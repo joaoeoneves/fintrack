@@ -27,6 +27,10 @@ class FirestoreExpenseRepository @Inject constructor(
     private fun expensesCollection(uid: String) =
         firestore.collection("users").document(uid).collection("expenses")
 
+    companion object {
+        private const val BATCH_CHUNK_SIZE = 400
+    }
+
     override fun observeExpenses(startInclusive: Instant, endExclusive: Instant): Flow<List<Expense>> {
         val uid = firebaseAuth.currentUser?.uid ?: return flowOf(emptyList())
 
@@ -89,6 +93,37 @@ class FirestoreExpenseRepository @Inject constructor(
             expensesCollection(uid).document(id).get().await().toExpenseOrNull()
         } catch (e: Exception) {
             null
+        }
+    }
+
+    override suspend fun getAllExpenses(): Result<List<Expense>> {
+        val uid = firebaseAuth.currentUser?.uid
+            ?: return Result.failure(IllegalStateException("Not signed in"))
+        return try {
+            val snapshot = expensesCollection(uid).get().await()
+            Result.success(snapshot.toExpenses())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun addExpenses(expenses: List<Expense>): Result<Int> {
+        val uid = firebaseAuth.currentUser?.uid
+            ?: return Result.failure(IllegalStateException("Not signed in"))
+        return try {
+            var total = 0
+            expenses.chunked(BATCH_CHUNK_SIZE).forEach { chunk ->
+                val batch = firestore.batch()
+                chunk.forEach { expense ->
+                    val docRef = expensesCollection(uid).document()
+                    batch.set(docRef, expense.toFirestoreMap(includeCreatedAt = true))
+                }
+                batch.commit().await()
+                total += chunk.size
+            }
+            Result.success(total)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

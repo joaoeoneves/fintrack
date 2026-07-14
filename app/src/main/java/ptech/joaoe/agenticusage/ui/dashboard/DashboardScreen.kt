@@ -1,5 +1,7 @@
 package ptech.joaoe.agenticusage.ui.dashboard
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,11 @@ import ptech.joaoe.agenticusage.domain.model.TimeRange
 import ptech.joaoe.agenticusage.ui.common.ExpenseRow
 import ptech.joaoe.agenticusage.ui.common.TimeRangeFilterRow
 import ptech.joaoe.agenticusage.ui.common.formatAmountCents
+import ptech.joaoe.agenticusage.ui.importexport.ExportUiState
+import ptech.joaoe.agenticusage.ui.importexport.ImportExportViewModel
+import ptech.joaoe.agenticusage.ui.importexport.ImportPreviewDialog
+import ptech.joaoe.agenticusage.ui.importexport.ImportUiState
+import ptech.joaoe.agenticusage.ui.importexport.MessageDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,9 +52,19 @@ fun DashboardScreen(
     onAddExpense: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: DashboardViewModel = hiltViewModel(),
+    importExportViewModel: ImportExportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val importState by importExportViewModel.importState.collectAsStateWithLifecycle()
+    val exportState by importExportViewModel.exportState.collectAsStateWithLifecycle()
+
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(importExportViewModel::onImportFileSelected)
+    }
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        uri?.let(importExportViewModel::onExportTargetSelected)
+    }
 
     Scaffold(
         modifier = modifier,
@@ -60,6 +77,22 @@ fun DashboardScreen(
                         Icon(Icons.Default.MoreVert, contentDescription = "More options")
                     }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Import CSV") },
+                            onClick = {
+                                menuExpanded = false
+                                importLauncher.launch(
+                                    arrayOf("text/csv", "text/comma-separated-values", "*/*")
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export CSV") },
+                            onClick = {
+                                menuExpanded = false
+                                exportLauncher.launch("agenticusage-expenses.csv")
+                            }
+                        )
                         DropdownMenuItem(
                             text = { Text("Sign out") },
                             onClick = {
@@ -100,6 +133,54 @@ fun DashboardScreen(
                 )
             }
         }
+    }
+
+    when (val state = importState) {
+        is ImportUiState.Preview -> {
+            ImportPreviewDialog(
+                state = state,
+                onConfirm = importExportViewModel::onConfirmImport,
+                onDismiss = importExportViewModel::onDismissImport
+            )
+        }
+
+        is ImportUiState.Done -> {
+            MessageDialog(
+                title = "Import complete",
+                message = "Imported ${state.importedCount} expense(s).",
+                onDismiss = importExportViewModel::onDismissImport
+            )
+        }
+
+        is ImportUiState.Error -> {
+            MessageDialog(
+                title = "Import failed",
+                message = state.message,
+                onDismiss = importExportViewModel::onDismissImport
+            )
+        }
+
+        ImportUiState.Idle, ImportUiState.Loading, ImportUiState.Importing -> Unit
+    }
+
+    when (val state = exportState) {
+        is ExportUiState.Done -> {
+            MessageDialog(
+                title = "Export complete",
+                message = "Exported ${state.exportedCount} expense(s).",
+                onDismiss = importExportViewModel::onDismissExport
+            )
+        }
+
+        is ExportUiState.Error -> {
+            MessageDialog(
+                title = "Export failed",
+                message = state.message,
+                onDismiss = importExportViewModel::onDismissExport
+            )
+        }
+
+        ExportUiState.Idle, ExportUiState.Exporting -> Unit
     }
 }
 

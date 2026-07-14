@@ -273,4 +273,106 @@ class FakeExpenseRepositoryTest {
         assertEquals(1, stored.size)
         assertEquals(day1, stored.single().date)
     }
+
+    // ---- getAllExpenses ----
+
+    @Test
+    fun getAllExpenses_emptyRepository_returnsEmptySuccess() = runBlocking {
+        val repo = FakeExpenseRepository()
+
+        val result = repo.getAllExpenses()
+
+        assertTrue(result.isSuccess)
+        assertTrue(result.getOrThrow().isEmpty())
+    }
+
+    @Test
+    fun getAllExpenses_returnsEntriesRegardlessOfDate_unlikeObserveExpenses() = runBlocking {
+        // Deliberately spans a much wider range than any single observeExpenses(start, end) call
+        // in these tests would use, to confirm getAllExpenses performs no date filtering at all.
+        val farPast = expense(id = "past", date = day0.minus(10_000, ChronoUnit.DAYS))
+        val farFuture = expense(id = "future", date = day0.plus(10_000, ChronoUnit.DAYS))
+        val repo = FakeExpenseRepository(listOf(farPast, farFuture))
+
+        val result = repo.getAllExpenses()
+
+        assertTrue(result.isSuccess)
+        assertEquals(setOf(farPast, farFuture), result.getOrThrow().toSet())
+        // Sanity-check: the same two entries would NOT both show up in a narrow observeExpenses window.
+        val narrowRange = repo.observeExpenses(day0, day2).first()
+        assertTrue(narrowRange.isEmpty())
+    }
+
+    @Test
+    fun getAllExpenses_reflectsLaterMutations() = runBlocking {
+        val repo = FakeExpenseRepository(listOf(expense(id = "e1", date = day0)))
+        repo.addExpense(expense(id = "e2", date = day1))
+        repo.deleteExpense("e1")
+
+        val result = repo.getAllExpenses()
+
+        assertTrue(result.isSuccess)
+        assertEquals(listOf("e2"), result.getOrThrow().map { it.id })
+    }
+
+    // ---- addExpenses (bulk) ----
+
+    @Test
+    fun addExpenses_emptyList_succeedsWithZeroCount_addsNothing() = runBlocking {
+        val repo = FakeExpenseRepository()
+
+        val result = repo.addExpenses(emptyList())
+
+        assertTrue(result.isSuccess)
+        assertEquals(0, result.getOrThrow())
+        assertTrue(repo.getAllExpenses().getOrThrow().isEmpty())
+    }
+
+    @Test
+    fun addExpenses_bulkAdd_returnsSuccessCount_allRowsRetrievableWithFreshNonBlankIds() = runBlocking {
+        val repo = FakeExpenseRepository()
+        val toImport = listOf(
+            expense(id = "", name = "Coffee", date = day0),
+            expense(id = "", name = "Rent", date = day1),
+            expense(id = "", name = "Netflix", date = day2)
+        )
+
+        val result = repo.addExpenses(toImport)
+
+        assertTrue(result.isSuccess)
+        assertEquals(3, result.getOrThrow())
+        val stored = repo.getAllExpenses().getOrThrow()
+        assertEquals(3, stored.size)
+        assertTrue(stored.all { it.id.isNotBlank() })
+        // ids are distinct
+        assertEquals(3, stored.map { it.id }.toSet().size)
+        assertEquals(setOf("Coffee", "Rent", "Netflix"), stored.map { it.name }.toSet())
+    }
+
+    @Test
+    fun addExpenses_ignoresAnyCallerSuppliedId_alwaysGeneratesFreshOne() = runBlocking {
+        val repo = FakeExpenseRepository()
+
+        repo.addExpenses(listOf(expense(id = "caller-supplied-id", date = day0)))
+
+        val stored = repo.getAllExpenses().getOrThrow()
+        assertEquals(1, stored.size)
+        assertFalse("caller-supplied-id" == stored.single().id)
+        assertTrue(stored.single().id.isNotBlank())
+    }
+
+    @Test
+    fun addExpenses_appendsToExistingEntries_doesNotReplaceThem() = runBlocking {
+        val existing = expense(id = "existing", date = day0)
+        val repo = FakeExpenseRepository(listOf(existing))
+
+        val result = repo.addExpenses(listOf(expense(id = "", name = "New", date = day1)))
+
+        assertTrue(result.isSuccess)
+        assertEquals(1, result.getOrThrow())
+        val stored = repo.getAllExpenses().getOrThrow()
+        assertEquals(2, stored.size)
+        assertTrue(stored.any { it.id == "existing" })
+        assertTrue(stored.any { it.name == "New" })
+    }
 }

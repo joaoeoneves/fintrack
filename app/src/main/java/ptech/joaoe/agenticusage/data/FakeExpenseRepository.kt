@@ -50,4 +50,13 @@ class FakeExpenseRepository(
 
     override suspend fun getExpense(id: String): Expense? =
         expensesFlow.value.find { it.id == id }
+
+    override suspend fun getAllExpenses(): Result<List<Expense>> =
+        Result.success(expensesFlow.value)
+
+    override suspend fun addExpenses(expenses: List<Expense>): Result<Int> {
+        val toStore = expenses.map { it.copy(id = UUID.randomUUID().toString()) }
+        expensesFlow.value = expensesFlow.value + toStore
+        return Result.success(expenses.size)
+    }
 }

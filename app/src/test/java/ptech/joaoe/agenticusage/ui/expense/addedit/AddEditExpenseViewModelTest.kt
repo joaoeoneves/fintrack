@@ -566,5 +566,13 @@ class AddEditExpenseViewModelTest {
         }
 
         override suspend fun getExpense(id: String): Expense? = getExpenseResult
+
+        override suspend fun getAllExpenses(): Result<List<Expense>> {
+            throw UnsupportedOperationException("not used in these tests")
+        }
+
+        override suspend fun addExpenses(expenses: List<Expense>): Result<Int> {
+            throw UnsupportedOperationException("not used in these tests")
+        }
     }
 }
