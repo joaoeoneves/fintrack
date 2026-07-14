@@ -4,7 +4,9 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import ptech.joaoe.agenticusage.data.FirebaseAuthRepository
 import ptech.joaoe.agenticusage.data.FirestoreExpenseRepository
+import ptech.joaoe.agenticusage.domain.repository.AuthRepository
 import ptech.joaoe.agenticusage.domain.repository.ExpenseRepository
 
 @Module
@@ -13,4 +15,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindExpenseRepository(impl: FirestoreExpenseRepository): ExpenseRepository
+
+    @Binds
+    abstract fun bindAuthRepository(impl: FirebaseAuthRepository): AuthRepository
 }

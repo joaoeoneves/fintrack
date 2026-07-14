@@ -7,41 +7,46 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dagger.hilt.android.AndroidEntryPoint
+import ptech.joaoe.agenticusage.ui.auth.AuthUiState
+import ptech.joaoe.agenticusage.ui.auth.AuthViewModel
+import ptech.joaoe.agenticusage.ui.auth.SignInScreen
+import ptech.joaoe.agenticusage.ui.auth.SignedInScreen
 import ptech.joaoe.agenticusage.ui.theme.AgenticUsageTheme
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             AgenticUsageTheme {
+                val viewModel: AuthViewModel = hiltViewModel()
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val context = LocalContext.current
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    val state = uiState
+                    if (state is AuthUiState.SignedIn) {
+                        SignedInScreen(
+                            user = state.user,
+                            onSignOutClick = viewModel::signOut,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    } else {
+                        SignInScreen(
+                            uiState = state,
+                            onSignInClick = { viewModel.signIn(context) },
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AgenticUsageTheme {
-        Greeting("Android")
     }
 }
