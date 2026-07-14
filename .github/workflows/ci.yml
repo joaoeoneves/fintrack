@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # The google-services Gradle plugin fails the build if app/google-services.json is missing.
+      # The real file is a gitignored local credential (Firebase project agenticusage-d7ce3) and is
+      # never committed. This CI job only compiles and runs JVM unit tests (against Fake repositories,
+      # not real Firestore), so a placeholder with the right shape and package name is sufficient —
+      # it's written here, not committed, so it can never be confused with the real credential.
+      - name: Write placeholder google-services.json
+        run: |
+          cat > app/google-services.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "agenticusage-ci-placeholder",
+              "storage_bucket": "agenticusage-ci-placeholder.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                  "android_client_info": {
+                    "package_name": "ptech.joaoe.agenticusage"
+                  }
+                },
+                "oauth_client": [
+                  {
+                    "client_id": "000000000000-placeholderplaceholderplacehold.apps.googleusercontent.com",
+                    "client_type": 3
+                  }
+                ],
+                "api_key": [
+                  {
+                    "current_key": "AIzaPlaceholderPlaceholderPlaceholderPlace"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+
+      - name: ktlint
+        run: ./gradlew ktlintCheck
+
+      - name: detekt
+        run: ./gradlew detekt
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            app/build/reports/ktlint
+            app/build/reports/detekt
+            app/build/reports/tests
+          retention-days: 7
