@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ptech.joaoe.agenticusage.domain.model.TimeRange
+import ptech.joaoe.agenticusage.ui.common.ErrorState
 import ptech.joaoe.agenticusage.ui.common.ExpenseRow
 import ptech.joaoe.agenticusage.ui.common.TimeRangeFilterRow
 import ptech.joaoe.agenticusage.ui.common.formatAmountCents
@@ -127,6 +128,16 @@ fun DashboardScreen(
                     state = state,
                     onTimeRangeSelected = viewModel::onTimeRangeSelected,
                     onOpenList = onOpenList,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                )
+            }
+
+            is DashboardUiState.Error -> {
+                ErrorState(
+                    message = state.message,
+                    onRetry = viewModel::onRetry,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)

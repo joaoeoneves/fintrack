@@ -4,6 +4,7 @@ import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.repository.ExpenseRepository
@@ -13,15 +14,18 @@ import ptech.joaoe.agenticusage.domain.repository.ExpenseRepository
  * and pass it directly where a fake repository is needed.
  */
 class FakeExpenseRepository(
-    initialExpenses: List<Expense> = emptyList()
+    initialExpenses: List<Expense> = emptyList(),
+    var nextObserveExpensesError: Throwable? = null
 ) : ExpenseRepository {
 
     private val expensesFlow = MutableStateFlow(initialExpenses)
 
-    override fun observeExpenses(startInclusive: Instant, endExclusive: Instant): Flow<List<Expense>> =
-        expensesFlow.map { expenses ->
+    override fun observeExpenses(startInclusive: Instant, endExclusive: Instant): Flow<List<Expense>> {
+        nextObserveExpensesError?.let { error -> return flow { throw error } }
+        return expensesFlow.map { expenses ->
             expenses.filter { it.date >= startInclusive && it.date < endExclusive }
         }
+    }
 
     override suspend fun addExpense(expense: Expense): Result<String> {
         val id = expense.id.ifBlank { UUID.randomUUID().toString() }

@@ -12,4 +12,6 @@ sealed interface ExpenseListUiState {
         val sortOption: SortOption,
         val expenses: List<Expense>
     ) : ExpenseListUiState
+
+    data class Error(val message: String) : ExpenseListUiState
 }

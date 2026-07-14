@@ -16,4 +16,6 @@ sealed interface DashboardUiState {
         val totalCents: Long,
         val recentExpenses: List<Expense>
     ) : DashboardUiState
+
+    data class Error(val message: String) : DashboardUiState
 }

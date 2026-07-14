@@ -203,4 +203,64 @@ class DashboardViewModelTest {
 
         job.cancel()
     }
+
+    // ---- observeExpenses failure -> Error state ----
+
+    @Test
+    fun observeExpensesFailure_beforeFirstCollection_surfacesErrorState_withUnderlyingMessage() = runTest(testDispatcher) {
+        val repo = FakeExpenseRepository()
+        repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
+        val viewModel = DashboardViewModel(repo)
+
+        val job = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
+
+        job.cancel()
+    }
+
+    @Test
+    fun observeExpensesFailure_withNullExceptionMessage_fallsBackToDefaultMessage() = runTest(testDispatcher) {
+        val repo = FakeExpenseRepository()
+        repo.nextObserveExpensesError = RuntimeException()
+        val viewModel = DashboardViewModel(repo)
+
+        val job = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(DashboardUiState.Error("Something went wrong"), viewModel.uiState.value)
+
+        job.cancel()
+    }
+
+    @Test
+    fun onRetry_afterClearingError_transitionsFromErrorBackToContent() = runTest(testDispatcher) {
+        val existing = expense(
+            id = "e1",
+            amountCents = 1_000L,
+            category = ExpenseCategory.SHOPPING,
+            date = now.minus(1, ChronoUnit.DAYS)
+        )
+        val repo = FakeExpenseRepository(listOf(existing))
+        repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
+        val viewModel = DashboardViewModel(repo)
+
+        val job = launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
+
+        // Clear the error on the underlying fake, then retry. Since `timeRange` itself hasn't
+        // changed, only the retry-trigger bump forces flatMapLatest to re-subscribe -- proving
+        // onRetry() isn't a no-op swallowed by StateFlow's equality-based dedup.
+        repo.nextObserveExpensesError = null
+        viewModel.onRetry()
+        advanceUntilIdle()
+
+        val content = viewModel.uiState.value as DashboardUiState.Content
+        assertEquals(listOf(existing), content.expenses)
+        assertEquals(1_000L, content.totalCents)
+
+        job.cancel()
+    }
 }

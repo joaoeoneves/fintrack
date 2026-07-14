@@ -3,13 +3,17 @@ package ptech.joaoe.agenticusage.data
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
@@ -92,6 +96,88 @@ class FakeExpenseRepositoryTest {
 
         assertEquals(setOf(investment, shopping), result.toSet())
         assertEquals(2, result.size)
+    }
+
+    // ---- observeExpenses: nextObserveExpensesError ----
+
+    @Test
+    fun observeExpenses_defaultNullError_behavesNormally() = runBlocking {
+        val e1 = expense(id = "e1", date = day1)
+        val repo = FakeExpenseRepository(listOf(e1))
+
+        assertNull(repo.nextObserveExpensesError)
+        val result = repo.observeExpenses(day0, day2).first()
+
+        assertEquals(listOf(e1), result)
+    }
+
+    @Test
+    fun observeExpenses_withErrorSet_flowThrowsThatExactThrowable() = runBlocking {
+        val repo = FakeExpenseRepository(listOf(expense(id = "e1", date = day1)))
+        val boom = IllegalStateException("Firestore unavailable")
+        repo.nextObserveExpensesError = boom
+
+        var caught: Throwable? = null
+        repo.observeExpenses(day0, day2)
+            .catch { e -> caught = e }
+            .collect { fail("expected the flow to throw, but got a value: $it") }
+
+        assertSame(boom, caught)
+    }
+
+    @Test
+    fun observeExpenses_withErrorSet_throwsOnEveryCollection_untilClearedAgain() = runBlocking {
+        val repo = FakeExpenseRepository(listOf(expense(id = "e1", date = day1)))
+        val boom = RuntimeException("boom")
+        repo.nextObserveExpensesError = boom
+
+        var firstCollectionThrew = false
+        try {
+            repo.observeExpenses(day0, day2).first()
+        } catch (e: RuntimeException) {
+            firstCollectionThrew = true
+            assertSame(boom, e)
+        }
+        assertTrue(firstCollectionThrew)
+
+        // Clear the error: subsequent collections should go back to the normal filtered flow.
+        repo.nextObserveExpensesError = null
+        val result = repo.observeExpenses(day0, day2).first()
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun nextObserveExpensesError_doesNotAffectAddUpdateDeleteGetAll() = runBlocking {
+        val e1 = expense(id = "e1", date = day1)
+        val repo = FakeExpenseRepository(listOf(e1))
+        repo.nextObserveExpensesError = RuntimeException("observe is broken")
+
+        // add
+        val addResult = repo.addExpense(expense(id = "e2", date = day1))
+        assertTrue(addResult.isSuccess)
+
+        // update
+        val updated = e1.copy(name = "Renamed")
+        assertTrue(repo.updateExpense(updated).isSuccess)
+
+        // getExpense / getAllExpenses unaffected
+        assertEquals(updated, repo.getExpense("e1"))
+        val all = repo.getAllExpenses()
+        assertTrue(all.isSuccess)
+        assertEquals(2, all.getOrThrow().size)
+
+        // delete
+        assertTrue(repo.deleteExpense("e2").isSuccess)
+        assertEquals(1, repo.getAllExpenses().getOrThrow().size)
+
+        // observeExpenses itself is still broken throughout
+        var threw = false
+        try {
+            repo.observeExpenses(day0, day2).first()
+        } catch (e: RuntimeException) {
+            threw = true
+        }
+        assertTrue("observeExpenses should still throw since nextObserveExpensesError was never cleared", threw)
     }
 
     // ---- observeExpenses: live updates over an active collector ----

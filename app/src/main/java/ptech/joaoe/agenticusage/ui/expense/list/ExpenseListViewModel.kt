@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -31,14 +32,21 @@ class ExpenseListViewModel @Inject constructor(
     private val timeRange = MutableStateFlow(savedStateHandle.toRoute<ExpenseList>().timeRange)
     private val query = MutableStateFlow("")
     private val sortOption = MutableStateFlow(SortOption.DATE_DESC)
+    private val retryTrigger = MutableStateFlow(0)
 
-    val uiState: StateFlow<ExpenseListUiState> = combine(timeRange, query, sortOption) { range, q, sort ->
+    val uiState: StateFlow<ExpenseListUiState> = combine(
+        timeRange,
+        query,
+        sortOption,
+        retryTrigger
+    ) { range, q, sort, _ ->
         Triple(range, q, sort)
     }
         .flatMapLatest { (range, q, sort) ->
             val instantRange = range.toInstantRange(now = Instant.now())
             expenseRepository.observeExpenses(instantRange.startInclusive, instantRange.endExclusive)
-                .map { expenses -> expenses.toContent(range, q, sort) }
+                .map<List<Expense>, ExpenseListUiState> { expenses -> expenses.toContent(range, q, sort) }
+                .catch { e -> emit(ExpenseListUiState.Error(e.message ?: "Something went wrong")) }
         }
         .stateIn(
             scope = viewModelScope,
@@ -56,6 +64,10 @@ class ExpenseListViewModel @Inject constructor(
 
     fun onSortSelected(sort: SortOption) {
         sortOption.value = sort
+    }
+
+    fun onRetry() {
+        retryTrigger.value++
     }
 
     fun onDeleteExpense(id: String) {

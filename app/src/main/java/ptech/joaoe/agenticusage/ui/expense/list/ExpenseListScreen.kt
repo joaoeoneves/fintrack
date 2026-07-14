@@ -40,6 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.TimeRange
+import ptech.joaoe.agenticusage.ui.common.ErrorState
 import ptech.joaoe.agenticusage.ui.common.ExpenseRow
 import ptech.joaoe.agenticusage.ui.common.TimeRangeFilterRow
 
@@ -81,6 +82,16 @@ fun ExpenseListScreen(
                     onOpenExpense = onOpenExpense,
                     onDeleteRequested = { expenseToDelete = it },
                     contentPadding = innerPadding
+                )
+            }
+
+            is ExpenseListUiState.Error -> {
+                ErrorState(
+                    message = state.message,
+                    onRetry = viewModel::onRetry,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 )
             }
         }

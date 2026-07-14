@@ -348,4 +348,94 @@ class ExpenseListViewModelTest {
 
         job.cancel()
     }
+
+    // ---- observeExpenses failure -> Error state ----
+
+    @Test
+    fun observeExpensesFailure_beforeFirstCollection_surfacesErrorState_withUnderlyingMessage() = runTest(testDispatcher) {
+        val repo = FakeExpenseRepository()
+        repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
+        val vm = viewModel(repo)
+
+        val job = launch { vm.uiState.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
+
+        job.cancel()
+    }
+
+    @Test
+    fun observeExpensesFailure_withNullExceptionMessage_fallsBackToDefaultMessage() = runTest(testDispatcher) {
+        val repo = FakeExpenseRepository()
+        repo.nextObserveExpensesError = RuntimeException()
+        val vm = viewModel(repo)
+
+        val job = launch { vm.uiState.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(ExpenseListUiState.Error("Something went wrong"), vm.uiState.value)
+
+        job.cancel()
+    }
+
+    @Test
+    fun onRetry_afterClearingError_transitionsFromErrorBackToContent() = runTest(testDispatcher) {
+        val existing = expense(id = "e1", amountCents = 1_000L, date = now.minus(1, ChronoUnit.DAYS))
+        val repo = FakeExpenseRepository(listOf(existing))
+        repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
+        val vm = viewModel(repo)
+
+        val job = launch { vm.uiState.collect {} }
+        advanceUntilIdle()
+        assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
+
+        // Clear the error on the underlying fake, then retry. Since timeRange/query/sortOption
+        // haven't changed, only the retry-trigger bump forces flatMapLatest to re-subscribe --
+        // proving onRetry() isn't a no-op swallowed by the combined key's equality-based dedup.
+        repo.nextObserveExpensesError = null
+        vm.onRetry()
+        advanceUntilIdle()
+
+        val content = vm.uiState.value as ExpenseListUiState.Content
+        assertEquals(listOf(existing), content.expenses)
+
+        job.cancel()
+    }
+
+    @Test
+    fun onRetry_doesNotResetCurrentQuerySortOptionOrTimeRangeSelections() = runTest(testDispatcher) {
+        val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
+        val coffeeOld = expense(id = "2", name = "Old Coffee", amountCents = 100L, date = now.minus(20, ChronoUnit.DAYS))
+        val groceries = expense(id = "3", name = "Groceries", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
+        val repo = FakeExpenseRepository(listOf(coffee, coffeeOld, groceries))
+        val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
+
+        val job = launch { vm.uiState.collect {} }
+        advanceUntilIdle()
+
+        vm.onQueryChanged("coffee")
+        vm.onSortSelected(SortOption.AMOUNT_ASC)
+        vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
+        advanceUntilIdle()
+
+        val beforeRetry = vm.uiState.value as ExpenseListUiState.Content
+        assertEquals("coffee", beforeRetry.query)
+        assertEquals(SortOption.AMOUNT_ASC, beforeRetry.sortOption)
+        assertEquals(TimeRange.ONE_WEEK, beforeRetry.timeRange)
+        // within one week: only "coffee" (2 days ago) matches the query; coffeeOld (20 days ago)
+        // and groceries (doesn't match query) are excluded.
+        assertEquals(listOf(coffee), beforeRetry.expenses)
+
+        vm.onRetry()
+        advanceUntilIdle()
+
+        val afterRetry = vm.uiState.value as ExpenseListUiState.Content
+        assertEquals("coffee", afterRetry.query)
+        assertEquals(SortOption.AMOUNT_ASC, afterRetry.sortOption)
+        assertEquals(TimeRange.ONE_WEEK, afterRetry.timeRange)
+        assertEquals(listOf(coffee), afterRetry.expenses)
+
+        job.cancel()
+    }
 }

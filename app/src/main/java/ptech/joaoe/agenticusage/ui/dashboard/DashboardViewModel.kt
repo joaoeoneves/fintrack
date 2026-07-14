@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -25,12 +27,14 @@ class DashboardViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val timeRange = MutableStateFlow(TimeRange.ONE_MONTH)
+    private val retryTrigger = MutableStateFlow(0)
 
-    val uiState: StateFlow<DashboardUiState> = timeRange
+    val uiState: StateFlow<DashboardUiState> = combine(timeRange, retryTrigger) { range, _ -> range }
         .flatMapLatest { range ->
             val instantRange = range.toInstantRange(now = Instant.now())
             expenseRepository.observeExpenses(instantRange.startInclusive, instantRange.endExclusive)
-                .map { expenses -> expenses.toContent(range) }
+                .map<List<Expense>, DashboardUiState> { expenses -> expenses.toContent(range) }
+                .catch { e -> emit(DashboardUiState.Error(e.message ?: "Something went wrong")) }
         }
         .stateIn(
             scope = viewModelScope,
@@ -40,6 +44,10 @@ class DashboardViewModel @Inject constructor(
 
     fun onTimeRangeSelected(range: TimeRange) {
         timeRange.value = range
+    }
+
+    fun onRetry() {
+        retryTrigger.value++
     }
 
     private fun List<Expense>.toContent(range: TimeRange): DashboardUiState.Content {

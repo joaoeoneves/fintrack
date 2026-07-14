@@ -14,7 +14,8 @@ class FakeAuthRepository(
     initialUser: AuthUser? = null,
     var nextSignInResult: Result<AuthUser> = Result.success(
         AuthUser(uid = "fake-uid", displayName = "Fake User", email = "fake@example.com", photoUrl = null)
-    )
+    ),
+    var nextSignOutResult: Result<Unit> = Result.success(Unit)
 ) : AuthRepository {
 
     private val userFlow = MutableStateFlow(initialUser)
@@ -27,7 +28,7 @@ class FakeAuthRepository(
     }
 
     override suspend fun signOut(): Result<Unit> {
-        userFlow.value = null
-        return Result.success(Unit)
+        nextSignOutResult.onSuccess { userFlow.value = null }
+        return nextSignOutResult
     }
 }

@@ -25,10 +25,11 @@ import ptech.joaoe.agenticusage.domain.model.AuthUser
 import ptech.joaoe.agenticusage.domain.repository.AuthRepository
 
 /**
- * Unit tests for [AuthViewModel]'s state transitions, backed by [FakeAuthRepository] (and, where
- * the fake's fixed-success [FakeAuthRepository.signOut] can't express a failure, a small
- * purpose-built local fake implementing [AuthRepository] directly, defined at the bottom of this
- * file).
+ * Unit tests for [AuthViewModel]'s state transitions, backed by [FakeAuthRepository] for
+ * everything except deterministically observing the transient `Loading` state during `signIn`
+ * (where [GatedSignInAuthRepository], a small local fake implementing [AuthRepository] directly
+ * and defined at the bottom of this file, is used instead -- see the comment above
+ * `signIn_success_transitionsIdleThenLoadingThenSignedIn` for why).
  *
  * All tests share one [StandardTestDispatcher] used both as `Dispatchers.Main` (so
  * `viewModelScope` coroutines run on it) and as the dispatcher driving [runTest] itself, so that
@@ -202,18 +203,16 @@ class AuthViewModelTest {
 
     // ---- signOut: failure ----
     //
-    // FakeAuthRepository.signOut() always succeeds (it unconditionally clears its user flow and
-    // returns Result.success(Unit)) -- there is no field on it to force a failure result, and the
-    // class is not `open` so it cannot be subclassed/overridden from a test. To exercise
-    // AuthViewModel's failure branch we use SignOutFailingAuthRepository, a small local
-    // AuthRepository implementation defined at the bottom of this file that lets us inject a
-    // controllable signOut() result.
+    // FakeAuthRepository now takes a configurable `nextSignOutResult` (see
+    // FakeExpenseRepository-style constructor param), which on failure returns that result
+    // *without* touching userFlow, so we can exercise AuthViewModel's failure branch directly
+    // against the real fake instead of a bespoke local subclass.
 
     @Test
     fun signOut_failure_setsErrorState_withUnderlyingMessage() = runTest(testDispatcher) {
-        val repo = SignOutFailingAuthRepository(
+        val repo = FakeAuthRepository(
             initialUser = user,
-            signOutResult = Result.failure(IllegalStateException("network unavailable"))
+            nextSignOutResult = Result.failure(IllegalStateException("network unavailable"))
         )
         val viewModel = AuthViewModel(repo)
         advanceUntilIdle()
@@ -226,9 +225,9 @@ class AuthViewModelTest {
 
     @Test
     fun signOut_failure_withNullExceptionMessage_fallsBackToDefaultMessage() = runTest(testDispatcher) {
-        val repo = SignOutFailingAuthRepository(
+        val repo = FakeAuthRepository(
             initialUser = user,
-            signOutResult = Result.failure(RuntimeException())
+            nextSignOutResult = Result.failure(RuntimeException())
         )
         val viewModel = AuthViewModel(repo)
         advanceUntilIdle()
@@ -237,6 +236,50 @@ class AuthViewModelTest {
         advanceUntilIdle()
 
         assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
+    }
+
+    @Test
+    fun signOut_failure_doesNotClearCurrentUser_repositoryFlowStillReflectsSignedInUser() = runTest(testDispatcher) {
+        val repo = FakeAuthRepository(
+            initialUser = user,
+            nextSignOutResult = Result.failure(IllegalStateException("network unavailable"))
+        )
+        val viewModel = AuthViewModel(repo)
+        advanceUntilIdle()
+        assertEquals(AuthUiState.SignedIn(user), viewModel.uiState.value)
+
+        viewModel.signOut()
+        advanceUntilIdle()
+
+        // AuthViewModel itself doesn't clear any state on signOut failure -- it relies entirely on
+        // observeCurrentUser()/userFlow being updated by the repository. Confirm the repository's
+        // own flow still reflects the signed-in user (i.e. FakeAuthRepository.signOut() did not
+        // clear userFlow.value on failure), even though the ViewModel's uiState surfaces an Error.
+        assertEquals(user, currentValueOf(repo.observeCurrentUser()))
+        assertEquals(AuthUiState.Error("network unavailable"), viewModel.uiState.value)
+    }
+
+    @Test
+    fun signOut_failureThenSuccess_eventuallyTransitionsToIdle_userClearedOnlyOnSuccess() = runTest(testDispatcher) {
+        val repo = FakeAuthRepository(
+            initialUser = user,
+            nextSignOutResult = Result.failure(IllegalStateException("network unavailable"))
+        )
+        val viewModel = AuthViewModel(repo)
+        advanceUntilIdle()
+
+        viewModel.signOut()
+        advanceUntilIdle()
+        assertEquals(AuthUiState.Error("network unavailable"), viewModel.uiState.value)
+        assertEquals(user, currentValueOf(repo.observeCurrentUser()))
+
+        // Reconfigure the fake to succeed on the next call and retry.
+        repo.nextSignOutResult = Result.success(Unit)
+        viewModel.signOut()
+        advanceUntilIdle()
+
+        assertNull(currentValueOf(repo.observeCurrentUser()))
+        assertEquals(AuthUiState.Idle, viewModel.uiState.value)
     }
 
     // ---- other edge cases ----
@@ -291,25 +334,6 @@ class AuthViewModelTest {
      * [FakeAuthRepository.observeCurrentUser] is), without needing a `first()` collection.
      */
     private fun currentValueOf(flow: Flow<AuthUser?>): AuthUser? = (flow as StateFlow<AuthUser?>).value
-
-    /**
-     * Minimal local [AuthRepository] fake -- distinct from [FakeAuthRepository] -- whose sole
-     * purpose is to let [signOut] fail in a controlled way, which [FakeAuthRepository] cannot do.
-     */
-    private class SignOutFailingAuthRepository(
-        initialUser: AuthUser?,
-        private val signOutResult: Result<Unit>
-    ) : AuthRepository {
-        private val userFlow = MutableStateFlow(initialUser)
-
-        override fun observeCurrentUser(): Flow<AuthUser?> = userFlow
-
-        override suspend fun signIn(context: Context): Result<AuthUser> {
-            throw UnsupportedOperationException("not used in signOut-failure tests")
-        }
-
-        override suspend fun signOut(): Result<Unit> = signOutResult
-    }
 
     /**
      * Local [AuthRepository] fake whose [signIn] suspends on a test-controlled
