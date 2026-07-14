@@ -1,0 +1,929 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="build.gradle.kts">
+        <error line="16" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="94" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/androidTest/java/ptech/joaoe/agenticusage/ExampleInstrumentedTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="9" column="1" source="standard:no-wildcard-imports" />
+        <error line="24" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/MainActivity.kt">
+        <error line="38" column="70" source="standard:trailing-comma-on-call-site" />
+        <error line="44" column="70" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/data/FakeAuthRepository.kt">
+        <error line="15" column="46" source="standard:multiline-expression-wrapping" />
+        <error line="16" column="107" source="standard:trailing-comma-on-call-site" />
+        <error line="18" column="63" source="standard:trailing-comma-on-declaration-site" />
+        <error line="20" column="1" source="standard:no-empty-first-line-in-class-body" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/data/FakeExpenseRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="18" column="52" source="standard:trailing-comma-on-declaration-site" />
+        <error line="20" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="23" column="34" source="standard:function-signature" />
+        <error line="23" column="59" source="standard:function-signature" />
+        <error line="23" column="80" source="standard:function-signature" />
+        <error line="55" column="60" source="standard:function-signature" />
+        <error line="58" column="67" source="standard:function-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/data/FirebaseAuthRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="22" column="29" source="standard:annotation" />
+        <error line="22" column="37" source="standard:annotation" />
+        <error line="24" column="53" source="standard:trailing-comma-on-declaration-site" />
+        <error line="26" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="27" column="58" source="standard:multiline-expression-wrapping" />
+        <error line="27" column="58" source="standard:function-signature" />
+        <error line="28" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="37" column="34" source="standard:multiline-expression-wrapping" />
+        <error line="37" column="51" source="standard:chain-method-continuation" />
+        <error line="42" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="42" column="47" source="standard:chain-method-continuation" />
+        <error line="58" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="67" column="50" source="standard:function-expression-body" />
+        <error line="77" column="55" source="standard:multiline-expression-wrapping" />
+        <error line="77" column="55" source="standard:function-signature" />
+        <error line="81" column="40" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/data/FirestoreExpenseRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="22" column="33" source="standard:annotation" />
+        <error line="22" column="41" source="standard:annotation" />
+        <error line="24" column="43" source="standard:trailing-comma-on-declaration-site" />
+        <error line="26" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="27" column="50" source="standard:function-signature" />
+        <error line="34" column="34" source="standard:function-signature" />
+        <error line="34" column="59" source="standard:function-signature" />
+        <error line="34" column="80" source="standard:function-signature" />
+        <error line="37" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="42" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="56" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="68" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="80" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="93" column="36" source="standard:chain-method-continuation" />
+        <error line="93" column="49" source="standard:chain-method-continuation" />
+        <error line="93" column="55" source="standard:chain-method-continuation" />
+        <error line="93" column="63" source="standard:chain-method-continuation" />
+        <error line="100" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="111" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="131" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="137" column="56" source="standard:trailing-comma-on-call-site" />
+        <error line="151" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="165" column="24" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/data/csv/ExpenseCsvParser.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="14" column="26" source="standard:class-signature" />
+        <error line="14" column="46" source="standard:class-signature" />
+        <error line="14" column="67" source="standard:class-signature" />
+        <error line="14" column="85" source="standard:class-signature" />
+        <error line="17" column="27" source="standard:class-signature" />
+        <error line="17" column="61" source="standard:class-signature" />
+        <error line="17" column="94" source="standard:class-signature" />
+        <error line="22" column="23" source="standard:class-signature" />
+        <error line="22" column="49" source="standard:class-signature" />
+        <error line="23" column="5" source="standard:blank-line-before-declaration" />
+        <error line="23" column="22" source="standard:class-signature" />
+        <error line="23" column="41" source="standard:class-signature" />
+        <error line="31" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="33" column="21" source="standard:multiline-expression-wrapping" />
+        <error line="33" column="28" source="standard:chain-method-continuation" />
+        <error line="45" column="85" source="standard:trailing-comma-on-call-site" />
+        <error line="75" column="63" source="standard:string-template" />
+        <error line="81" column="63" source="standard:string-template" />
+        <error line="87" column="63" source="standard:string-template" />
+        <error line="93" column="30" source="standard:multiline-expression-wrapping" />
+        <error line="99" column="28" source="standard:trailing-comma-on-call-site" />
+        <error line="111" column="59" source="standard:multiline-expression-wrapping" />
+        <error line="111" column="59" source="standard:function-signature" />
+        <error line="118" column="50" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/data/csv/ExpenseCsvWriter.kt">
+        <error line="13" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="17" column="22" source="standard:multiline-expression-wrapping" />
+        <error line="22" column="55" source="standard:trailing-comma-on-call-site" />
+        <error line="28" column="59" source="standard:multiline-expression-wrapping" />
+        <error line="28" column="59" source="standard:function-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/di/FirebaseModule.kt">
+        <error line="16" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="24" column="34" source="standard:parameter-list-wrapping" />
+        <error line="24" column="34" source="standard:function-signature" />
+        <error line="24" column="70" source="standard:parameter-list-wrapping" />
+        <error line="24" column="70" source="standard:function-signature" />
+        <error line="24" column="92" source="standard:function-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/di/RepositoryModule.kt">
+        <error line="15" column="1" source="standard:no-empty-first-line-in-class-body" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/domain/model/AuthUser.kt">
+        <error line="7" column="26" source="standard:trailing-comma-on-declaration-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/domain/model/Expense.kt">
+        <error line="11" column="22" source="standard:trailing-comma-on-declaration-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/domain/model/ExpenseCategory.kt">
+        <error line="7" column="14" source="standard:trailing-comma-on-declaration-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/domain/model/TimeRange.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="11" column="22" source="standard:class-signature" />
+        <error line="11" column="39" source="standard:class-signature" />
+        <error line="16" column="19" source="standard:trailing-comma-on-declaration-site" />
+        <error line="22" column="24" source="standard:function-signature" />
+        <error line="22" column="54" source="standard:function-signature" />
+        <error line="22" column="91" source="standard:function-signature" />
+        <error line="24" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="34" column="75" source="standard:trailing-comma-on-call-site" />
+        <error line="39" column="25" source="standard:class-signature" />
+        <error line="39" column="54" source="standard:class-signature" />
+        <error line="39" column="79" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/domain/repository/ExpenseRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="8" column="25" source="standard:function-signature" />
+        <error line="8" column="50" source="standard:function-signature" />
+        <error line="8" column="71" source="standard:function-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/auth/AuthUiState.kt">
+        <error line="7" column="5" source="standard:blank-line-before-declaration" />
+        <error line="8" column="5" source="standard:blank-line-before-declaration" />
+        <error line="8" column="25" source="standard:class-signature" />
+        <error line="8" column="43" source="standard:class-signature" />
+        <error line="9" column="5" source="standard:blank-line-before-declaration" />
+        <error line="9" column="22" source="standard:class-signature" />
+        <error line="9" column="41" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/auth/AuthViewModel.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="15" column="20" source="standard:annotation" />
+        <error line="15" column="28" source="standard:annotation" />
+        <error line="16" column="47" source="standard:trailing-comma-on-declaration-site" />
+        <error line="18" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="36" column="103" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/auth/SignInScreen.kt">
+        <error line="26" column="5" source="standard:function-naming" />
+        <error line="29" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="34" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="38" column="49" source="standard:trailing-comma-on-call-site" />
+        <error line="42" column="60" source="standard:trailing-comma-on-call-site" />
+        <error line="47" column="68" source="standard:trailing-comma-on-call-site" />
+        <error line="55" column="60" source="standard:trailing-comma-on-call-site" />
+        <error line="61" column="33" source="standard:trailing-comma-on-call-site" />
+        <error line="66" column="64" source="standard:trailing-comma-on-call-site" />
+        <error line="70" column="62" source="standard:trailing-comma-on-call-site" />
+        <error line="77" column="66" source="standard:trailing-comma-on-call-site" />
+        <error line="91" column="13" source="standard:function-naming" />
+        <error line="95" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="97" column="42" source="standard:trailing-comma-on-call-site" />
+        <error line="109" column="48" source="standard:trailing-comma-on-call-site" />
+        <error line="119" column="48" source="standard:trailing-comma-on-call-site" />
+        <error line="129" column="48" source="standard:trailing-comma-on-call-site" />
+        <error line="139" column="48" source="standard:trailing-comma-on-call-site" />
+        <error line="146" column="38" source="standard:trailing-comma-on-call-site" />
+        <error line="153" column="13" source="standard:function-naming" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/common/CategoryDisplay.kt">
+        <error line="10" column="13" source="standard:multiline-expression-wrapping" />
+        <error line="21" column="13" source="standard:multiline-expression-wrapping" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/common/ErrorState.kt">
+        <error line="21" column="5" source="standard:function-naming" />
+        <error line="24" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="27" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="30" column="44" source="standard:trailing-comma-on-call-site" />
+        <error line="34" column="61" source="standard:trailing-comma-on-call-site" />
+        <error line="38" column="59" source="standard:trailing-comma-on-call-site" />
+        <error line="43" column="56" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/common/ExpenseRow.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="26" column="5" source="standard:function-naming" />
+        <error line="29" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="32" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="36" column="57" source="standard:trailing-comma-on-call-site" />
+        <error line="43" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="51" column="67" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/common/TimeRangeFilterRow.kt">
+        <error line="21" column="5" source="standard:function-naming" />
+        <error line="24" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="27" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="31" column="59" source="standard:trailing-comma-on-call-site" />
+        <error line="37" column="46" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/dashboard/DashboardScreen.kt">
+        <error line="51" column="5" source="standard:function-naming" />
+        <error line="57" column="67" source="standard:trailing-comma-on-declaration-site" />
+        <error line="63" column="26" source="standard:multiline-expression-wrapping" />
+        <error line="66" column="26" source="standard:multiline-expression-wrapping" />
+        <error line="86" column="94" source="standard:trailing-comma-on-call-site" />
+        <error line="88" column="30" source="standard:trailing-comma-on-call-site" />
+        <error line="95" column="30" source="standard:trailing-comma-on-call-site" />
+        <error line="102" column="30" source="standard:trailing-comma-on-call-site" />
+        <error line="105" column="18" source="standard:trailing-comma-on-call-site" />
+        <error line="112" column="10" source="standard:trailing-comma-on-call-site" />
+        <error line="117" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="120" column="56" source="standard:trailing-comma-on-call-site" />
+        <error line="131" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="133" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="141" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="143" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="154" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="162" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="170" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="182" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="190" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="199" column="13" source="standard:function-naming" />
+        <error line="203" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="213" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="216" column="56" source="standard:trailing-comma-on-call-site" />
+        <error line="220" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="230" column="72" source="standard:trailing-comma-on-call-site" />
+        <error line="234" column="59" source="standard:trailing-comma-on-call-site" />
+        <error line="243" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="246" column="70" source="standard:trailing-comma-on-call-site" />
+        <error line="253" column="62" source="standard:trailing-comma-on-call-site" />
+        <error line="263" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="267" column="49" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/dashboard/DashboardUiState.kt">
+        <error line="7" column="26" source="standard:class-signature" />
+        <error line="7" column="57" source="standard:class-signature" />
+        <error line="7" column="77" source="standard:class-signature" />
+        <error line="17" column="42" source="standard:trailing-comma-on-declaration-site" />
+        <error line="20" column="22" source="standard:class-signature" />
+        <error line="20" column="41" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/dashboard/DashboardViewModel.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="10" column="1" source="standard:no-unused-imports" />
+        <error line="25" column="25" source="standard:annotation" />
+        <error line="25" column="33" source="standard:annotation" />
+        <error line="26" column="53" source="standard:trailing-comma-on-declaration-site" />
+        <error line="28" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="32" column="48" source="standard:multiline-expression-wrapping" />
+        <error line="35" column="30" source="standard:chain-method-continuation" />
+        <error line="39" column="9" source="standard:chain-method-continuation" />
+        <error line="42" column="52" source="standard:trailing-comma-on-call-site" />
+        <error line="54" column="30" source="standard:multiline-expression-wrapping" />
+        <error line="57" column="89" source="standard:trailing-comma-on-call-site" />
+        <error line="65" column="68" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/dashboard/PieChart.kt">
+        <error line="28" column="5" source="standard:function-naming" />
+        <error line="30" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="36" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="39" column="32" source="standard:trailing-comma-on-call-site" />
+        <error line="50" column="41" source="standard:trailing-comma-on-call-site" />
+        <error line="59" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="63" column="63" source="standard:trailing-comma-on-call-site" />
+        <error line="67" column="36" source="standard:multiline-expression-wrapping" />
+        <error line="69" column="91" source="standard:trailing-comma-on-call-site" />
+        <error line="74" column="66" source="standard:trailing-comma-on-call-site" />
+        <error line="79" column="64" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/expense/addedit/AddEditExpenseScreen.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="35" column="1" source="standard:no-unused-imports" />
+        <error line="53" column="5" source="standard:function-naming" />
+        <error line="57" column="57" source="standard:trailing-comma-on-declaration-site" />
+        <error line="80" column="56" source="standard:trailing-comma-on-call-site" />
+        <error line="84" column="18" source="standard:trailing-comma-on-call-site" />
+        <error line="86" column="10" source="standard:trailing-comma-on-call-site" />
+        <error line="91" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="94" column="56" source="standard:trailing-comma-on-call-site" />
+        <error line="108" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="110" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="119" column="13" source="standard:function-naming" />
+        <error line="126" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="132" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="135" column="58" source="standard:trailing-comma-on-call-site" />
+        <error line="144" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="154" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="159" column="61" source="standard:trailing-comma-on-call-site" />
+        <error line="167" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="169" column="82" source="standard:trailing-comma-on-call-site" />
+        <error line="173" column="68" source="standard:trailing-comma-on-call-site" />
+        <error line="181" column="26" source="standard:trailing-comma-on-call-site" />
+        <error line="197" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="204" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="211" column="60" source="standard:trailing-comma-on-call-site" />
+        <error line="217" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="218" column="65" source="standard:trailing-comma-on-call-site" />
+        <error line="236" column="14" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/expense/addedit/AddEditExpenseViewModel.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="23" column="30" source="standard:annotation" />
+        <error line="23" column="38" source="standard:annotation" />
+        <error line="25" column="39" source="standard:trailing-comma-on-declaration-site" />
+        <error line="27" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="41" column="34" source="standard:multiline-expression-wrapping" />
+        <error line="50" column="52" source="standard:trailing-comma-on-call-site" />
+        <error line="51" column="26" source="standard:trailing-comma-on-call-site" />
+        <error line="55" column="83" source="standard:trailing-comma-on-call-site" />
+        <error line="66" column="46" source="standard:function-signature" />
+        <error line="69" column="56" source="standard:function-signature" />
+        <error line="92" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="98" column="57" source="standard:trailing-comma-on-call-site" />
+        <error line="100" column="26" source="standard:multiline-expression-wrapping" />
+        <error line="105" column="19" source="standard:chain-method-continuation" />
+        <error line="110" column="38" source="standard:multiline-expression-wrapping" />
+        <error line="111" column="92" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/expense/addedit/AddEditUiState.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="16" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="24" column="5" source="standard:blank-line-before-declaration" />
+        <error line="24" column="22" source="standard:class-signature" />
+        <error line="24" column="48" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/expense/list/ExpenseListScreen.kt">
+        <error line="3" column="1" source="standard:no-unused-imports" />
+        <error line="49" column="5" source="standard:function-naming" />
+        <error line="53" column="54" source="standard:trailing-comma-on-declaration-site" />
+        <error line="67" column="18" source="standard:trailing-comma-on-call-site" />
+        <error line="69" column="10" source="standard:trailing-comma-on-call-site" />
+        <error line="84" column="50" source="standard:trailing-comma-on-call-site" />
+        <error line="92" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="94" column="47" source="standard:trailing-comma-on-call-site" />
+        <error line="118" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="125" column="13" source="standard:function-naming" />
+        <error line="132" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="135" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="137" column="37" source="standard:trailing-comma-on-call-site" />
+        <error line="146" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="148" column="62" source="standard:trailing-comma-on-call-site" />
+        <error line="154" column="77" source="standard:trailing-comma-on-call-site" />
+        <error line="159" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="162" column="52" source="standard:trailing-comma-on-call-site" />
+        <error line="165" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="170" column="63" source="standard:trailing-comma-on-call-site" />
+        <error line="178" column="71" source="standard:trailing-comma-on-call-site" />
+        <error line="183" column="59" source="standard:trailing-comma-on-call-site" />
+        <error line="198" column="13" source="standard:function-naming" />
+        <error line="201" column="34" source="standard:trailing-comma-on-declaration-site" />
+        <error line="208" column="28" source="standard:trailing-comma-on-call-site" />
+        <error line="216" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="218" column="78" source="standard:trailing-comma-on-call-site" />
+        <error line="227" column="22" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/expense/list/ExpenseListUiState.kt">
+        <error line="13" column="36" source="standard:trailing-comma-on-declaration-site" />
+        <error line="16" column="22" source="standard:class-signature" />
+        <error line="16" column="41" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/expense/list/ExpenseListViewModel.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="27" column="27" source="standard:annotation" />
+        <error line="27" column="35" source="standard:annotation" />
+        <error line="29" column="39" source="standard:trailing-comma-on-declaration-site" />
+        <error line="31" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="37" column="50" source="standard:multiline-expression-wrapping" />
+        <error line="41" column="21" source="standard:trailing-comma-on-call-site" />
+        <error line="45" column="9" source="standard:chain-method-continuation" />
+        <error line="47" column="30" source="standard:chain-method-continuation" />
+        <error line="51" column="9" source="standard:chain-method-continuation" />
+        <error line="54" column="54" source="standard:trailing-comma-on-call-site" />
+        <error line="79" column="41" source="standard:function-signature" />
+        <error line="79" column="59" source="standard:function-signature" />
+        <error line="79" column="74" source="standard:function-signature" />
+        <error line="79" column="90" source="standard:function-signature" />
+        <error line="80" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="85" column="22" source="standard:multiline-expression-wrapping" />
+        <error line="95" column="30" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/expense/list/SortOption.kt">
+        <error line="3" column="23" source="standard:class-signature" />
+        <error line="3" column="40" source="standard:class-signature" />
+        <error line="7" column="32" source="standard:trailing-comma-on-declaration-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/importexport/ImportExportDialogs.kt">
+        <error line="15" column="5" source="standard:function-naming" />
+        <error line="18" column="26" source="standard:trailing-comma-on-declaration-site" />
+        <error line="38" column="59" source="standard:trailing-comma-on-call-site" />
+        <error line="47" column="10" source="standard:trailing-comma-on-call-site" />
+        <error line="52" column="5" source="standard:function-naming" />
+        <error line="55" column="26" source="standard:trailing-comma-on-declaration-site" />
+        <error line="65" column="10" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/importexport/ImportExportUiState.kt">
+        <error line="8" column="5" source="standard:blank-line-before-declaration" />
+        <error line="9" column="5" source="standard:blank-line-before-declaration" />
+        <error line="9" column="24" source="standard:class-signature" />
+        <error line="9" column="58" source="standard:class-signature" />
+        <error line="9" column="91" source="standard:class-signature" />
+        <error line="10" column="5" source="standard:blank-line-before-declaration" />
+        <error line="11" column="5" source="standard:blank-line-before-declaration" />
+        <error line="11" column="21" source="standard:class-signature" />
+        <error line="11" column="43" source="standard:class-signature" />
+        <error line="12" column="5" source="standard:blank-line-before-declaration" />
+        <error line="12" column="22" source="standard:class-signature" />
+        <error line="12" column="41" source="standard:class-signature" />
+        <error line="17" column="5" source="standard:blank-line-before-declaration" />
+        <error line="18" column="5" source="standard:blank-line-before-declaration" />
+        <error line="18" column="21" source="standard:class-signature" />
+        <error line="18" column="43" source="standard:class-signature" />
+        <error line="19" column="5" source="standard:blank-line-before-declaration" />
+        <error line="19" column="22" source="standard:class-signature" />
+        <error line="19" column="41" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/importexport/ImportExportViewModel.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="20" column="28" source="standard:annotation" />
+        <error line="20" column="36" source="standard:annotation" />
+        <error line="22" column="53" source="standard:trailing-comma-on-declaration-site" />
+        <error line="24" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="34" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="35" column="40" source="standard:chain-method-continuation" />
+        <error line="35" column="61" source="standard:chain-method-continuation" />
+        <error line="35" column="79" source="standard:chain-method-continuation" />
+        <error line="43" column="34" source="standard:multiline-expression-wrapping" />
+        <error line="55" column="30" source="standard:chain-method-continuation" />
+        <error line="68" column="30" source="standard:chain-method-continuation" />
+        <error line="71" column="33" source="standard:multiline-expression-wrapping" />
+        <error line="78" column="42" source="standard:multiline-expression-wrapping" />
+        <error line="84" column="17" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/navigation/AgenticUsageNavHost.kt">
+        <error line="14" column="5" source="standard:function-naming" />
+        <error line="17" column="63" source="standard:trailing-comma-on-declaration-site" />
+        <error line="24" column="38" source="standard:trailing-comma-on-call-site" />
+        <error line="30" column="97" source="standard:trailing-comma-on-call-site" />
+        <error line="36" column="60" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/navigation/Routes.kt">
+        <error line="13" column="24" source="standard:class-signature" />
+        <error line="13" column="48" source="standard:class-signature" />
+        <error line="16" column="27" source="standard:class-signature" />
+        <error line="16" column="56" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/theme/Color.kt">
+        <error line="11" column="30" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/theme/Theme.kt">
+        <error line="3" column="1" source="standard:no-unused-imports" />
+        <error line="14" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="17" column="22" source="standard:trailing-comma-on-call-site" />
+        <error line="20" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="23" column="22" source="standard:trailing-comma-on-call-site" />
+        <error line="24" column="1" source="standard:no-blank-line-in-list" />
+        <error line="33" column="6" source="standard:block-comment-initial-star-alignment" />
+        <error line="37" column="5" source="standard:function-naming" />
+        <error line="41" column="36" source="standard:trailing-comma-on-declaration-site" />
+        <error line="43" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="56" column="26" source="standard:trailing-comma-on-call-site" />
+        <error line="58" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/main/java/ptech/joaoe/agenticusage/ui/theme/Type.kt">
+        <error line="10" column="18" source="standard:multiline-expression-wrapping" />
+        <error line="11" column="17" source="standard:multiline-expression-wrapping" />
+        <error line="16" column="31" source="standard:trailing-comma-on-call-site" />
+        <error line="17" column="6" source="standard:trailing-comma-on-call-site" />
+        <error line="33" column="6" source="standard:block-comment-initial-star-alignment" />
+        <error line="34" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/ExampleUnitTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="5" column="1" source="standard:no-wildcard-imports" />
+        <error line="17" column="1" source="standard:final-newline" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/data/FakeExpenseRepositoryTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="27" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="39" column="29" source="standard:trailing-comma-on-declaration-site" />
+        <error line="45" column="58" source="standard:multiline-expression-wrapping" />
+        <error line="45" column="58" source="standard:function-signature" />
+        <error line="55" column="56" source="standard:multiline-expression-wrapping" />
+        <error line="55" column="56" source="standard:function-signature" />
+        <error line="65" column="55" source="standard:multiline-expression-wrapping" />
+        <error line="65" column="55" source="standard:function-signature" />
+        <error line="77" column="62" source="standard:multiline-expression-wrapping" />
+        <error line="77" column="62" source="standard:function-signature" />
+        <error line="86" column="88" source="standard:multiline-expression-wrapping" />
+        <error line="86" column="88" source="standard:function-signature" />
+        <error line="104" column="62" source="standard:multiline-expression-wrapping" />
+        <error line="104" column="62" source="standard:function-signature" />
+        <error line="115" column="71" source="standard:multiline-expression-wrapping" />
+        <error line="115" column="71" source="standard:function-signature" />
+        <error line="121" column="13" source="standard:chain-method-continuation" />
+        <error line="129" column="84" source="standard:multiline-expression-wrapping" />
+        <error line="129" column="84" source="standard:function-signature" />
+        <error line="150" column="73" source="standard:multiline-expression-wrapping" />
+        <error line="150" column="73" source="standard:function-signature" />
+        <error line="186" column="71" source="standard:multiline-expression-wrapping" />
+        <error line="186" column="71" source="standard:function-signature" />
+        <error line="190" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="209" column="69" source="standard:multiline-expression-wrapping" />
+        <error line="209" column="69" source="standard:function-signature" />
+        <error line="214" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="236" column="53" source="standard:multiline-expression-wrapping" />
+        <error line="236" column="53" source="standard:function-signature" />
+        <error line="250" column="63" source="standard:multiline-expression-wrapping" />
+        <error line="250" column="63" source="standard:function-signature" />
+        <error line="262" column="69" source="standard:multiline-expression-wrapping" />
+        <error line="262" column="69" source="standard:function-signature" />
+        <error line="275" column="76" source="standard:multiline-expression-wrapping" />
+        <error line="275" column="76" source="standard:function-signature" />
+        <error line="294" column="70" source="standard:multiline-expression-wrapping" />
+        <error line="294" column="70" source="standard:function-signature" />
+        <error line="309" column="73" source="standard:multiline-expression-wrapping" />
+        <error line="309" column="73" source="standard:function-signature" />
+        <error line="324" column="70" source="standard:multiline-expression-wrapping" />
+        <error line="324" column="70" source="standard:function-signature" />
+        <error line="337" column="73" source="standard:multiline-expression-wrapping" />
+        <error line="337" column="73" source="standard:function-signature" />
+        <error line="350" column="70" source="standard:multiline-expression-wrapping" />
+        <error line="350" column="70" source="standard:function-signature" />
+        <error line="366" column="64" source="standard:multiline-expression-wrapping" />
+        <error line="366" column="64" source="standard:function-signature" />
+        <error line="376" column="81" source="standard:multiline-expression-wrapping" />
+        <error line="376" column="81" source="standard:function-signature" />
+        <error line="393" column="51" source="standard:multiline-expression-wrapping" />
+        <error line="393" column="51" source="standard:function-signature" />
+        <error line="407" column="69" source="standard:multiline-expression-wrapping" />
+        <error line="407" column="69" source="standard:function-signature" />
+        <error line="418" column="92" source="standard:multiline-expression-wrapping" />
+        <error line="418" column="92" source="standard:function-signature" />
+        <error line="420" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="423" column="60" source="standard:trailing-comma-on-call-site" />
+        <error line="439" column="76" source="standard:multiline-expression-wrapping" />
+        <error line="439" column="76" source="standard:function-signature" />
+        <error line="451" column="69" source="standard:multiline-expression-wrapping" />
+        <error line="451" column="69" source="standard:function-signature" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/data/csv/ExpenseCsvParserTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="15" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="20" column="22" source="standard:multiline-expression-wrapping" />
+        <error line="35" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="35" column="19" source="standard:string-template-indent" />
+        <error line="39" column="9" source="standard:string-template-indent" />
+        <error line="66" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="66" column="19" source="standard:string-template-indent" />
+        <error line="71" column="9" source="standard:string-template-indent" />
+        <error line="78" column="53" source="standard:trailing-comma-on-call-site" />
+        <error line="84" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="84" column="19" source="standard:string-template-indent" />
+        <error line="88" column="9" source="standard:string-template-indent" />
+        <error line="95" column="53" source="standard:trailing-comma-on-call-site" />
+        <error line="101" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="101" column="19" source="standard:string-template-indent" />
+        <error line="107" column="9" source="standard:string-template-indent" />
+        <error line="117" column="42" source="standard:trailing-comma-on-call-site" />
+        <error line="119" column="53" source="standard:trailing-comma-on-call-site" />
+        <error line="181" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="181" column="19" source="standard:string-template-indent" />
+        <error line="185" column="9" source="standard:string-template-indent" />
+        <error line="206" column="35" source="standard:chain-method-continuation" />
+        <error line="206" column="44" source="standard:chain-method-continuation" />
+        <error line="206" column="51" source="standard:chain-method-continuation" />
+        <error line="218" column="35" source="standard:chain-method-continuation" />
+        <error line="218" column="44" source="standard:chain-method-continuation" />
+        <error line="218" column="51" source="standard:chain-method-continuation" />
+        <error line="229" column="35" source="standard:chain-method-continuation" />
+        <error line="229" column="44" source="standard:chain-method-continuation" />
+        <error line="229" column="51" source="standard:chain-method-continuation" />
+        <error line="279" column="35" source="standard:chain-method-continuation" />
+        <error line="279" column="44" source="standard:chain-method-continuation" />
+        <error line="279" column="51" source="standard:chain-method-continuation" />
+        <error line="334" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="334" column="19" source="standard:string-template-indent" />
+        <error line="342" column="9" source="standard:string-template-indent" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/data/csv/ExpenseCsvWriterTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="14" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="21" column="22" source="standard:trailing-comma-on-declaration-site" />
+        <error line="26" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="32" column="35" source="standard:trailing-comma-on-call-site" />
+        <error line="39" column="28" source="standard:trailing-comma-on-call-site" />
+        <error line="40" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="61" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="67" column="41" source="standard:trailing-comma-on-call-site" />
+        <error line="68" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="82" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="88" column="28" source="standard:trailing-comma-on-call-site" />
+        <error line="95" column="49" source="standard:trailing-comma-on-call-site" />
+        <error line="102" column="26" source="standard:trailing-comma-on-call-site" />
+        <error line="109" column="46" source="standard:trailing-comma-on-call-site" />
+        <error line="110" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="135" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="141" column="28" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/domain/model/TimeRangeTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="16" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="22" column="58" source="standard:function-signature" />
+        <error line="154" column="36" source="standard:trailing-comma-on-call-site" />
+        <error line="160" column="38" source="standard:trailing-comma-on-call-site" />
+        <error line="164" column="36" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/ui/auth/AuthViewModelTest.kt">
+        <error line="41" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="51" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="55" column="24" source="standard:trailing-comma-on-call-site" />
+        <error line="71" column="64" source="standard:multiline-expression-wrapping" />
+        <error line="71" column="64" source="standard:function-signature" />
+        <error line="81" column="86" source="standard:multiline-expression-wrapping" />
+        <error line="81" column="86" source="standard:function-signature" />
+        <error line="103" column="67" source="standard:multiline-expression-wrapping" />
+        <error line="103" column="67" source="standard:function-signature" />
+        <error line="109" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="124" column="22" source="standard:trailing-comma-on-call-site" />
+        <error line="131" column="78" source="standard:multiline-expression-wrapping" />
+        <error line="131" column="78" source="standard:function-signature" />
+        <error line="132" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="134" column="92" source="standard:trailing-comma-on-call-site" />
+        <error line="140" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="154" column="22" source="standard:trailing-comma-on-call-site" />
+        <error line="159" column="79" source="standard:multiline-expression-wrapping" />
+        <error line="159" column="79" source="standard:function-signature" />
+        <error line="160" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="162" column="66" source="standard:trailing-comma-on-call-site" />
+        <error line="176" column="92" source="standard:multiline-expression-wrapping" />
+        <error line="176" column="92" source="standard:function-signature" />
+        <error line="192" column="60" source="standard:multiline-expression-wrapping" />
+        <error line="192" column="60" source="standard:function-signature" />
+        <error line="212" column="66" source="standard:multiline-expression-wrapping" />
+        <error line="212" column="66" source="standard:function-signature" />
+        <error line="213" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="215" column="93" source="standard:trailing-comma-on-call-site" />
+        <error line="227" column="80" source="standard:multiline-expression-wrapping" />
+        <error line="227" column="80" source="standard:function-signature" />
+        <error line="228" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="230" column="67" source="standard:trailing-comma-on-call-site" />
+        <error line="242" column="93" source="standard:multiline-expression-wrapping" />
+        <error line="242" column="93" source="standard:function-signature" />
+        <error line="243" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="245" column="93" source="standard:trailing-comma-on-call-site" />
+        <error line="263" column="93" source="standard:multiline-expression-wrapping" />
+        <error line="263" column="93" source="standard:function-signature" />
+        <error line="264" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="266" column="93" source="standard:trailing-comma-on-call-site" />
+        <error line="288" column="95" source="standard:multiline-expression-wrapping" />
+        <error line="288" column="95" source="standard:function-signature" />
+        <error line="296" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="310" column="22" source="standard:trailing-comma-on-call-site" />
+        <error line="315" column="50" source="standard:multiline-expression-wrapping" />
+        <error line="315" column="50" source="standard:function-signature" />
+        <error line="316" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="318" column="52" source="standard:trailing-comma-on-call-site" />
+        <error line="347" column="51" source="standard:trailing-comma-on-declaration-site" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/ui/dashboard/DashboardViewModelTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="31" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="52" column="29" source="standard:trailing-comma-on-declaration-site" />
+        <error line="56" column="59" source="standard:multiline-expression-wrapping" />
+        <error line="56" column="59" source="standard:function-signature" />
+        <error line="66" column="82" source="standard:multiline-expression-wrapping" />
+        <error line="66" column="82" source="standard:function-signature" />
+        <error line="86" column="72" source="standard:multiline-expression-wrapping" />
+        <error line="86" column="72" source="standard:function-signature" />
+        <error line="87" column="30" source="standard:multiline-expression-wrapping" />
+        <error line="91" column="49" source="standard:trailing-comma-on-call-site" />
+        <error line="93" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="97" column="50" source="standard:trailing-comma-on-call-site" />
+        <error line="113" column="76" source="standard:multiline-expression-wrapping" />
+        <error line="113" column="76" source="standard:function-signature" />
+        <error line="117" column="25" source="standard:property-wrapping" />
+        <error line="117" column="34" source="standard:argument-list-wrapping" />
+        <error line="117" column="45" source="standard:argument-list-wrapping" />
+        <error line="117" column="67" source="standard:argument-list-wrapping" />
+        <error line="117" column="107" source="standard:argument-list-wrapping" />
+        <error line="117" column="117" source="standard:chain-method-continuation" />
+        <error line="117" column="124" source="standard:argument-list-wrapping" />
+        <error line="117" column="127" source="standard:argument-list-wrapping" />
+        <error line="117" column="141" source="standard:max-line-length" />
+        <error line="117" column="142" source="standard:argument-list-wrapping" />
+        <error line="117" column="143" source="standard:argument-list-wrapping" />
+        <error line="137" column="77" source="standard:multiline-expression-wrapping" />
+        <error line="137" column="77" source="standard:function-signature" />
+        <error line="160" column="71" source="standard:multiline-expression-wrapping" />
+        <error line="160" column="71" source="standard:function-signature" />
+        <error line="161" column="25" source="standard:property-wrapping" />
+        <error line="161" column="34" source="standard:argument-list-wrapping" />
+        <error line="161" column="54" source="standard:argument-list-wrapping" />
+        <error line="161" column="76" source="standard:argument-list-wrapping" />
+        <error line="161" column="113" source="standard:argument-list-wrapping" />
+        <error line="161" column="123" source="standard:chain-method-continuation" />
+        <error line="161" column="130" source="standard:argument-list-wrapping" />
+        <error line="161" column="133" source="standard:argument-list-wrapping" />
+        <error line="161" column="141" source="standard:max-line-length" />
+        <error line="161" column="148" source="standard:argument-list-wrapping" />
+        <error line="161" column="149" source="standard:argument-list-wrapping" />
+        <error line="162" column="33" source="standard:property-wrapping" />
+        <error line="162" column="42" source="standard:argument-list-wrapping" />
+        <error line="162" column="63" source="standard:argument-list-wrapping" />
+        <error line="162" column="85" source="standard:argument-list-wrapping" />
+        <error line="162" column="122" source="standard:argument-list-wrapping" />
+        <error line="162" column="132" source="standard:chain-method-continuation" />
+        <error line="162" column="139" source="standard:argument-list-wrapping" />
+        <error line="162" column="141" source="standard:max-line-length" />
+        <error line="162" column="143" source="standard:argument-list-wrapping" />
+        <error line="162" column="158" source="standard:argument-list-wrapping" />
+        <error line="162" column="159" source="standard:argument-list-wrapping" />
+        <error line="186" column="91" source="standard:multiline-expression-wrapping" />
+        <error line="186" column="91" source="standard:function-signature" />
+        <error line="187" column="29" source="standard:property-wrapping" />
+        <error line="187" column="38" source="standard:argument-list-wrapping" />
+        <error line="187" column="50" source="standard:argument-list-wrapping" />
+        <error line="187" column="72" source="standard:argument-list-wrapping" />
+        <error line="187" column="109" source="standard:argument-list-wrapping" />
+        <error line="187" column="119" source="standard:chain-method-continuation" />
+        <error line="187" column="126" source="standard:argument-list-wrapping" />
+        <error line="187" column="131" source="standard:argument-list-wrapping" />
+        <error line="187" column="141" source="standard:max-line-length" />
+        <error line="187" column="146" source="standard:argument-list-wrapping" />
+        <error line="187" column="147" source="standard:argument-list-wrapping" />
+        <error line="210" column="99" source="standard:multiline-expression-wrapping" />
+        <error line="210" column="99" source="standard:function-signature" />
+        <error line="224" column="87" source="standard:multiline-expression-wrapping" />
+        <error line="224" column="87" source="standard:function-signature" />
+        <error line="238" column="74" source="standard:multiline-expression-wrapping" />
+        <error line="238" column="74" source="standard:function-signature" />
+        <error line="239" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="243" column="49" source="standard:trailing-comma-on-call-site" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/ui/expense/addedit/AddEditExpenseViewModelTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="53" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="66" column="66" source="standard:function-signature" />
+        <error line="69" column="35" source="standard:function-signature" />
+        <error line="69" column="66" source="standard:function-signature" />
+        <error line="69" column="83" source="standard:function-signature" />
+        <error line="69" column="86" source="standard:function-signature" />
+        <error line="75" column="67" source="standard:multiline-expression-wrapping" />
+        <error line="75" column="67" source="standard:function-signature" />
+        <error line="93" column="52" source="standard:multiline-expression-wrapping" />
+        <error line="93" column="52" source="standard:function-signature" />
+        <error line="109" column="66" source="standard:multiline-expression-wrapping" />
+        <error line="109" column="66" source="standard:function-signature" />
+        <error line="111" column="49" source="standard:statement-wrapping" />
+        <error line="111" column="66" source="standard:statement-wrapping" />
+        <error line="111" column="88" source="standard:statement-wrapping" />
+        <error line="125" column="72" source="standard:multiline-expression-wrapping" />
+        <error line="125" column="72" source="standard:function-signature" />
+        <error line="127" column="49" source="standard:statement-wrapping" />
+        <error line="127" column="66" source="standard:statement-wrapping" />
+        <error line="127" column="88" source="standard:statement-wrapping" />
+        <error line="142" column="47" source="standard:multiline-expression-wrapping" />
+        <error line="142" column="47" source="standard:function-signature" />
+        <error line="157" column="61" source="standard:multiline-expression-wrapping" />
+        <error line="157" column="61" source="standard:function-signature" />
+        <error line="171" column="48" source="standard:multiline-expression-wrapping" />
+        <error line="171" column="48" source="standard:function-signature" />
+        <error line="187" column="52" source="standard:multiline-expression-wrapping" />
+        <error line="187" column="52" source="standard:function-signature" />
+        <error line="206" column="48" source="standard:multiline-expression-wrapping" />
+        <error line="206" column="48" source="standard:function-signature" />
+        <error line="218" column="40" source="standard:multiline-expression-wrapping" />
+        <error line="218" column="40" source="standard:function-signature" />
+        <error line="231" column="39" source="standard:multiline-expression-wrapping" />
+        <error line="231" column="39" source="standard:function-signature" />
+        <error line="245" column="76" source="standard:multiline-expression-wrapping" />
+        <error line="245" column="76" source="standard:function-signature" />
+        <error line="263" column="42" source="standard:chain-method-continuation" />
+        <error line="263" column="101" source="standard:chain-method-continuation" />
+        <error line="263" column="109" source="standard:chain-method-continuation" />
+        <error line="263" column="118" source="standard:chain-method-continuation" />
+        <error line="275" column="53" source="standard:multiline-expression-wrapping" />
+        <error line="275" column="53" source="standard:function-signature" />
+        <error line="294" column="68" source="standard:multiline-expression-wrapping" />
+        <error line="294" column="68" source="standard:function-signature" />
+        <error line="295" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="301" column="42" source="standard:trailing-comma-on-call-site" />
+        <error line="319" column="67" source="standard:multiline-expression-wrapping" />
+        <error line="319" column="67" source="standard:function-signature" />
+        <error line="335" column="85" source="standard:multiline-expression-wrapping" />
+        <error line="335" column="85" source="standard:function-signature" />
+        <error line="336" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="342" column="42" source="standard:trailing-comma-on-call-site" />
+        <error line="370" column="84" source="standard:multiline-expression-wrapping" />
+        <error line="370" column="84" source="standard:function-signature" />
+        <error line="373" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="379" column="24" source="standard:trailing-comma-on-call-site" />
+        <error line="404" column="83" source="standard:multiline-expression-wrapping" />
+        <error line="404" column="83" source="standard:function-signature" />
+        <error line="427" column="82" source="standard:multiline-expression-wrapping" />
+        <error line="427" column="82" source="standard:function-signature" />
+        <error line="442" column="67" source="standard:multiline-expression-wrapping" />
+        <error line="442" column="67" source="standard:function-signature" />
+        <error line="443" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="446" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="452" column="28" source="standard:trailing-comma-on-call-site" />
+        <error line="453" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="466" column="58" source="standard:multiline-expression-wrapping" />
+        <error line="466" column="58" source="standard:function-signature" />
+        <error line="482" column="60" source="standard:multiline-expression-wrapping" />
+        <error line="482" column="60" source="standard:function-signature" />
+        <error line="498" column="63" source="standard:multiline-expression-wrapping" />
+        <error line="498" column="63" source="standard:function-signature" />
+        <error line="514" column="59" source="standard:multiline-expression-wrapping" />
+        <error line="514" column="59" source="standard:function-signature" />
+        <error line="530" column="58" source="standard:multiline-expression-wrapping" />
+        <error line="530" column="58" source="standard:function-signature" />
+        <error line="554" column="54" source="standard:trailing-comma-on-declaration-site" />
+        <error line="556" column="38" source="standard:function-signature" />
+        <error line="556" column="63" source="standard:function-signature" />
+        <error line="556" column="84" source="standard:function-signature" />
+        <error line="556" column="107" source="standard:function-expression-body" />
+        <error line="564" column="70" source="standard:function-expression-body" />
+        <error line="570" column="70" source="standard:function-expression-body" />
+        <error line="574" column="80" source="standard:function-expression-body" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/ui/expense/addedit/AmountParsingTest.kt">
+        <error line="11" column="1" source="standard:no-empty-first-line-in-class-body" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/ui/expense/list/ExpenseListViewModelTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="28" column="1" source="standard:no-unused-imports" />
+        <error line="47" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="68" column="29" source="standard:trailing-comma-on-declaration-site" />
+        <error line="73" column="58" source="standard:trailing-comma-on-declaration-site" />
+        <error line="79" column="50" source="standard:multiline-expression-wrapping" />
+        <error line="79" column="50" source="standard:function-signature" />
+        <error line="93" column="66" source="standard:multiline-expression-wrapping" />
+        <error line="93" column="66" source="standard:function-signature" />
+        <error line="110" column="69" source="standard:multiline-expression-wrapping" />
+        <error line="110" column="69" source="standard:function-signature" />
+        <error line="135" column="72" source="standard:multiline-expression-wrapping" />
+        <error line="135" column="72" source="standard:function-signature" />
+        <error line="155" column="72" source="standard:multiline-expression-wrapping" />
+        <error line="155" column="72" source="standard:function-signature" />
+        <error line="173" column="54" source="standard:multiline-expression-wrapping" />
+        <error line="173" column="54" source="standard:function-signature" />
+        <error line="191" column="62" source="standard:multiline-expression-wrapping" />
+        <error line="191" column="62" source="standard:function-signature" />
+        <error line="214" column="67" source="standard:multiline-expression-wrapping" />
+        <error line="214" column="67" source="standard:function-signature" />
+        <error line="231" column="53" source="standard:multiline-expression-wrapping" />
+        <error line="231" column="53" source="standard:function-signature" />
+        <error line="251" column="57" source="standard:multiline-expression-wrapping" />
+        <error line="251" column="57" source="standard:function-signature" />
+        <error line="271" column="55" source="standard:multiline-expression-wrapping" />
+        <error line="271" column="55" source="standard:function-signature" />
+        <error line="291" column="45" source="standard:multiline-expression-wrapping" />
+        <error line="291" column="45" source="standard:function-signature" />
+        <error line="314" column="69" source="standard:multiline-expression-wrapping" />
+        <error line="314" column="69" source="standard:function-signature" />
+        <error line="335" column="76" source="standard:multiline-expression-wrapping" />
+        <error line="335" column="76" source="standard:function-signature" />
+        <error line="355" column="99" source="standard:multiline-expression-wrapping" />
+        <error line="355" column="99" source="standard:function-signature" />
+        <error line="369" column="87" source="standard:multiline-expression-wrapping" />
+        <error line="369" column="87" source="standard:function-signature" />
+        <error line="383" column="74" source="standard:multiline-expression-wrapping" />
+        <error line="383" column="74" source="standard:function-signature" />
+        <error line="407" column="77" source="standard:multiline-expression-wrapping" />
+        <error line="407" column="77" source="standard:function-signature" />
+    </file>
+    <file name="src/test/java/ptech/joaoe/agenticusage/ui/importexport/ImportExportViewModelTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="40" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="64" column="29" source="standard:trailing-comma-on-declaration-site" />
+        <error line="70" column="82" source="standard:multiline-expression-wrapping" />
+        <error line="70" column="82" source="standard:function-signature" />
+        <error line="71" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="71" column="19" source="standard:string-template-indent" />
+        <error line="75" column="9" source="standard:string-template-indent" />
+        <error line="91" column="77" source="standard:multiline-expression-wrapping" />
+        <error line="91" column="77" source="standard:function-signature" />
+        <error line="92" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="92" column="19" source="standard:string-template-indent" />
+        <error line="96" column="9" source="standard:string-template-indent" />
+        <error line="110" column="62" source="standard:multiline-expression-wrapping" />
+        <error line="110" column="62" source="standard:function-signature" />
+        <error line="122" column="77" source="standard:multiline-expression-wrapping" />
+        <error line="122" column="77" source="standard:function-signature" />
+        <error line="134" column="92" source="standard:multiline-expression-wrapping" />
+        <error line="134" column="92" source="standard:function-signature" />
+        <error line="135" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="135" column="19" source="standard:string-template-indent" />
+        <error line="139" column="9" source="standard:string-template-indent" />
+        <error line="158" column="74" source="standard:multiline-expression-wrapping" />
+        <error line="158" column="74" source="standard:function-signature" />
+        <error line="177" column="47" source="standard:multiline-expression-wrapping" />
+        <error line="177" column="47" source="standard:function-signature" />
+        <error line="193" column="80" source="standard:multiline-expression-wrapping" />
+        <error line="193" column="80" source="standard:function-signature" />
+        <error line="194" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="197" column="112" source="standard:trailing-comma-on-call-site" />
+        <error line="198" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="214" column="79" source="standard:multiline-expression-wrapping" />
+        <error line="214" column="79" source="standard:function-signature" />
+        <error line="228" column="77" source="standard:multiline-expression-wrapping" />
+        <error line="228" column="77" source="standard:function-signature" />
+        <error line="229" column="20" source="standard:multiline-expression-wrapping" />
+        <error line="232" column="112" source="standard:trailing-comma-on-call-site" />
+        <error line="233" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="257" column="47" source="standard:multiline-expression-wrapping" />
+        <error line="257" column="47" source="standard:function-signature" />
+    </file>
+</baseline>
