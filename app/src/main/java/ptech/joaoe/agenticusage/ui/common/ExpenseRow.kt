@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,11 +39,20 @@ fun ExpenseRow(
     ) {
         Column {
             Text(text = expense.name, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = expense.category.displayName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = expense.category.icon,
+                    contentDescription = null,
+                    tint = expense.category.color,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = expense.category.displayName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(text = formatAmountCents(expense.amountCents), style = MaterialTheme.typography.bodyLarge)

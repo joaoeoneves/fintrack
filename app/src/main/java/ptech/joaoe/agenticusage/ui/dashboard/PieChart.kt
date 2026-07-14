@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import ptech.joaoe.agenticusage.ui.common.color
 import ptech.joaoe.agenticusage.ui.common.displayName
 import ptech.joaoe.agenticusage.ui.common.formatAmountCents
+import ptech.joaoe.agenticusage.ui.common.icon
 
 /**
  * Custom Canvas-based pie chart showing the share of spending per category, paired with a legend.
@@ -67,6 +69,14 @@ fun PieChart(
                         modifier = Modifier
                             .size(12.dp)
                             .background(color = slice.category.color, shape = CircleShape)
+                    )
+                    Icon(
+                        imageVector = slice.category.icon,
+                        contentDescription = null,
+                        tint = slice.category.color,
+                        modifier = Modifier
+                            .padding(start = 6.dp)
+                            .size(16.dp)
                     )
                     Text(
                         text = slice.category.displayName,
