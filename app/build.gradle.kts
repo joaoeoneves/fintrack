@@ -57,6 +57,7 @@ ktlint {
 detekt {
     buildUponDefaultConfig = true
     parallel = true
+    config.setFrom(file("config/detekt/detekt.yml"))
     baseline = file("config/detekt/baseline.xml")
 }
 

@@ -29,16 +29,17 @@ import ptech.joaoe.agenticusage.ui.common.icon
 @Composable
 fun PieChart(
     slices: List<CategoryTotal>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val total = slices.sumOf { it.totalCents }
 
     Column(modifier = modifier) {
         Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .padding(16.dp),
         ) {
             if (total <= 0L) return@Canvas
             var startAngle = -90f
@@ -49,7 +50,7 @@ fun PieChart(
                         color = slice.category.color,
                         startAngle = startAngle,
                         sweepAngle = sweep,
-                        useCenter = true
+                        useCenter = true,
                     )
                     startAngle += sweep
                 }
@@ -57,38 +58,46 @@ fun PieChart(
         }
 
         slices.forEach { slice ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(color = slice.category.color, shape = CircleShape)
-                    )
-                    Icon(
-                        imageVector = slice.category.icon,
-                        contentDescription = null,
-                        tint = slice.category.color,
-                        modifier = Modifier
-                            .padding(start = 6.dp)
-                            .size(16.dp)
-                    )
-                    Text(
-                        text = slice.category.displayName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-                Text(
-                    text = formatAmountCents(slice.totalCents),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            PieChartLegendRow(slice)
         }
+    }
+}
+
+@Composable
+private fun PieChartLegendRow(slice: CategoryTotal) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(12.dp)
+                        .background(color = slice.category.color, shape = CircleShape),
+            )
+            Icon(
+                imageVector = slice.category.icon,
+                contentDescription = null,
+                tint = slice.category.color,
+                modifier =
+                    Modifier
+                        .padding(start = 6.dp)
+                        .size(16.dp),
+            )
+            Text(
+                text = slice.category.displayName,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        }
+        Text(
+            text = formatAmountCents(slice.totalCents),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }

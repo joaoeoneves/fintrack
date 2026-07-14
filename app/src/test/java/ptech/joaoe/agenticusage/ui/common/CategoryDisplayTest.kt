@@ -15,7 +15,6 @@ import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
  * the fixed per-category mapping used by the pie chart legend and expense rows.
  */
 class CategoryDisplayTest {
-
     @Test
     fun transfer_mapsToSwapHorizIcon() {
         assertEquals(Icons.Filled.SwapHoriz, ExpenseCategory.TRANSFER.icon)
@@ -56,7 +55,7 @@ class CategoryDisplayTest {
         assertEquals(
             "Expected each ExpenseCategory to map to a distinct icon, but found duplicates",
             ExpenseCategory.entries.size,
-            icons.distinct().size
+            icons.distinct().size,
         )
     }
 

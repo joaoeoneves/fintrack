@@ -28,14 +28,15 @@ private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 fun ExpenseRow(
     expense: Expense,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .padding(vertical = 12.dp, horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column {
             Text(text = expense.name, style = MaterialTheme.typography.bodyLarge)
@@ -44,13 +45,13 @@ fun ExpenseRow(
                     imageVector = expense.category.icon,
                     contentDescription = null,
                     tint = expense.category.color,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
                 Text(
                     text = expense.category.displayName,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp)
+                    modifier = Modifier.padding(start = 4.dp),
                 )
             }
         }
@@ -59,7 +60,7 @@ fun ExpenseRow(
             Text(
                 text = expense.date.atZone(ZoneId.systemDefault()).format(dateFormatter),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
