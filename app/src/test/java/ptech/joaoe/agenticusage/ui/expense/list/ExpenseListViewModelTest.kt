@@ -2,8 +2,6 @@ package ptech.joaoe.agenticusage.ui.expense.list
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -25,7 +23,8 @@ import ptech.joaoe.agenticusage.data.FakeExpenseRepository
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
 import ptech.joaoe.agenticusage.domain.model.TimeRange
-import ptech.joaoe.agenticusage.ui.navigation.ExpenseList
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * Unit tests for [ExpenseListViewModel].
@@ -44,7 +43,6 @@ import ptech.joaoe.agenticusage.ui.navigation.ExpenseList
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class ExpenseListViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -65,377 +63,490 @@ class ExpenseListViewModelTest {
         amountCents: Long,
         category: ExpenseCategory = ExpenseCategory.SHOPPING,
         date: Instant,
-        note: String? = null
+        note: String? = null,
     ) = Expense(id = id, name = name, amountCents = amountCents, category = category, date = date, note = note)
 
     private fun viewModel(
         repository: ptech.joaoe.agenticusage.domain.repository.ExpenseRepository,
-        initialTimeRange: TimeRange = TimeRange.ONE_MONTH
+        initialTimeRange: TimeRange = TimeRange.ONE_MONTH,
     ) = ExpenseListViewModel(repository, SavedStateHandle(mapOf("timeRange" to initialTimeRange)))
 
     // ---- construction / initial timeRange from route ----
 
     @Test
-    fun construction_seedsTimeRangeFromRoute() = runTest(testDispatcher) {
-        val repo = FakeExpenseRepository()
-        val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_WEEK)
-
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
-
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(TimeRange.ONE_WEEK, content.timeRange)
-
-        job.cancel()
-    }
-
-    @Test
-    fun construction_withEachTimeRangeValue_decodesCorrectly() = runTest(testDispatcher) {
-        for (range in TimeRange.entries) {
+    fun construction_seedsTimeRangeFromRoute() =
+        runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val vm = viewModel(repo, initialTimeRange = range)
+            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_WEEK)
+
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
             val content = vm.uiState.value as ExpenseListUiState.Content
-            assertEquals(range, content.timeRange)
+            assertEquals(TimeRange.ONE_WEEK, content.timeRange)
 
             job.cancel()
         }
-    }
+
+    @Test
+    fun construction_withEachTimeRangeValue_decodesCorrectly() =
+        runTest(testDispatcher) {
+            for (range in TimeRange.entries) {
+                val repo = FakeExpenseRepository()
+                val vm = viewModel(repo, initialTimeRange = range)
+                val job = launch { vm.uiState.collect {} }
+                advanceUntilIdle()
+
+                val content = vm.uiState.value as ExpenseListUiState.Content
+                assertEquals(range, content.timeRange)
+
+                job.cancel()
+            }
+        }
 
     // ---- onTimeRangeSelected ----
 
     @Test
-    fun onTimeRangeSelected_changesFilterAndReQueriesRepository() = runTest(testDispatcher) {
-        val withinWeek = expense(id = "within-week", amountCents = 1_000L, date = now.minus(2, ChronoUnit.DAYS))
-        val withinMonthNotWeek = expense(id = "within-month", amountCents = 2_000L, date = now.minus(20, ChronoUnit.DAYS))
-        val repo = FakeExpenseRepository(listOf(withinWeek, withinMonthNotWeek))
-        val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
+    fun onTimeRangeSelected_changesFilterAndReQueriesRepository() =
+        runTest(testDispatcher) {
+            val withinWeek = expense(id = "within-week", amountCents = 1_000L, date = now.minus(2, ChronoUnit.DAYS))
+            val withinMonthNotWeek = expense(id = "within-month", amountCents = 2_000L, date = now.minus(20, ChronoUnit.DAYS))
+            val repo = FakeExpenseRepository(listOf(withinWeek, withinMonthNotWeek))
+            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        val monthContent = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(2, monthContent.expenses.size)
+            val monthContent = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(2, monthContent.expenses.size)
 
-        vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
-        advanceUntilIdle()
+            vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
+            advanceUntilIdle()
 
-        val weekContent = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(TimeRange.ONE_WEEK, weekContent.timeRange)
-        assertEquals(listOf(withinWeek), weekContent.expenses)
+            val weekContent = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(TimeRange.ONE_WEEK, weekContent.timeRange)
+            assertEquals(listOf(withinWeek), weekContent.expenses)
 
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     // ---- search / query ----
 
     @Test
-    fun onQueryChanged_caseInsensitivePartialMatch_filtersExpenses() = runTest(testDispatcher) {
-        val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now)
-        val groceries = expense(id = "2", name = "Groceries", amountCents = 3_000L, date = now)
-        val repo = FakeExpenseRepository(listOf(coffee, groceries))
-        val vm = viewModel(repo)
+    fun onQueryChanged_caseInsensitivePartialMatch_filtersExpenses() =
+        runTest(testDispatcher) {
+            val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now)
+            val groceries = expense(id = "2", name = "Groceries", amountCents = 3_000L, date = now)
+            val repo = FakeExpenseRepository(listOf(coffee, groceries))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        vm.onQueryChanged("COFFEE")
-        advanceUntilIdle()
+            vm.onQueryChanged("COFFEE")
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(listOf(coffee), content.expenses)
-        assertEquals("COFFEE", content.query)
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(listOf(coffee), content.expenses)
+            assertEquals("COFFEE", content.query)
 
-        job.cancel()
-    }
-
-    @Test
-    fun onQueryChanged_partialMatch_matchesSubstringAnywhereInName() = runTest(testDispatcher) {
-        val expense1 = expense(id = "1", name = "Weekly Groceries Run", amountCents = 500L, date = now)
-        val repo = FakeExpenseRepository(listOf(expense1))
-        val vm = viewModel(repo)
-
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
-
-        vm.onQueryChanged("rocer")
-        advanceUntilIdle()
-
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(listOf(expense1), content.expenses)
-
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
-    fun onQueryChanged_noMatch_producesEmptyList() = runTest(testDispatcher) {
-        val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now)
-        val repo = FakeExpenseRepository(listOf(coffee))
-        val vm = viewModel(repo)
+    fun onQueryChanged_partialMatch_matchesSubstringAnywhereInName() =
+        runTest(testDispatcher) {
+            val expense1 = expense(id = "1", name = "Weekly Groceries Run", amountCents = 500L, date = now)
+            val repo = FakeExpenseRepository(listOf(expense1))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        vm.onQueryChanged("nonexistent-xyz")
-        advanceUntilIdle()
+            vm.onQueryChanged("rocer")
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertTrue(content.expenses.isEmpty())
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(listOf(expense1), content.expenses)
 
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
-    fun onQueryChanged_blankQuery_isEquivalentToNoFilter() = runTest(testDispatcher) {
-        val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now)
-        val groceries = expense(id = "2", name = "Groceries", amountCents = 3_000L, date = now)
-        val repo = FakeExpenseRepository(listOf(coffee, groceries))
-        val vm = viewModel(repo)
+    fun onQueryChanged_noMatch_producesEmptyList() =
+        runTest(testDispatcher) {
+            val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now)
+            val repo = FakeExpenseRepository(listOf(coffee))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        vm.onQueryChanged("coffee")
-        advanceUntilIdle()
-        vm.onQueryChanged("   ")
-        advanceUntilIdle()
+            vm.onQueryChanged("nonexistent-xyz")
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(2, content.expenses.size)
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertTrue(content.expenses.isEmpty())
 
-        job.cancel()
-    }
+            job.cancel()
+        }
+
+    @Test
+    fun onQueryChanged_blankQuery_isEquivalentToNoFilter() =
+        runTest(testDispatcher) {
+            val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now)
+            val groceries = expense(id = "2", name = "Groceries", amountCents = 3_000L, date = now)
+            val repo = FakeExpenseRepository(listOf(coffee, groceries))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("coffee")
+            advanceUntilIdle()
+            vm.onQueryChanged("   ")
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(2, content.expenses.size)
+
+            job.cancel()
+        }
 
     // ---- sorting ----
 
     @Test
-    fun onSortSelected_dateDesc_isDefault_andSortsNewestFirst() = runTest(testDispatcher) {
-        val older = expense(id = "older", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
-        val newer = expense(id = "newer", amountCents = 200L, date = now.minus(1, ChronoUnit.DAYS))
-        val repo = FakeExpenseRepository(listOf(older, newer))
-        val vm = viewModel(repo)
+    fun onSortSelected_dateDesc_isDefault_andSortsNewestFirst() =
+        runTest(testDispatcher) {
+            val older = expense(id = "older", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
+            val newer = expense(id = "newer", amountCents = 200L, date = now.minus(1, ChronoUnit.DAYS))
+            val repo = FakeExpenseRepository(listOf(older, newer))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(SortOption.DATE_DESC, content.sortOption)
-        assertEquals(listOf(newer, older), content.expenses)
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(SortOption.DATE_DESC, content.sortOption)
+            assertEquals(listOf(newer, older), content.expenses)
 
-        job.cancel()
-    }
-
-    @Test
-    fun onSortSelected_dateAsc_sortsOldestFirst() = runTest(testDispatcher) {
-        val older = expense(id = "older", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
-        val newer = expense(id = "newer", amountCents = 200L, date = now.minus(1, ChronoUnit.DAYS))
-        val repo = FakeExpenseRepository(listOf(older, newer))
-        val vm = viewModel(repo)
-
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
-
-        vm.onSortSelected(SortOption.DATE_ASC)
-        advanceUntilIdle()
-
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(SortOption.DATE_ASC, content.sortOption)
-        assertEquals(listOf(older, newer), content.expenses)
-
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
-    fun onSortSelected_amountDesc_sortsHighestFirst() = runTest(testDispatcher) {
-        val cheap = expense(id = "cheap", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
-        val expensive = expense(id = "expensive", amountCents = 9_999L, date = now.minus(5, ChronoUnit.DAYS))
-        val repo = FakeExpenseRepository(listOf(cheap, expensive))
-        val vm = viewModel(repo)
+    fun onSortSelected_dateAsc_sortsOldestFirst() =
+        runTest(testDispatcher) {
+            val older = expense(id = "older", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
+            val newer = expense(id = "newer", amountCents = 200L, date = now.minus(1, ChronoUnit.DAYS))
+            val repo = FakeExpenseRepository(listOf(older, newer))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        vm.onSortSelected(SortOption.AMOUNT_DESC)
-        advanceUntilIdle()
+            vm.onSortSelected(SortOption.DATE_ASC)
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(SortOption.AMOUNT_DESC, content.sortOption)
-        assertEquals(listOf(expensive, cheap), content.expenses)
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(SortOption.DATE_ASC, content.sortOption)
+            assertEquals(listOf(older, newer), content.expenses)
 
-        job.cancel()
-    }
-
-    @Test
-    fun onSortSelected_amountAsc_sortsLowestFirst() = runTest(testDispatcher) {
-        val cheap = expense(id = "cheap", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
-        val expensive = expense(id = "expensive", amountCents = 9_999L, date = now.minus(5, ChronoUnit.DAYS))
-        val repo = FakeExpenseRepository(listOf(cheap, expensive))
-        val vm = viewModel(repo)
-
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
-
-        vm.onSortSelected(SortOption.AMOUNT_ASC)
-        advanceUntilIdle()
-
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(SortOption.AMOUNT_ASC, content.sortOption)
-        assertEquals(listOf(cheap, expensive), content.expenses)
-
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
-    fun sorting_appliesAfterQueryFilter() = runTest(testDispatcher) {
-        val coffeeCheap = expense(id = "c1", name = "Coffee small", amountCents = 300L, date = now)
-        val coffeeExpensive = expense(id = "c2", name = "Coffee large", amountCents = 700L, date = now)
-        val groceries = expense(id = "g1", name = "Groceries", amountCents = 5_000L, date = now)
-        val repo = FakeExpenseRepository(listOf(coffeeCheap, coffeeExpensive, groceries))
-        val vm = viewModel(repo)
+    fun onSortSelected_amountDesc_sortsHighestFirst() =
+        runTest(testDispatcher) {
+            val cheap = expense(id = "cheap", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
+            val expensive = expense(id = "expensive", amountCents = 9_999L, date = now.minus(5, ChronoUnit.DAYS))
+            val repo = FakeExpenseRepository(listOf(cheap, expensive))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        vm.onQueryChanged("coffee")
-        vm.onSortSelected(SortOption.AMOUNT_DESC)
-        advanceUntilIdle()
+            vm.onSortSelected(SortOption.AMOUNT_DESC)
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(listOf(coffeeExpensive, coffeeCheap), content.expenses)
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(SortOption.AMOUNT_DESC, content.sortOption)
+            assertEquals(listOf(expensive, cheap), content.expenses)
 
-        job.cancel()
-    }
+            job.cancel()
+        }
+
+    @Test
+    fun onSortSelected_amountAsc_sortsLowestFirst() =
+        runTest(testDispatcher) {
+            val cheap = expense(id = "cheap", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
+            val expensive = expense(id = "expensive", amountCents = 9_999L, date = now.minus(5, ChronoUnit.DAYS))
+            val repo = FakeExpenseRepository(listOf(cheap, expensive))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onSortSelected(SortOption.AMOUNT_ASC)
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(SortOption.AMOUNT_ASC, content.sortOption)
+            assertEquals(listOf(cheap, expensive), content.expenses)
+
+            job.cancel()
+        }
+
+    @Test
+    fun sorting_appliesAfterQueryFilter() =
+        runTest(testDispatcher) {
+            val coffeeCheap = expense(id = "c1", name = "Coffee small", amountCents = 300L, date = now)
+            val coffeeExpensive = expense(id = "c2", name = "Coffee large", amountCents = 700L, date = now)
+            val groceries = expense(id = "g1", name = "Groceries", amountCents = 5_000L, date = now)
+            val repo = FakeExpenseRepository(listOf(coffeeCheap, coffeeExpensive, groceries))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("coffee")
+            vm.onSortSelected(SortOption.AMOUNT_DESC)
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(listOf(coffeeExpensive, coffeeCheap), content.expenses)
+
+            job.cancel()
+        }
 
     // ---- delete ----
 
     @Test
-    fun onDeleteExpense_removesExpenseFromRepository_andUiState() = runTest(testDispatcher) {
-        val toKeep = expense(id = "keep", amountCents = 100L, date = now)
-        val toDelete = expense(id = "delete-me", amountCents = 200L, date = now)
-        val repo = FakeExpenseRepository(listOf(toKeep, toDelete))
-        val vm = viewModel(repo)
+    fun onDeleteExpense_removesExpenseFromRepository_andUiState() =
+        runTest(testDispatcher) {
+            val toKeep = expense(id = "keep", amountCents = 100L, date = now)
+            val toDelete = expense(id = "delete-me", amountCents = 200L, date = now)
+            val repo = FakeExpenseRepository(listOf(toKeep, toDelete))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        vm.onDeleteExpense("delete-me")
-        advanceUntilIdle()
+            vm.onDeleteExpense("delete-me")
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(listOf(toKeep), content.expenses)
-        assertNull(repo.getExpense("delete-me"))
-        assertEquals(toKeep, repo.getExpense("keep"))
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(listOf(toKeep), content.expenses)
+            assertNull(repo.getExpense("delete-me"))
+            assertEquals(toKeep, repo.getExpense("keep"))
 
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
-    fun onDeleteExpense_unknownId_doesNotThrow_andLeavesStateUnchanged() = runTest(testDispatcher) {
-        val toKeep = expense(id = "keep", amountCents = 100L, date = now)
-        val repo = FakeExpenseRepository(listOf(toKeep))
-        val vm = viewModel(repo)
+    fun onDeleteExpense_unknownId_doesNotThrow_andLeavesStateUnchanged() =
+        runTest(testDispatcher) {
+            val toKeep = expense(id = "keep", amountCents = 100L, date = now)
+            val repo = FakeExpenseRepository(listOf(toKeep))
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        vm.onDeleteExpense("does-not-exist")
-        advanceUntilIdle()
+            vm.onDeleteExpense("does-not-exist")
+            advanceUntilIdle()
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(listOf(toKeep), content.expenses)
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(listOf(toKeep), content.expenses)
 
-        job.cancel()
-    }
+            job.cancel()
+        }
+
+    @Test
+    fun onDeleteExpense_knownId_emitsDeletedExpenseOnUndoEvent() =
+        runTest(testDispatcher) {
+            val toDelete = expense(id = "delete-me", name = "Groceries", amountCents = 200L, date = now)
+            val repo = FakeExpenseRepository(listOf(toDelete))
+            val vm = viewModel(repo)
+
+            val undoEvents = mutableListOf<Expense>()
+            val undoJob = launch { vm.undoEvent.collect { undoEvents.add(it) } }
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onDeleteExpense("delete-me")
+            advanceUntilIdle()
+
+            assertEquals(listOf(toDelete), undoEvents)
+
+            job.cancel()
+            undoJob.cancel()
+        }
+
+    @Test
+    fun onDeleteExpense_unknownId_doesNotEmitOnUndoEvent() =
+        runTest(testDispatcher) {
+            val toKeep = expense(id = "keep", amountCents = 100L, date = now)
+            val repo = FakeExpenseRepository(listOf(toKeep))
+            val vm = viewModel(repo)
+
+            val undoEvents = mutableListOf<Expense>()
+            val undoJob = launch { vm.undoEvent.collect { undoEvents.add(it) } }
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onDeleteExpense("does-not-exist")
+            advanceUntilIdle()
+
+            assertTrue(undoEvents.isEmpty())
+
+            job.cancel()
+            undoJob.cancel()
+        }
+
+    @Test
+    fun onUndoDelete_reAddsExpense_soItReappearsInUiState() =
+        runTest(testDispatcher) {
+            val toKeep = expense(id = "keep", amountCents = 100L, date = now)
+            val toRestore = expense(id = "restore-me", name = "Coffee", amountCents = 500L, date = now)
+            val repo = FakeExpenseRepository(listOf(toKeep))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onUndoDelete(toRestore)
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertTrue(content.expenses.contains(toRestore))
+            assertEquals(toRestore, repo.getExpense("restore-me"))
+
+            job.cancel()
+        }
+
+    @Test
+    fun deleteThenUndo_roundTrip_expenseReappearsInUiState() =
+        runTest(testDispatcher) {
+            val toKeep = expense(id = "keep", amountCents = 100L, date = now)
+            val toDelete = expense(id = "delete-me", name = "Groceries", amountCents = 200L, date = now)
+            val repo = FakeExpenseRepository(listOf(toKeep, toDelete))
+            val vm = viewModel(repo)
+
+            val undoEvents = mutableListOf<Expense>()
+            val undoJob = launch { vm.undoEvent.collect { undoEvents.add(it) } }
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onDeleteExpense("delete-me")
+            advanceUntilIdle()
+
+            val afterDelete = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(listOf(toKeep), afterDelete.expenses)
+            assertEquals(1, undoEvents.size)
+
+            vm.onUndoDelete(undoEvents.single())
+            advanceUntilIdle()
+
+            val afterUndo = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(2, afterUndo.expenses.size)
+            assertTrue(afterUndo.expenses.contains(toDelete))
+            assertTrue(afterUndo.expenses.contains(toKeep))
+
+            job.cancel()
+            undoJob.cancel()
+        }
 
     // ---- observeExpenses failure -> Error state ----
 
     @Test
-    fun observeExpensesFailure_beforeFirstCollection_surfacesErrorState_withUnderlyingMessage() = runTest(testDispatcher) {
-        val repo = FakeExpenseRepository()
-        repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
-        val vm = viewModel(repo)
+    fun observeExpensesFailure_beforeFirstCollection_surfacesErrorState_withUnderlyingMessage() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
+            assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
 
-        job.cancel()
-    }
-
-    @Test
-    fun observeExpensesFailure_withNullExceptionMessage_fallsBackToDefaultMessage() = runTest(testDispatcher) {
-        val repo = FakeExpenseRepository()
-        repo.nextObserveExpensesError = RuntimeException()
-        val vm = viewModel(repo)
-
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
-
-        assertEquals(ExpenseListUiState.Error("Something went wrong"), vm.uiState.value)
-
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
-    fun onRetry_afterClearingError_transitionsFromErrorBackToContent() = runTest(testDispatcher) {
-        val existing = expense(id = "e1", amountCents = 1_000L, date = now.minus(1, ChronoUnit.DAYS))
-        val repo = FakeExpenseRepository(listOf(existing))
-        repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
-        val vm = viewModel(repo)
+    fun observeExpensesFailure_withNullExceptionMessage_fallsBackToDefaultMessage() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            repo.nextObserveExpensesError = RuntimeException()
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
-        assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
 
-        // Clear the error on the underlying fake, then retry. Since timeRange/query/sortOption
-        // haven't changed, only the retry-trigger bump forces flatMapLatest to re-subscribe --
-        // proving onRetry() isn't a no-op swallowed by the combined key's equality-based dedup.
-        repo.nextObserveExpensesError = null
-        vm.onRetry()
-        advanceUntilIdle()
+            assertEquals(ExpenseListUiState.Error("Something went wrong"), vm.uiState.value)
 
-        val content = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals(listOf(existing), content.expenses)
-
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
-    fun onRetry_doesNotResetCurrentQuerySortOptionOrTimeRangeSelections() = runTest(testDispatcher) {
-        val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
-        val coffeeOld = expense(id = "2", name = "Old Coffee", amountCents = 100L, date = now.minus(20, ChronoUnit.DAYS))
-        val groceries = expense(id = "3", name = "Groceries", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
-        val repo = FakeExpenseRepository(listOf(coffee, coffeeOld, groceries))
-        val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
+    fun onRetry_afterClearingError_transitionsFromErrorBackToContent() =
+        runTest(testDispatcher) {
+            val existing = expense(id = "e1", amountCents = 1_000L, date = now.minus(1, ChronoUnit.DAYS))
+            val repo = FakeExpenseRepository(listOf(existing))
+            repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
+            val vm = viewModel(repo)
 
-        val job = launch { vm.uiState.collect {} }
-        advanceUntilIdle()
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+            assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
 
-        vm.onQueryChanged("coffee")
-        vm.onSortSelected(SortOption.AMOUNT_ASC)
-        vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
-        advanceUntilIdle()
+            // Clear the error on the underlying fake, then retry. Since timeRange/query/sortOption
+            // haven't changed, only the retry-trigger bump forces flatMapLatest to re-subscribe --
+            // proving onRetry() isn't a no-op swallowed by the combined key's equality-based dedup.
+            repo.nextObserveExpensesError = null
+            vm.onRetry()
+            advanceUntilIdle()
 
-        val beforeRetry = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals("coffee", beforeRetry.query)
-        assertEquals(SortOption.AMOUNT_ASC, beforeRetry.sortOption)
-        assertEquals(TimeRange.ONE_WEEK, beforeRetry.timeRange)
-        // within one week: only "coffee" (2 days ago) matches the query; coffeeOld (20 days ago)
-        // and groceries (doesn't match query) are excluded.
-        assertEquals(listOf(coffee), beforeRetry.expenses)
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals(listOf(existing), content.expenses)
 
-        vm.onRetry()
-        advanceUntilIdle()
+            job.cancel()
+        }
 
-        val afterRetry = vm.uiState.value as ExpenseListUiState.Content
-        assertEquals("coffee", afterRetry.query)
-        assertEquals(SortOption.AMOUNT_ASC, afterRetry.sortOption)
-        assertEquals(TimeRange.ONE_WEEK, afterRetry.timeRange)
-        assertEquals(listOf(coffee), afterRetry.expenses)
+    @Test
+    fun onRetry_doesNotResetCurrentQuerySortOptionOrTimeRangeSelections() =
+        runTest(testDispatcher) {
+            val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
+            val coffeeOld = expense(id = "2", name = "Old Coffee", amountCents = 100L, date = now.minus(20, ChronoUnit.DAYS))
+            val groceries = expense(id = "3", name = "Groceries", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
+            val repo = FakeExpenseRepository(listOf(coffee, coffeeOld, groceries))
+            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
 
-        job.cancel()
-    }
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("coffee")
+            vm.onSortSelected(SortOption.AMOUNT_ASC)
+            vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
+            advanceUntilIdle()
+
+            val beforeRetry = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals("coffee", beforeRetry.query)
+            assertEquals(SortOption.AMOUNT_ASC, beforeRetry.sortOption)
+            assertEquals(TimeRange.ONE_WEEK, beforeRetry.timeRange)
+            // within one week: only "coffee" (2 days ago) matches the query; coffeeOld (20 days ago)
+            // and groceries (doesn't match query) are excluded.
+            assertEquals(listOf(coffee), beforeRetry.expenses)
+
+            vm.onRetry()
+            advanceUntilIdle()
+
+            val afterRetry = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals("coffee", afterRetry.query)
+            assertEquals(SortOption.AMOUNT_ASC, afterRetry.sortOption)
+            assertEquals(TimeRange.ONE_WEEK, afterRetry.timeRange)
+            assertEquals(listOf(coffee), afterRetry.expenses)
+
+            job.cancel()
+        }
 }

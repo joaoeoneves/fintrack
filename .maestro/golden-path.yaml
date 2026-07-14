@@ -63,13 +63,15 @@ appId: ptech.joaoe.agenticusage
 - assertVisible: "$56.78"
 - assertNotVisible: "$12.34"
 
-# --- 6: Delete it (confirm dialog still exists) and confirm it's gone ---
-# The row's trash-icon IconButton has contentDescription "Delete" (no visible label) — matched by
-# its accessibility text rather than a raw coordinate.
-- tapOn: "Delete"
-- assertVisible: "Delete this expense?"
+# --- 6: Delete it and confirm it's gone ---
+# Deletion is now immediate (tap or swipe the row) — there is no confirmation dialog anymore.
+# Instead an undo snackbar ("Deleted "<name>"" / "Undo") appears. The row's trash-icon IconButton
+# has contentDescription "Delete" (no visible label) — matched by its accessibility text rather
+# than a raw coordinate.
 - tapOn: "Delete"
 - assertNotVisible: "Maestro E2E Test Expense"
+- assertVisible: "Undo"
+# Let the undo snackbar time out on its own so the expense stays deleted.
 
 # --- 7: Exercise at least one time-range filter chip ---
 - tapOn: "1W"

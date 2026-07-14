@@ -1,6 +1,6 @@
 package ptech.joaoe.agenticusage.ui.expense.list
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -25,10 +24,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +43,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.TimeRange
 import ptech.joaoe.agenticusage.ui.common.ErrorState
 import ptech.joaoe.agenticusage.ui.common.ExpenseRow
@@ -50,10 +54,23 @@ fun ExpenseListScreen(
     onBack: () -> Unit,
     onOpenExpense: (String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ExpenseListViewModel = hiltViewModel()
+    viewModel: ExpenseListViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var expenseToDelete by remember { mutableStateOf<Expense?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.undoEvent.collect { expense ->
+            val result =
+                snackbarHostState.showSnackbar(
+                    message = "Deleted \"${expense.name}\"",
+                    actionLabel = "Undo",
+                )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.onUndoDelete(expense)
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -64,9 +81,10 @@ fun ExpenseListScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when (val state = uiState) {
             is ExpenseListUiState.Loading -> {
@@ -80,8 +98,8 @@ fun ExpenseListScreen(
                     onQueryChanged = viewModel::onQueryChanged,
                     onSortSelected = viewModel::onSortSelected,
                     onOpenExpense = onOpenExpense,
-                    onDeleteRequested = { expenseToDelete = it },
-                    contentPadding = innerPadding
+                    onDelete = viewModel::onDeleteExpense,
+                    contentPadding = innerPadding,
                 )
             }
 
@@ -89,34 +107,13 @@ fun ExpenseListScreen(
                 ErrorState(
                     message = state.message,
                     onRetry = viewModel::onRetry,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
         }
-    }
-
-    val pendingDelete = expenseToDelete
-    if (pendingDelete != null) {
-        AlertDialog(
-            onDismissRequest = { expenseToDelete = null },
-            title = { Text("Delete this expense?") },
-            text = { Text(pendingDelete.name) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.onDeleteExpense(pendingDelete.id)
-                    expenseToDelete = null
-                }) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { expenseToDelete = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 
@@ -128,13 +125,14 @@ private fun ExpenseListContent(
     onQueryChanged: (String) -> Unit,
     onSortSelected: (SortOption) -> Unit,
     onOpenExpense: (String) -> Unit,
-    onDeleteRequested: (Expense) -> Unit,
-    contentPadding: PaddingValues
+    onDelete: (String) -> Unit,
+    contentPadding: PaddingValues,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
     ) {
         TimeRangeFilterRow(selected = state.timeRange, onSelected = onTimeRangeSelected)
 
@@ -143,47 +141,93 @@ private fun ExpenseListContent(
             onValueChange = onQueryChanged,
             label = { Text("Search") },
             singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         )
 
         SortDropdown(
             selected = state.sortOption,
             onSelected = onSortSelected,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         )
 
         if (state.expenses.isEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = if (state.query.isBlank()) {
-                        "No expenses in this period yet."
-                    } else {
-                        "No expenses match \"${state.query}\"."
-                    },
-                    style = MaterialTheme.typography.bodyLarge
+                    text =
+                        if (state.query.isBlank()) {
+                            "No expenses in this period yet."
+                        } else {
+                            "No expenses match \"${state.query}\"."
+                        },
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.expenses, key = { it.id }) { expense ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ExpenseRow(
-                            expense = expense,
-                            onClick = { onOpenExpense(expense.id) },
-                            modifier = Modifier.weight(1f)
+                    val dismissState =
+                        rememberSwipeToDismissBoxState(
+                            confirmValueChange = { value ->
+                                if (value == SwipeToDismissBoxValue.StartToEnd ||
+                                    value == SwipeToDismissBoxValue.EndToStart
+                                ) {
+                                    onDelete(expense.id)
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
                         )
-                        IconButton(onClick = { onDeleteRequested(expense) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        backgroundContent = {
+                            val alignment =
+                                when (dismissState.dismissDirection) {
+                                    SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                                    SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
+                                    SwipeToDismissBoxValue.Settled -> Alignment.CenterEnd
+                                }
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.errorContainer)
+                                        .padding(horizontal = 16.dp),
+                                contentAlignment = alignment,
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
+                        },
+                    ) {
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surface),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ExpenseRow(
+                                expense = expense,
+                                onClick = { onOpenExpense(expense.id) },
+                                modifier = Modifier.weight(1f),
+                            )
+                            IconButton(onClick = { onDelete(expense.id) }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                            }
                         }
                     }
                     HorizontalDivider()
@@ -198,14 +242,14 @@ private fun ExpenseListContent(
 private fun SortDropdown(
     selected: SortOption,
     onSelected: (SortOption) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = it },
-        modifier = modifier
+        modifier = modifier,
     ) {
         OutlinedTextField(
             readOnly = true,
@@ -213,9 +257,10 @@ private fun SortDropdown(
             onValueChange = {},
             label = { Text("Sort by") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             SortOption.entries.forEach { option ->
@@ -224,7 +269,7 @@ private fun SortDropdown(
                     onClick = {
                         onSelected(option)
                         expanded = false
-                    }
+                    },
                 )
             }
         }
