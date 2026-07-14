@@ -1,0 +1,82 @@
+appId: ptech.joaoe.agenticusage
+---
+# Golden-path E2E flow for AgenticUsage.
+#
+# Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) —
+# real Google Sign-In cannot be scripted headlessly by Maestro, so this flow starts from the
+# Dashboard. If the app instead shows a sign-in screen, that's a sign the persisted session was
+# lost and this flow will fail fast at the "Total:" assertion below rather than silently
+# continuing on the wrong screen.
+
+- launchApp
+
+# --- 1/2: Dashboard loads with filter chips, total, pie legend, and the Add expense FAB ---
+- assertVisible: "AgenticUsage"
+- assertVisible: "1W"
+- assertVisible: "1M"
+- assertVisible: "3M"
+- assertVisible: "6M"
+- assertVisible: "1Y"
+- assertVisible:
+    text: "Total:.*"
+    optional: false
+- assertVisible: "Transfer"
+- assertVisible: "Investments"
+- assertVisible: "Shopping"
+- assertVisible: "Recurring"
+- assertVisible: "Add expense"
+
+# --- 3: Add a new expense via the FAB ---
+- tapOn: "Add expense"
+- assertVisible: "Add expense"
+- tapOn: "Name"
+- inputText: "Maestro E2E Test Expense"
+- tapOn: "Amount"
+- inputText: "12.34"
+- hideKeyboard
+- tapOn: "Save"
+
+# Back on the dashboard, the new expense should show up in "Recent expenses".
+- assertVisible: "Maestro E2E Test Expense"
+- assertVisible: "$12.34"
+
+# --- 4: Open the full expense list and confirm the new expense is there ---
+# "Recent expenses" header and "See all expenses" both open the same full list; the header is
+# reliably on-screen without needing to scroll first.
+- tapOn: "Recent expenses"
+- assertVisible: "All expenses"
+- assertVisible: "Maestro E2E Test Expense"
+- assertVisible: "$12.34"
+
+# --- 5: Edit it (change the amount) and confirm the change persists ---
+- tapOn: "Maestro E2E Test Expense"
+- assertVisible: "Edit expense"
+- tapOn: "Amount"
+- eraseText
+- inputText: "56.78"
+- hideKeyboard
+- tapOn: "Save"
+
+# Back on the full list, the updated amount should be visible.
+- assertVisible: "All expenses"
+- assertVisible: "Maestro E2E Test Expense"
+- assertVisible: "$56.78"
+- assertNotVisible: "$12.34"
+
+# --- 6: Delete it (confirm dialog still exists) and confirm it's gone ---
+# The row's trash-icon IconButton has contentDescription "Delete" (no visible label) — matched by
+# its accessibility text rather than a raw coordinate.
+- tapOn: "Delete"
+- assertVisible: "Delete this expense?"
+- tapOn: "Delete"
+- assertNotVisible: "Maestro E2E Test Expense"
+
+# --- 7: Exercise at least one time-range filter chip ---
+- tapOn: "1W"
+- assertVisible: "1W"
+- tapOn: "3M"
+- assertVisible: "3M"
+
+# Restore the default 1-month filter and return to the dashboard, leaving app state as found.
+- tapOn: "1M"
+- back
