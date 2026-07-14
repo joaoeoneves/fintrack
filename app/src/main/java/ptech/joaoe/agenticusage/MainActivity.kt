@@ -16,7 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import ptech.joaoe.agenticusage.ui.auth.AuthUiState
 import ptech.joaoe.agenticusage.ui.auth.AuthViewModel
 import ptech.joaoe.agenticusage.ui.auth.SignInScreen
-import ptech.joaoe.agenticusage.ui.auth.SignedInScreen
+import ptech.joaoe.agenticusage.ui.navigation.AgenticUsageNavHost
 import ptech.joaoe.agenticusage.ui.theme.AgenticUsageTheme
 
 @AndroidEntryPoint
@@ -33,9 +33,8 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val state = uiState
                     if (state is AuthUiState.SignedIn) {
-                        SignedInScreen(
-                            user = state.user,
-                            onSignOutClick = viewModel::signOut,
+                        AgenticUsageNavHost(
+                            onSignOut = viewModel::signOut,
                             modifier = Modifier.padding(innerPadding)
                         )
                     } else {

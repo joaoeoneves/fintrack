@@ -47,4 +47,7 @@ class FakeExpenseRepository(
         expensesFlow.value = current.filterNot { it.id == id }
         return Result.success(Unit)
     }
+
+    override suspend fun getExpense(id: String): Expense? =
+        expensesFlow.value.find { it.id == id }
 }

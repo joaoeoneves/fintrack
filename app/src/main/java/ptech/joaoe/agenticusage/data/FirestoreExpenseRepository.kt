@@ -83,6 +83,15 @@ class FirestoreExpenseRepository @Inject constructor(
         }
     }
 
+    override suspend fun getExpense(id: String): Expense? {
+        val uid = firebaseAuth.currentUser?.uid ?: return null
+        return try {
+            expensesCollection(uid).document(id).get().await().toExpenseOrNull()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
         val map = mutableMapOf<String, Any?>(
             "name" to name,

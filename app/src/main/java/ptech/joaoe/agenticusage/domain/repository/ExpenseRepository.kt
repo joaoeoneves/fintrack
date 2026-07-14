@@ -12,4 +12,6 @@ interface ExpenseRepository {
     suspend fun updateExpense(expense: Expense): Result<Unit>
 
     suspend fun deleteExpense(id: String): Result<Unit>
+
+    suspend fun getExpense(id: String): Expense?
 }
