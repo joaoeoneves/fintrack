@@ -1,24 +1,24 @@
 package ptech.joaoe.agenticusage.data.csv
 
-import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
+import java.time.Instant
 
 /**
  * Unit tests for [ExpenseCsvParser].
  */
 class ExpenseCsvParserTest {
-
     private val header = "name,amountCents,category,date,note"
 
     private fun parsed(csv: String): CsvParseResult {
         val outcome = ExpenseCsvParser.parse(csv)
-        val result = (outcome as? CsvImportOutcome.Parsed)?.result
-            ?: fail("Expected Parsed but was $outcome").let { throw IllegalStateException() }
+        val result =
+            (outcome as? CsvImportOutcome.Parsed)?.result
+                ?: fail("Expected Parsed but was $outcome").let { throw IllegalStateException() }
         return result
     }
 
@@ -32,11 +32,12 @@ class ExpenseCsvParserTest {
 
     @Test
     fun validMultiRowCsv_parsesAllRowsWithCorrectFields() {
-        val csv = """
+        val csv =
+            """
             $header
             Coffee,500,Shopping,2024-01-15T00:00:00Z,with milk
             Rent,150000,Recurring,2024-02-01,
-        """.trimIndent()
+            """.trimIndent()
 
         val result = parsed(csv)
 
@@ -63,48 +64,51 @@ class ExpenseCsvParserTest {
 
     @Test
     fun category_isCaseInsensitive_displayForm() {
-        val csv = """
+        val csv =
+            """
             $header
             A,100,shopping,2024-01-01,
             B,100,SHOPPING,2024-01-01,
             C,100,Shopping,2024-01-01,
-        """.trimIndent()
+            """.trimIndent()
 
         val result = parsed(csv)
 
         assertTrue(result.failures.isEmpty())
         assertEquals(
             listOf(ExpenseCategory.SHOPPING, ExpenseCategory.SHOPPING, ExpenseCategory.SHOPPING),
-            result.validExpenses.map { it.category }
+            result.validExpenses.map { it.category },
         )
     }
 
     @Test
     fun category_acceptsEnumNameForm() {
-        val csv = """
+        val csv =
+            """
             $header
             A,100,TRANSFER,2024-01-01,
             B,100,transfer,2024-01-01,
-        """.trimIndent()
+            """.trimIndent()
 
         val result = parsed(csv)
 
         assertTrue(result.failures.isEmpty())
         assertEquals(
             listOf(ExpenseCategory.TRANSFER, ExpenseCategory.TRANSFER),
-            result.validExpenses.map { it.category }
+            result.validExpenses.map { it.category },
         )
     }
 
     @Test
     fun category_acceptsAllFourValues() {
-        val csv = """
+        val csv =
+            """
             $header
             A,100,Transfer,2024-01-01,
             B,100,Investments,2024-01-01,
             C,100,Shopping,2024-01-01,
             D,100,Recurring,2024-01-01,
-        """.trimIndent()
+            """.trimIndent()
 
         val result = parsed(csv)
 
@@ -114,9 +118,9 @@ class ExpenseCsvParserTest {
                 ExpenseCategory.TRANSFER,
                 ExpenseCategory.INVESTMENTS,
                 ExpenseCategory.SHOPPING,
-                ExpenseCategory.RECURRING
+                ExpenseCategory.RECURRING,
             ),
-            result.validExpenses.map { it.category }
+            result.validExpenses.map { it.category },
         )
     }
 
@@ -178,11 +182,12 @@ class ExpenseCsvParserTest {
 
     @Test
     fun badCategory_producesRowFailureMentioningCategory_otherRowsStillParse() {
-        val csv = """
+        val csv =
+            """
             $header
             Good,100,Shopping,2024-01-01,
             Bad,100,NotACategory,2024-01-01,
-        """.trimIndent()
+            """.trimIndent()
 
         val result = parsed(csv)
 
@@ -203,7 +208,12 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
-        assertTrue(result.failures.single().reason.contains("amountCents", ignoreCase = true))
+        assertTrue(
+            result.failures
+                .single()
+                .reason
+                .contains("amountCents", ignoreCase = true),
+        )
     }
 
     @Test
@@ -215,7 +225,12 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
-        assertTrue(result.failures.single().reason.contains("amountCents", ignoreCase = true))
+        assertTrue(
+            result.failures
+                .single()
+                .reason
+                .contains("amountCents", ignoreCase = true),
+        )
     }
 
     @Test
@@ -226,7 +241,12 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
-        assertTrue(result.failures.single().reason.contains("amountCents", ignoreCase = true))
+        assertTrue(
+            result.failures
+                .single()
+                .reason
+                .contains("amountCents", ignoreCase = true),
+        )
     }
 
     @Test
@@ -276,7 +296,12 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
-        assertTrue(result.failures.single().reason.contains("Name", ignoreCase = true))
+        assertTrue(
+            result.failures
+                .single()
+                .reason
+                .contains("Name", ignoreCase = true),
+        )
     }
 
     // ---- empty / header-only / malformed header ----
@@ -331,7 +356,8 @@ class ExpenseCsvParserTest {
 
     @Test
     fun mixedValidAndMultipleFailureTypes_countsAndReasonsAllCorrect() {
-        val csv = """
+        val csv =
+            """
             $header
             Coffee,500,Shopping,2024-01-15,
             BadCategory,100,NotACategory,2024-01-01,
@@ -339,7 +365,7 @@ class ExpenseCsvParserTest {
             BadDate,100,Shopping,not-a-date,
             TooFewColumns,100,Shopping,2024-01-01
             Rent,150000,Recurring,2024-02-01,monthly rent
-        """.trimIndent()
+            """.trimIndent()
 
         val result = parsed(csv)
 

@@ -21,20 +21,21 @@ import ptech.joaoe.agenticusage.domain.model.TimeRange
 fun TimeRangeFilterRow(
     selected: TimeRange,
     onSelected: (TimeRange) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         TimeRange.entries.forEach { range ->
             FilterChip(
                 selected = range == selected,
                 onClick = { onSelected(range) },
-                label = { Text(range.label) }
+                label = { Text(range.label) },
             )
         }
     }

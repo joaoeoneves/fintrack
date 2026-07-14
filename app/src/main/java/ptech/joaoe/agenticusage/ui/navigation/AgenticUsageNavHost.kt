@@ -14,26 +14,26 @@ import ptech.joaoe.agenticusage.ui.expense.list.ExpenseListScreen
 fun AgenticUsageNavHost(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController = navController, startDestination = Dashboard, modifier = modifier) {
         composable<Dashboard> {
             DashboardScreen(
                 onOpenList = { timeRange -> navController.navigate(ExpenseList(timeRange)) },
                 onAddExpense = { navController.navigate(AddEditExpense()) },
-                onSignOut = onSignOut
+                onSignOut = onSignOut,
             )
         }
         composable<ExpenseList> {
             ExpenseListScreen(
                 onBack = { navController.popBackStack() },
-                onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) }
+                onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
             )
         }
         composable<AddEditExpense> {
             AddEditExpenseScreen(
                 onSaved = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
+                onCancel = { navController.popBackStack() },
             )
         }
     }

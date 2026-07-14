@@ -10,8 +10,10 @@ sealed interface ExpenseListUiState {
         val timeRange: TimeRange,
         val query: String,
         val sortOption: SortOption,
-        val expenses: List<Expense>
+        val expenses: List<Expense>,
     ) : ExpenseListUiState
 
-    data class Error(val message: String) : ExpenseListUiState
+    data class Error(
+        val message: String,
+    ) : ExpenseListUiState
 }

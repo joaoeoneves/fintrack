@@ -54,18 +54,20 @@ fun DashboardScreen(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(),
-    importExportViewModel: ImportExportViewModel = hiltViewModel()
+    importExportViewModel: ImportExportViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val importState by importExportViewModel.importState.collectAsStateWithLifecycle()
     val exportState by importExportViewModel.exportState.collectAsStateWithLifecycle()
 
-    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let(importExportViewModel::onImportFileSelected)
-    }
-    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
-        uri?.let(importExportViewModel::onExportTargetSelected)
-    }
+    val importLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let(importExportViewModel::onImportFileSelected)
+        }
+    val exportLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+            uri?.let(importExportViewModel::onExportTargetSelected)
+        }
 
     Scaffold(
         modifier = modifier,
@@ -83,41 +85,42 @@ fun DashboardScreen(
                             onClick = {
                                 menuExpanded = false
                                 importLauncher.launch(
-                                    arrayOf("text/csv", "text/comma-separated-values", "*/*")
+                                    arrayOf("text/csv", "text/comma-separated-values", "*/*"),
                                 )
-                            }
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Export CSV") },
                             onClick = {
                                 menuExpanded = false
                                 exportLauncher.launch("agenticusage-expenses.csv")
-                            }
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Sign out") },
                             onClick = {
                                 menuExpanded = false
                                 onSignOut()
-                            }
+                            },
                         )
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = onAddExpense) {
                 Text("Add expense")
             }
-        }
+        },
     ) { innerPadding ->
         when (val state = uiState) {
             is DashboardUiState.Loading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -128,9 +131,10 @@ fun DashboardScreen(
                     state = state,
                     onTimeRangeSelected = viewModel::onTimeRangeSelected,
                     onOpenList = onOpenList,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -138,9 +142,10 @@ fun DashboardScreen(
                 ErrorState(
                     message = state.message,
                     onRetry = viewModel::onRetry,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
         }
@@ -151,7 +156,7 @@ fun DashboardScreen(
             ImportPreviewDialog(
                 state = state,
                 onConfirm = importExportViewModel::onConfirmImport,
-                onDismiss = importExportViewModel::onDismissImport
+                onDismiss = importExportViewModel::onDismissImport,
             )
         }
 
@@ -159,7 +164,7 @@ fun DashboardScreen(
             MessageDialog(
                 title = "Import complete",
                 message = "Imported ${state.importedCount} expense(s).",
-                onDismiss = importExportViewModel::onDismissImport
+                onDismiss = importExportViewModel::onDismissImport,
             )
         }
 
@@ -167,7 +172,7 @@ fun DashboardScreen(
             MessageDialog(
                 title = "Import failed",
                 message = state.message,
-                onDismiss = importExportViewModel::onDismissImport
+                onDismiss = importExportViewModel::onDismissImport,
             )
         }
 
@@ -179,7 +184,7 @@ fun DashboardScreen(
             MessageDialog(
                 title = "Export complete",
                 message = "Exported ${state.exportedCount} expense(s).",
-                onDismiss = importExportViewModel::onDismissExport
+                onDismiss = importExportViewModel::onDismissExport,
             )
         }
 
@@ -187,7 +192,7 @@ fun DashboardScreen(
             MessageDialog(
                 title = "Export failed",
                 message = state.message,
-                onDismiss = importExportViewModel::onDismissExport
+                onDismiss = importExportViewModel::onDismissExport,
             )
         }
 
@@ -200,7 +205,7 @@ private fun DashboardContent(
     state: DashboardUiState.Content,
     onTimeRangeSelected: (TimeRange) -> Unit,
     onOpenList: (TimeRange) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier) {
         item {
@@ -210,14 +215,15 @@ private fun DashboardContent(
         if (state.expenses.isEmpty()) {
             item {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "No expenses in this period yet.",
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                 }
             }
@@ -227,11 +233,11 @@ private fun DashboardContent(
                     Text(
                         text = "Total: ${formatAmountCents(state.totalCents)}",
                         style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     )
                     PieChart(
                         slices = state.categoryTotals,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -240,17 +246,18 @@ private fun DashboardContent(
                 Text(
                     text = "Recent expenses",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenList(state.timeRange) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenList(state.timeRange) }
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
 
             items(state.recentExpenses, key = { it.id }) { expense ->
                 ExpenseRow(
                     expense = expense,
-                    onClick = { onOpenList(state.timeRange) }
+                    onClick = { onOpenList(state.timeRange) },
                 )
                 HorizontalDivider()
             }
@@ -260,11 +267,12 @@ private fun DashboardContent(
                     text = "See all expenses",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenList(state.timeRange) }
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenList(state.timeRange) }
+                            .padding(16.dp),
+                    textAlign = TextAlign.Center,
                 )
             }
 

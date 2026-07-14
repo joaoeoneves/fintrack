@@ -32,19 +32,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.collectLatest
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
 import ptech.joaoe.agenticusage.ui.common.displayName
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 private val displayDateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneOffset.UTC)
 
@@ -54,7 +53,7 @@ fun AddEditExpenseScreen(
     onSaved: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: AddEditExpenseViewModel = hiltViewModel()
+    viewModel: AddEditExpenseViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -77,21 +76,22 @@ fun AddEditExpenseScreen(
                     val form = (uiState as? AddEditUiState.Ready)?.form
                     TextButton(
                         onClick = { viewModel.onSave() },
-                        enabled = form?.isValid == true
+                        enabled = form?.isValid == true,
                     ) {
                         Text("Save")
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         when (val state = uiState) {
             is AddEditUiState.Loading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -105,9 +105,10 @@ fun AddEditExpenseScreen(
                     onCategorySelected = viewModel::onCategorySelected,
                     onDateSelected = viewModel::onDateSelected,
                     onNoteChanged = viewModel::onNoteChanged,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
         }
@@ -123,16 +124,17 @@ private fun ExpenseForm(
     onCategorySelected: (ExpenseCategory) -> Unit,
     onDateSelected: (Instant) -> Unit,
     onNoteChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier =
+            modifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         OutlinedTextField(
             value = form.name,
@@ -141,7 +143,7 @@ private fun ExpenseForm(
             isError = form.nameError != null,
             supportingText = { form.nameError?.let { Text(it) } },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         OutlinedTextField(
@@ -151,12 +153,12 @@ private fun ExpenseForm(
             isError = form.amountError != null,
             supportingText = { form.amountError?.let { Text(it) } },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         ExposedDropdownMenuBox(
             expanded = categoryMenuExpanded,
-            onExpandedChange = { categoryMenuExpanded = it }
+            onExpandedChange = { categoryMenuExpanded = it },
         ) {
             OutlinedTextField(
                 readOnly = true,
@@ -164,13 +166,14 @@ private fun ExpenseForm(
                 onValueChange = {},
                 label = { Text("Category") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             )
             ExposedDropdownMenu(
                 expanded = categoryMenuExpanded,
-                onDismissRequest = { categoryMenuExpanded = false }
+                onDismissRequest = { categoryMenuExpanded = false },
             ) {
                 ExpenseCategory.entries.forEach { category ->
                     DropdownMenuItem(
@@ -178,7 +181,7 @@ private fun ExpenseForm(
                         onClick = {
                             onCategorySelected(category)
                             categoryMenuExpanded = false
-                        }
+                        },
                     )
                 }
             }
@@ -194,29 +197,30 @@ private fun ExpenseForm(
                     Icon(Icons.Default.DateRange, contentDescription = "Change date")
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         OutlinedTextField(
             value = form.note,
             onValueChange = onNoteChanged,
             label = { Text("Note (optional)") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         form.saveError?.let { error ->
             Text(
                 text = error,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }
 
     if (showDatePicker) {
-        val datePickerState = androidx.compose.material3.rememberDatePickerState(
-            initialSelectedDateMillis = form.date.toEpochMilli()
-        )
+        val datePickerState =
+            androidx.compose.material3.rememberDatePickerState(
+                initialSelectedDateMillis = form.date.toEpochMilli(),
+            )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -233,7 +237,7 @@ private fun ExpenseForm(
                 TextButton(onClick = { showDatePicker = false }) {
                     Text("Cancel")
                 }
-            }
+            },
         ) {
             DatePicker(state = datePickerState)
         }

@@ -14,9 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ptech.joaoe.agenticusage.domain.model.Expense
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import ptech.joaoe.agenticusage.domain.model.Expense
 
 private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 

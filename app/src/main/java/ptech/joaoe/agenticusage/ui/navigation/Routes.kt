@@ -10,7 +10,11 @@ import ptech.joaoe.agenticusage.domain.model.TimeRange
 object Dashboard
 
 @Serializable
-data class ExpenseList(val timeRange: TimeRange)
+data class ExpenseList(
+    val timeRange: TimeRange,
+)
 
 @Serializable
-data class AddEditExpense(val expenseId: String? = null)
+data class AddEditExpense(
+    val expenseId: String? = null,
+)

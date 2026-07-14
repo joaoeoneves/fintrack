@@ -1,10 +1,10 @@
 package ptech.joaoe.agenticusage.domain.model
 
-import java.time.Instant
-import java.time.ZoneId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * Unit tests for [TimeRange.toInstantRange], a pure function. All tests anchor on a fixed
@@ -13,14 +13,12 @@ import org.junit.Test
  * on the JVM's default zone).
  */
 class TimeRangeTest {
-
     private val zone: ZoneId = ZoneId.of("UTC")
 
     // 2026-07-14 is a Tuesday; 15:30 UTC is deliberately not midnight.
     private val now = Instant.parse("2026-07-14T15:30:00Z")
 
-    private fun startOfDayUtc(dateIso: String): Instant =
-        Instant.parse("${dateIso}T00:00:00Z")
+    private fun startOfDayUtc(dateIso: String): Instant = Instant.parse("${dateIso}T00:00:00Z")
 
     // "Today" (2026-07-14) must always be fully included: endExclusive is always the start of
     // the *next* day, regardless of the time-of-day portion of `now`.
@@ -151,17 +149,17 @@ class TimeRangeTest {
 
         assertEquals(
             Instant.parse("2026-07-07T00:00:00Z"),
-            utcRange.startInclusive
+            utcRange.startInclusive,
         )
         // Tokyo's "today" is 2026-07-15, so its start-of-day boundaries are shifted by one day
         // relative to UTC, expressed as UTC instants (Tokyo midnight == UTC-9h).
         assertEquals(
             Instant.parse("2026-07-07T15:00:00Z"), // 2026-07-08T00:00 JST - 9h
-            tokyoRange.startInclusive
+            tokyoRange.startInclusive,
         )
         assertEquals(
             Instant.parse("2026-07-15T15:00:00Z"), // 2026-07-16T00:00 JST - 9h
-            tokyoRange.endExclusive
+            tokyoRange.endExclusive,
         )
     }
 

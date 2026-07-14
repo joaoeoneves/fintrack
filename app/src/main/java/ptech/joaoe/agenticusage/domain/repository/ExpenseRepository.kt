@@ -1,11 +1,14 @@
 package ptech.joaoe.agenticusage.domain.repository
 
-import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import ptech.joaoe.agenticusage.domain.model.Expense
+import java.time.Instant
 
 interface ExpenseRepository {
-    fun observeExpenses(startInclusive: Instant, endExclusive: Instant): Flow<List<Expense>>
+    fun observeExpenses(
+        startInclusive: Instant,
+        endExclusive: Instant,
+    ): Flow<List<Expense>>
 
     suspend fun addExpense(expense: Expense): Result<String>
 

@@ -1,44 +1,44 @@
 package ptech.joaoe.agenticusage.data.csv
 
-import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
+import java.time.Instant
 
 /**
  * Unit tests for [ExpenseCsvWriter], including a round-trip test through [ExpenseCsvParser].
  */
 class ExpenseCsvWriterTest {
-
     private fun expense(
         id: String = "",
         name: String,
         amountCents: Long,
         category: ExpenseCategory,
         date: Instant,
-        note: String?
+        note: String?,
     ) = Expense(id = id, name = name, amountCents = amountCents, category = category, date = date, note = note)
 
     @Test
     fun write_producesExpectedHeaderAndRows() {
-        val expenses = listOf(
-            expense(
-                name = "Coffee",
-                amountCents = 500L,
-                category = ExpenseCategory.SHOPPING,
-                date = Instant.parse("2024-01-15T00:00:00Z"),
-                note = "with milk"
-            ),
-            expense(
-                name = "Rent",
-                amountCents = 150_000L,
-                category = ExpenseCategory.RECURRING,
-                date = Instant.parse("2024-02-01T00:00:00Z"),
-                note = null
+        val expenses =
+            listOf(
+                expense(
+                    name = "Coffee",
+                    amountCents = 500L,
+                    category = ExpenseCategory.SHOPPING,
+                    date = Instant.parse("2024-01-15T00:00:00Z"),
+                    note = "with milk",
+                ),
+                expense(
+                    name = "Rent",
+                    amountCents = 150_000L,
+                    category = ExpenseCategory.RECURRING,
+                    date = Instant.parse("2024-02-01T00:00:00Z"),
+                    note = null,
+                ),
             )
-        )
 
         val csv = ExpenseCsvWriter.write(expenses)
         val lines = csv.split("\n")
@@ -58,15 +58,16 @@ class ExpenseCsvWriterTest {
 
     @Test
     fun write_quotesFieldsContainingCommaOrQuote() {
-        val expenses = listOf(
-            expense(
-                name = "Lunch, team",
-                amountCents = 1_234L,
-                category = ExpenseCategory.SHOPPING,
-                date = Instant.parse("2024-01-01T00:00:00Z"),
-                note = "she said \"hi\""
+        val expenses =
+            listOf(
+                expense(
+                    name = "Lunch, team",
+                    amountCents = 1_234L,
+                    category = ExpenseCategory.SHOPPING,
+                    date = Instant.parse("2024-01-01T00:00:00Z"),
+                    note = "she said \"hi\"",
+                ),
             )
-        )
 
         val csv = ExpenseCsvWriter.write(expenses)
         val dataLine = csv.split("\n")[1]
@@ -79,36 +80,37 @@ class ExpenseCsvWriterTest {
 
     @Test
     fun roundTrip_writeThenParse_reproducesOriginalExpenses_zeroFailures() {
-        val originals = listOf(
-            expense(
-                name = "Coffee",
-                amountCents = 599L, // not a round number of dollars
-                category = ExpenseCategory.SHOPPING,
-                date = Instant.parse("2024-01-15T08:30:00Z"),
-                note = null
-            ),
-            expense(
-                name = "Team lunch, offsite",
-                amountCents = 12_345L,
-                category = ExpenseCategory.TRANSFER,
-                date = Instant.parse("2024-03-01T00:00:00Z"),
-                note = "with \"the whole\" team"
-            ),
-            expense(
-                name = "401k contribution",
-                amountCents = 500_000L,
-                category = ExpenseCategory.INVESTMENTS,
-                date = Instant.parse("2024-06-30T23:59:59Z"),
-                note = ""
-            ),
-            expense(
-                name = "Netflix",
-                amountCents = 1_599L,
-                category = ExpenseCategory.RECURRING,
-                date = Instant.parse("2024-12-31T00:00:00Z"),
-                note = "monthly, auto-renews"
+        val originals =
+            listOf(
+                expense(
+                    name = "Coffee",
+                    amountCents = 599L, // not a round number of dollars
+                    category = ExpenseCategory.SHOPPING,
+                    date = Instant.parse("2024-01-15T08:30:00Z"),
+                    note = null,
+                ),
+                expense(
+                    name = "Team lunch, offsite",
+                    amountCents = 12_345L,
+                    category = ExpenseCategory.TRANSFER,
+                    date = Instant.parse("2024-03-01T00:00:00Z"),
+                    note = "with \"the whole\" team",
+                ),
+                expense(
+                    name = "401k contribution",
+                    amountCents = 500_000L,
+                    category = ExpenseCategory.INVESTMENTS,
+                    date = Instant.parse("2024-06-30T23:59:59Z"),
+                    note = "",
+                ),
+                expense(
+                    name = "Netflix",
+                    amountCents = 1_599L,
+                    category = ExpenseCategory.RECURRING,
+                    date = Instant.parse("2024-12-31T00:00:00Z"),
+                    note = "monthly, auto-renews",
+                ),
             )
-        )
 
         val csv = ExpenseCsvWriter.write(originals)
         val outcome = ExpenseCsvParser.parse(csv)
@@ -132,15 +134,16 @@ class ExpenseCsvWriterTest {
 
     @Test
     fun roundTrip_allFourCategories_matchAfterWriteAndParse() {
-        val originals = ExpenseCategory.entries.mapIndexed { index, category ->
-            expense(
-                name = "Expense $index",
-                amountCents = (index + 1) * 111L,
-                category = category,
-                date = Instant.parse("2024-0${index + 1}-10T00:00:00Z"),
-                note = null
-            )
-        }
+        val originals =
+            ExpenseCategory.entries.mapIndexed { index, category ->
+                expense(
+                    name = "Expense $index",
+                    amountCents = (index + 1) * 111L,
+                    category = category,
+                    date = Instant.parse("2024-0${index + 1}-10T00:00:00Z"),
+                    note = null,
+                )
+            }
 
         val csv = ExpenseCsvWriter.write(originals)
         val outcome = ExpenseCsvParser.parse(csv) as CsvImportOutcome.Parsed

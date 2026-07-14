@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 fun ImportPreviewDialog(
     state: ImportUiState.Preview,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -35,7 +35,7 @@ fun ImportPreviewDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = state.validExpenses.isNotEmpty()
+                enabled = state.validExpenses.isNotEmpty(),
             ) {
                 Text("Import")
             }
@@ -44,7 +44,7 @@ fun ImportPreviewDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }
 
@@ -52,7 +52,7 @@ fun ImportPreviewDialog(
 fun MessageDialog(
     title: String,
     message: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -62,6 +62,6 @@ fun MessageDialog(
             TextButton(onClick = onDismiss) {
                 Text("OK")
             }
-        }
+        },
     )
 }

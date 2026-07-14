@@ -1,7 +1,7 @@
 package ptech.joaoe.agenticusage.ui.expense.addedit
 
-import java.time.Instant
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
+import java.time.Instant
 
 data class ExpenseFormState(
     val name: String = "",
@@ -13,7 +13,7 @@ data class ExpenseFormState(
     val amountError: String? = null,
     val saveError: String? = null,
     val isEditMode: Boolean = false,
-    val expenseId: String? = null
+    val expenseId: String? = null,
 ) {
     val isValid: Boolean
         get() = name.isNotBlank() && parseAmountCents(amountText).isSuccess
@@ -21,5 +21,8 @@ data class ExpenseFormState(
 
 sealed interface AddEditUiState {
     data object Loading : AddEditUiState
-    data class Ready(val form: ExpenseFormState) : AddEditUiState
+
+    data class Ready(
+        val form: ExpenseFormState,
+    ) : AddEditUiState
 }

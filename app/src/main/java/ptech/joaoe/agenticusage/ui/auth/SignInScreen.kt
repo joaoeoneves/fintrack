@@ -26,25 +26,26 @@ import ptech.joaoe.agenticusage.ui.theme.AgenticUsageTheme
 fun SignInScreen(
     uiState: AuthUiState,
     onSignInClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val isLoading = uiState is AuthUiState.Loading
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = "AgenticUsage",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
         )
         Text(
             text = "Sign in to track your expenses",
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
         )
 
         if (uiState is AuthUiState.Error) {
@@ -52,29 +53,29 @@ fun SignInScreen(
                 text = uiState.message,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 16.dp),
             )
         }
 
         Button(
             onClick = onSignInClick,
-            enabled = !isLoading
+            enabled = !isLoading,
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(18.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onPrimary,
                 )
                 Text(
                     text = "Sign in with Google",
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.padding(start = 8.dp),
                 )
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     GoogleLogo(modifier = Modifier.size(18.dp))
                     Text(
                         text = "Sign in with Google",
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 8.dp),
                     )
                 }
             }
@@ -92,10 +93,11 @@ private fun GoogleLogo(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val strokeWidth = size.minDimension / 4f
         val diameter = size.minDimension - strokeWidth
-        val topLeft = Offset(
-            (size.width - diameter) / 2f,
-            (size.height - diameter) / 2f
-        )
+        val topLeft =
+            Offset(
+                (size.width - diameter) / 2f,
+                (size.height - diameter) / 2f,
+            )
         val arcSize = Size(diameter, diameter)
 
         // Blue: right side
@@ -106,7 +108,7 @@ private fun GoogleLogo(modifier: Modifier = Modifier) {
             useCenter = false,
             topLeft = topLeft,
             size = arcSize,
-            style = Stroke(width = strokeWidth)
+            style = Stroke(width = strokeWidth),
         )
         // Green: bottom
         drawArc(
@@ -116,7 +118,7 @@ private fun GoogleLogo(modifier: Modifier = Modifier) {
             useCenter = false,
             topLeft = topLeft,
             size = arcSize,
-            style = Stroke(width = strokeWidth)
+            style = Stroke(width = strokeWidth),
         )
         // Yellow: left-bottom
         drawArc(
@@ -126,7 +128,7 @@ private fun GoogleLogo(modifier: Modifier = Modifier) {
             useCenter = false,
             topLeft = topLeft,
             size = arcSize,
-            style = Stroke(width = strokeWidth)
+            style = Stroke(width = strokeWidth),
         )
         // Red: left-top
         drawArc(
@@ -136,14 +138,14 @@ private fun GoogleLogo(modifier: Modifier = Modifier) {
             useCenter = false,
             topLeft = topLeft,
             size = arcSize,
-            style = Stroke(width = strokeWidth)
+            style = Stroke(width = strokeWidth),
         )
         // Blue horizontal bar, the crossbar of the "G"
         drawLine(
             color = Color(0xFF4285F4),
             start = Offset(size.width / 2f, size.height / 2f),
             end = Offset(topLeft.x + diameter, size.height / 2f),
-            strokeWidth = strokeWidth
+            strokeWidth = strokeWidth,
         )
     }
 }

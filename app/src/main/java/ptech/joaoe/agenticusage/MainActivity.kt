@@ -35,13 +35,13 @@ class MainActivity : ComponentActivity() {
                     if (state is AuthUiState.SignedIn) {
                         AgenticUsageNavHost(
                             onSignOut = viewModel::signOut,
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding),
                         )
                     } else {
                         SignInScreen(
                             uiState = state,
                             onSignInClick = { viewModel.signIn(context) },
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding),
                         )
                     }
                 }

@@ -13,7 +13,6 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object FirebaseModule {
-
     @Provides
     fun provideFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
 
@@ -21,6 +20,7 @@ object FirebaseModule {
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 
     @Provides
-    fun provideCredentialManager(@ApplicationContext context: Context): CredentialManager =
-        CredentialManager.create(context)
+    fun provideCredentialManager(
+        @ApplicationContext context: Context,
+    ): CredentialManager = CredentialManager.create(context)
 }

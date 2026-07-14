@@ -8,7 +8,6 @@ import org.junit.Test
  * Unit tests for the pure function [parseAmountCents].
  */
 class AmountParsingTest {
-
     @Test
     fun validDecimal_withTwoDecimalPlaces_parsesExactCents() {
         val result = parseAmountCents("12.50")

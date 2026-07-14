@@ -12,7 +12,6 @@ import ptech.joaoe.agenticusage.domain.repository.ExpenseRepository
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
     @Binds
     abstract fun bindExpenseRepository(impl: FirestoreExpenseRepository): ExpenseRepository
 

@@ -4,7 +4,10 @@ import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
 import ptech.joaoe.agenticusage.domain.model.TimeRange
 
-data class CategoryTotal(val category: ExpenseCategory, val totalCents: Long)
+data class CategoryTotal(
+    val category: ExpenseCategory,
+    val totalCents: Long,
+)
 
 sealed interface DashboardUiState {
     data object Loading : DashboardUiState
@@ -14,8 +17,10 @@ sealed interface DashboardUiState {
         val expenses: List<Expense>,
         val categoryTotals: List<CategoryTotal>,
         val totalCents: Long,
-        val recentExpenses: List<Expense>
+        val recentExpenses: List<Expense>,
     ) : DashboardUiState
 
-    data class Error(val message: String) : DashboardUiState
+    data class Error(
+        val message: String,
+    ) : DashboardUiState
 }

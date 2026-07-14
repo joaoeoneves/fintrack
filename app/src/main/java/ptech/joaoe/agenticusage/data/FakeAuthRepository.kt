@@ -12,12 +12,12 @@ import ptech.joaoe.agenticusage.domain.repository.AuthRepository
  */
 class FakeAuthRepository(
     initialUser: AuthUser? = null,
-    var nextSignInResult: Result<AuthUser> = Result.success(
-        AuthUser(uid = "fake-uid", displayName = "Fake User", email = "fake@example.com", photoUrl = null)
-    ),
-    var nextSignOutResult: Result<Unit> = Result.success(Unit)
+    var nextSignInResult: Result<AuthUser> =
+        Result.success(
+            AuthUser(uid = "fake-uid", displayName = "Fake User", email = "fake@example.com", photoUrl = null),
+        ),
+    var nextSignOutResult: Result<Unit> = Result.success(Unit),
 ) : AuthRepository {
-
     private val userFlow = MutableStateFlow(initialUser)
 
     override fun observeCurrentUser(): Flow<AuthUser?> = userFlow

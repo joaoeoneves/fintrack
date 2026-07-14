@@ -8,5 +8,5 @@ data class Expense(
     val amountCents: Long,
     val category: ExpenseCategory,
     val date: Instant,
-    val note: String?
+    val note: String?,
 )

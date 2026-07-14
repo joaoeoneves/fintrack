@@ -1,26 +1,38 @@
 package ptech.joaoe.agenticusage.data.csv
 
+import ptech.joaoe.agenticusage.domain.model.Expense
+import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeParseException
-import ptech.joaoe.agenticusage.domain.model.Expense
-import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
 
 private const val EXPECTED_HEADER = "name,amountcents,category,date,note"
 private const val EXPECTED_COLUMN_COUNT = 5
 
 /** A single CSV data row that failed to parse into an [Expense]. */
-data class CsvRowFailure(val rowNumber: Int, val rawLine: String, val reason: String)
+data class CsvRowFailure(
+    val rowNumber: Int,
+    val rawLine: String,
+    val reason: String,
+)
 
 /** Result of parsing a whole CSV document: successfully parsed expenses plus any row failures. */
-data class CsvParseResult(val validExpenses: List<Expense>, val failures: List<CsvRowFailure>)
+data class CsvParseResult(
+    val validExpenses: List<Expense>,
+    val failures: List<CsvRowFailure>,
+)
 
 /** Outcome of attempting to parse a CSV document: either a (possibly partial) [CsvParseResult], or a
  * fatal error that prevented parsing from proceeding at all (empty file, bad header). */
 sealed interface CsvImportOutcome {
-    data class Parsed(val result: CsvParseResult) : CsvImportOutcome
-    data class Error(val message: String) : CsvImportOutcome
+    data class Parsed(
+        val result: CsvParseResult,
+    ) : CsvImportOutcome
+
+    data class Error(
+        val message: String,
+    ) : CsvImportOutcome
 }
 
 /**
@@ -28,10 +40,11 @@ sealed interface CsvImportOutcome {
  * header `name,amountCents,category,date,note`, one row per expense.
  */
 object ExpenseCsvParser {
-
     fun parse(csvText: String): CsvImportOutcome {
-        val lines = csvText.split("\r\n", "\n")
-            .let { if (it.isNotEmpty() && it.last().isBlank()) it.dropLast(1) else it }
+        val lines =
+            csvText
+                .split("\r\n", "\n")
+                .let { if (it.isNotEmpty() && it.last().isBlank()) it.dropLast(1) else it }
         val nonBlankLines = lines.filter { it.isNotBlank() }
 
         if (nonBlankLines.isEmpty()) {
@@ -42,7 +55,7 @@ object ExpenseCsvParser {
         val headerColumns = splitCsvLine(header).map { it.trim().lowercase() }
         if (headerColumns.joinToString(",") != EXPECTED_HEADER) {
             return CsvImportOutcome.Error(
-                "Unrecognized header — expected name,amountCents,category,date,note"
+                "Unrecognized header — expected name,amountCents,category,date,note",
             )
         }
 
@@ -72,32 +85,33 @@ object ExpenseCsvParser {
 
             val amountCents = rawAmount.trim().toLongOrNull()
             if (amountCents == null) {
-                failures += CsvRowFailure(rowNumber, line, "Invalid amountCents value: '${rawAmount}'")
+                failures += CsvRowFailure(rowNumber, line, "Invalid amountCents value: '$rawAmount'")
                 return@forEachIndexed
             }
 
             val category = parseCategory(rawCategory.trim())
             if (category == null) {
-                failures += CsvRowFailure(rowNumber, line, "Unknown category: '${rawCategory}'")
+                failures += CsvRowFailure(rowNumber, line, "Unknown category: '$rawCategory'")
                 return@forEachIndexed
             }
 
             val date = parseDate(rawDate.trim())
             if (date == null) {
-                failures += CsvRowFailure(rowNumber, line, "Invalid date: '${rawDate}'")
+                failures += CsvRowFailure(rowNumber, line, "Invalid date: '$rawDate'")
                 return@forEachIndexed
             }
 
             val note = rawNote.ifBlank { null }
 
-            validExpenses += Expense(
-                id = "",
-                name = name,
-                amountCents = amountCents,
-                category = category,
-                date = date,
-                note = note
-            )
+            validExpenses +=
+                Expense(
+                    id = "",
+                    name = name,
+                    amountCents = amountCents,
+                    category = category,
+                    date = date,
+                    note = note,
+                )
         }
 
         return CsvImportOutcome.Parsed(CsvParseResult(validExpenses, failures))
@@ -108,15 +122,16 @@ object ExpenseCsvParser {
             category.name.equals(raw, ignoreCase = true) || category.canonicalName().equals(raw, ignoreCase = true)
         }
 
-    private fun ExpenseCategory.canonicalName(): String = when (this) {
-        ExpenseCategory.TRANSFER -> "Transfer"
-        ExpenseCategory.INVESTMENTS -> "Investments"
-        ExpenseCategory.SHOPPING -> "Shopping"
-        ExpenseCategory.RECURRING -> "Recurring"
-    }
+    private fun ExpenseCategory.canonicalName(): String =
+        when (this) {
+            ExpenseCategory.TRANSFER -> "Transfer"
+            ExpenseCategory.INVESTMENTS -> "Investments"
+            ExpenseCategory.SHOPPING -> "Shopping"
+            ExpenseCategory.RECURRING -> "Recurring"
+        }
 
-    private fun parseDate(raw: String): Instant? {
-        return try {
+    private fun parseDate(raw: String): Instant? =
+        try {
             Instant.parse(raw)
         } catch (e: DateTimeParseException) {
             try {
@@ -125,7 +140,6 @@ object ExpenseCsvParser {
                 null
             }
         }
-    }
 
     /**
      * Splits a single CSV line into its raw fields, supporting double-quoted fields (with doubled
