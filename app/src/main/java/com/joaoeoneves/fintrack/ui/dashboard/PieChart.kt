@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,13 +23,63 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 
+// Same ring diameter as the original restyle, but a thinner stroke (26dp vs 32dp) so the inner
+// hole has more room for the total-spent amount at realistic (even large) values.
+//
+// An earlier attempt at this also grew RING_SIZE itself (160dp -> 176dp) to guarantee no overlap
+// for large totals, but that ate directly into the legend Column's width (same Row, legend has
+// `Modifier.weight(1f)`) and made legend rows with longer category names (e.g.
+// "Investments  $1000.00") wrap their amount onto a second line. That's unnecessary: the center
+// label's TextAutoSize (below) already shrinks the amount font as needed to fit
+// RING_HOLE_CONTENT_SIZE, so the thinner stroke alone is enough to stop the *common* case (e.g.
+// "$1,242.00"-scale totals) from touching the ring at full font size, while autoSize handles
+// genuinely large totals gracefully. Keeping RING_SIZE at its original value leaves the legend at
+// its original, un-cramped width.
 private val RING_SIZE = 160.dp
-private val RING_STROKE_WIDTH = 32.dp
+private val RING_STROKE_WIDTH = 26.dp
+
+// The diameter of the ring's inner hole, i.e. the space available for the centered total text.
+private val RING_HOLE_SIZE = RING_SIZE - RING_STROKE_WIDTH * 2
+
+// A small safety margin so the amount text never visually touches the ring, even with rounded
+// stroke caps.
+private val RING_HOLE_CONTENT_SIZE = RING_HOLE_SIZE - 12.dp
+
+/**
+ * The "Total Spent" label and formatted amount centered inside the ring's hole. The amount uses
+ * auto-sizing text bounded to the hole's diameter so it always fits regardless of how many digits
+ * the total has, instead of a fixed style that can overflow into the ring for larger totals.
+ */
+@Composable
+private fun PieChartCenterLabel(totalCents: Long) {
+    Column(
+        modifier = Modifier.width(RING_HOLE_CONTENT_SIZE),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = "Total Spent",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = formatAmountCents(totalCents),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = 22.sp),
+        )
+    }
+}
 
 /**
  * Custom Canvas-based donut chart showing the share of spending per category, with the total spent
@@ -72,19 +124,7 @@ fun PieChart(
                 }
             }
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Total Spent",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = formatAmountCents(total),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+            PieChartCenterLabel(total)
         }
 
         Column(
@@ -110,7 +150,10 @@ private fun PieChartLegendRow(slice: CategoryTotal) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f, fill = false),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
                 modifier =
                     Modifier
@@ -120,12 +163,17 @@ private fun PieChartLegendRow(slice: CategoryTotal) {
             Text(
                 text = slice.category.displayName,
                 style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
         Text(
             text = formatAmountCents(slice.totalCents),
             style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 8.dp),
         )
     }
 }
