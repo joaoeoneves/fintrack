@@ -1,0 +1,68 @@
+# Income-tracking E2E flow for AgenticUsage.
+#
+# Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) —
+# real Google Sign-In cannot be scripted headlessly by Maestro, so this flow starts from the
+# Dashboard, same as golden-path.yaml. If the app instead shows a sign-in screen, that's a sign
+# the persisted session was lost and this flow will fail fast at the "Total:" assertion below.
+appId: ptech.joaoe.agenticusage
+---
+- launchApp
+
+# --- 1: Dashboard loads with the expense total, income total, and net balance ---
+- assertVisible: "AgenticUsage"
+- assertVisible:
+    text: "Total:.*"
+- assertVisible:
+    text: "Income:.*"
+- assertVisible:
+    text: "Net balance:.*"
+
+# --- 2: Scroll down to the "Recent income" section and add an income entry ---
+- scrollUntilVisible:
+    element: "Add income"
+    direction: DOWN
+- tapOn: "Add income"
+- assertVisible: "Add income"
+- tapOn: "Source"
+- inputText: "Maestro E2E Test Salary"
+- tapOn: "Amount"
+- inputText: "100.00"
+- hideKeyboard
+- tapOn: "Save"
+
+# Back on the dashboard, the new income should show up in "Recent income".
+- assertVisible: "Maestro E2E Test Salary"
+- assertVisible: "$100.00"
+
+# --- 3: Net balance reflects income minus expenses; expense-only figures are untouched ---
+# (Dashboard net balance = income - expenses. Assertions on the exact numbers are intentionally
+# left to unit tests, which cover the math precisely; this flow only asserts the feature is wired
+# end-to-end and doesn't silently regress expense totals.)
+- scrollUntilVisible:
+    element: "Total:.*"
+    direction: UP
+- assertVisible:
+    text: "Income:.*"
+
+# --- 4: Open the full income list and confirm the new income is there ---
+- scrollUntilVisible:
+    element: "See all income"
+    direction: DOWN
+- tapOn: "See all income"
+- assertVisible: "All income"
+- assertVisible: "Maestro E2E Test Salary"
+- assertVisible: "$100.00"
+
+# --- 5: Delete it via the row's Delete affordance and confirm the undo snackbar appears ---
+# Deletion is immediate (mirrors the expense list) — an undo snackbar ("Deleted "<source>"" /
+# "Undo") appears. The row's trash-icon IconButton has contentDescription "Delete".
+- tapOn: "Delete"
+- assertNotVisible: "Maestro E2E Test Salary"
+- assertVisible: "Undo"
+# Let the undo snackbar time out on its own so the income entry stays deleted.
+
+# Return to the dashboard, leaving app state as found.
+- back
+- scrollUntilVisible:
+    element: "Total:.*"
+    direction: UP
