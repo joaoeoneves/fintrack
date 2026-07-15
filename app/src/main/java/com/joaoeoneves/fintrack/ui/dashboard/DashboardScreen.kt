@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,14 +8,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -26,13 +29,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,11 +49,6 @@ import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.TimeRangeFilterRow
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
-import com.joaoeoneves.fintrack.ui.importexport.ExportUiState
-import com.joaoeoneves.fintrack.ui.importexport.ImportExportViewModel
-import com.joaoeoneves.fintrack.ui.importexport.ImportPreviewDialog
-import com.joaoeoneves.fintrack.ui.importexport.ImportUiState
-import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,73 +57,38 @@ fun DashboardScreen(
     onAddExpense: () -> Unit,
     onOpenIncomeList: (TimeRange) -> Unit,
     onAddIncome: () -> Unit,
-    onSignOut: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(),
-    importExportViewModel: ImportExportViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val importState by importExportViewModel.importState.collectAsStateWithLifecycle()
-    val exportState by importExportViewModel.exportState.collectAsStateWithLifecycle()
-
-    val importLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let(importExportViewModel::onImportFileSelected)
-        }
-    val exportLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
-            uri?.let(importExportViewModel::onExportTargetSelected)
-        }
 
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            var menuExpanded by remember { mutableStateOf(false) }
             TopAppBar(
                 title = { Text("FinTrack") },
                 actions = {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                    }
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(
-                            text = { Text("Import CSV") },
-                            onClick = {
-                                menuExpanded = false
-                                importLauncher.launch(
-                                    arrayOf("text/csv", "text/comma-separated-values", "*/*"),
-                                )
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Export CSV") },
-                            onClick = {
-                                menuExpanded = false
-                                exportLauncher.launch("fintrack-expenses.csv")
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(if (isDarkTheme) "Switch to light mode" else "Switch to dark mode") },
-                            onClick = {
-                                menuExpanded = false
-                                onToggleTheme()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Sign out") },
-                            onClick = {
-                                menuExpanded = false
-                                onSignOut()
-                            },
-                        )
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        actionIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    ),
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = onAddExpense) {
+            ExtendedFloatingActionButton(
+                onClick = onAddExpense,
+                shape = RoundedCornerShape(16.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
                 Text("Add expense")
             }
         },
@@ -168,54 +133,6 @@ fun DashboardScreen(
             }
         }
     }
-
-    when (val state = importState) {
-        is ImportUiState.Preview -> {
-            ImportPreviewDialog(
-                state = state,
-                onConfirm = importExportViewModel::onConfirmImport,
-                onDismiss = importExportViewModel::onDismissImport,
-            )
-        }
-
-        is ImportUiState.Done -> {
-            MessageDialog(
-                title = "Import complete",
-                message = "Imported ${state.importedCount} expense(s).",
-                onDismiss = importExportViewModel::onDismissImport,
-            )
-        }
-
-        is ImportUiState.Error -> {
-            MessageDialog(
-                title = "Import failed",
-                message = state.message,
-                onDismiss = importExportViewModel::onDismissImport,
-            )
-        }
-
-        ImportUiState.Idle, ImportUiState.Loading, ImportUiState.Importing -> Unit
-    }
-
-    when (val state = exportState) {
-        is ExportUiState.Done -> {
-            MessageDialog(
-                title = "Export complete",
-                message = "Exported ${state.exportedCount} expense(s).",
-                onDismiss = importExportViewModel::onDismissExport,
-            )
-        }
-
-        is ExportUiState.Error -> {
-            MessageDialog(
-                title = "Export failed",
-                message = state.message,
-                onDismiss = importExportViewModel::onDismissExport,
-            )
-        }
-
-        ExportUiState.Idle, ExportUiState.Exporting -> Unit
-    }
 }
 
 @Composable
@@ -234,109 +151,140 @@ private fun DashboardContent(
         }
 
         item {
-            DashboardSummary(state = state)
+            BalanceSummaryCard(
+                state = state,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
 
         item {
-            NetBalanceSummary(state = state)
+            DashboardSummary(
+                state = state,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
 
         item {
             BudgetSection(
                 budgets = state.budgets,
                 onSetBudget = onSetBudget,
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
 
         if (!state.expenses.isEmpty()) {
             item {
-                Text(
-                    text = "Recent expenses",
-                    style = MaterialTheme.typography.titleMedium,
+                Card(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenList(state.timeRange) }
                             .padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                ) {
+                    Column {
+                        Text(
+                            text = "Recent expenses",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenList(state.timeRange) }
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
 
-            items(state.recentExpenses, key = { it.id }) { expense ->
-                ExpenseRow(
-                    expense = expense,
-                    onClick = { onOpenList(state.timeRange) },
-                )
-                HorizontalDivider()
-            }
+                        state.recentExpenses.forEach { expense ->
+                            ExpenseRow(
+                                expense = expense,
+                                onClick = { onOpenList(state.timeRange) },
+                            )
+                            HorizontalDivider()
+                        }
 
-            item {
-                Text(
-                    text = "See all expenses",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenList(state.timeRange) }
-                            .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-
-        item {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenIncomeList(state.timeRange) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "Recent income",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = onAddIncome) {
-                    Icon(Icons.Default.Add, contentDescription = "Add income")
+                        Text(
+                            text = "See all expenses",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenList(state.timeRange) }
+                                    .padding(16.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             }
         }
 
-        if (state.recentIncome.isEmpty()) {
-            item {
-                Text(
-                    text = "No income in this period yet.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-        } else {
-            items(state.recentIncome, key = { it.id }) { income ->
-                IncomeRow(
-                    income = income,
-                    onClick = { onOpenIncomeList(state.timeRange) },
-                )
-                HorizontalDivider()
-            }
+        item {
+            Card(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Column {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenIncomeList(state.timeRange) }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Recent income",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(onClick = onAddIncome) {
+                            Icon(Icons.Default.Add, contentDescription = "Add income")
+                        }
+                    }
 
-            item {
-                Text(
-                    text = "See all income",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenIncomeList(state.timeRange) }
-                            .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                )
+                    if (state.recentIncome.isEmpty()) {
+                        Text(
+                            text = "No income in this period yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    } else {
+                        state.recentIncome.forEach { income ->
+                            IncomeRow(
+                                income = income,
+                                onClick = { onOpenIncomeList(state.timeRange) },
+                            )
+                            HorizontalDivider()
+                        }
+
+                        Text(
+                            text = "See all income",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenIncomeList(state.timeRange) }
+                                    .padding(16.dp),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
             }
         }
 
@@ -347,31 +295,113 @@ private fun DashboardContent(
 }
 
 @Composable
-private fun NetBalanceSummary(state: DashboardUiState.Content) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+private fun BalanceSummaryCard(
+    state: DashboardUiState.Content,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "Net Balance",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = formatAmountCents(state.netCents),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color =
+                    if (state.netCents < 0) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+            )
+
+            HorizontalDivider()
+
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+            ) {
+                BalanceSummaryColumn(
+                    label = "Income",
+                    amountCents = state.incomeCents,
+                    icon = Icons.Filled.TrendingUp,
+                    tint = MaterialTheme.colorScheme.primary,
+                    amountColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f),
+                )
+                BalanceSummaryColumn(
+                    label = "Expenses",
+                    amountCents = state.totalCents,
+                    icon = Icons.AutoMirrored.Filled.TrendingDown,
+                    tint = MaterialTheme.colorScheme.error,
+                    amountColor = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BalanceSummaryColumn(
+    label: String,
+    amountCents: Long,
+    icon: ImageVector,
+    tint: Color,
+    amountColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(tint.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = tint)
+        }
         Text(
-            text = "Income: ${formatAmountCents(state.incomeCents)}",
-            style = MaterialTheme.typography.bodyLarge,
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp),
         )
         Text(
-            text = "Net balance: ${formatAmountCents(state.netCents)}",
+            text = formatAmountCents(amountCents),
             style = MaterialTheme.typography.bodyLarge,
-            color =
-                if (state.netCents < 0) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.primary
-                },
+            fontWeight = FontWeight.Bold,
+            color = amountColor,
         )
     }
 }
 
 @Composable
-private fun DashboardSummary(state: DashboardUiState.Content) {
+private fun DashboardSummary(
+    state: DashboardUiState.Content,
+    modifier: Modifier = Modifier,
+) {
     if (state.expenses.isEmpty()) {
         Box(
             modifier =
-                Modifier
+                modifier
                     .fillMaxWidth()
                     .padding(32.dp),
             contentAlignment = Alignment.Center,
@@ -382,15 +412,17 @@ private fun DashboardSummary(state: DashboardUiState.Content) {
             )
         }
     } else {
-        Column(modifier = Modifier.padding(top = 8.dp)) {
-            Text(
-                text = "Total: ${formatAmountCents(state.totalCents)}",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
+        Card(
+            modifier = modifier,
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        ) {
             PieChart(
                 slices = state.categoryTotals,
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
             )
         }
     }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -17,7 +18,9 @@ import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.auth.AuthUiState
 import com.joaoeoneves.fintrack.ui.auth.AuthViewModel
 import com.joaoeoneves.fintrack.ui.auth.SignInScreen
+import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.navigation.FinTrackNavHost
+import com.joaoeoneves.fintrack.ui.theme.CurrencyViewModel
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,12 +48,13 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val state = uiState
                     if (state is AuthUiState.SignedIn) {
-                        FinTrackNavHost(
-                            onSignOut = viewModel::signOut,
-                            isDarkTheme = resolvedDarkTheme,
-                            onToggleTheme = { themeViewModel.toggleTheme(resolvedDarkTheme) },
-                            modifier = Modifier.padding(innerPadding),
-                        )
+                        val currencyViewModel: CurrencyViewModel = hiltViewModel()
+                        val currency by currencyViewModel.currency.collectAsStateWithLifecycle()
+                        CompositionLocalProvider(LocalCurrency provides currency) {
+                            FinTrackNavHost(
+                                modifier = Modifier.padding(innerPadding),
+                            )
+                        }
                     } else {
                         SignInScreen(
                             uiState = state,

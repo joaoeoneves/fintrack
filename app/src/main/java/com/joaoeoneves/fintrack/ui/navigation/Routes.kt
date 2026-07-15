@@ -28,3 +28,6 @@ data class IncomeList(
 data class AddEditIncome(
     val incomeId: String? = null,
 )
+
+@Serializable
+object Settings

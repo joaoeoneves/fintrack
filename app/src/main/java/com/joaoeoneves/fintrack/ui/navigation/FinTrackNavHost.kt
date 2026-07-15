@@ -11,12 +11,10 @@ import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.expense.list.ExpenseListScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.income.list.IncomeListScreen
+import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 
 @Composable
 fun FinTrackNavHost(
-    onSignOut: () -> Unit,
-    isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -27,9 +25,7 @@ fun FinTrackNavHost(
                 onAddExpense = { navController.navigate(AddEditExpense()) },
                 onOpenIncomeList = { timeRange -> navController.navigate(IncomeList(timeRange)) },
                 onAddIncome = { navController.navigate(AddEditIncome()) },
-                onSignOut = onSignOut,
-                isDarkTheme = isDarkTheme,
-                onToggleTheme = onToggleTheme,
+                onOpenSettings = { navController.navigate(Settings) },
             )
         }
         composable<ExpenseList> {
@@ -54,6 +50,11 @@ fun FinTrackNavHost(
             AddEditIncomeScreen(
                 onSaved = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() },
+            )
+        }
+        composable<Settings> {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
             )
         }
     }

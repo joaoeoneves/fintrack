@@ -1,0 +1,67 @@
+# Settings screen E2E flow for FinTrack.
+#
+# Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) --
+# same assumption as golden-path.yaml / income-tracking.yaml, since real Google Sign-In cannot be
+# scripted headlessly by Maestro. Starts and ends on the Dashboard, with theme back to Dark and
+# currency back to USD before this flow ends -- golden-path.yaml and income-tracking.yaml assume
+# the "$" symbol is shown.
+#
+# Step 2/3 assert that switching currency/theme in Settings takes effect immediately on the
+# already-running Dashboard, in the same app process, with no restart required. This depends on
+# CurrencyRepository/ThemeRepository (SharedPrefsCurrencyRepository/SharedPrefsThemeRepository)
+# being bound as singletons in RepositoryModule.kt -- both classes cache their current value in an
+# in-memory StateFlow, so if a non-singleton binding ever regresses back in, MainActivity's
+# CurrencyViewModel/ThemeViewModel and SettingsViewModel would each get their own separate
+# repository instance, and a write through one would silently stop reaching the other's
+# collectors (only visible after a full process restart). See SharedPrefsCurrencyRepositoryTest /
+# RepositoryModuleSingletonScopeTest for the corresponding unit-level regression coverage.
+appId: com.joaoeoneves.fintrack
+---
+- launchApp
+
+# --- 1: Open Settings via the gear icon on the Dashboard ---
+- assertVisible: "FinTrack"
+- tapOn: "Settings"
+- assertVisible: "Settings"
+- assertVisible: "Appearance"
+- assertVisible: "Currency"
+- assertVisible: "Data"
+- assertVisible: "Account"
+- assertVisible: "About"
+
+# --- 2: Currency -- switch to EUR and confirm the Dashboard total/list reflect the new symbol ---
+# Confirms the switch takes effect live, without an app restart (see the header comment above).
+- assertVisible: "US Dollar ($)"
+- tapOn: "Display currency"
+- assertVisible: "Euro (€)"
+- tapOn: "Euro (€)"
+- assertVisible: "Euro (€)"
+- tapOn: "Back"
+- assertVisible:
+    text: "€.*"
+
+# Switch back to USD before the flow ends -- other flows assume "$".
+- tapOn: "Settings"
+- tapOn: "Display currency"
+- tapOn: "US Dollar ($)"
+- tapOn: "Back"
+- assertVisible:
+    text: "\\$.*"
+
+# --- 3: Appearance -- select each theme option and confirm no crash ---
+- tapOn: "Settings"
+- tapOn: "Light"
+- assertVisible: "Light"
+- tapOn: "System default"
+- assertVisible: "System default"
+- tapOn: "Dark"
+- assertVisible: "Dark"
+
+# --- 4: Data -- Import CSV / Export CSV still launch their file pickers ---
+- tapOn: "Import CSV"
+- back
+- tapOn: "Export CSV"
+- back
+
+# Return to the dashboard, leaving app state as found.
+- tapOn: "Back"

@@ -4,9 +4,11 @@ import com.joaoeoneves.fintrack.data.FirebaseAuthRepository
 import com.joaoeoneves.fintrack.data.FirestoreBudgetRepository
 import com.joaoeoneves.fintrack.data.FirestoreExpenseRepository
 import com.joaoeoneves.fintrack.data.FirestoreIncomeRepository
+import com.joaoeoneves.fintrack.data.SharedPrefsCurrencyRepository
 import com.joaoeoneves.fintrack.data.SharedPrefsThemeRepository
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
+import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
@@ -14,6 +16,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -31,5 +34,10 @@ abstract class RepositoryModule {
     abstract fun bindIncomeRepository(impl: FirestoreIncomeRepository): IncomeRepository
 
     @Binds
+    @Singleton
     abstract fun bindThemeRepository(impl: SharedPrefsThemeRepository): ThemeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCurrencyRepository(impl: SharedPrefsCurrencyRepository): CurrencyRepository
 }
