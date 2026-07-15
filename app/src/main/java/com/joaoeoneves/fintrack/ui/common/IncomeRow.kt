@@ -1,20 +1,25 @@
 package com.joaoeoneves.fintrack.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.domain.model.Income
 import java.time.ZoneId
@@ -39,24 +44,51 @@ fun IncomeRow(
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .padding(vertical = 12.dp, horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
-            Text(text = income.source, style = MaterialTheme.typography.bodyLarge)
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center,
+            ) {
                 Icon(
-                    imageVector = Icons.Filled.AttachMoney,
+                    imageVector = Icons.Filled.TrendingUp,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Column(
+                modifier =
+                    Modifier
+                        .padding(start = 12.dp)
+                        .weight(1f),
+            ) {
+                Text(
+                    text = income.source,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = income.date.atZone(ZoneId.systemDefault()).format(dateFormatter),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(text = formatAmountCents(income.amountCents), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = income.date.atZone(ZoneId.systemDefault()).format(dateFormatter),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Text(
+            text = "+${formatAmountCents(income.amountCents)}",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }

@@ -3,19 +3,16 @@
 # Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) —
 # real Google Sign-In cannot be scripted headlessly by Maestro, so this flow starts from the
 # Dashboard, same as golden-path.yaml. If the app instead shows a sign-in screen, that's a sign
-# the persisted session was lost and this flow will fail fast at the "Total:" assertion below.
+# the persisted session was lost and this flow will fail fast at the "Net Balance" assertion below.
 appId: com.joaoeoneves.fintrack
 ---
 - launchApp
 
-# --- 1: Dashboard loads with the expense total, income total, and net balance ---
+# --- 1: Dashboard loads with the balance summary card (net balance + income/expenses columns) ---
 - assertVisible: "FinTrack"
-- assertVisible:
-    text: "Total:.*"
-- assertVisible:
-    text: "Income:.*"
-- assertVisible:
-    text: "Net balance:.*"
+- assertVisible: "Net Balance"
+- assertVisible: "Income"
+- assertVisible: "Expenses"
 
 # --- 2: Scroll down to the "Recent income" section and add an income entry ---
 - scrollUntilVisible:
@@ -31,18 +28,18 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Save"
 
 # Back on the dashboard, the new income should show up in "Recent income".
+# IncomeRow now prefixes the amount with "+" (restyled amount text), so the row shows "+$100.00".
 - assertVisible: "Maestro E2E Test Salary"
-- assertVisible: "$100.00"
+- assertVisible: "+$100.00"
 
 # --- 3: Net balance reflects income minus expenses; expense-only figures are untouched ---
 # (Dashboard net balance = income - expenses. Assertions on the exact numbers are intentionally
 # left to unit tests, which cover the math precisely; this flow only asserts the feature is wired
 # end-to-end and doesn't silently regress expense totals.)
 - scrollUntilVisible:
-    element: "Total:.*"
+    element: "Net Balance"
     direction: UP
-- assertVisible:
-    text: "Income:.*"
+- assertVisible: "Income"
 
 # --- 4: Open the full income list and confirm the new income is there ---
 - scrollUntilVisible:
@@ -51,7 +48,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "See all income"
 - assertVisible: "All income"
 - assertVisible: "Maestro E2E Test Salary"
-- assertVisible: "$100.00"
+- assertVisible: "+$100.00"
 
 # --- 5: Delete it via the row's Delete affordance and confirm the undo snackbar appears ---
 # Deletion is immediate (mirrors the expense list) — an undo snackbar ("Deleted "<source>"" /
@@ -64,5 +61,5 @@ appId: com.joaoeoneves.fintrack
 # Return to the dashboard, leaving app state as found.
 - back
 - scrollUntilVisible:
-    element: "Total:.*"
+    element: "Net Balance"
     direction: UP

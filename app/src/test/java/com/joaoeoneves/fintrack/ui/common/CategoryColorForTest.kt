@@ -12,48 +12,48 @@ import org.junit.Test
  * and its legend.
  */
 class CategoryColorForTest {
-    // ---- light mode: fixed Google Material brand hues ----
+    // ---- light mode: fixed fintech-accent brand hues ----
 
     @Test
     fun transfer_lightMode_resolvesToBrandBlue() {
-        assertEquals(Color(0xFF4285F4), categoryColorFor(ExpenseCategory.TRANSFER, isDarkTheme = false))
+        assertEquals(Color(0xFF2563EB), categoryColorFor(ExpenseCategory.TRANSFER, isDarkTheme = false))
     }
 
     @Test
     fun investments_lightMode_resolvesToBrandGreen() {
-        assertEquals(Color(0xFF34A853), categoryColorFor(ExpenseCategory.INVESTMENTS, isDarkTheme = false))
+        assertEquals(Color(0xFF059669), categoryColorFor(ExpenseCategory.INVESTMENTS, isDarkTheme = false))
     }
 
     @Test
     fun shopping_lightMode_resolvesToBrandYellow() {
-        assertEquals(Color(0xFFFBBC05), categoryColorFor(ExpenseCategory.SHOPPING, isDarkTheme = false))
+        assertEquals(Color(0xFFD97706), categoryColorFor(ExpenseCategory.SHOPPING, isDarkTheme = false))
     }
 
     @Test
     fun recurring_lightMode_resolvesToBrandRed() {
-        assertEquals(Color(0xFFEA4335), categoryColorFor(ExpenseCategory.RECURRING, isDarkTheme = false))
+        assertEquals(Color(0xFFDC2626), categoryColorFor(ExpenseCategory.RECURRING, isDarkTheme = false))
     }
 
     // ---- dark mode: distinct tuned tones ----
 
     @Test
     fun transfer_darkMode_resolvesToTunedBlue() {
-        assertEquals(Color(0xFF8AB4F8), categoryColorFor(ExpenseCategory.TRANSFER, isDarkTheme = true))
+        assertEquals(Color(0xFF3B82F6), categoryColorFor(ExpenseCategory.TRANSFER, isDarkTheme = true))
     }
 
     @Test
     fun investments_darkMode_resolvesToTunedGreen() {
-        assertEquals(Color(0xFF81C995), categoryColorFor(ExpenseCategory.INVESTMENTS, isDarkTheme = true))
+        assertEquals(Color(0xFF10B981), categoryColorFor(ExpenseCategory.INVESTMENTS, isDarkTheme = true))
     }
 
     @Test
     fun shopping_darkMode_resolvesToTunedYellow() {
-        assertEquals(Color(0xFFFDD663), categoryColorFor(ExpenseCategory.SHOPPING, isDarkTheme = true))
+        assertEquals(Color(0xFFF59E0B), categoryColorFor(ExpenseCategory.SHOPPING, isDarkTheme = true))
     }
 
     @Test
     fun recurring_darkMode_resolvesToTunedRed() {
-        assertEquals(Color(0xFFF28B82), categoryColorFor(ExpenseCategory.RECURRING, isDarkTheme = true))
+        assertEquals(Color(0xFFEF4444), categoryColorFor(ExpenseCategory.RECURRING, isDarkTheme = true))
     }
 
     // ---- light vs. dark: every category's color must actually differ between themes ----

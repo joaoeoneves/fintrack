@@ -28,10 +28,10 @@ val ExpenseCategory.displayName: String
  */
 private fun lightCategoryColor(category: ExpenseCategory): Color =
     when (category) {
-        ExpenseCategory.TRANSFER -> Color(0xFF4285F4)
-        ExpenseCategory.INVESTMENTS -> Color(0xFF34A853)
-        ExpenseCategory.SHOPPING -> Color(0xFFFBBC05)
-        ExpenseCategory.RECURRING -> Color(0xFFEA4335)
+        ExpenseCategory.TRANSFER -> Color(0xFF2563EB)
+        ExpenseCategory.INVESTMENTS -> Color(0xFF059669)
+        ExpenseCategory.SHOPPING -> Color(0xFFD97706)
+        ExpenseCategory.RECURRING -> Color(0xFFDC2626)
     }
 
 /**
@@ -40,10 +40,10 @@ private fun lightCategoryColor(category: ExpenseCategory): Color =
  */
 private fun darkCategoryColor(category: ExpenseCategory): Color =
     when (category) {
-        ExpenseCategory.TRANSFER -> Color(0xFF8AB4F8)
-        ExpenseCategory.INVESTMENTS -> Color(0xFF81C995)
-        ExpenseCategory.SHOPPING -> Color(0xFFFDD663)
-        ExpenseCategory.RECURRING -> Color(0xFFF28B82)
+        ExpenseCategory.TRANSFER -> Color(0xFF3B82F6)
+        ExpenseCategory.INVESTMENTS -> Color(0xFF10B981)
+        ExpenseCategory.SHOPPING -> Color(0xFFF59E0B)
+        ExpenseCategory.RECURRING -> Color(0xFFEF4444)
     }
 
 /**

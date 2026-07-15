@@ -10,16 +10,16 @@ appId: com.joaoeoneves.fintrack
 
 - launchApp
 
-# --- 1/2: Dashboard loads with filter chips, total, pie legend, and the Add expense FAB ---
+# --- 1/2: Dashboard loads with filter pills, balance summary card, pie legend, and the Add expense FAB ---
 - assertVisible: "FinTrack"
 - assertVisible: "1W"
 - assertVisible: "1M"
 - assertVisible: "3M"
 - assertVisible: "6M"
 - assertVisible: "1Y"
-- assertVisible:
-    text: "Total:.*"
-    optional: false
+- assertVisible: "Net Balance"
+- assertVisible: "Income"
+- assertVisible: "Expenses"
 - assertVisible: "Transfer"
 - assertVisible: "Investments"
 - assertVisible: "Shopping"
@@ -36,17 +36,24 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 
-# Back on the dashboard, the new expense should show up in "Recent expenses".
+# Back on the dashboard, the new expense should show up in "Recent expenses". That section is now
+# pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/BudgetSection above it
+# (all new in this layout), so scroll down before interacting with it. The amount assertion is
+# deliberately deferred to the full list below rather than checked here: right after the Firestore
+# write, an in-flight snapshot-listener refresh can reset the LazyColumn scroll offset back to the
+# top between the scroll and a same-screen assertion, making an amount check here flaky.
 - assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "$12.34"
+- scrollUntilVisible:
+    element: "Recent expenses"
+    direction: DOWN
 
 # --- 4: Open the full expense list and confirm the new expense is there ---
-# "Recent expenses" header and "See all expenses" both open the same full list; the header is
-# reliably on-screen without needing to scroll first.
+# "Recent expenses" header and "See all expenses" both open the same full list. ExpenseRow now
+# prefixes the amount with "-" (restyled amount text), so the row shows "-$12.34".
 - tapOn: "Recent expenses"
 - assertVisible: "All expenses"
 - assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "$12.34"
+- assertVisible: "-$12.34"
 
 # --- 5: Edit it (change the amount) and confirm the change persists ---
 - tapOn: "Maestro E2E Test Expense"
@@ -60,8 +67,8 @@ appId: com.joaoeoneves.fintrack
 # Back on the full list, the updated amount should be visible.
 - assertVisible: "All expenses"
 - assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "$56.78"
-- assertNotVisible: "$12.34"
+- assertVisible: "-$56.78"
+- assertNotVisible: "-$12.34"
 
 # --- 6: Delete it and confirm it's gone ---
 # Deletion is now immediate (tap or swipe the row) — there is no confirmation dialog anymore.
