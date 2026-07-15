@@ -71,6 +71,7 @@
     <ID>SwallowedException:FirestoreExpenseRepository.kt$FirestoreExpenseRepository$e: IllegalArgumentException</ID>
     <ID>SwallowedException:ImportExportViewModel.kt$ImportExportViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:FirebaseAuthRepository.kt$FirebaseAuthRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreBudgetRepository.kt$FirestoreBudgetRepository$e: Exception</ID>
     <ID>TooGenericExceptionCaught:FirestoreExpenseRepository.kt$FirestoreExpenseRepository$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ImportExportViewModel.kt$ImportExportViewModel$e: Exception</ID>
     <ID>TooManyFunctions:FirestoreExpenseRepository.kt$FirestoreExpenseRepository : ExpenseRepository</ID>

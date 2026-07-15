@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
 import ptech.joaoe.agenticusage.domain.model.TimeRange
 import ptech.joaoe.agenticusage.ui.common.ErrorState
 import ptech.joaoe.agenticusage.ui.common.ExpenseRow
@@ -131,6 +132,7 @@ fun DashboardScreen(
                     state = state,
                     onTimeRangeSelected = viewModel::onTimeRangeSelected,
                     onOpenList = onOpenList,
+                    onSetBudget = viewModel::onSetBudget,
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -205,6 +207,7 @@ private fun DashboardContent(
     state: DashboardUiState.Content,
     onTimeRangeSelected: (TimeRange) -> Unit,
     onOpenList: (TimeRange) -> Unit,
+    onSetBudget: (ExpenseCategory, Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier) {
@@ -212,36 +215,19 @@ private fun DashboardContent(
             TimeRangeFilterRow(selected = state.timeRange, onSelected = onTimeRangeSelected)
         }
 
-        if (state.expenses.isEmpty()) {
-            item {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "No expenses in this period yet.",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-            }
-        } else {
-            item {
-                Column(modifier = Modifier.padding(top = 8.dp)) {
-                    Text(
-                        text = "Total: ${formatAmountCents(state.totalCents)}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-                    PieChart(
-                        slices = state.categoryTotals,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
+        item {
+            DashboardSummary(state = state)
+        }
 
+        item {
+            BudgetSection(
+                budgets = state.budgets,
+                onSetBudget = onSetBudget,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        if (!state.expenses.isEmpty()) {
             item {
                 Text(
                     text = "Recent expenses",
@@ -275,10 +261,40 @@ private fun DashboardContent(
                     textAlign = TextAlign.Center,
                 )
             }
+        }
 
-            item {
-                Box(modifier = Modifier.padding(bottom = 80.dp)) {}
-            }
+        item {
+            Box(modifier = Modifier.padding(bottom = 80.dp)) {}
+        }
+    }
+}
+
+@Composable
+private fun DashboardSummary(state: DashboardUiState.Content) {
+    if (state.expenses.isEmpty()) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "No expenses in this period yet.",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+    } else {
+        Column(modifier = Modifier.padding(top = 8.dp)) {
+            Text(
+                text = "Total: ${formatAmountCents(state.totalCents)}",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            PieChart(
+                slices = state.categoryTotals,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

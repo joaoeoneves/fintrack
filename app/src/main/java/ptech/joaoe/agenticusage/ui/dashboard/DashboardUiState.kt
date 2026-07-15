@@ -9,6 +9,18 @@ data class CategoryTotal(
     val totalCents: Long,
 )
 
+/**
+ * Progress of a single [ExpenseCategory] against its budget limit for the current calendar
+ * month. [limitCents] is `null` when no budget has been set for the category.
+ */
+data class CategoryBudget(
+    val category: ExpenseCategory,
+    val limitCents: Long?,
+    val spentCents: Long,
+) {
+    val isOverBudget: Boolean get() = limitCents != null && spentCents > limitCents
+}
+
 sealed interface DashboardUiState {
     data object Loading : DashboardUiState
 
@@ -18,6 +30,7 @@ sealed interface DashboardUiState {
         val categoryTotals: List<CategoryTotal>,
         val totalCents: Long,
         val recentExpenses: List<Expense>,
+        val budgets: List<CategoryBudget>,
     ) : DashboardUiState
 
     data class Error(
