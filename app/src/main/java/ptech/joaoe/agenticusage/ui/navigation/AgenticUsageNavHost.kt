@@ -9,6 +9,8 @@ import androidx.navigation.compose.rememberNavController
 import ptech.joaoe.agenticusage.ui.dashboard.DashboardScreen
 import ptech.joaoe.agenticusage.ui.expense.addedit.AddEditExpenseScreen
 import ptech.joaoe.agenticusage.ui.expense.list.ExpenseListScreen
+import ptech.joaoe.agenticusage.ui.income.addedit.AddEditIncomeScreen
+import ptech.joaoe.agenticusage.ui.income.list.IncomeListScreen
 
 @Composable
 fun AgenticUsageNavHost(
@@ -21,6 +23,8 @@ fun AgenticUsageNavHost(
             DashboardScreen(
                 onOpenList = { timeRange -> navController.navigate(ExpenseList(timeRange)) },
                 onAddExpense = { navController.navigate(AddEditExpense()) },
+                onOpenIncomeList = { timeRange -> navController.navigate(IncomeList(timeRange)) },
+                onAddIncome = { navController.navigate(AddEditIncome()) },
                 onSignOut = onSignOut,
             )
         }
@@ -32,6 +36,18 @@ fun AgenticUsageNavHost(
         }
         composable<AddEditExpense> {
             AddEditExpenseScreen(
+                onSaved = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() },
+            )
+        }
+        composable<IncomeList> {
+            IncomeListScreen(
+                onBack = { navController.popBackStack() },
+                onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
+            )
+        }
+        composable<AddEditIncome> {
+            AddEditIncomeScreen(
                 onSaved = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() },
             )

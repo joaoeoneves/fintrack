@@ -18,3 +18,13 @@ data class ExpenseList(
 data class AddEditExpense(
     val expenseId: String? = null,
 )
+
+@Serializable
+data class IncomeList(
+    val timeRange: TimeRange,
+)
+
+@Serializable
+data class AddEditIncome(
+    val incomeId: String? = null,
+)

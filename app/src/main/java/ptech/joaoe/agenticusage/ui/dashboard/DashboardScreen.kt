@@ -5,12 +5,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -39,6 +41,7 @@ import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
 import ptech.joaoe.agenticusage.domain.model.TimeRange
 import ptech.joaoe.agenticusage.ui.common.ErrorState
 import ptech.joaoe.agenticusage.ui.common.ExpenseRow
+import ptech.joaoe.agenticusage.ui.common.IncomeRow
 import ptech.joaoe.agenticusage.ui.common.TimeRangeFilterRow
 import ptech.joaoe.agenticusage.ui.common.formatAmountCents
 import ptech.joaoe.agenticusage.ui.importexport.ExportUiState
@@ -52,6 +55,8 @@ import ptech.joaoe.agenticusage.ui.importexport.MessageDialog
 fun DashboardScreen(
     onOpenList: (TimeRange) -> Unit,
     onAddExpense: () -> Unit,
+    onOpenIncomeList: (TimeRange) -> Unit,
+    onAddIncome: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(),
@@ -133,6 +138,8 @@ fun DashboardScreen(
                     onTimeRangeSelected = viewModel::onTimeRangeSelected,
                     onOpenList = onOpenList,
                     onSetBudget = viewModel::onSetBudget,
+                    onOpenIncomeList = onOpenIncomeList,
+                    onAddIncome = onAddIncome,
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -208,6 +215,8 @@ private fun DashboardContent(
     onTimeRangeSelected: (TimeRange) -> Unit,
     onOpenList: (TimeRange) -> Unit,
     onSetBudget: (ExpenseCategory, Long) -> Unit,
+    onOpenIncomeList: (TimeRange) -> Unit,
+    onAddIncome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier) {
@@ -217,6 +226,10 @@ private fun DashboardContent(
 
         item {
             DashboardSummary(state = state)
+        }
+
+        item {
+            NetBalanceSummary(state = state)
         }
 
         item {
@@ -264,8 +277,83 @@ private fun DashboardContent(
         }
 
         item {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenIncomeList(state.timeRange) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Recent income",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onAddIncome) {
+                    Icon(Icons.Default.Add, contentDescription = "Add income")
+                }
+            }
+        }
+
+        if (state.recentIncome.isEmpty()) {
+            item {
+                Text(
+                    text = "No income in this period yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+        } else {
+            items(state.recentIncome, key = { it.id }) { income ->
+                IncomeRow(
+                    income = income,
+                    onClick = { onOpenIncomeList(state.timeRange) },
+                )
+                HorizontalDivider()
+            }
+
+            item {
+                Text(
+                    text = "See all income",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenIncomeList(state.timeRange) }
+                            .padding(16.dp),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
+        item {
             Box(modifier = Modifier.padding(bottom = 80.dp)) {}
         }
+    }
+}
+
+@Composable
+private fun NetBalanceSummary(state: DashboardUiState.Content) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Text(
+            text = "Income: ${formatAmountCents(state.incomeCents)}",
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+            text = "Net balance: ${formatAmountCents(state.netCents)}",
+            style = MaterialTheme.typography.bodyLarge,
+            color =
+                if (state.netCents < 0) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
+        )
     }
 }
 

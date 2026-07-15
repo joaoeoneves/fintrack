@@ -11,5 +11,10 @@ service cloud.firestore {
     match /users/{userId}/budgets/{categoryId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Each user can only read/write their own income entries.
+    match /users/{userId}/income/{incomeId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }

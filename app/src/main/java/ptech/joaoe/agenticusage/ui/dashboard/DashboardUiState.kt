@@ -2,6 +2,7 @@ package ptech.joaoe.agenticusage.ui.dashboard
 
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
+import ptech.joaoe.agenticusage.domain.model.Income
 import ptech.joaoe.agenticusage.domain.model.TimeRange
 
 data class CategoryTotal(
@@ -31,6 +32,9 @@ sealed interface DashboardUiState {
         val totalCents: Long,
         val recentExpenses: List<Expense>,
         val budgets: List<CategoryBudget>,
+        val incomeCents: Long,
+        val netCents: Long,
+        val recentIncome: List<Income>,
     ) : DashboardUiState
 
     data class Error(

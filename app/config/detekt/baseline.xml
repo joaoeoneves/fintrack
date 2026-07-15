@@ -4,12 +4,16 @@
   <CurrentIssues>
     <ID>DestructuringDeclarationWithTooManyEntries:ExpenseCsvParser.kt$ExpenseCsvParser$val (rawName, rawAmount, rawCategory, rawDate, rawNote) = fields</ID>
     <ID>LongMethod:AddEditExpenseScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun ExpenseForm( form: ExpenseFormState, onNameChanged: (String) -&gt; Unit, onAmountChanged: (String) -&gt; Unit, onCategorySelected: (ExpenseCategory) -&gt; Unit, onDateSelected: (Instant) -&gt; Unit, onNoteChanged: (String) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>LongMethod:DashboardScreen.kt$@Composable private fun DashboardContent( state: DashboardUiState.Content, onTimeRangeSelected: (TimeRange) -&gt; Unit, onOpenList: (TimeRange) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>LongMethod:DashboardScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DashboardScreen( onOpenList: (TimeRange) -&gt; Unit, onAddExpense: () -&gt; Unit, onSignOut: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: DashboardViewModel = hiltViewModel(), importExportViewModel: ImportExportViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:AddEditIncomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun IncomeForm( form: IncomeFormState, onSourceChanged: (String) -&gt; Unit, onAmountChanged: (String) -&gt; Unit, onDateSelected: (Instant) -&gt; Unit, onNoteChanged: (String) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:DashboardScreen.kt$@Composable private fun DashboardContent( state: DashboardUiState.Content, onTimeRangeSelected: (TimeRange) -&gt; Unit, onOpenList: (TimeRange) -&gt; Unit, onSetBudget: (ExpenseCategory, Long) -&gt; Unit, onOpenIncomeList: (TimeRange) -&gt; Unit, onAddIncome: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:DashboardScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DashboardScreen( onOpenList: (TimeRange) -&gt; Unit, onAddExpense: () -&gt; Unit, onOpenIncomeList: (TimeRange) -&gt; Unit, onAddIncome: () -&gt; Unit, onSignOut: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: DashboardViewModel = hiltViewModel(), importExportViewModel: ImportExportViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:ExpenseCsvParser.kt$ExpenseCsvParser$fun parse(csvText: String): CsvImportOutcome</ID>
     <ID>LongMethod:ExpenseListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun ExpenseListContent( state: ExpenseListUiState.Content, onTimeRangeSelected: (TimeRange) -&gt; Unit, onQueryChanged: (String) -&gt; Unit, onSortSelected: (SortOption) -&gt; Unit, onOpenExpense: (String) -&gt; Unit, onDelete: (String) -&gt; Unit, contentPadding: PaddingValues, )</ID>
+    <ID>LongMethod:IncomeListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun IncomeListContent( state: IncomeListUiState.Content, onTimeRangeSelected: (TimeRange) -&gt; Unit, onOpenIncome: (String) -&gt; Unit, onDelete: (String) -&gt; Unit, contentPadding: PaddingValues, )</ID>
     <ID>LongParameterList:AddEditExpenseScreen.kt$( form: ExpenseFormState, onNameChanged: (String) -&gt; Unit, onAmountChanged: (String) -&gt; Unit, onCategorySelected: (ExpenseCategory) -&gt; Unit, onDateSelected: (Instant) -&gt; Unit, onNoteChanged: (String) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>LongParameterList:DashboardScreen.kt$( onOpenList: (TimeRange) -&gt; Unit, onAddExpense: () -&gt; Unit, onSignOut: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: DashboardViewModel = hiltViewModel(), importExportViewModel: ImportExportViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:AddEditIncomeScreen.kt$( form: IncomeFormState, onSourceChanged: (String) -&gt; Unit, onAmountChanged: (String) -&gt; Unit, onDateSelected: (Instant) -&gt; Unit, onNoteChanged: (String) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:DashboardScreen.kt$( onOpenList: (TimeRange) -&gt; Unit, onAddExpense: () -&gt; Unit, onOpenIncomeList: (TimeRange) -&gt; Unit, onAddIncome: () -&gt; Unit, onSignOut: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: DashboardViewModel = hiltViewModel(), importExportViewModel: ImportExportViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:DashboardScreen.kt$( state: DashboardUiState.Content, onTimeRangeSelected: (TimeRange) -&gt; Unit, onOpenList: (TimeRange) -&gt; Unit, onSetBudget: (ExpenseCategory, Long) -&gt; Unit, onOpenIncomeList: (TimeRange) -&gt; Unit, onAddIncome: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>LongParameterList:DashboardViewModelTest.kt$DashboardViewModelTest$( id: String, name: String = id, amountCents: Long, category: ExpenseCategory, date: Instant, note: String? = null, )</ID>
     <ID>LongParameterList:ExpenseCsvWriterTest.kt$ExpenseCsvWriterTest$( id: String = "", name: String, amountCents: Long, category: ExpenseCategory, date: Instant, note: String?, )</ID>
     <ID>LongParameterList:ExpenseListScreen.kt$( state: ExpenseListUiState.Content, onTimeRangeSelected: (TimeRange) -&gt; Unit, onQueryChanged: (String) -&gt; Unit, onSortSelected: (SortOption) -&gt; Unit, onOpenExpense: (String) -&gt; Unit, onDelete: (String) -&gt; Unit, contentPadding: PaddingValues, )</ID>
@@ -17,6 +21,7 @@
     <ID>LongParameterList:FakeExpenseRepositoryTest.kt$FakeExpenseRepositoryTest$( id: String = "", name: String = "expense", amountCents: Long = 1_000L, category: ExpenseCategory = ExpenseCategory.SHOPPING, date: Instant = day1, note: String? = null, )</ID>
     <ID>LongParameterList:ImportExportViewModelTest.kt$ImportExportViewModelTest$( id: String = "", name: String, amountCents: Long = 500L, category: ExpenseCategory = ExpenseCategory.SHOPPING, date: Instant = Instant.parse("2024-01-15T00:00:00Z"), note: String? = null, )</ID>
     <ID>MagicNumber:AddEditExpenseViewModel.kt$100</ID>
+    <ID>MagicNumber:AddEditIncomeViewModel.kt$100</ID>
     <ID>MagicNumber:CategoryDisplay.kt$0xFF34A853</ID>
     <ID>MagicNumber:CategoryDisplay.kt$0xFF4285F4</ID>
     <ID>MagicNumber:CategoryDisplay.kt$0xFFEA4335</ID>
@@ -30,6 +35,7 @@
     <ID>MagicNumber:DashboardViewModel.kt$DashboardViewModel$5</ID>
     <ID>MagicNumber:DashboardViewModel.kt$DashboardViewModel$5_000</ID>
     <ID>MagicNumber:ExpenseListViewModel.kt$ExpenseListViewModel$5_000</ID>
+    <ID>MagicNumber:IncomeListViewModel.kt$IncomeListViewModel$5_000</ID>
     <ID>MagicNumber:PieChart.kt$360f</ID>
     <ID>MagicNumber:PieChart.kt$90f</ID>
     <ID>MagicNumber:SignInScreen.kt$0xFF34A853</ID>
@@ -44,6 +50,9 @@
     <ID>MaxLineLength:AddEditExpenseViewModelTest.kt$AddEditExpenseViewModelTest$private fun addModeViewModel(repository: ExpenseRepository)</ID>
     <ID>MaxLineLength:AddEditExpenseViewModelTest.kt$AddEditExpenseViewModelTest.TrackingRepository$override suspend fun deleteExpense(id: String): Result&lt;Unit&gt;</ID>
     <ID>MaxLineLength:AddEditExpenseViewModelTest.kt$AddEditExpenseViewModelTest.TrackingRepository$override suspend fun getAllExpenses(): Result&lt;List&lt;Expense&gt;&gt;</ID>
+    <ID>MaxLineLength:AddEditIncomeViewModel.kt$AddEditIncomeViewModel$_uiState.value = AddEditIncomeUiState.Ready(form.copy(sourceError = sourceError, amountError = amountError))</ID>
+    <ID>MaxLineLength:AddEditIncomeViewModel.kt$AddEditIncomeViewModel$fun onAmountChanged(amountText: String)</ID>
+    <ID>MaxLineLength:AddEditIncomeViewModel.kt$AddEditIncomeViewModel$fun onSourceChanged(source: String)</ID>
     <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest$expense(id = "i1", amountCents = 3_000L, category = ExpenseCategory.INVESTMENTS, date = now.minus(4, ChronoUnit.DAYS))</ID>
     <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest$expense(id = "old", amountCents = 1_000L, category = ExpenseCategory.SHOPPING, date = now.minus(200, ChronoUnit.DAYS))</ID>
     <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest$expense(id = "r1", amountCents = 4_000L, category = ExpenseCategory.RECURRING, date = now.minus(5, ChronoUnit.DAYS))</ID>
@@ -66,15 +75,19 @@
     <ID>ReturnCount:ExpenseCsvParser.kt$ExpenseCsvParser$fun parse(csvText: String): CsvImportOutcome</ID>
     <ID>ReturnCount:FirebaseAuthRepository.kt$FirebaseAuthRepository$override suspend fun signIn(context: Context): Result&lt;AuthUser&gt;</ID>
     <ID>ReturnCount:FirestoreExpenseRepository.kt$FirestoreExpenseRepository$private fun DocumentSnapshot.toExpenseOrNull(): Expense?</ID>
+    <ID>ReturnCount:FirestoreIncomeRepository.kt$FirestoreIncomeRepository$private fun DocumentSnapshot.toIncomeOrNull(): Income?</ID>
     <ID>SwallowedException:FakeExpenseRepositoryTest.kt$FakeExpenseRepositoryTest$e: RuntimeException</ID>
     <ID>SwallowedException:FirestoreExpenseRepository.kt$FirestoreExpenseRepository$e: Exception</ID>
     <ID>SwallowedException:FirestoreExpenseRepository.kt$FirestoreExpenseRepository$e: IllegalArgumentException</ID>
+    <ID>SwallowedException:FirestoreIncomeRepository.kt$FirestoreIncomeRepository$e: Exception</ID>
     <ID>SwallowedException:ImportExportViewModel.kt$ImportExportViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:FirebaseAuthRepository.kt$FirebaseAuthRepository$e: Exception</ID>
     <ID>TooGenericExceptionCaught:FirestoreBudgetRepository.kt$FirestoreBudgetRepository$e: Exception</ID>
     <ID>TooGenericExceptionCaught:FirestoreExpenseRepository.kt$FirestoreExpenseRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreIncomeRepository.kt$FirestoreIncomeRepository$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ImportExportViewModel.kt$ImportExportViewModel$e: Exception</ID>
     <ID>TooManyFunctions:FirestoreExpenseRepository.kt$FirestoreExpenseRepository : ExpenseRepository</ID>
+    <ID>TooManyFunctions:FirestoreIncomeRepository.kt$FirestoreIncomeRepository : IncomeRepository</ID>
     <ID>UnusedPrivateMember:ExpenseCsvParserTest.kt$ExpenseCsvParserTest$private fun errorMessage(csv: String): String</ID>
     <ID>UnusedPrivateMember:SignInScreen.kt$@Preview(showBackground = true) @Composable private fun SignInScreenPreview()</ID>
   </CurrentIssues>

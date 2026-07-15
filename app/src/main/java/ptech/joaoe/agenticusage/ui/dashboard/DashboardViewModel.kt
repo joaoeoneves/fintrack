@@ -16,10 +16,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
+import ptech.joaoe.agenticusage.domain.model.Income
 import ptech.joaoe.agenticusage.domain.model.TimeRange
 import ptech.joaoe.agenticusage.domain.model.currentCalendarMonthRange
 import ptech.joaoe.agenticusage.domain.repository.BudgetRepository
 import ptech.joaoe.agenticusage.domain.repository.ExpenseRepository
+import ptech.joaoe.agenticusage.domain.repository.IncomeRepository
 import java.time.Instant
 import javax.inject.Inject
 
@@ -30,6 +32,7 @@ class DashboardViewModel
     constructor(
         private val expenseRepository: ExpenseRepository,
         private val budgetRepository: BudgetRepository,
+        private val incomeRepository: IncomeRepository,
     ) : ViewModel() {
         private val timeRange = MutableStateFlow(TimeRange.ONE_MONTH)
         private val retryTrigger = MutableStateFlow(0)
@@ -57,7 +60,8 @@ class DashboardViewModel
                     combine(
                         expenseRepository.observeExpenses(instantRange.startInclusive, instantRange.endExclusive),
                         budgetProgress(),
-                    ) { expenses, budgets -> expenses.toContent(range, budgets) }
+                        incomeRepository.observeIncome(instantRange.startInclusive, instantRange.endExclusive),
+                    ) { expenses, budgets, income -> expenses.toContent(range, budgets, income) }
                         .map<DashboardUiState.Content, DashboardUiState> { content -> content }
                         .catch { e -> emit(DashboardUiState.Error(e.message ?: "Something went wrong")) }
                 }.stateIn(
@@ -84,6 +88,7 @@ class DashboardViewModel
         private fun List<Expense>.toContent(
             range: TimeRange,
             budgets: List<CategoryBudget>,
+            income: List<Income>,
         ): DashboardUiState.Content {
             val categoryTotals =
                 ExpenseCategory.entries.map { category ->
@@ -92,13 +97,18 @@ class DashboardViewModel
                         totalCents = filter { it.category == category }.sumOf { it.amountCents },
                     )
                 }
+            val totalCents = sumOf { it.amountCents }
+            val incomeCents = income.sumOf { it.amountCents }
             return DashboardUiState.Content(
                 timeRange = range,
                 expenses = this,
                 categoryTotals = categoryTotals,
-                totalCents = sumOf { it.amountCents },
+                totalCents = totalCents,
                 recentExpenses = sortedByDescending { it.date }.take(5),
                 budgets = budgets,
+                incomeCents = incomeCents,
+                netCents = incomeCents - totalCents,
+                recentIncome = income.sortedByDescending { it.date }.take(5),
             )
         }
     }

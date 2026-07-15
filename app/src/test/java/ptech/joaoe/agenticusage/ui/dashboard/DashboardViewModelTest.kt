@@ -18,9 +18,11 @@ import org.junit.Before
 import org.junit.Test
 import ptech.joaoe.agenticusage.data.FakeBudgetRepository
 import ptech.joaoe.agenticusage.data.FakeExpenseRepository
+import ptech.joaoe.agenticusage.data.FakeIncomeRepository
 import ptech.joaoe.agenticusage.domain.model.Budget
 import ptech.joaoe.agenticusage.domain.model.Expense
 import ptech.joaoe.agenticusage.domain.model.ExpenseCategory
+import ptech.joaoe.agenticusage.domain.model.Income
 import ptech.joaoe.agenticusage.domain.model.TimeRange
 import java.time.Instant
 import java.time.LocalTime
@@ -68,6 +70,14 @@ class DashboardViewModelTest {
         note: String? = null,
     ) = Expense(id = id, name = name, amountCents = amountCents, category = category, date = date, note = note)
 
+    private fun income(
+        id: String,
+        source: String = id,
+        amountCents: Long,
+        date: Instant,
+        note: String? = null,
+    ) = Income(id = id, source = source, amountCents = amountCents, date = date, note = note)
+
     /** Noon on [day] of the given [yearMonth], safely away from midnight rollover edges. */
     private fun noonOn(
         yearMonth: YearMonth,
@@ -83,7 +93,7 @@ class DashboardViewModelTest {
     fun initialState_isLoading_beforeCollectionStarts() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             // Before advanceUntilIdle/collection, the StateFlow built via stateIn(WhileSubscribed)
             // has not yet started collecting upstream, so it should still report its initialValue.
@@ -94,7 +104,7 @@ class DashboardViewModelTest {
     fun emptyRepository_producesContentWithZeroTotalsAndAllCategoriesPresent() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -129,7 +139,7 @@ class DashboardViewModelTest {
                     date = now.minus(40, ChronoUnit.DAYS),
                 )
             val repo = FakeExpenseRepository(listOf(insideOneMonth, outsideOneMonth))
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -155,7 +165,7 @@ class DashboardViewModelTest {
             val recurring =
                 expense(id = "r1", amountCents = 4_000L, category = ExpenseCategory.RECURRING, date = now.minus(5, ChronoUnit.DAYS))
             val repo = FakeExpenseRepository(listOf(shopping1, shopping2, transfer, investment, recurring))
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -183,7 +193,7 @@ class DashboardViewModelTest {
             val e6 = expense(id = "e6", amountCents = 100L, category = ExpenseCategory.SHOPPING, date = now.minus(6, ChronoUnit.DAYS))
             val e7 = expense(id = "e7", amountCents = 100L, category = ExpenseCategory.SHOPPING, date = now.minus(7, ChronoUnit.DAYS))
             val repo = FakeExpenseRepository(listOf(e4, e1, e7, e2, e6, e3, e5))
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -208,7 +218,7 @@ class DashboardViewModelTest {
                     date = now.minus(20, ChronoUnit.DAYS),
                 )
             val repo = FakeExpenseRepository(listOf(withinWeek, withinMonthNotWeek))
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -235,7 +245,7 @@ class DashboardViewModelTest {
             val onlyOldExpense =
                 expense(id = "old", amountCents = 1_000L, category = ExpenseCategory.SHOPPING, date = now.minus(200, ChronoUnit.DAYS))
             val repo = FakeExpenseRepository(listOf(onlyOldExpense))
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -260,7 +270,7 @@ class DashboardViewModelTest {
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
             repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -275,7 +285,7 @@ class DashboardViewModelTest {
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
             repo.nextObserveExpensesError = RuntimeException()
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -297,7 +307,7 @@ class DashboardViewModelTest {
                 )
             val repo = FakeExpenseRepository(listOf(existing))
             repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
-            val viewModel = DashboardViewModel(repo, FakeBudgetRepository())
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -324,7 +334,7 @@ class DashboardViewModelTest {
         runTest(testDispatcher) {
             val expenseRepo = FakeExpenseRepository()
             val budgetRepo = FakeBudgetRepository()
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -344,7 +354,7 @@ class DashboardViewModelTest {
         runTest(testDispatcher) {
             val expenseRepo = FakeExpenseRepository()
             val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -387,7 +397,7 @@ class DashboardViewModelTest {
                 )
             val expenseRepo = FakeExpenseRepository(listOf(oldButThisMonthExpense))
             val budgetRepo = FakeBudgetRepository()
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -424,7 +434,7 @@ class DashboardViewModelTest {
                 )
             val expenseRepo = FakeExpenseRepository(listOf(previousMonthExpense, thisMonthExpense))
             val budgetRepo = FakeBudgetRepository()
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -450,7 +460,7 @@ class DashboardViewModelTest {
                 expense(id = "big", amountCents = 1_000_000L, category = ExpenseCategory.SHOPPING, date = now)
             val expenseRepo = FakeExpenseRepository(listOf(bigExpense))
             val budgetRepo = FakeBudgetRepository() // no limit set
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -471,7 +481,7 @@ class DashboardViewModelTest {
                 expense(id = "at-limit", amountCents = 10_000L, category = ExpenseCategory.SHOPPING, date = now)
             val expenseRepo = FakeExpenseRepository(listOf(expenseAtLimit))
             val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -491,7 +501,7 @@ class DashboardViewModelTest {
                 expense(id = "over-limit", amountCents = 10_001L, category = ExpenseCategory.SHOPPING, date = now)
             val expenseRepo = FakeExpenseRepository(listOf(overLimitExpense))
             val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -510,7 +520,7 @@ class DashboardViewModelTest {
         runTest(testDispatcher) {
             val expenseRepo = FakeExpenseRepository()
             val budgetRepo = FakeBudgetRepository()
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -534,7 +544,7 @@ class DashboardViewModelTest {
         runTest(testDispatcher) {
             val expenseRepo = FakeExpenseRepository()
             val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 5_000L)))
-            val viewModel = DashboardViewModel(expenseRepo, budgetRepo)
+            val viewModel = DashboardViewModel(expenseRepo, budgetRepo, FakeIncomeRepository())
 
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -545,6 +555,227 @@ class DashboardViewModelTest {
             val content = viewModel.uiState.value as DashboardUiState.Content
             assertEquals(ExpenseCategory.entries.size, content.budgets.size)
             assertEquals(7_500L, content.budgets.single { it.category == ExpenseCategory.SHOPPING }.limitCents)
+
+            job.cancel()
+        }
+
+    // ---- income / net balance: scoped to the currently-selected TimeRange (not the calendar-month budget range) ----
+
+    @Test
+    fun incomeCents_sumsIncomeWithinSelectedTimeRange_excludesIncomeOutsideIt() =
+        runTest(testDispatcher) {
+            val insideOneMonth = income(id = "inside", amountCents = 250_000L, date = now.minus(3, ChronoUnit.DAYS))
+            val outsideOneMonth = income(id = "outside", amountCents = 999_999L, date = now.minus(40, ChronoUnit.DAYS))
+            val expenseRepo = FakeExpenseRepository()
+            val incomeRepo = FakeIncomeRepository(listOf(insideOneMonth, outsideOneMonth))
+            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(TimeRange.ONE_MONTH, content.timeRange)
+            assertEquals(250_000L, content.incomeCents)
+            assertEquals(listOf(insideOneMonth), content.recentIncome)
+
+            job.cancel()
+        }
+
+    @Test
+    fun incomeCents_emptyIncomeRepository_isZero() =
+        runTest(testDispatcher) {
+            val expenseRepo = FakeExpenseRepository()
+            val incomeRepo = FakeIncomeRepository()
+            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(0L, content.incomeCents)
+            assertTrue(content.recentIncome.isEmpty())
+
+            job.cancel()
+        }
+
+    @Test
+    fun netCents_equalsIncomeMinusExpenses_forSelectedTimeRange() =
+        runTest(testDispatcher) {
+            val expenseThisMonth =
+                expense(
+                    id = "e1",
+                    amountCents = 12_000L,
+                    category = ExpenseCategory.SHOPPING,
+                    date = now.minus(2, ChronoUnit.DAYS),
+                )
+            val incomeThisMonth = income(id = "i1", amountCents = 300_000L, date = now.minus(1, ChronoUnit.DAYS))
+            val expenseRepo = FakeExpenseRepository(listOf(expenseThisMonth))
+            val incomeRepo = FakeIncomeRepository(listOf(incomeThisMonth))
+            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(300_000L, content.incomeCents)
+            assertEquals(12_000L, content.totalCents)
+            assertEquals(288_000L, content.netCents)
+
+            job.cancel()
+        }
+
+    @Test
+    fun netCents_negativeWhenExpensesExceedIncome() =
+        runTest(testDispatcher) {
+            val bigExpense = expense(id = "e1", amountCents = 50_000L, category = ExpenseCategory.SHOPPING, date = now)
+            val smallIncome = income(id = "i1", amountCents = 10_000L, date = now)
+            val expenseRepo = FakeExpenseRepository(listOf(bigExpense))
+            val incomeRepo = FakeIncomeRepository(listOf(smallIncome))
+            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(-40_000L, content.netCents)
+
+            job.cancel()
+        }
+
+    @Test
+    fun netCents_zeroWhenNoIncomeAndNoExpenses() =
+        runTest(testDispatcher) {
+            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), FakeIncomeRepository())
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(0L, content.incomeCents)
+            assertEquals(0L, content.totalCents)
+            assertEquals(0L, content.netCents)
+
+            job.cancel()
+        }
+
+    @Test
+    fun recentIncome_returnsTop5ByDateDescending_whenMoreThan5InRange() =
+        runTest(testDispatcher) {
+            // 7 income entries inside the range, at distinct days, in scrambled insertion order.
+            val i1 = income(id = "i1", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
+            val i2 = income(id = "i2", amountCents = 100L, date = now.minus(2, ChronoUnit.DAYS))
+            val i3 = income(id = "i3", amountCents = 100L, date = now.minus(3, ChronoUnit.DAYS))
+            val i4 = income(id = "i4", amountCents = 100L, date = now.minus(4, ChronoUnit.DAYS))
+            val i5 = income(id = "i5", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
+            val i6 = income(id = "i6", amountCents = 100L, date = now.minus(6, ChronoUnit.DAYS))
+            val i7 = income(id = "i7", amountCents = 100L, date = now.minus(7, ChronoUnit.DAYS))
+            val incomeRepo = FakeIncomeRepository(listOf(i4, i1, i7, i2, i6, i3, i5))
+            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(listOf(i1, i2, i3, i4, i5), content.recentIncome)
+            assertEquals(700L, content.incomeCents)
+
+            job.cancel()
+        }
+
+    @Test
+    fun income_inDifferentTimeRangeBucketThanExpenses_isFilteredIndependently() =
+        runTest(testDispatcher) {
+            // Income lands within the current month but *outside* the current week; the expense is
+            // the reverse (inside the week, and therefore also inside the month). Selecting
+            // ONE_WEEK should include the expense but exclude the income; selecting ONE_MONTH
+            // should include both.
+            val incomeOutsideWeekInsideMonth =
+                income(id = "income-month-only", amountCents = 400_000L, date = now.minus(20, ChronoUnit.DAYS))
+            val expenseInsideWeek =
+                expense(
+                    id = "expense-week",
+                    amountCents = 5_000L,
+                    category = ExpenseCategory.SHOPPING,
+                    date = now.minus(1, ChronoUnit.DAYS),
+                )
+            val expenseRepo = FakeExpenseRepository(listOf(expenseInsideWeek))
+            val incomeRepo = FakeIncomeRepository(listOf(incomeOutsideWeekInsideMonth))
+            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val monthContent = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(TimeRange.ONE_MONTH, monthContent.timeRange)
+            assertEquals(400_000L, monthContent.incomeCents)
+            assertEquals(5_000L, monthContent.totalCents)
+            assertEquals(395_000L, monthContent.netCents)
+
+            viewModel.onTimeRangeSelected(TimeRange.ONE_WEEK)
+            advanceUntilIdle()
+
+            val weekContent = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(TimeRange.ONE_WEEK, weekContent.timeRange)
+            // Income from 20 days ago is excluded from the one-week bucket...
+            assertEquals(0L, weekContent.incomeCents)
+            assertTrue(weekContent.recentIncome.isEmpty())
+            // ...while the expense (1 day ago) is still included.
+            assertEquals(5_000L, weekContent.totalCents)
+            assertEquals(-5_000L, weekContent.netCents)
+
+            job.cancel()
+        }
+
+    // ---- observeIncome failure -> Error state (mirrors observeExpenses failure handling) ----
+
+    @Test
+    fun observeIncomeFailure_beforeFirstCollection_surfacesErrorState_withUnderlyingMessage() =
+        runTest(testDispatcher) {
+            val incomeRepo = FakeIncomeRepository()
+            incomeRepo.nextObserveIncomeError = IllegalStateException("Firestore unavailable")
+            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
+
+            job.cancel()
+        }
+
+    @Test
+    fun observeIncomeFailure_withNullExceptionMessage_fallsBackToDefaultMessage() =
+        runTest(testDispatcher) {
+            val incomeRepo = FakeIncomeRepository()
+            incomeRepo.nextObserveIncomeError = RuntimeException()
+            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(DashboardUiState.Error("Something went wrong"), viewModel.uiState.value)
+
+            job.cancel()
+        }
+
+    @Test
+    fun onRetry_afterClearingObserveIncomeError_transitionsFromErrorBackToContent() =
+        runTest(testDispatcher) {
+            val existingIncome = income(id = "i1", amountCents = 1_000L, date = now.minus(1, ChronoUnit.DAYS))
+            val incomeRepo = FakeIncomeRepository(listOf(existingIncome))
+            incomeRepo.nextObserveIncomeError = IllegalStateException("Firestore unavailable")
+            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+            assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
+
+            incomeRepo.nextObserveIncomeError = null
+            viewModel.onRetry()
+            advanceUntilIdle()
+
+            val content = viewModel.uiState.value as DashboardUiState.Content
+            assertEquals(1_000L, content.incomeCents)
 
             job.cancel()
         }
