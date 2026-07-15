@@ -15,6 +15,8 @@ import ptech.joaoe.agenticusage.ui.income.list.IncomeListScreen
 @Composable
 fun AgenticUsageNavHost(
     onSignOut: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -26,6 +28,8 @@ fun AgenticUsageNavHost(
                 onOpenIncomeList = { timeRange -> navController.navigate(IncomeList(timeRange)) },
                 onAddIncome = { navController.navigate(AddEditIncome()) },
                 onSignOut = onSignOut,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = onToggleTheme,
             )
         }
         composable<ExpenseList> {

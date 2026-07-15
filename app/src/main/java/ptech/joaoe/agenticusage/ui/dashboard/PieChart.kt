@@ -32,6 +32,7 @@ fun PieChart(
     modifier: Modifier = Modifier,
 ) {
     val total = slices.sumOf { it.totalCents }
+    val sliceColors = slices.map { it.category.color }
 
     Column(modifier = modifier) {
         Canvas(
@@ -43,11 +44,11 @@ fun PieChart(
         ) {
             if (total <= 0L) return@Canvas
             var startAngle = -90f
-            slices.forEach { slice ->
+            slices.forEachIndexed { index, slice ->
                 val sweep = (slice.totalCents.toFloat() / total.toFloat()) * 360f
                 if (sweep > 0f) {
                     drawArc(
-                        color = slice.category.color,
+                        color = sliceColors[index],
                         startAngle = startAngle,
                         sweepAngle = sweep,
                         useCenter = true,

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,11 +14,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import ptech.joaoe.agenticusage.domain.model.ThemePreference
 import ptech.joaoe.agenticusage.ui.auth.AuthUiState
 import ptech.joaoe.agenticusage.ui.auth.AuthViewModel
 import ptech.joaoe.agenticusage.ui.auth.SignInScreen
 import ptech.joaoe.agenticusage.ui.navigation.AgenticUsageNavHost
 import ptech.joaoe.agenticusage.ui.theme.AgenticUsageTheme
+import ptech.joaoe.agenticusage.ui.theme.ThemeViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -25,7 +28,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AgenticUsageTheme {
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val themePreference by themeViewModel.themePreference.collectAsStateWithLifecycle()
+            val resolvedDarkTheme =
+                when (themePreference) {
+                    ThemePreference.SYSTEM -> isSystemInDarkTheme()
+                    ThemePreference.LIGHT -> false
+                    ThemePreference.DARK -> true
+                }
+
+            AgenticUsageTheme(darkTheme = resolvedDarkTheme, dynamicColor = false) {
                 val viewModel: AuthViewModel = hiltViewModel()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val context = LocalContext.current
@@ -35,6 +47,8 @@ class MainActivity : ComponentActivity() {
                     if (state is AuthUiState.SignedIn) {
                         AgenticUsageNavHost(
                             onSignOut = viewModel::signOut,
+                            isDarkTheme = resolvedDarkTheme,
+                            onToggleTheme = { themeViewModel.toggleTheme(resolvedDarkTheme) },
                             modifier = Modifier.padding(innerPadding),
                         )
                     } else {

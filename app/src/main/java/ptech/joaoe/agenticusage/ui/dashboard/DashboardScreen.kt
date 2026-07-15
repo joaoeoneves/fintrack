@@ -58,6 +58,8 @@ fun DashboardScreen(
     onOpenIncomeList: (TimeRange) -> Unit,
     onAddIncome: () -> Unit,
     onSignOut: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(),
     importExportViewModel: ImportExportViewModel = hiltViewModel(),
@@ -100,6 +102,13 @@ fun DashboardScreen(
                             onClick = {
                                 menuExpanded = false
                                 exportLauncher.launch("agenticusage-expenses.csv")
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(if (isDarkTheme) "Switch to light mode" else "Switch to dark mode") },
+                            onClick = {
+                                menuExpanded = false
+                                onToggleTheme()
                             },
                         )
                         DropdownMenuItem(

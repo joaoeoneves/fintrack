@@ -8,10 +8,12 @@ import ptech.joaoe.agenticusage.data.FirebaseAuthRepository
 import ptech.joaoe.agenticusage.data.FirestoreBudgetRepository
 import ptech.joaoe.agenticusage.data.FirestoreExpenseRepository
 import ptech.joaoe.agenticusage.data.FirestoreIncomeRepository
+import ptech.joaoe.agenticusage.data.SharedPrefsThemeRepository
 import ptech.joaoe.agenticusage.domain.repository.AuthRepository
 import ptech.joaoe.agenticusage.domain.repository.BudgetRepository
 import ptech.joaoe.agenticusage.domain.repository.ExpenseRepository
 import ptech.joaoe.agenticusage.domain.repository.IncomeRepository
+import ptech.joaoe.agenticusage.domain.repository.ThemeRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -27,4 +29,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindIncomeRepository(impl: FirestoreIncomeRepository): IncomeRepository
+
+    @Binds
+    abstract fun bindThemeRepository(impl: SharedPrefsThemeRepository): ThemeRepository
 }
