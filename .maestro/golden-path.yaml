@@ -36,16 +36,18 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 
-# Back on the dashboard, the new expense should show up in "Recent expenses". That section is now
+# Back on the dashboard, the new expense should show up in "Recent expenses". That section is
 # pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/BudgetSection above it
-# (all new in this layout), so scroll down before interacting with it. The amount assertion is
-# deliberately deferred to the full list below rather than checked here: right after the Firestore
-# write, an in-flight snapshot-listener refresh can reset the LazyColumn scroll offset back to the
-# top between the scroll and a same-screen assertion, making an amount check here flaky.
-- assertVisible: "Maestro E2E Test Expense"
+# (all new in this layout), so scroll down *before* asserting the row is visible -- asserting
+# beforehand is unreliable since the Dashboard resets its LazyColumn scroll offset to the top on
+# return from AddExpenseScreen. The amount assertion is deliberately deferred to the full list
+# below rather than checked here: right after the Firestore write, an in-flight snapshot-listener
+# refresh can reset the LazyColumn scroll offset back to the top between the scroll and a
+# same-screen assertion, making an amount check here flaky.
 - scrollUntilVisible:
     element: "Recent expenses"
     direction: DOWN
+- assertVisible: "Maestro E2E Test Expense"
 
 # --- 4: Open the full expense list and confirm the new expense is there ---
 # "Recent expenses" header and "See all expenses" both open the same full list. ExpenseRow now

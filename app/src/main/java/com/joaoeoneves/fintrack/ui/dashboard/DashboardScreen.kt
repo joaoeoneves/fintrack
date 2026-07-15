@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +50,10 @@ import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.TimeRangeFilterRow
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+
+// ExtendedFAB height (~56dp) + Scaffold's FAB margin (~16dp) + breathing room (~24dp), so the
+// LazyColumn's own layout bounds shrink and no item can ever be placed under the FAB.
+private val FabClearance = 96.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,7 +150,10 @@ private fun DashboardContent(
     onAddIncome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(modifier = modifier) {
+    LazyColumn(
+        modifier = modifier.padding(bottom = FabClearance),
+        contentPadding = PaddingValues(bottom = 16.dp),
+    ) {
         item {
             TimeRangeFilterRow(selected = state.timeRange, onSelected = onTimeRangeSelected)
         }
@@ -286,10 +294,6 @@ private fun DashboardContent(
                     }
                 }
             }
-        }
-
-        item {
-            Box(modifier = Modifier.padding(bottom = 80.dp)) {}
         }
     }
 }
