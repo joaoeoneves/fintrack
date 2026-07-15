@@ -11,7 +11,7 @@ plugins {
 }
 
 android {
-    namespace = "ptech.joaoe.agenticusage"
+    namespace = "com.joaoeoneves.fintrack"
     compileSdk {
         version =
             release(36) {
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "ptech.joaoe.agenticusage"
+        applicationId = "com.joaoeoneves.fintrack"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

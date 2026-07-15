@@ -1,15 +1,15 @@
-# Income-tracking E2E flow for AgenticUsage.
+# Income-tracking E2E flow for FinTrack.
 #
 # Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) —
 # real Google Sign-In cannot be scripted headlessly by Maestro, so this flow starts from the
 # Dashboard, same as golden-path.yaml. If the app instead shows a sign-in screen, that's a sign
 # the persisted session was lost and this flow will fail fast at the "Total:" assertion below.
-appId: ptech.joaoe.agenticusage
+appId: com.joaoeoneves.fintrack
 ---
 - launchApp
 
 # --- 1: Dashboard loads with the expense total, income total, and net balance ---
-- assertVisible: "AgenticUsage"
+- assertVisible: "FinTrack"
 - assertVisible:
     text: "Total:.*"
 - assertVisible:

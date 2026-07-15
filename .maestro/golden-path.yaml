@@ -1,6 +1,6 @@
-appId: ptech.joaoe.agenticusage
+appId: com.joaoeoneves.fintrack
 ---
-# Golden-path E2E flow for AgenticUsage.
+# Golden-path E2E flow for FinTrack.
 #
 # Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) —
 # real Google Sign-In cannot be scripted headlessly by Maestro, so this flow starts from the
@@ -11,7 +11,7 @@ appId: ptech.joaoe.agenticusage
 - launchApp
 
 # --- 1/2: Dashboard loads with filter chips, total, pie legend, and the Add expense FAB ---
-- assertVisible: "AgenticUsage"
+- assertVisible: "FinTrack"
 - assertVisible: "1W"
 - assertVisible: "1M"
 - assertVisible: "3M"

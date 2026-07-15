@@ -1,4 +1,4 @@
-# AgenticUsage
+# FinTrack
 
 A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack Compose and Firebase.
 
@@ -64,10 +64,10 @@ Min SDK 24, target/compile SDK 36, Java 11 source/target compatibility.
 
 ### Architecture
 
-Single module (`:app`), package `ptech.joaoe.agenticusage`, organized as:
+Single module (`:app`), package `com.joaoeoneves.fintrack`, organized as:
 
 ```
-app/src/main/java/ptech/joaoe/agenticusage/
+app/src/main/java/com/joaoeoneves/fintrack/
 ├── ui/            Compose screens and components (dashboard, expense/, income/, auth/, theme/, ...)
 ├── data/          Repository implementations (Firestore + Fake), CSV import/export
 ├── domain/        Domain models and repository interfaces
@@ -111,7 +111,7 @@ Security rules ([`firestore.rules`](firestore.rules)) restrict every collection 
 
 ### Getting started
 
-1. **Firebase project**: create one, register an Android app with package `ptech.joaoe.agenticusage`,
+1. **Firebase project**: create one, register an Android app with package `com.joaoeoneves.fintrack`,
    enable Google Sign-In in Authentication, create a Firestore database, and deploy `firestore.rules`.
    Download `google-services.json` into `app/` — it's gitignored and never committed (CI uses a
    placeholder; see [CI](#ci)).

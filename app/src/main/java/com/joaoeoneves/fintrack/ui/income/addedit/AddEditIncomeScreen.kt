@@ -1,0 +1,205 @@
+package com.joaoeoneves.fintrack.ui.income.addedit
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.collectLatest
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
+private val displayDateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneOffset.UTC)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddEditIncomeScreen(
+    onSaved: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: AddEditIncomeViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.savedEvent.collectLatest { onSaved() }
+    }
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            val isEditMode = (uiState as? AddEditIncomeUiState.Ready)?.form?.isEditMode ?: false
+            TopAppBar(
+                title = { Text(if (isEditMode) "Edit income" else "Add income") },
+                navigationIcon = {
+                    IconButton(onClick = onCancel) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Cancel")
+                    }
+                },
+                actions = {
+                    val form = (uiState as? AddEditIncomeUiState.Ready)?.form
+                    TextButton(
+                        onClick = { viewModel.onSave() },
+                        enabled = form?.isValid == true,
+                    ) {
+                        Text("Save")
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+        when (val state = uiState) {
+            is AddEditIncomeUiState.Loading -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is AddEditIncomeUiState.Ready -> {
+                IncomeForm(
+                    form = state.form,
+                    onSourceChanged = viewModel::onSourceChanged,
+                    onAmountChanged = viewModel::onAmountChanged,
+                    onDateSelected = viewModel::onDateSelected,
+                    onNoteChanged = viewModel::onNoteChanged,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun IncomeForm(
+    form: IncomeFormState,
+    onSourceChanged: (String) -> Unit,
+    onAmountChanged: (String) -> Unit,
+    onDateSelected: (Instant) -> Unit,
+    onNoteChanged: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    Column(
+        modifier =
+            modifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        OutlinedTextField(
+            value = form.source,
+            onValueChange = onSourceChanged,
+            label = { Text("Source") },
+            isError = form.sourceError != null,
+            supportingText = { form.sourceError?.let { Text(it) } },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        OutlinedTextField(
+            value = form.amountText,
+            onValueChange = onAmountChanged,
+            label = { Text("Amount") },
+            isError = form.amountError != null,
+            supportingText = { form.amountError?.let { Text(it) } },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        OutlinedTextField(
+            readOnly = true,
+            value = displayDateFormatter.format(form.date),
+            onValueChange = {},
+            label = { Text("Date") },
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Change date")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        OutlinedTextField(
+            value = form.note,
+            onValueChange = onNoteChanged,
+            label = { Text("Note (optional)") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        form.saveError?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState =
+            androidx.compose.material3.rememberDatePickerState(
+                initialSelectedDateMillis = form.date.toEpochMilli(),
+            )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        onDateSelected(Instant.ofEpochMilli(millis))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
