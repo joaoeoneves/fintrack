@@ -21,7 +21,7 @@ class ImportExportViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
-        @ApplicationContext private val context: Context,
+        @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val _importState = MutableStateFlow<ImportUiState>(ImportUiState.Idle)
         val importState: StateFlow<ImportUiState> = _importState.asStateFlow()

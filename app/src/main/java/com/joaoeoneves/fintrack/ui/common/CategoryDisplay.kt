@@ -1,10 +1,10 @@
 package com.joaoeoneves.fintrack.ui.common
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -69,7 +69,7 @@ val ExpenseCategory.icon: ImageVector
     get() =
         when (this) {
             ExpenseCategory.TRANSFER -> Icons.Filled.SwapHoriz
-            ExpenseCategory.INVESTMENTS -> Icons.Filled.TrendingUp
+            ExpenseCategory.INVESTMENTS -> Icons.AutoMirrored.Filled.TrendingUp
             ExpenseCategory.SHOPPING -> Icons.Filled.ShoppingCart
             ExpenseCategory.RECURRING -> Icons.Filled.Autorenew
         }

@@ -15,9 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -341,7 +341,7 @@ private fun BalanceSummaryCard(
                 BalanceSummaryColumn(
                     label = "Income",
                     amountCents = state.incomeCents,
-                    icon = Icons.Filled.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     tint = MaterialTheme.colorScheme.primary,
                     amountColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),

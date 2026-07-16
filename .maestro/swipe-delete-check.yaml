@@ -1,0 +1,141 @@
+appId: com.joaoeoneves.fintrack
+---
+# Regression flow for the confirmValueChange -> LaunchedEffect(dismissState.currentValue) swap in
+# ExpenseListScreen.kt / IncomeListScreen.kt (rememberSwipeToDismissBoxState deprecation fix).
+#
+# Confirms actual swipe gestures (not just tapping the row's Delete icon, which golden-path.yaml /
+# income-tracking.yaml already cover) still delete the row immediately in either direction, with
+# no crash, no ghost/stuck row, and no double-deletion. Uses temporary rows created and deleted
+# entirely within this flow so it never touches real seeded data.
+#
+# IMPORTANT: use explicit percentage `start`/`end` coordinates for the swipe, not
+# `swipe: { from: { text: ... }, direction: ... }`. The latter was verified (2026-07-16) to not
+# drag far enough past this SwipeToDismissBox's dismiss threshold regardless of `duration` -- the
+# row visibly doesn't move at all and the assertion that it's gone reliably fails. This appears to
+# be a limitation of Maestro's from-element swipe distance calculation for this component, not an
+# app bug: explicit start/end coordinates (or a real on-device swipe) delete the row correctly and
+# immediately every time. On the 1080x2400 emulator used for this flow, the first data row sits at
+# ~44% of screen height on "All expenses" (which has Search + Sort-by controls above the list) but
+# only ~28% on "All income" (which has neither) -- adjust these y values if run on a different
+# resolution or if either screen's layout above the list changes.
+#
+# Also note: "See all income" can sit just past the Dashboard LazyColumn's clip bounds even when
+# `scrollUntilVisible` reports it found -- tapping it there is a no-op (it's technically in the view
+# hierarchy but clipped/not actually rendered yet). A plain extra `scroll` after `scrollUntilVisible`
+# and before tapping "See all income" reliably brings it fully into view first.
+#
+# Assumes the app is already signed in, same as the other flows in this directory.
+- launchApp
+
+# --- Expense row: swipe EndToStart (right-to-left) to delete ---
+- tapOn: "Add expense"
+- assertVisible: "Add expense"
+- tapOn: "Name"
+- inputText: "Swipe Test Expense A"
+- tapOn: "Amount"
+- inputText: "5.00"
+- hideKeyboard
+- tapOn: "Save"
+
+- scrollUntilVisible:
+    element: "See all expenses"
+    direction: DOWN
+- tapOn: "See all expenses"
+- assertVisible: "All expenses"
+- assertVisible: "Swipe Test Expense A"
+- swipe:
+    start: "83%, 44%"
+    end: "9%, 44%"
+    duration: 800
+- assertNotVisible: "Swipe Test Expense A"
+# Confirm no crash / list still usable, no ghost row / duplicate delete side effects.
+- assertVisible: "All expenses"
+- assertVisible: "Ginasio"
+
+# --- Expense row: swipe StartToEnd (left-to-right) to delete ---
+- back
+- tapOn: "Add expense"
+- assertVisible: "Add expense"
+- tapOn: "Name"
+- inputText: "Swipe Test Expense B"
+- tapOn: "Amount"
+- inputText: "6.00"
+- hideKeyboard
+- tapOn: "Save"
+
+- scrollUntilVisible:
+    element: "See all expenses"
+    direction: DOWN
+- tapOn: "See all expenses"
+- assertVisible: "All expenses"
+- assertVisible: "Swipe Test Expense B"
+- swipe:
+    start: "9%, 44%"
+    end: "83%, 44%"
+    duration: 800
+- assertNotVisible: "Swipe Test Expense B"
+- assertVisible: "All expenses"
+- assertVisible: "Ginasio"
+- back
+
+# --- Income row: swipe EndToStart ---
+- scrollUntilVisible:
+    element: "Add income"
+    direction: DOWN
+- tapOn:
+    text: "Add income"
+- assertVisible: "Add income"
+- tapOn: "Source"
+- inputText: "Swipe Test Income A"
+- tapOn: "Amount"
+- inputText: "7.00"
+- hideKeyboard
+- tapOn: "Save"
+
+- assertVisible: "Swipe Test Income A"
+- scrollUntilVisible:
+    element: "See all income"
+    direction: DOWN
+- scroll
+- tapOn: "See all income"
+- assertVisible: "All income"
+- assertVisible: "Swipe Test Income A"
+- swipe:
+    start: "83%, 28%"
+    end: "9%, 28%"
+    duration: 800
+- assertNotVisible: "Swipe Test Income A"
+- assertVisible: "All income"
+- back
+
+# --- Income row: swipe StartToEnd ---
+- scrollUntilVisible:
+    element: "Add income"
+    direction: DOWN
+- tapOn:
+    text: "Add income"
+- assertVisible: "Add income"
+- tapOn: "Source"
+- inputText: "Swipe Test Income B"
+- tapOn: "Amount"
+- inputText: "8.00"
+- hideKeyboard
+- tapOn: "Save"
+
+- scrollUntilVisible:
+    element: "See all income"
+    direction: DOWN
+- scroll
+- tapOn: "See all income"
+- assertVisible: "All income"
+- assertVisible: "Swipe Test Income B"
+- swipe:
+    start: "9%, 28%"
+    end: "83%, 28%"
+    duration: 800
+- assertNotVisible: "Swipe Test Income B"
+- assertVisible: "All income"
+- back
+- scrollUntilVisible:
+    element: "Net Balance"
+    direction: UP

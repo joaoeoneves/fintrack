@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -72,7 +72,7 @@ fun IncomeListScreen(
                 title = { Text("All income") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
             )
@@ -141,19 +141,16 @@ private fun IncomeListContent(
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.income, key = { it.id }) { income ->
-                    val dismissState =
-                        rememberSwipeToDismissBoxState(
-                            confirmValueChange = { value ->
-                                if (value == SwipeToDismissBoxValue.StartToEnd ||
-                                    value == SwipeToDismissBoxValue.EndToStart
-                                ) {
-                                    onDelete(income.id)
-                                    true
-                                } else {
-                                    false
-                                }
-                            },
-                        )
+                    val dismissState = rememberSwipeToDismissBoxState()
+
+                    LaunchedEffect(dismissState.currentValue) {
+                        if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd ||
+                            dismissState.currentValue == SwipeToDismissBoxValue.EndToStart
+                        ) {
+                            onDelete(income.id)
+                            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                        }
+                    }
 
                     SwipeToDismissBox(
                         state = dismissState,

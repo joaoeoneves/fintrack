@@ -1,10 +1,10 @@
 package com.joaoeoneves.fintrack.ui.common
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.TrendingUp
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -22,7 +22,7 @@ class CategoryDisplayTest {
 
     @Test
     fun investments_mapsToTrendingUpIcon() {
-        assertEquals(Icons.Filled.TrendingUp, ExpenseCategory.INVESTMENTS.icon)
+        assertEquals(Icons.AutoMirrored.Filled.TrendingUp, ExpenseCategory.INVESTMENTS.icon)
     }
 
     @Test
