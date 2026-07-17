@@ -24,6 +24,6 @@ class CurrencyViewModel
             currencyRepository.observeCurrency().stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = CurrencyOption.USD,
+                initialValue = CurrencyOption.EUR,
             )
     }

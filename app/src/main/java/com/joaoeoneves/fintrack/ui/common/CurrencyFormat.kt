@@ -9,9 +9,9 @@ import java.math.RoundingMode
 /**
  * The currently selected display currency, provided by [com.joaoeoneves.fintrack.MainActivity]
  * (via `CurrencyViewModel`) above the signed-in nav graph, same pattern as
- * [com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme]. Defaults to [CurrencyOption.USD].
+ * [com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme]. Defaults to [CurrencyOption.EUR].
  */
-val LocalCurrency = staticCompositionLocalOf { CurrencyOption.USD }
+val LocalCurrency = staticCompositionLocalOf { CurrencyOption.EUR }
 
 /**
  * Formats an amount stored as integer minor units (cents) into a display string like "$12.50",

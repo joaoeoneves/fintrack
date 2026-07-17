@@ -23,13 +23,13 @@ class SharedPrefsCurrencyRepositoryTest {
     private fun context() = RuntimeEnvironment.getApplication()
 
     @Test
-    fun observeCurrency_nothingStoredYet_defaultsToUsd() =
+    fun observeCurrency_nothingStoredYet_defaultsToEur() =
         runBlocking {
             val repo = SharedPrefsCurrencyRepository(context())
 
             val result = repo.observeCurrency().first()
 
-            assertEquals(CurrencyOption.USD, result)
+            assertEquals(CurrencyOption.EUR, result)
         }
 
     @Test
@@ -81,7 +81,7 @@ class SharedPrefsCurrencyRepositoryTest {
         }
 
     @Test
-    fun readStoredCurrency_unrecognizedStoredString_fallsBackToUsd() =
+    fun readStoredCurrency_unrecognizedStoredString_fallsBackToEur() =
         runBlocking {
             val ctx = context()
             // Simulate a corrupted/unrecognized stored value (e.g. from a removed enum constant in
@@ -94,11 +94,11 @@ class SharedPrefsCurrencyRepositoryTest {
 
             val repo = SharedPrefsCurrencyRepository(ctx)
 
-            assertEquals(CurrencyOption.USD, repo.observeCurrency().first())
+            assertEquals(CurrencyOption.EUR, repo.observeCurrency().first())
         }
 
     @Test
-    fun readStoredCurrency_emptyStoredString_fallsBackToUsd() =
+    fun readStoredCurrency_emptyStoredString_fallsBackToEur() =
         runBlocking {
             val ctx = context()
             ctx
@@ -109,6 +109,6 @@ class SharedPrefsCurrencyRepositoryTest {
 
             val repo = SharedPrefsCurrencyRepository(ctx)
 
-            assertEquals(CurrencyOption.USD, repo.observeCurrency().first())
+            assertEquals(CurrencyOption.EUR, repo.observeCurrency().first())
         }
 }

@@ -6,7 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.ThemePreference
 
 data class SettingsUiState(
     val themePreference: ThemePreference = ThemePreference.SYSTEM,
-    val currency: CurrencyOption = CurrencyOption.USD,
+    val currency: CurrencyOption = CurrencyOption.EUR,
     val currentUser: AuthUser? = null,
     val signOutError: String? = null,
 )

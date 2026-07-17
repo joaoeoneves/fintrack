@@ -6,6 +6,15 @@
 # currency back to USD before this flow ends -- golden-path.yaml and income-tracking.yaml assume
 # the "$" symbol is shown.
 #
+# Deliberately does NOT assert what the *current* display-currency label is before switching:
+# the app's default fallback (fresh install / cleared SharedPreferences, no explicit selection
+# made yet) is CurrencyOption.EUR ("Euro (€)"), but this device may already have an explicit
+# USD selection persisted from a prior run of this very flow (an explicit selection is never
+# retroactively changed by what the fallback default is). Asserting a fixed starting label would
+# make this flow fail on a truly fresh app state. Instead, step 2 explicitly selects "US Dollar
+# ($)" first to pin a known baseline regardless of starting state, then exercises the live-update
+# round trip, and finishes back on USD either way.
+#
 # Step 2/3 assert that switching currency/theme in Settings takes effect immediately on the
 # already-running Dashboard, in the same app process, with no restart required. This depends on
 # CurrencyRepository/ThemeRepository (SharedPrefsCurrencyRepository/SharedPrefsThemeRepository)
@@ -27,11 +36,24 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Currency"
 - assertVisible: "Data"
 - assertVisible: "Account"
-- assertVisible: "About"
+# "About" sits below the fold on a 2400px-tall viewport with an account already signed in (name +
+# email pushes it further down) -- scroll to it rather than asserting it's visible without moving,
+# which is viewport-size-dependent and unrelated to the currency-default change this flow otherwise
+# covers.
+- scrollUntilVisible:
+    element: "About"
+    direction: DOWN
 
-# --- 2: Currency -- switch to EUR and confirm the Dashboard total/list reflect the new symbol ---
-# Confirms the switch takes effect live, without an app restart (see the header comment above).
-- assertVisible: "US Dollar ($)"
+# --- 2: Currency -- pin a known USD baseline, then switch to EUR and confirm the Dashboard
+# total/list reflect the new symbol live (see the header comment above for why we don't assert
+# the starting label first).
+- tapOn: "Display currency"
+- tapOn: "US Dollar ($)"
+- tapOn: "Back"
+- assertVisible:
+    text: "\\$.*"
+
+- tapOn: "Settings"
 - tapOn: "Display currency"
 - assertVisible: "Euro (€)"
 - tapOn: "Euro (€)"

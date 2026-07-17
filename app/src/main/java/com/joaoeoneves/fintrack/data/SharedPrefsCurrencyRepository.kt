@@ -14,7 +14,7 @@ private const val KEY_CURRENCY = "currency"
 
 /**
  * [CurrencyRepository] backed by [android.content.SharedPreferences], storing the [CurrencyOption]
- * enum name as a string. Absent/unrecognized values default to [CurrencyOption.USD].
+ * enum name as a string. Absent/unrecognized values default to [CurrencyOption.EUR].
  *
  * Scoped as a singleton because it caches state in [currencyFlow]; a second instance would seed
  * its own copy from disk and never observe writes made through the first instance.
@@ -37,7 +37,7 @@ class SharedPrefsCurrencyRepository
         }
 
         private fun readStoredCurrency(): CurrencyOption {
-            val stored = prefs.getString(KEY_CURRENCY, null) ?: return CurrencyOption.USD
-            return CurrencyOption.entries.find { it.name == stored } ?: CurrencyOption.USD
+            val stored = prefs.getString(KEY_CURRENCY, null) ?: return CurrencyOption.EUR
+            return CurrencyOption.entries.find { it.name == stored } ?: CurrencyOption.EUR
         }
     }
