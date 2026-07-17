@@ -30,3 +30,28 @@ val CurrencyOption.displayName: String
             CurrencyOption.CAD -> "Canadian Dollar"
             CurrencyOption.AUD -> "Australian Dollar"
         }
+
+/**
+ * Where the currency symbol is placed relative to the formatted amount.
+ */
+enum class SymbolPosition { PREFIX, SUFFIX }
+
+/**
+ * Decimal separator character used when formatting a [CurrencyOption]'s amounts.
+ */
+val CurrencyOption.decimalSeparator: Char
+    get() =
+        when (this) {
+            CurrencyOption.EUR -> ','
+            else -> '.'
+        }
+
+/**
+ * Where the [symbol] is placed relative to the formatted amount for a [CurrencyOption].
+ */
+val CurrencyOption.symbolPosition: SymbolPosition
+    get() =
+        when (this) {
+            CurrencyOption.EUR -> SymbolPosition.SUFFIX
+            else -> SymbolPosition.PREFIX
+        }

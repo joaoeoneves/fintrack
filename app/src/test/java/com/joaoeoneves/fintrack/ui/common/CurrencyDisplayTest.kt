@@ -114,4 +114,84 @@ class CurrencyDisplayTest {
             names.distinct().size,
         )
     }
+
+    // --- decimalSeparator / symbolPosition: EUR uses a comma separator with a suffixed symbol
+    // ("1330,40€"); every other currency keeps the period separator with a prefixed symbol
+    // ("$1330.40"), per the change to CurrencyDisplay.kt / CurrencyFormat.kt. ---
+
+    @Test
+    fun usd_decimalSeparator_isPeriod() {
+        assertEquals('.', CurrencyOption.USD.decimalSeparator)
+    }
+
+    @Test
+    fun eur_decimalSeparator_isComma() {
+        assertEquals(',', CurrencyOption.EUR.decimalSeparator)
+    }
+
+    @Test
+    fun gbp_decimalSeparator_isPeriod() {
+        assertEquals('.', CurrencyOption.GBP.decimalSeparator)
+    }
+
+    @Test
+    fun jpy_decimalSeparator_isPeriod() {
+        assertEquals('.', CurrencyOption.JPY.decimalSeparator)
+    }
+
+    @Test
+    fun cad_decimalSeparator_isPeriod() {
+        assertEquals('.', CurrencyOption.CAD.decimalSeparator)
+    }
+
+    @Test
+    fun aud_decimalSeparator_isPeriod() {
+        assertEquals('.', CurrencyOption.AUD.decimalSeparator)
+    }
+
+    @Test
+    fun usd_symbolPosition_isPrefix() {
+        assertEquals(SymbolPosition.PREFIX, CurrencyOption.USD.symbolPosition)
+    }
+
+    @Test
+    fun eur_symbolPosition_isSuffix() {
+        assertEquals(SymbolPosition.SUFFIX, CurrencyOption.EUR.symbolPosition)
+    }
+
+    @Test
+    fun gbp_symbolPosition_isPrefix() {
+        assertEquals(SymbolPosition.PREFIX, CurrencyOption.GBP.symbolPosition)
+    }
+
+    @Test
+    fun jpy_symbolPosition_isPrefix() {
+        assertEquals(SymbolPosition.PREFIX, CurrencyOption.JPY.symbolPosition)
+    }
+
+    @Test
+    fun cad_symbolPosition_isPrefix() {
+        assertEquals(SymbolPosition.PREFIX, CurrencyOption.CAD.symbolPosition)
+    }
+
+    @Test
+    fun aud_symbolPosition_isPrefix() {
+        assertEquals(SymbolPosition.PREFIX, CurrencyOption.AUD.symbolPosition)
+    }
+
+    @Test
+    fun onlyEur_usesCommaDecimalSeparator() {
+        // Guards against a future currency silently picking up the comma separator (or EUR losing
+        // it) without an explicit branch/test update here.
+        val commaSeparatorCurrencies = CurrencyOption.entries.filter { it.decimalSeparator == ',' }
+
+        assertEquals(listOf(CurrencyOption.EUR), commaSeparatorCurrencies)
+    }
+
+    @Test
+    fun onlyEur_usesSuffixSymbolPosition() {
+        val suffixCurrencies = CurrencyOption.entries.filter { it.symbolPosition == SymbolPosition.SUFFIX }
+
+        assertEquals(listOf(CurrencyOption.EUR), suffixCurrencies)
+    }
 }

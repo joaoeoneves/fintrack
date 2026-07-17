@@ -15,6 +15,13 @@
 # ($)" first to pin a known baseline regardless of starting state, then exercises the live-update
 # round trip, and finishes back on USD either way.
 #
+# EUR renders with a comma decimal separator and a *suffixed* symbol ("1330,40€"), while every
+# other currency (including USD) keeps the period-decimal/prefixed-symbol style ("$1330.40") --
+# see CurrencyDisplay.kt/CurrencyFormat.kt. The step-2 post-EUR assertion below therefore uses
+# ".*€.*" (not "€.*", which would require the text to *start* with the symbol and can
+# never match a suffixed amount like "196,96€") -- this was caught as a real regression by
+# the tester agent when the EUR-default + EUR-suffix changes landed together.
+#
 # Step 2/3 assert that switching currency/theme in Settings takes effect immediately on the
 # already-running Dashboard, in the same app process, with no restart required. This depends on
 # CurrencyRepository/ThemeRepository (SharedPrefsCurrencyRepository/SharedPrefsThemeRepository)
@@ -60,7 +67,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Euro (€)"
 - tapOn: "Back"
 - assertVisible:
-    text: "€.*"
+    text: ".*€.*"
 
 # Switch back to USD before the flow ends -- other flows assume "$".
 - tapOn: "Settings"

@@ -14,13 +14,23 @@ import java.math.RoundingMode
 val LocalCurrency = staticCompositionLocalOf { CurrencyOption.EUR }
 
 /**
- * Formats an amount stored as integer minor units (cents) into a display string like "$12.50",
- * using the currency symbol from [LocalCurrency]. Uses [BigDecimal] rather than floating point to
- * avoid rounding errors. Uniform 2-decimal formatting is used for every [CurrencyOption], including
- * [CurrencyOption.JPY] — a deliberate scope decision, not a bug.
+ * Formats an amount stored as integer minor units (cents) into a display string, using the
+ * decimal separator, symbol, and symbol position ([CurrencyOption.decimalSeparator],
+ * [CurrencyOption.symbol], [CurrencyOption.symbolPosition]) for the currency from
+ * [LocalCurrency]. Most currencies format as prefixed-symbol with a period decimal separator,
+ * e.g. "$12.50"; [CurrencyOption.EUR] instead uses a comma decimal separator with the symbol
+ * suffixed, e.g. "12,50€". Uses [BigDecimal] rather than floating point to avoid rounding errors.
+ * Uniform 2-decimal formatting is used for every [CurrencyOption], including [CurrencyOption.JPY]
+ * — a deliberate scope decision, not a bug.
  */
 @Composable
 fun formatAmountCents(amountCents: Long): String {
+    val currency = LocalCurrency.current
     val amount = BigDecimal(amountCents).movePointLeft(2).setScale(2, RoundingMode.HALF_UP)
-    return "${LocalCurrency.current.symbol}$amount"
+    val sign = if (amount.signum() < 0) "-" else ""
+    val amountText = amount.abs().toPlainString().replace('.', currency.decimalSeparator)
+    return when (currency.symbolPosition) {
+        SymbolPosition.PREFIX -> "$sign${currency.symbol}$amountText"
+        SymbolPosition.SUFFIX -> "$sign$amountText${currency.symbol}"
+    }
 }
