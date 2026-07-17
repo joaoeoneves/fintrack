@@ -1,3 +1,147 @@
 <resources>
     <string name="app_name">FinTrack</string>
+
+    <!-- Shared actions -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_import">Import</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="action_add_expense">Add expense</string>
+    <string name="action_add_income">Add income</string>
+
+    <!-- Shared content descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_cancel">Cancel</string>
+    <string name="cd_delete">Delete</string>
+    <string name="cd_change_date">Change date</string>
+    <string name="cd_settings">Settings</string>
+
+    <!-- Shared form field labels -->
+    <string name="field_amount">Amount</string>
+    <string name="field_date">Date</string>
+    <string name="field_note_optional">Note (optional)</string>
+
+    <!-- Shared error/state strings -->
+    <string name="error_state_title">Something went wrong.</string>
+    <string name="error_generic_fallback">Something went wrong</string>
+    <string name="error_invalid_amount">Enter a valid amount</string>
+    <string name="error_sign_in_failed">Sign-in failed</string>
+    <string name="error_sign_out_failed">Sign-out failed</string>
+
+    <!-- Auth -->
+    <string name="auth_subtitle">Sign in to track your expenses</string>
+    <string name="auth_sign_in_with_google">Sign in with Google</string>
+
+    <!-- Expense/income row shared -->
+    <string name="row_category_date">%1$s • %2$s</string>
+
+    <!-- Categories -->
+    <string name="category_transfer">Transfer</string>
+    <string name="category_investments">Investments</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_recurring">Recurring</string>
+
+    <!-- Currencies: deliberately NOT extracted to string resources. CurrencyOption.displayName
+         in CurrencyDisplay.kt stays hardcoded English on purpose. See that file's KDoc. -->
+
+    <!-- Dashboard -->
+    <string name="dashboard_budgets_title">Budgets (this month)</string>
+    <string name="dashboard_recent_expenses">Recent expenses</string>
+    <string name="dashboard_see_all_expenses">See all expenses</string>
+    <string name="dashboard_recent_income">Recent income</string>
+    <string name="dashboard_no_income">No income in this period yet.</string>
+    <string name="dashboard_see_all_income">See all income</string>
+    <string name="dashboard_net_balance">Net Balance</string>
+    <string name="dashboard_income_label">Income</string>
+    <string name="dashboard_expenses_label">Expenses</string>
+    <string name="dashboard_no_expenses">No expenses in this period yet.</string>
+    <string name="dashboard_total_spent">Total Spent</string>
+
+    <!-- Budgets -->
+    <string name="budget_spent_of_limit">%1$s / %2$s</string>
+    <string name="budget_spent_no_limit">%1$s spent — no limit set</string>
+    <string name="budget_dialog_title">Set budget for %1$s</string>
+    <string name="budget_dialog_limit_label">Monthly limit</string>
+
+    <!-- Add/edit expense -->
+    <string name="expense_edit_title">Edit expense</string>
+    <string name="expense_field_name">Name</string>
+    <string name="expense_field_category">Category</string>
+    <string name="error_name_required">Name is required</string>
+    <string name="error_failed_save_expense">Failed to save expense</string>
+
+    <!-- Expense list -->
+    <string name="expense_list_title">All expenses</string>
+    <string name="expense_list_deleted_snackbar">Deleted \"%1$s\"</string>
+    <string name="expense_list_search_label">Search</string>
+    <string name="expense_list_no_match">No expenses match \"%1$s\".</string>
+
+    <!-- Sort options -->
+    <string name="sort_by_label">Sort by</string>
+    <string name="sort_newest_first">Newest first</string>
+    <string name="sort_oldest_first">Oldest first</string>
+    <string name="sort_highest_amount">Highest amount</string>
+    <string name="sort_lowest_amount">Lowest amount</string>
+
+    <!-- Import/export -->
+    <string name="import_preview_title">Import preview</string>
+    <string name="import_preview_summary">%1$d rows ready to import, %2$d failed</string>
+    <string name="import_preview_row_failure">Row %1$d: %2$s</string>
+    <string name="label_import_complete">Import complete</string>
+    <string name="label_import_failed">Import failed</string>
+    <string name="label_export_complete">Export complete</string>
+    <string name="label_export_failed">Export failed</string>
+    <string name="error_import_read_file">Could not read the selected file</string>
+    <string name="error_import_failed">Import failed</string>
+    <string name="error_export_write_file">Could not write the export file</string>
+    <string name="error_export_failed">Export failed</string>
+
+    <!-- Add/edit income -->
+    <string name="income_edit_title">Edit income</string>
+    <string name="income_field_source">Source</string>
+    <string name="error_source_required">Source is required</string>
+    <string name="error_failed_save_income">Failed to save income</string>
+
+    <!-- Income list -->
+    <string name="income_list_title">All income</string>
+    <string name="income_list_deleted_snackbar">Deleted \"%1$s\"</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_section_currency">Currency</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_section_account">Account</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_currency_label">Display currency</string>
+    <string name="settings_import_csv">Import CSV</string>
+    <string name="settings_export_csv">Export CSV</string>
+    <string name="settings_signed_in_fallback">Signed in</string>
+    <string name="label_sign_out_failed">Sign-out failed</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_version_unknown">unknown</string>
+
+    <!-- Theme -->
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Language picker. "language_portuguese" is intentionally NOT translated in values-pt-rPT:
+         every language keeps its own name written in that language, the standard convention for
+         in-app language pickers. -->
+    <string name="language_english">English</string>
+    <string name="language_portuguese">Português</string>
+
+    <plurals name="import_complete_message">
+        <item quantity="one">Imported %d expense.</item>
+        <item quantity="other">Imported %d expenses.</item>
+    </plurals>
+    <plurals name="export_complete_message">
+        <item quantity="one">Exported %d expense.</item>
+        <item quantity="other">Exported %d expenses.</item>
+    </plurals>
 </resources>

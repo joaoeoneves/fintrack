@@ -23,9 +23,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.domain.model.Income
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-
-private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
 /**
  * A single income row (source, amount, date) shared between the dashboard's recent-income list
@@ -37,6 +34,8 @@ fun IncomeRow(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
 ) {
+    val dateFormatter = rememberLocaleAwareDateFormatter()
+
     Row(
         modifier =
             modifier

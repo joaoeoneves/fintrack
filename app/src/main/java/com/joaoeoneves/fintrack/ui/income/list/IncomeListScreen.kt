@@ -33,9 +33,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
@@ -51,13 +54,15 @@ fun IncomeListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val undoLabel = stringResource(R.string.action_undo)
 
     LaunchedEffect(Unit) {
         viewModel.undoEvent.collect { income ->
             val result =
                 snackbarHostState.showSnackbar(
-                    message = "Deleted \"${income.source}\"",
-                    actionLabel = "Undo",
+                    message = context.getString(R.string.income_list_deleted_snackbar, income.source),
+                    actionLabel = undoLabel,
                 )
             if (result == SnackbarResult.ActionPerformed) {
                 viewModel.onUndoDelete(income)
@@ -69,10 +74,10 @@ fun IncomeListScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("All income") },
+                title = { Text(stringResource(R.string.income_list_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -134,7 +139,7 @@ private fun IncomeListContent(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "No income in this period yet.",
+                    text = stringResource(R.string.dashboard_no_income),
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
@@ -190,7 +195,7 @@ private fun IncomeListContent(
                                 modifier = Modifier.weight(1f),
                             )
                             IconButton(onClick = { onDelete(income.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete))
                             }
                         }
                     }

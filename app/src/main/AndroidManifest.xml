@@ -24,6 +24,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Lets AndroidX (AppCompatDelegate) auto-store the per-app language choice on
+             Android 12 (API 32) and below; Android 13+ stores it via the platform LocaleManager
+             instead. Required for the in-app language picker to survive a process restart on
+             older devices. -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
     </application>
 
 </manifest>

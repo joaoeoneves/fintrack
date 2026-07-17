@@ -18,8 +18,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 @Composable
@@ -39,11 +41,11 @@ fun SignInScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "FinTrack",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineMedium,
         )
         Text(
-            text = "Sign in to track your expenses",
+            text = stringResource(R.string.auth_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
         )
@@ -67,14 +69,14 @@ fun SignInScreen(
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
                 Text(
-                    text = "Sign in with Google",
+                    text = stringResource(R.string.auth_sign_in_with_google),
                     modifier = Modifier.padding(start = 8.dp),
                 )
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     GoogleLogo(modifier = Modifier.size(18.dp))
                     Text(
-                        text = "Sign in with Google",
+                        text = stringResource(R.string.auth_sign_in_with_google),
                         modifier = Modifier.padding(start = 8.dp),
                     )
                 }

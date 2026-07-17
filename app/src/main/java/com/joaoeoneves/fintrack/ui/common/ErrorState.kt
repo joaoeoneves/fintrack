@@ -11,7 +11,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.joaoeoneves.fintrack.R
 
 /**
  * A centered error message with a retry button, shared between screens that observe a Firestore
@@ -35,7 +37,7 @@ fun ErrorState(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Something went wrong.",
+                text = stringResource(R.string.error_state_title),
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
@@ -44,7 +46,7 @@ fun ErrorState(
                 color = MaterialTheme.colorScheme.error,
             )
             Button(onClick = onRetry) {
-                Text("Retry")
+                Text(stringResource(R.string.action_retry))
             }
         }
     }

@@ -17,13 +17,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
-private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
 /**
  * A single expense row (name, category, amount, date) shared between the dashboard's recent-expense
@@ -35,6 +35,8 @@ fun ExpenseRow(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
 ) {
+    val dateFormatter = rememberLocaleAwareDateFormatter()
+
     Row(
         modifier =
             modifier
@@ -44,51 +46,63 @@ fun ExpenseRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(expense.category.color.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = expense.category.icon,
-                    contentDescription = null,
-                    tint = expense.category.color,
-                )
-            }
-            Column(
-                modifier =
-                    Modifier
-                        .padding(start = 12.dp)
-                        .weight(1f),
-            ) {
-                Text(
-                    text = expense.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text =
-                        "${expense.category.displayName} • " +
-                            expense.date.atZone(ZoneId.systemDefault()).format(dateFormatter),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
+        ExpenseRowLeading(expense = expense, dateFormatter = dateFormatter, modifier = Modifier.weight(1f))
         Text(
             text = "-${formatAmountCents(expense.amountCents)}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
+    }
+}
+
+@Composable
+private fun ExpenseRowLeading(
+    expense: Expense,
+    dateFormatter: DateTimeFormatter,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(expense.category.color.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = expense.category.icon,
+                contentDescription = null,
+                tint = expense.category.color,
+            )
+        }
+        Column(
+            modifier =
+                Modifier
+                    .padding(start = 12.dp)
+                    .weight(1f),
+        ) {
+            Text(
+                text = expense.name,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text =
+                    stringResource(
+                        R.string.row_category_date,
+                        expense.category.displayName,
+                        expense.date.atZone(ZoneId.systemDefault()).format(dateFormatter),
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }

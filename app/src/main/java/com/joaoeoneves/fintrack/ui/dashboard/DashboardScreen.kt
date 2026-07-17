@@ -38,11 +38,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.ui.common.ErrorState
@@ -73,10 +75,10 @@ fun DashboardScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("FinTrack") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.cd_settings))
                     }
                 },
                 colors =
@@ -94,7 +96,7 @@ fun DashboardScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
-                Text("Add expense")
+                Text(stringResource(R.string.action_add_expense))
             }
         },
     ) { innerPadding ->
@@ -201,7 +203,7 @@ private fun DashboardContent(
                 ) {
                     Column {
                         Text(
-                            text = "Recent expenses",
+                            text = stringResource(R.string.dashboard_recent_expenses),
                             style = MaterialTheme.typography.titleMedium,
                             modifier =
                                 Modifier
@@ -219,7 +221,7 @@ private fun DashboardContent(
                         }
 
                         Text(
-                            text = "See all expenses",
+                            text = stringResource(R.string.dashboard_see_all_expenses),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier =
@@ -253,18 +255,18 @@ private fun DashboardContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "Recent income",
+                            text = stringResource(R.string.dashboard_recent_income),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f),
                         )
                         IconButton(onClick = onAddIncome) {
-                            Icon(Icons.Default.Add, contentDescription = "Add income")
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add_income))
                         }
                     }
 
                     if (state.recentIncome.isEmpty()) {
                         Text(
-                            text = "No income in this period yet.",
+                            text = stringResource(R.string.dashboard_no_income),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier =
                                 Modifier
@@ -281,7 +283,7 @@ private fun DashboardContent(
                         }
 
                         Text(
-                            text = "See all income",
+                            text = stringResource(R.string.dashboard_see_all_income),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier =
@@ -313,7 +315,7 @@ private fun BalanceSummaryCard(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Net Balance",
+                text = stringResource(R.string.dashboard_net_balance),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -339,7 +341,7 @@ private fun BalanceSummaryCard(
                         .padding(top = 16.dp),
             ) {
                 BalanceSummaryColumn(
-                    label = "Income",
+                    label = stringResource(R.string.dashboard_income_label),
                     amountCents = state.incomeCents,
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
                     tint = MaterialTheme.colorScheme.primary,
@@ -347,7 +349,7 @@ private fun BalanceSummaryCard(
                     modifier = Modifier.weight(1f),
                 )
                 BalanceSummaryColumn(
-                    label = "Expenses",
+                    label = stringResource(R.string.dashboard_expenses_label),
                     amountCents = state.totalCents,
                     icon = Icons.AutoMirrored.Filled.TrendingDown,
                     tint = MaterialTheme.colorScheme.error,
@@ -411,7 +413,7 @@ private fun DashboardSummary(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "No expenses in this period yet.",
+                text = stringResource(R.string.dashboard_no_expenses),
                 style = MaterialTheme.typography.bodyLarge,
             )
         }

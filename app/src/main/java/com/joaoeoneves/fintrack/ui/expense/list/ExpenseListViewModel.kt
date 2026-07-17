@@ -1,14 +1,17 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.navigation.ExpenseList
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +35,11 @@ class ExpenseListViewModel
     constructor(
         private val expenseRepository: ExpenseRepository,
         savedStateHandle: SavedStateHandle,
+        // Nullable with a default so existing unit tests that construct this ViewModel directly
+        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
+        // production. When null (test-only), the fallback below matches the exact literal those
+        // tests assert on.
+        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val timeRange = MutableStateFlow(savedStateHandle.toRoute<ExpenseList>().timeRange)
         private val query = MutableStateFlow("")
@@ -54,7 +62,10 @@ class ExpenseListViewModel
                 expenseRepository
                     .observeExpenses(instantRange.startInclusive, instantRange.endExclusive)
                     .map<List<Expense>, ExpenseListUiState> { expenses -> expenses.toContent(range, q, sort) }
-                    .catch { e -> emit(ExpenseListUiState.Error(e.message ?: "Something went wrong")) }
+                    .catch { e ->
+                        val fallback = context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
+                        emit(ExpenseListUiState.Error(e.message ?: fallback))
+                    }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),

@@ -40,9 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
@@ -58,13 +61,15 @@ fun ExpenseListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val undoLabel = stringResource(R.string.action_undo)
 
     LaunchedEffect(Unit) {
         viewModel.undoEvent.collect { expense ->
             val result =
                 snackbarHostState.showSnackbar(
-                    message = "Deleted \"${expense.name}\"",
-                    actionLabel = "Undo",
+                    message = context.getString(R.string.expense_list_deleted_snackbar, expense.name),
+                    actionLabel = undoLabel,
                 )
             if (result == SnackbarResult.ActionPerformed) {
                 viewModel.onUndoDelete(expense)
@@ -76,10 +81,10 @@ fun ExpenseListScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("All expenses") },
+                title = { Text(stringResource(R.string.expense_list_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -139,7 +144,7 @@ private fun ExpenseListContent(
         OutlinedTextField(
             value = state.query,
             onValueChange = onQueryChanged,
-            label = { Text("Search") },
+            label = { Text(stringResource(R.string.expense_list_search_label)) },
             singleLine = true,
             modifier =
                 Modifier
@@ -164,9 +169,9 @@ private fun ExpenseListContent(
                 Text(
                     text =
                         if (state.query.isBlank()) {
-                            "No expenses in this period yet."
+                            stringResource(R.string.dashboard_no_expenses)
                         } else {
-                            "No expenses match \"${state.query}\"."
+                            stringResource(R.string.expense_list_no_match, state.query)
                         },
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -223,7 +228,7 @@ private fun ExpenseListContent(
                                 modifier = Modifier.weight(1f),
                             )
                             IconButton(onClick = { onDelete(expense.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete))
                             }
                         }
                     }
@@ -233,6 +238,16 @@ private fun ExpenseListContent(
         }
     }
 }
+
+private val SortOption.label: String
+    @Composable
+    get() =
+        when (this) {
+            SortOption.DATE_DESC -> stringResource(R.string.sort_newest_first)
+            SortOption.DATE_ASC -> stringResource(R.string.sort_oldest_first)
+            SortOption.AMOUNT_DESC -> stringResource(R.string.sort_highest_amount)
+            SortOption.AMOUNT_ASC -> stringResource(R.string.sort_lowest_amount)
+        }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -252,7 +267,7 @@ private fun SortDropdown(
             readOnly = true,
             value = selected.label,
             onValueChange = {},
-            label = { Text("Sort by") },
+            label = { Text(stringResource(R.string.sort_by_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier =
                 Modifier

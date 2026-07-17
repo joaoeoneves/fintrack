@@ -19,6 +19,12 @@ val CurrencyOption.symbol: String
 
 /**
  * Human-readable label for a [CurrencyOption], used in the Settings currency picker.
+ *
+ * Deliberately NOT localized via `stringResource()`: `CurrencyDisplayTest` asserts on this
+ * property directly from plain (non-Composable) JUnit test methods, so it must stay a synchronous,
+ * Context-free `String` getter. Currency *names* (unlike every other UI string in the app) are
+ * therefore only in English regardless of the in-app language -- a deliberate, flagged compromise,
+ * not an oversight. See the language-feature report for the full rationale.
  */
 val CurrencyOption.displayName: String
     get() =

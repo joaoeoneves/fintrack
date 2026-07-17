@@ -29,7 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -56,7 +58,7 @@ fun BudgetSection(
     ) {
         Column {
             Text(
-                text = "Budgets (this month)",
+                text = stringResource(R.string.dashboard_budgets_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
@@ -132,9 +134,13 @@ private fun BudgetRow(
             Text(
                 text =
                     if (budget.limitCents != null) {
-                        "${formatAmountCents(budget.spentCents)} / ${formatAmountCents(budget.limitCents)}"
+                        stringResource(
+                            R.string.budget_spent_of_limit,
+                            formatAmountCents(budget.spentCents),
+                            formatAmountCents(budget.limitCents),
+                        )
                     } else {
-                        "${formatAmountCents(budget.spentCents)} spent — no limit set"
+                        stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))
                     },
                 style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
@@ -162,10 +168,11 @@ private fun EditBudgetDialog(
 ) {
     var amountText by remember { mutableStateOf(budget.limitCents?.let { it.toAmountText() } ?: "") }
     var error by remember { mutableStateOf<String?>(null) }
+    val invalidAmountMessage = stringResource(R.string.error_invalid_amount)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Set budget for ${budget.category.displayName}") },
+        title = { Text(stringResource(R.string.budget_dialog_title, budget.category.displayName)) },
         text = {
             OutlinedTextField(
                 value = amountText,
@@ -173,7 +180,7 @@ private fun EditBudgetDialog(
                     amountText = it
                     error = null
                 },
-                label = { Text("Monthly limit") },
+                label = { Text(stringResource(R.string.budget_dialog_limit_label)) },
                 isError = error != null,
                 supportingText = { error?.let { Text(it) } },
                 singleLine = true,
@@ -183,14 +190,14 @@ private fun EditBudgetDialog(
             TextButton(onClick = {
                 parseAmountCents(amountText)
                     .onSuccess { cents -> onSave(cents) }
-                    .onFailure { error = "Enter a valid amount" }
+                    .onFailure { error = invalidAmountMessage }
             }) {
-                Text("Save")
+                Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         },
     )

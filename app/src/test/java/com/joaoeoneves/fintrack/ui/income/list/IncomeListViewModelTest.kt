@@ -2,10 +2,12 @@ package com.joaoeoneves.fintrack.ui.income.list
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -329,6 +331,27 @@ class IncomeListViewModelTest {
             advanceUntilIdle()
 
             assertEquals(IncomeListUiState.Error("Something went wrong"), vm.uiState.value)
+
+            job.cancel()
+        }
+
+    @Test
+    fun observeIncomeFailure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo = FakeIncomeRepository()
+            repo.nextObserveIncomeError = RuntimeException()
+            val context = FakeStringContext(R.string.error_generic_fallback, "translated generic error")
+            val vm =
+                IncomeListViewModel(
+                    repo,
+                    SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH)),
+                    context,
+                )
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(IncomeListUiState.Error("translated generic error"), vm.uiState.value)
 
             job.cancel()
         }

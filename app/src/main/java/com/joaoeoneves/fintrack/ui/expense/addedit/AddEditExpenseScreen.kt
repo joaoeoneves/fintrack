@@ -35,17 +35,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-
-private val displayDateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneOffset.UTC)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,23 +64,11 @@ fun AddEditExpenseScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            val isEditMode = (uiState as? AddEditUiState.Ready)?.form?.isEditMode ?: false
-            TopAppBar(
-                title = { Text(if (isEditMode) "Edit expense" else "Add expense") },
-                navigationIcon = {
-                    IconButton(onClick = onCancel) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cancel")
-                    }
-                },
-                actions = {
-                    val form = (uiState as? AddEditUiState.Ready)?.form
-                    TextButton(
-                        onClick = { viewModel.onSave() },
-                        enabled = form?.isValid == true,
-                    ) {
-                        Text("Save")
-                    }
-                },
+            AddEditExpenseTopBar(
+                isEditMode = (uiState as? AddEditUiState.Ready)?.form?.isEditMode ?: false,
+                isSaveEnabled = (uiState as? AddEditUiState.Ready)?.form?.isValid == true,
+                onCancel = onCancel,
+                onSave = viewModel::onSave,
             )
         },
     ) { innerPadding ->
@@ -117,6 +105,33 @@ fun AddEditExpenseScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun AddEditExpenseTopBar(
+    isEditMode: Boolean,
+    isSaveEnabled: Boolean,
+    onCancel: () -> Unit,
+    onSave: () -> Unit,
+) {
+    TopAppBar(
+        title = {
+            val titleRes = if (isEditMode) R.string.expense_edit_title else R.string.action_add_expense
+            Text(stringResource(titleRes))
+        },
+        navigationIcon = {
+            IconButton(onClick = onCancel) {
+                val cancelCd = stringResource(R.string.cd_cancel)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = cancelCd)
+            }
+        },
+        actions = {
+            TextButton(onClick = onSave, enabled = isSaveEnabled) {
+                Text(stringResource(R.string.action_save))
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun ExpenseForm(
     form: ExpenseFormState,
     onNameChanged: (String) -> Unit,
@@ -128,6 +143,7 @@ private fun ExpenseForm(
 ) {
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    val displayDateFormatter = rememberLocaleAwareDateFormatter().withZone(ZoneOffset.UTC)
 
     Column(
         modifier =
@@ -139,7 +155,7 @@ private fun ExpenseForm(
         OutlinedTextField(
             value = form.name,
             onValueChange = onNameChanged,
-            label = { Text("Name") },
+            label = { Text(stringResource(R.string.expense_field_name)) },
             isError = form.nameError != null,
             supportingText = { form.nameError?.let { Text(it) } },
             singleLine = true,
@@ -149,7 +165,7 @@ private fun ExpenseForm(
         OutlinedTextField(
             value = form.amountText,
             onValueChange = onAmountChanged,
-            label = { Text("Amount") },
+            label = { Text(stringResource(R.string.field_amount)) },
             isError = form.amountError != null,
             supportingText = { form.amountError?.let { Text(it) } },
             singleLine = true,
@@ -164,7 +180,7 @@ private fun ExpenseForm(
                 readOnly = true,
                 value = form.category.displayName,
                 onValueChange = {},
-                label = { Text("Category") },
+                label = { Text(stringResource(R.string.expense_field_category)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
                 modifier =
                     Modifier
@@ -191,10 +207,11 @@ private fun ExpenseForm(
             readOnly = true,
             value = displayDateFormatter.format(form.date),
             onValueChange = {},
-            label = { Text("Date") },
+            label = { Text(stringResource(R.string.field_date)) },
             trailingIcon = {
                 IconButton(onClick = { showDatePicker = true }) {
-                    Icon(Icons.Default.DateRange, contentDescription = "Change date")
+                    val changeDateCd = stringResource(R.string.cd_change_date)
+                    Icon(Icons.Default.DateRange, contentDescription = changeDateCd)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -203,7 +220,7 @@ private fun ExpenseForm(
         OutlinedTextField(
             value = form.note,
             onValueChange = onNoteChanged,
-            label = { Text("Note (optional)") },
+            label = { Text(stringResource(R.string.field_note_optional)) },
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -230,12 +247,12 @@ private fun ExpenseForm(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             },
         ) {

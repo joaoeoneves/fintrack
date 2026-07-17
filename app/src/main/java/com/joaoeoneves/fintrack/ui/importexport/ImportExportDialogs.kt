@@ -9,7 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.joaoeoneves.fintrack.R
 
 @Composable
 fun ImportPreviewDialog(
@@ -19,14 +21,20 @@ fun ImportPreviewDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Import preview") },
+        title = { Text(stringResource(R.string.import_preview_title)) },
         text = {
             Column {
-                Text("${state.validExpenses.size} rows ready to import, ${state.failures.size} failed")
+                Text(
+                    stringResource(
+                        R.string.import_preview_summary,
+                        state.validExpenses.size,
+                        state.failures.size,
+                    ),
+                )
                 if (state.failures.isNotEmpty()) {
                     LazyColumn(modifier = Modifier.heightIn(max = 240.dp)) {
                         items(state.failures) { failure ->
-                            Text("Row ${failure.rowNumber}: ${failure.reason}")
+                            Text(stringResource(R.string.import_preview_row_failure, failure.rowNumber, failure.reason))
                         }
                     }
                 }
@@ -37,12 +45,12 @@ fun ImportPreviewDialog(
                 onClick = onConfirm,
                 enabled = state.validExpenses.isNotEmpty(),
             ) {
-                Text("Import")
+                Text(stringResource(R.string.action_import))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         },
     )
@@ -60,7 +68,7 @@ fun MessageDialog(
         text = { Text(message) },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK")
+                Text(stringResource(R.string.action_ok))
             }
         },
     )

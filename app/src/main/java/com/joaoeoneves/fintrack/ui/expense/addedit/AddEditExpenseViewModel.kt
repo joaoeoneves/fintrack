@@ -1,14 +1,17 @@
 package com.joaoeoneves.fintrack.ui.expense.addedit
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,11 @@ class AddEditExpenseViewModel
     constructor(
         private val expenseRepository: ExpenseRepository,
         savedStateHandle: SavedStateHandle,
+        // Nullable with a default so existing unit tests that construct this ViewModel directly
+        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
+        // production. When null (test-only), the fallbacks below match the exact literals those
+        // tests assert on.
+        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditExpense>()
 
@@ -78,9 +86,11 @@ class AddEditExpenseViewModel
             if (current !is AddEditUiState.Ready) return
             val form = current.form
 
-            val nameError = if (form.name.isBlank()) "Name is required" else null
+            val nameRequiredMessage = context?.getString(R.string.error_name_required) ?: "Name is required"
+            val invalidAmountMessage = context?.getString(R.string.error_invalid_amount) ?: "Enter a valid amount"
+            val nameError = if (form.name.isBlank()) nameRequiredMessage else null
             val amountResult = parseAmountCents(form.amountText)
-            val amountError = if (amountResult.isFailure) "Enter a valid amount" else null
+            val amountError = if (amountResult.isFailure) invalidAmountMessage else null
 
             if (nameError != null || amountError != null) {
                 _uiState.value = AddEditUiState.Ready(form.copy(nameError = nameError, amountError = amountError))
@@ -110,9 +120,11 @@ class AddEditExpenseViewModel
                     }.onFailure { e ->
                         val latest = _uiState.value
                         if (latest is AddEditUiState.Ready) {
+                            val failedSaveMessage =
+                                context?.getString(R.string.error_failed_save_expense) ?: "Failed to save expense"
                             _uiState.value =
                                 AddEditUiState.Ready(
-                                    latest.form.copy(saveError = e.message ?: "Failed to save expense"),
+                                    latest.form.copy(saveError = e.message ?: failedSaveMessage),
                                 )
                         }
                     }

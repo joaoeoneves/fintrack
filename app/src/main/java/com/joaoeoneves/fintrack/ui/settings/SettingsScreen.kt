@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
@@ -49,9 +50,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
@@ -90,10 +95,10 @@ fun SettingsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -109,6 +114,11 @@ fun SettingsScreen(
             AppearanceSection(
                 selected = uiState.themePreference,
                 onSelected = viewModel::setThemePreference,
+                modifier = sectionModifier,
+            )
+            LanguageSection(
+                selected = uiState.language,
+                onSelected = viewModel::setLanguage,
                 modifier = sectionModifier,
             )
             CurrencySection(
@@ -143,15 +153,20 @@ fun SettingsScreen(
 
         is ImportUiState.Done -> {
             MessageDialog(
-                title = "Import complete",
-                message = "Imported ${state.importedCount} expense(s).",
+                title = stringResource(R.string.label_import_complete),
+                message =
+                    pluralStringResource(
+                        R.plurals.import_complete_message,
+                        state.importedCount,
+                        state.importedCount,
+                    ),
                 onDismiss = importExportViewModel::onDismissImport,
             )
         }
 
         is ImportUiState.Error -> {
             MessageDialog(
-                title = "Import failed",
+                title = stringResource(R.string.label_import_failed),
                 message = state.message,
                 onDismiss = importExportViewModel::onDismissImport,
             )
@@ -163,15 +178,20 @@ fun SettingsScreen(
     when (val state = exportState) {
         is ExportUiState.Done -> {
             MessageDialog(
-                title = "Export complete",
-                message = "Exported ${state.exportedCount} expense(s).",
+                title = stringResource(R.string.label_export_complete),
+                message =
+                    pluralStringResource(
+                        R.plurals.export_complete_message,
+                        state.exportedCount,
+                        state.exportedCount,
+                    ),
                 onDismiss = importExportViewModel::onDismissExport,
             )
         }
 
         is ExportUiState.Error -> {
             MessageDialog(
-                title = "Export failed",
+                title = stringResource(R.string.label_export_failed),
                 message = state.message,
                 onDismiss = importExportViewModel::onDismissExport,
             )
@@ -182,7 +202,7 @@ fun SettingsScreen(
 
     uiState.signOutError?.let { message ->
         MessageDialog(
-            title = "Sign-out failed",
+            title = stringResource(R.string.label_sign_out_failed),
             message = message,
             onDismiss = viewModel::dismissSignOutError,
         )
@@ -217,11 +237,26 @@ private fun SectionHeader(
 }
 
 private val ThemePreference.label: String
+    @Composable
     get() =
         when (this) {
-            ThemePreference.SYSTEM -> "System default"
-            ThemePreference.LIGHT -> "Light"
-            ThemePreference.DARK -> "Dark"
+            ThemePreference.SYSTEM -> stringResource(R.string.theme_system)
+            ThemePreference.LIGHT -> stringResource(R.string.theme_light)
+            ThemePreference.DARK -> stringResource(R.string.theme_dark)
+        }
+
+/**
+ * Human-readable label for an [AppLanguage]. [AppLanguage.PORTUGUESE]'s own label is always
+ * rendered in Portuguese ("Português"), regardless of the currently active app language — the
+ * same convention every language picker follows for its non-default entries.
+ */
+private val AppLanguage.label: String
+    @Composable
+    get() =
+        when (this) {
+            AppLanguage.SYSTEM -> stringResource(R.string.theme_system)
+            AppLanguage.ENGLISH -> stringResource(R.string.language_english)
+            AppLanguage.PORTUGUESE -> stringResource(R.string.language_portuguese)
         }
 
 @Composable
@@ -236,7 +271,7 @@ private fun AppearanceSection(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            SectionHeader("Appearance", Icons.Filled.Palette)
+            SectionHeader(stringResource(R.string.settings_section_appearance), Icons.Filled.Palette)
             ThemePreference.entries.forEach { preference ->
                 Row(
                     modifier =
@@ -251,6 +286,39 @@ private fun AppearanceSection(
                         onClick = { onSelected(preference) },
                     )
                     Text(text = preference.label, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguageSection(
+    selected: AppLanguage,
+    onSelected: (AppLanguage) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column {
+            SectionHeader(stringResource(R.string.settings_section_language), Icons.Filled.Language)
+            AppLanguage.entries.forEach { language ->
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelected(language) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(
+                        selected = selected == language,
+                        onClick = { onSelected(language) },
+                    )
+                    Text(text = language.label, style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
@@ -272,7 +340,7 @@ private fun CurrencySection(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            SectionHeader("Currency", Icons.Filled.AttachMoney)
+            SectionHeader(stringResource(R.string.settings_section_currency), Icons.Filled.AttachMoney)
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = it },
@@ -282,7 +350,7 @@ private fun CurrencySection(
                     readOnly = true,
                     value = "${selected.displayName} (${selected.symbol})",
                     onValueChange = {},
-                    label = { Text("Display currency") },
+                    label = { Text(stringResource(R.string.settings_currency_label)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier =
                         Modifier
@@ -317,9 +385,9 @@ private fun DataSection(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            SectionHeader("Data", Icons.Filled.ImportExport)
+            SectionHeader(stringResource(R.string.settings_section_data), Icons.Filled.ImportExport)
             Text(
-                text = "Import CSV",
+                text = stringResource(R.string.settings_import_csv),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier =
                     Modifier
@@ -328,7 +396,7 @@ private fun DataSection(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
             )
             Text(
-                text = "Export CSV",
+                text = stringResource(R.string.settings_export_csv),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier =
                     Modifier
@@ -352,9 +420,10 @@ private fun AccountSection(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            SectionHeader("Account", Icons.Filled.Person)
+            SectionHeader(stringResource(R.string.settings_section_account), Icons.Filled.Person)
+            val signedInFallback = stringResource(R.string.settings_signed_in_fallback)
             Text(
-                text = currentUser?.displayName ?: currentUser?.email ?: "Signed in",
+                text = currentUser?.displayName ?: currentUser?.email ?: signedInFallback,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
@@ -370,7 +439,7 @@ private fun AccountSection(
                 onClick = onSignOut,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             ) {
-                Text("Sign out")
+                Text(stringResource(R.string.action_sign_out))
             }
         }
     }
@@ -379,12 +448,13 @@ private fun AccountSection(
 @Composable
 private fun AboutSection(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val unknownVersion = stringResource(R.string.about_version_unknown)
     val versionName =
         remember {
             try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: unknownVersion
             } catch (e: PackageManager.NameNotFoundException) {
-                "unknown"
+                unknownVersion
             }
         }
 
@@ -394,14 +464,14 @@ private fun AboutSection(modifier: Modifier = Modifier) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            SectionHeader("About", Icons.Filled.Info)
+            SectionHeader(stringResource(R.string.settings_section_about), Icons.Filled.Info)
             Text(
-                text = "FinTrack",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
             Text(
-                text = "Version $versionName",
+                text = stringResource(R.string.about_version, versionName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 16.dp),

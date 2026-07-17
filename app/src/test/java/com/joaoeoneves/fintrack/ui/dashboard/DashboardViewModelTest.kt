@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import android.app.Application
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -8,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -24,6 +27,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.time.Instant
 import java.time.LocalTime
 import java.time.YearMonth
@@ -44,6 +50,8 @@ import java.time.temporal.ChronoUnit
  * of a month -- the test uses [assumeTrue] to skip itself gracefully rather than risk flakiness.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class DashboardViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
@@ -291,6 +299,22 @@ class DashboardViewModelTest {
             advanceUntilIdle()
 
             assertEquals(DashboardUiState.Error("Something went wrong"), viewModel.uiState.value)
+
+            job.cancel()
+        }
+
+    @Test
+    fun observeExpensesFailure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            repo.nextObserveExpensesError = RuntimeException()
+            val context = FakeStringContext(R.string.error_generic_fallback, "translated generic error")
+            val viewModel = DashboardViewModel(repo, FakeBudgetRepository(), FakeIncomeRepository(), context)
+
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(DashboardUiState.Error("translated generic error"), viewModel.uiState.value)
 
             job.cancel()
         }

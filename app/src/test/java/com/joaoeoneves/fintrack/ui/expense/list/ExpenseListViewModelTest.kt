@@ -2,10 +2,12 @@ package com.joaoeoneves.fintrack.ui.expense.list
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -484,6 +486,27 @@ class ExpenseListViewModelTest {
             advanceUntilIdle()
 
             assertEquals(ExpenseListUiState.Error("Something went wrong"), vm.uiState.value)
+
+            job.cancel()
+        }
+
+    @Test
+    fun observeExpensesFailure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            repo.nextObserveExpensesError = RuntimeException()
+            val context = FakeStringContext(R.string.error_generic_fallback, "translated generic error")
+            val vm =
+                ExpenseListViewModel(
+                    repo,
+                    SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH)),
+                    context,
+                )
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(ExpenseListUiState.Error("translated generic error"), vm.uiState.value)
 
             job.cancel()
         }

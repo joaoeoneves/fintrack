@@ -1,10 +1,13 @@
 package com.joaoeoneves.fintrack.ui.auth
 
+import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeAuthRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
+import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +26,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Unit tests for [AuthViewModel]'s state transitions, backed by [FakeAuthRepository] for
@@ -37,6 +43,8 @@ import org.junit.Test
  * its `signIn`/`signOut` coroutines have queued.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class AuthViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
@@ -177,6 +185,51 @@ class AuthViewModelTest {
             advanceUntilIdle()
 
             assertEquals(AuthUiState.Error("Sign-in failed"), viewModel.uiState.value)
+        }
+
+    // ---- signIn/signOut failure: real (non-null) appContext branch ----
+    //
+    // The tests above all construct AuthViewModel with the default `appContext = null`, which
+    // exercises the hardcoded-English-fallback branch of `appContext?.getString(...) ?: "..."`.
+    // These two prove the *other* branch: when a real Context is supplied, the ViewModel actually
+    // calls `context.getString(R.string.xxx)` and uses its result instead of the fallback --
+    // using FakeStringContext (no Robolectric resource loading involved) so the string returned is
+    // trivially distinguishable from both the hardcoded fallback and any other stubbed value.
+
+    @Test
+    fun signIn_failure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo =
+                FakeAuthRepository(
+                    initialUser = null,
+                    nextSignInResult = Result.failure(RuntimeException()),
+                )
+            val appContext = FakeStringContext(R.string.error_sign_in_failed, "translated sign-in failure")
+            val viewModel = AuthViewModel(repo, appContext)
+            advanceUntilIdle()
+
+            viewModel.signIn(fakeContext)
+            advanceUntilIdle()
+
+            assertEquals(AuthUiState.Error("translated sign-in failure"), viewModel.uiState.value)
+        }
+
+    @Test
+    fun signOut_failure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo =
+                FakeAuthRepository(
+                    initialUser = user,
+                    nextSignOutResult = Result.failure(RuntimeException()),
+                )
+            val appContext = FakeStringContext(R.string.error_sign_out_failed, "translated sign-out failure")
+            val viewModel = AuthViewModel(repo, appContext)
+            advanceUntilIdle()
+
+            viewModel.signOut()
+            advanceUntilIdle()
+
+            assertEquals(AuthUiState.Error("translated sign-out failure"), viewModel.uiState.value)
         }
 
     // ---- signOut: success (relies on the fake's flow, not a ViewModel shortcut) ----

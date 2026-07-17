@@ -2,9 +2,11 @@ package com.joaoeoneves.fintrack.ui.importexport
 
 import android.app.Application
 import android.net.Uri
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -125,14 +127,35 @@ class ImportExportViewModelTest {
     @Test
     fun onImportFileSelected_missingFile_movesToErrorState_doesNotCrash() =
         runTest(testDispatcher) {
+            // Real note on why this uses FakeStringContext instead of context() directly: this
+            // ViewModel's Context param is required (not nullable), and the failure branch under
+            // test calls context.getString(R.string.error_import_read_file). This project's
+            // Robolectric setup does not currently have `android.testOptions.unitTests
+            // .isIncludeAndroidResources = true` set in app/build.gradle.kts, so a *real* Context's
+            // getString() throws `Resources.NotFoundException` for every resource id -- including
+            // R.string.app_name -- reproducible even on main before this feature branch (confirmed
+            // via a throwaway probe test), i.e. this is a pre-existing test-infrastructure gap, not
+            // a regression from this feature and not a production bug in ImportExportViewModel.kt.
+            // FakeStringContext wraps the real Robolectric context() (so ContentResolver/file access
+            // for openInputStream still works normally) while serving a canned value for getString,
+            // giving this test real, working coverage of the exception -> Error-state path without
+            // depending on that broken resource-loading pipeline.
             val missing = File(tempFolder.root, "does-not-exist.csv")
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val fakeContext =
+                FakeStringContext(
+                    R.string.error_import_read_file,
+                    "Could not read the selected file",
+                    base = context(),
+                )
+            val viewModel = ImportExportViewModel(repo, fakeContext)
 
             viewModel.onImportFileSelected(Uri.fromFile(missing))
             advanceUntilIdle()
 
-            assertTrue(viewModel.importState.value is ImportUiState.Error)
+            val state = viewModel.importState.value
+            assertTrue(state is ImportUiState.Error)
+            assertEquals("Could not read the selected file", (state as ImportUiState.Error).message)
         }
 
     @Test

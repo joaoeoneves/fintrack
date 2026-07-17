@@ -2,10 +2,12 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -179,6 +181,28 @@ class AddEditExpenseViewModelTest {
             val state = viewModel.uiState.value as AddEditUiState.Ready
             assertEquals("Name is required", state.form.nameError)
             assertEquals("Enter a valid amount", state.form.amountError)
+        }
+
+    @Test
+    fun onSave_blankNameAndInvalidAmount_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            val context =
+                FakeStringContext(
+                    mapOf(
+                        R.string.error_name_required to "translated name required",
+                        R.string.error_invalid_amount to "translated invalid amount",
+                    ),
+                )
+            val viewModel = AddEditExpenseViewModel(repo, SavedStateHandle(), context)
+            advanceUntilIdle()
+
+            viewModel.onSave()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AddEditUiState.Ready
+            assertEquals("translated name required", state.form.nameError)
+            assertEquals("translated invalid amount", state.form.amountError)
         }
 
     @Test

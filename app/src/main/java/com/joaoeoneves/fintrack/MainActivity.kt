@@ -1,9 +1,9 @@
 package com.joaoeoneves.fintrack
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,8 +25,13 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
+// Extends AppCompatActivity (rather than plain ComponentActivity) because
+// AppCompatDelegate.setApplicationLocales — used by SharedPrefsLanguageRepository to drive the
+// in-app language picker — is documented to require an AppCompatActivity host when the UI is
+// built with Compose; without it, setApplicationLocales silently fails to recreate/relocalize the
+// activity. AppCompatActivity extends ComponentActivity, so `setContent {}` still works unchanged.
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

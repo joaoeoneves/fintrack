@@ -1,0 +1,146 @@
+<resources>
+    <string name="app_name">FinTrack</string>
+
+    <!-- Ações partilhadas -->
+    <string name="action_save">Guardar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_ok">OK</string>
+    <string name="action_retry">Tentar novamente</string>
+    <string name="action_undo">Anular</string>
+    <string name="action_import">Importar</string>
+    <string name="action_sign_out">Terminar sessão</string>
+    <string name="action_add_expense">Adicionar despesa</string>
+    <string name="action_add_income">Adicionar rendimento</string>
+
+    <!-- Descrições de conteúdo partilhadas -->
+    <string name="cd_back">Voltar</string>
+    <string name="cd_cancel">Cancelar</string>
+    <string name="cd_delete">Eliminar</string>
+    <string name="cd_change_date">Alterar data</string>
+    <string name="cd_settings">Definições</string>
+
+    <!-- Rótulos de campos partilhados -->
+    <string name="field_amount">Montante</string>
+    <string name="field_date">Data</string>
+    <string name="field_note_optional">Nota (opcional)</string>
+
+    <!-- Erros/estados partilhados -->
+    <string name="error_state_title">Ocorreu um problema.</string>
+    <string name="error_generic_fallback">Ocorreu um problema</string>
+    <string name="error_invalid_amount">Introduza um montante válido</string>
+    <string name="error_sign_in_failed">Falha ao iniciar sessão</string>
+    <string name="error_sign_out_failed">Falha ao terminar sessão</string>
+
+    <!-- Autenticação -->
+    <string name="auth_subtitle">Inicie sessão para acompanhar as suas despesas</string>
+    <string name="auth_sign_in_with_google">Iniciar sessão com o Google</string>
+
+    <!-- Linha de despesa/rendimento partilhada -->
+    <string name="row_category_date">%1$s • %2$s</string>
+
+    <!-- Categorias -->
+    <string name="category_transfer">Transferência</string>
+    <string name="category_investments">Investimentos</string>
+    <string name="category_shopping">Compras</string>
+    <string name="category_recurring">Recorrente</string>
+
+    <!-- Moedas: deliberadamente NÃO extraídas para recursos de string. CurrencyOption.displayName
+         em CurrencyDisplay.kt mantém-se fixo em inglês, de propósito. Ver o KDoc desse ficheiro. -->
+
+    <!-- Painel principal -->
+    <string name="dashboard_budgets_title">Orçamentos (este mês)</string>
+    <string name="dashboard_recent_expenses">Despesas recentes</string>
+    <string name="dashboard_see_all_expenses">Ver todas as despesas</string>
+    <string name="dashboard_recent_income">Rendimentos recentes</string>
+    <string name="dashboard_no_income">Ainda não há rendimentos neste período.</string>
+    <string name="dashboard_see_all_income">Ver todos os rendimentos</string>
+    <string name="dashboard_net_balance">Saldo líquido</string>
+    <string name="dashboard_income_label">Rendimentos</string>
+    <string name="dashboard_expenses_label">Despesas</string>
+    <string name="dashboard_no_expenses">Ainda não há despesas neste período.</string>
+    <string name="dashboard_total_spent">Total gasto</string>
+
+    <!-- Orçamentos -->
+    <string name="budget_spent_of_limit">%1$s / %2$s</string>
+    <string name="budget_spent_no_limit">%1$s gasto — sem limite definido</string>
+    <string name="budget_dialog_title">Definir orçamento para %1$s</string>
+    <string name="budget_dialog_limit_label">Limite mensal</string>
+
+    <!-- Adicionar/editar despesa -->
+    <string name="expense_edit_title">Editar despesa</string>
+    <string name="expense_field_name">Nome</string>
+    <string name="expense_field_category">Categoria</string>
+    <string name="error_name_required">O nome é obrigatório</string>
+    <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
+
+    <!-- Lista de despesas -->
+    <string name="expense_list_title">Todas as despesas</string>
+    <string name="expense_list_deleted_snackbar">Eliminado \"%1$s\"</string>
+    <string name="expense_list_search_label">Pesquisar</string>
+    <string name="expense_list_no_match">Nenhuma despesa corresponde a \"%1$s\".</string>
+
+    <!-- Opções de ordenação -->
+    <string name="sort_by_label">Ordenar por</string>
+    <string name="sort_newest_first">Mais recentes primeiro</string>
+    <string name="sort_oldest_first">Mais antigas primeiro</string>
+    <string name="sort_highest_amount">Montante mais alto</string>
+    <string name="sort_lowest_amount">Montante mais baixo</string>
+
+    <!-- Importar/exportar -->
+    <string name="import_preview_title">Pré-visualização da importação</string>
+    <string name="import_preview_summary">%1$d linhas prontas para importar, %2$d falharam</string>
+    <string name="import_preview_row_failure">Linha %1$d: %2$s</string>
+    <string name="label_import_complete">Importação concluída</string>
+    <string name="label_import_failed">Falha na importação</string>
+    <string name="label_export_complete">Exportação concluída</string>
+    <string name="label_export_failed">Falha na exportação</string>
+    <string name="error_import_read_file">Não foi possível ler o ficheiro selecionado</string>
+    <string name="error_import_failed">Falha na importação</string>
+    <string name="error_export_write_file">Não foi possível escrever o ficheiro de exportação</string>
+    <string name="error_export_failed">Falha na exportação</string>
+
+    <!-- Adicionar/editar rendimento -->
+    <string name="income_edit_title">Editar rendimento</string>
+    <string name="income_field_source">Origem</string>
+    <string name="error_source_required">A origem é obrigatória</string>
+    <string name="error_failed_save_income">Não foi possível guardar o rendimento</string>
+
+    <!-- Lista de rendimentos -->
+    <string name="income_list_title">Todos os rendimentos</string>
+    <string name="income_list_deleted_snackbar">Eliminado \"%1$s\"</string>
+
+    <!-- Definições -->
+    <string name="settings_title">Definições</string>
+    <string name="settings_section_appearance">Aparência</string>
+    <string name="settings_section_language">Idioma</string>
+    <string name="settings_section_currency">Moeda</string>
+    <string name="settings_section_data">Dados</string>
+    <string name="settings_section_account">Conta</string>
+    <string name="settings_section_about">Acerca</string>
+    <string name="settings_currency_label">Moeda de exibição</string>
+    <string name="settings_import_csv">Importar CSV</string>
+    <string name="settings_export_csv">Exportar CSV</string>
+    <string name="settings_signed_in_fallback">Sessão iniciada</string>
+    <string name="label_sign_out_failed">Falha ao terminar sessão</string>
+    <string name="about_version">Versão %1$s</string>
+    <string name="about_version_unknown">desconhecida</string>
+
+    <!-- Tema -->
+    <string name="theme_system">Predefinição do sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Escuro</string>
+
+    <!-- Seletor de idioma. Cada idioma mantém o seu próprio nome (autónimo), tal como no seletor
+         de idioma de qualquer aplicação: "English" e "Português" não são traduzidos, mesmo aqui. -->
+    <string name="language_english">English</string>
+    <string name="language_portuguese">Português</string>
+
+    <plurals name="import_complete_message">
+        <item quantity="one">%d despesa importada.</item>
+        <item quantity="other">%d despesas importadas.</item>
+    </plurals>
+    <plurals name="export_complete_message">
+        <item quantity="one">%d despesa exportada.</item>
+        <item quantity="other">%d despesas exportadas.</item>
+    </plurals>
+</resources>

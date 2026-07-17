@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.csv.CsvImportOutcome
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvParser
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvWriter
@@ -42,7 +43,7 @@ class ImportExportViewModel
                         null
                     }
                 if (text == null) {
-                    _importState.value = ImportUiState.Error("Could not read the selected file")
+                    _importState.value = ImportUiState.Error(context.getString(R.string.error_import_read_file))
                     return@launch
                 }
                 _importState.value =
@@ -61,7 +62,10 @@ class ImportExportViewModel
                 expenseRepository
                     .addExpenses(preview.validExpenses)
                     .onSuccess { count -> _importState.value = ImportUiState.Done(count) }
-                    .onFailure { e -> _importState.value = ImportUiState.Error(e.message ?: "Import failed") }
+                    .onFailure { e ->
+                        val fallback = e.message ?: context.getString(R.string.error_import_failed)
+                        _importState.value = ImportUiState.Error(fallback)
+                    }
             }
         }
 
@@ -88,9 +92,12 @@ class ImportExportViewModel
                             if (wrote) {
                                 ExportUiState.Done(expenses.size)
                             } else {
-                                ExportUiState.Error("Could not write the export file")
+                                ExportUiState.Error(context.getString(R.string.error_export_write_file))
                             }
-                    }.onFailure { e -> _exportState.value = ExportUiState.Error(e.message ?: "Export failed") }
+                    }.onFailure { e ->
+                        val fallback = e.message ?: context.getString(R.string.error_export_failed)
+                        _exportState.value = ExportUiState.Error(fallback)
+                    }
             }
         }
 

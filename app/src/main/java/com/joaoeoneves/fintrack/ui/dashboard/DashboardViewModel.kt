@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Income
@@ -11,6 +13,7 @@ import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +36,11 @@ class DashboardViewModel
         private val expenseRepository: ExpenseRepository,
         private val budgetRepository: BudgetRepository,
         private val incomeRepository: IncomeRepository,
+        // Nullable with a default so existing unit tests that construct this ViewModel directly
+        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
+        // production. When null (test-only), the fallback below matches the exact literal those
+        // tests assert on.
+        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val timeRange = MutableStateFlow(TimeRange.ONE_MONTH)
         private val retryTrigger = MutableStateFlow(0)
@@ -63,7 +71,11 @@ class DashboardViewModel
                         incomeRepository.observeIncome(instantRange.startInclusive, instantRange.endExclusive),
                     ) { expenses, budgets, income -> expenses.toContent(range, budgets, income) }
                         .map<DashboardUiState.Content, DashboardUiState> { content -> content }
-                        .catch { e -> emit(DashboardUiState.Error(e.message ?: "Something went wrong")) }
+                        .catch { e ->
+                            val fallback =
+                                context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
+                            emit(DashboardUiState.Error(e.message ?: fallback))
+                        }
                 }.stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(5_000),

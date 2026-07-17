@@ -8,19 +8,24 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 
 /**
  * Human-readable label for an [ExpenseCategory], shared across dashboard, list, and add/edit screens.
+ * `@Composable` because it resolves through [stringResource]; every call site is inside a
+ * Composable already.
  */
 val ExpenseCategory.displayName: String
+    @Composable
     get() =
         when (this) {
-            ExpenseCategory.TRANSFER -> "Transfer"
-            ExpenseCategory.INVESTMENTS -> "Investments"
-            ExpenseCategory.SHOPPING -> "Shopping"
-            ExpenseCategory.RECURRING -> "Recurring"
+            ExpenseCategory.TRANSFER -> stringResource(R.string.category_transfer)
+            ExpenseCategory.INVESTMENTS -> stringResource(R.string.category_investments)
+            ExpenseCategory.SHOPPING -> stringResource(R.string.category_shopping)
+            ExpenseCategory.RECURRING -> stringResource(R.string.category_recurring)
         }
 
 /**
