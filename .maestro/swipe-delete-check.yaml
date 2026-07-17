@@ -27,6 +27,21 @@ appId: com.joaoeoneves.fintrack
 # Assumes the app is already signed in, same as the other flows in this directory.
 - launchApp
 
+# --- 0: Pin language to English before any of the (English) assertions below. Fresh installs now
+# default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer
+# assume the app renders in English out of the box. The Settings entry point's label is itself
+# locale-dependent ("Settings" vs. "Definições"), so match either via regex alternation since we
+# don't yet know which is currently in effect. "English" is always labeled "English" regardless
+# of the active app language (see settings.yaml's currency-pinning header comment for the general
+# "pin a known baseline" pattern this mirrors). No restore-to-original-language step at the end of
+# this flow is needed: swipe-delete-check.yaml doesn't restore any other global setting either
+# (unlike settings.yaml, which restores theme/currency because other flows depend on those
+# defaults).
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
+
 # --- Expense row: swipe EndToStart (right-to-left) to delete ---
 - tapOn: "Add expense"
 - assertVisible: "Add expense"

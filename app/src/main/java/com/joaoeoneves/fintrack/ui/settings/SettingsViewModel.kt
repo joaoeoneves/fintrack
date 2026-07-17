@@ -32,7 +32,7 @@ class SettingsViewModel
         // Nullable with defaults so existing unit tests that construct this ViewModel directly
         // (bypassing Hilt) with only the original 3 positional args keep compiling; Hilt itself
         // always supplies both in production. When languageRepository is null (test-only), the
-        // language always reads as AppLanguage.SYSTEM, matching SettingsUiState()'s own default.
+        // language always reads as AppLanguage.PORTUGUESE, matching SettingsUiState()'s own default.
         // When context is null, the signOutError fallback below matches the exact literal those
         // tests assert on.
         private val languageRepository: LanguageRepository? = null,
@@ -44,7 +44,7 @@ class SettingsViewModel
             combine(
                 themeRepository.observeThemePreference(),
                 currencyRepository.observeCurrency(),
-                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.SYSTEM),
+                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.PORTUGUESE),
                 authRepository.observeCurrentUser(),
                 signOutError,
             ) { themePreference, currency, language, currentUser, error ->

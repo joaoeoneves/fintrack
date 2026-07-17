@@ -41,12 +41,18 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Settings"
 - assertVisible: "Appearance"
 - assertVisible: "Currency"
-- assertVisible: "Data"
-- assertVisible: "Account"
-# "About" sits below the fold on a 2400px-tall viewport with an account already signed in (name +
-# email pushes it further down) -- scroll to it rather than asserting it's visible without moving,
-# which is viewport-size-dependent and unrelated to the currency-default change this flow otherwise
-# covers.
+# "Data", "Account", and "About" all sit below the fold on a 2400px-tall viewport now: the
+# Language section (added between Appearance and Currency for the language-preference feature)
+# pushes everything below it further down, on top of the account-signed-in row (name + email)
+# already doing the same to "About" -- scroll to each rather than asserting visible without
+# moving, which is viewport-size-dependent and unrelated to the currency-default change this flow
+# otherwise covers.
+- scrollUntilVisible:
+    element: "Data"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Account"
+    direction: DOWN
 - scrollUntilVisible:
     element: "About"
     direction: DOWN
@@ -87,6 +93,11 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Dark"
 
 # --- 4: Data -- Import CSV / Export CSV still launch their file pickers ---
+# The Data section (with these two buttons) is below the fold at this scroll position too, for
+# the same Language-section-was-added reason as step 1's scroll comment above.
+- scrollUntilVisible:
+    element: "Import CSV"
+    direction: DOWN
 - tapOn: "Import CSV"
 - back
 - tapOn: "Export CSV"

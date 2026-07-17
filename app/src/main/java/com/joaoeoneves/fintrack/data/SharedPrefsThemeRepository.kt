@@ -14,7 +14,8 @@ private const val KEY_THEME_PREFERENCE = "theme_preference"
 
 /**
  * [ThemeRepository] backed by [android.content.SharedPreferences], storing the [ThemePreference]
- * enum name as a string. Absent/unrecognized values default to [ThemePreference.SYSTEM].
+ * enum name as a string. Absent/unrecognized values default to [ThemePreference.DARK] (the
+ * first-install default).
  *
  * Scoped as a singleton because it caches state in [themePreferenceFlow]; a second instance would
  * seed its own copy from disk and never observe writes made through the first instance.
@@ -37,7 +38,7 @@ class SharedPrefsThemeRepository
         }
 
         private fun readStoredPreference(): ThemePreference {
-            val stored = prefs.getString(KEY_THEME_PREFERENCE, null) ?: return ThemePreference.SYSTEM
-            return ThemePreference.entries.find { it.name == stored } ?: ThemePreference.SYSTEM
+            val stored = prefs.getString(KEY_THEME_PREFERENCE, null) ?: return ThemePreference.DARK
+            return ThemePreference.entries.find { it.name == stored } ?: ThemePreference.DARK
         }
     }

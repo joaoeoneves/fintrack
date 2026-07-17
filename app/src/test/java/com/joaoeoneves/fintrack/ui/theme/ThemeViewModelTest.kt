@@ -38,15 +38,15 @@ class ThemeViewModelTest {
     }
 
     @Test
-    fun themePreference_initialValue_isSystem() =
+    fun themePreference_initialValue_isDark() =
         runTest(testDispatcher) {
-            val repo = FakeThemeRepository(ThemePreference.DARK)
+            val repo = FakeThemeRepository(ThemePreference.LIGHT)
             val viewModel = ThemeViewModel(repo)
 
             // Before advanceUntilIdle/collection, the StateFlow built via stateIn(WhileSubscribed)
             // has not yet started collecting upstream, so it should still report its initialValue
             // regardless of what the repository is actually seeded with.
-            assertEquals(ThemePreference.SYSTEM, viewModel.themePreference.value)
+            assertEquals(ThemePreference.DARK, viewModel.themePreference.value)
         }
 
     @Test

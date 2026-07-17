@@ -22,13 +22,13 @@ class SharedPrefsThemeRepositoryTest {
     private fun context() = RuntimeEnvironment.getApplication()
 
     @Test
-    fun observeThemePreference_nothingStoredYet_defaultsToSystem() =
+    fun observeThemePreference_nothingStoredYet_defaultsToDark() =
         runBlocking {
             val repo = SharedPrefsThemeRepository(context())
 
             val result = repo.observeThemePreference().first()
 
-            assertEquals(ThemePreference.SYSTEM, result)
+            assertEquals(ThemePreference.DARK, result)
         }
 
     @Test
@@ -79,7 +79,7 @@ class SharedPrefsThemeRepositoryTest {
         }
 
     @Test
-    fun readStoredPreference_unrecognizedStoredString_defaultsToSystem() =
+    fun readStoredPreference_unrecognizedStoredString_defaultsToDark() =
         runBlocking {
             val ctx = context()
             // Simulate a corrupted/unrecognized stored value (e.g. from a removed enum constant in
@@ -92,6 +92,6 @@ class SharedPrefsThemeRepositoryTest {
 
             val repo = SharedPrefsThemeRepository(ctx)
 
-            assertEquals(ThemePreference.SYSTEM, repo.observeThemePreference().first())
+            assertEquals(ThemePreference.DARK, repo.observeThemePreference().first())
         }
 }

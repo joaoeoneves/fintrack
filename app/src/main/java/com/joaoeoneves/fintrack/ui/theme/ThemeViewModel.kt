@@ -21,7 +21,7 @@ class ThemeViewModel
             themeRepository.observeThemePreference().stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = ThemePreference.SYSTEM,
+                initialValue = ThemePreference.DARK,
             )
 
         /**

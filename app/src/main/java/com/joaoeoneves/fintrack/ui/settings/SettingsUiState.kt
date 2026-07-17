@@ -6,9 +6,9 @@ import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 
 data class SettingsUiState(
-    val themePreference: ThemePreference = ThemePreference.SYSTEM,
+    val themePreference: ThemePreference = ThemePreference.DARK,
     val currency: CurrencyOption = CurrencyOption.EUR,
-    val language: AppLanguage = AppLanguage.SYSTEM,
+    val language: AppLanguage = AppLanguage.PORTUGUESE,
     val currentUser: AuthUser? = null,
     val signOutError: String? = null,
 )

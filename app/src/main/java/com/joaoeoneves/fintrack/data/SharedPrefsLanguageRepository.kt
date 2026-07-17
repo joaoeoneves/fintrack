@@ -16,7 +16,8 @@ private const val KEY_LANGUAGE = "language"
 
 /**
  * [LanguageRepository] backed by [android.content.SharedPreferences], storing the [AppLanguage]
- * enum name as a string. Absent/unrecognized values default to [AppLanguage.SYSTEM].
+ * enum name as a string. Absent/unrecognized values default to [AppLanguage.PORTUGUESE] (the
+ * first-install default).
  *
  * [setLanguage] both persists the preference and applies it app-wide via
  * [AppCompatDelegate.setApplicationLocales], which drives `stringResource()`/date-formatting
@@ -38,6 +39,10 @@ class SharedPrefsLanguageRepository
 
         override fun observeLanguage(): Flow<AppLanguage> = languageFlow
 
+        override fun applyPersistedLocale() {
+            AppCompatDelegate.setApplicationLocales(languageFlow.value.toLocaleListCompat())
+        }
+
         override suspend fun setLanguage(language: AppLanguage) {
             prefs.edit().putString(KEY_LANGUAGE, language.name).apply()
             languageFlow.value = language
@@ -45,8 +50,8 @@ class SharedPrefsLanguageRepository
         }
 
         private fun readStoredLanguage(): AppLanguage {
-            val stored = prefs.getString(KEY_LANGUAGE, null) ?: return AppLanguage.SYSTEM
-            return AppLanguage.entries.find { it.name == stored } ?: AppLanguage.SYSTEM
+            val stored = prefs.getString(KEY_LANGUAGE, null) ?: return AppLanguage.PORTUGUESE
+            return AppLanguage.entries.find { it.name == stored } ?: AppLanguage.PORTUGUESE
         }
 
         private fun AppLanguage.toLocaleListCompat(): LocaleListCompat =

@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
+import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.ui.auth.AuthUiState
 import com.joaoeoneves.fintrack.ui.auth.AuthViewModel
 import com.joaoeoneves.fintrack.ui.auth.SignInScreen
@@ -24,6 +25,7 @@ import com.joaoeoneves.fintrack.ui.theme.CurrencyViewModel
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 // Extends AppCompatActivity (rather than plain ComponentActivity) because
 // AppCompatDelegate.setApplicationLocales — used by SharedPrefsLanguageRepository to drive the
@@ -32,8 +34,17 @@ import dagger.hilt.android.AndroidEntryPoint
 // activity. AppCompatActivity extends ComponentActivity, so `setContent {}` still works unchanged.
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    @Inject
+    lateinit var languageRepository: LanguageRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // AppCompatDelegate.setApplicationLocales() is a no-op until at least one
+        // AppCompatActivity has been created, so the persisted/default language can only be
+        // reliably (re-)applied here, not earlier (e.g. from Application.onCreate()) -- confirmed
+        // via on-device testing: an Application-level attempt left AppCompatDelegate reporting an
+        // empty locale list despite the call executing successfully.
+        languageRepository.applyPersistedLocale()
         enableEdgeToEdge()
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()

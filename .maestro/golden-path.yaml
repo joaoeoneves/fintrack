@@ -10,6 +10,20 @@ appId: com.joaoeoneves.fintrack
 
 - launchApp
 
+# --- 0: Pin language to English before any of the (English) assertions below. Fresh installs now
+# default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer
+# assume the app renders in English out of the box. The Settings entry point's label is itself
+# locale-dependent ("Settings" vs. "Definições"), so match either via regex alternation since we
+# don't yet know which is currently in effect. "English" is always labeled "English" regardless
+# of the active app language (see settings.yaml's currency-pinning header comment for the general
+# "pin a known baseline" pattern this mirrors). No restore-to-original-language step at the end of
+# this flow is needed: golden-path.yaml doesn't restore any other global setting either (unlike
+# settings.yaml, which restores theme/currency because other flows depend on those defaults).
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
+
 # --- 1/2: Dashboard loads with filter pills, balance summary card, pie legend, and the Add expense FAB ---
 - assertVisible: "FinTrack"
 - assertVisible: "1W"
