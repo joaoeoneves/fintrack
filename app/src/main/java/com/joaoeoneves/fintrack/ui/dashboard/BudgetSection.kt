@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
@@ -105,7 +106,7 @@ private fun BudgetRow(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -131,6 +132,8 @@ private fun BudgetRow(
             }
             val textColor =
                 if (budget.isOverBudget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+            // Weighted so long, wrapped translations of this status text are confined to their own
+            // right-hand column and never overlap the category name on the left (see bug report).
             Text(
                 text =
                     if (budget.limitCents != null) {
@@ -142,8 +145,10 @@ private fun BudgetRow(
                     } else {
                         stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))
                     },
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = textColor,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f),
             )
         }
         LinearProgressIndicator(
