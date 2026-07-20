@@ -617,7 +617,11 @@ class FakeExpenseRepositoryTest {
             val repo = FakeExpenseRepository()
             repo.nextAddExpensesFailure = IllegalStateException("transient")
             repo.addExpensesFailureAfterCount = 1
-            val toImport = listOf(expense(id = "", name = "Coffee", date = day0), expense(id = "", name = "Rent", date = day1))
+            val toImport =
+                listOf(
+                    expense(id = "", name = "Coffee", date = day0),
+                    expense(id = "", name = "Rent", date = day1),
+                )
 
             val first = repo.addExpenses(toImport)
             assertFalse(first.isCompleteSuccess)

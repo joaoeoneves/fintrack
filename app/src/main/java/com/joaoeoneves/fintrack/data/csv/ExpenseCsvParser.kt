@@ -41,7 +41,7 @@ sealed interface CsvImportOutcome {
  */
 object ExpenseCsvParser {
     fun parse(csvText: String): CsvImportOutcome {
-        val normalizedText = csvText.removePrefix("﻿")
+        val normalizedText = csvText.removePrefix("\uFEFF")
         val lines =
             splitCsvRecords(normalizedText)
                 .let { if (it.isNotEmpty() && it.last().isBlank()) it.dropLast(1) else it }
@@ -155,29 +155,45 @@ object ExpenseCsvParser {
         var i = 0
         while (i < text.length) {
             val c = text[i]
-            if (c == '"') {
-                current.append(c)
-                if (inQuotes && i + 1 < text.length && text[i + 1] == '"') {
-                    current.append(text[i + 1])
-                    i += 2
-                    continue
+            when {
+                c == '"' -> {
+                    val (nextIndex, nextInQuotes) = consumeQuoteChar(text, i, inQuotes, current)
+                    i = nextIndex
+                    inQuotes = nextInQuotes
                 }
-                inQuotes = !inQuotes
-                i++
-                continue
+                !inQuotes && (c == '\n' || c == '\r') -> {
+                    records += current.toString()
+                    current.setLength(0)
+                    i += newlineWidth(text, i)
+                }
+                else -> {
+                    current.append(c)
+                    i++
+                }
             }
-            if (!inQuotes && (c == '\n' || c == '\r')) {
-                records += current.toString()
-                current.setLength(0)
-                i += if (c == '\r' && i + 1 < text.length && text[i + 1] == '\n') 2 else 1
-                continue
-            }
-            current.append(c)
-            i++
         }
         records += current.toString()
         return records
     }
+
+    private fun consumeQuoteChar(
+        text: String,
+        index: Int,
+        inQuotes: Boolean,
+        current: StringBuilder,
+    ): Pair<Int, Boolean> {
+        current.append('"')
+        if (inQuotes && index + 1 < text.length && text[index + 1] == '"') {
+            current.append(text[index + 1])
+            return (index + 2) to inQuotes
+        }
+        return (index + 1) to !inQuotes
+    }
+
+    private fun newlineWidth(
+        text: String,
+        index: Int,
+    ): Int = if (text[index] == '\r' && index + 1 < text.length && text[index + 1] == '\n') 2 else 1
 
     /**
      * Splits a single CSV line into its raw fields, supporting double-quoted fields (with doubled

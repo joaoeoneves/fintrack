@@ -138,7 +138,8 @@ class FirestoreExpenseRepository
                 firebaseAuth.currentUser?.uid
                     ?: return BulkAddResult(0, IllegalStateException("Not signed in"))
             var total = 0
-            expenses.chunked(BATCH_CHUNK_SIZE).forEach { chunk ->
+            var failure: Throwable? = null
+            for (chunk in expenses.chunked(BATCH_CHUNK_SIZE)) {
                 try {
                     val batch = firestore.batch()
                     chunk.forEach { expense ->
@@ -148,10 +149,11 @@ class FirestoreExpenseRepository
                     batch.commit().await()
                     total += chunk.size
                 } catch (e: Exception) {
-                    return BulkAddResult(total, e)
+                    failure = e
+                    break
                 }
             }
-            return BulkAddResult(total, null)
+            return BulkAddResult(total, failure)
         }
 
         private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
