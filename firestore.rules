@@ -2,19 +2,69 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each user can only read/write their own expenses.
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isValidCategory(category) {
+      return category in ['TRANSFER', 'INVESTMENTS', 'SHOPPING', 'RECURRING'];
+    }
+
+    function isValidAmountCents(amountCents) {
+      return amountCents is int && amountCents > 0;
+    }
+
+    function isValidNote(data) {
+      return !('note' in data) || data.note == null ||
+        (data.note is string && data.note.size() <= 2000);
+    }
+
+    function isValidExpense(data) {
+      return data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && isValidAmountCents(data.amountCents)
+        && isValidCategory(data.category)
+        && data.date is timestamp
+        && isValidNote(data);
+    }
+
+    function isValidIncome(data) {
+      return data.keys().hasAll(['source', 'amountCents', 'date'])
+        && data.source is string && data.source.size() > 0 && data.source.size() <= 200
+        && isValidAmountCents(data.amountCents)
+        && data.date is timestamp
+        && isValidNote(data);
+    }
+
+    function isValidBudget(data) {
+      return data.keys().hasAll(['limitCents'])
+        && data.limitCents is int && data.limitCents > 0;
+    }
+
+    // Each user can only read/write their own expenses, and every write must
+    // carry a well-typed name/amount/category/date (a modified client can no
+    // longer smuggle in a negative amount or an unknown category string).
     match /users/{userId}/expenses/{expenseId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidExpense(request.resource.data);
     }
 
-    // Each user can only read/write their own per-category budget limits.
+    // Each user can only read/write their own per-category budget limits; the
+    // document id doubles as the category, so it must be one of the four
+    // known categories and the limit must be a positive integer.
     match /users/{userId}/budgets/{categoryId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && isValidCategory(categoryId)
+        && isValidBudget(request.resource.data);
     }
 
-    // Each user can only read/write their own income entries.
+    // Each user can only read/write their own income entries, validated the
+    // same way as expenses (source is free text, so no enum check there).
     match /users/{userId}/income/{incomeId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidIncome(request.resource.data);
     }
   }
 }
