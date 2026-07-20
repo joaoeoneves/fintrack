@@ -572,4 +572,55 @@ class ExpenseListViewModelTest {
 
             job.cancel()
         }
+
+    // ---- process death: query/sortOption now live in SavedStateHandle, same as timeRange already did ----
+
+    @Test
+    fun processDeathSimulation_queryAndSortOption_surviveRecreationViaSameSavedStateHandle() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
+            val original = ExpenseListViewModel(repo, savedStateHandle)
+
+            val originalJob = launch { original.uiState.collect {} }
+            advanceUntilIdle()
+            original.onQueryChanged("foo")
+            original.onSortSelected(SortOption.AMOUNT_ASC)
+            advanceUntilIdle()
+            originalJob.cancel()
+
+            // Simulate process death + recreation: construct a *new* ViewModel instance with the
+            // *same* SavedStateHandle object, exactly as the real Android framework hands back a
+            // restored SavedStateHandle after process death, instead of a fresh empty one.
+            val recreated = ExpenseListViewModel(repo, savedStateHandle)
+            val recreatedJob = launch { recreated.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = recreated.uiState.value as ExpenseListUiState.Content
+            assertEquals("foo", content.query)
+            assertEquals(SortOption.AMOUNT_ASC, content.sortOption)
+            assertEquals(TimeRange.ONE_MONTH, content.timeRange)
+
+            recreatedJob.cancel()
+        }
+
+    @Test
+    fun processDeathSimulation_defaultQueryAndSortOption_whenNeverChanged_remainAtDefaults() =
+        runTest(testDispatcher) {
+            // Regression guard for the opposite direction: a fresh SavedStateHandle that never had
+            // onQueryChanged/onSortSelected called against it must still default to ""/DATE_DESC,
+            // not crash or throw on the getStateFlow(key, default) lookup.
+            val repo = FakeExpenseRepository()
+            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
+            val vm = ExpenseListViewModel(repo, savedStateHandle)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as ExpenseListUiState.Content
+            assertEquals("", content.query)
+            assertEquals(SortOption.DATE_DESC, content.sortOption)
+
+            job.cancel()
+        }
 }

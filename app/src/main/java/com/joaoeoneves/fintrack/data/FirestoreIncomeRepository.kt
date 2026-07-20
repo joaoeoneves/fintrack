@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data
 
+import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -26,6 +27,7 @@ class FirestoreIncomeRepository
         private fun incomeCollection(uid: String) = firestore.collection("users").document(uid).collection("income")
 
         companion object {
+            private const val TAG = "FirestoreIncomeRepo"
             private const val BATCH_CHUNK_SIZE = 400
         }
 
@@ -170,9 +172,21 @@ class FirestoreIncomeRepository
         private fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
 
         private fun DocumentSnapshot.toIncomeOrNull(): Income? {
-            val source = getString("source") ?: return null
-            val amountCents = getLong("amountCents") ?: return null
-            val date = getTimestamp("date") ?: return null
+            val source =
+                getString("source") ?: run {
+                    Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'source'")
+                    return null
+                }
+            val amountCents =
+                getLong("amountCents") ?: run {
+                    Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'amountCents'")
+                    return null
+                }
+            val date =
+                getTimestamp("date") ?: run {
+                    Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'date'")
+                    return null
+                }
             val note = getString("note")
 
             return Income(

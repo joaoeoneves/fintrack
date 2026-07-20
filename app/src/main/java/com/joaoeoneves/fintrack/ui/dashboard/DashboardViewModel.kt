@@ -45,10 +45,9 @@ class DashboardViewModel
         private val timeRange = MutableStateFlow(TimeRange.ONE_MONTH)
         private val retryTrigger = MutableStateFlow(0)
 
-        private val monthRange = currentCalendarMonthRange()
-
-        private fun budgetProgress(): Flow<List<CategoryBudget>> =
-            combine(
+        private fun budgetProgress(): Flow<List<CategoryBudget>> {
+            val monthRange = currentCalendarMonthRange()
+            return combine(
                 expenseRepository.observeExpenses(monthRange.startInclusive, monthRange.endExclusive),
                 budgetRepository.observeBudgets(),
             ) { monthExpenses, budgets ->
@@ -60,6 +59,7 @@ class DashboardViewModel
                     )
                 }
             }
+        }
 
         val uiState: StateFlow<DashboardUiState> =
             combine(timeRange, retryTrigger) { range, _ -> range }

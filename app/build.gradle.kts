@@ -27,6 +27,29 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Exposes this dev's local (gitignored) google-services.json values to JVM unit tests only,
+        // so FirebaseTestApp can construct a real (network-inert) FirebaseApp without hardcoding a
+        // copy of the project's Firebase client identifiers in source. Empty when the file is absent
+        // (e.g. a fresh checkout before running Firebase setup) rather than failing the build.
+        val googleServicesFile = rootProject.file("app/google-services.json")
+        val googleServices =
+            if (googleServicesFile.exists()) {
+                groovy.json.JsonSlurper().parse(googleServicesFile) as Map<*, *>
+            } else {
+                null
+            }
+        val client = (googleServices?.get("client") as? List<*>)?.firstOrNull() as? Map<*, *>
+        val projectInfo = googleServices?.get("project_info") as? Map<*, *>
+        val clientInfo = client?.get("client_info") as? Map<*, *>
+        val apiKey = (client?.get("api_key") as? List<*>)?.firstOrNull() as? Map<*, *>
+        buildConfigField("String", "TEST_FIREBASE_PROJECT_ID", "\"${projectInfo?.get("project_id") ?: ""}\"")
+        buildConfigField(
+            "String",
+            "TEST_FIREBASE_APPLICATION_ID",
+            "\"${clientInfo?.get("mobilesdk_app_id") ?: ""}\"",
+        )
+        buildConfigField("String", "TEST_FIREBASE_API_KEY", "\"${apiKey?.get("current_key") ?: ""}\"")
     }
 
     buildTypes {
@@ -42,6 +65,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     testOptions {
         unitTests {

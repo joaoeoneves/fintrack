@@ -34,7 +34,7 @@ class ExpenseListViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
-        savedStateHandle: SavedStateHandle,
+        private val savedStateHandle: SavedStateHandle,
         // Nullable with a default so existing unit tests that construct this ViewModel directly
         // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
         // production. When null (test-only), the fallback below matches the exact literal those
@@ -42,8 +42,8 @@ class ExpenseListViewModel
         @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val timeRange = MutableStateFlow(savedStateHandle.toRoute<ExpenseList>().timeRange)
-        private val query = MutableStateFlow("")
-        private val sortOption = MutableStateFlow(SortOption.DATE_DESC)
+        private val query = savedStateHandle.getStateFlow(KEY_QUERY, "")
+        private val sortOption = savedStateHandle.getStateFlow(KEY_SORT_OPTION, SortOption.DATE_DESC)
         private val retryTrigger = MutableStateFlow(0)
 
         private val undoEvents = Channel<Expense>(Channel.BUFFERED)
@@ -77,11 +77,11 @@ class ExpenseListViewModel
         }
 
         fun onQueryChanged(newQuery: String) {
-            query.value = newQuery
+            savedStateHandle[KEY_QUERY] = newQuery
         }
 
         fun onSortSelected(sort: SortOption) {
-            sortOption.value = sort
+            savedStateHandle[KEY_SORT_OPTION] = sort
         }
 
         fun onRetry() {
@@ -134,5 +134,10 @@ class ExpenseListViewModel
                 sortOption = sort,
                 expenses = sorted,
             )
+        }
+
+        private companion object {
+            private const val KEY_QUERY = "query"
+            private const val KEY_SORT_OPTION = "sortOption"
         }
     }

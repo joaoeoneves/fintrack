@@ -11,6 +11,7 @@ import com.joaoeoneves.fintrack.data.csv.ExpenseCsvWriter
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +40,8 @@ class ImportExportViewModel
                             .openInputStream(uri)
                             ?.bufferedReader()
                             ?.use { it.readText() }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         null
                     }
@@ -91,6 +94,8 @@ class ImportExportViewModel
                                 val stream = context.contentResolver.openOutputStream(uri)
                                 stream?.use { it.write(csv.toByteArray(Charsets.UTF_8)) }
                                 stream != null
+                            } catch (e: CancellationException) {
+                                throw e
                             } catch (e: Exception) {
                                 false
                             }

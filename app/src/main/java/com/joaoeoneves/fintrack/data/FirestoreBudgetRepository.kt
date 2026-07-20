@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -23,6 +24,10 @@ class FirestoreBudgetRepository
         private val firebaseAuth: FirebaseAuth,
     ) : BudgetRepository {
         private fun budgetsCollection(uid: String) = firestore.collection("users").document(uid).collection("budgets")
+
+        companion object {
+            private const val TAG = "FirestoreBudgetRepo"
+        }
 
         override fun observeBudgets(): Flow<List<Budget>> {
             val uid = firebaseAuth.currentUser?.uid ?: return flowOf(emptyList())
@@ -67,10 +72,16 @@ class FirestoreBudgetRepository
         private fun DocumentSnapshot.toBudgetOrNull(): Budget? {
             val category = ExpenseCategory.entries.find { it.name == id }
             val limitCents = getLong("limitCents")
-            return if (category != null && limitCents != null) {
-                Budget(category = category, limitCents = limitCents)
-            } else {
-                null
+            return when {
+                category == null -> {
+                    Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'category'")
+                    null
+                }
+                limitCents == null -> {
+                    Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'limitCents'")
+                    null
+                }
+                else -> Budget(category = category, limitCents = limitCents)
             }
         }
     }

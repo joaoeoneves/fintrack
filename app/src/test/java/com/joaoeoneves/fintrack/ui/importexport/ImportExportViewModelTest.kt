@@ -6,7 +6,9 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.testutil.CancellingContentProvider
 import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.testutil.GenericFailureContentProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -22,6 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -307,7 +310,7 @@ class ImportExportViewModelTest {
             assertEquals(1, (viewModel.exportState.value as ExportUiState.Done).exportedCount)
 
             // Prepend a BOM to the exported file, as a re-saved "CSV UTF-8" export might have.
-            val bomPrefixedBytes = "﻿".toByteArray(Charsets.UTF_8) + file.readBytes()
+            val bomPrefixedBytes = "".toByteArray(Charsets.UTF_8) + file.readBytes()
             file.writeBytes(bomPrefixedBytes)
 
             viewModel.onImportFileSelected(Uri.fromFile(file))
@@ -422,5 +425,64 @@ class ImportExportViewModelTest {
             viewModel.onDismissExport()
 
             assertEquals(ExportUiState.Idle, viewModel.exportState.value)
+        }
+
+    // ---- cancellation propagation (must NOT be swallowed into an Error UI state) ----
+    //
+    // A real android.content.ContentProvider is registered (via Robolectric.setupContentProvider)
+    // under a test authority, and a content:// Uri pointing at it is used to select the "file" --
+    // this is the supported extension point for making context.contentResolver.openInputStream/
+    // openOutputStream throw an arbitrary exception without a mocking library: ContentResolver's
+    // own openInputStream/openOutputStream are `final` in the public SDK stub used at compile time,
+    // so subclassing/overriding ContentResolver itself doesn't compile.
+
+    @Test
+    fun onImportFileSelected_cancellationDuringFileRead_doesNotSurfaceAsErrorState() =
+        runTest(testDispatcher) {
+            Robolectric.setupContentProvider(CancellingContentProvider::class.java, CancellingContentProvider.AUTHORITY)
+            val repo = FakeExpenseRepository()
+            val viewModel = ImportExportViewModel(repo, context())
+
+            viewModel.onImportFileSelected(Uri.parse("content://${CancellingContentProvider.AUTHORITY}/file.csv"))
+            advanceUntilIdle()
+
+            // Before the fix, a CancellationException thrown mid-read was caught by the generic
+            // `catch (e: Exception)` branch and turned into ImportUiState.Error. Now it must
+            // propagate out and cancel the coroutine instead, leaving the state exactly where it
+            // was set immediately before entering the try block: Loading.
+            assertEquals(ImportUiState.Loading, viewModel.importState.value)
+        }
+
+    @Test
+    fun onExportTargetSelected_cancellationDuringFileWrite_doesNotSurfaceAsErrorState() =
+        runTest(testDispatcher) {
+            Robolectric.setupContentProvider(CancellingContentProvider::class.java, CancellingContentProvider.AUTHORITY)
+            val repo = FakeExpenseRepository(listOf(expense(id = "e1", name = "Coffee")))
+            val viewModel = ImportExportViewModel(repo, context())
+
+            viewModel.onExportTargetSelected(Uri.parse("content://${CancellingContentProvider.AUTHORITY}/export.csv"))
+            advanceUntilIdle()
+
+            // Before the fix, this would surface as ExportUiState.Error. The write attempt happens
+            // inside expenseRepository.getAllExpenses().onSuccess { ... }, so the state just before
+            // the cancellation point is Exporting -- it must stay there, not flip to Error.
+            assertEquals(ExportUiState.Exporting, viewModel.exportState.value)
+        }
+
+    @Test
+    fun onImportFileSelected_genericExceptionDuringFileRead_stillSurfacesAsErrorState_regressionCheck() =
+        runTest(testDispatcher) {
+            // Sanity check alongside the cancellation tests above: a *non*-cancellation exception
+            // during the same read path must still be caught and surfaced as Error, proving the new
+            // `catch (e: CancellationException) { throw e }` branch didn't accidentally swallow or
+            // reclassify ordinary failures too.
+            Robolectric.setupContentProvider(GenericFailureContentProvider::class.java, GenericFailureContentProvider.AUTHORITY)
+            val repo = FakeExpenseRepository()
+            val viewModel = ImportExportViewModel(repo, context())
+
+            viewModel.onImportFileSelected(Uri.parse("content://${GenericFailureContentProvider.AUTHORITY}/file.csv"))
+            advanceUntilIdle()
+
+            assertTrue(viewModel.importState.value is ImportUiState.Error)
         }
 }

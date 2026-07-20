@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data
 
+import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -28,6 +29,7 @@ class FirestoreExpenseRepository
         private fun expensesCollection(uid: String) = firestore.collection("users").document(uid).collection("expenses")
 
         companion object {
+            private const val TAG = "FirestoreExpenseRepo"
             private const val BATCH_CHUNK_SIZE = 400
         }
 
@@ -175,16 +177,33 @@ class FirestoreExpenseRepository
         private fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
 
         private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
-            val name = getString("name") ?: return null
-            val amountCents = getLong("amountCents") ?: return null
-            val categoryName = getString("category") ?: return null
+            val name =
+                getString("name") ?: run {
+                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'name'")
+                    return null
+                }
+            val amountCents =
+                getLong("amountCents") ?: run {
+                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'amountCents'")
+                    return null
+                }
+            val categoryName =
+                getString("category") ?: run {
+                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'category'")
+                    return null
+                }
             val category =
                 try {
                     ExpenseCategory.valueOf(categoryName)
                 } catch (e: IllegalArgumentException) {
+                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'category'")
                     return null
                 }
-            val date = getTimestamp("date") ?: return null
+            val date =
+                getTimestamp("date") ?: run {
+                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'date'")
+                    return null
+                }
             val note = getString("note")
 
             return Expense(
