@@ -10,3 +10,10 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# Navigation-Compose resolves @Serializable enum route args (TimeRange, used
+# by the ExpenseList/IncomeList routes in Routes.kt) by fully-qualified class
+# name at NavHost setup time for every destination in the graph, not lazily —
+# an unkept name here crashes the whole authenticated nav graph on launch.
+-keepnames class com.joaoeoneves.fintrack.domain.model.TimeRange
+-keepclassmembers class com.joaoeoneves.fintrack.domain.model.TimeRange { *; }
