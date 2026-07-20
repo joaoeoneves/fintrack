@@ -107,6 +107,31 @@ class AddEditExpenseViewModelTest {
             assertFalse(state.form.date.isAfter(after))
         }
 
+    // ---- isEditRoute: independent of uiState ----
+
+    @Test
+    fun isEditRoute_falseInAddMode() =
+        runTest(testDispatcher) {
+            val viewModel = addModeViewModel(FakeExpenseRepository())
+
+            assertFalse(viewModel.isEditRoute)
+        }
+
+    @Test
+    fun isEditRoute_trueInEditMode_evenWhileLoadIsFailing() =
+        runTest(testDispatcher) {
+            // isEditRoute reflects only the navigation route (expenseId presence), not the current
+            // uiState -- it must stay true for top-bar title/mode purposes even when the load
+            // itself has failed and uiState is AddEditUiState.Error.
+            val repo = FakeExpenseRepository()
+            repo.nextGetExpenseError = IllegalStateException("boom")
+            val viewModel = editModeViewModel(repo, "e1")
+            advanceUntilIdle()
+
+            assertTrue(viewModel.isEditRoute)
+            assertTrue(viewModel.uiState.value is AddEditUiState.Error)
+        }
+
     // ---- validation ----
 
     @Test
@@ -305,13 +330,14 @@ class AddEditExpenseViewModelTest {
 
             assertEquals(1, events.size)
             val stored =
-                repo.getExpense(
-                    repo
-                        .observeExpenses(date.minusSeconds(1), date.plusSeconds(1))
-                        .first()
-                        .single()
-                        .id,
-                )
+                repo
+                    .getExpense(
+                        repo
+                            .observeExpenses(date.minusSeconds(1), date.plusSeconds(1))
+                            .first()
+                            .single()
+                            .id,
+                    ).getOrThrow()
             assertNotNull(stored)
             assertEquals("Coffee", stored!!.name)
             assertEquals(500L, stored.amountCents)
@@ -372,6 +398,10 @@ class AddEditExpenseViewModelTest {
     @Test
     fun editMode_expenseNotFound_isReadyEditModeWithBlankForm() =
         runTest(testDispatcher) {
+            // Regression guard: a genuinely-missing id (Result.success(null), i.e. confirmed
+            // not-found -- e.g. a stale deep link) must still fall through to the pre-existing
+            // blank-but-editable form, exactly as before the Error-state bug fix. This must NOT
+            // collapse into AddEditUiState.Error; only an actual read *failure* should.
             val repo = FakeExpenseRepository()
             val viewModel = editModeViewModel(repo, "does-not-exist")
 
@@ -382,6 +412,114 @@ class AddEditExpenseViewModelTest {
             assertEquals("does-not-exist", state.form.expenseId)
             assertEquals("", state.form.name)
             assertEquals("", state.form.amountText)
+        }
+
+    // ---- edit mode: load failure -> Error state (the data-loss bug fix) ----
+
+    @Test
+    fun editMode_getExpenseFails_setsErrorState_neverFallsBackToReadyBlankEditableForm() =
+        runTest(testDispatcher) {
+            // The actual bug: previously a transient load failure was indistinguishable from
+            // "not found" and fell through to a blank, editable, isEditMode=true form -- saving
+            // from which would silently upsert over (i.e. destroy) the real record. Now it must
+            // produce a distinct, non-editable Error state instead.
+            val repo = FakeExpenseRepository()
+            repo.nextGetExpenseError = IllegalStateException("Firestore unavailable")
+            val viewModel = editModeViewModel(repo, "e1")
+
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue("expected Error state but was $state", state is AddEditUiState.Error)
+            // Explicitly assert this is NOT the old buggy behavior: a Ready state with a blank,
+            // editable form would look identical to a legitimate not-found on screen, and saving
+            // from it would silently overwrite/upsert the real record.
+            assertFalse(state is AddEditUiState.Ready)
+
+            assertEquals("Firestore unavailable", (state as AddEditUiState.Error).message)
+        }
+
+    @Test
+    fun editMode_getExpenseFails_withNullMessage_fallsBackToDefaultErrorMessage() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            repo.nextGetExpenseError = IllegalStateException()
+            val viewModel = editModeViewModel(repo, "e1")
+
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AddEditUiState.Error
+            assertEquals("Something went wrong", state.message)
+        }
+
+    @Test
+    fun editMode_getExpenseFails_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            repo.nextGetExpenseError = IllegalStateException()
+            val context =
+                FakeStringContext(
+                    R.string.error_generic_fallback,
+                    "translated something went wrong",
+                )
+            val viewModel = AddEditExpenseViewModel(repo, SavedStateHandle(mapOf("expenseId" to "e1")), context)
+
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AddEditUiState.Error
+            assertEquals("translated something went wrong", state.message)
+        }
+
+    // ---- onRetry ----
+
+    @Test
+    fun onRetry_afterFailure_succeeds_transitionsToReadyWithPrefilledData() =
+        runTest(testDispatcher) {
+            val existing =
+                Expense(
+                    id = "e1",
+                    name = "Netflix",
+                    amountCents = 1_599L,
+                    category = ExpenseCategory.RECURRING,
+                    date = Instant.parse("2026-02-01T00:00:00Z"),
+                    note = "Monthly subscription",
+                )
+            val repo = FakeExpenseRepository(listOf(existing))
+            repo.nextGetExpenseError = IllegalStateException("transient network blip")
+            val viewModel = editModeViewModel(repo, "e1")
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value is AddEditUiState.Error)
+
+            // nextGetExpenseError self-resets after being consumed once, so this retry hits the
+            // real (successful) data.
+            viewModel.onRetry()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AddEditUiState.Ready
+            assertTrue(state.form.isEditMode)
+            assertEquals("e1", state.form.expenseId)
+            assertEquals("Netflix", state.form.name)
+            assertEquals("15.99", state.form.amountText)
+            assertEquals(ExpenseCategory.RECURRING, state.form.category)
+            assertEquals("Monthly subscription", state.form.note)
+        }
+
+    @Test
+    fun onRetry_stillFailing_staysInErrorState() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            repo.nextGetExpenseError = IllegalStateException("first failure")
+            val viewModel = editModeViewModel(repo, "e1")
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value is AddEditUiState.Error)
+
+            repo.nextGetExpenseError = IllegalStateException("second failure")
+            viewModel.onRetry()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state is AddEditUiState.Error)
+            assertEquals("second failure", (state as AddEditUiState.Error).message)
         }
 
     // ---- edit mode: save ----
@@ -411,7 +549,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             assertEquals(1, events.size)
-            val updated = repo.getExpense("e1")
+            val updated = repo.getExpense("e1").getOrThrow()
             assertNotNull(updated)
             assertEquals("e1", updated!!.id)
             assertEquals("Netflix Premium", updated.name)
@@ -633,7 +771,7 @@ class AddEditExpenseViewModelTest {
 
         override suspend fun deleteExpense(id: String): Result<Unit> = throw UnsupportedOperationException("not used in these tests")
 
-        override suspend fun getExpense(id: String): Expense? = getExpenseResult
+        override suspend fun getExpense(id: String): Result<Expense?> = Result.success(getExpenseResult)
 
         override suspend fun getAllExpenses(): Result<List<Expense>> = throw UnsupportedOperationException("not used in these tests")
 

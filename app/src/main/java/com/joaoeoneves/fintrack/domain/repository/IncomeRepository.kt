@@ -16,7 +16,7 @@ interface IncomeRepository {
 
     suspend fun deleteIncome(id: String): Result<Unit>
 
-    suspend fun getIncome(id: String): Income?
+    suspend fun getIncome(id: String): Result<Income?>
 
     suspend fun getAllIncome(): Result<List<Income>>
 

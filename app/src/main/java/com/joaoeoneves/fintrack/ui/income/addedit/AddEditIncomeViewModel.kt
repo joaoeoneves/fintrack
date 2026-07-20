@@ -36,6 +36,8 @@ class AddEditIncomeViewModel
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditIncome>()
 
+        val isEditRoute: Boolean = route.incomeId != null
+
         private val _uiState = MutableStateFlow<AddEditIncomeUiState>(AddEditIncomeUiState.Loading)
         val uiState: StateFlow<AddEditIncomeUiState> = _uiState.asStateFlow()
 
@@ -43,32 +45,45 @@ class AddEditIncomeViewModel
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
 
         init {
+            loadIncome()
+        }
+
+        private fun loadIncome() {
             viewModelScope.launch {
+                _uiState.value = AddEditIncomeUiState.Loading
                 val incomeId = route.incomeId
                 if (incomeId != null) {
-                    val existing = incomeRepository.getIncome(incomeId)
-                    _uiState.value =
-                        if (existing != null) {
-                            AddEditIncomeUiState.Ready(
-                                IncomeFormState(
-                                    source = existing.source,
-                                    amountText = existing.amountCents.toAmountText(),
-                                    date = existing.date,
-                                    note = existing.note ?: "",
-                                    isEditMode = true,
-                                    incomeId = existing.id,
-                                ),
-                            )
-                        } else {
-                            AddEditIncomeUiState.Ready(
-                                IncomeFormState(isEditMode = true, incomeId = incomeId),
-                            )
+                    incomeRepository
+                        .getIncome(incomeId)
+                        .onSuccess { existing ->
+                            _uiState.value =
+                                if (existing != null) {
+                                    AddEditIncomeUiState.Ready(
+                                        IncomeFormState(
+                                            source = existing.source,
+                                            amountText = existing.amountCents.toAmountText(),
+                                            date = existing.date,
+                                            note = existing.note ?: "",
+                                            isEditMode = true,
+                                            incomeId = existing.id,
+                                        ),
+                                    )
+                                } else {
+                                    AddEditIncomeUiState.Ready(
+                                        IncomeFormState(isEditMode = true, incomeId = incomeId),
+                                    )
+                                }
+                        }.onFailure { e ->
+                            val fallback = context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
+                            _uiState.value = AddEditIncomeUiState.Error(e.message ?: fallback)
                         }
                 } else {
                     _uiState.value = AddEditIncomeUiState.Ready(IncomeFormState(date = Instant.now()))
                 }
             }
         }
+
+        fun onRetry() = loadIncome()
 
         fun onSourceChanged(source: String) = updateForm { it.copy(source = source, sourceError = null, saveError = null) }
 

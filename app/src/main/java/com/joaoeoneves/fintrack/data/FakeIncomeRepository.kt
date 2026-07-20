@@ -16,6 +16,7 @@ import java.util.UUID
 class FakeIncomeRepository(
     initialIncome: List<Income> = emptyList(),
     var nextObserveIncomeError: Throwable? = null,
+    var nextGetIncomeError: Throwable? = null,
 ) : IncomeRepository {
     private val incomeFlow = MutableStateFlow(initialIncome)
 
@@ -54,7 +55,13 @@ class FakeIncomeRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun getIncome(id: String): Income? = incomeFlow.value.find { it.id == id }
+    override suspend fun getIncome(id: String): Result<Income?> {
+        nextGetIncomeError?.let { error ->
+            nextGetIncomeError = null
+            return Result.failure(error)
+        }
+        return Result.success(incomeFlow.value.find { it.id == id })
+    }
 
     override suspend fun getAllIncome(): Result<List<Income>> = Result.success(incomeFlow.value)
 

@@ -36,6 +36,8 @@ class AddEditExpenseViewModel
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditExpense>()
 
+        val isEditRoute: Boolean = route.expenseId != null
+
         private val _uiState = MutableStateFlow<AddEditUiState>(AddEditUiState.Loading)
         val uiState: StateFlow<AddEditUiState> = _uiState.asStateFlow()
 
@@ -43,33 +45,46 @@ class AddEditExpenseViewModel
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
 
         init {
+            loadExpense()
+        }
+
+        private fun loadExpense() {
             viewModelScope.launch {
+                _uiState.value = AddEditUiState.Loading
                 val expenseId = route.expenseId
                 if (expenseId != null) {
-                    val existing = expenseRepository.getExpense(expenseId)
-                    _uiState.value =
-                        if (existing != null) {
-                            AddEditUiState.Ready(
-                                ExpenseFormState(
-                                    name = existing.name,
-                                    amountText = existing.amountCents.toAmountText(),
-                                    category = existing.category,
-                                    date = existing.date,
-                                    note = existing.note ?: "",
-                                    isEditMode = true,
-                                    expenseId = existing.id,
-                                ),
-                            )
-                        } else {
-                            AddEditUiState.Ready(
-                                ExpenseFormState(isEditMode = true, expenseId = expenseId),
-                            )
+                    expenseRepository
+                        .getExpense(expenseId)
+                        .onSuccess { existing ->
+                            _uiState.value =
+                                if (existing != null) {
+                                    AddEditUiState.Ready(
+                                        ExpenseFormState(
+                                            name = existing.name,
+                                            amountText = existing.amountCents.toAmountText(),
+                                            category = existing.category,
+                                            date = existing.date,
+                                            note = existing.note ?: "",
+                                            isEditMode = true,
+                                            expenseId = existing.id,
+                                        ),
+                                    )
+                                } else {
+                                    AddEditUiState.Ready(
+                                        ExpenseFormState(isEditMode = true, expenseId = expenseId),
+                                    )
+                                }
+                        }.onFailure { e ->
+                            val fallback = context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
+                            _uiState.value = AddEditUiState.Error(e.message ?: fallback)
                         }
                 } else {
                     _uiState.value = AddEditUiState.Ready(ExpenseFormState(date = Instant.now()))
                 }
             }
         }
+
+        fun onRetry() = loadExpense()
 
         fun onNameChanged(name: String) = updateForm { it.copy(name = name, nameError = null, saveError = null) }
 

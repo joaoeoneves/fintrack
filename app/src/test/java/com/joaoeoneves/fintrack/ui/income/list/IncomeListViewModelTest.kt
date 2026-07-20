@@ -183,8 +183,8 @@ class IncomeListViewModelTest {
 
             val content = vm.uiState.value as IncomeListUiState.Content
             assertEquals(listOf(toKeep), content.income)
-            assertNull(repo.getIncome("delete-me"))
-            assertEquals(toKeep, repo.getIncome("keep"))
+            assertNull(repo.getIncome("delete-me").getOrThrow())
+            assertEquals(toKeep, repo.getIncome("keep").getOrThrow())
 
             job.cancel()
         }
@@ -266,7 +266,7 @@ class IncomeListViewModelTest {
 
             val content = vm.uiState.value as IncomeListUiState.Content
             assertTrue(content.income.contains(toRestore))
-            assertEquals(toRestore, repo.getIncome("restore-me"))
+            assertEquals(toRestore, repo.getIncome("restore-me").getOrThrow())
 
             job.cancel()
         }

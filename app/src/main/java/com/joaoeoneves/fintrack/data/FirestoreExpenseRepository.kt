@@ -7,7 +7,6 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
-import com.google.firebase.firestore.SetOptions
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -76,7 +75,7 @@ class FirestoreExpenseRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = expense.toFirestoreMap(includeCreatedAt = false)
-                expensesCollection(uid).document(expense.id).set(data, SetOptions.merge()).await()
+                expensesCollection(uid).document(expense.id).update(data).await()
                 Result.success(Unit)
             } catch (e: Exception) {
                 Result.failure(e)
@@ -88,23 +87,36 @@ class FirestoreExpenseRepository
                 firebaseAuth.currentUser?.uid
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
-                expensesCollection(uid).document(id).delete().await()
+                val docRef = expensesCollection(uid).document(id)
+                firestore
+                    .runTransaction<Unit> { transaction ->
+                        val snapshot = transaction.get(docRef)
+                        if (!snapshot.exists()) {
+                            throw NoSuchElementException("Expense with id $id not found")
+                        }
+                        transaction.delete(docRef)
+                        Unit
+                    }.await()
                 Result.success(Unit)
             } catch (e: Exception) {
                 Result.failure(e)
             }
         }
 
-        override suspend fun getExpense(id: String): Expense? {
-            val uid = firebaseAuth.currentUser?.uid ?: return null
+        override suspend fun getExpense(id: String): Result<Expense?> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
-                expensesCollection(uid)
-                    .document(id)
-                    .get()
-                    .await()
-                    .toExpenseOrNull()
+                val expense =
+                    expensesCollection(uid)
+                        .document(id)
+                        .get()
+                        .await()
+                        .toExpenseOrNull()
+                Result.success(expense)
             } catch (e: Exception) {
-                null
+                Result.failure(e)
             }
         }
 

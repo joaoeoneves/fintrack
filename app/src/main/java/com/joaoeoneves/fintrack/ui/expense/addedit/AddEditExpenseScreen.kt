@@ -41,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import kotlinx.coroutines.flow.collectLatest
@@ -65,7 +66,7 @@ fun AddEditExpenseScreen(
         modifier = modifier,
         topBar = {
             AddEditExpenseTopBar(
-                isEditMode = (uiState as? AddEditUiState.Ready)?.form?.isEditMode ?: false,
+                isEditMode = viewModel.isEditRoute,
                 isSaveEnabled = (uiState as? AddEditUiState.Ready)?.form?.isValid == true,
                 onCancel = onCancel,
                 onSave = viewModel::onSave,
@@ -93,6 +94,17 @@ fun AddEditExpenseScreen(
                     onCategorySelected = viewModel::onCategorySelected,
                     onDateSelected = viewModel::onDateSelected,
                     onNoteChanged = viewModel::onNoteChanged,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                )
+            }
+
+            is AddEditUiState.Error -> {
+                ErrorState(
+                    message = state.message,
+                    onRetry = viewModel::onRetry,
                     modifier =
                         Modifier
                             .fillMaxSize()

@@ -2,9 +2,11 @@ package com.joaoeoneves.fintrack.ui.income.addedit
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -93,6 +95,31 @@ class AddEditIncomeViewModelTest {
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
             assertFalse(state.form.date.isBefore(before))
             assertFalse(state.form.date.isAfter(after))
+        }
+
+    // ---- isEditRoute: independent of uiState ----
+
+    @Test
+    fun isEditRoute_falseInAddMode() =
+        runTest(testDispatcher) {
+            val viewModel = addModeViewModel(FakeIncomeRepository())
+
+            assertFalse(viewModel.isEditRoute)
+        }
+
+    @Test
+    fun isEditRoute_trueInEditMode_evenWhileLoadIsFailing() =
+        runTest(testDispatcher) {
+            // isEditRoute reflects only the navigation route (incomeId presence), not the current
+            // uiState -- it must stay true for top-bar title/mode purposes even when the load
+            // itself has failed and uiState is AddEditIncomeUiState.Error.
+            val repo = FakeIncomeRepository()
+            repo.nextGetIncomeError = IllegalStateException("boom")
+            val viewModel = editModeViewModel(repo, "i1")
+            advanceUntilIdle()
+
+            assertTrue(viewModel.isEditRoute)
+            assertTrue(viewModel.uiState.value is AddEditIncomeUiState.Error)
         }
 
     // ---- validation ----
@@ -257,13 +284,14 @@ class AddEditIncomeViewModelTest {
 
             assertEquals(1, events.size)
             val stored =
-                repo.getIncome(
-                    repo
-                        .observeIncome(date.minusSeconds(1), date.plusSeconds(1))
-                        .first()
-                        .single()
-                        .id,
-                )
+                repo
+                    .getIncome(
+                        repo
+                            .observeIncome(date.minusSeconds(1), date.plusSeconds(1))
+                            .first()
+                            .single()
+                            .id,
+                    ).getOrThrow()
             assertNotNull(stored)
             assertEquals("Freelance", stored!!.source)
             assertEquals(5_000L, stored.amountCents)
@@ -321,6 +349,10 @@ class AddEditIncomeViewModelTest {
     @Test
     fun editMode_incomeNotFound_isReadyEditModeWithBlankForm() =
         runTest(testDispatcher) {
+            // Regression guard: a genuinely-missing id (Result.success(null), i.e. confirmed
+            // not-found -- e.g. a stale deep link) must still fall through to the pre-existing
+            // blank-but-editable form, exactly as before the Error-state bug fix. This must NOT
+            // collapse into AddEditIncomeUiState.Error; only an actual read *failure* should.
             val repo = FakeIncomeRepository()
             val viewModel = editModeViewModel(repo, "does-not-exist")
 
@@ -331,6 +363,112 @@ class AddEditIncomeViewModelTest {
             assertEquals("does-not-exist", state.form.incomeId)
             assertEquals("", state.form.source)
             assertEquals("", state.form.amountText)
+        }
+
+    // ---- edit mode: load failure -> Error state (the data-loss bug fix) ----
+
+    @Test
+    fun editMode_getIncomeFails_setsErrorState_neverFallsBackToReadyBlankEditableForm() =
+        runTest(testDispatcher) {
+            // The actual bug: previously a transient load failure was indistinguishable from
+            // "not found" and fell through to a blank, editable, isEditMode=true form -- saving
+            // from which would silently upsert over (i.e. destroy) the real record. Now it must
+            // produce a distinct, non-editable Error state instead.
+            val repo = FakeIncomeRepository()
+            repo.nextGetIncomeError = IllegalStateException("Firestore unavailable")
+            val viewModel = editModeViewModel(repo, "i1")
+
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue("expected Error state but was $state", state is AddEditIncomeUiState.Error)
+            // Explicitly assert this is NOT the old buggy behavior: a Ready state with a blank,
+            // editable form would look identical to a legitimate not-found on screen, and saving
+            // from it would silently overwrite/upsert the real record.
+            assertFalse(state is AddEditIncomeUiState.Ready)
+
+            assertEquals("Firestore unavailable", (state as AddEditIncomeUiState.Error).message)
+        }
+
+    @Test
+    fun editMode_getIncomeFails_withNullMessage_fallsBackToDefaultErrorMessage() =
+        runTest(testDispatcher) {
+            val repo = FakeIncomeRepository()
+            repo.nextGetIncomeError = IllegalStateException()
+            val viewModel = editModeViewModel(repo, "i1")
+
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AddEditIncomeUiState.Error
+            assertEquals("Something went wrong", state.message)
+        }
+
+    @Test
+    fun editMode_getIncomeFails_andRealContext_usesContextGetString_notHardcodedFallback() =
+        runTest(testDispatcher) {
+            val repo = FakeIncomeRepository()
+            repo.nextGetIncomeError = IllegalStateException()
+            val context =
+                FakeStringContext(
+                    R.string.error_generic_fallback,
+                    "translated something went wrong",
+                )
+            val viewModel = AddEditIncomeViewModel(repo, SavedStateHandle(mapOf("incomeId" to "i1")), context)
+
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AddEditIncomeUiState.Error
+            assertEquals("translated something went wrong", state.message)
+        }
+
+    // ---- onRetry ----
+
+    @Test
+    fun onRetry_afterFailure_succeeds_transitionsToReadyWithPrefilledData() =
+        runTest(testDispatcher) {
+            val existing =
+                Income(
+                    id = "i1",
+                    source = "Salary",
+                    amountCents = 500_000L,
+                    date = Instant.parse("2026-02-01T00:00:00Z"),
+                    note = "Monthly salary",
+                )
+            val repo = FakeIncomeRepository(listOf(existing))
+            repo.nextGetIncomeError = IllegalStateException("transient network blip")
+            val viewModel = editModeViewModel(repo, "i1")
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value is AddEditIncomeUiState.Error)
+
+            // nextGetIncomeError self-resets after being consumed once, so this retry hits the
+            // real (successful) data.
+            viewModel.onRetry()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
+            assertTrue(state.form.isEditMode)
+            assertEquals("i1", state.form.incomeId)
+            assertEquals("Salary", state.form.source)
+            assertEquals("5000.00", state.form.amountText)
+            assertEquals("Monthly salary", state.form.note)
+        }
+
+    @Test
+    fun onRetry_stillFailing_staysInErrorState() =
+        runTest(testDispatcher) {
+            val repo = FakeIncomeRepository()
+            repo.nextGetIncomeError = IllegalStateException("first failure")
+            val viewModel = editModeViewModel(repo, "i1")
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value is AddEditIncomeUiState.Error)
+
+            repo.nextGetIncomeError = IllegalStateException("second failure")
+            viewModel.onRetry()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state is AddEditIncomeUiState.Error)
+            assertEquals("second failure", (state as AddEditIncomeUiState.Error).message)
         }
 
     // ---- edit mode: save ----
@@ -359,7 +497,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             assertEquals(1, events.size)
-            val updated = repo.getIncome("i1")
+            val updated = repo.getIncome("i1").getOrThrow()
             assertNotNull(updated)
             assertEquals("i1", updated!!.id)
             assertEquals("Salary (raise)", updated.source)
@@ -402,6 +540,9 @@ class AddEditIncomeViewModelTest {
         runTest(testDispatcher) {
             // The income existed at load time but is deleted by the time Save is pressed (e.g. by
             // another client) -- FakeIncomeRepository.updateIncome fails when the id is missing.
+            // This is the ViewModel-level confirmation that update-of-a-missing-id surfaces a save
+            // error and never fires the "saved" event -- i.e. no silent upsert of a deleted/stale
+            // record, mirroring the Firestore repo's switch from set(merge) to update().
             val existing =
                 Income(
                     id = "i1",
@@ -562,7 +703,7 @@ class AddEditIncomeViewModelTest {
 
         override suspend fun deleteIncome(id: String): Result<Unit> = throw UnsupportedOperationException("unused")
 
-        override suspend fun getIncome(id: String): Income? = getIncomeResult
+        override suspend fun getIncome(id: String): Result<Income?> = Result.success(getIncomeResult)
 
         override suspend fun getAllIncome(): Result<List<Income>> = throw UnsupportedOperationException("unused")
 

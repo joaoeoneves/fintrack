@@ -169,7 +169,7 @@ class FakeIncomeRepositoryTest {
             assertTrue(repo.updateIncome(updated).isSuccess)
 
             // getIncome / getAllIncome unaffected
-            assertEquals(updated, repo.getIncome("i1"))
+            assertEquals(updated, repo.getIncome("i1").getOrThrow())
             val all = repo.getAllIncome()
             assertTrue(all.isSuccess)
             assertEquals(2, all.getOrThrow().size)
@@ -388,20 +388,75 @@ class FakeIncomeRepositoryTest {
     // ---- getIncome ----
 
     @Test
-    fun getIncome_unknownId_returnsNull() =
+    fun getIncome_unknownId_returnsSuccessWithNull() =
         runBlocking {
             val repo = FakeIncomeRepository()
 
-            assertNull(repo.getIncome("does-not-exist"))
+            val result = repo.getIncome("does-not-exist")
+
+            // "Not found" must be a *successful* result carrying null, not a failure -- callers
+            // (e.g. AddEditIncomeViewModel) rely on this to distinguish a confirmed-absent
+            // document (blank editable form) from a failed read (error state, no silent upsert).
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow())
         }
 
     @Test
-    fun getIncome_knownId_returnsMatchingEntry() =
+    fun getIncome_knownId_returnsSuccessWithMatchingEntry() =
         runBlocking {
             val i1 = income(id = "i1", date = day0)
             val repo = FakeIncomeRepository(listOf(i1))
 
-            assertEquals(i1, repo.getIncome("i1"))
+            val result = repo.getIncome("i1")
+
+            assertTrue(result.isSuccess)
+            assertEquals(i1, result.getOrThrow())
+        }
+
+    // ---- getIncome: nextGetIncomeError ----
+
+    @Test
+    fun getIncome_defaultNullError_behavesNormally() =
+        runBlocking {
+            val repo = FakeIncomeRepository()
+
+            assertNull(repo.nextGetIncomeError)
+            assertTrue(repo.getIncome("anything").isSuccess)
+        }
+
+    @Test
+    fun getIncome_withErrorSet_returnsFailureWithThatExactThrowable_distinctFromNotFound() =
+        runBlocking {
+            val i1 = income(id = "i1", date = day0)
+            val repo = FakeIncomeRepository(listOf(i1))
+            val boom = IllegalStateException("Firestore unavailable")
+            repo.nextGetIncomeError = boom
+
+            // Even for a *known* id, a load failure must surface as Result.failure, never as a
+            // (successful) null -- otherwise it would be indistinguishable from "not found".
+            val result = repo.getIncome("i1")
+
+            assertTrue(result.isFailure)
+            assertSame(boom, result.exceptionOrNull())
+        }
+
+    @Test
+    fun getIncome_withErrorSet_selfResetsAfterOneCall_soRetrySucceeds() =
+        runBlocking {
+            val i1 = income(id = "i1", date = day0)
+            val repo = FakeIncomeRepository(listOf(i1))
+            repo.nextGetIncomeError = RuntimeException("transient")
+
+            val first = repo.getIncome("i1")
+            assertTrue(first.isFailure)
+            assertNull(
+                "the fake should self-reset after being consumed once",
+                repo.nextGetIncomeError,
+            )
+
+            val second = repo.getIncome("i1")
+            assertTrue(second.isSuccess)
+            assertEquals(i1, second.getOrThrow())
         }
 
     // ---- getAllIncome ----

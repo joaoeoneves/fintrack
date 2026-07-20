@@ -7,7 +7,6 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
-import com.google.firebase.firestore.SetOptions
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -75,7 +74,7 @@ class FirestoreIncomeRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = income.toFirestoreMap(includeCreatedAt = false)
-                incomeCollection(uid).document(income.id).set(data, SetOptions.merge()).await()
+                incomeCollection(uid).document(income.id).update(data).await()
                 Result.success(Unit)
             } catch (e: Exception) {
                 Result.failure(e)
@@ -87,23 +86,36 @@ class FirestoreIncomeRepository
                 firebaseAuth.currentUser?.uid
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
-                incomeCollection(uid).document(id).delete().await()
+                val docRef = incomeCollection(uid).document(id)
+                firestore
+                    .runTransaction<Unit> { transaction ->
+                        val snapshot = transaction.get(docRef)
+                        if (!snapshot.exists()) {
+                            throw NoSuchElementException("Income with id $id not found")
+                        }
+                        transaction.delete(docRef)
+                        Unit
+                    }.await()
                 Result.success(Unit)
             } catch (e: Exception) {
                 Result.failure(e)
             }
         }
 
-        override suspend fun getIncome(id: String): Income? {
-            val uid = firebaseAuth.currentUser?.uid ?: return null
+        override suspend fun getIncome(id: String): Result<Income?> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
-                incomeCollection(uid)
-                    .document(id)
-                    .get()
-                    .await()
-                    .toIncomeOrNull()
+                val income =
+                    incomeCollection(uid)
+                        .document(id)
+                        .get()
+                        .await()
+                        .toIncomeOrNull()
+                Result.success(income)
             } catch (e: Exception) {
-                null
+                Result.failure(e)
             }
         }
 

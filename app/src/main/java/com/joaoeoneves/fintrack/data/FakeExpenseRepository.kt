@@ -16,6 +16,7 @@ import java.util.UUID
 class FakeExpenseRepository(
     initialExpenses: List<Expense> = emptyList(),
     var nextObserveExpensesError: Throwable? = null,
+    var nextGetExpenseError: Throwable? = null,
 ) : ExpenseRepository {
     private val expensesFlow = MutableStateFlow(initialExpenses)
 
@@ -54,7 +55,13 @@ class FakeExpenseRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun getExpense(id: String): Expense? = expensesFlow.value.find { it.id == id }
+    override suspend fun getExpense(id: String): Result<Expense?> {
+        nextGetExpenseError?.let { error ->
+            nextGetExpenseError = null
+            return Result.failure(error)
+        }
+        return Result.success(expensesFlow.value.find { it.id == id })
+    }
 
     override suspend fun getAllExpenses(): Result<List<Expense>> = Result.success(expensesFlow.value)
 

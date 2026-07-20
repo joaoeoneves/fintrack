@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
@@ -59,7 +60,7 @@ fun AddEditIncomeScreen(
         modifier = modifier,
         topBar = {
             AddEditIncomeTopBar(
-                isEditMode = (uiState as? AddEditIncomeUiState.Ready)?.form?.isEditMode ?: false,
+                isEditMode = viewModel.isEditRoute,
                 isSaveEnabled = (uiState as? AddEditIncomeUiState.Ready)?.form?.isValid == true,
                 onCancel = onCancel,
                 onSave = viewModel::onSave,
@@ -86,6 +87,17 @@ fun AddEditIncomeScreen(
                     onAmountChanged = viewModel::onAmountChanged,
                     onDateSelected = viewModel::onDateSelected,
                     onNoteChanged = viewModel::onNoteChanged,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                )
+            }
+
+            is AddEditIncomeUiState.Error -> {
+                ErrorState(
+                    message = state.message,
+                    onRetry = viewModel::onRetry,
                     modifier =
                         Modifier
                             .fillMaxSize()

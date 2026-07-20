@@ -338,8 +338,8 @@ class ExpenseListViewModelTest {
 
             val content = vm.uiState.value as ExpenseListUiState.Content
             assertEquals(listOf(toKeep), content.expenses)
-            assertNull(repo.getExpense("delete-me"))
-            assertEquals(toKeep, repo.getExpense("keep"))
+            assertNull(repo.getExpense("delete-me").getOrThrow())
+            assertEquals(toKeep, repo.getExpense("keep").getOrThrow())
 
             job.cancel()
         }
@@ -421,7 +421,7 @@ class ExpenseListViewModelTest {
 
             val content = vm.uiState.value as ExpenseListUiState.Content
             assertTrue(content.expenses.contains(toRestore))
-            assertEquals(toRestore, repo.getExpense("restore-me"))
+            assertEquals(toRestore, repo.getExpense("restore-me").getOrThrow())
 
             job.cancel()
         }

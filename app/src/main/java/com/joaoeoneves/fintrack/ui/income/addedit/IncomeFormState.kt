@@ -24,4 +24,8 @@ sealed interface AddEditIncomeUiState {
     data class Ready(
         val form: IncomeFormState,
     ) : AddEditIncomeUiState
+
+    data class Error(
+        val message: String,
+    ) : AddEditIncomeUiState
 }

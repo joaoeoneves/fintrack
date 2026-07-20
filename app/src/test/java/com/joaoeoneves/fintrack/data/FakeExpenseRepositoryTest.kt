@@ -170,7 +170,7 @@ class FakeExpenseRepositoryTest {
             assertTrue(repo.updateExpense(updated).isSuccess)
 
             // getExpense / getAllExpenses unaffected
-            assertEquals(updated, repo.getExpense("e1"))
+            assertEquals(updated, repo.getExpense("e1").getOrThrow())
             val all = repo.getAllExpenses()
             assertTrue(all.isSuccess)
             assertEquals(2, all.getOrThrow().size)
@@ -380,6 +380,80 @@ class FakeExpenseRepositoryTest {
             val stored = repo.observeExpenses(day0, day3).first()
             assertEquals(1, stored.size)
             assertEquals(day1, stored.single().date)
+        }
+
+    // ---- getExpense ----
+
+    @Test
+    fun getExpense_unknownId_returnsSuccessWithNull() =
+        runBlocking {
+            val repo = FakeExpenseRepository()
+
+            val result = repo.getExpense("does-not-exist")
+
+            // "Not found" must be a *successful* result carrying null, not a failure -- callers
+            // (e.g. AddEditExpenseViewModel) rely on this to distinguish a confirmed-absent
+            // document (blank editable form) from a failed read (error state, no silent upsert).
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow())
+        }
+
+    @Test
+    fun getExpense_knownId_returnsSuccessWithMatchingEntry() =
+        runBlocking {
+            val e1 = expense(id = "e1", date = day0)
+            val repo = FakeExpenseRepository(listOf(e1))
+
+            val result = repo.getExpense("e1")
+
+            assertTrue(result.isSuccess)
+            assertEquals(e1, result.getOrThrow())
+        }
+
+    // ---- getExpense: nextGetExpenseError ----
+
+    @Test
+    fun getExpense_defaultNullError_behavesNormally() =
+        runBlocking {
+            val repo = FakeExpenseRepository()
+
+            assertNull(repo.nextGetExpenseError)
+            assertTrue(repo.getExpense("anything").isSuccess)
+        }
+
+    @Test
+    fun getExpense_withErrorSet_returnsFailureWithThatExactThrowable_distinctFromNotFound() =
+        runBlocking {
+            val e1 = expense(id = "e1", date = day0)
+            val repo = FakeExpenseRepository(listOf(e1))
+            val boom = IllegalStateException("Firestore unavailable")
+            repo.nextGetExpenseError = boom
+
+            // Even for a *known* id, a load failure must surface as Result.failure, never as a
+            // (successful) null -- otherwise it would be indistinguishable from "not found".
+            val result = repo.getExpense("e1")
+
+            assertTrue(result.isFailure)
+            assertSame(boom, result.exceptionOrNull())
+        }
+
+    @Test
+    fun getExpense_withErrorSet_selfResetsAfterOneCall_soRetrySucceeds() =
+        runBlocking {
+            val e1 = expense(id = "e1", date = day0)
+            val repo = FakeExpenseRepository(listOf(e1))
+            repo.nextGetExpenseError = RuntimeException("transient")
+
+            val first = repo.getExpense("e1")
+            assertTrue(first.isFailure)
+            assertNull(
+                "the fake should self-reset after being consumed once",
+                repo.nextGetExpenseError,
+            )
+
+            val second = repo.getExpense("e1")
+            assertTrue(second.isSuccess)
+            assertEquals(e1, second.getOrThrow())
         }
 
     // ---- getAllExpenses ----
