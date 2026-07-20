@@ -24,7 +24,27 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "English"
 - back
 
-# --- 1/2: Dashboard loads with filter pills, balance summary card, pie legend, and the Add expense FAB ---
+# --- 0b: Pin currency to EUR before the "-12,34€"/"-56,78€" assertions below. Fresh installs now
+# default to EUR, but this device may have an explicit USD selection persisted from a prior run of
+# settings.yaml or income-tracking.yaml (an explicit selection is never retroactively changed by
+# what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
+# so pin a known baseline here explicitly rather than assuming whatever currency another flow left
+# the device on. Mirrors the exact navigation pattern already used in settings.yaml's own
+# currency-switching steps: open Settings, tap "Display currency" (an inline exposed-dropdown on
+# the Settings screen itself, not a separate screen), tap the target currency option (selects it
+# and closes the dropdown, still on Settings), then tap "Back" (the top-app-bar back arrow,
+# content-desc "Back") to return directly to the Dashboard. No restore-to-original-currency step at
+# the end of this flow is needed, same reasoning as the language pin above.
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "Display currency"
+- tapOn: "Euro (€)"
+- tapOn: "Back"
+
+# --- 1: Dashboard loads with filter pills, balance summary card, pie legend ---
+# The "Add expense" entry point lives on the Dashboard's "Recent expenses" card header (a plus
+# IconButton next to the section title, mirroring the "Recent income" card exactly) -- see step 2
+# below. ExpenseListScreen itself has no add control of its own, just back navigation.
 - assertVisible: "FinTrack"
 - assertVisible: "1W"
 - assertVisible: "1M"
@@ -38,9 +58,17 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Investments"
 - assertVisible: "Shopping"
 - assertVisible: "Recurring"
-- assertVisible: "Add expense"
 
-# --- 3: Add a new expense via the FAB ---
+# --- 2: Add a new expense via the Dashboard's "Recent expenses" card plus icon ---
+# That card is pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/
+# BudgetSection above it, so scroll down before tapping it. The plus icon has no visible label,
+# only the "Add expense" content description, which Maestro matches the same way as visible text.
+# The card (and its plus icon) is always visible/tappable, even with zero expenses in the selected
+# range -- the empty-state guard that used to hide this card entirely was removed, since it's now
+# the *only* path from Dashboard into the expense-adding flow and must never dead-end.
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -50,28 +78,21 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 
-# Back on the dashboard, the new expense should show up in "Recent expenses". That section is
-# pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/BudgetSection above it
-# (all new in this layout), so scroll down *before* asserting the row is visible -- asserting
-# beforehand is unreliable since the Dashboard resets its LazyColumn scroll offset to the top on
-# return from AddExpenseScreen. The amount assertion is deliberately deferred to the full list
-# below rather than checked here: right after the Firestore write, an in-flight snapshot-listener
-# refresh can reset the LazyColumn scroll offset back to the top between the scroll and a
-# same-screen assertion, making an amount check here flaky.
+# Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
+# up immediately in the "Recent expenses" card (it sorts by date descending, and this row is the
+# most recent). Fresh installs now default to EUR (comma-decimal, suffixed symbol), so the row
+# shows "-12,34€" rather than a USD "-$12.34".
 - scrollUntilVisible:
-    element: "Recent expenses"
+    element: "Maestro E2E Test Expense"
     direction: DOWN
 - assertVisible: "Maestro E2E Test Expense"
+- assertVisible: "-12,34€"
 
-# --- 4: Open the full expense list and confirm the new expense is there ---
-# "Recent expenses" header and "See all expenses" both open the same full list. ExpenseRow now
-# prefixes the amount with "-" (restyled amount text), so the row shows "-$12.34".
-- tapOn: "Recent expenses"
+# --- 3: Edit it (change the amount) and confirm the change persists ---
+# Tapping a row on the Dashboard's "Recent expenses" card navigates to the full list (not directly
+# to edit) -- tap the expense again once there to open it in edit mode.
+- tapOn: "Maestro E2E Test Expense"
 - assertVisible: "All expenses"
-- assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "-$12.34"
-
-# --- 5: Edit it (change the amount) and confirm the change persists ---
 - tapOn: "Maestro E2E Test Expense"
 - assertVisible: "Edit expense"
 - tapOn: "Amount"
@@ -83,10 +104,10 @@ appId: com.joaoeoneves.fintrack
 # Back on the full list, the updated amount should be visible.
 - assertVisible: "All expenses"
 - assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "-$56.78"
-- assertNotVisible: "-$12.34"
+- assertVisible: "-56,78€"
+- assertNotVisible: "-12,34€"
 
-# --- 6: Delete it and confirm it's gone ---
+# --- 4: Delete it and confirm it's gone ---
 # Deletion is now immediate (tap or swipe the row) — there is no confirmation dialog anymore.
 # Instead an undo snackbar ("Deleted "<name>"" / "Undo") appears. The row's trash-icon IconButton
 # has contentDescription "Delete" (no visible label) — matched by its accessibility text rather
@@ -96,7 +117,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Undo"
 # Let the undo snackbar time out on its own so the expense stays deleted.
 
-# --- 7: Exercise at least one time-range filter chip ---
+# --- 5: Exercise at least one time-range filter chip (ExpenseListScreen has its own filter row) ---
 - tapOn: "1W"
 - assertVisible: "1W"
 - tapOn: "3M"

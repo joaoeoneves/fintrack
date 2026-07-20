@@ -58,6 +58,7 @@
     <string name="dashboard_income_label">Rendimentos</string>
     <string name="dashboard_expenses_label">Despesas</string>
     <string name="dashboard_no_expenses">Ainda não há despesas neste período.</string>
+    <string name="dashboard_recent_expenses_empty">Ainda sem despesas</string>
     <string name="dashboard_total_spent">Total gasto</string>
 
     <!-- Orçamentos -->

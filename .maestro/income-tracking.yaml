@@ -23,6 +23,23 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "English"
 - back
 
+# --- 0b: Pin currency to USD before the "+$100.00" assertions below. Fresh installs now default
+# to EUR, but this device may have an explicit EUR selection persisted from a prior run of
+# golden-path.yaml (an explicit selection is never retroactively changed by what the fallback
+# default is) -- these flows share a device/emulator and don't run in isolation, so pin a known
+# baseline here explicitly rather than assuming whatever currency another flow left the device on.
+# Mirrors the exact navigation pattern already used in settings.yaml's own currency-switching
+# steps: open Settings, tap "Display currency" (an inline exposed-dropdown on the Settings screen
+# itself, not a separate screen), tap the target currency option (selects it and closes the
+# dropdown, still on Settings), then tap "Back" (the top-app-bar back arrow, content-desc "Back")
+# to return directly to the Dashboard. No restore-to-original-currency step at the end of this
+# flow is needed, same reasoning as the language pin above.
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "Display currency"
+- tapOn: "US Dollar ($)"
+- tapOn: "Back"
+
 # --- 1: Dashboard loads with the balance summary card (net balance + income/expenses columns) ---
 - assertVisible: "FinTrack"
 - assertVisible: "Net Balance"

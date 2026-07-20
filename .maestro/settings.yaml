@@ -3,8 +3,11 @@
 # Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) --
 # same assumption as golden-path.yaml / income-tracking.yaml, since real Google Sign-In cannot be
 # scripted headlessly by Maestro. Starts and ends on the Dashboard, with theme back to Dark and
-# currency back to USD before this flow ends -- golden-path.yaml and income-tracking.yaml assume
-# the "$" symbol is shown.
+# currency back to USD before this flow ends. golden-path.yaml now pins its own EUR baseline
+# independently (see its "0b" step) and no longer depends on this flow's final currency state.
+# income-tracking.yaml still assumes the "$" symbol is shown and historically depended on this
+# flow ending on USD -- but it now also pins its own USD baseline independently (see its own "0b"
+# step), so this flow ending on USD is belt-and-suspenders at this point, not a hard dependency.
 #
 # Deliberately does NOT assert what the *current* display-currency label is before switching:
 # the app's default fallback (fresh install / cleared SharedPreferences, no explicit selection

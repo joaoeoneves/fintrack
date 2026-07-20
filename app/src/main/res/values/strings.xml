@@ -58,6 +58,7 @@
     <string name="dashboard_income_label">Income</string>
     <string name="dashboard_expenses_label">Expenses</string>
     <string name="dashboard_no_expenses">No expenses in this period yet.</string>
+    <string name="dashboard_recent_expenses_empty">No expenses yet</string>
     <string name="dashboard_total_spent">Total Spent</string>
 
     <!-- Budgets -->

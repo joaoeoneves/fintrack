@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.expense.list.ExpenseListScreen
@@ -21,11 +22,14 @@ fun FinTrackNavHost(
     NavHost(navController = navController, startDestination = Dashboard, modifier = modifier) {
         composable<Dashboard> {
             DashboardScreen(
-                onOpenList = { timeRange -> navController.navigate(ExpenseList(timeRange)) },
-                onAddExpense = { navController.navigate(AddEditExpense()) },
-                onOpenIncomeList = { timeRange -> navController.navigate(IncomeList(timeRange)) },
-                onAddIncome = { navController.navigate(AddEditIncome()) },
-                onOpenSettings = { navController.navigate(Settings) },
+                callbacks =
+                    DashboardCallbacks(
+                        onOpenList = { timeRange -> navController.navigate(ExpenseList(timeRange)) },
+                        onAddExpense = { navController.navigate(AddEditExpense()) },
+                        onOpenIncomeList = { timeRange -> navController.navigate(IncomeList(timeRange)) },
+                        onAddIncome = { navController.navigate(AddEditIncome()) },
+                        onOpenSettings = { navController.navigate(Settings) },
+                    ),
             )
         }
         composable<ExpenseList> {

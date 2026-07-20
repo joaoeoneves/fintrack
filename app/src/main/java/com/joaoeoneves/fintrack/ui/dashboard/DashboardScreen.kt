@@ -22,7 +22,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,52 +52,17 @@ import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.TimeRangeFilterRow
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 
-// ExtendedFAB height (~56dp) + Scaffold's FAB margin (~16dp) + breathing room (~24dp), so the
-// LazyColumn's own layout bounds shrink and no item can ever be placed under the FAB.
-private val FabClearance = 96.dp
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onOpenList: (TimeRange) -> Unit,
-    onAddExpense: () -> Unit,
-    onOpenIncomeList: (TimeRange) -> Unit,
-    onAddIncome: () -> Unit,
-    onOpenSettings: () -> Unit,
-    modifier: Modifier = Modifier,
+    callbacks: DashboardCallbacks,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                actions = {
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.cd_settings))
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        titleContentColor = MaterialTheme.colorScheme.onBackground,
-                        actionIconContentColor = MaterialTheme.colorScheme.onBackground,
-                    ),
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onAddExpense,
-                shape = RoundedCornerShape(16.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Text(stringResource(R.string.action_add_expense))
-            }
-        },
+        topBar = { DashboardTopBar(onOpenSettings = callbacks.onOpenSettings) },
     ) { innerPadding ->
         when (val state = uiState) {
             is DashboardUiState.Loading -> {
@@ -117,10 +81,8 @@ fun DashboardScreen(
                 DashboardContent(
                     state = state,
                     onTimeRangeSelected = viewModel::onTimeRangeSelected,
-                    onOpenList = onOpenList,
+                    callbacks = callbacks,
                     onSetBudget = viewModel::onSetBudget,
-                    onOpenIncomeList = onOpenIncomeList,
-                    onAddIncome = onAddIncome,
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -142,159 +104,199 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DashboardTopBar(onOpenSettings: () -> Unit) {
+    TopAppBar(
+        title = { Text(stringResource(R.string.app_name)) },
+        actions = {
+            IconButton(onClick = onOpenSettings) {
+                Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.cd_settings))
+            }
+        },
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.background,
+                titleContentColor = MaterialTheme.colorScheme.onBackground,
+                actionIconContentColor = MaterialTheme.colorScheme.onBackground,
+            ),
+    )
+}
+
 @Composable
 private fun DashboardContent(
     state: DashboardUiState.Content,
     onTimeRangeSelected: (TimeRange) -> Unit,
-    onOpenList: (TimeRange) -> Unit,
+    callbacks: DashboardCallbacks,
     onSetBudget: (ExpenseCategory, Long) -> Unit,
-    onOpenIncomeList: (TimeRange) -> Unit,
-    onAddIncome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val cardModifier =
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+
     LazyColumn(
-        modifier = modifier.padding(bottom = FabClearance),
+        modifier = modifier,
         contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
             TimeRangeFilterRow(selected = state.timeRange, onSelected = onTimeRangeSelected)
         }
 
+        item { BalanceSummaryCard(state = state, modifier = cardModifier) }
+
+        item { DashboardSummary(state = state, modifier = cardModifier) }
+
         item {
-            BalanceSummaryCard(
+            BudgetSection(budgets = state.budgets, onSetBudget = onSetBudget, modifier = cardModifier)
+        }
+
+        item {
+            RecentExpensesCard(
                 state = state,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                onOpenList = callbacks.onOpenList,
+                onAddExpense = callbacks.onAddExpense,
+                modifier = cardModifier,
             )
         }
 
         item {
-            DashboardSummary(
+            RecentIncomeCard(
                 state = state,
+                onOpenIncomeList = callbacks.onOpenIncomeList,
+                onAddIncome = callbacks.onAddIncome,
+                modifier = cardModifier,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecentIncomeCard(
+    state: DashboardUiState.Content,
+    onOpenIncomeList: (TimeRange) -> Unit,
+    onAddIncome: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column {
+            Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .clickable { onOpenIncomeList(state.timeRange) }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-        }
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.dashboard_recent_income),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onAddIncome) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add_income))
+                }
+            }
 
-        item {
-            BudgetSection(
-                budgets = state.budgets,
-                onSetBudget = onSetBudget,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-        }
-
-        if (!state.expenses.isEmpty()) {
-            item {
-                Card(
+            if (state.recentIncome.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.dashboard_no_income),
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.dashboard_recent_expenses),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onOpenList(state.timeRange) }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-
-                        state.recentExpenses.forEach { expense ->
-                            ExpenseRow(
-                                expense = expense,
-                                onClick = { onOpenList(state.timeRange) },
-                            )
-                            HorizontalDivider()
-                        }
-
-                        Text(
-                            text = stringResource(R.string.dashboard_see_all_expenses),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onOpenList(state.timeRange) }
-                                    .padding(16.dp),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                )
+            } else {
+                state.recentIncome.forEach { income ->
+                    IncomeRow(
+                        income = income,
+                        onClick = { onOpenIncomeList(state.timeRange) },
+                    )
+                    HorizontalDivider()
                 }
+
+                Text(
+                    text = stringResource(R.string.dashboard_see_all_income),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenIncomeList(state.timeRange) }
+                            .padding(16.dp),
+                    textAlign = TextAlign.Center,
+                )
             }
         }
+    }
+}
 
-        item {
-            Card(
+@Composable
+private fun RecentExpensesCard(
+    state: DashboardUiState.Content,
+    onOpenList: (TimeRange) -> Unit,
+    onAddExpense: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column {
+            Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .clickable { onOpenList(state.timeRange) }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column {
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { onOpenIncomeList(state.timeRange) }
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.dashboard_recent_income),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.weight(1f),
-                        )
-                        IconButton(onClick = onAddIncome) {
-                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add_income))
-                        }
-                    }
-
-                    if (state.recentIncome.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.dashboard_no_income),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-                    } else {
-                        state.recentIncome.forEach { income ->
-                            IncomeRow(
-                                income = income,
-                                onClick = { onOpenIncomeList(state.timeRange) },
-                            )
-                            HorizontalDivider()
-                        }
-
-                        Text(
-                            text = stringResource(R.string.dashboard_see_all_income),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onOpenIncomeList(state.timeRange) }
-                                    .padding(16.dp),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                Text(
+                    text = stringResource(R.string.dashboard_recent_expenses),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onAddExpense) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add_expense))
                 }
+            }
+
+            if (state.recentExpenses.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.dashboard_recent_expenses_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            } else {
+                state.recentExpenses.forEach { expense ->
+                    ExpenseRow(
+                        expense = expense,
+                        onClick = { onOpenList(state.timeRange) },
+                    )
+                    HorizontalDivider()
+                }
+
+                Text(
+                    text = stringResource(R.string.dashboard_see_all_expenses),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenList(state.timeRange) }
+                            .padding(16.dp),
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }

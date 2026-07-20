@@ -43,6 +43,14 @@ appId: com.joaoeoneves.fintrack
 - back
 
 # --- Expense row: swipe EndToStart (right-to-left) to delete ---
+# The Dashboard's own "Add expense" plus icon lives on the "Recent expenses" card header
+# (contentDescription "Add expense", same string resource the old FAB used and matched by Maestro
+# the same way). Tapping it navigates straight into the add-expense form from the Dashboard --
+# saving pops back to the Dashboard, so navigate into "All expenses" via "See all expenses"
+# afterwards to reach the swipeable row.
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -52,6 +60,7 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 
+# Back on the Dashboard -- open the full list to reach the swipeable row.
 - scrollUntilVisible:
     element: "See all expenses"
     direction: DOWN
@@ -66,9 +75,13 @@ appId: com.joaoeoneves.fintrack
 # Confirm no crash / list still usable, no ghost row / duplicate delete side effects.
 - assertVisible: "All expenses"
 - assertVisible: "Ginasio"
+- back
 
 # --- Expense row: swipe StartToEnd (left-to-right) to delete ---
-- back
+# Back on the Dashboard -- add the second test row via the same "Recent expenses" card plus icon.
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
