@@ -74,9 +74,14 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Income"
 
 # --- 4: Open the full income list and confirm the new income is there ---
+# "See all income" can sit just past the Dashboard LazyColumn's clip bounds even when
+# scrollUntilVisible reports it found -- tapping it there is a no-op (see swipe-delete-check.yaml's
+# header comment for the full explanation). A plain extra scroll after scrollUntilVisible and
+# before tapping "See all income" reliably brings it fully into view first.
 - scrollUntilVisible:
     element: "See all income"
     direction: DOWN
+- scroll
 - tapOn: "See all income"
 - assertVisible: "All income"
 - assertVisible: "Maestro E2E Test Salary"
