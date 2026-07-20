@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import android.content.Context
+import android.util.Log
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -72,14 +73,14 @@ class FirebaseAuthRepository
             }
         }
 
-        override suspend fun signOut(): Result<Unit> =
-            try {
-                credentialManager.clearCredentialState(ClearCredentialStateRequest())
-                firebaseAuth.signOut()
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
+        override suspend fun signOut(): Result<Unit> {
+            val clearResult = runCatching { credentialManager.clearCredentialState(ClearCredentialStateRequest()) }
+            val signOutResult = runCatching { firebaseAuth.signOut() }
+            clearResult.exceptionOrNull()?.let {
+                Log.w(TAG, "Failed to clear credential state during sign-out", it)
             }
+            return combineSignOutResults(clearResult, signOutResult)
+        }
 
         private fun FirebaseUser.toAuthUser(): AuthUser =
             AuthUser(
@@ -88,4 +89,18 @@ class FirebaseAuthRepository
                 email = email,
                 photoUrl = photoUrl?.toString(),
             )
+
+        companion object {
+            private const val TAG = "FirebaseAuthRepository"
+
+            @Suppress("UnusedParameter")
+            internal fun combineSignOutResults(
+                clearCredentialResult: Result<Unit>,
+                firebaseSignOutResult: Result<Unit>,
+            ): Result<Unit> =
+                firebaseSignOutResult.fold(
+                    onSuccess = { Result.success(Unit) },
+                    onFailure = { e -> Result.failure(e) },
+                )
+        }
     }

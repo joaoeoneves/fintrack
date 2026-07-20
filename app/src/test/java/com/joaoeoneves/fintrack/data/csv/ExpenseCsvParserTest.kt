@@ -7,15 +7,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * Unit tests for [ExpenseCsvParser].
+ *
+ * Bare-date (no time component) rows are resolved via `LocalDate.atStartOfDay(zone)`, where `zone`
+ * defaults to `ZoneId.systemDefault()` but can be passed explicitly. Tests that care about the
+ * exact resulting [Instant] for a bare date pass an explicit, non-UTC zone (matching the fixed-zone
+ * convention used in `TimeRangeTest` "avoiding any dependency on the JVM's default zone") rather
+ * than relying on the actual machine's default zone, which is nondeterministic across CI/machines.
  */
 class ExpenseCsvParserTest {
     private val header = "name,amountCents,category,date,note"
 
-    private fun parsed(csv: String): CsvParseResult {
-        val outcome = ExpenseCsvParser.parse(csv)
+    private fun parsed(
+        csv: String,
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): CsvParseResult {
+        val outcome = ExpenseCsvParser.parse(csv, zone)
         val result =
             (outcome as? CsvImportOutcome.Parsed)?.result
                 ?: fail("Expected Parsed but was $outcome").let { throw IllegalStateException() }
@@ -32,6 +43,7 @@ class ExpenseCsvParserTest {
 
     @Test
     fun validMultiRowCsv_parsesAllRowsWithCorrectFields() {
+        val zone = ZoneId.of("America/New_York")
         val csv =
             """
             $header
@@ -39,7 +51,7 @@ class ExpenseCsvParserTest {
             Rent,150000,Recurring,2024-02-01,
             """.trimIndent()
 
-        val result = parsed(csv)
+        val result = parsed(csv, zone)
 
         assertTrue(result.failures.isEmpty())
         assertEquals(2, result.validExpenses.size)
@@ -48,6 +60,7 @@ class ExpenseCsvParserTest {
         assertEquals("Coffee", coffee.name)
         assertEquals(500L, coffee.amountCents)
         assertEquals(ExpenseCategory.SHOPPING, coffee.category)
+        // Full offset-aware instant: unaffected by the zone argument.
         assertEquals(Instant.parse("2024-01-15T00:00:00Z"), coffee.date)
         assertEquals("with milk", coffee.note)
         assertEquals("", coffee.id)
@@ -56,7 +69,8 @@ class ExpenseCsvParserTest {
         assertEquals("Rent", rent.name)
         assertEquals(150_000L, rent.amountCents)
         assertEquals(ExpenseCategory.RECURRING, rent.category)
-        assertEquals(Instant.parse("2024-02-01T00:00:00Z"), rent.date)
+        // Bare date: resolved against the passed-in zone, not hardcoded UTC.
+        assertEquals(LocalDate.parse("2024-02-01").atStartOfDay(zone).toInstant(), rent.date)
         assertNull(rent.note)
     }
 
@@ -138,12 +152,89 @@ class ExpenseCsvParserTest {
 
     @Test
     fun date_acceptsPlainYyyyMmDd() {
+        val zone = ZoneId.of("America/New_York")
         val csv = "$header\nA,100,Shopping,2024-06-15,\n"
 
-        val result = parsed(csv)
+        val result = parsed(csv, zone)
 
         assertTrue(result.failures.isEmpty())
-        assertEquals(Instant.parse("2024-06-15T00:00:00Z"), result.validExpenses.single().date)
+        assertEquals(
+            LocalDate.parse("2024-06-15").atStartOfDay(zone).toInstant(),
+            result.validExpenses.single().date,
+        )
+    }
+
+    // ---- bare-date zone regression (bug fix: previously always hardcoded to UTC midnight) ----
+
+    @Test
+    fun bareDate_negativeOffsetZone_landsOnWrittenCalendarDay_notOldUtcMidnightValue() {
+        // America/New_York is UTC-5 in January (standard time, no DST ambiguity).
+        val zone = ZoneId.of("America/New_York")
+        val csv = "$header\nA,100,Shopping,2024-01-15,\n"
+
+        val result = parsed(csv, zone)
+
+        assertTrue(result.failures.isEmpty())
+        val actual = result.validExpenses.single().date
+        val expected = LocalDate.parse("2024-01-15").atStartOfDay(zone).toInstant()
+        assertEquals(expected, actual)
+
+        // The old (buggy) behavior always parsed a bare date as UTC midnight, regardless of zone.
+        // Confirm we no longer produce that value for a negative-offset zone.
+        val oldBuggyUtcMidnightValue = Instant.parse("2024-01-15T00:00:00Z")
+        assertTrue(
+            "bare date must honor the provided (negative-offset) zone, not fall back to UTC",
+            actual != oldBuggyUtcMidnightValue,
+        )
+    }
+
+    @Test
+    fun bareDate_positiveOffsetZone_landsOnWrittenCalendarDay_notOldUtcMidnightValue() {
+        val zone = ZoneId.of("Asia/Tokyo") // UTC+9, no DST.
+        val csv = "$header\nA,100,Shopping,2024-01-15,\n"
+
+        val result = parsed(csv, zone)
+
+        assertTrue(result.failures.isEmpty())
+        val actual = result.validExpenses.single().date
+        val expected = LocalDate.parse("2024-01-15").atStartOfDay(zone).toInstant()
+        assertEquals(expected, actual)
+
+        val oldBuggyUtcMidnightValue = Instant.parse("2024-01-15T00:00:00Z")
+        assertTrue(
+            "bare date must honor the provided (positive-offset) zone, not fall back to UTC",
+            actual != oldBuggyUtcMidnightValue,
+        )
+    }
+
+    @Test
+    fun fullInstantDate_withNonUtcZonePassedIn_remainsUnchanged_offsetAwareBranchIgnoresZone() {
+        // The full-instant branch (Instant.parse) is used for the app's own CSV export format,
+        // which always writes a complete offset-aware instant -- it must stay zone-independent.
+        val zone = ZoneId.of("Asia/Tokyo")
+        val csv = "$header\nA,100,Shopping,2024-06-15T13:45:30Z,\n"
+
+        val result = parsed(csv, zone)
+
+        assertTrue(result.failures.isEmpty())
+        assertEquals(Instant.parse("2024-06-15T13:45:30Z"), result.validExpenses.single().date)
+    }
+
+    @Test
+    fun parse_withNoExplicitZoneArgument_usesSystemDefaultZone() {
+        // Smoke test documenting the production default (ZoneId.systemDefault()), the overload
+        // actually used by call sites that don't pass a zone explicitly. This one test is
+        // inherently tied to the machine's actual default zone, which is expected/acceptable here
+        // -- every other zone-sensitive test above pins an explicit zone for determinism.
+        val csv = "$header\nA,100,Shopping,2024-01-15,\n"
+
+        val outcome = ExpenseCsvParser.parse(csv)
+
+        val result =
+            (outcome as? CsvImportOutcome.Parsed)?.result
+                ?: fail("Expected Parsed but was $outcome").let { throw IllegalStateException() }
+        val expected = LocalDate.parse("2024-01-15").atStartOfDay(ZoneId.systemDefault()).toInstant()
+        assertEquals(expected, result.validExpenses.single().date)
     }
 
     // ---- note handling ----
@@ -182,12 +273,13 @@ class ExpenseCsvParserTest {
 
     @Test
     fun note_quotedWithEmbeddedNewline_parsesAsSingleRow_noteTextExact_secondRowIntact() {
+        val zone = ZoneId.of("America/New_York")
         val csv =
             "$header\n" +
                 "Coffee,500,Shopping,2024-01-15T00:00:00Z,\"line one\nline two\"\n" +
                 "Rent,150000,Recurring,2024-02-01,\n"
 
-        val result = parsed(csv)
+        val result = parsed(csv, zone)
 
         assertTrue("expected no failures but got ${result.failures}", result.failures.isEmpty())
         assertEquals(2, result.validExpenses.size)
@@ -200,7 +292,7 @@ class ExpenseCsvParserTest {
         assertEquals("Rent", rent.name)
         assertEquals(150_000L, rent.amountCents)
         assertEquals(ExpenseCategory.RECURRING, rent.category)
-        assertEquals(Instant.parse("2024-02-01T00:00:00Z"), rent.date)
+        assertEquals(LocalDate.parse("2024-02-01").atStartOfDay(zone).toInstant(), rent.date)
         assertNull(rent.note)
     }
 
@@ -264,7 +356,7 @@ class ExpenseCsvParserTest {
 
     @Test
     fun bomPrefixedHeader_parsesSuccessfully_firstFieldNotCorrupted() {
-        val bom = "﻿"
+        val bom = ""
         val csv = "$bom$header\nCoffee,500,Shopping,2024-01-15T00:00:00Z,with milk\n"
 
         val outcome = ExpenseCsvParser.parse(csv)

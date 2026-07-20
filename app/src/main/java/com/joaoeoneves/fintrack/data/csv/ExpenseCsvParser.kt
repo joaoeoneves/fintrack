@@ -4,7 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.time.format.DateTimeParseException
 
 private const val EXPECTED_HEADER = "name,amountcents,category,date,note"
@@ -40,7 +40,10 @@ sealed interface CsvImportOutcome {
  * header `name,amountCents,category,date,note`, one row per expense.
  */
 object ExpenseCsvParser {
-    fun parse(csvText: String): CsvImportOutcome {
+    fun parse(
+        csvText: String,
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): CsvImportOutcome {
         val normalizedText = csvText.removePrefix("\uFEFF")
         val lines =
             splitCsvRecords(normalizedText)
@@ -95,7 +98,7 @@ object ExpenseCsvParser {
                 return@forEachIndexed
             }
 
-            val date = parseDate(rawDate.trim())
+            val date = parseDate(rawDate.trim(), zone)
             if (date == null) {
                 failures += CsvRowFailure(rowNumber, line, "Invalid date: '$rawDate'")
                 return@forEachIndexed
@@ -130,12 +133,15 @@ object ExpenseCsvParser {
             ExpenseCategory.RECURRING -> "Recurring"
         }
 
-    private fun parseDate(raw: String): Instant? =
+    private fun parseDate(
+        raw: String,
+        zone: ZoneId,
+    ): Instant? =
         try {
             Instant.parse(raw)
         } catch (e: DateTimeParseException) {
             try {
-                LocalDate.parse(raw).atStartOfDay(ZoneOffset.UTC).toInstant()
+                LocalDate.parse(raw).atStartOfDay(zone).toInstant()
             } catch (e2: DateTimeParseException) {
                 null
             }
