@@ -178,6 +178,129 @@ class ExpenseCsvParserTest {
         assertEquals("she said \"hi\"", result.validExpenses.single().note)
     }
 
+    // ---- multi-line quoted note fields (record-splitting regression) ----
+
+    @Test
+    fun note_quotedWithEmbeddedNewline_parsesAsSingleRow_noteTextExact_secondRowIntact() {
+        val csv =
+            "$header\n" +
+                "Coffee,500,Shopping,2024-01-15T00:00:00Z,\"line one\nline two\"\n" +
+                "Rent,150000,Recurring,2024-02-01,\n"
+
+        val result = parsed(csv)
+
+        assertTrue("expected no failures but got ${result.failures}", result.failures.isEmpty())
+        assertEquals(2, result.validExpenses.size)
+
+        val coffee = result.validExpenses[0]
+        assertEquals("Coffee", coffee.name)
+        assertEquals("line one\nline two", coffee.note)
+
+        val rent = result.validExpenses[1]
+        assertEquals("Rent", rent.name)
+        assertEquals(150_000L, rent.amountCents)
+        assertEquals(ExpenseCategory.RECURRING, rent.category)
+        assertEquals(Instant.parse("2024-02-01T00:00:00Z"), rent.date)
+        assertNull(rent.note)
+    }
+
+    @Test
+    fun note_quotedWithEmbeddedCrLf_parsesAsSingleRow_noteTextExact_secondRowIntact() {
+        val csv =
+            "$header\n" +
+                "Coffee,500,Shopping,2024-01-15T00:00:00Z,\"line one\r\nline two\"\n" +
+                "Rent,150000,Recurring,2024-02-01,\n"
+
+        val result = parsed(csv)
+
+        assertTrue("expected no failures but got ${result.failures}", result.failures.isEmpty())
+        assertEquals(2, result.validExpenses.size)
+
+        val coffee = result.validExpenses[0]
+        assertEquals("Coffee", coffee.name)
+        assertEquals("line one\r\nline two", coffee.note)
+
+        val rent = result.validExpenses[1]
+        assertEquals("Rent", rent.name)
+        assertEquals(150_000L, rent.amountCents)
+    }
+
+    @Test
+    fun multiLineNoteRow_followedByRowWithParseError_reportsCorrectLogicalRowNumber() {
+        // Row 2 (Coffee) spans two physical lines because of the embedded newline in its quoted
+        // note. Row 3 (the bad-category row) must still be reported as logical row 3, not thrown
+        // off by the physical line count (which would make it look like row 4).
+        val csv =
+            "$header\n" +
+                "Coffee,500,Shopping,2024-01-15T00:00:00Z,\"line one\nline two\"\n" +
+                "Bad,100,NotACategory,2024-01-01,\n"
+
+        val result = parsed(csv)
+
+        assertEquals(1, result.validExpenses.size)
+        assertEquals("Coffee", result.validExpenses.single().name)
+        assertEquals(1, result.failures.size)
+        val failure = result.failures.single()
+        assertEquals(3, failure.rowNumber)
+        assertTrue(failure.reason.contains("category", ignoreCase = true))
+    }
+
+    @Test
+    fun unterminatedQuote_malformedNote_doesNotThrow_returnsNonCrashingOutcome() {
+        // An opening quote that's never closed: the rest of the file (including subsequent
+        // physical lines) is swallowed into one open quoted field. parse() must return an
+        // outcome, not let an exception escape.
+        val csv = "$header\nA,100,Shopping,2024-01-01,\"unterminated note\n"
+
+        val outcome = ExpenseCsvParser.parse(csv)
+
+        // Either a fatal Error, or a Parsed result (possibly with a row failure) are both
+        // acceptable non-crashing outcomes -- the only hard requirement is that parse() returns
+        // normally instead of throwing.
+        assertTrue(outcome is CsvImportOutcome.Error || outcome is CsvImportOutcome.Parsed)
+    }
+
+    // ---- BOM handling ----
+
+    @Test
+    fun bomPrefixedHeader_parsesSuccessfully_firstFieldNotCorrupted() {
+        val bom = "﻿"
+        val csv = "$bom$header\nCoffee,500,Shopping,2024-01-15T00:00:00Z,with milk\n"
+
+        val outcome = ExpenseCsvParser.parse(csv)
+
+        assertTrue("expected Parsed but was $outcome", outcome is CsvImportOutcome.Parsed)
+        val result = (outcome as CsvImportOutcome.Parsed).result
+        assertTrue(result.failures.isEmpty())
+        assertEquals(1, result.validExpenses.size)
+        val coffee = result.validExpenses.single()
+        assertEquals("Coffee", coffee.name)
+        assertEquals(500L, coffee.amountCents)
+        assertEquals(ExpenseCategory.SHOPPING, coffee.category)
+        assertEquals("with milk", coffee.note)
+    }
+
+    @Test
+    fun bomPrefixedFile_withActuallyWrongHeader_stillProducesError() {
+        val bom = "﻿"
+        val csv = "$bom" + "foo,bar,baz,qux,quux\nA,100,Shopping,2024-01-01,\n"
+
+        val outcome = ExpenseCsvParser.parse(csv)
+
+        assertTrue(outcome is CsvImportOutcome.Error)
+    }
+
+    @Test
+    fun noBom_fileUnaffected_stillParsesNormally() {
+        val csv = "$header\nCoffee,500,Shopping,2024-01-15T00:00:00Z,with milk\n"
+
+        val result = parsed(csv)
+
+        assertTrue(result.failures.isEmpty())
+        assertEquals(1, result.validExpenses.size)
+        assertEquals("Coffee", result.validExpenses.single().name)
+    }
+
     // ---- row failures ----
 
     @Test

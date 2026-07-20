@@ -92,6 +92,7 @@
     <string name="import_preview_summary">%1$d rows ready to import, %2$d failed</string>
     <string name="import_preview_row_failure">Row %1$d: %2$s</string>
     <string name="label_import_complete">Import complete</string>
+    <string name="label_import_partial_failure">Import partially completed</string>
     <string name="label_import_failed">Import failed</string>
     <string name="label_export_complete">Export complete</string>
     <string name="label_export_failed">Export failed</string>
@@ -144,5 +145,9 @@
     <plurals name="export_complete_message">
         <item quantity="one">Exported %d expense.</item>
         <item quantity="other">Exported %d expenses.</item>
+    </plurals>
+    <plurals name="import_partial_failure_message">
+        <item quantity="one">%1$d expense was imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
+        <item quantity="other">%1$d expenses were imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
     </plurals>
 </resources>

@@ -164,6 +164,20 @@ fun SettingsScreen(
             )
         }
 
+        is ImportUiState.PartialFailure -> {
+            MessageDialog(
+                title = stringResource(R.string.label_import_partial_failure),
+                message =
+                    pluralStringResource(
+                        R.plurals.import_partial_failure_message,
+                        state.succeededCount,
+                        state.succeededCount,
+                        state.message,
+                    ),
+                onDismiss = importExportViewModel::onDismissImport,
+            )
+        }
+
         is ImportUiState.Error -> {
             MessageDialog(
                 title = stringResource(R.string.label_import_failed),

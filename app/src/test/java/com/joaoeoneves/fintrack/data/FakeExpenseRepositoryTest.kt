@@ -509,8 +509,9 @@ class FakeExpenseRepositoryTest {
 
             val result = repo.addExpenses(emptyList())
 
-            assertTrue(result.isSuccess)
-            assertEquals(0, result.getOrThrow())
+            assertTrue(result.isCompleteSuccess)
+            assertEquals(0, result.succeededCount)
+            assertNull(result.failure)
             assertTrue(repo.getAllExpenses().getOrThrow().isEmpty())
         }
 
@@ -527,8 +528,9 @@ class FakeExpenseRepositoryTest {
 
             val result = repo.addExpenses(toImport)
 
-            assertTrue(result.isSuccess)
-            assertEquals(3, result.getOrThrow())
+            assertTrue(result.isCompleteSuccess)
+            assertEquals(3, result.succeededCount)
+            assertNull(result.failure)
             val stored = repo.getAllExpenses().getOrThrow()
             assertEquals(3, stored.size)
             assertTrue(stored.all { it.id.isNotBlank() })
@@ -558,11 +560,76 @@ class FakeExpenseRepositoryTest {
 
             val result = repo.addExpenses(listOf(expense(id = "", name = "New", date = day1)))
 
-            assertTrue(result.isSuccess)
-            assertEquals(1, result.getOrThrow())
+            assertTrue(result.isCompleteSuccess)
+            assertEquals(1, result.succeededCount)
             val stored = repo.getAllExpenses().getOrThrow()
             assertEquals(2, stored.size)
             assertTrue(stored.any { it.id == "existing" })
             assertTrue(stored.any { it.name == "New" })
+        }
+
+    // ---- addExpenses (bulk): partial-failure tracking ----
+
+    @Test
+    fun addExpenses_nextAddExpensesFailureSet_onlyPrefixCountIsStored_resultReportsPartialSuccessAndFailure() =
+        runBlocking {
+            val repo = FakeExpenseRepository()
+            val boom = IllegalStateException("Firestore batch commit failed")
+            repo.nextAddExpensesFailure = boom
+            repo.addExpensesFailureAfterCount = 2
+            val toImport =
+                listOf(
+                    expense(id = "", name = "Coffee", date = day0),
+                    expense(id = "", name = "Rent", date = day1),
+                    expense(id = "", name = "Netflix", date = day2),
+                    expense(id = "", name = "Groceries", date = day3),
+                )
+
+            val result = repo.addExpenses(toImport)
+
+            assertFalse(result.isCompleteSuccess)
+            assertEquals(2, result.succeededCount)
+            assertSame(boom, result.failure)
+            val stored = repo.getAllExpenses().getOrThrow()
+            assertEquals(2, stored.size)
+            assertEquals(setOf("Coffee", "Rent"), stored.map { it.name }.toSet())
+        }
+
+    @Test
+    fun addExpenses_nextAddExpensesFailureSet_zeroAfterCount_reportsZeroSucceeded_storesNothing() =
+        runBlocking {
+            val repo = FakeExpenseRepository()
+            val boom = IllegalStateException("boom")
+            repo.nextAddExpensesFailure = boom
+            repo.addExpensesFailureAfterCount = 0
+
+            val result = repo.addExpenses(listOf(expense(id = "", name = "Coffee", date = day0)))
+
+            assertFalse(result.isCompleteSuccess)
+            assertEquals(0, result.succeededCount)
+            assertSame(boom, result.failure)
+            assertTrue(repo.getAllExpenses().getOrThrow().isEmpty())
+        }
+
+    @Test
+    fun addExpenses_nextAddExpensesFailure_selfResetsAfterOneCall_soRetrySucceedsCompletely() =
+        runBlocking {
+            val repo = FakeExpenseRepository()
+            repo.nextAddExpensesFailure = IllegalStateException("transient")
+            repo.addExpensesFailureAfterCount = 1
+            val toImport = listOf(expense(id = "", name = "Coffee", date = day0), expense(id = "", name = "Rent", date = day1))
+
+            val first = repo.addExpenses(toImport)
+            assertFalse(first.isCompleteSuccess)
+            assertEquals(1, first.succeededCount)
+            assertNull("the fake should self-reset after being consumed once", repo.nextAddExpensesFailure)
+
+            val second = repo.addExpenses(listOf(expense(id = "", name = "Netflix", date = day2)))
+            assertTrue(second.isCompleteSuccess)
+            assertEquals(1, second.succeededCount)
+            assertNull(second.failure)
+            val stored = repo.getAllExpenses().getOrThrow()
+            assertEquals(2, stored.size)
+            assertEquals(setOf("Coffee", "Netflix"), stored.map { it.name }.toSet())
         }
 }

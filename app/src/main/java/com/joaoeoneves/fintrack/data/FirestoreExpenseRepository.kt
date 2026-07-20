@@ -9,6 +9,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -132,13 +133,13 @@ class FirestoreExpenseRepository
             }
         }
 
-        override suspend fun addExpenses(expenses: List<Expense>): Result<Int> {
+        override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult {
             val uid =
                 firebaseAuth.currentUser?.uid
-                    ?: return Result.failure(IllegalStateException("Not signed in"))
-            return try {
-                var total = 0
-                expenses.chunked(BATCH_CHUNK_SIZE).forEach { chunk ->
+                    ?: return BulkAddResult(0, IllegalStateException("Not signed in"))
+            var total = 0
+            expenses.chunked(BATCH_CHUNK_SIZE).forEach { chunk ->
+                try {
                     val batch = firestore.batch()
                     chunk.forEach { expense ->
                         val docRef = expensesCollection(uid).document()
@@ -146,11 +147,11 @@ class FirestoreExpenseRepository
                     }
                     batch.commit().await()
                     total += chunk.size
+                } catch (e: Exception) {
+                    return BulkAddResult(total, e)
                 }
-                Result.success(total)
-            } catch (e: Exception) {
-                Result.failure(e)
             }
+            return BulkAddResult(total, null)
         }
 
         private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {

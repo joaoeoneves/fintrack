@@ -92,6 +92,7 @@
     <string name="import_preview_summary">%1$d linhas prontas para importar, %2$d falharam</string>
     <string name="import_preview_row_failure">Linha %1$d: %2$s</string>
     <string name="label_import_complete">Importação concluída</string>
+    <string name="label_import_partial_failure">Importação parcialmente concluída</string>
     <string name="label_import_failed">Falha na importação</string>
     <string name="label_export_complete">Exportação concluída</string>
     <string name="label_export_failed">Falha na exportação</string>
@@ -143,5 +144,9 @@
     <plurals name="export_complete_message">
         <item quantity="one">%d despesa exportada.</item>
         <item quantity="other">%d despesas exportadas.</item>
+    </plurals>
+    <plurals name="import_partial_failure_message">
+        <item quantity="one">%1$d despesa foi importada antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
+        <item quantity="other">%1$d despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
     </plurals>
 </resources>

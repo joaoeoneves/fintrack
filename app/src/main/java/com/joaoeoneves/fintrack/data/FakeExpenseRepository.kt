@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,8 @@ class FakeExpenseRepository(
     initialExpenses: List<Expense> = emptyList(),
     var nextObserveExpensesError: Throwable? = null,
     var nextGetExpenseError: Throwable? = null,
+    var nextAddExpensesFailure: Throwable? = null,
+    var addExpensesFailureAfterCount: Int = Int.MAX_VALUE,
 ) : ExpenseRepository {
     private val expensesFlow = MutableStateFlow(initialExpenses)
 
@@ -65,9 +68,17 @@ class FakeExpenseRepository(
 
     override suspend fun getAllExpenses(): Result<List<Expense>> = Result.success(expensesFlow.value)
 
-    override suspend fun addExpenses(expenses: List<Expense>): Result<Int> {
+    override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult {
+        val failure = nextAddExpensesFailure
+        if (failure != null) {
+            nextAddExpensesFailure = null
+            val committed = expenses.take(addExpensesFailureAfterCount)
+            val toStore = committed.map { it.copy(id = UUID.randomUUID().toString()) }
+            expensesFlow.value = expensesFlow.value + toStore
+            return BulkAddResult(committed.size, failure)
+        }
         val toStore = expenses.map { it.copy(id = UUID.randomUUID().toString()) }
         expensesFlow.value = expensesFlow.value + toStore
-        return Result.success(expenses.size)
+        return BulkAddResult(expenses.size, null)
     }
 }

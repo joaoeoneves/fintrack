@@ -19,6 +19,11 @@ sealed interface ImportUiState {
         val importedCount: Int,
     ) : ImportUiState
 
+    data class PartialFailure(
+        val succeededCount: Int,
+        val message: String,
+    ) : ImportUiState
+
     data class Error(
         val message: String,
     ) : ImportUiState

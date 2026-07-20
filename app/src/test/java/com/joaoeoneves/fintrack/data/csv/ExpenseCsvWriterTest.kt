@@ -110,6 +110,13 @@ class ExpenseCsvWriterTest {
                     date = Instant.parse("2024-12-31T00:00:00Z"),
                     note = "monthly, auto-renews",
                 ),
+                expense(
+                    name = "Multi-line note expense",
+                    amountCents = 2_500L,
+                    category = ExpenseCategory.SHOPPING,
+                    date = Instant.parse("2024-07-04T00:00:00Z"),
+                    note = "line one\nline two\nline three",
+                ),
             )
 
         val csv = ExpenseCsvWriter.write(originals)
@@ -130,6 +137,29 @@ class ExpenseCsvWriterTest {
             assertEquals(original.note.orEmpty().ifBlank { null }, parsed.note)
             assertEquals("", parsed.id) // writer/parser don't round-trip id
         }
+    }
+
+    @Test
+    fun roundTrip_noteWithEmbeddedNewline_isolated_zeroFailures_exactNoteEquality() {
+        // Direct proof of the writer's doc-comment claim ("guaranteed round-trip") for the
+        // specific case that used to break: a note containing an embedded newline.
+        val original =
+            expense(
+                name = "Team offsite",
+                amountCents = 45_000L,
+                category = ExpenseCategory.TRANSFER,
+                date = Instant.parse("2024-09-01T00:00:00Z"),
+                note = "Paid for everyone.\nWill be reimbursed next month.",
+            )
+
+        val csv = ExpenseCsvWriter.write(listOf(original))
+        val outcome = ExpenseCsvParser.parse(csv)
+
+        assertTrue(outcome is CsvImportOutcome.Parsed)
+        val result = (outcome as CsvImportOutcome.Parsed).result
+        assertTrue(result.failures.isEmpty())
+        assertEquals(1, result.validExpenses.size)
+        assertEquals(original.note, result.validExpenses.single().note)
     }
 
     @Test

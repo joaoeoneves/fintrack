@@ -204,6 +204,125 @@ class ImportExportViewModelTest {
             assertTrue(stored.any { it.name == "New" })
         }
 
+    // ---- partial-failure bulk import ----
+
+    @Test
+    fun onConfirmImport_partialFailure_movesToPartialFailureState_withMatchingStoredCount() =
+        runTest(testDispatcher) {
+            val csv =
+                """
+                name,amountCents,category,date,note
+                Coffee,500,Shopping,2024-01-15T00:00:00Z,
+                Rent,150000,Recurring,2024-02-01,
+                Netflix,1599,Recurring,2024-03-01,
+                """.trimIndent()
+            val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
+            val repo = FakeExpenseRepository()
+            repo.nextAddExpensesFailure = IllegalStateException("Firestore batch commit failed")
+            repo.addExpensesFailureAfterCount = 2
+            val viewModel = ImportExportViewModel(repo, context())
+            viewModel.onImportFileSelected(Uri.fromFile(file))
+            advanceUntilIdle()
+
+            viewModel.onConfirmImport()
+            advanceUntilIdle()
+
+            val state = viewModel.importState.value
+            assertTrue("expected PartialFailure but was $state", state is ImportUiState.PartialFailure)
+            val partial = state as ImportUiState.PartialFailure
+            assertEquals(2, partial.succeededCount)
+            assertEquals("Firestore batch commit failed", partial.message)
+
+            // The reported succeededCount must match what's actually durably stored, not just a
+            // number surfaced in UI state.
+            val stored = repo.getAllExpenses().getOrThrow()
+            assertEquals(2, stored.size)
+            assertEquals(setOf("Coffee", "Rent"), stored.map { it.name }.toSet())
+        }
+
+    @Test
+    fun onConfirmImport_fullFailure_zeroRowsCommitted_producesErrorNotPartialFailure() =
+        runTest(testDispatcher) {
+            val csv =
+                """
+                name,amountCents,category,date,note
+                Coffee,500,Shopping,2024-01-15T00:00:00Z,
+                Rent,150000,Recurring,2024-02-01,
+                """.trimIndent()
+            val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
+            val repo = FakeExpenseRepository()
+            repo.nextAddExpensesFailure = IllegalStateException("Not signed in")
+            repo.addExpensesFailureAfterCount = 0
+            val viewModel = ImportExportViewModel(repo, context())
+            viewModel.onImportFileSelected(Uri.fromFile(file))
+            advanceUntilIdle()
+
+            viewModel.onConfirmImport()
+            advanceUntilIdle()
+
+            val state = viewModel.importState.value
+            assertTrue("expected Error, not PartialFailure, but was $state", state is ImportUiState.Error)
+            assertEquals("Not signed in", (state as ImportUiState.Error).message)
+            assertTrue(repo.getAllExpenses().getOrThrow().isEmpty())
+        }
+
+    @Test
+    fun onDismissImport_fromPartialFailureState_resetsStateToIdle() =
+        runTest(testDispatcher) {
+            val csv = "name,amountCents,category,date,note\nCoffee,500,Shopping,2024-01-15T00:00:00Z,\n"
+            val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
+            val repo = FakeExpenseRepository()
+            repo.nextAddExpensesFailure = IllegalStateException("boom")
+            repo.addExpensesFailureAfterCount = 0
+            val viewModel = ImportExportViewModel(repo, context())
+            viewModel.onImportFileSelected(Uri.fromFile(file))
+            advanceUntilIdle()
+            viewModel.onConfirmImport()
+            advanceUntilIdle()
+            assertTrue(viewModel.importState.value is ImportUiState.Error)
+
+            viewModel.onDismissImport()
+
+            assertEquals(ImportUiState.Idle, viewModel.importState.value)
+        }
+
+    @Test
+    fun exportThenImport_multiLineNoteAndBom_roundTripsThroughFullFileReadParsePreviewPath() =
+        runTest(testDispatcher) {
+            val repo =
+                FakeExpenseRepository(
+                    listOf(
+                        expense(
+                            id = "e1",
+                            name = "Team offsite",
+                            note = "Paid for everyone.\nWill be reimbursed next month.",
+                        ),
+                    ),
+                )
+            val viewModel = ImportExportViewModel(repo, context())
+            val file = File(tempFolder.root, "roundtrip.csv")
+
+            viewModel.onExportTargetSelected(Uri.fromFile(file))
+            advanceUntilIdle()
+            assertEquals(1, (viewModel.exportState.value as ExportUiState.Done).exportedCount)
+
+            // Prepend a BOM to the exported file, as a re-saved "CSV UTF-8" export might have.
+            val bomPrefixedBytes = "﻿".toByteArray(Charsets.UTF_8) + file.readBytes()
+            file.writeBytes(bomPrefixedBytes)
+
+            viewModel.onImportFileSelected(Uri.fromFile(file))
+            advanceUntilIdle()
+
+            val preview = viewModel.importState.value as ImportUiState.Preview
+            assertTrue(preview.failures.isEmpty())
+            assertEquals(1, preview.validExpenses.size)
+            assertEquals("Team offsite", preview.validExpenses.single().name)
+            assertEquals(
+                "Paid for everyone.\nWill be reimbursed next month.",
+                preview.validExpenses.single().note,
+            )
+        }
+
     @Test
     fun onDismissImport_resetsStateToIdle() =
         runTest(testDispatcher) {

@@ -41,9 +41,9 @@ sealed interface CsvImportOutcome {
  */
 object ExpenseCsvParser {
     fun parse(csvText: String): CsvImportOutcome {
+        val normalizedText = csvText.removePrefix("﻿")
         val lines =
-            csvText
-                .split("\r\n", "\n")
+            splitCsvRecords(normalizedText)
                 .let { if (it.isNotEmpty() && it.last().isBlank()) it.dropLast(1) else it }
         val nonBlankLines = lines.filter { it.isNotBlank() }
 
@@ -140,6 +140,44 @@ object ExpenseCsvParser {
                 null
             }
         }
+
+    /**
+     * Splits the raw CSV document text into logical records, scanning character-by-character and
+     * tracking whether we're inside an open quoted field (toggled on `"`, with `""` treated as an
+     * escaped quote that stays inside the field). Only treats `\n`/`\r`/`\r\n` as a record
+     * separator when NOT inside an open quote, so a quoted multi-line note (a valid CSV field
+     * containing an embedded newline) is kept as a single logical record.
+     */
+    private fun splitCsvRecords(text: String): List<String> {
+        val records = mutableListOf<String>()
+        val current = StringBuilder()
+        var inQuotes = false
+        var i = 0
+        while (i < text.length) {
+            val c = text[i]
+            if (c == '"') {
+                current.append(c)
+                if (inQuotes && i + 1 < text.length && text[i + 1] == '"') {
+                    current.append(text[i + 1])
+                    i += 2
+                    continue
+                }
+                inQuotes = !inQuotes
+                i++
+                continue
+            }
+            if (!inQuotes && (c == '\n' || c == '\r')) {
+                records += current.toString()
+                current.setLength(0)
+                i += if (c == '\r' && i + 1 < text.length && text[i + 1] == '\n') 2 else 1
+                continue
+            }
+            current.append(c)
+            i++
+        }
+        records += current.toString()
+        return records
+    }
 
     /**
      * Splits a single CSV line into its raw fields, supporting double-quoted fields (with doubled

@@ -59,12 +59,18 @@ class ImportExportViewModel
             val preview = _importState.value as? ImportUiState.Preview ?: return
             viewModelScope.launch {
                 _importState.value = ImportUiState.Importing
-                expenseRepository
-                    .addExpenses(preview.validExpenses)
-                    .onSuccess { count -> _importState.value = ImportUiState.Done(count) }
-                    .onFailure { e ->
-                        val fallback = e.message ?: context.getString(R.string.error_import_failed)
-                        _importState.value = ImportUiState.Error(fallback)
+                val result = expenseRepository.addExpenses(preview.validExpenses)
+                _importState.value =
+                    when {
+                        result.isCompleteSuccess -> ImportUiState.Done(result.succeededCount)
+                        result.succeededCount > 0 -> {
+                            val fallback = result.failure?.message ?: context.getString(R.string.error_import_failed)
+                            ImportUiState.PartialFailure(result.succeededCount, fallback)
+                        }
+                        else -> {
+                            val fallback = result.failure?.message ?: context.getString(R.string.error_import_failed)
+                            ImportUiState.Error(fallback)
+                        }
                     }
             }
         }

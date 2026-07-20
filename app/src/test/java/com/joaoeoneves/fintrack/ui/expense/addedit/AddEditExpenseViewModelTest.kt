@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
@@ -775,7 +776,7 @@ class AddEditExpenseViewModelTest {
 
         override suspend fun getAllExpenses(): Result<List<Expense>> = throw UnsupportedOperationException("not used in these tests")
 
-        override suspend fun addExpenses(expenses: List<Expense>): Result<Int> =
+        override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult =
             throw UnsupportedOperationException("not used in these tests")
     }
 }
