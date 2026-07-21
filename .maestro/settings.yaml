@@ -98,12 +98,18 @@ appId: com.joaoeoneves.fintrack
 # --- 4: Data -- Import CSV / Export CSV still launch their file pickers ---
 # The Data section (with these two buttons) is below the fold at this scroll position too, for
 # the same Language-section-was-added reason as step 1's scroll comment above.
+# Labels now disclose the expenses-only scope of CSV import/export ("Import CSV (expenses)" /
+# "Export CSV (expenses)") -- the assertVisible calls below actively prove that disclosure text
+# renders on-screen, guarding against a future accidental revert to the old ambiguous
+# "Import CSV"/"Export CSV" labels.
 - scrollUntilVisible:
-    element: "Import CSV"
+    element: "Import CSV \\(expenses\\)"
     direction: DOWN
-- tapOn: "Import CSV"
+- assertVisible: "Import CSV \\(expenses\\)"
+- tapOn: "Import CSV \\(expenses\\)"
 - back
-- tapOn: "Export CSV"
+- assertVisible: "Export CSV \\(expenses\\)"
+- tapOn: "Export CSV \\(expenses\\)"
 - back
 
 # Return to the dashboard, leaving app state as found.

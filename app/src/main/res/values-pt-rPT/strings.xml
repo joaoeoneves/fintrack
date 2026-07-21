@@ -120,8 +120,8 @@
     <string name="settings_section_account">Conta</string>
     <string name="settings_section_about">Acerca</string>
     <string name="settings_currency_label">Moeda de exibição</string>
-    <string name="settings_import_csv">Importar CSV</string>
-    <string name="settings_export_csv">Exportar CSV</string>
+    <string name="settings_import_csv">Importar CSV (despesas)</string>
+    <string name="settings_export_csv">Exportar CSV (despesas)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
     <string name="label_sign_out_failed">Falha ao terminar sessão</string>
     <string name="about_version">Versão %1$s</string>
