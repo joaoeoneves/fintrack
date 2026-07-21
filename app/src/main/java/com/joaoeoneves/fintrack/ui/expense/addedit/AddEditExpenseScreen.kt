@@ -10,10 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -42,11 +39,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.ui.common.ErrorState
+import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.displayName
-import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
-import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,8 +150,6 @@ private fun ExpenseForm(
     modifier: Modifier = Modifier,
 ) {
     var categoryMenuExpanded by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    val displayDateFormatter = rememberLocaleAwareDateFormatter().withZone(ZoneOffset.UTC)
 
     Column(
         modifier =
@@ -215,17 +209,9 @@ private fun ExpenseForm(
             }
         }
 
-        OutlinedTextField(
-            readOnly = true,
-            value = displayDateFormatter.format(form.date),
-            onValueChange = {},
-            label = { Text(stringResource(R.string.field_date)) },
-            trailingIcon = {
-                IconButton(onClick = { showDatePicker = true }) {
-                    val changeDateCd = stringResource(R.string.cd_change_date)
-                    Icon(Icons.Default.DateRange, contentDescription = changeDateCd)
-                }
-            },
+        ReadOnlyDateField(
+            date = form.date,
+            onDateSelected = onDateSelected,
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -242,33 +228,6 @@ private fun ExpenseForm(
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
             )
-        }
-    }
-
-    if (showDatePicker) {
-        val datePickerState =
-            androidx.compose.material3.rememberDatePickerState(
-                initialSelectedDateMillis = form.date.toEpochMilli(),
-            )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        onDateSelected(Instant.ofEpochMilli(millis))
-                    }
-                    showDatePicker = false
-                }) {
-                    Text(stringResource(R.string.action_ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        ) {
-            DatePicker(state = datePickerState)
         }
     }
 }
