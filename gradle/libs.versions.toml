@@ -1,29 +1,30 @@
 [versions]
-agp = "9.2.1"
-appcompat = "1.7.0"
-coreKtx = "1.10.1"
+agp = "9.3.0"
+appcompat = "1.7.1"
+coreKtx = "1.18.0"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
-lifecycleRuntimeKtx = "2.6.1"
-activityCompose = "1.8.0"
-kotlin = "2.2.10"
-composeBom = "2026.02.01"
-hilt = "2.56.2"
-kotlinxCoroutinesPlayServices = "1.9.0"
-firebaseBom = "33.7.0"
-credentials = "1.3.0"
-credentialsPlayServicesAuth = "1.3.0"
-googleid = "1.1.1"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+lifecycleRuntimeKtx = "2.10.0"
+activityCompose = "1.13.0"
+kotlin = "2.4.10"
+composeBom = "2026.06.01"
+hilt = "2.60.1"
+kotlinxCoroutinesPlayServices = "1.11.0"
+firebaseBom = "34.16.0"
+credentials = "1.6.0"
+credentialsPlayServicesAuth = "1.6.0"
+googleid = "1.2.0"
 googleServices = "4.5.0"
-hiltNavigationCompose = "1.2.0"
-lifecycleRuntimeCompose = "2.6.1"
-kotlinxCoroutinesTest = "1.9.0"
-navigationCompose = "2.9.6"
-kotlinxSerializationJson = "1.9.0"
+hiltNavigationCompose = "1.3.0"
+lifecycleRuntimeCompose = "2.10.0"
+kotlinxCoroutinesTest = "1.11.0"
+navigationCompose = "2.9.8"
+kotlinxSerializationJson = "1.11.0"
 robolectric = "4.16.1"
 ktlint = "14.2.0"
 detekt = "1.23.8"
+desugarJdkLibs = "2.1.5"
 
 [libraries]
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -47,8 +48,8 @@ hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
-firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
@@ -58,6 +59,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+android-desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

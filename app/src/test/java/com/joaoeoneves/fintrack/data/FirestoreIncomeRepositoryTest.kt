@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.data
 
 import android.app.Application
 import com.google.firebase.Timestamp
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.TestDocumentSnapshots
@@ -21,7 +20,9 @@ import org.robolectric.shadows.ShadowLog
 import java.time.Instant
 
 /**
- * Unit tests for [FirestoreIncomeRepository]'s private `toIncomeOrNull()` conversion. See
+ * Unit tests for [FirestoreIncomeRepository]'s private top-level `toIncomeOrNull()` conversion (a
+ * file-private `DocumentSnapshot` extension, not a class member -- Kotlin compiles it onto a
+ * synthetic `FirestoreIncomeRepositoryKt` facade class, invoked here as a static method). See
  * [FirestoreExpenseRepositoryTest] for the full rationale behind this approach (no mocking library
  * available; a real [DocumentSnapshot] is built via [TestDocumentSnapshots]).
  */
@@ -29,7 +30,6 @@ import java.time.Instant
 @Config(application = Application::class)
 class FirestoreIncomeRepositoryTest {
     private lateinit var firestore: FirebaseFirestore
-    private lateinit var repository: FirestoreIncomeRepository
 
     private companion object {
         private const val TAG = "FirestoreIncomeRepo"
@@ -40,15 +40,15 @@ class FirestoreIncomeRepositoryTest {
         ShadowLog.clear()
         val app = FirebaseTestApp.ensureInitialized(RuntimeEnvironment.getApplication())
         firestore = FirebaseFirestore.getInstance(app)
-        repository = FirestoreIncomeRepository(firestore, FirebaseAuth.getInstance(app))
     }
 
     private fun toIncomeOrNull(snapshot: DocumentSnapshot): Income? {
         val method =
-            FirestoreIncomeRepository::class.java
+            Class
+                .forName("com.joaoeoneves.fintrack.data.FirestoreIncomeRepositoryKt")
                 .getDeclaredMethod("toIncomeOrNull", DocumentSnapshot::class.java)
         method.isAccessible = true
-        return method.invoke(repository, snapshot) as Income?
+        return method.invoke(null, snapshot) as Income?
     }
 
     private fun validFields(): Map<String, com.google.firestore.v1.Value> =

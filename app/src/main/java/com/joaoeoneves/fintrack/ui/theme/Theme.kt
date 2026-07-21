@@ -1,3 +1,8 @@
+// The 0xFF000000/0xFFFFFFFF literals below are the black/white `onPrimary`/`onError` role colors
+// completing the two Material color schemes defined in this file; a named constant above each one
+// would just rename the same self-evident literal, so suppress at the file level instead.
+@file:Suppress("MagicNumber")
+
 package com.joaoeoneves.fintrack.ui.theme
 
 import android.app.Activity

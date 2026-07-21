@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.data
 
 import android.app.Application
 import com.google.firebase.Timestamp
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.TestDocumentSnapshots
@@ -21,21 +20,22 @@ import org.robolectric.shadows.ShadowLog
 import java.time.Instant
 
 /**
- * Unit tests for [FirestoreExpenseRepository]'s private `toExpenseOrNull()` conversion, exercised
+ * Unit tests for [FirestoreExpenseRepository]'s private top-level `toExpenseOrNull()` conversion
+ * (a file-private `DocumentSnapshot` extension, not a class member -- Kotlin compiles it onto a
+ * synthetic `FirestoreExpenseRepositoryKt` facade class, invoked here as a static method), exercised
  * directly via reflection on a real [DocumentSnapshot] (built through [TestDocumentSnapshots], which
  * uses Firestore's own package-private `DocumentSnapshot.fromDocument` factory -- see that file's doc
  * comment). This project has no mocking library (see `FirebaseAuthRepositoryTest`), so this is the
  * only way to exercise the actual malformed-doc-drop logic end to end rather than re-implementing it.
  *
- * A real (but network-inert -- nothing here ever calls `.get()`/`.collection()`) [FirebaseFirestore] /
- * [FirebaseAuth] pair is required only because the repository's constructor and `DocumentSnapshot`'s
- * factory both require non-null instances; see [FirebaseTestApp].
+ * A real (but network-inert -- nothing here ever calls `.get()`/`.collection()`) [FirebaseFirestore]
+ * is required only because `DocumentSnapshot`'s factory requires a non-null instance; see
+ * [FirebaseTestApp].
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class FirestoreExpenseRepositoryTest {
     private lateinit var firestore: FirebaseFirestore
-    private lateinit var repository: FirestoreExpenseRepository
 
     private companion object {
         private const val TAG = "FirestoreExpenseRepo"
@@ -46,15 +46,15 @@ class FirestoreExpenseRepositoryTest {
         ShadowLog.clear()
         val app = FirebaseTestApp.ensureInitialized(RuntimeEnvironment.getApplication())
         firestore = FirebaseFirestore.getInstance(app)
-        repository = FirestoreExpenseRepository(firestore, FirebaseAuth.getInstance(app))
     }
 
     private fun toExpenseOrNull(snapshot: DocumentSnapshot): Expense? {
         val method =
-            FirestoreExpenseRepository::class.java
+            Class
+                .forName("com.joaoeoneves.fintrack.data.FirestoreExpenseRepositoryKt")
                 .getDeclaredMethod("toExpenseOrNull", DocumentSnapshot::class.java)
         method.isAccessible = true
-        return method.invoke(repository, snapshot) as Expense?
+        return method.invoke(null, snapshot) as Expense?
     }
 
     private fun validFields(): Map<String, com.google.firestore.v1.Value> =

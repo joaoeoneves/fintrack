@@ -36,8 +36,8 @@ class FirebaseAuthRepository
                 awaitClose { firebaseAuth.removeAuthStateListener(listener) }
             }
 
-        override suspend fun signIn(context: Context): Result<AuthUser> {
-            return try {
+        override suspend fun signIn(context: Context): Result<AuthUser> =
+            try {
                 val googleIdOption =
                     GetGoogleIdOption
                         .Builder()
@@ -54,24 +54,29 @@ class FirebaseAuthRepository
                 val result = credentialManager.getCredential(context, request)
                 val credential = result.credential
 
-                if (credential !is CustomCredential ||
-                    credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
-                ) {
-                    return Result.failure(IllegalStateException("Unexpected credential type: ${credential.type}"))
+                when {
+                    credential !is CustomCredential ||
+                        credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
+                        Result.failure(IllegalStateException("Unexpected credential type: ${credential.type}"))
+                    }
+                    else -> {
+                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                        val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+                        val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
+                        val user = authResult.user
+                        if (user != null) {
+                            Result.success(user.toAuthUser())
+                        } else {
+                            Result.failure(IllegalStateException("Sign-in succeeded but no user was returned"))
+                        }
+                    }
                 }
-
-                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
-                val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
-                val user =
-                    authResult.user
-                        ?: return Result.failure(IllegalStateException("Sign-in succeeded but no user was returned"))
-
-                Result.success(user.toAuthUser())
             } catch (e: Exception) {
+                // Broad catch: CredentialManager/Firebase Auth SDK calls above don't document a
+                // stable exception surface (varies by device credential provider); convert any
+                // failure into a Result so the caller can present a generic sign-in error.
                 Result.failure(e)
             }
-        }
 
         override suspend fun signOut(): Result<Unit> {
             val clearResult = runCatching { credentialManager.clearCredentialState(ClearCredentialStateRequest()) }

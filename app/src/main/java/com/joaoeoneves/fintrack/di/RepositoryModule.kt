@@ -22,28 +22,28 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
+interface RepositoryModule {
     @Binds
-    abstract fun bindExpenseRepository(impl: FirestoreExpenseRepository): ExpenseRepository
+    fun bindExpenseRepository(impl: FirestoreExpenseRepository): ExpenseRepository
 
     @Binds
-    abstract fun bindAuthRepository(impl: FirebaseAuthRepository): AuthRepository
+    fun bindAuthRepository(impl: FirebaseAuthRepository): AuthRepository
 
     @Binds
-    abstract fun bindBudgetRepository(impl: FirestoreBudgetRepository): BudgetRepository
+    fun bindBudgetRepository(impl: FirestoreBudgetRepository): BudgetRepository
 
     @Binds
-    abstract fun bindIncomeRepository(impl: FirestoreIncomeRepository): IncomeRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindThemeRepository(impl: SharedPrefsThemeRepository): ThemeRepository
+    fun bindIncomeRepository(impl: FirestoreIncomeRepository): IncomeRepository
 
     @Binds
     @Singleton
-    abstract fun bindCurrencyRepository(impl: SharedPrefsCurrencyRepository): CurrencyRepository
+    fun bindThemeRepository(impl: SharedPrefsThemeRepository): ThemeRepository
 
     @Binds
     @Singleton
-    abstract fun bindLanguageRepository(impl: SharedPrefsLanguageRepository): LanguageRepository
+    fun bindCurrencyRepository(impl: SharedPrefsCurrencyRepository): CurrencyRepository
+
+    @Binds
+    @Singleton
+    fun bindLanguageRepository(impl: SharedPrefsLanguageRepository): LanguageRepository
 }

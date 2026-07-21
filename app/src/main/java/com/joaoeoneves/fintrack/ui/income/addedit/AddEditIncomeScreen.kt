@@ -77,10 +77,13 @@ fun AddEditIncomeScreen(
             is AddEditIncomeUiState.Ready -> {
                 IncomeForm(
                     form = state.form,
-                    onSourceChanged = viewModel::onSourceChanged,
-                    onAmountChanged = viewModel::onAmountChanged,
-                    onDateSelected = viewModel::onDateSelected,
-                    onNoteChanged = viewModel::onNoteChanged,
+                    actions =
+                        IncomeFormActions(
+                            onSourceChanged = viewModel::onSourceChanged,
+                            onAmountChanged = viewModel::onAmountChanged,
+                            onDateSelected = viewModel::onDateSelected,
+                            onNoteChanged = viewModel::onNoteChanged,
+                        ),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -129,14 +132,18 @@ private fun AddEditIncomeTopBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Bundles [IncomeForm]'s field-change callbacks to keep its own parameter list short. */
+private data class IncomeFormActions(
+    val onSourceChanged: (String) -> Unit,
+    val onAmountChanged: (String) -> Unit,
+    val onDateSelected: (Instant) -> Unit,
+    val onNoteChanged: (String) -> Unit,
+)
+
 @Composable
 private fun IncomeForm(
     form: IncomeFormState,
-    onSourceChanged: (String) -> Unit,
-    onAmountChanged: (String) -> Unit,
-    onDateSelected: (Instant) -> Unit,
-    onNoteChanged: (String) -> Unit,
+    actions: IncomeFormActions,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -146,35 +153,17 @@ private fun IncomeForm(
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedTextField(
-            value = form.source,
-            onValueChange = onSourceChanged,
-            label = { Text(stringResource(R.string.income_field_source)) },
-            isError = form.sourceError != null,
-            supportingText = { form.sourceError?.let { Text(it) } },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedTextField(
-            value = form.amountText,
-            onValueChange = onAmountChanged,
-            label = { Text(stringResource(R.string.field_amount)) },
-            isError = form.amountError != null,
-            supportingText = { form.amountError?.let { Text(it) } },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        IncomeSourceAndAmountFields(form = form, actions = actions)
 
         ReadOnlyDateField(
             date = form.date,
-            onDateSelected = onDateSelected,
+            onDateSelected = actions.onDateSelected,
             modifier = Modifier.fillMaxWidth(),
         )
 
         OutlinedTextField(
             value = form.note,
-            onValueChange = onNoteChanged,
+            onValueChange = actions.onNoteChanged,
             label = { Text(stringResource(R.string.field_note_optional)) },
             modifier = Modifier.fillMaxWidth(),
         )
@@ -187,4 +176,30 @@ private fun IncomeForm(
             )
         }
     }
+}
+
+@Composable
+private fun IncomeSourceAndAmountFields(
+    form: IncomeFormState,
+    actions: IncomeFormActions,
+) {
+    OutlinedTextField(
+        value = form.source,
+        onValueChange = actions.onSourceChanged,
+        label = { Text(stringResource(R.string.income_field_source)) },
+        isError = form.sourceError != null,
+        supportingText = { form.sourceError?.let { Text(it) } },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    OutlinedTextField(
+        value = form.amountText,
+        onValueChange = actions.onAmountChanged,
+        label = { Text(stringResource(R.string.field_amount)) },
+        isError = form.amountError != null,
+        supportingText = { form.amountError?.let { Text(it) } },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }

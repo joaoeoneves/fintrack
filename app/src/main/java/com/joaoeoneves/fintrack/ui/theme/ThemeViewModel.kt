@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// How long (in ms) the underlying Firestore listener is kept alive after the last collector
+// disappears, so a quick configuration change doesn't tear down and immediately re-establish it.
+private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
 @HiltViewModel
 class ThemeViewModel
     @Inject
@@ -20,7 +24,7 @@ class ThemeViewModel
         val themePreference: StateFlow<ThemePreference> =
             themeRepository.observeThemePreference().stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                 initialValue = ThemePreference.DARK,
             )
 

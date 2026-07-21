@@ -21,6 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 
+// Duration (in ms) of the selected-segment background/content color cross-fade below.
+private const val SEGMENT_TRANSITION_MILLIS = 200
+
 /**
  * A single pill-shaped segmented control, one equal-weight segment per [TimeRange] value, shared
  * between the dashboard and full expense/income list screens.
@@ -62,7 +65,7 @@ private fun TimeRangeSegment(
     val backgroundColor by
         animateColorAsState(
             targetValue = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
-            animationSpec = tween(200),
+            animationSpec = tween(SEGMENT_TRANSITION_MILLIS),
             label = "segmentBackground",
         )
     val contentColor by
@@ -73,7 +76,7 @@ private fun TimeRangeSegment(
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-            animationSpec = tween(200),
+            animationSpec = tween(SEGMENT_TRANSITION_MILLIS),
             label = "segmentContent",
         )
 

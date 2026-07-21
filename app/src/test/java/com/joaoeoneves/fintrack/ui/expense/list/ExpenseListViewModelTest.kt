@@ -111,8 +111,10 @@ class ExpenseListViewModelTest {
     @Test
     fun onTimeRangeSelected_changesFilterAndReQueriesRepository() =
         runTest(testDispatcher) {
-            val withinWeek = expense(id = "within-week", amountCents = 1_000L, date = now.minus(2, ChronoUnit.DAYS))
-            val withinMonthNotWeek = expense(id = "within-month", amountCents = 2_000L, date = now.minus(20, ChronoUnit.DAYS))
+            val withinWeek =
+                expense(id = "within-week", amountCents = 1_000L, date = now.minus(2, ChronoUnit.DAYS))
+            val withinMonthNotWeek =
+                expense(id = "within-month", amountCents = 2_000L, date = now.minus(20, ChronoUnit.DAYS))
             val repo = FakeExpenseRepository(listOf(withinWeek, withinMonthNotWeek))
             val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
 
@@ -539,9 +541,12 @@ class ExpenseListViewModelTest {
     @Test
     fun onRetry_doesNotResetCurrentQuerySortOptionOrTimeRangeSelections() =
         runTest(testDispatcher) {
-            val coffee = expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
-            val coffeeOld = expense(id = "2", name = "Old Coffee", amountCents = 100L, date = now.minus(20, ChronoUnit.DAYS))
-            val groceries = expense(id = "3", name = "Groceries", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
+            val coffee =
+                expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
+            val coffeeOld =
+                expense(id = "2", name = "Old Coffee", amountCents = 100L, date = now.minus(20, ChronoUnit.DAYS))
+            val groceries =
+                expense(id = "3", name = "Groceries", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
             val repo = FakeExpenseRepository(listOf(coffee, coffeeOld, groceries))
             val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
 

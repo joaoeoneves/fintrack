@@ -65,7 +65,10 @@ class AddEditExpenseViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun addModeViewModel(repository: ExpenseRepository) = AddEditExpenseViewModel(repository, SavedStateHandle())
+    private fun addModeViewModel(repository: ExpenseRepository): AddEditExpenseViewModel {
+        val savedStateHandle = SavedStateHandle()
+        return AddEditExpenseViewModel(repository, savedStateHandle)
+    }
 
     private fun editModeViewModel(
         repository: ExpenseRepository,
@@ -761,22 +764,24 @@ class AddEditExpenseViewModelTest {
         private val onUpdate: () -> Result<Unit> = { Result.success(Unit) },
         private val getExpenseResult: Expense? = null,
     ) : ExpenseRepository {
+        /** Shared by every method this fake doesn't need to support -- keeps call sites one-liners. */
+        private fun unsupported(): Nothing = throw UnsupportedOperationException("not used in these tests")
+
         override fun observeExpenses(
             startInclusive: Instant,
             endExclusive: Instant,
-        ): Flow<List<Expense>> = throw UnsupportedOperationException("not used in these tests")
+        ): Flow<List<Expense>> = unsupported()
 
         override suspend fun addExpense(expense: Expense): Result<String> = onAdd()
 
         override suspend fun updateExpense(expense: Expense): Result<Unit> = onUpdate()
 
-        override suspend fun deleteExpense(id: String): Result<Unit> = throw UnsupportedOperationException("not used in these tests")
+        override suspend fun deleteExpense(id: String): Result<Unit> = unsupported()
 
         override suspend fun getExpense(id: String): Result<Expense?> = Result.success(getExpenseResult)
 
-        override suspend fun getAllExpenses(): Result<List<Expense>> = throw UnsupportedOperationException("not used in these tests")
+        override suspend fun getAllExpenses(): Result<List<Expense>> = unsupported()
 
-        override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult =
-            throw UnsupportedOperationException("not used in these tests")
+        override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult = unsupported()
     }
 }

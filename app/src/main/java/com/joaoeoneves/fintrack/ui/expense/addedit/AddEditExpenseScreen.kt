@@ -85,11 +85,14 @@ fun AddEditExpenseScreen(
             is AddEditUiState.Ready -> {
                 ExpenseForm(
                     form = state.form,
-                    onNameChanged = viewModel::onNameChanged,
-                    onAmountChanged = viewModel::onAmountChanged,
-                    onCategorySelected = viewModel::onCategorySelected,
-                    onDateSelected = viewModel::onDateSelected,
-                    onNoteChanged = viewModel::onNoteChanged,
+                    actions =
+                        ExpenseFormActions(
+                            onNameChanged = viewModel::onNameChanged,
+                            onAmountChanged = viewModel::onAmountChanged,
+                            onCategorySelected = viewModel::onCategorySelected,
+                            onDateSelected = viewModel::onDateSelected,
+                            onNoteChanged = viewModel::onNoteChanged,
+                        ),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -138,19 +141,21 @@ private fun AddEditExpenseTopBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Bundles [ExpenseForm]'s field-change callbacks to keep its own parameter list short. */
+private data class ExpenseFormActions(
+    val onNameChanged: (String) -> Unit,
+    val onAmountChanged: (String) -> Unit,
+    val onCategorySelected: (ExpenseCategory) -> Unit,
+    val onDateSelected: (Instant) -> Unit,
+    val onNoteChanged: (String) -> Unit,
+)
+
 @Composable
 private fun ExpenseForm(
     form: ExpenseFormState,
-    onNameChanged: (String) -> Unit,
-    onAmountChanged: (String) -> Unit,
-    onCategorySelected: (ExpenseCategory) -> Unit,
-    onDateSelected: (Instant) -> Unit,
-    onNoteChanged: (String) -> Unit,
+    actions: ExpenseFormActions,
     modifier: Modifier = Modifier,
 ) {
-    var categoryMenuExpanded by remember { mutableStateOf(false) }
-
     Column(
         modifier =
             modifier
@@ -160,7 +165,7 @@ private fun ExpenseForm(
     ) {
         OutlinedTextField(
             value = form.name,
-            onValueChange = onNameChanged,
+            onValueChange = actions.onNameChanged,
             label = { Text(stringResource(R.string.expense_field_name)) },
             isError = form.nameError != null,
             supportingText = { form.nameError?.let { Text(it) } },
@@ -170,7 +175,7 @@ private fun ExpenseForm(
 
         OutlinedTextField(
             value = form.amountText,
-            onValueChange = onAmountChanged,
+            onValueChange = actions.onAmountChanged,
             label = { Text(stringResource(R.string.field_amount)) },
             isError = form.amountError != null,
             supportingText = { form.amountError?.let { Text(it) } },
@@ -178,46 +183,20 @@ private fun ExpenseForm(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        ExposedDropdownMenuBox(
-            expanded = categoryMenuExpanded,
-            onExpandedChange = { categoryMenuExpanded = it },
-        ) {
-            OutlinedTextField(
-                readOnly = true,
-                value = form.category.displayName,
-                onValueChange = {},
-                label = { Text(stringResource(R.string.expense_field_category)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-            )
-            ExposedDropdownMenu(
-                expanded = categoryMenuExpanded,
-                onDismissRequest = { categoryMenuExpanded = false },
-            ) {
-                ExpenseCategory.entries.forEach { category ->
-                    DropdownMenuItem(
-                        text = { Text(category.displayName) },
-                        onClick = {
-                            onCategorySelected(category)
-                            categoryMenuExpanded = false
-                        },
-                    )
-                }
-            }
-        }
+        ExpenseCategoryField(
+            category = form.category,
+            onCategorySelected = actions.onCategorySelected,
+        )
 
         ReadOnlyDateField(
             date = form.date,
-            onDateSelected = onDateSelected,
+            onDateSelected = actions.onDateSelected,
             modifier = Modifier.fillMaxWidth(),
         )
 
         OutlinedTextField(
             value = form.note,
-            onValueChange = onNoteChanged,
+            onValueChange = actions.onNoteChanged,
             label = { Text(stringResource(R.string.field_note_optional)) },
             modifier = Modifier.fillMaxWidth(),
         )
@@ -228,6 +207,48 @@ private fun ExpenseForm(
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExpenseCategoryField(
+    category: ExpenseCategory,
+    onCategorySelected: (ExpenseCategory) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = categoryMenuExpanded,
+        onExpandedChange = { categoryMenuExpanded = it },
+        modifier = modifier,
+    ) {
+        OutlinedTextField(
+            readOnly = true,
+            value = category.displayName,
+            onValueChange = {},
+            label = { Text(stringResource(R.string.expense_field_category)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(
+            expanded = categoryMenuExpanded,
+            onDismissRequest = { categoryMenuExpanded = false },
+        ) {
+            ExpenseCategory.entries.forEach { entry ->
+                DropdownMenuItem(
+                    text = { Text(entry.displayName) },
+                    onClick = {
+                        onCategorySelected(entry)
+                        categoryMenuExpanded = false
+                    },
+                )
+            }
         }
     }
 }

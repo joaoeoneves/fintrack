@@ -10,6 +10,12 @@ import java.time.format.DateTimeParseException
 private const val EXPECTED_HEADER = "name,amountcents,category,date,note"
 private const val EXPECTED_COLUMN_COUNT = 5
 
+private const val COLUMN_NAME = 0
+private const val COLUMN_AMOUNT_CENTS = 1
+private const val COLUMN_CATEGORY = 2
+private const val COLUMN_DATE = 3
+private const val COLUMN_NOTE = 4
+
 /** A single CSV data row that failed to parse into an [Expense]. */
 data class CsvRowFailure(
     val rowNumber: Int,
@@ -50,23 +56,21 @@ object ExpenseCsvParser {
                 .let { if (it.isNotEmpty() && it.last().isBlank()) it.dropLast(1) else it }
         val nonBlankLines = lines.filter { it.isNotBlank() }
 
-        if (nonBlankLines.isEmpty()) {
-            return CsvImportOutcome.Error("The file is empty")
-        }
+        val headerColumns =
+            nonBlankLines.firstOrNull()?.let { header -> splitCsvLine(header).map { it.trim().lowercase() } }
 
-        val header = nonBlankLines.first()
-        val headerColumns = splitCsvLine(header).map { it.trim().lowercase() }
-        if (headerColumns.joinToString(",") != EXPECTED_HEADER) {
-            return CsvImportOutcome.Error(
-                "Unrecognized header — expected name,amountCents,category,date,note",
-            )
+        return when {
+            nonBlankLines.isEmpty() -> CsvImportOutcome.Error("The file is empty")
+            headerColumns?.joinToString(",") != EXPECTED_HEADER ->
+                CsvImportOutcome.Error("Unrecognized header — expected name,amountCents,category,date,note")
+            else -> CsvImportOutcome.Parsed(parseDataLines(nonBlankLines.drop(1), zone))
         }
+    }
 
-        val dataLines = nonBlankLines.drop(1)
-        if (dataLines.isEmpty()) {
-            return CsvImportOutcome.Parsed(CsvParseResult(emptyList(), emptyList()))
-        }
-
+    private fun parseDataLines(
+        dataLines: List<String>,
+        zone: ZoneId,
+    ): CsvParseResult {
         val validExpenses = mutableListOf<Expense>()
         val failures = mutableListOf<CsvRowFailure>()
 
@@ -78,7 +82,11 @@ object ExpenseCsvParser {
                 return@forEachIndexed
             }
 
-            val (rawName, rawAmount, rawCategory, rawDate, rawNote) = fields
+            val rawName = fields[COLUMN_NAME]
+            val rawAmount = fields[COLUMN_AMOUNT_CENTS]
+            val rawCategory = fields[COLUMN_CATEGORY]
+            val rawDate = fields[COLUMN_DATE]
+            val rawNote = fields[COLUMN_NOTE]
 
             val name = rawName.trim()
             if (name.isEmpty()) {
@@ -117,7 +125,7 @@ object ExpenseCsvParser {
                 )
         }
 
-        return CsvImportOutcome.Parsed(CsvParseResult(validExpenses, failures))
+        return CsvParseResult(validExpenses, failures)
     }
 
     private fun parseCategory(raw: String): ExpenseCategory? =
@@ -214,27 +222,49 @@ object ExpenseCsvParser {
             val c = line[i]
             when {
                 inQuotes -> {
-                    if (c == '"') {
-                        if (i + 1 < line.length && line[i + 1] == '"') {
-                            current.append('"')
-                            i++
-                        } else {
-                            inQuotes = false
-                        }
-                    } else {
-                        current.append(c)
-                    }
+                    val (nextIndex, stillInQuotes) = consumeQuotedFieldChar(line, i, current)
+                    i = nextIndex
+                    inQuotes = stillInQuotes
                 }
-                c == '"' -> inQuotes = true
+                c == '"' -> {
+                    inQuotes = true
+                    i++
+                }
                 c == ',' -> {
                     fields += current.toString()
                     current.setLength(0)
+                    i++
                 }
-                else -> current.append(c)
+                else -> {
+                    current.append(c)
+                    i++
+                }
             }
-            i++
         }
         fields += current.toString()
         return fields
+    }
+
+    /**
+     * Consumes a single character of a quoted CSV field, starting from [index] (which is known to
+     * be inside an open quote). Returns the next index to resume scanning from, plus whether the
+     * field is still inside an open quote afterwards.
+     */
+    private fun consumeQuotedFieldChar(
+        line: String,
+        index: Int,
+        current: StringBuilder,
+    ): Pair<Int, Boolean> {
+        val c = line[index]
+        if (c != '"') {
+            current.append(c)
+            return (index + 1) to true
+        }
+        return if (index + 1 < line.length && line[index + 1] == '"') {
+            current.append('"')
+            (index + 2) to true
+        } else {
+            (index + 1) to false
+        }
     }
 }

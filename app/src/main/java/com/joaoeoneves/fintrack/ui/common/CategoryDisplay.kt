@@ -1,3 +1,8 @@
+// lightCategoryColor/darkCategoryColor below map each ExpenseCategory to a named brand-hex Color
+// literal; the enum branch already documents what each literal means, so a `private const val`
+// per literal would just rename it a second time. Suppress at the file level instead.
+@file:Suppress("MagicNumber")
+
 package com.joaoeoneves.fintrack.ui.common
 
 import androidx.compose.material.icons.Icons

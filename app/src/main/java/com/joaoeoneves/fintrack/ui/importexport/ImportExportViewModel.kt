@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.importexport
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val TAG = "ImportExportViewModel"
 
 @HiltViewModel
 class ImportExportViewModel
@@ -43,6 +46,10 @@ class ImportExportViewModel
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
+                        // Broad catch: content-provider I/O can throw undocumented exception
+                        // types depending on the provider implementation; log and fall back to
+                        // a generic read-failure message for the user.
+                        Log.w(TAG, "Failed to read import file", e)
                         null
                     }
                 if (text == null) {
@@ -97,6 +104,8 @@ class ImportExportViewModel
                             } catch (e: CancellationException) {
                                 throw e
                             } catch (e: Exception) {
+                                // Broad catch: see onImportFileSelected above.
+                                Log.w(TAG, "Failed to write export file", e)
                                 false
                             }
                         _exportState.value =

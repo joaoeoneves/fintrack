@@ -109,47 +109,8 @@ private fun BudgetRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(budget.category.color.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = budget.category.icon,
-                        contentDescription = null,
-                        tint = budget.category.color,
-                    )
-                }
-                Text(
-                    text = budget.category.displayName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 12.dp),
-                )
-            }
-            val textColor =
-                if (budget.isOverBudget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-            // Weighted so long, wrapped translations of this status text are confined to their own
-            // right-hand column and never overlap the category name on the left (see bug report).
-            Text(
-                text =
-                    if (budget.limitCents != null) {
-                        stringResource(
-                            R.string.budget_spent_of_limit,
-                            formatAmountCents(budget.spentCents),
-                            formatAmountCents(budget.limitCents),
-                        )
-                    } else {
-                        stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))
-                    },
-                style = MaterialTheme.typography.bodySmall,
-                color = textColor,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f),
-            )
+            BudgetCategoryLabel(category = budget.category)
+            BudgetStatusText(budget = budget, modifier = Modifier.weight(1f))
         }
         LinearProgressIndicator(
             progress = { progress },
@@ -163,6 +124,57 @@ private fun BudgetRow(
                     .clip(RoundedCornerShape(3.dp)),
         )
     }
+}
+
+@Composable
+private fun BudgetCategoryLabel(category: ExpenseCategory) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(category.color.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = category.icon,
+                contentDescription = null,
+                tint = category.color,
+            )
+        }
+        Text(
+            text = category.displayName,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(start = 12.dp),
+        )
+    }
+}
+
+// Weighted so long, wrapped translations of this status text are confined to their own
+// right-hand column and never overlap the category name on the left (see bug report).
+@Composable
+private fun BudgetStatusText(
+    budget: CategoryBudget,
+    modifier: Modifier = Modifier,
+) {
+    val textColor = if (budget.isOverBudget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    Text(
+        text =
+            if (budget.limitCents != null) {
+                stringResource(
+                    R.string.budget_spent_of_limit,
+                    formatAmountCents(budget.spentCents),
+                    formatAmountCents(budget.limitCents),
+                )
+            } else {
+                stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))
+            },
+        style = MaterialTheme.typography.bodySmall,
+        color = textColor,
+        textAlign = TextAlign.End,
+        modifier = modifier,
+    )
 }
 
 @Composable

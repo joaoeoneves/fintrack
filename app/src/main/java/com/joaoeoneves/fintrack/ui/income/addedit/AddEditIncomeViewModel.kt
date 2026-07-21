@@ -85,9 +85,13 @@ class AddEditIncomeViewModel
 
         fun onRetry() = loadIncome()
 
-        fun onSourceChanged(source: String) = updateForm { it.copy(source = source, sourceError = null, saveError = null) }
+        fun onSourceChanged(source: String) {
+            updateForm { it.copy(source = source, sourceError = null, saveError = null) }
+        }
 
-        fun onAmountChanged(amountText: String) = updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
+        fun onAmountChanged(amountText: String) {
+            updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
+        }
 
         fun onDateSelected(date: Instant) = updateForm { it.copy(date = date, saveError = null) }
 
@@ -105,7 +109,8 @@ class AddEditIncomeViewModel
             val amountError = if (amountResult.isFailure) invalidAmountMessage else null
 
             if (sourceError != null || amountError != null) {
-                _uiState.value = AddEditIncomeUiState.Ready(form.copy(sourceError = sourceError, amountError = amountError))
+                _uiState.value =
+                    AddEditIncomeUiState.Ready(form.copy(sourceError = sourceError, amountError = amountError))
                 return
             }
 
@@ -150,8 +155,10 @@ class AddEditIncomeViewModel
         }
     }
 
+private const val CENTS_PER_UNIT = 100
+
 private fun Long.toAmountText(): String {
-    val whole = this / 100
-    val fraction = (this % 100).let { if (it < 0) -it else it }
+    val whole = this / CENTS_PER_UNIT
+    val fraction = (this % CENTS_PER_UNIT).let { if (it < 0) -it else it }
     return "$whole.${fraction.toString().padStart(2, '0')}"
 }

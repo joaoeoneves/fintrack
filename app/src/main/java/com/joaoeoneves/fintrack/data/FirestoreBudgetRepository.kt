@@ -63,6 +63,9 @@ class FirestoreBudgetRepository
                 budgetsCollection(uid).document(category.name).set(data, SetOptions.merge()).await()
                 Result.success(Unit)
             } catch (e: Exception) {
+                // Broad catch: Firestore Task failures aren't narrowly typed (network, permission,
+                // and server errors all surface as generic/undocumented exception subtypes here);
+                // convert any failure into a Result for the caller.
                 Result.failure(e)
             }
         }

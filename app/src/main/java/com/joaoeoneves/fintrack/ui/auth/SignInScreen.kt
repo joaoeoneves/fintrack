@@ -85,15 +85,24 @@ fun SignInScreen(
     }
 }
 
+// The ratio of the mark's stroke width to its overall size: a quarter of the smallest dimension
+// keeps the "G" ring visually proportioned like Google's published logo.
+private const val STROKE_WIDTH_DIVISOR = 4f
+
 /**
  * A small multi-color Google "G" mark, hand-drawn with [Canvas] since the project only depends on
  * material-icons-core (no material-icons-extended, which is where a bundled Google glyph would
  * otherwise come from).
+ *
+ * The four `Color(0xFF...)` literals below are Google's published brand colors for the "G" mark;
+ * naming each one individually would just restate what this doc comment already documents, so
+ * suppress at this composable rather than extract four one-off constants.
  */
+@Suppress("MagicNumber")
 @Composable
 private fun GoogleLogo(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val strokeWidth = size.minDimension / 4f
+        val strokeWidth = size.minDimension / STROKE_WIDTH_DIVISOR
         val diameter = size.minDimension - strokeWidth
         val topLeft =
             Offset(
@@ -152,6 +161,8 @@ private fun GoogleLogo(modifier: Modifier = Modifier) {
     }
 }
 
+// Compose preview function: only rendered by Android Studio's preview pane, not dead code.
+@Suppress("UnusedPrivateMember")
 @Preview(showBackground = true)
 @Composable
 private fun SignInScreenPreview() {

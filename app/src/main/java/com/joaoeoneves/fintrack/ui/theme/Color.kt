@@ -1,3 +1,8 @@
+// This file's sole purpose is naming hex color literals as top-level palette constants; the
+// `val SomeColorName = Color(0xFF...)` declarations are already self-documenting, so extracting a
+// `private const val ..._HEX` above each one would just rename the same literal twice.
+@file:Suppress("MagicNumber")
+
 package com.joaoeoneves.fintrack.ui.theme
 
 import androidx.compose.ui.graphics.Color

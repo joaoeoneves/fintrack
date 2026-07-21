@@ -28,6 +28,14 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
 
+// How long (in ms) the underlying Firestore listeners are kept alive after the last collector
+// disappears, so a quick configuration change doesn't tear down and immediately re-establish them.
+private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
+// How many of the most recent expenses/income entries are surfaced in the dashboard's "recent
+// activity" preview.
+private const val RECENT_ITEMS_LIMIT = 5
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel
@@ -78,7 +86,7 @@ class DashboardViewModel
                         }
                 }.stateIn(
                     scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
+                    started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                     initialValue = DashboardUiState.Loading,
                 )
 
@@ -116,11 +124,11 @@ class DashboardViewModel
                 expenses = this,
                 categoryTotals = categoryTotals,
                 totalCents = totalCents,
-                recentExpenses = sortedByDescending { it.date }.take(5),
+                recentExpenses = sortedByDescending { it.date }.take(RECENT_ITEMS_LIMIT),
                 budgets = budgets,
                 incomeCents = incomeCents,
                 netCents = incomeCents - totalCents,
-                recentIncome = income.sortedByDescending { it.date }.take(5),
+                recentIncome = income.sortedByDescending { it.date }.take(RECENT_ITEMS_LIMIT),
             )
         }
     }

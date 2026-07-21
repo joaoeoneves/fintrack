@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,6 +40,7 @@ import com.joaoeoneves.fintrack.ui.common.SearchField
 import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
 import com.joaoeoneves.fintrack.ui.common.TimeRangeFilterRow
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,14 +56,14 @@ fun ExpenseListScreen(
     // drive a controlled text field without dropping/reordering fast-typed characters.
     val query by viewModel.query.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
     val undoLabel = stringResource(R.string.action_undo)
+    val deletedSnackbarTemplate = stringResource(R.string.expense_list_deleted_snackbar)
 
     LaunchedEffect(Unit) {
         viewModel.undoEvent.collect { expense ->
             val result =
                 snackbarHostState.showSnackbar(
-                    message = context.getString(R.string.expense_list_deleted_snackbar, expense.name),
+                    message = String.format(Locale.getDefault(), deletedSnackbarTemplate, expense.name),
                     actionLabel = undoLabel,
                 )
             if (result == SnackbarResult.ActionPerformed) {

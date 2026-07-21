@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
+// How long (in ms) the underlying Firestore listener is kept alive after the last collector
+// disappears, so a quick configuration change doesn't tear down and immediately re-establish it.
+private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
 /**
  * Read-only view of the selected display currency, purely to drive the `CompositionLocalProvider`
  * in `MainActivity`. Writes are owned by `SettingsViewModel`.
@@ -23,7 +27,7 @@ class CurrencyViewModel
         val currency: StateFlow<CurrencyOption> =
             currencyRepository.observeCurrency().stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                 initialValue = CurrencyOption.EUR,
             )
     }

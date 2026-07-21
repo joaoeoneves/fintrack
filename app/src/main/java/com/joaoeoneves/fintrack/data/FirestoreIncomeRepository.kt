@@ -18,6 +18,9 @@ import kotlinx.coroutines.tasks.await
 import java.time.Instant
 import javax.inject.Inject
 
+private const val TAG = "FirestoreIncomeRepo"
+private const val BATCH_CHUNK_SIZE = 400
+
 class FirestoreIncomeRepository
     @Inject
     constructor(
@@ -25,11 +28,6 @@ class FirestoreIncomeRepository
         private val firebaseAuth: FirebaseAuth,
     ) : IncomeRepository {
         private fun incomeCollection(uid: String) = firestore.collection("users").document(uid).collection("income")
-
-        companion object {
-            private const val TAG = "FirestoreIncomeRepo"
-            private const val BATCH_CHUNK_SIZE = 400
-        }
 
         override fun observeIncome(
             startInclusive: Instant,
@@ -66,6 +64,9 @@ class FirestoreIncomeRepository
                 val reference = incomeCollection(uid).add(data).await()
                 Result.success(reference.id)
             } catch (e: Exception) {
+                // Broad catch: Firestore Task failures aren't narrowly typed (network, permission,
+                // and server errors all surface as generic/undocumented exception subtypes here);
+                // convert any failure into a Result for the caller.
                 Result.failure(e)
             }
         }
@@ -79,6 +80,7 @@ class FirestoreIncomeRepository
                 incomeCollection(uid).document(income.id).update(data).await()
                 Result.success(Unit)
             } catch (e: Exception) {
+                // Broad catch: see addIncome above.
                 Result.failure(e)
             }
         }
@@ -100,6 +102,8 @@ class FirestoreIncomeRepository
                     }.await()
                 Result.success(Unit)
             } catch (e: Exception) {
+                // Broad catch: covers both Firestore Task failures and the NoSuchElementException
+                // thrown above when the document is missing, converting either into a Result.
                 Result.failure(e)
             }
         }
@@ -117,6 +121,7 @@ class FirestoreIncomeRepository
                         .toIncomeOrNull()
                 Result.success(income)
             } catch (e: Exception) {
+                // Broad catch: see addIncome above.
                 Result.failure(e)
             }
         }
@@ -129,6 +134,7 @@ class FirestoreIncomeRepository
                 val snapshot = incomeCollection(uid).get().await()
                 Result.success(snapshot.toIncomeList())
             } catch (e: Exception) {
+                // Broad catch: see addIncome above.
                 Result.failure(e)
             }
         }
@@ -150,51 +156,55 @@ class FirestoreIncomeRepository
                 }
                 Result.success(total)
             } catch (e: Exception) {
+                // Broad catch: see addIncome above.
                 Result.failure(e)
             }
         }
+    }
 
-        private fun Income.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
-            val map =
-                mutableMapOf<String, Any?>(
-                    "source" to source,
-                    "amountCents" to amountCents,
-                    "date" to Timestamp(date.epochSecond, date.nano),
-                    "note" to note,
-                    "updatedAt" to FieldValue.serverTimestamp(),
-                )
-            if (includeCreatedAt) {
-                map["createdAt"] = FieldValue.serverTimestamp()
-            }
-            return map
+private fun Income.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
+    val map =
+        mutableMapOf<String, Any?>(
+            "source" to source,
+            "amountCents" to amountCents,
+            "date" to Timestamp(date.epochSecond, date.nano),
+            "note" to note,
+            "updatedAt" to FieldValue.serverTimestamp(),
+        )
+    if (includeCreatedAt) {
+        map["createdAt"] = FieldValue.serverTimestamp()
+    }
+    return map
+}
+
+private fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
+
+private fun DocumentSnapshot.toIncomeOrNull(): Income? {
+    val source = getString("source")
+    val amountCents = getLong("amountCents")
+    val date = getTimestamp("date")
+    val note = getString("note")
+
+    return when {
+        source == null -> {
+            Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'source'")
+            null
         }
-
-        private fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
-
-        private fun DocumentSnapshot.toIncomeOrNull(): Income? {
-            val source =
-                getString("source") ?: run {
-                    Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'source'")
-                    return null
-                }
-            val amountCents =
-                getLong("amountCents") ?: run {
-                    Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'amountCents'")
-                    return null
-                }
-            val date =
-                getTimestamp("date") ?: run {
-                    Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'date'")
-                    return null
-                }
-            val note = getString("note")
-
-            return Income(
+        amountCents == null -> {
+            Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'amountCents'")
+            null
+        }
+        date == null -> {
+            Log.w(TAG, "Dropping malformed income doc $id: missing or invalid 'date'")
+            null
+        }
+        else ->
+            Income(
                 id = id,
                 source = source,
                 amountCents = amountCents,
                 date = Instant.ofEpochSecond(date.seconds, date.nanoseconds.toLong()),
                 note = note,
             )
-        }
     }
+}

@@ -337,55 +337,69 @@ private fun BalanceSummaryCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(
-                text = formatAmountCents(state.netCents),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color =
-                    if (state.netCents < 0) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-            )
+            NetBalanceAmountText(netCents = state.netCents)
 
             HorizontalDivider()
 
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-            ) {
-                BalanceSummaryColumn(
-                    label = stringResource(R.string.dashboard_income_label),
-                    amountCents = state.incomeCents,
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    tint = MaterialTheme.colorScheme.primary,
-                    amountColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f),
-                )
-                BalanceSummaryColumn(
-                    label = stringResource(R.string.dashboard_expenses_label),
-                    amountCents = state.totalCents,
-                    icon = Icons.AutoMirrored.Filled.TrendingDown,
-                    tint = MaterialTheme.colorScheme.error,
-                    amountColor = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            BalanceStatsRow(state = state, modifier = Modifier.padding(top = 16.dp))
         }
     }
 }
 
 @Composable
+private fun NetBalanceAmountText(netCents: Long) {
+    Text(
+        text = formatAmountCents(netCents),
+        style = MaterialTheme.typography.headlineLarge,
+        fontWeight = FontWeight.Bold,
+        color = if (netCents < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+    )
+}
+
+@Composable
+private fun BalanceStatsRow(
+    state: DashboardUiState.Content,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier = modifier.fillMaxWidth()) {
+        BalanceSummaryColumn(
+            stat =
+                BalanceStat(
+                    label = stringResource(R.string.dashboard_income_label),
+                    amountCents = state.incomeCents,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    tint = MaterialTheme.colorScheme.primary,
+                    amountColor = MaterialTheme.colorScheme.primary,
+                ),
+            modifier = Modifier.weight(1f),
+        )
+        BalanceSummaryColumn(
+            stat =
+                BalanceStat(
+                    label = stringResource(R.string.dashboard_expenses_label),
+                    amountCents = state.totalCents,
+                    icon = Icons.AutoMirrored.Filled.TrendingDown,
+                    tint = MaterialTheme.colorScheme.error,
+                    amountColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+/** A single income/expenses stat shown by [BalanceSummaryColumn], bundled to keep its parameter list short. */
+private data class BalanceStat(
+    val label: String,
+    val amountCents: Long,
+    val icon: ImageVector,
+    val tint: Color,
+    val amountColor: Color,
+)
+
+@Composable
 private fun BalanceSummaryColumn(
-    label: String,
-    amountCents: Long,
-    icon: ImageVector,
-    tint: Color,
-    amountColor: Color,
+    stat: BalanceStat,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -397,22 +411,22 @@ private fun BalanceSummaryColumn(
                 Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(tint.copy(alpha = 0.15f)),
+                    .background(stat.tint.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = tint)
+            Icon(imageVector = stat.icon, contentDescription = null, tint = stat.tint)
         }
         Text(
-            text = label,
+            text = stat.label,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp),
         )
         Text(
-            text = formatAmountCents(amountCents),
+            text = formatAmountCents(stat.amountCents),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = amountColor,
+            color = stat.amountColor,
         )
     }
 }

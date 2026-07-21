@@ -33,12 +33,6 @@ class ExpenseCsvParserTest {
         return result
     }
 
-    private fun errorMessage(csv: String): String {
-        val outcome = ExpenseCsvParser.parse(csv)
-        return (outcome as? CsvImportOutcome.Error)?.message
-            ?: fail("Expected Error but was $outcome").let { throw IllegalStateException() }
-    }
-
     // ---- happy path ----
 
     @Test

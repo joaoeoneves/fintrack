@@ -62,6 +62,13 @@ private val RING_HOLE_CONTENT_SIZE = RING_HOLE_SIZE - 12.dp
 // The multiplier used to convert a fractional share into a whole-number percentage.
 private const val PERCENT_SCALE = 100
 
+// Degrees in a full turn, used to convert a slice's fractional share of the total into a sweep angle.
+private const val FULL_CIRCLE_DEGREES = 360f
+
+// Canvas angles start at the 3 o'clock position; offsetting by this many degrees rotates the first
+// slice's start to 12 o'clock instead.
+private const val ARC_START_ANGLE_DEGREES = -90f
+
 /**
  * The "Total Spent" label and formatted amount centered inside the ring's hole. The amount uses
  * auto-sizing text bounded to the hole's diameter so it always fits regardless of how many digits
@@ -159,9 +166,9 @@ fun PieChart(
                 if (total <= 0L) return@Canvas
                 val inset = strokeWidthPx / 2
                 val arcSize = Size(size.width - strokeWidthPx, size.height - strokeWidthPx)
-                var startAngle = -90f
+                var startAngle = ARC_START_ANGLE_DEGREES
                 slices.forEachIndexed { index, slice ->
-                    val sweep = (slice.totalCents.toFloat() / total.toFloat()) * 360f
+                    val sweep = (slice.totalCents.toFloat() / total.toFloat()) * FULL_CIRCLE_DEGREES
                     if (sweep > 0f) {
                         drawArc(
                             color = sliceColors[index],

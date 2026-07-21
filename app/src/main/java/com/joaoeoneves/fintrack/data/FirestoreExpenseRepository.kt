@@ -20,6 +20,9 @@ import kotlinx.coroutines.tasks.await
 import java.time.Instant
 import javax.inject.Inject
 
+private const val TAG = "FirestoreExpenseRepo"
+private const val BATCH_CHUNK_SIZE = 400
+
 class FirestoreExpenseRepository
     @Inject
     constructor(
@@ -27,11 +30,6 @@ class FirestoreExpenseRepository
         private val firebaseAuth: FirebaseAuth,
     ) : ExpenseRepository {
         private fun expensesCollection(uid: String) = firestore.collection("users").document(uid).collection("expenses")
-
-        companion object {
-            private const val TAG = "FirestoreExpenseRepo"
-            private const val BATCH_CHUNK_SIZE = 400
-        }
 
         override fun observeExpenses(
             startInclusive: Instant,
@@ -68,6 +66,9 @@ class FirestoreExpenseRepository
                 val reference = expensesCollection(uid).add(data).await()
                 Result.success(reference.id)
             } catch (e: Exception) {
+                // Broad catch: Firestore Task failures aren't narrowly typed (network, permission,
+                // and server errors all surface as generic/undocumented exception subtypes here);
+                // convert any failure into a Result for the caller.
                 Result.failure(e)
             }
         }
@@ -81,6 +82,7 @@ class FirestoreExpenseRepository
                 expensesCollection(uid).document(expense.id).update(data).await()
                 Result.success(Unit)
             } catch (e: Exception) {
+                // Broad catch: see addExpense above.
                 Result.failure(e)
             }
         }
@@ -102,6 +104,8 @@ class FirestoreExpenseRepository
                     }.await()
                 Result.success(Unit)
             } catch (e: Exception) {
+                // Broad catch: covers both Firestore Task failures and the NoSuchElementException
+                // thrown above when the document is missing, converting either into a Result.
                 Result.failure(e)
             }
         }
@@ -119,6 +123,7 @@ class FirestoreExpenseRepository
                         .toExpenseOrNull()
                 Result.success(expense)
             } catch (e: Exception) {
+                // Broad catch: see addExpense above.
                 Result.failure(e)
             }
         }
@@ -131,6 +136,7 @@ class FirestoreExpenseRepository
                 val snapshot = expensesCollection(uid).get().await()
                 Result.success(snapshot.toExpenses())
             } catch (e: Exception) {
+                // Broad catch: see addExpense above.
                 Result.failure(e)
             }
         }
@@ -151,62 +157,60 @@ class FirestoreExpenseRepository
                     batch.commit().await()
                     total += chunk.size
                 } catch (e: Exception) {
+                    // Broad catch: see addExpense above.
                     failure = e
                     break
                 }
             }
             return BulkAddResult(total, failure)
         }
+    }
 
-        private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
-            val map =
-                mutableMapOf<String, Any?>(
-                    "name" to name,
-                    "amountCents" to amountCents,
-                    "category" to category.name,
-                    "date" to Timestamp(date.epochSecond, date.nano),
-                    "note" to note,
-                    "updatedAt" to FieldValue.serverTimestamp(),
-                )
-            if (includeCreatedAt) {
-                map["createdAt"] = FieldValue.serverTimestamp()
-            }
-            return map
+private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
+    val map =
+        mutableMapOf<String, Any?>(
+            "name" to name,
+            "amountCents" to amountCents,
+            "category" to category.name,
+            "date" to Timestamp(date.epochSecond, date.nano),
+            "note" to note,
+            "updatedAt" to FieldValue.serverTimestamp(),
+        )
+    if (includeCreatedAt) {
+        map["createdAt"] = FieldValue.serverTimestamp()
+    }
+    return map
+}
+
+private fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
+
+private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
+    val name = getString("name")
+    val amountCents = getLong("amountCents")
+    val categoryName = getString("category")
+    val category = ExpenseCategory.entries.find { it.name == categoryName }
+    val date = getTimestamp("date")
+    val note = getString("note")
+
+    return when {
+        name == null -> {
+            Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'name'")
+            null
         }
-
-        private fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
-
-        private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
-            val name =
-                getString("name") ?: run {
-                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'name'")
-                    return null
-                }
-            val amountCents =
-                getLong("amountCents") ?: run {
-                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'amountCents'")
-                    return null
-                }
-            val categoryName =
-                getString("category") ?: run {
-                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'category'")
-                    return null
-                }
-            val category =
-                try {
-                    ExpenseCategory.valueOf(categoryName)
-                } catch (e: IllegalArgumentException) {
-                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'category'")
-                    return null
-                }
-            val date =
-                getTimestamp("date") ?: run {
-                    Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'date'")
-                    return null
-                }
-            val note = getString("note")
-
-            return Expense(
+        amountCents == null -> {
+            Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'amountCents'")
+            null
+        }
+        category == null -> {
+            Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'category'")
+            null
+        }
+        date == null -> {
+            Log.w(TAG, "Dropping malformed expense doc $id: missing or invalid 'date'")
+            null
+        }
+        else ->
+            Expense(
                 id = id,
                 name = name,
                 amountCents = amountCents,
@@ -214,5 +218,5 @@ class FirestoreExpenseRepository
                 date = Instant.ofEpochSecond(date.seconds, date.nanoseconds.toLong()),
                 note = note,
             )
-        }
     }
+}

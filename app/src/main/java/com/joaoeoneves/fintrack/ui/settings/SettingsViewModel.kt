@@ -22,6 +22,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// How long (in ms) the underlying repository flows are kept alive after the last collector
+// disappears, so a quick configuration change doesn't tear down and immediately re-establish them.
+private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
 @HiltViewModel
 class SettingsViewModel
     @Inject
@@ -57,7 +61,7 @@ class SettingsViewModel
                 )
             }.stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                 initialValue = SettingsUiState(),
             )
 

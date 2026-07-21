@@ -1,6 +1,8 @@
 package com.google.firebase.firestore
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.core.UserData
+import com.google.firebase.firestore.model.DatabaseId
 import com.google.firebase.firestore.model.DocumentKey
 import com.google.firebase.firestore.model.MutableDocument
 import com.google.firebase.firestore.model.ObjectValue
@@ -23,8 +25,30 @@ import com.google.firestore.v1.Value
  * calls back into it (it's only dereferenced for reference-type fields, e.g. `getDocumentReference`,
  * which none of our repositories read) -- so callers can safely pass whatever already-constructed
  * `FirebaseFirestore` instance they used to build the repository under test.
+ *
+ * [stringValue]/[longValue]/[timestampValue] build [Value] instances via Firestore's own
+ * package-private [UserDataReader] (the same scalar-conversion path used internally by
+ * `DocumentReference.set(...)`) rather than via `Value.newBuilder()...build()` directly. That's
+ * deliberate, not just style: `firebase-firestore`'s POM (since the Firebase BOM 34 upgrade that
+ * dropped the `-ktx` artifacts) declares its `grpc-protobuf-lite` -> `protobuf-javalite` dependency
+ * as Maven scope `runtime`, so `com.google.protobuf.GeneratedMessageLite` (Value/Value.Builder's
+ * superclass) is present on the unit-test *runtime* classpath but not the *compile* one. Calling
+ * `Value.Builder`'s inherited `.build()` ourselves needs that supertype resolvable at compile time
+ * (`Cannot access 'GeneratedMessageLite' which is a supertype of 'Value'`); routing through
+ * `UserDataReader`, whose own `.build()` calls were already compiled inside the firestore jar, only
+ * ever hands us back an already-built `Value` reference, which needs no supertype resolution to
+ * merely hold a reference to. Fixing this at the root (adding an explicit test-scoped
+ * `protobuf-javalite` dependency) requires editing `app/build.gradle.kts`, outside this package's
+ * `app/src/test` lane.
  */
 object TestDocumentSnapshots {
+    private val userDataReader = UserDataReader(DatabaseId.forProject("test-project"))
+
+    private fun parseScalarValue(value: Any): Value {
+        val rootContext = UserData.ParseAccumulator(UserData.Source.Set).rootContext()
+        return userDataReader.parseScalarValue(value, rootContext)
+    }
+
     /**
      * Builds a "found" (exists() == true) [DocumentSnapshot] with the given [id] and [fields],
      * nested (arbitrarily -- the collection name doesn't affect [DocumentSnapshot.getId] or field
@@ -50,18 +74,9 @@ object TestDocumentSnapshots {
         )
     }
 
-    fun stringValue(value: String): Value = Value.newBuilder().setStringValue(value).build()
+    fun stringValue(value: String): Value = parseScalarValue(value)
 
-    fun longValue(value: Long): Value = Value.newBuilder().setIntegerValue(value).build()
+    fun longValue(value: Long): Value = parseScalarValue(value)
 
-    fun timestampValue(timestamp: Timestamp): Value =
-        Value
-            .newBuilder()
-            .setTimestampValue(
-                com.google.protobuf.Timestamp
-                    .newBuilder()
-                    .setSeconds(timestamp.seconds)
-                    .setNanos(timestamp.nanoseconds)
-                    .build(),
-            ).build()
+    fun timestampValue(timestamp: Timestamp): Value = parseScalarValue(timestamp)
 }

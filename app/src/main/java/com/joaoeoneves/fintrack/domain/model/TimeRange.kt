@@ -4,6 +4,10 @@ import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.ZoneId
 
+// Month counts backing the THREE_MONTHS/SIX_MONTHS range options below.
+private const val THREE_MONTHS_COUNT = 3L
+private const val SIX_MONTHS_COUNT = 6L
+
 /**
  * A rolling time-range filter, always ending "today" (inclusive) in a given time zone.
  */
@@ -31,8 +35,8 @@ enum class TimeRange(
             when (this) {
                 ONE_WEEK -> today.minusWeeks(1)
                 ONE_MONTH -> today.minusMonths(1)
-                THREE_MONTHS -> today.minusMonths(3)
-                SIX_MONTHS -> today.minusMonths(6)
+                THREE_MONTHS -> today.minusMonths(THREE_MONTHS_COUNT)
+                SIX_MONTHS -> today.minusMonths(SIX_MONTHS_COUNT)
                 ONE_YEAR -> today.minusYears(1)
             }
         val endExclusiveDate = today.plusDays(1)

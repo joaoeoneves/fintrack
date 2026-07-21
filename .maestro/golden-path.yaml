@@ -45,6 +45,18 @@ appId: com.joaoeoneves.fintrack
 # The "Add expense" entry point lives on the Dashboard's "Recent expenses" card header (a plus
 # IconButton next to the section title, mirroring the "Recent income" card exactly) -- see step 2
 # below. ExpenseListScreen itself has no add control of its own, just back navigation.
+#
+# The four category assertions below use a ".*<name>.*" wildcard, not a bare category name.
+# PieChart.kt's legend rows (fix(dashboard): add TalkBack accessibility to pie chart, 2026-07-21)
+# now collapse each row's children into a single Modifier.clearAndSetSemantics node exposing only
+# a merged content description (e.g. "Recurring, 6 percent, 72,00€") -- the literal "Recurring"
+# text is no longer its own accessibility node. A bare "Recurring" assertVisible is a full-string
+# regex match and fails against that merged label; "Transfer"/"Investments"/"Shopping" only
+# happened to keep passing incidentally via the separate Budgets-section category TextViews below
+# the pie chart, which "Recurring"'s budget row doesn't share since it sits just past the fold and
+# isn't composed yet at this scroll position. Wildcarding restores the original "pie legend is
+# visible" intent for all four regardless of scroll position, and keeps matching whichever of the
+# two (legend content-desc or Budgets-section literal text) happens to be on screen.
 - assertVisible: "FinTrack"
 - assertVisible: "1W"
 - assertVisible: "1M"
@@ -54,10 +66,10 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Net Balance"
 - assertVisible: "Income"
 - assertVisible: "Expenses"
-- assertVisible: "Transfer"
-- assertVisible: "Investments"
-- assertVisible: "Shopping"
-- assertVisible: "Recurring"
+- assertVisible: ".*Transfer.*"
+- assertVisible: ".*Investments.*"
+- assertVisible: ".*Shopping.*"
+- assertVisible: ".*Recurring.*"
 
 # --- 2: Add a new expense via the Dashboard's "Recent expenses" card plus icon ---
 # That card is pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/

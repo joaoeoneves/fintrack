@@ -88,9 +88,13 @@ class AddEditExpenseViewModel
 
         fun onNameChanged(name: String) = updateForm { it.copy(name = name, nameError = null, saveError = null) }
 
-        fun onAmountChanged(amountText: String) = updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
+        fun onAmountChanged(amountText: String) {
+            updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
+        }
 
-        fun onCategorySelected(category: ExpenseCategory) = updateForm { it.copy(category = category, saveError = null) }
+        fun onCategorySelected(category: ExpenseCategory) {
+            updateForm { it.copy(category = category, saveError = null) }
+        }
 
         fun onDateSelected(date: Instant) = updateForm { it.copy(date = date, saveError = null) }
 
@@ -154,8 +158,10 @@ class AddEditExpenseViewModel
         }
     }
 
+private const val CENTS_PER_UNIT = 100
+
 private fun Long.toAmountText(): String {
-    val whole = this / 100
-    val fraction = (this % 100).let { if (it < 0) -it else it }
+    val whole = this / CENTS_PER_UNIT
+    val fraction = (this % CENTS_PER_UNIT).let { if (it < 0) -it else it }
     return "$whole.${fraction.toString().padStart(2, '0')}"
 }
