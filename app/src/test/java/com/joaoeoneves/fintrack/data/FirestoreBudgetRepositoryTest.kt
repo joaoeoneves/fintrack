@@ -47,7 +47,9 @@ class FirestoreBudgetRepositoryTest {
     }
 
     private fun toBudgetOrNull(snapshot: DocumentSnapshot): Budget? {
-        val method = FirestoreBudgetRepository::class.java.getDeclaredMethod("toBudgetOrNull", DocumentSnapshot::class.java)
+        val method =
+            FirestoreBudgetRepository::class.java
+                .getDeclaredMethod("toBudgetOrNull", DocumentSnapshot::class.java)
         method.isAccessible = true
         return method.invoke(repository, snapshot) as Budget?
     }
@@ -82,7 +84,10 @@ class FirestoreBudgetRepositoryTest {
 
         assertNull(result)
         val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue("expected a warning log for invalid 'category', got: $logs", logs.any { it.msg.contains("'category'") })
+        assertTrue(
+            "expected a warning log for invalid 'category', got: $logs",
+            logs.any { it.msg.contains("'category'") },
+        )
     }
 
     @Test
@@ -99,6 +104,9 @@ class FirestoreBudgetRepositoryTest {
 
         assertNull(result)
         val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue("expected a warning log for missing 'limitCents', got: $logs", logs.any { it.msg.contains("'limitCents'") })
+        assertTrue(
+            "expected a warning log for missing 'limitCents', got: $logs",
+            logs.any { it.msg.contains("'limitCents'") },
+        )
     }
 }

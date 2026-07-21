@@ -44,7 +44,9 @@ class FirestoreIncomeRepositoryTest {
     }
 
     private fun toIncomeOrNull(snapshot: DocumentSnapshot): Income? {
-        val method = FirestoreIncomeRepository::class.java.getDeclaredMethod("toIncomeOrNull", DocumentSnapshot::class.java)
+        val method =
+            FirestoreIncomeRepository::class.java
+                .getDeclaredMethod("toIncomeOrNull", DocumentSnapshot::class.java)
         method.isAccessible = true
         return method.invoke(repository, snapshot) as Income?
     }
@@ -59,7 +61,8 @@ class FirestoreIncomeRepositoryTest {
 
     @Test
     fun wellFormedDoc_parsesToIncome_andIsNotDropped() {
-        val snapshot = TestDocumentSnapshots.found(firestore, id = "good1", fields = validFields(), collection = "income")
+        val snapshot =
+            TestDocumentSnapshots.found(firestore, id = "good1", fields = validFields(), collection = "income")
 
         val result = toIncomeOrNull(snapshot)
 
@@ -78,7 +81,13 @@ class FirestoreIncomeRepositoryTest {
 
     @Test
     fun malformedDoc_missingSource_isDroppedAsNull_andLogsWarning() {
-        val snapshot = TestDocumentSnapshots.found(firestore, id = "bad-source", fields = validFields() - "source", collection = "income")
+        val snapshot =
+            TestDocumentSnapshots.found(
+                firestore,
+                id = "bad-source",
+                fields = validFields() - "source",
+                collection = "income",
+            )
 
         val result = toIncomeOrNull(snapshot)
 
@@ -90,18 +99,32 @@ class FirestoreIncomeRepositoryTest {
     @Test
     fun malformedDoc_missingAmountCents_isDroppedAsNull_andLogsWarning() {
         val snapshot =
-            TestDocumentSnapshots.found(firestore, id = "bad-amount", fields = validFields() - "amountCents", collection = "income")
+            TestDocumentSnapshots.found(
+                firestore,
+                id = "bad-amount",
+                fields = validFields() - "amountCents",
+                collection = "income",
+            )
 
         val result = toIncomeOrNull(snapshot)
 
         assertNull(result)
         val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue("expected a warning log for missing 'amountCents', got: $logs", logs.any { it.msg.contains("'amountCents'") })
+        assertTrue(
+            "expected a warning log for missing 'amountCents', got: $logs",
+            logs.any { it.msg.contains("'amountCents'") },
+        )
     }
 
     @Test
     fun malformedDoc_missingDate_isDroppedAsNull_andLogsWarning() {
-        val snapshot = TestDocumentSnapshots.found(firestore, id = "bad-date", fields = validFields() - "date", collection = "income")
+        val snapshot =
+            TestDocumentSnapshots.found(
+                firestore,
+                id = "bad-date",
+                fields = validFields() - "date",
+                collection = "income",
+            )
 
         val result = toIncomeOrNull(snapshot)
 

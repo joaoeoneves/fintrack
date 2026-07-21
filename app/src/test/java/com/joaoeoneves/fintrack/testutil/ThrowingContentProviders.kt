@@ -94,7 +94,7 @@ class GenericFailureContentProvider : ContentProvider() {
     override fun openFile(
         uri: Uri,
         mode: String,
-    ): ParcelFileDescriptor = throw IllegalStateException("boom")
+    ): ParcelFileDescriptor = error("boom")
 
     companion object {
         const val AUTHORITY = "com.joaoeoneves.fintrack.test.genericfailure"

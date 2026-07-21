@@ -476,7 +476,10 @@ class ImportExportViewModelTest {
             // during the same read path must still be caught and surfaced as Error, proving the new
             // `catch (e: CancellationException) { throw e }` branch didn't accidentally swallow or
             // reclassify ordinary failures too.
-            Robolectric.setupContentProvider(GenericFailureContentProvider::class.java, GenericFailureContentProvider.AUTHORITY)
+            Robolectric.setupContentProvider(
+                GenericFailureContentProvider::class.java,
+                GenericFailureContentProvider.AUTHORITY,
+            )
             val repo = FakeExpenseRepository()
             val viewModel = ImportExportViewModel(repo, context())
 

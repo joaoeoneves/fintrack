@@ -50,7 +50,9 @@ class FirestoreExpenseRepositoryTest {
     }
 
     private fun toExpenseOrNull(snapshot: DocumentSnapshot): Expense? {
-        val method = FirestoreExpenseRepository::class.java.getDeclaredMethod("toExpenseOrNull", DocumentSnapshot::class.java)
+        val method =
+            FirestoreExpenseRepository::class.java
+                .getDeclaredMethod("toExpenseOrNull", DocumentSnapshot::class.java)
         method.isAccessible = true
         return method.invoke(repository, snapshot) as Expense?
     }
@@ -117,7 +119,10 @@ class FirestoreExpenseRepositoryTest {
 
         assertNull(result)
         val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue("expected a warning log for missing 'amountCents', got: $logs", logs.any { it.msg.contains("'amountCents'") })
+        assertTrue(
+            "expected a warning log for missing 'amountCents', got: $logs",
+            logs.any { it.msg.contains("'amountCents'") },
+        )
     }
 
     @Test
@@ -128,7 +133,10 @@ class FirestoreExpenseRepositoryTest {
 
         assertNull(result)
         val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue("expected a warning log for missing 'category', got: $logs", logs.any { it.msg.contains("'category'") })
+        assertTrue(
+            "expected a warning log for missing 'category', got: $logs",
+            logs.any { it.msg.contains("'category'") },
+        )
     }
 
     @Test
@@ -140,7 +148,10 @@ class FirestoreExpenseRepositoryTest {
 
         assertNull(result)
         val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue("expected a warning log for invalid 'category', got: $logs", logs.any { it.msg.contains("'category'") })
+        assertTrue(
+            "expected a warning log for invalid 'category', got: $logs",
+            logs.any { it.msg.contains("'category'") },
+        )
     }
 
     @Test

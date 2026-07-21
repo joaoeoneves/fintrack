@@ -30,7 +30,8 @@ import java.time.Instant
  *
  * These exercise the real [DashboardScreen] composable with a [DashboardViewModel] constructed
  * directly against in-memory fakes (bypassing Hilt entirely, same pattern as the JVM
- * [DashboardViewModelTest] uses) -- no navigation graph or running app is required to prove:
+ * `DashboardViewModelExpenseTest`/`DashboardViewModelBudgetTest`/`DashboardViewModelIncomeTest`
+ * use) -- no navigation graph or running app is required to prove:
  *  1. Tapping the plus icon (content description "Add expense") on the "Recent expenses" card
  *     header invokes `onAddExpense`, both when `state.recentExpenses` is empty and non-empty.
  *  2. The "Recent expenses" card always renders -- including its empty-state text -- and stays
