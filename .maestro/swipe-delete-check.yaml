@@ -15,9 +15,11 @@ appId: com.joaoeoneves.fintrack
 # be a limitation of Maestro's from-element swipe distance calculation for this component, not an
 # app bug: explicit start/end coordinates (or a real on-device swipe) delete the row correctly and
 # immediately every time. On the 1080x2400 emulator used for this flow, the first data row sits at
-# ~44% of screen height on "All expenses" (which has Search + Sort-by controls above the list) but
-# only ~28% on "All income" (which has neither) -- adjust these y values if run on a different
-# resolution or if either screen's layout above the list changes.
+# ~44% of screen height on both "All expenses" and "All income" -- both screens now have identical
+# Search + Sort-by controls above the list (verified 2026-07-21; "All income" previously had
+# neither and its row sat at ~28%, but that's stale now that it has its own Search/Sort like
+# expenses) -- adjust these y values if run on a different resolution or if either screen's layout
+# above the list changes again.
 #
 # Also note: "See all income" can sit just past the Dashboard LazyColumn's clip bounds even when
 # `scrollUntilVisible` reports it found -- tapping it there is a no-op (it's technically in the view
@@ -120,17 +122,30 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 
-- assertVisible: "Swipe Test Income A"
+# No assertVisible for "Swipe Test Income A" right here on the Dashboard: adding it back
+# immediately before the "See all income" navigation below reintroduces the exact race described
+# next, since the two checks are close enough together that the Firestore round-trip can still be
+# in flight when the second one runs.
 - scrollUntilVisible:
     element: "See all income"
     direction: DOWN
 - scroll
 - tapOn: "See all income"
 - assertVisible: "All income"
-- assertVisible: "Swipe Test Income A"
+# extendedWaitUntil (not assertVisible) on purpose: verified 2026-07-21 that a plain assertVisible
+# here is a genuine flake, not element-matching noise. Navigating straight from Save into "See all
+# income" with no intervening scroll-up/scroll-down (unlike income-tracking.yaml, which happens to
+# absorb the same round-trip via its own extra Dashboard scroll before reaching this screen) can
+# outrun the Firestore listener round-trip that populates this list, so the row genuinely isn't
+# composed yet at assertion time. Reproduced twice via a full run of this file; did not reproduce
+# when the same steps were issued individually with natural inter-command latency, confirming a
+# timing race rather than a real app defect.
+- extendedWaitUntil:
+    visible: "Swipe Test Income A"
+    timeout: 10000
 - swipe:
-    start: "83%, 28%"
-    end: "9%, 28%"
+    start: "83%, 44%"
+    end: "9%, 44%"
     duration: 800
 - assertNotVisible: "Swipe Test Income A"
 - assertVisible: "All income"
@@ -156,10 +171,13 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn: "See all income"
 - assertVisible: "All income"
-- assertVisible: "Swipe Test Income B"
+# Same extendedWaitUntil-over-assertVisible rationale as the "Swipe Test Income A" block above.
+- extendedWaitUntil:
+    visible: "Swipe Test Income B"
+    timeout: 10000
 - swipe:
-    start: "9%, 28%"
-    end: "83%, 28%"
+    start: "9%, 44%"
+    end: "83%, 44%"
     duration: 800
 - assertNotVisible: "Swipe Test Income B"
 - assertVisible: "All income"

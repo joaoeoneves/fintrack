@@ -34,7 +34,7 @@ class IncomeListViewModel
     @Inject
     constructor(
         private val incomeRepository: IncomeRepository,
-        savedStateHandle: SavedStateHandle,
+        private val savedStateHandle: SavedStateHandle,
         // Nullable with a default so existing unit tests that construct this ViewModel directly
         // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
         // production. When null (test-only), the fallback below matches the exact literal those
@@ -42,31 +42,52 @@ class IncomeListViewModel
         @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val timeRange = MutableStateFlow(savedStateHandle.toRoute<IncomeList>().timeRange)
+
+        // Public so the screen can bind the search field's displayed value directly to this,
+        // instead of to Content.query (which only updates after a round trip through the
+        // repository's live Firestore listener). Binding to the round-tripped value is too slow
+        // for a controlled text field and drops/reorders characters typed faster than the
+        // round trip completes.
+        val query: StateFlow<String> = savedStateHandle.getStateFlow(KEY_QUERY, "")
+        private val sortOption = savedStateHandle.getStateFlow(KEY_SORT_OPTION, IncomeSortOption.DATE_DESC)
         private val retryTrigger = MutableStateFlow(0)
 
         private val undoEvents = Channel<Income>(Channel.BUFFERED)
         val undoEvent: Flow<Income> = undoEvents.receiveAsFlow()
 
         val uiState: StateFlow<IncomeListUiState> =
-            combine(timeRange, retryTrigger) { range, _ -> range }
-                .flatMapLatest { range ->
-                    val instantRange = range.toInstantRange(now = Instant.now())
-                    incomeRepository
-                        .observeIncome(instantRange.startInclusive, instantRange.endExclusive)
-                        .map<List<Income>, IncomeListUiState> { income -> income.toContent(range) }
-                        .catch { e ->
-                            val fallback =
-                                context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
-                            emit(IncomeListUiState.Error(e.message ?: fallback))
-                        }
-                }.stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
-                    initialValue = IncomeListUiState.Loading,
-                )
+            combine(
+                timeRange,
+                query,
+                sortOption,
+                retryTrigger,
+            ) { range, q, sort, _ ->
+                Triple(range, q, sort)
+            }.flatMapLatest { (range, q, sort) ->
+                val instantRange = range.toInstantRange(now = Instant.now())
+                incomeRepository
+                    .observeIncome(instantRange.startInclusive, instantRange.endExclusive)
+                    .map<List<Income>, IncomeListUiState> { income -> income.toContent(range, q, sort) }
+                    .catch { e ->
+                        val fallback = context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
+                        emit(IncomeListUiState.Error(e.message ?: fallback))
+                    }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = IncomeListUiState.Loading,
+            )
 
         fun onTimeRangeSelected(range: TimeRange) {
             timeRange.value = range
+        }
+
+        fun onQueryChanged(newQuery: String) {
+            savedStateHandle[KEY_QUERY] = newQuery
+        }
+
+        fun onSortSelected(sort: IncomeSortOption) {
+            savedStateHandle[KEY_SORT_OPTION] = sort
         }
 
         fun onRetry() {
@@ -95,9 +116,34 @@ class IncomeListViewModel
             }
         }
 
-        private fun List<Income>.toContent(range: TimeRange): IncomeListUiState.Content =
-            IncomeListUiState.Content(
+        private fun List<Income>.toContent(
+            range: TimeRange,
+            query: String,
+            sort: IncomeSortOption,
+        ): IncomeListUiState.Content {
+            val filtered =
+                if (query.isBlank()) {
+                    this
+                } else {
+                    filter { it.source.contains(query, ignoreCase = true) }
+                }
+            val sorted =
+                when (sort) {
+                    IncomeSortOption.DATE_DESC -> filtered.sortedByDescending { it.date }
+                    IncomeSortOption.DATE_ASC -> filtered.sortedBy { it.date }
+                    IncomeSortOption.AMOUNT_DESC -> filtered.sortedByDescending { it.amountCents }
+                    IncomeSortOption.AMOUNT_ASC -> filtered.sortedBy { it.amountCents }
+                }
+            return IncomeListUiState.Content(
                 timeRange = range,
-                income = sortedByDescending { it.date },
+                query = query,
+                sortOption = sort,
+                income = sorted,
             )
+        }
+
+        private companion object {
+            private const val KEY_QUERY = "query"
+            private const val KEY_SORT_OPTION = "sortOption"
+        }
     }

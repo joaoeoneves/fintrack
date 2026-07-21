@@ -8,6 +8,8 @@ sealed interface IncomeListUiState {
 
     data class Content(
         val timeRange: TimeRange,
+        val query: String,
+        val sortOption: IncomeSortOption,
         val income: List<Income>,
     ) : IncomeListUiState
 

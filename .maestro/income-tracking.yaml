@@ -46,7 +46,12 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Income"
 - assertVisible: "Expenses"
 
-# --- 2: Scroll down to the "Recent income" section and add an income entry ---
+# --- 2: Scroll down to the "Recent income" section and add two income entries. A second,
+# distinctly-named entry ("Freelance Payment") is added alongside the original test entry so the
+# All-income list below has two rows to filter and reorder between for the search/sort assertions
+# in step 4b. Its amount ($50) is deliberately lower than the first entry's ($100) so that
+# switching to "Highest amount" sort (AMOUNT_DESC) visibly swaps their relative order versus the
+# default "Newest first" (DATE_DESC) order, giving an observable, assertable reordering.
 - scrollUntilVisible:
     element: "Add income"
     direction: DOWN
@@ -64,6 +69,21 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Maestro E2E Test Salary"
 - assertVisible: "+$100.00"
 
+- scrollUntilVisible:
+    element: "Add income"
+    direction: DOWN
+- tapOn: "Add income"
+- assertVisible: "Add income"
+- tapOn: "Source"
+- inputText: "Freelance Payment"
+- tapOn: "Amount"
+- inputText: "50.00"
+- hideKeyboard
+- tapOn: "Save"
+
+- assertVisible: "Freelance Payment"
+- assertVisible: "+$50.00"
+
 # --- 3: Net balance reflects income minus expenses; expense-only figures are untouched ---
 # (Dashboard net balance = income - expenses. Assertions on the exact numbers are intentionally
 # left to unit tests, which cover the math precisely; this flow only asserts the feature is wired
@@ -73,7 +93,7 @@ appId: com.joaoeoneves.fintrack
     direction: UP
 - assertVisible: "Income"
 
-# --- 4: Open the full income list and confirm the new income is there ---
+# --- 4: Open the full income list and confirm both new income entries are there ---
 # "See all income" can sit just past the Dashboard LazyColumn's clip bounds even when
 # scrollUntilVisible reports it found -- tapping it there is a no-op (see swipe-delete-check.yaml's
 # header comment for the full explanation). A plain extra scroll after scrollUntilVisible and
@@ -86,14 +106,78 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "All income"
 - assertVisible: "Maestro E2E Test Salary"
 - assertVisible: "+$100.00"
+- assertVisible: "Freelance Payment"
+- assertVisible: "+$50.00"
 
-# --- 5: Delete it via the row's Delete affordance and confirm the undo snackbar appears ---
+# --- 4a: Default sort is "Newest first" (DATE_DESC) -- "Freelance Payment" was added after
+# "Maestro E2E Test Salary" in step 2 above, so it's newer and should render above it. Maestro has
+# no direct "assert list order" primitive, but assertVisible's "above"/"below" relative-position
+# matchers give an exact, non-flaky substitute: they compare the matched elements' on-screen
+# bounds directly, so this is a real ordering assertion, not a proxy for one.
+- assertVisible:
+    text: "Freelance Payment"
+    above:
+      text: "Maestro E2E Test Salary"
+
+# --- 4b: Search filters the list by source (case-insensitive substring on IncomeRow's source
+# field), and the empty-state message embeds the query when nothing matches.
+#
+# Previously this step could only type a single character ("f") because the search field's
+# displayed `value` was bound to IncomeListUiState.Content.query, which only updated after a round
+# trip through the ViewModel's combine(...).flatMapLatest{...} pipeline and IncomeRepository's live
+# Firestore listener -- slow enough that a second fast keystroke would land before the first's
+# round trip did, snapping the controlled TextField back to stale state and dropping/reordering
+# every character after the first. Fixed by binding the field to IncomeListViewModel.query (a
+# SavedStateHandle-backed StateFlow that updates instantly, no round trip) instead; the full
+# multi-character query below now types and lands correctly.
+- tapOn: "Search"
+- inputText: "Freelance"
+- assertVisible: "Freelance Payment"
+- assertNotVisible: "Maestro E2E Test Salary"
+
+# Clear the search back to empty and confirm both entries are visible again.
+- tapOn: "Freelance"
+- eraseText: 20
+- hideKeyboard
+- assertVisible: "Freelance Payment"
+- assertVisible: "Maestro E2E Test Salary"
+
+# --- 4c: Sort dropdown -- switch to "Highest amount" (AMOUNT_DESC) and confirm the entries swap
+# relative order versus the default (since Maestro E2E Test Salary's $100 > Freelance Payment's
+# $50, unlike the date-based default order asserted in 4a above), then restore the default
+# ("Newest first") before proceeding, leaving app state as found.
+- tapOn: "Newest first"
+- assertVisible: "Highest amount"
+- tapOn: "Highest amount"
+- assertVisible:
+    text: "Maestro E2E Test Salary"
+    above:
+      text: "Freelance Payment"
+
+- tapOn: "Highest amount"
+- assertVisible: "Newest first"
+- tapOn: "Newest first"
+- assertVisible:
+    text: "Freelance Payment"
+    above:
+      text: "Maestro E2E Test Salary"
+
+# --- 5: Delete both via each row's Delete affordance and confirm the undo snackbar appears ---
 # Deletion is immediate (mirrors the expense list) — an undo snackbar ("Deleted "<source>"" /
-# "Undo") appears. The row's trash-icon IconButton has contentDescription "Delete".
-- tapOn: "Delete"
+# "Undo") appears. The row's trash-icon IconButton has contentDescription "Delete". With sort
+# restored to "Newest first" above, "Freelance Payment" (newer) is the first "Delete" match;
+# deleting it leaves "Maestro E2E Test Salary" as the next (and now only) "Delete" match.
+- tapOn:
+    text: "Delete"
+    index: 0
+- assertNotVisible: "Freelance Payment"
+- assertVisible: "Undo"
+- tapOn:
+    text: "Delete"
+    index: 0
 - assertNotVisible: "Maestro E2E Test Salary"
 - assertVisible: "Undo"
-# Let the undo snackbar time out on its own so the income entry stays deleted.
+# Let the undo snackbars time out on their own so both income entries stay deleted.
 
 # Return to the dashboard, leaving app state as found.
 - back

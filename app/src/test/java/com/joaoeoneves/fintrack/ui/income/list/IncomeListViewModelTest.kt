@@ -30,7 +30,7 @@ import java.time.temporal.ChronoUnit
 
 /**
  * Unit tests for [IncomeListViewModel], mirroring [com.joaoeoneves.fintrack.ui.expense.list.ExpenseListViewModelTest]'s
- * coverage/conventions (minus query/sort, which [IncomeListViewModel] doesn't have).
+ * coverage/conventions, including query/sort support.
  *
  * Like `ExpenseListViewModel`, the constructor eagerly calls
  * `savedStateHandle.toRoute<IncomeList>()`, which requires a real (shadowed) `android.os.Bundle`
@@ -146,10 +146,93 @@ class IncomeListViewModelTest {
             job.cancel()
         }
 
-    // ---- sorting: income is always sorted date-descending ----
+    // ---- search / query ----
 
     @Test
-    fun uiState_sortsIncomeByDateDescending() =
+    fun onQueryChanged_caseInsensitivePartialMatch_filtersIncome() =
+        runTest(testDispatcher) {
+            val salary = income(id = "1", source = "Salary", amountCents = 500_000L, date = now)
+            val freelance = income(id = "2", source = "Freelance", amountCents = 3_000L, date = now)
+            val repo = FakeIncomeRepository(listOf(salary, freelance))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("SAL")
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(listOf(salary), content.income)
+            assertEquals("SAL", content.query)
+
+            job.cancel()
+        }
+
+    @Test
+    fun onQueryChanged_partialMatch_matchesSubstringAnywhereInSource() =
+        runTest(testDispatcher) {
+            val income1 = income(id = "1", source = "Monthly Salary Payment", amountCents = 500L, date = now)
+            val repo = FakeIncomeRepository(listOf(income1))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("y Sal")
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(listOf(income1), content.income)
+
+            job.cancel()
+        }
+
+    @Test
+    fun onQueryChanged_noMatch_producesEmptyList() =
+        runTest(testDispatcher) {
+            val salary = income(id = "1", source = "Salary", amountCents = 500L, date = now)
+            val repo = FakeIncomeRepository(listOf(salary))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("nonexistent-xyz")
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertTrue(content.income.isEmpty())
+
+            job.cancel()
+        }
+
+    @Test
+    fun onQueryChanged_blankQuery_isEquivalentToNoFilter() =
+        runTest(testDispatcher) {
+            val salary = income(id = "1", source = "Salary", amountCents = 500L, date = now)
+            val freelance = income(id = "2", source = "Freelance", amountCents = 3_000L, date = now)
+            val repo = FakeIncomeRepository(listOf(salary, freelance))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("salary")
+            advanceUntilIdle()
+            vm.onQueryChanged("   ")
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(2, content.income.size)
+
+            job.cancel()
+        }
+
+    // ---- sorting ----
+
+    @Test
+    fun onSortSelected_dateDesc_isDefault_andSortsNewestFirst() =
         runTest(testDispatcher) {
             val older = income(id = "older", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
             val newer = income(id = "newer", amountCents = 200L, date = now.minus(1, ChronoUnit.DAYS))
@@ -160,7 +243,93 @@ class IncomeListViewModelTest {
             advanceUntilIdle()
 
             val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(IncomeSortOption.DATE_DESC, content.sortOption)
             assertEquals(listOf(newer, older), content.income)
+
+            job.cancel()
+        }
+
+    @Test
+    fun onSortSelected_dateAsc_sortsOldestFirst() =
+        runTest(testDispatcher) {
+            val older = income(id = "older", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
+            val newer = income(id = "newer", amountCents = 200L, date = now.minus(1, ChronoUnit.DAYS))
+            val repo = FakeIncomeRepository(listOf(older, newer))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onSortSelected(IncomeSortOption.DATE_ASC)
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(IncomeSortOption.DATE_ASC, content.sortOption)
+            assertEquals(listOf(older, newer), content.income)
+
+            job.cancel()
+        }
+
+    @Test
+    fun onSortSelected_amountDesc_sortsHighestFirst() =
+        runTest(testDispatcher) {
+            val small = income(id = "small", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
+            val large = income(id = "large", amountCents = 500_000L, date = now.minus(5, ChronoUnit.DAYS))
+            val repo = FakeIncomeRepository(listOf(small, large))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onSortSelected(IncomeSortOption.AMOUNT_DESC)
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(IncomeSortOption.AMOUNT_DESC, content.sortOption)
+            assertEquals(listOf(large, small), content.income)
+
+            job.cancel()
+        }
+
+    @Test
+    fun onSortSelected_amountAsc_sortsLowestFirst() =
+        runTest(testDispatcher) {
+            val small = income(id = "small", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
+            val large = income(id = "large", amountCents = 500_000L, date = now.minus(5, ChronoUnit.DAYS))
+            val repo = FakeIncomeRepository(listOf(small, large))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onSortSelected(IncomeSortOption.AMOUNT_ASC)
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(IncomeSortOption.AMOUNT_ASC, content.sortOption)
+            assertEquals(listOf(small, large), content.income)
+
+            job.cancel()
+        }
+
+    @Test
+    fun sorting_appliesAfterQueryFilter() =
+        runTest(testDispatcher) {
+            val salarySmall = income(id = "s1", source = "Salary small", amountCents = 300L, date = now)
+            val salaryLarge = income(id = "s2", source = "Salary large", amountCents = 700L, date = now)
+            val bonus = income(id = "b1", source = "Bonus", amountCents = 5_000L, date = now)
+            val repo = FakeIncomeRepository(listOf(salarySmall, salaryLarge, bonus))
+            val vm = viewModel(repo)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            vm.onQueryChanged("salary")
+            vm.onSortSelected(IncomeSortOption.AMOUNT_DESC)
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals(listOf(salaryLarge, salarySmall), content.income)
 
             job.cancel()
         }
@@ -382,30 +551,91 @@ class IncomeListViewModelTest {
         }
 
     @Test
-    fun onRetry_doesNotResetCurrentTimeRangeSelection() =
+    fun onRetry_doesNotResetCurrentQuerySortOptionOrTimeRangeSelections() =
         runTest(testDispatcher) {
-            val withinWeek = income(id = "within-week", amountCents = 1_000L, date = now.minus(2, ChronoUnit.DAYS))
-            val withinMonthNotWeek =
-                income(id = "within-month", amountCents = 2_000L, date = now.minus(20, ChronoUnit.DAYS))
-            val repo = FakeIncomeRepository(listOf(withinWeek, withinMonthNotWeek))
+            val salary =
+                income(id = "1", source = "Monthly Salary", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
+            val salaryOld =
+                income(id = "2", source = "Old Salary", amountCents = 100L, date = now.minus(20, ChronoUnit.DAYS))
+            val bonus = income(id = "3", source = "Bonus", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
+            val repo = FakeIncomeRepository(listOf(salary, salaryOld, bonus))
             val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
+            vm.onQueryChanged("salary")
+            vm.onSortSelected(IncomeSortOption.AMOUNT_ASC)
             vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
             advanceUntilIdle()
 
             val beforeRetry = vm.uiState.value as IncomeListUiState.Content
+            assertEquals("salary", beforeRetry.query)
+            assertEquals(IncomeSortOption.AMOUNT_ASC, beforeRetry.sortOption)
             assertEquals(TimeRange.ONE_WEEK, beforeRetry.timeRange)
-            assertEquals(listOf(withinWeek), beforeRetry.income)
+            // within one week: only "salary" (2 days ago) matches the query; salaryOld (20 days ago)
+            // and bonus (doesn't match query) are excluded.
+            assertEquals(listOf(salary), beforeRetry.income)
 
             vm.onRetry()
             advanceUntilIdle()
 
             val afterRetry = vm.uiState.value as IncomeListUiState.Content
+            assertEquals("salary", afterRetry.query)
+            assertEquals(IncomeSortOption.AMOUNT_ASC, afterRetry.sortOption)
             assertEquals(TimeRange.ONE_WEEK, afterRetry.timeRange)
-            assertEquals(listOf(withinWeek), afterRetry.income)
+            assertEquals(listOf(salary), afterRetry.income)
+
+            job.cancel()
+        }
+
+    // ---- process death: query/sortOption live in SavedStateHandle, same as timeRange already did ----
+
+    @Test
+    fun processDeathSimulation_queryAndSortOption_surviveRecreationViaSameSavedStateHandle() =
+        runTest(testDispatcher) {
+            val repo = FakeIncomeRepository()
+            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
+            val original = IncomeListViewModel(repo, savedStateHandle)
+
+            val originalJob = launch { original.uiState.collect {} }
+            advanceUntilIdle()
+            original.onQueryChanged("foo")
+            original.onSortSelected(IncomeSortOption.AMOUNT_ASC)
+            advanceUntilIdle()
+            originalJob.cancel()
+
+            // Simulate process death + recreation: construct a *new* ViewModel instance with the
+            // *same* SavedStateHandle object, exactly as the real Android framework hands back a
+            // restored SavedStateHandle after process death, instead of a fresh empty one.
+            val recreated = IncomeListViewModel(repo, savedStateHandle)
+            val recreatedJob = launch { recreated.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = recreated.uiState.value as IncomeListUiState.Content
+            assertEquals("foo", content.query)
+            assertEquals(IncomeSortOption.AMOUNT_ASC, content.sortOption)
+            assertEquals(TimeRange.ONE_MONTH, content.timeRange)
+
+            recreatedJob.cancel()
+        }
+
+    @Test
+    fun processDeathSimulation_defaultQueryAndSortOption_whenNeverChanged_remainAtDefaults() =
+        runTest(testDispatcher) {
+            // Regression guard for the opposite direction: a fresh SavedStateHandle that never had
+            // onQueryChanged/onSortSelected called against it must still default to ""/DATE_DESC,
+            // not crash or throw on the getStateFlow(key, default) lookup.
+            val repo = FakeIncomeRepository()
+            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
+            val vm = IncomeListViewModel(repo, savedStateHandle)
+
+            val job = launch { vm.uiState.collect {} }
+            advanceUntilIdle()
+
+            val content = vm.uiState.value as IncomeListUiState.Content
+            assertEquals("", content.query)
+            assertEquals(IncomeSortOption.DATE_DESC, content.sortOption)
 
             job.cancel()
         }

@@ -110,6 +110,8 @@
     <!-- Income list -->
     <string name="income_list_title">All income</string>
     <string name="income_list_deleted_snackbar">Deleted \"%1$s\"</string>
+    <string name="income_list_search_label">Search</string>
+    <string name="income_list_no_match">No income matches \"%1$s\".</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

@@ -110,6 +110,8 @@
     <!-- Lista de rendimentos -->
     <string name="income_list_title">Todos os rendimentos</string>
     <string name="income_list_deleted_snackbar">Eliminado \"%1$s\"</string>
+    <string name="income_list_search_label">Pesquisar</string>
+    <string name="income_list_no_match">Nenhum rendimento corresponde a \"%1$s\".</string>
 
     <!-- Definições -->
     <string name="settings_title">Definições</string>

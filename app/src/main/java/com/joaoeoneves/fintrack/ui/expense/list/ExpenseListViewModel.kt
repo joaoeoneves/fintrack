@@ -42,7 +42,13 @@ class ExpenseListViewModel
         @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val timeRange = MutableStateFlow(savedStateHandle.toRoute<ExpenseList>().timeRange)
-        private val query = savedStateHandle.getStateFlow(KEY_QUERY, "")
+
+        // Public so the screen can bind the search field's displayed value directly to this,
+        // instead of to Content.query (which only updates after a round trip through the
+        // repository's live Firestore listener). Binding to the round-tripped value is too slow
+        // for a controlled text field and drops/reorders characters typed faster than the
+        // round trip completes.
+        val query: StateFlow<String> = savedStateHandle.getStateFlow(KEY_QUERY, "")
         private val sortOption = savedStateHandle.getStateFlow(KEY_SORT_OPTION, SortOption.DATE_DESC)
         private val retryTrigger = MutableStateFlow(0)
 
