@@ -18,6 +18,8 @@
     <string name="cd_delete">Eliminar</string>
     <string name="cd_change_date">Alterar data</string>
     <string name="cd_settings">Definições</string>
+    <string name="cd_pie_chart_total">Resumo de despesas. Total gasto: %1$s.</string>
+    <string name="cd_pie_chart_category_item">%1$s, %2$d por cento, %3$s</string>
 
     <!-- Rótulos de campos partilhados -->
     <string name="field_amount">Montante</string>

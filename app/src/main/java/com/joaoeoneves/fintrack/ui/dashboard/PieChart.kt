@@ -23,6 +23,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -31,6 +35,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import kotlin.math.roundToInt
 
 // Same ring diameter as the original restyle, but a thinner stroke (26dp vs 32dp) so the inner
 // hole has more room for the total-spent amount at realistic (even large) values.
@@ -53,6 +58,9 @@ private val RING_HOLE_SIZE = RING_SIZE - RING_STROKE_WIDTH * 2
 // A small safety margin so the amount text never visually touches the ring, even with rounded
 // stroke caps.
 private val RING_HOLE_CONTENT_SIZE = RING_HOLE_SIZE - 12.dp
+
+// The multiplier used to convert a fractional share into a whole-number percentage.
+private const val PERCENT_SCALE = 100
 
 /**
  * The "Total Spent" label and formatted amount centered inside the ring's hole. The amount uses
@@ -84,6 +92,41 @@ private fun PieChartCenterLabel(totalCents: Long) {
 }
 
 /**
+ * Plain (non-composable), unit-testable computation of a slice's share of the total, rounded to
+ * the nearest whole percent. Returns 0 when [totalCents] is non-positive, avoiding a divide-by-zero.
+ */
+fun percentageOf(
+    amountCents: Long,
+    totalCents: Long,
+): Int {
+    if (totalCents <= 0L) return 0
+    return ((amountCents.toDouble() / totalCents.toDouble()) * PERCENT_SCALE).roundToInt()
+}
+
+/**
+ * Builds the accessibility content description for the whole donut chart: the total spent amount
+ * followed by a per-category breakdown (name, percentage, and amount) for each slice.
+ */
+@Composable
+private fun buildChartContentDescription(
+    slices: List<CategoryTotal>,
+    total: Long,
+): String {
+    val totalText = formatAmountCents(total)
+    val perCategoryCd =
+        slices.map { slice ->
+            stringResource(
+                R.string.cd_pie_chart_category_item,
+                slice.category.displayName,
+                percentageOf(slice.totalCents, total),
+                formatAmountCents(slice.totalCents),
+            )
+        }
+    return stringResource(R.string.cd_pie_chart_total, totalText) +
+        if (perCategoryCd.isNotEmpty()) " " + perCategoryCd.joinToString(separator = ". ") else ""
+}
+
+/**
  * Custom Canvas-based donut chart showing the share of spending per category, with the total spent
  * centered inside the ring and a legend rendered alongside it.
  */
@@ -96,12 +139,20 @@ fun PieChart(
     val sliceColors = slices.map { it.category.color }
     val strokeWidthPx = with(LocalDensity.current) { RING_STROKE_WIDTH.toPx() }
 
+    val chartContentDescription = buildChartContentDescription(slices, total)
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier.size(RING_SIZE),
+            modifier =
+                Modifier
+                    .size(RING_SIZE)
+                    .clearAndSetSemantics {
+                        contentDescription = chartContentDescription
+                        role = Role.Image
+                    },
             contentAlignment = Alignment.Center,
         ) {
             Canvas(modifier = Modifier.size(RING_SIZE)) {
@@ -136,19 +187,30 @@ fun PieChart(
                     .padding(start = 16.dp),
         ) {
             slices.forEach { slice ->
-                PieChartLegendRow(slice)
+                PieChartLegendRow(slice, totalCents = total)
             }
         }
     }
 }
 
 @Composable
-private fun PieChartLegendRow(slice: CategoryTotal) {
+private fun PieChartLegendRow(
+    slice: CategoryTotal,
+    totalCents: Long,
+) {
+    val rowContentDescription =
+        stringResource(
+            R.string.cd_pie_chart_category_item,
+            slice.category.displayName,
+            percentageOf(slice.totalCents, totalCents),
+            formatAmountCents(slice.totalCents),
+        )
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(vertical = 4.dp)
+                .clearAndSetSemantics { contentDescription = rowContentDescription },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
