@@ -1,5 +1,18 @@
 # FinTrack
 
+[![CI](https://github.com/joaoeoneves/FinTrack/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoeoneves/FinTrack/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?logo=firebase&logoColor=black)
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" width="200" alt="Dashboard with balance, spending breakdown and budgets">
+  <img src="docs/screenshots/recent.png" width="200" alt="Recent expenses and income">
+  <img src="docs/screenshots/all-expenses.png" width="200" alt="Expense list with period filter, search and sort">
+  <img src="docs/screenshots/add-expense.png" width="200" alt="Add expense form">
+</p>
+
 A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack Compose and Firebase.
 
 ---
