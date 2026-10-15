@@ -15,6 +15,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
   - [Common commands](#common-commands)
   - [Testing](#testing)
   - [CI](#ci)
+- [License](#license)
 
 ---
 
@@ -164,3 +165,8 @@ check and for compiling, since unit tests run against Fake repositories and neve
 calls. Instrumented/Maestro tests are intentionally kept out of this CI job (booting an emulator in CI is
 slow and flake-prone) and are run manually instead.
 
+---
+
+## License
+
+[MIT](LICENSE) © 2026 João Neves
