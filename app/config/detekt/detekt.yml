@@ -1,0 +1,5 @@
+naming:
+  FunctionNaming:
+    # @Composable functions are conventionally PascalCase (they read like components, e.g.
+    # ExpenseRow, PieChart) — that's correct Compose style, not a naming violation.
+    ignoreAnnotated: ["Composable"]

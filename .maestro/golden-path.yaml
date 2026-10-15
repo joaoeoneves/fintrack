@@ -1,0 +1,140 @@
+appId: com.joaoeoneves.fintrack
+---
+# Golden-path E2E flow for FinTrack.
+#
+# Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) —
+# real Google Sign-In cannot be scripted headlessly by Maestro, so this flow starts from the
+# Dashboard. If the app instead shows a sign-in screen, that's a sign the persisted session was
+# lost and this flow will fail fast at the "Total:" assertion below rather than silently
+# continuing on the wrong screen.
+
+- launchApp
+
+# --- 0: Pin language to English before any of the (English) assertions below. Fresh installs now
+# default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer
+# assume the app renders in English out of the box. The Settings entry point's label is itself
+# locale-dependent ("Settings" vs. "Definições"), so match either via regex alternation since we
+# don't yet know which is currently in effect. "English" is always labeled "English" regardless
+# of the active app language (see settings.yaml's currency-pinning header comment for the general
+# "pin a known baseline" pattern this mirrors). No restore-to-original-language step at the end of
+# this flow is needed: golden-path.yaml doesn't restore any other global setting either (unlike
+# settings.yaml, which restores theme/currency because other flows depend on those defaults).
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
+
+# --- 0b: Pin currency to EUR before the "-12,34€"/"-56,78€" assertions below. Fresh installs now
+# default to EUR, but this device may have an explicit USD selection persisted from a prior run of
+# settings.yaml or income-tracking.yaml (an explicit selection is never retroactively changed by
+# what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
+# so pin a known baseline here explicitly rather than assuming whatever currency another flow left
+# the device on. Mirrors the exact navigation pattern already used in settings.yaml's own
+# currency-switching steps: open Settings, tap "Display currency" (an inline exposed-dropdown on
+# the Settings screen itself, not a separate screen), tap the target currency option (selects it
+# and closes the dropdown, still on Settings), then tap "Back" (the top-app-bar back arrow,
+# content-desc "Back") to return directly to the Dashboard. No restore-to-original-currency step at
+# the end of this flow is needed, same reasoning as the language pin above.
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "Display currency"
+- tapOn: "Euro (€)"
+- tapOn: "Back"
+
+# --- 1: Dashboard loads with filter pills, balance summary card, pie legend ---
+# The "Add expense" entry point lives on the Dashboard's "Recent expenses" card header (a plus
+# IconButton next to the section title, mirroring the "Recent income" card exactly) -- see step 2
+# below. ExpenseListScreen itself has no add control of its own, just back navigation.
+#
+# The four category assertions below use a ".*<name>.*" wildcard, not a bare category name.
+# PieChart.kt's legend rows (fix(dashboard): add TalkBack accessibility to pie chart, 2026-07-21)
+# now collapse each row's children into a single Modifier.clearAndSetSemantics node exposing only
+# a merged content description (e.g. "Recurring, 6 percent, 72,00€") -- the literal "Recurring"
+# text is no longer its own accessibility node. A bare "Recurring" assertVisible is a full-string
+# regex match and fails against that merged label; "Transfer"/"Investments"/"Shopping" only
+# happened to keep passing incidentally via the separate Budgets-section category TextViews below
+# the pie chart, which "Recurring"'s budget row doesn't share since it sits just past the fold and
+# isn't composed yet at this scroll position. Wildcarding restores the original "pie legend is
+# visible" intent for all four regardless of scroll position, and keeps matching whichever of the
+# two (legend content-desc or Budgets-section literal text) happens to be on screen.
+- assertVisible: "FinTrack"
+- assertVisible: "1W"
+- assertVisible: "1M"
+- assertVisible: "3M"
+- assertVisible: "6M"
+- assertVisible: "1Y"
+- assertVisible: "Net Balance"
+- assertVisible: "Income"
+- assertVisible: "Expenses"
+- assertVisible: ".*Transfer.*"
+- assertVisible: ".*Investments.*"
+- assertVisible: ".*Shopping.*"
+- assertVisible: ".*Recurring.*"
+
+# --- 2: Add a new expense via the Dashboard's "Recent expenses" card plus icon ---
+# That card is pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/
+# BudgetSection above it, so scroll down before tapping it. The plus icon has no visible label,
+# only the "Add expense" content description, which Maestro matches the same way as visible text.
+# The card (and its plus icon) is always visible/tappable, even with zero expenses in the selected
+# range -- the empty-state guard that used to hide this card entirely was removed, since it's now
+# the *only* path from Dashboard into the expense-adding flow and must never dead-end.
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
+- tapOn: "Add expense"
+- assertVisible: "Add expense"
+- tapOn: "Name"
+- inputText: "Maestro E2E Test Expense"
+- tapOn: "Amount"
+- inputText: "12.34"
+- hideKeyboard
+- tapOn: "Save"
+
+# Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
+# up immediately in the "Recent expenses" card (it sorts by date descending, and this row is the
+# most recent). Fresh installs now default to EUR (comma-decimal, suffixed symbol), so the row
+# shows "-12,34€" rather than a USD "-$12.34".
+- scrollUntilVisible:
+    element: "Maestro E2E Test Expense"
+    direction: DOWN
+- assertVisible: "Maestro E2E Test Expense"
+- assertVisible: "-12,34€"
+
+# --- 3: Edit it (change the amount) and confirm the change persists ---
+# Tapping a row on the Dashboard's "Recent expenses" card navigates to the full list (not directly
+# to edit) -- tap the expense again once there to open it in edit mode.
+- tapOn: "Maestro E2E Test Expense"
+- assertVisible: "All expenses"
+- tapOn: "Maestro E2E Test Expense"
+- assertVisible: "Edit expense"
+- tapOn: "Amount"
+- eraseText
+- inputText: "56.78"
+- hideKeyboard
+- tapOn: "Save"
+
+# Back on the full list, the updated amount should be visible.
+- assertVisible: "All expenses"
+- assertVisible: "Maestro E2E Test Expense"
+- assertVisible: "-56,78€"
+- assertNotVisible: "-12,34€"
+
+# --- 4: Delete it and confirm it's gone ---
+# Deletion is now immediate (tap or swipe the row) — there is no confirmation dialog anymore.
+# Instead an undo snackbar ("Deleted "<name>"" / "Undo") appears. The row's trash-icon IconButton
+# has contentDescription "Delete" (no visible label) — matched by its accessibility text rather
+# than a raw coordinate.
+- tapOn: "Delete"
+- assertNotVisible: "Maestro E2E Test Expense"
+- assertVisible: "Undo"
+# Let the undo snackbar time out on its own so the expense stays deleted.
+
+# --- 5: Exercise at least one time-range filter chip (ExpenseListScreen has its own filter row) ---
+- tapOn: "1W"
+- assertVisible: "1W"
+- tapOn: "3M"
+- assertVisible: "3M"
+
+# Restore the default 1-month filter and return to the dashboard, leaving app state as found.
+- tapOn: "1M"
+- back

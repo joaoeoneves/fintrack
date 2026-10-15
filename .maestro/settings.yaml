@@ -1,0 +1,116 @@
+# Settings screen E2E flow for FinTrack.
+#
+# Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) --
+# same assumption as golden-path.yaml / income-tracking.yaml, since real Google Sign-In cannot be
+# scripted headlessly by Maestro. Starts and ends on the Dashboard, with theme back to Dark and
+# currency back to USD before this flow ends. golden-path.yaml now pins its own EUR baseline
+# independently (see its "0b" step) and no longer depends on this flow's final currency state.
+# income-tracking.yaml still assumes the "$" symbol is shown and historically depended on this
+# flow ending on USD -- but it now also pins its own USD baseline independently (see its own "0b"
+# step), so this flow ending on USD is belt-and-suspenders at this point, not a hard dependency.
+#
+# Deliberately does NOT assert what the *current* display-currency label is before switching:
+# the app's default fallback (fresh install / cleared SharedPreferences, no explicit selection
+# made yet) is CurrencyOption.EUR ("Euro (€)"), but this device may already have an explicit
+# USD selection persisted from a prior run of this very flow (an explicit selection is never
+# retroactively changed by what the fallback default is). Asserting a fixed starting label would
+# make this flow fail on a truly fresh app state. Instead, step 2 explicitly selects "US Dollar
+# ($)" first to pin a known baseline regardless of starting state, then exercises the live-update
+# round trip, and finishes back on USD either way.
+#
+# EUR renders with a comma decimal separator and a *suffixed* symbol ("1330,40€"), while every
+# other currency (including USD) keeps the period-decimal/prefixed-symbol style ("$1330.40") --
+# see CurrencyDisplay.kt/CurrencyFormat.kt. The step-2 post-EUR assertion below therefore uses
+# ".*€.*" (not "€.*", which would require the text to *start* with the symbol and can
+# never match a suffixed amount like "196,96€") -- this was caught as a real regression by
+# the tester agent when the EUR-default + EUR-suffix changes landed together.
+#
+# Step 2/3 assert that switching currency/theme in Settings takes effect immediately on the
+# already-running Dashboard, in the same app process, with no restart required. This depends on
+# CurrencyRepository/ThemeRepository (SharedPrefsCurrencyRepository/SharedPrefsThemeRepository)
+# being bound as singletons in RepositoryModule.kt -- both classes cache their current value in an
+# in-memory StateFlow, so if a non-singleton binding ever regresses back in, MainActivity's
+# CurrencyViewModel/ThemeViewModel and SettingsViewModel would each get their own separate
+# repository instance, and a write through one would silently stop reaching the other's
+# collectors (only visible after a full process restart). See SharedPrefsCurrencyRepositoryTest /
+# RepositoryModuleSingletonScopeTest for the corresponding unit-level regression coverage.
+appId: com.joaoeoneves.fintrack
+---
+- launchApp
+
+# --- 1: Open Settings via the gear icon on the Dashboard ---
+- assertVisible: "FinTrack"
+- tapOn: "Settings"
+- assertVisible: "Settings"
+- assertVisible: "Appearance"
+- assertVisible: "Currency"
+# "Data", "Account", and "About" all sit below the fold on a 2400px-tall viewport now: the
+# Language section (added between Appearance and Currency for the language-preference feature)
+# pushes everything below it further down, on top of the account-signed-in row (name + email)
+# already doing the same to "About" -- scroll to each rather than asserting visible without
+# moving, which is viewport-size-dependent and unrelated to the currency-default change this flow
+# otherwise covers.
+- scrollUntilVisible:
+    element: "Data"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Account"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "About"
+    direction: DOWN
+
+# --- 2: Currency -- pin a known USD baseline, then switch to EUR and confirm the Dashboard
+# total/list reflect the new symbol live (see the header comment above for why we don't assert
+# the starting label first).
+- tapOn: "Display currency"
+- tapOn: "US Dollar ($)"
+- tapOn: "Back"
+- assertVisible:
+    text: "\\$.*"
+
+- tapOn: "Settings"
+- tapOn: "Display currency"
+- assertVisible: "Euro (€)"
+- tapOn: "Euro (€)"
+- assertVisible: "Euro (€)"
+- tapOn: "Back"
+- assertVisible:
+    text: ".*€.*"
+
+# Switch back to USD before the flow ends -- other flows assume "$".
+- tapOn: "Settings"
+- tapOn: "Display currency"
+- tapOn: "US Dollar ($)"
+- tapOn: "Back"
+- assertVisible:
+    text: "\\$.*"
+
+# --- 3: Appearance -- select each theme option and confirm no crash ---
+- tapOn: "Settings"
+- tapOn: "Light"
+- assertVisible: "Light"
+- tapOn: "System default"
+- assertVisible: "System default"
+- tapOn: "Dark"
+- assertVisible: "Dark"
+
+# --- 4: Data -- Import CSV / Export CSV still launch their file pickers ---
+# The Data section (with these two buttons) is below the fold at this scroll position too, for
+# the same Language-section-was-added reason as step 1's scroll comment above.
+# Labels now disclose the expenses-only scope of CSV import/export ("Import CSV (expenses)" /
+# "Export CSV (expenses)") -- the assertVisible calls below actively prove that disclosure text
+# renders on-screen, guarding against a future accidental revert to the old ambiguous
+# "Import CSV"/"Export CSV" labels.
+- scrollUntilVisible:
+    element: "Import CSV \\(expenses\\)"
+    direction: DOWN
+- assertVisible: "Import CSV \\(expenses\\)"
+- tapOn: "Import CSV \\(expenses\\)"
+- back
+- assertVisible: "Export CSV \\(expenses\\)"
+- tapOn: "Export CSV \\(expenses\\)"
+- back
+
+# Return to the dashboard, leaving app state as found.
+- tapOn: "Back"

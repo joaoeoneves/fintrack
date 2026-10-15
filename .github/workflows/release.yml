@@ -1,0 +1,148 @@
+name: Release
+
+# Each version arrives as one commit on top of main, pushed to rc/vX.Y. This runs the full CI on it and, when it
+# passes, builds and signs the APK (R8), moves main to the commit, tags it vX.Y, publishes the GitHub release with
+# the CHANGELOG section as notes, and deletes the rc branch. A failed run leaves main and the tags untouched.
+on:
+  push:
+    branches: ["rc/v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # versionCode = major*100 + minor, so minor must stay below 100 to keep codes unique.
+      - name: Check the candidate
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME#rc/}"
+          if ! [[ "$tag" =~ ^v([0-9]+)\.([0-9]+)$ ]] || (( 10#${BASH_REMATCH[2]} > 99 )); then
+            echo "::error::Branch '$GITHUB_REF_NAME' must be rc/vX.Y with a minor of 0..99"
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::error::$tag already exists"
+            exit 1
+          fi
+          # One snapshot commit straight on top of main, so publishing is a fast-forward.
+          if git rev-parse -q --verify origin/main >/dev/null && [ "$(git rev-parse HEAD^)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::$GITHUB_REF_NAME is not a single commit on top of main"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  ci:
+    needs: candidate
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: [candidate, ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.candidate.outputs.tag }}
+    steps:
+      # Full history: the push to main below must be seen as a fast-forward.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Derive version
+        run: |
+          [[ "$TAG" =~ ^v([0-9]+)\.([0-9]+)$ ]]
+          {
+            echo "VERSION_NAME=${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+            echo "VERSION_CODE=$((10#${BASH_REMATCH[1]} * 100 + 10#${BASH_REMATCH[2]}))"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::error::Secret GOOGLE_SERVICES_JSON_BASE64 is missing; a release needs the real Firebase config"
+            exit 1
+          fi
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/google-services.json
+
+      - name: Decode keystore
+        env:
+          FINTRACK_KEYSTORE_BASE64: ${{ secrets.FINTRACK_KEYSTORE_BASE64 }}
+          KS_PASSWORD: ${{ secrets.FINTRACK_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.FINTRACK_KEY_ALIAS }}
+          KS_KEY_PASSWORD: ${{ secrets.FINTRACK_KEY_PASSWORD }}
+        run: |
+          for v in FINTRACK_KEYSTORE_BASE64 KS_PASSWORD KS_ALIAS KS_KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then
+              echo "::error::A required signing secret is missing (FINTRACK_KEYSTORE_BASE64, FINTRACK_KEYSTORE_PASSWORD, FINTRACK_KEY_ALIAS, FINTRACK_KEY_PASSWORD)"
+              exit 1
+            fi
+          done
+          echo "$FINTRACK_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          {
+            echo "FINTRACK_KEYSTORE_FILE=$RUNNER_TEMP/release.jks"
+            echo "FINTRACK_KEYSTORE_PASSWORD=$KS_PASSWORD"
+            echo "FINTRACK_KEY_ALIAS=$KS_ALIAS"
+            echo "FINTRACK_KEY_PASSWORD=$KS_KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      # lintVital would lint the code a second time; the CI job already ran Android lint on it.
+      - name: Build signed release
+        run: >
+          ./gradlew assembleRelease -x lintVitalRelease
+          -PversionName="$VERSION_NAME" -PversionCode="$VERSION_CODE"
+
+      - name: Verify APK signature
+        run: |
+          set -o pipefail
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n 1)apksigner"
+          "$apksigner" verify "$apk"
+          "$apksigner" verify --print-certs "$apk" | grep -i -m 1 "SHA-256 digest"
+          cp "$apk" "FinTrack-${TAG}.apk"
+          cp app/build/outputs/mapping/release/mapping.txt "FinTrack-${TAG}-mapping.txt"
+
+      - name: Release notes
+        run: |
+          # The "## [X.Y]" section of the CHANGELOG, without its heading; a short line when there is none.
+          awk -v v="$VERSION_NAME" '
+            /^## \[/ { on = index($0, "## [" v "]") == 1; next }
+            on' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "FinTrack ${TAG}." > notes.md
+
+      # main moves only after everything above passed; the push fails if main moved meanwhile.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push origin "HEAD:refs/heads/main"
+          gh release create "$TAG" "FinTrack-${TAG}.apk" "FinTrack-${TAG}-mapping.txt" \
+            --title "FinTrack ${TAG}" --notes-file notes.md --target "$GITHUB_SHA"
+          git push origin --delete "$GITHUB_REF_NAME"
+
+      - name: Remove keystore and credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks" app/google-services.json
