@@ -1,6 +1,6 @@
 # FinTrack
 
-[![CI](https://github.com/joaoeoneves/FinTrack/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoeoneves/FinTrack/actions/workflows/ci.yml)
+[![CI](https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
@@ -24,6 +24,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
   - [Tech stack](#tech-stack)
   - [Architecture](#architecture)
   - [Data model](#data-model--firestore)
+  - [Download](#download)
   - [Getting started](#getting-started)
   - [Common commands](#common-commands)
   - [Testing](#testing)
@@ -47,13 +48,19 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 - **Per-category budget limits** — set a monthly limit per category; the Dashboard shows progress bars
   against the current calendar month (independent of the rolling time-range filter) with an over-budget
   visual state.
-- **Full expense/income lists** — swipe-to-dismiss delete with an Undo snackbar, plus a trash-icon button
+- **Full expense/income lists** — the same time-range filters, text search, and sorting (newest/oldest
+  first, highest/lowest amount); swipe-to-dismiss delete with an Undo snackbar, plus a trash-icon button
   for discoverability.
-- **CSV import/export** — for expenses (income CSV support is a deliberate fast-follow, not yet built).
+- **CSV import/export** — for expenses, from Settings (income CSV support is a deliberate fast-follow, not
+  yet built).
 - **Google Sign-In** via Credential Manager (not the legacy `GoogleSignInClient` API) + Firebase Auth.
-- **Dark mode** — a full, intentional Material 3 dark color scheme (not an auto-inverted afterthought),
-  following the system setting by default, with a manual light/dark override in the Dashboard's overflow
-  menu.
+- **Settings** — reached from the Dashboard's gear icon:
+  - **Theme**: system default, light or dark, with a full, intentional Material 3 dark color scheme (not an
+    auto-inverted afterthought).
+  - **Language**: English or Portuguese (or the system language), switched in-app.
+  - **Display currency**: USD, EUR, GBP, JPY, CAD or AUD. Purely cosmetic: it changes the symbol and
+    formatting, with no exchange-rate conversion.
+  - CSV import/export and the signed-in account.
 - **Offline-friendly** — Firestore's built-in local cache is the only persistence layer; there's no local
   Room database, so data survives offline use and syncs back once reconnected.
 
@@ -61,7 +68,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 
 | Layer | Choice |
 |---|---|
-| Language | Kotlin 2.2 |
+| Language | Kotlin 2.4 |
 | UI | Jetpack Compose + Material 3 |
 | Architecture | MVVM — ViewModels hold state/logic, composables stay declarative |
 | Async | Coroutines + `Flow`, `StateFlow` for UI state (`collectAsStateWithLifecycle`) |
@@ -123,6 +130,11 @@ users/{uid}/budgets/{categoryName}
 Security rules ([`firestore.rules`](firestore.rules)) restrict every collection to
 `request.auth.uid == userId` — a user can only ever read/write their own documents.
 
+### Download
+
+A debug-signed APK of the latest version is attached to the
+[latest release](https://github.com/joaoeoneves/fintrack/releases/latest) (Android 7.0+).
+
 ### Getting started
 
 1. **Firebase project**: create one, register an Android app with package `com.joaoeoneves.fintrack`,
@@ -165,8 +177,11 @@ Three layers, deliberately kept separate:
    on-device verification happens through Maestro instead (see below).
 3. **Maestro E2E flows** (`.maestro/*.yaml`) — YAML flows driven against a real emulator, using semantic
    element matching (by visible text/content-description) rather than brittle coordinates or resource IDs.
-   Run with `maestro test .maestro/<flow>.yaml`. Existing flows: `golden-path.yaml` (sign-in → add expense → dashboard → full list →
-   edit → delete → filters) and `income-tracking.yaml` (income add → net balance → delete/undo).
+   Run with `maestro test .maestro/<flow>.yaml`. Existing flows: `golden-path.yaml` (add expense → dashboard → full list → edit →
+   delete → filters), `income-tracking.yaml` (income add → net balance → delete/undo), `settings.yaml`
+   (theme and currency switching), `date-field.yaml` (date picker) and `swipe-delete-check.yaml`
+   (swipe-to-delete and Undo). All of them start from an already signed-in session, since Google Sign-In
+   can't be scripted headlessly.
 
 ### CI
 
