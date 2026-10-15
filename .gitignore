@@ -13,3 +13,4 @@ local.properties
 # possibly-public remote; each dev/CI pulls it from the Firebase console instead.
 google-services.json
 
+TODO.md
