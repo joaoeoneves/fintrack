@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 @Composable
@@ -52,7 +53,7 @@ fun SignInScreen(
 
         if (uiState is AuthUiState.Error) {
             Text(
-                text = uiState.message,
+                text = uiState.message.asString(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 16.dp),

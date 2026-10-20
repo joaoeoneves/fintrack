@@ -8,7 +8,7 @@ import com.joaoeoneves.fintrack.data.FakeAuthRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -169,7 +169,11 @@ class AuthViewModelTest {
             job.cancel()
 
             assertEquals(
-                listOf(AuthUiState.Idle, AuthUiState.Loading, AuthUiState.Error("Sign-in failed")),
+                listOf(
+                    AuthUiState.Idle,
+                    AuthUiState.Loading,
+                    AuthUiState.Error(UiText.StringResource(R.string.error_sign_in_failed)),
+                ),
                 snapshots,
             )
         }
@@ -204,42 +208,6 @@ class AuthViewModelTest {
         }
 
     @Test
-    fun signIn_cancelledByUser_withCauseAndRealContext_stillEndsIdle() =
-        runTest(testDispatcher) {
-            val repo =
-                FakeAuthRepository(
-                    initialUser = null,
-                    nextSignInResult = Result.failure(SignInCancelledException(IllegalStateException("picker closed"))),
-                )
-            val appContext = FakeStringContext(R.string.error_sign_in_failed, "translated sign-in failure")
-            val viewModel = AuthViewModel(repo, appContext)
-            advanceUntilIdle()
-
-            viewModel.signIn(fakeContext)
-            advanceUntilIdle()
-
-            assertEquals(AuthUiState.Idle, viewModel.uiState.value)
-        }
-
-    @Test
-    fun signIn_failure_withMessage_andRealContext_usesContextString_notExceptionMessage() =
-        runTest(testDispatcher) {
-            val repo =
-                FakeAuthRepository(
-                    initialUser = null,
-                    nextSignInResult = Result.failure(IllegalStateException("raw SDK detail")),
-                )
-            val appContext = FakeStringContext(R.string.error_sign_in_failed, "translated sign-in failure")
-            val viewModel = AuthViewModel(repo, appContext)
-            advanceUntilIdle()
-
-            viewModel.signIn(fakeContext)
-            advanceUntilIdle()
-
-            assertEquals(AuthUiState.Error("translated sign-in failure"), viewModel.uiState.value)
-        }
-
-    @Test
     fun signIn_failure_withNullExceptionMessage_fallsBackToDefaultMessage() =
         runTest(testDispatcher) {
             val repo =
@@ -253,70 +221,27 @@ class AuthViewModelTest {
             viewModel.signIn(fakeContext)
             advanceUntilIdle()
 
-            assertEquals(AuthUiState.Error("Sign-in failed"), viewModel.uiState.value)
+            assertEquals(
+                AuthUiState.Error(UiText.StringResource(R.string.error_sign_in_failed)),
+                viewModel.uiState.value,
+            )
         }
 
-    // ---- signIn/signOut failure: real (non-null) appContext branch ----
-    //
-    // The tests above all construct AuthViewModel with the default `appContext = null`, which
-    // exercises the hardcoded-English-fallback branch of `appContext?.getString(...) ?: "..."`.
-    // These two prove the *other* branch: when a real Context is supplied, the ViewModel actually
-    // calls `context.getString(R.string.xxx)` and uses its result instead of the fallback --
-    // using FakeStringContext (no Robolectric resource loading involved) so the string returned is
-    // trivially distinguishable from both the hardcoded fallback and any other stubbed value.
-
     @Test
-    fun signIn_failure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
+    fun signIn_cancelledByUser_withCause_stillEndsIdle() =
         runTest(testDispatcher) {
             val repo =
                 FakeAuthRepository(
                     initialUser = null,
-                    nextSignInResult = Result.failure(RuntimeException()),
+                    nextSignInResult = Result.failure(SignInCancelledException(IllegalStateException("picker closed"))),
                 )
-            val appContext = FakeStringContext(R.string.error_sign_in_failed, "translated sign-in failure")
-            val viewModel = AuthViewModel(repo, appContext)
+            val viewModel = AuthViewModel(repo)
             advanceUntilIdle()
 
             viewModel.signIn(fakeContext)
             advanceUntilIdle()
 
-            assertEquals(AuthUiState.Error("translated sign-in failure"), viewModel.uiState.value)
-        }
-
-    @Test
-    fun signOut_failure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
-        runTest(testDispatcher) {
-            val repo =
-                FakeAuthRepository(
-                    initialUser = user,
-                    nextSignOutResult = Result.failure(RuntimeException()),
-                )
-            val appContext = FakeStringContext(R.string.error_sign_out_failed, "translated sign-out failure")
-            val viewModel = AuthViewModel(repo, appContext)
-            advanceUntilIdle()
-
-            viewModel.signOut()
-            advanceUntilIdle()
-
-            assertEquals(AuthUiState.Error("translated sign-out failure"), viewModel.uiState.value)
-        }
-
-    @Test
-    fun signOut_failure_withNonNullMessage_andRealContext_usesContextGetString_neverRawMessage() =
-        runTest(testDispatcher) {
-            val repo =
-                FakeAuthRepository(
-                    initialUser = user,
-                    nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
-                )
-            val appContext = FakeStringContext(R.string.error_sign_out_failed, "translated sign-out failure")
-            val viewModel = AuthViewModel(repo, appContext)
-            advanceUntilIdle()
-
-            viewModel.signOut()
-            advanceUntilIdle()
-
-            assertEquals(AuthUiState.Error("translated sign-out failure"), viewModel.uiState.value)
+            assertEquals(AuthUiState.Idle, viewModel.uiState.value)
         }
 
     // ---- signOut: success (relies on the fake's flow, not a ViewModel shortcut) ----
@@ -373,7 +298,10 @@ class AuthViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
+            assertEquals(
+                AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed)),
+                viewModel.uiState.value,
+            )
         }
 
     @Test
@@ -390,7 +318,10 @@ class AuthViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
+            assertEquals(
+                AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed)),
+                viewModel.uiState.value,
+            )
         }
 
     @Test
@@ -413,7 +344,10 @@ class AuthViewModelTest {
             // own flow still reflects the signed-in user (i.e. FakeAuthRepository.signOut() did not
             // clear userFlow.value on failure), even though the ViewModel's uiState surfaces an Error.
             assertEquals(user, currentValueOf(repo.observeCurrentUser()))
-            assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
+            assertEquals(
+                AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed)),
+                viewModel.uiState.value,
+            )
         }
 
     @Test
@@ -429,7 +363,10 @@ class AuthViewModelTest {
 
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
+            assertEquals(
+                AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed)),
+                viewModel.uiState.value,
+            )
             assertEquals(user, currentValueOf(repo.observeCurrentUser()))
 
             // Reconfigure the fake to succeed on the next call and retry.

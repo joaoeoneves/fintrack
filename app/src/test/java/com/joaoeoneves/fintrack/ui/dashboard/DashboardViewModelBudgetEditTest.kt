@@ -5,7 +5,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -34,8 +34,8 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
         (uiState.value as DashboardUiState.Content).budgets.single { it.category == category }
 
     /** Starts collecting uiState and budgetErrorEvent; returns the live list of emitted errors. */
-    private fun TestScope.collectAll(viewModel: DashboardViewModel): MutableList<String> {
-        val errors = mutableListOf<String>()
+    private fun TestScope.collectAll(viewModel: DashboardViewModel): MutableList<UiText> {
+        val errors = mutableListOf<UiText>()
         backgroundScope.launch { viewModel.uiState.collect {} }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.budgetErrorEvent.collect { errors.add(it) }
@@ -92,23 +92,8 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
             viewModel.onClearBudget(ExpenseCategory.SHOPPING)
             advanceUntilIdle()
 
-            assertEquals(listOf("Failed to remove budget"), errors)
+            assertEquals(listOf(UiText.StringResource(R.string.error_budget_remove_failed)), errors)
             assertEquals(10_000L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
-        }
-
-    @Test
-    fun onClearBudget_failure_withContext_emitsContextString() =
-        runTest(testDispatcher) {
-            val budgetRepo = FakeBudgetRepository(nextClearBudgetError = IllegalStateException("boom"))
-            val context = FakeStringContext(R.string.error_budget_remove_failed, "translated remove failure")
-            val viewModel = viewModel(budgetRepository = budgetRepo, context = context)
-            val errors = collectAll(viewModel)
-            advanceUntilIdle()
-
-            viewModel.onClearBudget(ExpenseCategory.TRANSFER)
-            advanceUntilIdle()
-
-            assertEquals(listOf("translated remove failure"), errors)
         }
 
     // ---- onSetBudget: error event ----
@@ -139,7 +124,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
             viewModel.onSetBudget(ExpenseCategory.SHOPPING, 7_500L)
             advanceUntilIdle()
 
-            assertEquals(listOf("Failed to save budget"), errors)
+            assertEquals(listOf(UiText.StringResource(R.string.error_budget_save_failed)), errors)
             assertEquals(5_000L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
         }
 
@@ -158,20 +143,5 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
 
             assertEquals(1, errors.size)
             assertEquals(7_500L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
-        }
-
-    @Test
-    fun onSetBudget_failure_withContext_emitsContextString() =
-        runTest(testDispatcher) {
-            val budgetRepo = FakeBudgetRepository(nextSetBudgetError = IllegalStateException("boom"))
-            val context = FakeStringContext(R.string.error_budget_save_failed, "translated save failure")
-            val viewModel = viewModel(budgetRepository = budgetRepo, context = context)
-            val errors = collectAll(viewModel)
-            advanceUntilIdle()
-
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 1_000L)
-            advanceUntilIdle()
-
-            assertEquals(listOf("translated save failure"), errors)
         }
 }

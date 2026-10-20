@@ -54,8 +54,13 @@
     <string name="category_shopping">Compras</string>
     <string name="category_recurring">Recorrente</string>
 
-    <!-- Moedas: deliberadamente NÃO extraídas para recursos de string. CurrencyOption.displayName
-         em CurrencyDisplay.kt mantém-se fixo em inglês, de propósito. Ver o KDoc desse ficheiro. -->
+    <!-- Moedas -->
+    <string name="currency_usd">Dólar americano</string>
+    <string name="currency_eur">Euro</string>
+    <string name="currency_gbp">Libra esterlina</string>
+    <string name="currency_jpy">Iene japonês</string>
+    <string name="currency_cad">Dólar canadiano</string>
+    <string name="currency_aud">Dólar australiano</string>
 
     <!-- Seletor de período -->
     <string name="period_this_month">Este mês</string>
@@ -170,14 +175,17 @@
 
     <plurals name="import_complete_message">
         <item quantity="one">%d despesa importada.</item>
+        <item quantity="many">%d de despesas importadas.</item>
         <item quantity="other">%d despesas importadas.</item>
     </plurals>
     <plurals name="export_complete_message">
         <item quantity="one">%d despesa exportada.</item>
+        <item quantity="many">%d de despesas exportadas.</item>
         <item quantity="other">%d despesas exportadas.</item>
     </plurals>
     <plurals name="import_partial_failure_message">
         <item quantity="one">%1$d despesa foi importada antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
+        <item quantity="many">%1$d de despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
         <item quantity="other">%1$d despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
     </plurals>
 </resources>

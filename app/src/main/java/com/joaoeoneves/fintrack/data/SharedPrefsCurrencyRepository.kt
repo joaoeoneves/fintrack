@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,7 +33,7 @@ class SharedPrefsCurrencyRepository
         override fun observeCurrency(): Flow<CurrencyOption> = currencyFlow
 
         override suspend fun setCurrency(currency: CurrencyOption) {
-            prefs.edit().putString(KEY_CURRENCY, currency.name).apply()
+            prefs.edit { putString(KEY_CURRENCY, currency.name) }
             currencyFlow.value = currency
         }
 

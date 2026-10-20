@@ -1,11 +1,13 @@
 package com.joaoeoneves.fintrack.ui.settings
 
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeAuthRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -219,7 +221,7 @@ class SettingsViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
             job.cancel()
         }
@@ -241,7 +243,7 @@ class SettingsViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
             job.cancel()
         }
@@ -263,7 +265,7 @@ class SettingsViewModelTest {
             advanceUntilIdle()
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
 
             viewModel.dismissSignOutError()
             advanceUntilIdle()
@@ -308,7 +310,7 @@ class SettingsViewModelTest {
 
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
 
             authRepo.nextSignOutResult = Result.success(Unit)
@@ -319,7 +321,7 @@ class SettingsViewModelTest {
             // signOutError is never cleared automatically on a later success -- only
             // dismissSignOutError() clears it. Confirm that's still the (documented) behavior so a
             // future change to auto-clear it is a deliberate one, not an accident.
-            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             job.cancel()
         }
 

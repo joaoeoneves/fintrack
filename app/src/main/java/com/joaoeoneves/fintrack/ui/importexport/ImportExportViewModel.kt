@@ -10,6 +10,8 @@ import com.joaoeoneves.fintrack.data.csv.CsvImportOutcome
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvParser
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvWriter
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.messageOr
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -53,14 +55,14 @@ class ImportExportViewModel
                         null
                     }
                 if (text == null) {
-                    _importState.value = ImportUiState.Error(context.getString(R.string.error_import_read_file))
+                    _importState.value = ImportUiState.Error(UiText.StringResource(R.string.error_import_read_file))
                     return@launch
                 }
                 _importState.value =
                     when (val outcome = ExpenseCsvParser.parse(text)) {
                         is CsvImportOutcome.Parsed ->
                             ImportUiState.Preview(outcome.result.validExpenses, outcome.result.failures)
-                        is CsvImportOutcome.Error -> ImportUiState.Error(outcome.message)
+                        is CsvImportOutcome.Error -> ImportUiState.Error(UiText.Dynamic(outcome.message))
                     }
             }
         }
@@ -73,14 +75,12 @@ class ImportExportViewModel
                 _importState.value =
                     when {
                         result.isCompleteSuccess -> ImportUiState.Done(result.succeededCount)
-                        result.succeededCount > 0 -> {
-                            val fallback = result.failure?.message ?: context.getString(R.string.error_import_failed)
-                            ImportUiState.PartialFailure(result.succeededCount, fallback)
-                        }
-                        else -> {
-                            val fallback = result.failure?.message ?: context.getString(R.string.error_import_failed)
-                            ImportUiState.Error(fallback)
-                        }
+                        result.succeededCount > 0 ->
+                            ImportUiState.PartialFailure(
+                                result.succeededCount,
+                                result.failure.messageOr(R.string.error_import_failed),
+                            )
+                        else -> ImportUiState.Error(result.failure.messageOr(R.string.error_import_failed))
                     }
             }
         }
@@ -112,11 +112,10 @@ class ImportExportViewModel
                             if (wrote) {
                                 ExportUiState.Done(expenses.size)
                             } else {
-                                ExportUiState.Error(context.getString(R.string.error_export_write_file))
+                                ExportUiState.Error(UiText.StringResource(R.string.error_export_write_file))
                             }
                     }.onFailure { e ->
-                        val fallback = e.message ?: context.getString(R.string.error_export_failed)
-                        _exportState.value = ExportUiState.Error(fallback)
+                        _exportState.value = ExportUiState.Error(e.messageOr(R.string.error_export_failed))
                     }
             }
         }

@@ -41,7 +41,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
@@ -51,6 +51,7 @@ import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
+import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.displayName
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
@@ -107,7 +108,7 @@ fun AddEditExpenseScreen(
 
             is AddEditUiState.Error -> {
                 ErrorState(
-                    message = state.message,
+                    message = state.message.asString(),
                     onRetry = viewModel::onRetry,
                     modifier =
                         Modifier
@@ -210,7 +211,7 @@ private fun ExpenseForm(
 
         form.saveError?.let { error ->
             Text(
-                text = error,
+                text = error.asString(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -229,7 +230,11 @@ private fun ExpenseNameAndAmountFields(
         label = { Text(stringResource(R.string.expense_field_name)) },
         isError = form.nameError != null,
         supportingText = {
-            FieldSupportingText(error = form.nameError, length = form.name.codePointLength(), max = MAX_NAME_LENGTH)
+            FieldSupportingText(
+                error = form.nameError?.asString(),
+                length = form.name.codePointLength(),
+                max = MAX_NAME_LENGTH,
+            )
         },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
@@ -240,7 +245,7 @@ private fun ExpenseNameAndAmountFields(
         onValueChange = actions.onAmountChanged,
         label = { Text(stringResource(R.string.field_amount)) },
         isError = form.amountError != null,
-        supportingText = { form.amountError?.let { Text(it) } },
+        supportingText = { form.amountError?.let { Text(it.asString()) } },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),

@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.auth
 
 import com.joaoeoneves.fintrack.domain.model.AuthUser
+import com.joaoeoneves.fintrack.ui.common.UiText
 
 sealed interface AuthUiState {
     data object Idle : AuthUiState
@@ -12,6 +13,6 @@ sealed interface AuthUiState {
     ) : AuthUiState
 
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : AuthUiState
 }

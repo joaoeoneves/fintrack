@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.income.list
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,10 +11,11 @@ import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import com.joaoeoneves.fintrack.ui.navigation.IncomeList
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -45,7 +45,7 @@ private sealed interface PeriodItems<out T> {
     ) : PeriodItems<T>
 
     data class Failed(
-        val message: String,
+        val message: UiText,
     ) : PeriodItems<Nothing>
 }
 
@@ -57,11 +57,6 @@ class IncomeListViewModel
         private val incomeRepository: IncomeRepository,
         private val savedStateHandle: SavedStateHandle,
         private val clock: Clock,
-        // Nullable with a default so existing unit tests that construct this ViewModel directly
-        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
-        // production. When null (test-only), the fallback below matches the exact literal those
-        // tests assert on.
-        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         // The route's own "period" argument is only the initial value; the user's later choices
         // are stored under a separate key so the route argument itself is never overwritten.
@@ -97,11 +92,7 @@ class IncomeListViewModel
                     incomeRepository
                         .observeIncome(instantRange.startInclusive, instantRange.endExclusive)
                         .map<List<Income>, PeriodItems<Income>> { PeriodItems.Loaded(period, canGoToNextMonth, it) }
-                        .catch { e ->
-                            val fallback =
-                                context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
-                            emit(PeriodItems.Failed(e.message ?: fallback))
-                        }
+                        .catch { e -> emit(PeriodItems.Failed(e.messageOr(R.string.error_generic_fallback))) }
                 }
 
         val uiState: StateFlow<IncomeListUiState> =

@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,11 +19,6 @@ class AuthViewModel
     @Inject
     constructor(
         private val authRepository: AuthRepository,
-        // Nullable with a default so existing unit tests that construct this ViewModel directly
-        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
-        // production. When null (test-only), errors fall back to the English literals ("Sign-in
-        // failed" / "Sign-out failed") that those tests assert on; raw exception messages are never shown.
-        @param:ApplicationContext private val appContext: Context? = null,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
         val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -49,9 +44,7 @@ class AuthViewModel
                             } else {
                                 // Deliberately not e.message: raw SDK/credential-provider messages
                                 // aren't user-facing (the repository logs the details instead).
-                                AuthUiState.Error(
-                                    appContext?.getString(R.string.error_sign_in_failed) ?: "Sign-in failed",
-                                )
+                                AuthUiState.Error(UiText.StringResource(R.string.error_sign_in_failed))
                             }
                     },
                 )
@@ -63,8 +56,7 @@ class AuthViewModel
                 val result = authRepository.signOut()
                 result.onFailure {
                     // Deliberately not e.message (see signIn above).
-                    _uiState.value =
-                        AuthUiState.Error(appContext?.getString(R.string.error_sign_out_failed) ?: "Sign-out failed")
+                    _uiState.value = AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed))
                 }
             }
         }

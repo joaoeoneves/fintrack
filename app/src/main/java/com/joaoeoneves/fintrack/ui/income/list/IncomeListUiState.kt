@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.income.list
 
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.UiText
 
 sealed interface IncomeListUiState {
     data object Loading : IncomeListUiState
@@ -15,6 +16,6 @@ sealed interface IncomeListUiState {
     ) : IncomeListUiState
 
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : IncomeListUiState
 }

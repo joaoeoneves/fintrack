@@ -7,8 +7,8 @@ import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.testutil.CancellingContentProvider
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import com.joaoeoneves.fintrack.testutil.GenericFailureContentProvider
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -124,41 +124,25 @@ class ImportExportViewModelTest {
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
 
-            assertTrue(viewModel.importState.value is ImportUiState.Error)
+            // Parser-level errors (CsvImportOutcome.Error) carry their own message as Dynamic text.
+            val state = viewModel.importState.value
+            assertTrue("expected Error but was $state", state is ImportUiState.Error)
+            assertTrue((state as ImportUiState.Error).message is UiText.Dynamic)
         }
 
     @Test
     fun onImportFileSelected_missingFile_movesToErrorState_doesNotCrash() =
         runTest(testDispatcher) {
-            // Real note on why this uses FakeStringContext instead of context() directly: this
-            // ViewModel's Context param is required (not nullable), and the failure branch under
-            // test calls context.getString(R.string.error_import_read_file). This project's
-            // Robolectric setup does not currently have `android.testOptions.unitTests
-            // .isIncludeAndroidResources = true` set in app/build.gradle.kts, so a *real* Context's
-            // getString() throws `Resources.NotFoundException` for every resource id -- including
-            // R.string.app_name -- reproducible even on main before this feature branch (confirmed
-            // via a throwaway probe test), i.e. this is a pre-existing test-infrastructure gap, not
-            // a regression from this feature and not a production bug in ImportExportViewModel.kt.
-            // FakeStringContext wraps the real Robolectric context() (so ContentResolver/file access
-            // for openInputStream still works normally) while serving a canned value for getString,
-            // giving this test real, working coverage of the exception -> Error-state path without
-            // depending on that broken resource-loading pipeline.
             val missing = File(tempFolder.root, "does-not-exist.csv")
             val repo = FakeExpenseRepository()
-            val fakeContext =
-                FakeStringContext(
-                    R.string.error_import_read_file,
-                    "Could not read the selected file",
-                    base = context(),
-                )
-            val viewModel = ImportExportViewModel(repo, fakeContext)
+            val viewModel = ImportExportViewModel(repo, context())
 
             viewModel.onImportFileSelected(Uri.fromFile(missing))
             advanceUntilIdle()
 
             val state = viewModel.importState.value
             assertTrue(state is ImportUiState.Error)
-            assertEquals("Could not read the selected file", (state as ImportUiState.Error).message)
+            assertEquals(UiText.StringResource(R.string.error_import_read_file), (state as ImportUiState.Error).message)
         }
 
     @Test
@@ -234,13 +218,38 @@ class ImportExportViewModelTest {
             assertTrue("expected PartialFailure but was $state", state is ImportUiState.PartialFailure)
             val partial = state as ImportUiState.PartialFailure
             assertEquals(2, partial.succeededCount)
-            assertEquals("Firestore batch commit failed", partial.message)
+            assertEquals(UiText.Dynamic("Firestore batch commit failed"), partial.message)
 
             // The reported succeededCount must match what's actually durably stored, not just a
             // number surfaced in UI state.
             val stored = repo.getAllExpenses().getOrThrow()
             assertEquals(2, stored.size)
             assertEquals(setOf("Coffee", "Rent"), stored.map { it.name }.toSet())
+        }
+
+    @Test
+    fun onConfirmImport_partialFailure_withNullMessage_fallsBackToImportFailedResource() =
+        runTest(testDispatcher) {
+            val csv =
+                """
+                name,amountCents,category,date,note
+                Coffee,500,Shopping,2024-01-15T00:00:00Z,
+                Rent,150000,Recurring,2024-02-01,
+                """.trimIndent()
+            val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
+            val repo = FakeExpenseRepository()
+            repo.nextAddExpensesFailure = IllegalStateException()
+            repo.addExpensesFailureAfterCount = 1
+            val viewModel = ImportExportViewModel(repo, context())
+            viewModel.onImportFileSelected(Uri.fromFile(file))
+            advanceUntilIdle()
+
+            viewModel.onConfirmImport()
+            advanceUntilIdle()
+
+            val partial = viewModel.importState.value as ImportUiState.PartialFailure
+            assertEquals(1, partial.succeededCount)
+            assertEquals(UiText.StringResource(R.string.error_import_failed), partial.message)
         }
 
     @Test
@@ -265,7 +274,7 @@ class ImportExportViewModelTest {
 
             val state = viewModel.importState.value
             assertTrue("expected Error, not PartialFailure, but was $state", state is ImportUiState.Error)
-            assertEquals("Not signed in", (state as ImportUiState.Error).message)
+            assertEquals(UiText.Dynamic("Not signed in"), (state as ImportUiState.Error).message)
             assertTrue(repo.getAllExpenses().getOrThrow().isEmpty())
         }
 
@@ -486,6 +495,9 @@ class ImportExportViewModelTest {
             viewModel.onImportFileSelected(Uri.parse("content://${GenericFailureContentProvider.AUTHORITY}/file.csv"))
             advanceUntilIdle()
 
-            assertTrue(viewModel.importState.value is ImportUiState.Error)
+            assertEquals(
+                ImportUiState.Error(UiText.StringResource(R.string.error_import_read_file)),
+                viewModel.importState.value,
+            )
         }
 }

@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,7 +34,7 @@ class SharedPrefsThemeRepository
         override fun observeThemePreference(): Flow<ThemePreference> = themePreferenceFlow
 
         override suspend fun setThemePreference(preference: ThemePreference) {
-            prefs.edit().putString(KEY_THEME_PREFERENCE, preference.name).apply()
+            prefs.edit { putString(KEY_THEME_PREFERENCE, preference.name) }
             themePreferenceFlow.value = preference
         }
 

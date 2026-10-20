@@ -30,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
@@ -39,6 +39,7 @@ import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
+import com.joaoeoneves.fintrack.ui.common.asString
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 
@@ -100,7 +101,7 @@ fun AddEditIncomeScreen(
 
             is AddEditIncomeUiState.Error -> {
                 ErrorState(
-                    message = state.message,
+                    message = state.message.asString(),
                     onRetry = viewModel::onRetry,
                     modifier =
                         Modifier
@@ -180,7 +181,7 @@ private fun IncomeForm(
 
         form.saveError?.let { error ->
             Text(
-                text = error,
+                text = error.asString(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -200,7 +201,7 @@ private fun IncomeSourceAndAmountFields(
         isError = form.sourceError != null,
         supportingText = {
             FieldSupportingText(
-                error = form.sourceError,
+                error = form.sourceError?.asString(),
                 length = form.source.codePointLength(),
                 max = MAX_NAME_LENGTH,
             )
@@ -214,7 +215,7 @@ private fun IncomeSourceAndAmountFields(
         onValueChange = actions.onAmountChanged,
         label = { Text(stringResource(R.string.field_amount)) },
         isError = form.amountError != null,
-        supportingText = { form.amountError?.let { Text(it) } },
+        supportingText = { form.amountError?.let { Text(it.asString()) } },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),

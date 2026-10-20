@@ -8,7 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -28,10 +28,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * [SettingsViewModel.signOut] failure messaging with a real (stubbed) Context: the localized
- * `error_sign_out_failed` string is shown even when the exception carries its own message. Needs
- * Robolectric for [FakeStringContext]'s `Resources` construction, unlike the plain-JVM
- * [SettingsViewModelTest].
+ * [SettingsViewModel.signOut] failure messaging: the `error_sign_out_failed` resource is surfaced
+ * as [com.joaoeoneves.fintrack.ui.common.UiText.StringResource] even when the exception carries its
+ * own message (the raw message is never shown).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -62,32 +61,7 @@ class SettingsViewModelSignOutTest {
     }
 
     @Test
-    fun signOut_failure_withNonNullMessage_andContext_showsLocalizedString_neverRawMessage() =
-        runTest(testDispatcher) {
-            val authRepo =
-                FakeAuthRepository(
-                    initialUser = user,
-                    nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
-                )
-            val context = FakeStringContext(R.string.error_sign_out_failed, "translated sign-out failure")
-            val viewModel =
-                SettingsViewModel(
-                    StaticThemeRepository(),
-                    FakeCurrencyRepository(CurrencyOption.USD),
-                    authRepo,
-                    context = context,
-                )
-            backgroundScope.launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            viewModel.signOut()
-            advanceUntilIdle()
-
-            assertEquals("translated sign-out failure", viewModel.uiState.value.signOutError)
-        }
-
-    @Test
-    fun signOut_failure_withNonNullMessage_andNoContext_showsEnglishFallback() =
+    fun signOut_failure_withNonNullMessage_showsSignOutResource_neverRawMessage() =
         runTest(testDispatcher) {
             val authRepo =
                 FakeAuthRepository(
@@ -102,6 +76,6 @@ class SettingsViewModelSignOutTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
         }
 }

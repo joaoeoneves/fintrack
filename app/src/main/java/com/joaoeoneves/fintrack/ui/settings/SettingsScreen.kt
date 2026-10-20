@@ -22,12 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
+import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.importexport.ExportUiState
 import com.joaoeoneves.fintrack.ui.importexport.ImportExportViewModel
 import com.joaoeoneves.fintrack.ui.importexport.ImportPreviewDialog
@@ -83,7 +84,7 @@ fun SettingsScreen(
     uiState.signOutError?.let { message ->
         MessageDialog(
             title = stringResource(R.string.label_sign_out_failed),
-            message = message,
+            message = message.asString(),
             onDismiss = viewModel::dismissSignOutError,
         )
     }
@@ -203,7 +204,7 @@ private fun ImportStateDialog(
                         R.plurals.import_partial_failure_message,
                         state.succeededCount,
                         state.succeededCount,
-                        state.message,
+                        state.message.asString(),
                     ),
                 onDismiss = onDismiss,
             )
@@ -212,7 +213,7 @@ private fun ImportStateDialog(
         is ImportUiState.Error -> {
             MessageDialog(
                 title = stringResource(R.string.label_import_failed),
-                message = state.message,
+                message = state.message.asString(),
                 onDismiss = onDismiss,
             )
         }
@@ -243,7 +244,7 @@ private fun ExportStateDialog(
         is ExportUiState.Error -> {
             MessageDialog(
                 title = stringResource(R.string.label_export_failed),
-                message = state.message,
+                message = state.message.asString(),
                 onDismiss = onDismiss,
             )
         }

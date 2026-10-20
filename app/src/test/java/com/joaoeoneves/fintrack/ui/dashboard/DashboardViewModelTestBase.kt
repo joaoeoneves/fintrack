@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
@@ -61,15 +60,13 @@ open class DashboardViewModelTestBase {
     protected val currentMonth: YearMonth = YearMonth.of(2026, 10)
     protected val previousMonth: YearMonth = YearMonth.of(2026, 9)
 
-    @Suppress("LongParameterList")
     protected fun viewModel(
         expenseRepository: ExpenseRepository = FakeExpenseRepository(),
         budgetRepository: BudgetRepository = FakeBudgetRepository(),
         incomeRepository: IncomeRepository = FakeIncomeRepository(),
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         clock: Clock = this.clock,
-        context: Context? = null,
-    ) = DashboardViewModel(expenseRepository, budgetRepository, incomeRepository, savedStateHandle, clock, context)
+    ) = DashboardViewModel(expenseRepository, budgetRepository, incomeRepository, savedStateHandle, clock)
 
     /** Starts collecting [viewModel]'s uiState in the background and runs it to idle. */
     protected fun TestScope.collect(viewModel: DashboardViewModel) {

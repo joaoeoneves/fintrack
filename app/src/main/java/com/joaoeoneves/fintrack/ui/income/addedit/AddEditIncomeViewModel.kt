@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.income.addedit
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,12 +10,13 @@ import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.navigation.AddEditIncome
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,11 +34,6 @@ class AddEditIncomeViewModel
     constructor(
         private val incomeRepository: IncomeRepository,
         savedStateHandle: SavedStateHandle,
-        // Nullable with a default so existing unit tests that construct this ViewModel directly
-        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
-        // production. When null (test-only), the fallbacks below match the exact literals those
-        // tests assert on.
-        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditIncome>()
 
@@ -83,8 +78,7 @@ class AddEditIncomeViewModel
                                     )
                                 }
                         }.onFailure { e ->
-                            val fallback = context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
-                            _uiState.value = AddEditIncomeUiState.Error(e.message ?: fallback)
+                            _uiState.value = AddEditIncomeUiState.Error(e.messageOr(R.string.error_generic_fallback))
                         }
                 } else {
                     _uiState.value = AddEditIncomeUiState.Ready(IncomeFormState(date = Instant.now()))
@@ -119,11 +113,9 @@ class AddEditIncomeViewModel
             if (current !is AddEditIncomeUiState.Ready || current.form.isSaving) return
             val form = current.form
 
-            val sourceRequiredMessage = context?.getString(R.string.error_source_required) ?: "Source is required"
-            val invalidAmountMessage = context?.getString(R.string.error_invalid_amount) ?: "Enter a valid amount"
-            val sourceError = if (form.source.isBlank()) sourceRequiredMessage else null
+            val sourceError = if (form.source.isBlank()) UiText.StringResource(R.string.error_source_required) else null
             val amountResult = parseAmountCents(form.amountText)
-            val amountError = if (amountResult.isFailure) invalidAmountMessage else null
+            val amountError = if (amountResult.isFailure) UiText.StringResource(R.string.error_invalid_amount) else null
 
             if (sourceError != null || amountError != null) {
                 _uiState.value =
@@ -154,12 +146,9 @@ class AddEditIncomeViewModel
                     }.onFailure { e ->
                         val latest = _uiState.value
                         if (latest is AddEditIncomeUiState.Ready) {
-                            val failedSaveMessage =
-                                context?.getString(R.string.error_failed_save_income) ?: "Failed to save income"
+                            val saveError = e.messageOr(R.string.error_failed_save_income)
                             _uiState.value =
-                                AddEditIncomeUiState.Ready(
-                                    latest.form.copy(isSaving = false, saveError = e.message ?: failedSaveMessage),
-                                )
+                                AddEditIncomeUiState.Ready(latest.form.copy(isSaving = false, saveError = saveError))
                         }
                     }
             }

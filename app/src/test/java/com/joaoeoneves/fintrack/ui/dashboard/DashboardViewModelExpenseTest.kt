@@ -5,7 +5,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -146,7 +146,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             val viewModel = viewModel(expenseRepository = repo)
             collect(viewModel)
 
-            assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
+            assertEquals(DashboardUiState.Error(UiText.Dynamic("Firestore unavailable")), viewModel.uiState.value)
         }
 
     @Test
@@ -157,19 +157,10 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             val viewModel = viewModel(expenseRepository = repo)
             collect(viewModel)
 
-            assertEquals(DashboardUiState.Error("Something went wrong"), viewModel.uiState.value)
-        }
-
-    @Test
-    fun observeExpensesFailure_withNullExceptionMessage_andRealContext_usesContextGetString() =
-        runTest(testDispatcher) {
-            val repo = FakeExpenseRepository()
-            repo.nextObserveExpensesError = RuntimeException()
-            val context = FakeStringContext(R.string.error_generic_fallback, "translated generic error")
-            val viewModel = viewModel(expenseRepository = repo, context = context)
-            collect(viewModel)
-
-            assertEquals(DashboardUiState.Error("translated generic error"), viewModel.uiState.value)
+            assertEquals(
+                DashboardUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                viewModel.uiState.value,
+            )
         }
 
     @Test
@@ -180,7 +171,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             repo.nextObserveExpensesError = IllegalStateException("Firestore unavailable")
             val viewModel = viewModel(expenseRepository = repo)
             collect(viewModel)
-            assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
+            assertEquals(DashboardUiState.Error(UiText.Dynamic("Firestore unavailable")), viewModel.uiState.value)
 
             // The period hasn't changed, so only the retry trigger forces a re-subscription.
             repo.nextObserveExpensesError = null

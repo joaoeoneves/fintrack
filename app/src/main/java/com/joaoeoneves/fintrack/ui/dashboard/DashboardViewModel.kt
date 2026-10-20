@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,9 +20,10 @@ import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -72,11 +72,6 @@ class DashboardViewModel
         private val incomeRepository: IncomeRepository,
         savedStateHandle: SavedStateHandle,
         private val clock: Clock,
-        // Nullable with a default so existing unit tests that construct this ViewModel directly
-        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
-        // production. When null (test-only), the fallback below matches the exact literal those
-        // tests assert on.
-        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
         private val selection =
             PeriodSelection(savedStateHandle, KEY_PERIOD, Period.CurrentMonth.encode(), clock)
@@ -139,11 +134,7 @@ class DashboardViewModel
                 incomeRepository.observeIncome(range.startInclusive, range.endExclusive),
             ) { expenses, budgets, income -> expenses.toContent(header, budgets, income) }
                 .map<DashboardUiState.Content, DashboardUiState> { content -> content }
-                .catch { e ->
-                    val fallback =
-                        context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
-                    emit(DashboardUiState.Error(e.message ?: fallback))
-                }
+                .catch { e -> emit(DashboardUiState.Error(e.messageOr(R.string.error_generic_fallback))) }
         }
 
         fun onPeriodSelected(period: Period) = selection.select(period)
@@ -156,10 +147,10 @@ class DashboardViewModel
             retryTrigger.value++
         }
 
-        private val budgetErrors = Channel<String>(Channel.BUFFERED)
+        private val budgetErrors = Channel<UiText>(Channel.BUFFERED)
 
         /** One-shot user-facing messages for budget writes that failed, shown as a snackbar. */
-        val budgetErrorEvent: Flow<String> = budgetErrors.receiveAsFlow()
+        val budgetErrorEvent: Flow<UiText> = budgetErrors.receiveAsFlow()
 
         fun onSetBudget(
             category: ExpenseCategory,
@@ -167,7 +158,7 @@ class DashboardViewModel
         ) {
             viewModelScope.launch {
                 budgetRepository.setBudget(category, limitCents).onFailure {
-                    budgetErrors.send(context?.getString(R.string.error_budget_save_failed) ?: "Failed to save budget")
+                    budgetErrors.send(UiText.StringResource(R.string.error_budget_save_failed))
                 }
             }
         }
@@ -175,9 +166,7 @@ class DashboardViewModel
         fun onClearBudget(category: ExpenseCategory) {
             viewModelScope.launch {
                 budgetRepository.clearBudget(category).onFailure {
-                    budgetErrors.send(
-                        context?.getString(R.string.error_budget_remove_failed) ?: "Failed to remove budget",
-                    )
+                    budgetErrors.send(UiText.StringResource(R.string.error_budget_remove_failed))
                 }
             }
         }

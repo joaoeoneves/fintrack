@@ -7,7 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -415,7 +415,7 @@ class ExpenseListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
+            assertEquals(ExpenseListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
 
             job.cancel()
         }
@@ -430,29 +430,10 @@ class ExpenseListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            assertEquals(ExpenseListUiState.Error("Something went wrong"), vm.uiState.value)
-
-            job.cancel()
-        }
-
-    @Test
-    fun observeExpensesFailure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
-        runTest(testDispatcher) {
-            val repo = FakeExpenseRepository()
-            repo.nextObserveExpensesError = RuntimeException()
-            val context = FakeStringContext(R.string.error_generic_fallback, "translated generic error")
-            val vm =
-                ExpenseListViewModel(
-                    repo,
-                    SavedStateHandle(mapOf("period" to "current")),
-                    clock,
-                    context,
-                )
-
-            val job = launch { vm.uiState.collect {} }
-            advanceUntilIdle()
-
-            assertEquals(ExpenseListUiState.Error("translated generic error"), vm.uiState.value)
+            assertEquals(
+                ExpenseListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                vm.uiState.value,
+            )
 
             job.cancel()
         }
@@ -467,7 +448,7 @@ class ExpenseListViewModelTest {
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
-            assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
+            assertEquals(ExpenseListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
 
             // Clear the error on the underlying fake, then retry. Since period/query/sortOption
             // haven't changed, only the retry-trigger bump forces flatMapLatest to re-subscribe --

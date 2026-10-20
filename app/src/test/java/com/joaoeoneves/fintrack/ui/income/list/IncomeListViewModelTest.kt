@@ -7,7 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -411,7 +411,7 @@ class IncomeListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            assertEquals(IncomeListUiState.Error("Firestore unavailable"), vm.uiState.value)
+            assertEquals(IncomeListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
 
             job.cancel()
         }
@@ -426,29 +426,10 @@ class IncomeListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            assertEquals(IncomeListUiState.Error("Something went wrong"), vm.uiState.value)
-
-            job.cancel()
-        }
-
-    @Test
-    fun observeIncomeFailure_withNullExceptionMessage_andRealContext_usesContextGetString_notHardcodedFallback() =
-        runTest(testDispatcher) {
-            val repo = FakeIncomeRepository()
-            repo.nextObserveIncomeError = RuntimeException()
-            val context = FakeStringContext(R.string.error_generic_fallback, "translated generic error")
-            val vm =
-                IncomeListViewModel(
-                    repo,
-                    SavedStateHandle(mapOf("period" to "current")),
-                    clock,
-                    context,
-                )
-
-            val job = launch { vm.uiState.collect {} }
-            advanceUntilIdle()
-
-            assertEquals(IncomeListUiState.Error("translated generic error"), vm.uiState.value)
+            assertEquals(
+                IncomeListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                vm.uiState.value,
+            )
 
             job.cancel()
         }
@@ -463,7 +444,7 @@ class IncomeListViewModelTest {
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
-            assertEquals(IncomeListUiState.Error("Firestore unavailable"), vm.uiState.value)
+            assertEquals(IncomeListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
 
             // Clear the error on the underlying fake, then retry. Since the period itself hasn't
             // changed, only the retry-trigger bump forces flatMapLatest to re-subscribe -- proving

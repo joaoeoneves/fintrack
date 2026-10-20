@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.expense.list
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.UiText
 
 sealed interface ExpenseListUiState {
     data object Loading : ExpenseListUiState
@@ -17,6 +18,6 @@ sealed interface ExpenseListUiState {
     ) : ExpenseListUiState
 
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : ExpenseListUiState
 }

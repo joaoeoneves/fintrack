@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Income
@@ -39,6 +39,7 @@ import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.SearchField
 import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
+import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
@@ -105,7 +106,7 @@ fun IncomeListScreen(
 
             is IncomeListUiState.Error -> {
                 ErrorState(
-                    message = state.message,
+                    message = state.message.asString(),
                     onRetry = viewModel::onRetry,
                     modifier =
                         Modifier

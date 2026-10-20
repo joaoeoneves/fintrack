@@ -1,14 +1,16 @@
 package com.joaoeoneves.fintrack.ui.common
 
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 /**
- * Unit tests for the [CurrencyOption.symbol] and [CurrencyOption.displayName] extension
+ * Unit tests for the [CurrencyOption.symbol] and [CurrencyOption.displayNameRes] extension
  * properties in CurrencyDisplay.kt, mirroring the exhaustive per-entry mapping style of
- * [CategoryDisplayTest].
+ * [CategoryDisplayTest]. The resolved (localized) names are covered by
+ * [CurrencyDisplayNameResourcesTest].
  */
 class CurrencyDisplayTest {
     @Test
@@ -42,33 +44,33 @@ class CurrencyDisplayTest {
     }
 
     @Test
-    fun usd_mapsToUsDollarDisplayName() {
-        assertEquals("US Dollar", CurrencyOption.USD.displayName)
+    fun usd_mapsToUsdNameResource() {
+        assertEquals(R.string.currency_usd, CurrencyOption.USD.displayNameRes)
     }
 
     @Test
-    fun eur_mapsToEuroDisplayName() {
-        assertEquals("Euro", CurrencyOption.EUR.displayName)
+    fun eur_mapsToEurNameResource() {
+        assertEquals(R.string.currency_eur, CurrencyOption.EUR.displayNameRes)
     }
 
     @Test
-    fun gbp_mapsToBritishPoundDisplayName() {
-        assertEquals("British Pound", CurrencyOption.GBP.displayName)
+    fun gbp_mapsToGbpNameResource() {
+        assertEquals(R.string.currency_gbp, CurrencyOption.GBP.displayNameRes)
     }
 
     @Test
-    fun jpy_mapsToJapaneseYenDisplayName() {
-        assertEquals("Japanese Yen", CurrencyOption.JPY.displayName)
+    fun jpy_mapsToJpyNameResource() {
+        assertEquals(R.string.currency_jpy, CurrencyOption.JPY.displayNameRes)
     }
 
     @Test
-    fun cad_mapsToCanadianDollarDisplayName() {
-        assertEquals("Canadian Dollar", CurrencyOption.CAD.displayName)
+    fun cad_mapsToCadNameResource() {
+        assertEquals(R.string.currency_cad, CurrencyOption.CAD.displayNameRes)
     }
 
     @Test
-    fun aud_mapsToAustralianDollarDisplayName() {
-        assertEquals("Australian Dollar", CurrencyOption.AUD.displayName)
+    fun aud_mapsToAudNameResource() {
+        assertEquals(R.string.currency_aud, CurrencyOption.AUD.displayNameRes)
     }
 
     @Test
@@ -79,15 +81,6 @@ class CurrencyDisplayTest {
             val symbol = option.symbol
             assertNotNull("Expected a non-null symbol for $option", symbol)
             assert(symbol.isNotBlank()) { "Expected a non-blank symbol for $option" }
-        }
-    }
-
-    @Test
-    fun everyCurrencyOption_hasANonBlankDisplayName() {
-        for (option in CurrencyOption.entries) {
-            val name = option.displayName
-            assertNotNull("Expected a non-null displayName for $option", name)
-            assert(name.isNotBlank()) { "Expected a non-blank displayName for $option" }
         }
     }
 
@@ -105,13 +98,13 @@ class CurrencyDisplayTest {
     }
 
     @Test
-    fun allCurrencyOptions_mapToDistinctDisplayNames() {
-        val names = CurrencyOption.entries.map { it.displayName }
+    fun allCurrencyOptions_mapToDistinctNameResources() {
+        val resIds = CurrencyOption.entries.map { it.displayNameRes }
 
         assertEquals(
-            "Expected each CurrencyOption to map to a distinct displayName, but found duplicates",
+            "Expected each CurrencyOption to map to a distinct displayNameRes, but found duplicates",
             CurrencyOption.entries.size,
-            names.distinct().size,
+            resIds.distinct().size,
         )
     }
 }

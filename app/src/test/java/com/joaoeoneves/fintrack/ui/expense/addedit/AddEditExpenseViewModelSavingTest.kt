@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -76,7 +77,6 @@ class AddEditExpenseViewModelSavingTest {
     ) = AddEditExpenseViewModel(
         repository,
         SavedStateHandle(if (expenseId != null) mapOf("expenseId" to expenseId) else emptyMap()),
-        context = null,
     )
 
     private fun AddEditExpenseViewModel.form() = (uiState.value as AddEditUiState.Ready).form
@@ -174,7 +174,7 @@ class AddEditExpenseViewModelSavingTest {
             advanceUntilIdle()
 
             assertFalse(vm.form().isSaving)
-            assertEquals("offline", vm.form().saveError)
+            assertEquals(UiText.Dynamic("offline"), vm.form().saveError)
             assertEquals(0, savedCount())
 
             vm.onSave()

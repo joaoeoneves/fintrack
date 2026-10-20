@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.income.addedit
 
+import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import java.time.Instant
 
@@ -8,9 +9,9 @@ data class IncomeFormState(
     val amountText: String = "",
     val date: Instant = Instant.now(),
     val note: String = "",
-    val sourceError: String? = null,
-    val amountError: String? = null,
-    val saveError: String? = null,
+    val sourceError: UiText? = null,
+    val amountError: UiText? = null,
+    val saveError: UiText? = null,
     val isSaving: Boolean = false,
     val isEditMode: Boolean = false,
     val incomeId: String? = null,
@@ -27,6 +28,6 @@ sealed interface AddEditIncomeUiState {
     ) : AddEditIncomeUiState
 
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : AddEditIncomeUiState
 }

@@ -196,7 +196,7 @@ private fun EditBudgetDialog(
     onDismiss: () -> Unit,
 ) {
     val decimalSeparator = decimalSeparatorFor(currentLocale())
-    var amountText by remember { mutableStateOf(budget.limitCents?.toAmountInputText(decimalSeparator) ?: "") }
+    var amountText by remember { mutableStateOf(budget.limitCents?.toAmountInputText(decimalSeparator).orEmpty()) }
     var error by remember { mutableStateOf<String?>(null) }
     val invalidAmountMessage = stringResource(R.string.error_invalid_amount)
     val hasLimit = budget.limitCents != null

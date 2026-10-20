@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.settings
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
@@ -11,8 +10,8 @@ import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,16 +32,13 @@ class SettingsViewModel
         private val themeRepository: ThemeRepository,
         private val currencyRepository: CurrencyRepository,
         private val authRepository: AuthRepository,
-        // Nullable with defaults so existing unit tests that construct this ViewModel directly
+        // Nullable with a default so existing unit tests that construct this ViewModel directly
         // (bypassing Hilt) with only the original 3 positional args keep compiling; Hilt itself
-        // always supplies both in production. When languageRepository is null (test-only), the
-        // language always reads as AppLanguage.PORTUGUESE, matching SettingsUiState()'s own default.
-        // When context is null, signOutError falls back to the literal "Sign-out failed" (the
-        // English error_sign_out_failed string), which is what those tests assert on.
+        // always supplies it in production. When null (test-only), the language always reads as
+        // AppLanguage.PORTUGUESE, matching SettingsUiState()'s own default.
         private val languageRepository: LanguageRepository? = null,
-        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
-        private val signOutError = MutableStateFlow<String?>(null)
+        private val signOutError = MutableStateFlow<UiText?>(null)
 
         val uiState: StateFlow<SettingsUiState> =
             combine(
@@ -81,7 +77,7 @@ class SettingsViewModel
             viewModelScope.launch {
                 authRepository.signOut().onFailure {
                     // Deliberately not e.message: raw SDK messages aren't user-facing.
-                    signOutError.value = context?.getString(R.string.error_sign_out_failed) ?: "Sign-out failed"
+                    signOutError.value = UiText.StringResource(R.string.error_sign_out_failed)
                 }
             }
         }

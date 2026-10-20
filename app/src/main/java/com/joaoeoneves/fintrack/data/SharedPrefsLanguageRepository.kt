@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
@@ -44,7 +45,7 @@ class SharedPrefsLanguageRepository
         }
 
         override suspend fun setLanguage(language: AppLanguage) {
-            prefs.edit().putString(KEY_LANGUAGE, language.name).apply()
+            prefs.edit { putString(KEY_LANGUAGE, language.name) }
             languageFlow.value = language
             AppCompatDelegate.setApplicationLocales(language.toLocaleListCompat())
         }

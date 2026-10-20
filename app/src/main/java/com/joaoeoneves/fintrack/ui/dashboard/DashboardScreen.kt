@@ -33,10 +33,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
@@ -45,6 +46,7 @@ import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
+import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
@@ -61,8 +63,9 @@ fun DashboardScreen(
     OnResumeEffect(onResume = viewModel::onRetry)
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val resources = LocalResources.current
     LaunchedEffect(Unit) {
-        viewModel.budgetErrorEvent.collect { snackbarHostState.showSnackbar(it) }
+        viewModel.budgetErrorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
     }
 
     Scaffold(
@@ -107,7 +110,7 @@ fun DashboardScreen(
 
             is DashboardUiState.Error -> {
                 ErrorState(
-                    message = state.message,
+                    message = state.message.asString(),
                     onRetry = viewModel::onRetry,
                     modifier =
                         Modifier

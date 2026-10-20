@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -74,7 +75,6 @@ class AddEditIncomeViewModelSavingTest {
     ) = AddEditIncomeViewModel(
         repository,
         SavedStateHandle(if (incomeId != null) mapOf("incomeId" to incomeId) else emptyMap()),
-        context = null,
     )
 
     private fun AddEditIncomeViewModel.form() = (uiState.value as AddEditIncomeUiState.Ready).form
@@ -172,7 +172,7 @@ class AddEditIncomeViewModelSavingTest {
             advanceUntilIdle()
 
             assertFalse(vm.form().isSaving)
-            assertEquals("offline", vm.form().saveError)
+            assertEquals(UiText.Dynamic("offline"), vm.form().saveError)
             assertEquals(0, savedCount())
 
             vm.onSave()

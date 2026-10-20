@@ -54,8 +54,13 @@
     <string name="category_shopping">Shopping</string>
     <string name="category_recurring">Recurring</string>
 
-    <!-- Currencies: deliberately NOT extracted to string resources. CurrencyOption.displayName
-         in CurrencyDisplay.kt stays hardcoded English on purpose. See that file's KDoc. -->
+    <!-- Currencies -->
+    <string name="currency_usd">US Dollar</string>
+    <string name="currency_eur">Euro</string>
+    <string name="currency_gbp">British Pound</string>
+    <string name="currency_jpy">Japanese Yen</string>
+    <string name="currency_cad">Canadian Dollar</string>
+    <string name="currency_aud">Australian Dollar</string>
 
     <!-- Period selector -->
     <string name="period_this_month">This month</string>

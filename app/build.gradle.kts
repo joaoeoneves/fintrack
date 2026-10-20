@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.serialization)
@@ -68,6 +68,12 @@ android {
         compose = true
         buildConfig = true
     }
+    sourceSets {
+        // Hand-written repository fakes shared by JVM unit tests and instrumented tests, kept out
+        // of the production APK.
+        getByName("test").java.srcDir("src/test/shared/java")
+        getByName("androidTest").java.srcDir("src/test/shared/java")
+    }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -90,6 +96,9 @@ detekt {
     parallel = true
     config.setFrom(file("config/detekt/detekt.yml"))
     baseline = file("config/detekt/baseline.xml")
+    source.setFrom(
+        files("src/main/java", "src/main/kotlin", "src/test/java", "src/test/kotlin", "src/test/shared/java"),
+    )
 }
 
 dependencies {
@@ -105,7 +114,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
@@ -113,7 +122,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
-    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)

@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.YearMonth
 
 data class CategoryTotal(
@@ -53,6 +54,6 @@ sealed interface DashboardUiState {
     ) : DashboardUiState
 
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : DashboardUiState
 }
