@@ -71,6 +71,34 @@ class FirestoreBudgetRepositoryTest {
     }
 
     @Test
+    fun foodDocId_parsesToFoodBudget() {
+        val snapshot =
+            TestDocumentSnapshots.found(
+                firestore,
+                id = "FOOD",
+                fields = mapOf("limitCents" to TestDocumentSnapshots.longValue(25_000L)),
+                collection = "budgets",
+            )
+
+        assertEquals(Budget(ExpenseCategory.FOOD, 25_000L), toBudgetOrNull(snapshot))
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun unknownDocId_groceries_isStillDroppedAsNull() {
+        val snapshot =
+            TestDocumentSnapshots.found(
+                firestore,
+                id = "GROCERIES",
+                fields = mapOf("limitCents" to TestDocumentSnapshots.longValue(25_000L)),
+                collection = "budgets",
+            )
+
+        assertNull(toBudgetOrNull(snapshot))
+        assertTrue(ShadowLog.getLogsForTag(TAG).any { it.msg.contains("'category'") })
+    }
+
+    @Test
     fun malformedDoc_idNotAValidCategory_isDroppedAsNull_andLogsWarning() {
         val snapshot =
             TestDocumentSnapshots.found(

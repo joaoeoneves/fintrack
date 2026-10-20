@@ -8,6 +8,7 @@ package com.joaoeoneves.fintrack.ui.common
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ val ExpenseCategory.displayName: String
             ExpenseCategory.TRANSFER -> stringResource(R.string.category_transfer)
             ExpenseCategory.INVESTMENTS -> stringResource(R.string.category_investments)
             ExpenseCategory.SHOPPING -> stringResource(R.string.category_shopping)
+            ExpenseCategory.FOOD -> stringResource(R.string.category_food)
             ExpenseCategory.RECURRING -> stringResource(R.string.category_recurring)
         }
 
@@ -41,6 +43,7 @@ private fun lightCategoryColor(category: ExpenseCategory): Color =
         ExpenseCategory.TRANSFER -> Color(0xFF2563EB)
         ExpenseCategory.INVESTMENTS -> Color(0xFF059669)
         ExpenseCategory.SHOPPING -> Color(0xFFD97706)
+        ExpenseCategory.FOOD -> Color(0xFF7C3AED)
         ExpenseCategory.RECURRING -> Color(0xFFDC2626)
     }
 
@@ -53,6 +56,7 @@ private fun darkCategoryColor(category: ExpenseCategory): Color =
         ExpenseCategory.TRANSFER -> Color(0xFF3B82F6)
         ExpenseCategory.INVESTMENTS -> Color(0xFF10B981)
         ExpenseCategory.SHOPPING -> Color(0xFFF59E0B)
+        ExpenseCategory.FOOD -> Color(0xFF8B5CF6)
         ExpenseCategory.RECURRING -> Color(0xFFEF4444)
     }
 
@@ -81,5 +85,6 @@ val ExpenseCategory.icon: ImageVector
             ExpenseCategory.TRANSFER -> Icons.Filled.SwapHoriz
             ExpenseCategory.INVESTMENTS -> Icons.AutoMirrored.Filled.TrendingUp
             ExpenseCategory.SHOPPING -> Icons.Filled.ShoppingCart
+            ExpenseCategory.FOOD -> Icons.Filled.Restaurant
             ExpenseCategory.RECURRING -> Icons.Filled.Autorenew
         }

@@ -163,7 +163,7 @@ class ExpenseCsvWriterTest {
     }
 
     @Test
-    fun roundTrip_allFourCategories_matchAfterWriteAndParse() {
+    fun roundTrip_allCategories_matchAfterWriteAndParse() {
         val originals =
             ExpenseCategory.entries.mapIndexed { index, category ->
                 expense(

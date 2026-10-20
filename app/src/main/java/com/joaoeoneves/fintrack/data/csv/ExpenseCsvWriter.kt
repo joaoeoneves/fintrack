@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.csv
 
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 
 private const val HEADER = "name,amountCents,category,date,note"
 
@@ -25,14 +24,6 @@ object ExpenseCsvWriter {
         }
         return lines.joinToString("\n")
     }
-
-    private fun ExpenseCategory.canonicalName(): String =
-        when (this) {
-            ExpenseCategory.TRANSFER -> "Transfer"
-            ExpenseCategory.INVESTMENTS -> "Investments"
-            ExpenseCategory.SHOPPING -> "Shopping"
-            ExpenseCategory.RECURRING -> "Recurring"
-        }
 
     private fun escapeCsvField(field: String): String {
         val needsQuoting = field.contains(',') || field.contains('"') || field.contains('\n') || field.contains('\r')

@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.common
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
@@ -31,6 +32,11 @@ class CategoryDisplayTest {
     }
 
     @Test
+    fun food_mapsToRestaurantIcon() {
+        assertEquals(Icons.Filled.Restaurant, ExpenseCategory.FOOD.icon)
+    }
+
+    @Test
     fun recurring_mapsToAutorenewIcon() {
         assertEquals(Icons.Filled.Autorenew, ExpenseCategory.RECURRING.icon)
     }
@@ -48,8 +54,8 @@ class CategoryDisplayTest {
 
     @Test
     fun allCategories_mapToDistinctIcons() {
-        // No two categories should accidentally share the same icon -- each of the 4 fixed
-        // categories must be visually distinguishable by icon alone.
+        // No two categories should accidentally share the same icon -- every fixed category must be
+        // visually distinguishable by icon alone.
         val icons = ExpenseCategory.entries.map { it.icon }
 
         assertEquals(

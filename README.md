@@ -37,8 +37,8 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 
 ### Features
 
-- **Expense tracking** — add/edit/delete expenses with a name, amount, one of four fixed categories
-  (Transfer, Investments, Shopping, Recurring), date, and an optional note.
+- **Expense tracking** — add/edit/delete expenses with a name, amount, one of five fixed categories
+  (Transfer, Investments, Shopping, Food, Recurring), date, and an optional note.
 - **Income tracking** — a separate, parallel entity (free-text source like "Salary" or "Freelance" instead
   of a fixed category), kept intentionally independent of expenses so it could be added later with zero
   risk to the existing expense code.
@@ -110,7 +110,7 @@ different, nav-entry-scoped instance.
 users/{uid}/expenses/{expenseId}
   name: string
   amountCents: number       // integer minor units, always > 0 — avoids float rounding errors
-  category: string          // TRANSFER | INVESTMENTS | SHOPPING | RECURRING
+  category: string          // TRANSFER | INVESTMENTS | SHOPPING | FOOD | RECURRING
   isRefund: boolean         // optional, absent = false; a refund subtracts from its category
   date: timestamp
   note: string | null

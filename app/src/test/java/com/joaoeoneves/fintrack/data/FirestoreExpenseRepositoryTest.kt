@@ -155,6 +155,26 @@ class FirestoreExpenseRepositoryTest {
     }
 
     @Test
+    fun foodCategory_parsesToFood_andIsNotDropped() {
+        val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("FOOD"))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "food1", fields = fields)
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(com.joaoeoneves.fintrack.domain.model.ExpenseCategory.FOOD, result?.category)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun unknownCategoryName_groceries_isStillDroppedAsNull() {
+        val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("GROCERIES"))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "groceries", fields = fields)
+
+        assertNull(toExpenseOrNull(snapshot))
+        assertTrue(ShadowLog.getLogsForTag(TAG).any { it.msg.contains("'category'") })
+    }
+
+    @Test
     fun malformedDoc_missingDate_isDroppedAsNull_andLogsWarning() {
         val snapshot = TestDocumentSnapshots.found(firestore, id = "bad-date", fields = validFields() - "date")
 

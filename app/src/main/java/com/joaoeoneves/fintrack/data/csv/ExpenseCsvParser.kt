@@ -20,15 +20,6 @@ private const val COLUMN_CATEGORY = 2
 private const val COLUMN_DATE = 3
 private const val COLUMN_NOTE = 4
 
-/** Human-readable category name also accepted in the CSV `category` column. */
-private fun ExpenseCategory.canonicalName(): String =
-    when (this) {
-        ExpenseCategory.TRANSFER -> "Transfer"
-        ExpenseCategory.INVESTMENTS -> "Investments"
-        ExpenseCategory.SHOPPING -> "Shopping"
-        ExpenseCategory.RECURRING -> "Recurring"
-    }
-
 /** Outcome of validating a single, correctly-shaped CSV data row. */
 private sealed interface ParsedRow {
     data class Valid(

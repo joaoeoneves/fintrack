@@ -27,7 +27,14 @@ class ExpenseListFilterTest {
         coffee.copy(id = "r", name = "Rent", amountCents = 90_000L, category = ExpenseCategory.RECURRING, note = null)
     private val etf =
         coffee.copy(id = "i", name = "ETF", amountCents = 20_000L, category = ExpenseCategory.INVESTMENTS, note = null)
-    private val ptLabels = mapOf(ExpenseCategory.SHOPPING to "Compras", ExpenseCategory.RECURRING to "Recorrente")
+    private val groceries =
+        coffee.copy(id = "f", name = "Supermarket", amountCents = 3_210L, category = ExpenseCategory.FOOD, note = null)
+    private val ptLabels =
+        mapOf(
+            ExpenseCategory.SHOPPING to "Compras",
+            ExpenseCategory.FOOD to "Alimentação",
+            ExpenseCategory.RECURRING to "Recorrente",
+        )
 
     private fun List<Expense>.content(
         query: String = "",
@@ -53,6 +60,20 @@ class ExpenseListFilterTest {
     fun matchesQuery_localizedCategoryLabel() {
         assertTrue(coffee.matchesQuery("compr", ptLabels))
         assertFalse(rent.matchesQuery("compr", ptLabels))
+    }
+
+    @Test
+    fun matchesQuery_ptFoodLabel_matchesFoodExpenseOnly() {
+        assertTrue(groceries.matchesQuery("Alimentação", ptLabels))
+        assertTrue(groceries.matchesQuery("aliment", ptLabels))
+        assertFalse(coffee.matchesQuery("Alimentação", ptLabels))
+        assertFalse(rent.matchesQuery("Alimentação", ptLabels))
+    }
+
+    @Test
+    fun matchesQuery_foodEnumName_withNoLabels() {
+        assertTrue(groceries.matchesQuery("food", emptyMap()))
+        assertFalse(coffee.matchesQuery("food", emptyMap()))
     }
 
     @Test
@@ -96,6 +117,29 @@ class ExpenseListFilterTest {
 
         assertEquals(listOf(rent), content.expenses)
         assertEquals(ExpenseCategory.RECURRING, content.categoryFilter)
+    }
+
+    @Test
+    fun toListContent_foodCategoryFilter_showsOnlyFood() {
+        val lunch = coffee.copy(id = "l", name = "Lunch", category = ExpenseCategory.FOOD)
+
+        val content = listOf(coffee, groceries, rent, etf, lunch).content(category = ExpenseCategory.FOOD)
+
+        assertEquals(setOf(groceries, lunch), content.expenses.toSet())
+        assertTrue(content.expenses.all { it.category == ExpenseCategory.FOOD })
+        assertEquals(ExpenseCategory.FOOD, content.categoryFilter)
+    }
+
+    @Test
+    fun toListContent_foodCategoryFilter_noFoodExpenses_isEmpty() {
+        assertTrue(listOf(coffee, rent, etf).content(category = ExpenseCategory.FOOD).expenses.isEmpty())
+    }
+
+    @Test
+    fun toListContent_ptFoodLabelQuery_withNoCategoryFilter_findsFood() {
+        val content = listOf(coffee, groceries, rent).content(query = "alimentação", labels = ptLabels)
+
+        assertEquals(listOf(groceries), content.expenses)
     }
 
     @Test

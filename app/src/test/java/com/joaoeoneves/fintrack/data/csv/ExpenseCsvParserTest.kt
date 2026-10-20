@@ -108,14 +108,15 @@ class ExpenseCsvParserTest {
     }
 
     @Test
-    fun category_acceptsAllFourValues() {
+    fun category_acceptsEveryCanonicalName() {
         val csv =
             """
             $header
             A,100,Transfer,2024-01-01,
             B,100,Investments,2024-01-01,
             C,100,Shopping,2024-01-01,
-            D,100,Recurring,2024-01-01,
+            D,100,Food,2024-01-01,
+            E,100,Recurring,2024-01-01,
             """.trimIndent()
 
         val result = parsed(csv)
@@ -126,6 +127,7 @@ class ExpenseCsvParserTest {
                 ExpenseCategory.TRANSFER,
                 ExpenseCategory.INVESTMENTS,
                 ExpenseCategory.SHOPPING,
+                ExpenseCategory.FOOD,
                 ExpenseCategory.RECURRING,
             ),
             result.validExpenses.map { it.category },

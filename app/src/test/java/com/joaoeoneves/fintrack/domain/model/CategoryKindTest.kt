@@ -11,6 +11,7 @@ class CategoryKindTest {
                 ExpenseCategory.TRANSFER to CategoryKind.SPENDING,
                 ExpenseCategory.INVESTMENTS to CategoryKind.SAVING,
                 ExpenseCategory.SHOPPING to CategoryKind.SPENDING,
+                ExpenseCategory.FOOD to CategoryKind.SPENDING,
                 ExpenseCategory.RECURRING to CategoryKind.SPENDING,
             )
 

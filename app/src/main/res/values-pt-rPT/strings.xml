@@ -52,6 +52,7 @@
     <string name="category_transfer">Transferência</string>
     <string name="category_investments">Investimentos</string>
     <string name="category_shopping">Compras</string>
+    <string name="category_food">Alimentação</string>
     <string name="category_recurring">Recorrente</string>
 
     <!-- Moedas -->

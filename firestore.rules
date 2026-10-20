@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function isValidCategory(category) {
-      return category in ['TRANSFER', 'INVESTMENTS', 'SHOPPING', 'RECURRING'];
+      return category in ['TRANSFER', 'INVESTMENTS', 'SHOPPING', 'FOOD', 'RECURRING'];
     }
 
     function isValidAmountCents(amountCents) {
@@ -51,7 +51,7 @@ service cloud.firestore {
     }
 
     // Each user can only read/write their own per-category budget limits; the
-    // document id doubles as the category, so it must be one of the four
+    // document id doubles as the category, so it must be one of the five
     // known categories and the limit must be a positive integer.
     match /users/{userId}/budgets/{categoryId} {
       allow read, delete: if isOwner(userId);

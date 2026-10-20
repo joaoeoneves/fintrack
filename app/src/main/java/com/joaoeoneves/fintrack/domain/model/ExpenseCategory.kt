@@ -10,5 +10,6 @@ enum class ExpenseCategory(
     TRANSFER(CategoryKind.SPENDING),
     INVESTMENTS(CategoryKind.SAVING),
     SHOPPING(CategoryKind.SPENDING),
+    FOOD(CategoryKind.SPENDING),
     RECURRING(CategoryKind.SPENDING),
 }

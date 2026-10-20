@@ -33,7 +33,8 @@ import java.time.temporal.ChronoUnit
 /**
  * Shared fixtures/setup for [DashboardViewModel] tests, split by feature area into
  * [DashboardViewModelExpenseTest], [DashboardViewModelBudgetTest], [DashboardViewModelBudgetEditTest],
- * [DashboardViewModelIncomeTest] and [DashboardViewModelPeriodTest].
+ * [DashboardViewModelIncomeTest], [DashboardViewModelPeriodTest], [DashboardViewModelRefundTest] and
+ * [DashboardViewModelFoodCategoryTest].
  *
  * "Now" is a fixed [clock] (2026-10-20 12:00 UTC) injected into the ViewModel, so every fixture
  * lands deterministically inside/outside the current month -- no `Instant.now()` and no

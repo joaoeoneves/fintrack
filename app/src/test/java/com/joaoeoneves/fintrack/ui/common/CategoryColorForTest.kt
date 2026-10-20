@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -30,6 +31,11 @@ class CategoryColorForTest {
     }
 
     @Test
+    fun food_lightMode_resolvesToBrandViolet() {
+        assertEquals(Color(0xFF7C3AED), categoryColorFor(ExpenseCategory.FOOD, isDarkTheme = false))
+    }
+
+    @Test
     fun recurring_lightMode_resolvesToBrandRed() {
         assertEquals(Color(0xFFDC2626), categoryColorFor(ExpenseCategory.RECURRING, isDarkTheme = false))
     }
@@ -52,6 +58,11 @@ class CategoryColorForTest {
     }
 
     @Test
+    fun food_darkMode_resolvesToTunedViolet() {
+        assertEquals(Color(0xFF8B5CF6), categoryColorFor(ExpenseCategory.FOOD, isDarkTheme = true))
+    }
+
+    @Test
     fun recurring_darkMode_resolvesToTunedRed() {
         assertEquals(Color(0xFFEF4444), categoryColorFor(ExpenseCategory.RECURRING, isDarkTheme = true))
     }
@@ -69,5 +80,23 @@ class CategoryColorForTest {
                 dark,
             )
         }
+    }
+
+    // ---- within a theme: no two categories may share a color (pie slices must be distinguishable) ----
+
+    @Test
+    fun lightColors_arePairwiseDistinct() {
+        assertPairwiseDistinct(isDarkTheme = false)
+    }
+
+    @Test
+    fun darkColors_arePairwiseDistinct() {
+        assertPairwiseDistinct(isDarkTheme = true)
+    }
+
+    private fun assertPairwiseDistinct(isDarkTheme: Boolean) {
+        val colors = ExpenseCategory.entries.associateWith { categoryColorFor(it, isDarkTheme) }
+        val duplicates = colors.entries.groupBy({ it.value }, { it.key }).filterValues { it.size > 1 }
+        assertTrue("Categories sharing a color (dark=$isDarkTheme): $duplicates", duplicates.isEmpty())
     }
 }
