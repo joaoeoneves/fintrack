@@ -70,6 +70,17 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: ".*Investments.*"
 - assertVisible: ".*Shopping.*"
 - assertVisible: ".*Recurring.*"
+# B6: capture the Dashboard so the outer-Scaffold-padding removal can be checked visually (no
+# doubled gap above the "FinTrack" top bar, last card not clipped above the nav bar).
+- takeScreenshot: build/maestro/golden-path-dashboard
+- scroll
+- scroll
+- scroll
+- scroll
+- takeScreenshot: build/maestro/golden-path-dashboard-bottom
+- scrollUntilVisible:
+    element: "Net Balance"
+    direction: UP
 
 # --- 2: Add a new expense via the Dashboard's "Recent expenses" card plus icon ---
 # That card is pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/
@@ -107,9 +118,13 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "All expenses"
 - tapOn: "Maestro E2E Test Expense"
 - assertVisible: "Edit expense"
+# B4: in edit mode the amount is prefilled with the display currency's decimal separator -- EUR
+# (pinned in step 0b) uses ',' so the field must show "12,34", not "12.34".
+- assertVisible: "12,34"
 - tapOn: "Amount"
 - eraseText
-- inputText: "56.78"
+# B4: the amount field accepts ',' as the decimal separator (decimal keyboard).
+- inputText: "56,78"
 - hideKeyboard
 - tapOn: "Save"
 

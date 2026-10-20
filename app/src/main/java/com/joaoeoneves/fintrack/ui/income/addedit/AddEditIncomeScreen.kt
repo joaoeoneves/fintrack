@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +47,7 @@ fun AddEditIncomeScreen(
     viewModel: AddEditIncomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val readyForm = (uiState as? AddEditIncomeUiState.Ready)?.form
 
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collectLatest { onSaved() }
@@ -55,7 +58,7 @@ fun AddEditIncomeScreen(
         topBar = {
             AddEditIncomeTopBar(
                 isEditMode = viewModel.isEditRoute,
-                isSaveEnabled = (uiState as? AddEditIncomeUiState.Ready)?.form?.isValid == true,
+                isSaveEnabled = readyForm != null && readyForm.isValid && !readyForm.isSaving,
                 onCancel = onCancel,
                 onSave = viewModel::onSave,
             )
@@ -199,6 +202,7 @@ private fun IncomeSourceAndAmountFields(
         label = { Text(stringResource(R.string.field_amount)) },
         isError = form.amountError != null,
         supportingText = { form.amountError?.let { Text(it) } },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )

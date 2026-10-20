@@ -7,8 +7,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.ui.common.decimalSeparator
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
+import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.navigation.AddEditIncome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -33,6 +37,9 @@ class AddEditIncomeViewModel
         // production. When null (test-only), the fallbacks below match the exact literals those
         // tests assert on.
         @param:ApplicationContext private val context: Context? = null,
+        // Nullable with a default for the same reason as context: when null (test-only), edit-mode
+        // amounts are prefilled with '.' as the decimal separator.
+        private val currencyRepository: CurrencyRepository? = null,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditIncome>()
 
@@ -56,12 +63,13 @@ class AddEditIncomeViewModel
                     incomeRepository
                         .getIncome(incomeId)
                         .onSuccess { existing ->
+                            val separator = currencyRepository?.observeCurrency()?.first()?.decimalSeparator ?: '.'
                             _uiState.value =
                                 if (existing != null) {
                                     AddEditIncomeUiState.Ready(
                                         IncomeFormState(
                                             source = existing.source,
-                                            amountText = existing.amountCents.toAmountText(),
+                                            amountText = existing.amountCents.toAmountInputText(separator),
                                             date = existing.date,
                                             note = existing.note ?: "",
                                             isEditMode = true,
@@ -99,7 +107,7 @@ class AddEditIncomeViewModel
 
         fun onSave() {
             val current = _uiState.value
-            if (current !is AddEditIncomeUiState.Ready) return
+            if (current !is AddEditIncomeUiState.Ready || current.form.isSaving) return
             val form = current.form
 
             val sourceRequiredMessage = context?.getString(R.string.error_source_required) ?: "Source is required"
@@ -115,6 +123,7 @@ class AddEditIncomeViewModel
             }
 
             val amountCents = amountResult.getOrThrow()
+            _uiState.value = AddEditIncomeUiState.Ready(form.copy(isSaving = true))
             viewModelScope.launch {
                 val income =
                     Income(
@@ -140,7 +149,7 @@ class AddEditIncomeViewModel
                                 context?.getString(R.string.error_failed_save_income) ?: "Failed to save income"
                             _uiState.value =
                                 AddEditIncomeUiState.Ready(
-                                    latest.form.copy(saveError = e.message ?: failedSaveMessage),
+                                    latest.form.copy(isSaving = false, saveError = e.message ?: failedSaveMessage),
                                 )
                         }
                     }
@@ -154,11 +163,3 @@ class AddEditIncomeViewModel
             }
         }
     }
-
-private const val CENTS_PER_UNIT = 100
-
-private fun Long.toAmountText(): String {
-    val whole = this / CENTS_PER_UNIT
-    val fraction = (this % CENTS_PER_UNIT).let { if (it < 0) -it else it }
-    return "$whole.${fraction.toString().padStart(2, '0')}"
-}

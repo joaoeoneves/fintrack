@@ -15,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -98,11 +100,30 @@ class DashboardViewModel
             retryTrigger.value++
         }
 
+        private val budgetErrors = Channel<String>(Channel.BUFFERED)
+
+        /** One-shot user-facing messages for budget writes that failed, shown as a snackbar. */
+        val budgetErrorEvent: Flow<String> = budgetErrors.receiveAsFlow()
+
         fun onSetBudget(
             category: ExpenseCategory,
             limitCents: Long,
         ) {
-            viewModelScope.launch { budgetRepository.setBudget(category, limitCents) }
+            viewModelScope.launch {
+                budgetRepository.setBudget(category, limitCents).onFailure {
+                    budgetErrors.send(context?.getString(R.string.error_budget_save_failed) ?: "Failed to save budget")
+                }
+            }
+        }
+
+        fun onClearBudget(category: ExpenseCategory) {
+            viewModelScope.launch {
+                budgetRepository.clearBudget(category).onFailure {
+                    budgetErrors.send(
+                        context?.getString(R.string.error_budget_remove_failed) ?: "Failed to remove budget",
+                    )
+                }
+            }
         }
 
         private fun List<Expense>.toContent(

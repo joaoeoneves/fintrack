@@ -9,7 +9,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -61,12 +63,18 @@ class FirestoreIncomeRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = income.toFirestoreMap(includeCreatedAt = true)
-                val reference = incomeCollection(uid).add(data).await()
-                Result.success(reference.id)
+                val collection = incomeCollection(uid)
+                val docRef = if (income.id.isBlank()) collection.document() else collection.document(income.id)
+                // Not awaited: the write lands in Firestore's local cache immediately and syncs when
+                // the device is online. Awaiting would suspend until server acknowledgement, which
+                // hangs the save indefinitely while offline.
+                docRef.set(data).addOnFailureListener { Log.w(TAG, "Add income write ${docRef.id} failed", it) }
+                Result.success(docRef.id)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Broad catch: Firestore Task failures aren't narrowly typed (network, permission,
-                // and server errors all surface as generic/undocumented exception subtypes here);
-                // convert any failure into a Result for the caller.
+                // Broad catch: Firestore can throw synchronously for invalid input/state with
+                // undocumented exception subtypes; convert any failure into a Result for the caller.
                 Result.failure(e)
             }
         }
@@ -77,8 +85,12 @@ class FirestoreIncomeRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = income.toFirestoreMap(includeCreatedAt = false)
-                incomeCollection(uid).document(income.id).update(data).await()
+                val docRef = incomeCollection(uid).document(income.id)
+                // Not awaited: see addIncome above.
+                docRef.update(data).addOnFailureListener { Log.w(TAG, "Update income write ${docRef.id} failed", it) }
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addIncome above.
                 Result.failure(e)
@@ -91,19 +103,13 @@ class FirestoreIncomeRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val docRef = incomeCollection(uid).document(id)
-                firestore
-                    .runTransaction<Unit> { transaction ->
-                        val snapshot = transaction.get(docRef)
-                        if (!snapshot.exists()) {
-                            throw NoSuchElementException("Income with id $id not found")
-                        }
-                        transaction.delete(docRef)
-                        Unit
-                    }.await()
+                // Not awaited (see addIncome above); deleting a missing document is a no-op.
+                docRef.delete().addOnFailureListener { Log.w(TAG, "Delete income write ${docRef.id} failed", it) }
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Broad catch: covers both Firestore Task failures and the NoSuchElementException
-                // thrown above when the document is missing, converting either into a Result.
+                // Broad catch: see addIncome above.
                 Result.failure(e)
             }
         }
@@ -120,6 +126,8 @@ class FirestoreIncomeRepository
                         .await()
                         .toIncomeOrNull()
                 Result.success(income)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addIncome above.
                 Result.failure(e)
@@ -133,19 +141,22 @@ class FirestoreIncomeRepository
             return try {
                 val snapshot = incomeCollection(uid).get().await()
                 Result.success(snapshot.toIncomeList())
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addIncome above.
                 Result.failure(e)
             }
         }
 
-        override suspend fun addIncomeList(income: List<Income>): Result<Int> {
+        override suspend fun addIncomeList(income: List<Income>): BulkAddResult {
             val uid =
                 firebaseAuth.currentUser?.uid
-                    ?: return Result.failure(IllegalStateException("Not signed in"))
-            return try {
-                var total = 0
-                income.chunked(BATCH_CHUNK_SIZE).forEach { chunk ->
+                    ?: return BulkAddResult(0, IllegalStateException("Not signed in"))
+            var total = 0
+            var failure: Throwable? = null
+            for (chunk in income.chunked(BATCH_CHUNK_SIZE)) {
+                try {
                     val batch = firestore.batch()
                     chunk.forEach { item ->
                         val docRef = incomeCollection(uid).document()
@@ -153,12 +164,15 @@ class FirestoreIncomeRepository
                     }
                     batch.commit().await()
                     total += chunk.size
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Broad catch: see addIncome above.
+                    failure = e
+                    break
                 }
-                Result.success(total)
-            } catch (e: Exception) {
-                // Broad catch: see addIncome above.
-                Result.failure(e)
             }
+            return BulkAddResult(total, failure)
         }
     }
 

@@ -11,4 +11,6 @@ interface BudgetRepository {
         category: ExpenseCategory,
         limitCents: Long,
     ): Result<Unit>
+
+    suspend fun clearBudget(category: ExpenseCategory): Result<Unit>
 }

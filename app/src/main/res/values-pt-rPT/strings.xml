@@ -4,6 +4,7 @@
     <!-- Ações partilhadas -->
     <string name="action_save">Guardar</string>
     <string name="action_cancel">Cancelar</string>
+    <string name="action_remove">Remover</string>
     <string name="action_ok">OK</string>
     <string name="action_retry">Tentar novamente</string>
     <string name="action_undo">Anular</string>
@@ -31,6 +32,8 @@
     <string name="error_generic_fallback">Ocorreu um problema</string>
     <string name="error_invalid_amount">Introduza um montante válido</string>
     <string name="error_sign_in_failed">Falha ao iniciar sessão</string>
+    <string name="error_budget_save_failed">Não foi possível guardar o orçamento</string>
+    <string name="error_budget_remove_failed">Não foi possível remover o orçamento</string>
     <string name="error_sign_out_failed">Falha ao terminar sessão</string>
 
     <!-- Autenticação -->

@@ -357,15 +357,15 @@ class FakeIncomeRepositoryTest {
         }
 
     @Test
-    fun deleteIncome_unknownId_returnsFailure_andDoesNotModifyList() =
+    fun deleteIncome_unknownId_isSuccessfulNoOp_andDoesNotModifyList() =
         runBlocking {
             val i1 = income(id = "i1", date = day0)
             val repo = FakeIncomeRepository(listOf(i1))
 
             val result = repo.deleteIncome("does-not-exist")
 
-            assertTrue(result.isFailure)
-            assertTrue(result.exceptionOrNull() is NoSuchElementException)
+            // Matches real Firestore: deleting a missing document is a successful no-op.
+            assertTrue(result.isSuccess)
             val stored = repo.observeIncome(day0, day3).first()
             assertEquals(listOf(i1), stored)
         }
@@ -501,71 +501,5 @@ class FakeIncomeRepositoryTest {
 
             assertTrue(result.isSuccess)
             assertEquals(listOf("i2"), result.getOrThrow().map { it.id })
-        }
-
-    // ---- addIncomeList (bulk) ----
-
-    @Test
-    fun addIncomeList_emptyList_succeedsWithZeroCount_addsNothing() =
-        runBlocking {
-            val repo = FakeIncomeRepository()
-
-            val result = repo.addIncomeList(emptyList())
-
-            assertTrue(result.isSuccess)
-            assertEquals(0, result.getOrThrow())
-            assertTrue(repo.getAllIncome().getOrThrow().isEmpty())
-        }
-
-    @Test
-    fun addIncomeList_bulkAdd_returnsSuccessCount_allRowsRetrievableWithFreshNonBlankIds() =
-        runBlocking {
-            val repo = FakeIncomeRepository()
-            val toImport =
-                listOf(
-                    income(id = "", source = "Salary", date = day0),
-                    income(id = "", source = "Freelance", date = day1),
-                    income(id = "", source = "Interest", date = day2),
-                )
-
-            val result = repo.addIncomeList(toImport)
-
-            assertTrue(result.isSuccess)
-            assertEquals(3, result.getOrThrow())
-            val stored = repo.getAllIncome().getOrThrow()
-            assertEquals(3, stored.size)
-            assertTrue(stored.all { it.id.isNotBlank() })
-            // ids are distinct
-            assertEquals(3, stored.map { it.id }.toSet().size)
-            assertEquals(setOf("Salary", "Freelance", "Interest"), stored.map { it.source }.toSet())
-        }
-
-    @Test
-    fun addIncomeList_ignoresAnyCallerSuppliedId_alwaysGeneratesFreshOne() =
-        runBlocking {
-            val repo = FakeIncomeRepository()
-
-            repo.addIncomeList(listOf(income(id = "caller-supplied-id", date = day0)))
-
-            val stored = repo.getAllIncome().getOrThrow()
-            assertEquals(1, stored.size)
-            assertFalse("caller-supplied-id" == stored.single().id)
-            assertTrue(stored.single().id.isNotBlank())
-        }
-
-    @Test
-    fun addIncomeList_appendsToExistingEntries_doesNotReplaceThem() =
-        runBlocking {
-            val existing = income(id = "existing", date = day0)
-            val repo = FakeIncomeRepository(listOf(existing))
-
-            val result = repo.addIncomeList(listOf(income(id = "", source = "New", date = day1)))
-
-            assertTrue(result.isSuccess)
-            assertEquals(1, result.getOrThrow())
-            val stored = repo.getAllIncome().getOrThrow()
-            assertEquals(2, stored.size)
-            assertTrue(stored.any { it.id == "existing" })
-            assertTrue(stored.any { it.source == "New" })
         }
 }

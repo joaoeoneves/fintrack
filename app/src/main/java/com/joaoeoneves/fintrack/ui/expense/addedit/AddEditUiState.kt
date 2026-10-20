@@ -12,6 +12,7 @@ data class ExpenseFormState(
     val nameError: String? = null,
     val amountError: String? = null,
     val saveError: String? = null,
+    val isSaving: Boolean = false,
     val isEditMode: Boolean = false,
     val expenseId: String? = null,
 ) {

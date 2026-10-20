@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,24 +31,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.color
+import com.joaoeoneves.fintrack.ui.common.decimalSeparator
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
+import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 
 /**
  * Shows per-category budget progress for the current calendar month, with the ability to tap a
- * row to set or change that category's limit.
+ * row to set, change or remove that category's limit.
  */
 @Composable
 fun BudgetSection(
     budgets: List<CategoryBudget>,
     onSetBudget: (ExpenseCategory, Long) -> Unit,
+    onClearBudget: (ExpenseCategory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editingBudget by remember { mutableStateOf<CategoryBudget?>(null) }
@@ -77,6 +83,10 @@ fun BudgetSection(
             budget = budget,
             onSave = { limitCents ->
                 onSetBudget(budget.category, limitCents)
+                editingBudget = null
+            },
+            onRemove = {
+                onClearBudget(budget.category)
                 editingBudget = null
             },
             onDismiss = { editingBudget = null },
@@ -181,11 +191,14 @@ private fun BudgetStatusText(
 private fun EditBudgetDialog(
     budget: CategoryBudget,
     onSave: (Long) -> Unit,
+    onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var amountText by remember { mutableStateOf(budget.limitCents?.let { it.toAmountText() } ?: "") }
+    val decimalSeparator = LocalCurrency.current.decimalSeparator
+    var amountText by remember { mutableStateOf(budget.limitCents?.toAmountInputText(decimalSeparator) ?: "") }
     var error by remember { mutableStateOf<String?>(null) }
     val invalidAmountMessage = stringResource(R.string.error_invalid_amount)
+    val hasLimit = budget.limitCents != null
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -200,30 +213,36 @@ private fun EditBudgetDialog(
                 label = { Text(stringResource(R.string.budget_dialog_limit_label)) },
                 isError = error != null,
                 supportingText = { error?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
             )
         },
         confirmButton = {
             TextButton(onClick = {
-                parseAmountCents(amountText)
-                    .onSuccess { cents -> onSave(cents) }
-                    .onFailure { error = invalidAmountMessage }
+                when {
+                    // Clearing the field means "no limit": remove an existing one, otherwise
+                    // there is nothing to change.
+                    amountText.isBlank() -> if (hasLimit) onRemove() else onDismiss()
+                    else ->
+                        parseAmountCents(amountText)
+                            .onSuccess { cents -> onSave(cents) }
+                            .onFailure { error = invalidAmountMessage }
+                }
             }) {
                 Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
+            Row {
+                if (hasLimit) {
+                    TextButton(onClick = onRemove) {
+                        Text(stringResource(R.string.action_remove))
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             }
         },
     )
-}
-
-private const val CENTS_PER_UNIT = 100
-
-private fun Long.toAmountText(): String {
-    val whole = this / CENTS_PER_UNIT
-    val fraction = (this % CENTS_PER_UNIT).let { if (it < 0) -it else it }
-    return "$whole.${fraction.toString().padStart(2, '0')}"
 }

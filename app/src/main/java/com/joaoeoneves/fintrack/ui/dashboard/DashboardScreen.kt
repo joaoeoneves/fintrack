@@ -27,25 +27,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
@@ -53,6 +53,7 @@ import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
+import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TimeRangeFilterRow
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 
@@ -64,21 +65,17 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    viewModel.onRetry()
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    OnResumeEffect(onResume = viewModel::onRetry)
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        viewModel.budgetErrorEvent.collect { snackbarHostState.showSnackbar(it) }
     }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { DashboardTopBar(onOpenSettings = callbacks.onOpenSettings) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when (val state = uiState) {
             is DashboardUiState.Loading -> {
@@ -98,7 +95,11 @@ fun DashboardScreen(
                     state = state,
                     onTimeRangeSelected = viewModel::onTimeRangeSelected,
                     callbacks = callbacks,
-                    onSetBudget = viewModel::onSetBudget,
+                    budgetActions =
+                        BudgetActions(
+                            onSetBudget = viewModel::onSetBudget,
+                            onClearBudget = viewModel::onClearBudget,
+                        ),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -139,12 +140,18 @@ private fun DashboardTopBar(onOpenSettings: () -> Unit) {
     )
 }
 
+/** Bundles the budget write callbacks to keep [DashboardContent] under detekt's LongParameterList. */
+private data class BudgetActions(
+    val onSetBudget: (ExpenseCategory, Long) -> Unit,
+    val onClearBudget: (ExpenseCategory) -> Unit,
+)
+
 @Composable
 private fun DashboardContent(
     state: DashboardUiState.Content,
     onTimeRangeSelected: (TimeRange) -> Unit,
     callbacks: DashboardCallbacks,
-    onSetBudget: (ExpenseCategory, Long) -> Unit,
+    budgetActions: BudgetActions,
     modifier: Modifier = Modifier,
 ) {
     val cardModifier =
@@ -165,7 +172,12 @@ private fun DashboardContent(
         item { DashboardSummary(state = state, modifier = cardModifier) }
 
         item {
-            BudgetSection(budgets = state.budgets, onSetBudget = onSetBudget, modifier = cardModifier)
+            BudgetSection(
+                budgets = state.budgets,
+                onSetBudget = budgetActions.onSetBudget,
+                onClearBudget = budgetActions.onClearBudget,
+                modifier = cardModifier,
+            )
         }
 
         item {

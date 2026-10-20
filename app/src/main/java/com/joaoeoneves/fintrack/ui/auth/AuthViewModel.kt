@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -42,8 +43,16 @@ class AuthViewModel
                 result.fold(
                     onSuccess = { user -> _uiState.value = AuthUiState.SignedIn(user) },
                     onFailure = { e ->
-                        val fallback = appContext?.getString(R.string.error_sign_in_failed) ?: "Sign-in failed"
-                        _uiState.value = AuthUiState.Error(e.message ?: fallback)
+                        _uiState.value =
+                            if (e is SignInCancelledException) {
+                                AuthUiState.Idle
+                            } else {
+                                // Deliberately not e.message: raw SDK/credential-provider messages
+                                // aren't user-facing (the repository logs the details instead).
+                                AuthUiState.Error(
+                                    appContext?.getString(R.string.error_sign_in_failed) ?: "Sign-in failed",
+                                )
+                            }
                     },
                 )
             }

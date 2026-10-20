@@ -1,0 +1,77 @@
+appId: com.joaoeoneves.fintrack
+---
+# Dashboard budget dialog E2E flow (B9 "Remove" button / empty-field-removes-limit, plus B4
+# comma-decimal amount entry inside the dialog).
+#
+# Assumes the app is already signed in and lands on the Dashboard -- same assumption as
+# golden-path.yaml (real Google Sign-In cannot be scripted headlessly).
+#
+# Uses the "Recurring" category because it is the one category with no limit set on the shared
+# test account. Every limit this flow sets on it is removed again before the flow ends, so the
+# budgets data is left exactly as found (the other categories' limits are never touched).
+#
+# The "no limit" assertions match budget_spent_no_limit ("%1$s spent — no limit set") with a
+# regex on the spent prefix, since the spent amount depends on the current month's data.
+
+- launchApp
+
+# --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b. EUR uses ',' as the decimal
+# separator, which is what the "100,50" entry/prefill assertions below rely on.
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "Display currency"
+- tapOn: "Euro (€)"
+- tapOn: "Back"
+- assertVisible: "FinTrack"
+
+# --- 1: Set a limit using a comma decimal (B4) ---
+- scrollUntilVisible:
+    element: "Budgets \\(this month\\)"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Recurring"
+    direction: DOWN
+- tapOn: "Recurring"
+- assertVisible: "Set budget for Recurring"
+# No limit yet, so no Remove button is offered.
+- assertNotVisible: "Remove"
+- tapOn: "Monthly limit"
+- inputText: "100,50"
+- hideKeyboard
+- tapOn: "Save"
+- assertNotVisible: "Set budget for Recurring"
+- assertVisible: ".*100,50€.*"
+
+# --- 2: Reopen -- prefilled with the EUR separator, and Remove is offered (B9) ---
+- tapOn: "Recurring"
+- assertVisible: "Set budget for Recurring"
+- assertVisible: "100,50"
+- assertVisible: "Remove"
+- tapOn: "Remove"
+- assertNotVisible: "Set budget for Recurring"
+- assertNotVisible: ".*100,50€.*"
+- assertVisible: ".* spent — no limit set"
+
+# --- 3: Set it again, then clear the field and Save -- an empty field removes the limit (B9) ---
+- tapOn: "Recurring"
+- assertVisible: "Set budget for Recurring"
+- tapOn: "Monthly limit"
+- inputText: "100,50"
+- hideKeyboard
+- tapOn: "Save"
+- assertVisible: ".*100,50€.*"
+
+- tapOn: "Recurring"
+- assertVisible: "100,50"
+- tapOn: "100,50"
+- eraseText: 20
+- hideKeyboard
+- tapOn: "Save"
+- assertNotVisible: "Set budget for Recurring"
+- assertNotVisible: ".*100,50€.*"
+- assertVisible: ".* spent — no limit set"
+# Recurring is back to no limit, exactly as this flow found it.

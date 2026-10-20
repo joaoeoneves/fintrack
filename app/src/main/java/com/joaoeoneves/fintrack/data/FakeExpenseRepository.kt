@@ -50,11 +50,8 @@ class FakeExpenseRepository(
     }
 
     override suspend fun deleteExpense(id: String): Result<Unit> {
-        val current = expensesFlow.value
-        if (current.none { it.id == id }) {
-            return Result.failure(NoSuchElementException("Expense with id $id not found"))
-        }
-        expensesFlow.value = current.filterNot { it.id == id }
+        // Matches real Firestore: deleting a missing document is a successful no-op.
+        expensesFlow.value = expensesFlow.value.filterNot { it.id == id }
         return Result.success(Unit)
     }
 

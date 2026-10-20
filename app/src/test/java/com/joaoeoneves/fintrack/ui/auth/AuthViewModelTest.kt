@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeAuthRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
+import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.CompletableDeferred
@@ -24,6 +25,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -140,8 +142,10 @@ class AuthViewModelTest {
     // ---- signIn: failure ----
 
     @Test
-    fun signIn_failure_transitionsLoadingThenError_withUnderlyingMessage() =
+    fun signIn_failure_transitionsLoadingThenError_withGenericMessage_notUnderlyingMessage() =
         runTest(testDispatcher) {
+            // Raw SDK/credential-provider messages aren't user-facing: the ViewModel must show the
+            // generic fallback even when the exception carries its own message.
             val repo =
                 GatedSignInAuthRepository(
                     initialUser = null,
@@ -165,9 +169,74 @@ class AuthViewModelTest {
             job.cancel()
 
             assertEquals(
-                listOf(AuthUiState.Idle, AuthUiState.Loading, AuthUiState.Error("no credential available")),
+                listOf(AuthUiState.Idle, AuthUiState.Loading, AuthUiState.Error("Sign-in failed")),
                 snapshots,
             )
+        }
+
+    @Test
+    fun signIn_cancelledByUser_transitionsIdleThenLoadingThenIdle_neverError() =
+        runTest(testDispatcher) {
+            val repo =
+                GatedSignInAuthRepository(
+                    initialUser = null,
+                    signInResult = Result.failure(SignInCancelledException()),
+                )
+            val viewModel = AuthViewModel(repo)
+            advanceUntilIdle()
+
+            val snapshots = mutableListOf<AuthUiState>()
+            val job =
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    viewModel.uiState.collect { snapshots.add(it) }
+                }
+
+            viewModel.signIn(fakeContext)
+            advanceUntilIdle()
+            assertEquals(listOf(AuthUiState.Idle, AuthUiState.Loading), snapshots)
+
+            repo.signInGate.complete(Unit)
+            advanceUntilIdle()
+            job.cancel()
+
+            assertEquals(listOf(AuthUiState.Idle, AuthUiState.Loading, AuthUiState.Idle), snapshots)
+            assertTrue(snapshots.none { it is AuthUiState.Error })
+        }
+
+    @Test
+    fun signIn_cancelledByUser_withCauseAndRealContext_stillEndsIdle() =
+        runTest(testDispatcher) {
+            val repo =
+                FakeAuthRepository(
+                    initialUser = null,
+                    nextSignInResult = Result.failure(SignInCancelledException(IllegalStateException("picker closed"))),
+                )
+            val appContext = FakeStringContext(R.string.error_sign_in_failed, "translated sign-in failure")
+            val viewModel = AuthViewModel(repo, appContext)
+            advanceUntilIdle()
+
+            viewModel.signIn(fakeContext)
+            advanceUntilIdle()
+
+            assertEquals(AuthUiState.Idle, viewModel.uiState.value)
+        }
+
+    @Test
+    fun signIn_failure_withMessage_andRealContext_usesContextString_notExceptionMessage() =
+        runTest(testDispatcher) {
+            val repo =
+                FakeAuthRepository(
+                    initialUser = null,
+                    nextSignInResult = Result.failure(IllegalStateException("raw SDK detail")),
+                )
+            val appContext = FakeStringContext(R.string.error_sign_in_failed, "translated sign-in failure")
+            val viewModel = AuthViewModel(repo, appContext)
+            advanceUntilIdle()
+
+            viewModel.signIn(fakeContext)
+            advanceUntilIdle()
+
+            assertEquals(AuthUiState.Error("translated sign-in failure"), viewModel.uiState.value)
         }
 
     @Test

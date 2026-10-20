@@ -4,8 +4,8 @@ import com.joaoeoneves.fintrack.data.FakeAuthRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
+import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -339,23 +339,5 @@ class SettingsViewModelTest {
         }
 
         fun currentPreference(): ThemePreference = preferenceFlow.value
-    }
-
-    /**
-     * Minimal in-memory [CurrencyRepository] fake, local to this test file since no fake exists
-     * under `app/src/main` for this repository.
-     */
-    private class FakeCurrencyRepository(
-        initial: CurrencyOption = CurrencyOption.USD,
-    ) : CurrencyRepository {
-        private val currencyFlow = MutableStateFlow(initial)
-
-        override fun observeCurrency(): Flow<CurrencyOption> = currencyFlow
-
-        override suspend fun setCurrency(currency: CurrencyOption) {
-            currencyFlow.value = currency
-        }
-
-        fun currentCurrency(): CurrencyOption = currencyFlow.value
     }
 }

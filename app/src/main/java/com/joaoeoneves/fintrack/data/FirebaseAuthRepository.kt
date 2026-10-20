@@ -6,6 +6,7 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -13,7 +14,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AuthUser
+import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -71,16 +74,24 @@ class FirebaseAuthRepository
                         }
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: GetCredentialCancellationException) {
+                // The user dismissed the account picker: not an error worth surfacing.
+                Result.failure(SignInCancelledException(e))
             } catch (e: Exception) {
                 // Broad catch: CredentialManager/Firebase Auth SDK calls above don't document a
-                // stable exception surface (varies by device credential provider); convert any
-                // failure into a Result so the caller can present a generic sign-in error.
+                // stable exception surface (varies by device credential provider); log the detail
+                // and convert any failure into a Result so the caller can present a generic
+                // sign-in error.
+                Log.w(TAG, "Sign-in failed", e)
                 Result.failure(e)
             }
 
         override suspend fun signOut(): Result<Unit> {
-            val clearResult = runCatching { credentialManager.clearCredentialState(ClearCredentialStateRequest()) }
-            val signOutResult = runCatching { firebaseAuth.signOut() }
+            val clearResult =
+                runCatchingCancellable { credentialManager.clearCredentialState(ClearCredentialStateRequest()) }
+            val signOutResult = runCatchingCancellable { firebaseAuth.signOut() }
             clearResult.exceptionOrNull()?.let {
                 Log.w(TAG, "Failed to clear credential state during sign-out", it)
             }

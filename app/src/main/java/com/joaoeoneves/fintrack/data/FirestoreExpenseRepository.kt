@@ -12,6 +12,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -63,12 +64,18 @@ class FirestoreExpenseRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = expense.toFirestoreMap(includeCreatedAt = true)
-                val reference = expensesCollection(uid).add(data).await()
-                Result.success(reference.id)
+                val collection = expensesCollection(uid)
+                val docRef = if (expense.id.isBlank()) collection.document() else collection.document(expense.id)
+                // Not awaited: the write lands in Firestore's local cache immediately and syncs when
+                // the device is online. Awaiting would suspend until server acknowledgement, which
+                // hangs the save indefinitely while offline.
+                docRef.set(data).addOnFailureListener { Log.w(TAG, "Add expense write ${docRef.id} failed", it) }
+                Result.success(docRef.id)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Broad catch: Firestore Task failures aren't narrowly typed (network, permission,
-                // and server errors all surface as generic/undocumented exception subtypes here);
-                // convert any failure into a Result for the caller.
+                // Broad catch: Firestore can throw synchronously for invalid input/state with
+                // undocumented exception subtypes; convert any failure into a Result for the caller.
                 Result.failure(e)
             }
         }
@@ -79,8 +86,12 @@ class FirestoreExpenseRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = expense.toFirestoreMap(includeCreatedAt = false)
-                expensesCollection(uid).document(expense.id).update(data).await()
+                val docRef = expensesCollection(uid).document(expense.id)
+                // Not awaited: see addExpense above.
+                docRef.update(data).addOnFailureListener { Log.w(TAG, "Update expense write ${docRef.id} failed", it) }
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addExpense above.
                 Result.failure(e)
@@ -93,19 +104,13 @@ class FirestoreExpenseRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val docRef = expensesCollection(uid).document(id)
-                firestore
-                    .runTransaction<Unit> { transaction ->
-                        val snapshot = transaction.get(docRef)
-                        if (!snapshot.exists()) {
-                            throw NoSuchElementException("Expense with id $id not found")
-                        }
-                        transaction.delete(docRef)
-                        Unit
-                    }.await()
+                // Not awaited (see addExpense above); deleting a missing document is a no-op.
+                docRef.delete().addOnFailureListener { Log.w(TAG, "Delete expense write ${docRef.id} failed", it) }
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Broad catch: covers both Firestore Task failures and the NoSuchElementException
-                // thrown above when the document is missing, converting either into a Result.
+                // Broad catch: see addExpense above.
                 Result.failure(e)
             }
         }
@@ -122,6 +127,8 @@ class FirestoreExpenseRepository
                         .await()
                         .toExpenseOrNull()
                 Result.success(expense)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addExpense above.
                 Result.failure(e)
@@ -135,6 +142,8 @@ class FirestoreExpenseRepository
             return try {
                 val snapshot = expensesCollection(uid).get().await()
                 Result.success(snapshot.toExpenses())
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addExpense above.
                 Result.failure(e)
@@ -156,6 +165,8 @@ class FirestoreExpenseRepository
                     }
                     batch.commit().await()
                     total += chunk.size
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     // Broad catch: see addExpense above.
                     failure = e

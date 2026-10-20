@@ -11,6 +11,7 @@ data class IncomeFormState(
     val sourceError: String? = null,
     val amountError: String? = null,
     val saveError: String? = null,
+    val isSaving: Boolean = false,
     val isEditMode: Boolean = false,
     val incomeId: String? = null,
 ) {

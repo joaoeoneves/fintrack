@@ -10,11 +10,11 @@ import com.google.firebase.firestore.SetOptions
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirestoreBudgetRepository
@@ -60,12 +60,36 @@ class FirestoreBudgetRepository
                         "limitCents" to limitCents,
                         "updatedAt" to FieldValue.serverTimestamp(),
                     )
-                budgetsCollection(uid).document(category.name).set(data, SetOptions.merge()).await()
+                val docRef = budgetsCollection(uid).document(category.name)
+                // Not awaited: the write lands in Firestore's local cache immediately and syncs when
+                // the device is online. Awaiting would hang indefinitely while offline.
+                docRef
+                    .set(data, SetOptions.merge())
+                    .addOnFailureListener { Log.w(TAG, "Set budget write ${docRef.id} failed", it) }
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: Firestore Task failures aren't narrowly typed (network, permission,
                 // and server errors all surface as generic/undocumented exception subtypes here);
                 // convert any failure into a Result for the caller.
+                Result.failure(e)
+            }
+        }
+
+        override suspend fun clearBudget(category: ExpenseCategory): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return try {
+                val docRef = budgetsCollection(uid).document(category.name)
+                // Not awaited (see setBudget above); deleting a missing document is a no-op.
+                docRef.delete().addOnFailureListener { Log.w(TAG, "Clear budget write ${docRef.id} failed", it) }
+                Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Broad catch: see setBudget above.
                 Result.failure(e)
             }
         }

@@ -8,7 +8,9 @@ import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.ui.common.decimalSeparator
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -33,6 +36,9 @@ class AddEditExpenseViewModel
         // production. When null (test-only), the fallbacks below match the exact literals those
         // tests assert on.
         @param:ApplicationContext private val context: Context? = null,
+        // Nullable with a default for the same reason as context: when null (test-only), edit-mode
+        // amounts are prefilled with '.' as the decimal separator.
+        private val currencyRepository: CurrencyRepository? = null,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditExpense>()
 
@@ -56,12 +62,13 @@ class AddEditExpenseViewModel
                     expenseRepository
                         .getExpense(expenseId)
                         .onSuccess { existing ->
+                            val separator = currencyRepository?.observeCurrency()?.first()?.decimalSeparator ?: '.'
                             _uiState.value =
                                 if (existing != null) {
                                     AddEditUiState.Ready(
                                         ExpenseFormState(
                                             name = existing.name,
-                                            amountText = existing.amountCents.toAmountText(),
+                                            amountText = existing.amountCents.toAmountInputText(separator),
                                             category = existing.category,
                                             date = existing.date,
                                             note = existing.note ?: "",
@@ -102,7 +109,7 @@ class AddEditExpenseViewModel
 
         fun onSave() {
             val current = _uiState.value
-            if (current !is AddEditUiState.Ready) return
+            if (current !is AddEditUiState.Ready || current.form.isSaving) return
             val form = current.form
 
             val nameRequiredMessage = context?.getString(R.string.error_name_required) ?: "Name is required"
@@ -117,6 +124,7 @@ class AddEditExpenseViewModel
             }
 
             val amountCents = amountResult.getOrThrow()
+            _uiState.value = AddEditUiState.Ready(form.copy(isSaving = true))
             viewModelScope.launch {
                 val expense =
                     Expense(
@@ -143,7 +151,7 @@ class AddEditExpenseViewModel
                                 context?.getString(R.string.error_failed_save_expense) ?: "Failed to save expense"
                             _uiState.value =
                                 AddEditUiState.Ready(
-                                    latest.form.copy(saveError = e.message ?: failedSaveMessage),
+                                    latest.form.copy(isSaving = false, saveError = e.message ?: failedSaveMessage),
                                 )
                         }
                     }
@@ -157,11 +165,3 @@ class AddEditExpenseViewModel
             }
         }
     }
-
-private const val CENTS_PER_UNIT = 100
-
-private fun Long.toAmountText(): String {
-    val whole = this / CENTS_PER_UNIT
-    val fraction = (this % CENTS_PER_UNIT).let { if (it < 0) -it else it }
-    return "$whole.${fraction.toString().padStart(2, '0')}"
-}

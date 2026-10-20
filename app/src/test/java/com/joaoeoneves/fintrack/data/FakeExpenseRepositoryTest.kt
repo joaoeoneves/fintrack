@@ -354,15 +354,15 @@ class FakeExpenseRepositoryTest {
         }
 
     @Test
-    fun deleteExpense_unknownId_returnsFailure_andDoesNotModifyList() =
+    fun deleteExpense_unknownId_isSuccessfulNoOp_andDoesNotModifyList() =
         runBlocking {
             val e1 = expense(id = "e1", date = day0)
             val repo = FakeExpenseRepository(listOf(e1))
 
             val result = repo.deleteExpense("does-not-exist")
 
-            assertTrue(result.isFailure)
-            assertTrue(result.exceptionOrNull() is NoSuchElementException)
+            // Matches real Firestore: deleting a missing document is a successful no-op.
+            assertTrue(result.isSuccess)
             val stored = repo.observeExpenses(day0, day3).first()
             assertEquals(listOf(e1), stored)
         }

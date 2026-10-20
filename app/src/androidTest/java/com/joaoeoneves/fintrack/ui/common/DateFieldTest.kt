@@ -7,12 +7,13 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.joaoeoneves.fintrack.R
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -36,13 +37,17 @@ class DateFieldTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // Fixed instant, formatted the same way ReadOnlyDateField formats it internally (its own
-    // formatter is `.withZone(ZoneOffset.UTC)`) -- renders as "Jun 15, 2024".
-    private val fixedDate: Instant = Instant.parse("2024-06-15T00:00:00Z")
+    // Fixed zone + instant, formatted the same way ReadOnlyDateField formats it internally (its
+    // formatter is `.withZone(zone)`). The zone is passed explicitly to ReadOnlyDateField so the
+    // test doesn't depend on the device's default zone. The instant is deliberately chosen so the
+    // calendar day differs between UTC (Jun 15) and the field's zone (Jun 14, 20:30 PDT) -- that
+    // is exactly the case the B5 "format/convert in the device's zone, not UTC" fix covers.
+    private val zone: ZoneId = ZoneId.of("America/Los_Angeles")
+    private val fixedDate: Instant = Instant.parse("2024-06-15T03:30:00Z")
     private val formattedDate: String =
         DateTimeFormatter
             .ofPattern("MMM d, yyyy", Locale.getDefault(Locale.Category.FORMAT))
-            .withZone(ZoneOffset.UTC)
+            .withZone(zone)
             .format(fixedDate)
 
     private val changeDateContentDescription: String by lazy {
@@ -54,7 +59,7 @@ class DateFieldTest {
 
     private fun setDateFieldContent(onDateSelected: (Instant) -> Unit = {}) {
         composeTestRule.setContent {
-            ReadOnlyDateField(date = fixedDate, onDateSelected = onDateSelected)
+            ReadOnlyDateField(date = fixedDate, onDateSelected = onDateSelected, zone = zone)
         }
     }
 
@@ -93,5 +98,20 @@ class DateFieldTest {
         composeTestRule.onNodeWithText(okButtonText).performClick()
 
         assertNotNull(selectedDate)
+    }
+
+    @Test
+    fun confirmingWithoutChangingSelection_returnsOriginalInstant() {
+        // B5 regression: opening the picker and pressing OK without touching the selection must
+        // hand back exactly the original instant -- no day shift from a UTC/local mix-up and no
+        // lost time of day.
+        var selectedDate: Instant? = null
+        setDateFieldContent(onDateSelected = { selectedDate = it })
+
+        composeTestRule.onNodeWithContentDescription(changeDateContentDescription).performClick()
+        composeTestRule.onNodeWithText(okButtonText).performClick()
+
+        assertEquals(fixedDate, selectedDate)
+        composeTestRule.onNodeWithText(formattedDate).assertExists()
     }
 }

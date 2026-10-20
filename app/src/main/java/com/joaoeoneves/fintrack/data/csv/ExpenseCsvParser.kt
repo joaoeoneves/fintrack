@@ -16,6 +16,34 @@ private const val COLUMN_CATEGORY = 2
 private const val COLUMN_DATE = 3
 private const val COLUMN_NOTE = 4
 
+// Mirror the size limits enforced by firestore.rules for expense documents, so rows the server
+// would reject are reported as row failures at preview time instead of failing the import batch.
+private const val MAX_NAME_LENGTH = 200
+private const val MAX_NOTE_LENGTH = 2000
+
+/** Length in Unicode code points (what Firestore rules' `size()` counts), not UTF-16 chars. */
+private fun String.codePointLength(): Int = codePointCount(0, length)
+
+/** Human-readable category name also accepted in the CSV `category` column. */
+private fun ExpenseCategory.canonicalName(): String =
+    when (this) {
+        ExpenseCategory.TRANSFER -> "Transfer"
+        ExpenseCategory.INVESTMENTS -> "Investments"
+        ExpenseCategory.SHOPPING -> "Shopping"
+        ExpenseCategory.RECURRING -> "Recurring"
+    }
+
+/** Outcome of validating a single, correctly-shaped CSV data row. */
+private sealed interface ParsedRow {
+    data class Valid(
+        val expense: Expense,
+    ) : ParsedRow
+
+    data class Invalid(
+        val reason: String,
+    ) : ParsedRow
+}
+
 /** A single CSV data row that failed to parse into an [Expense]. */
 data class CsvRowFailure(
     val rowNumber: Int,
@@ -82,63 +110,57 @@ object ExpenseCsvParser {
                 return@forEachIndexed
             }
 
-            val rawName = fields[COLUMN_NAME]
-            val rawAmount = fields[COLUMN_AMOUNT_CENTS]
-            val rawCategory = fields[COLUMN_CATEGORY]
-            val rawDate = fields[COLUMN_DATE]
-            val rawNote = fields[COLUMN_NOTE]
-
-            val name = rawName.trim()
-            if (name.isEmpty()) {
-                failures += CsvRowFailure(rowNumber, line, "Name is required")
-                return@forEachIndexed
+            when (val row = parseRow(fields, zone)) {
+                is ParsedRow.Valid -> validExpenses += row.expense
+                is ParsedRow.Invalid -> failures += CsvRowFailure(rowNumber, line, row.reason)
             }
-
-            val amountCents = rawAmount.trim().toLongOrNull()
-            if (amountCents == null) {
-                failures += CsvRowFailure(rowNumber, line, "Invalid amountCents value: '$rawAmount'")
-                return@forEachIndexed
-            }
-
-            val category = parseCategory(rawCategory.trim())
-            if (category == null) {
-                failures += CsvRowFailure(rowNumber, line, "Unknown category: '$rawCategory'")
-                return@forEachIndexed
-            }
-
-            val date = parseDate(rawDate.trim(), zone)
-            if (date == null) {
-                failures += CsvRowFailure(rowNumber, line, "Invalid date: '$rawDate'")
-                return@forEachIndexed
-            }
-
-            val note = rawNote.ifBlank { null }
-
-            validExpenses +=
-                Expense(
-                    id = "",
-                    name = name,
-                    amountCents = amountCents,
-                    category = category,
-                    date = date,
-                    note = note,
-                )
         }
 
         return CsvParseResult(validExpenses, failures)
     }
 
+    private fun parseRow(
+        fields: List<String>,
+        zone: ZoneId,
+    ): ParsedRow {
+        val rawAmount = fields[COLUMN_AMOUNT_CENTS]
+        val rawCategory = fields[COLUMN_CATEGORY]
+        val rawDate = fields[COLUMN_DATE]
+        val rawNote = fields[COLUMN_NOTE]
+
+        val name = fields[COLUMN_NAME].trim()
+        val amountCents = rawAmount.trim().toLongOrNull()
+        val category = parseCategory(rawCategory.trim())
+        val date = parseDate(rawDate.trim(), zone)
+        val note = rawNote.ifBlank { null }
+
+        return when {
+            name.isEmpty() -> ParsedRow.Invalid("Name is required")
+            name.codePointLength() > MAX_NAME_LENGTH ->
+                ParsedRow.Invalid("Name exceeds $MAX_NAME_LENGTH characters")
+            amountCents == null -> ParsedRow.Invalid("Invalid amountCents value: '$rawAmount'")
+            amountCents <= 0 -> ParsedRow.Invalid("amountCents must be positive: '$rawAmount'")
+            category == null -> ParsedRow.Invalid("Unknown category: '$rawCategory'")
+            date == null -> ParsedRow.Invalid("Invalid date: '$rawDate'")
+            note != null && note.codePointLength() > MAX_NOTE_LENGTH ->
+                ParsedRow.Invalid("Note exceeds $MAX_NOTE_LENGTH characters")
+            else ->
+                ParsedRow.Valid(
+                    Expense(
+                        id = "",
+                        name = name,
+                        amountCents = amountCents,
+                        category = category,
+                        date = date,
+                        note = note,
+                    ),
+                )
+        }
+    }
+
     private fun parseCategory(raw: String): ExpenseCategory? =
         ExpenseCategory.entries.find { category ->
             category.name.equals(raw, ignoreCase = true) || category.canonicalName().equals(raw, ignoreCase = true)
-        }
-
-    private fun ExpenseCategory.canonicalName(): String =
-        when (this) {
-            ExpenseCategory.TRANSFER -> "Transfer"
-            ExpenseCategory.INVESTMENTS -> "Investments"
-            ExpenseCategory.SHOPPING -> "Shopping"
-            ExpenseCategory.RECURRING -> "Recurring"
         }
 
     private fun parseDate(

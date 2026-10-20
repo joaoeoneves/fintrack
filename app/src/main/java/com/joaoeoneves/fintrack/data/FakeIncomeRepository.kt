@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,8 @@ class FakeIncomeRepository(
     initialIncome: List<Income> = emptyList(),
     var nextObserveIncomeError: Throwable? = null,
     var nextGetIncomeError: Throwable? = null,
+    var nextAddIncomeListFailure: Throwable? = null,
+    var addIncomeListFailureAfterCount: Int = Int.MAX_VALUE,
 ) : IncomeRepository {
     private val incomeFlow = MutableStateFlow(initialIncome)
 
@@ -47,11 +50,8 @@ class FakeIncomeRepository(
     }
 
     override suspend fun deleteIncome(id: String): Result<Unit> {
-        val current = incomeFlow.value
-        if (current.none { it.id == id }) {
-            return Result.failure(NoSuchElementException("Income with id $id not found"))
-        }
-        incomeFlow.value = current.filterNot { it.id == id }
+        // Matches real Firestore: deleting a missing document is a successful no-op.
+        incomeFlow.value = incomeFlow.value.filterNot { it.id == id }
         return Result.success(Unit)
     }
 
@@ -65,9 +65,17 @@ class FakeIncomeRepository(
 
     override suspend fun getAllIncome(): Result<List<Income>> = Result.success(incomeFlow.value)
 
-    override suspend fun addIncomeList(income: List<Income>): Result<Int> {
+    override suspend fun addIncomeList(income: List<Income>): BulkAddResult {
+        val failure = nextAddIncomeListFailure
+        if (failure != null) {
+            nextAddIncomeListFailure = null
+            val committed = income.take(addIncomeListFailureAfterCount)
+            val toStore = committed.map { it.copy(id = UUID.randomUUID().toString()) }
+            incomeFlow.value = incomeFlow.value + toStore
+            return BulkAddResult(committed.size, failure)
+        }
         val toStore = income.map { it.copy(id = UUID.randomUUID().toString()) }
         incomeFlow.value = incomeFlow.value + toStore
-        return Result.success(income.size)
+        return BulkAddResult(income.size, null)
     }
 }

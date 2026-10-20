@@ -41,6 +41,8 @@ appId: com.joaoeoneves.fintrack
 # --- 2: The date field defaults to today, formatted "MMM d, yyyy" (e.g. "Jul 21, 2026") by
 # rememberLocaleAwareDateFormatter() -- match it with a regex since the exact day is dynamic.
 - assertVisible: "[A-Za-z]{3} [0-9]{1,2}, [0-9]{4}"
+# B5: remember the displayed date so we can prove confirming the picker unchanged doesn't shift it.
+- copyTextFrom: "[A-Za-z]{3} [0-9]{1,2}, [0-9]{4}"
 
 # --- 3: Tap the field's text body (NOT the trailing icon) -- this used to be a no-op before the
 # MutableInteractionSource + PressInteraction.Release fix in ReadOnlyDateField.
@@ -51,6 +53,9 @@ appId: com.joaoeoneves.fintrack
 # "Cancel" briefly colliding with the top app bar's own cd_cancel ("Cancel") IconButton while the
 # dialog is still showing.
 - tapOn: "OK"
+# B5: OK without changing the selection must leave the exact same date displayed (it used to
+# shift by a day in zones where the local and UTC calendar day differ).
+- assertVisible: ${maestro.copiedText}
 
 # --- 4: Tap the trailing icon (content description "Change date") -- confirms its own onClick
 # still independently opens the dialog too, unaffected by the body-tap fix.

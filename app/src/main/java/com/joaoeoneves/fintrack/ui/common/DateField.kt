@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 /**
  * A read-only date field that opens a [DatePickerDialog] when tapped anywhere on the field body,
@@ -35,9 +35,10 @@ fun ReadOnlyDateField(
     date: Instant,
     onDateSelected: (Instant) -> Unit,
     modifier: Modifier = Modifier,
+    zone: ZoneId = ZoneId.systemDefault(),
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val displayDateFormatter = rememberLocaleAwareDateFormatter().withZone(ZoneOffset.UTC)
+    val displayDateFormatter = rememberLocaleAwareDateFormatter().withZone(zone)
 
     val dateFieldInteractionSource = remember { MutableInteractionSource() }
     LaunchedEffect(dateFieldInteractionSource) {
@@ -66,14 +67,14 @@ fun ReadOnlyDateField(
     if (showDatePicker) {
         val datePickerState =
             rememberDatePickerState(
-                initialSelectedDateMillis = date.toEpochMilli(),
+                initialSelectedDateMillis = date.toDatePickerMillis(zone),
             )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        onDateSelected(Instant.ofEpochMilli(millis))
+                        onDateSelected(datePickerMillisToInstant(millis, date, zone))
                     }
                     showDatePicker = false
                 }) {

@@ -199,4 +199,95 @@ class FakeBudgetRepositoryTest {
                 caught,
             )
         }
+
+    // ---- clearBudget ----
+
+    @Test
+    fun clearBudget_removesOnlyThatCategory() =
+        runBlocking {
+            val repo =
+                FakeBudgetRepository(
+                    listOf(Budget(ExpenseCategory.SHOPPING, 10_000L), Budget(ExpenseCategory.TRANSFER, 5_000L)),
+                )
+
+            val result = repo.clearBudget(ExpenseCategory.SHOPPING)
+
+            assertTrue(result.isSuccess)
+            assertEquals(listOf(Budget(ExpenseCategory.TRANSFER, 5_000L)), repo.observeBudgets().first())
+        }
+
+    @Test
+    fun clearBudget_missingCategory_succeeds_andLeavesStateUnchanged() =
+        runBlocking {
+            val seeded = listOf(Budget(ExpenseCategory.TRANSFER, 5_000L))
+            val repo = FakeBudgetRepository(seeded)
+
+            val result = repo.clearBudget(ExpenseCategory.SHOPPING)
+
+            assertTrue(result.isSuccess)
+            assertEquals(seeded, repo.observeBudgets().first())
+        }
+
+    @Test
+    fun clearBudget_thenSetBudgetAgain_addsFreshEntry() =
+        runBlocking {
+            val repo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+
+            repo.clearBudget(ExpenseCategory.SHOPPING)
+            repo.setBudget(ExpenseCategory.SHOPPING, 2_000L)
+
+            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 2_000L)), repo.observeBudgets().first())
+        }
+
+    // ---- one-shot failure knobs ----
+
+    @Test
+    fun nextSetBudgetError_failsOnce_leavesStateUnchanged_thenSelfClears() =
+        runBlocking {
+            val seeded = listOf(Budget(ExpenseCategory.SHOPPING, 10_000L))
+            val boom = IllegalStateException("set failed")
+            val repo = FakeBudgetRepository(seeded, nextSetBudgetError = boom)
+
+            val first = repo.setBudget(ExpenseCategory.SHOPPING, 1L)
+
+            assertSame(boom, first.exceptionOrNull())
+            assertEquals(seeded, repo.observeBudgets().first())
+            assertNull(repo.nextSetBudgetError)
+
+            val second = repo.setBudget(ExpenseCategory.SHOPPING, 1L)
+            assertTrue(second.isSuccess)
+            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 1L)), repo.observeBudgets().first())
+        }
+
+    @Test
+    fun nextClearBudgetError_failsOnce_leavesStateUnchanged_thenSelfClears() =
+        runBlocking {
+            val seeded = listOf(Budget(ExpenseCategory.SHOPPING, 10_000L))
+            val boom = IllegalStateException("clear failed")
+            val repo = FakeBudgetRepository(seeded, nextClearBudgetError = boom)
+
+            val first = repo.clearBudget(ExpenseCategory.SHOPPING)
+
+            assertSame(boom, first.exceptionOrNull())
+            assertEquals(seeded, repo.observeBudgets().first())
+            assertNull(repo.nextClearBudgetError)
+
+            val second = repo.clearBudget(ExpenseCategory.SHOPPING)
+            assertTrue(second.isSuccess)
+            assertTrue(repo.observeBudgets().first().isEmpty())
+        }
+
+    @Test
+    fun nextClearBudgetError_doesNotAffectSetBudget_andViceVersa() =
+        runBlocking {
+            val repo = FakeBudgetRepository(nextClearBudgetError = IllegalStateException("clear failed"))
+
+            assertTrue(repo.setBudget(ExpenseCategory.SHOPPING, 10_000L).isSuccess)
+            assertTrue(repo.clearBudget(ExpenseCategory.SHOPPING).isFailure)
+
+            repo.nextSetBudgetError = IllegalStateException("set failed")
+            assertTrue(repo.clearBudget(ExpenseCategory.SHOPPING).isSuccess)
+            assertTrue(repo.setBudget(ExpenseCategory.SHOPPING, 1L).isFailure)
+            assertTrue(repo.observeBudgets().first().isEmpty())
+        }
 }

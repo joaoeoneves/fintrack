@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
@@ -707,6 +708,6 @@ class AddEditIncomeViewModelTest {
 
         override suspend fun getAllIncome(): Result<List<Income>> = throw UnsupportedOperationException("unused")
 
-        override suspend fun addIncomeList(income: List<Income>): Result<Int> = throw UnsupportedOperationException()
+        override suspend fun addIncomeList(income: List<Income>): BulkAddResult = throw UnsupportedOperationException()
     }
 }
