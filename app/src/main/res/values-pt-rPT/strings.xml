@@ -102,6 +102,12 @@
     <string name="expense_list_deleted_snackbar">Eliminado \"%1$s\"</string>
     <string name="expense_list_search_label">Pesquisar</string>
     <string name="expense_list_no_match">Nenhuma despesa corresponde a \"%1$s\".</string>
+    <string name="expense_list_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
+    <string name="expense_field_refund">Estorno</string>
+    <string name="expense_field_refund_hint">Dinheiro devolvido; reduz os gastos desta categoria</string>
+    <string name="expense_refund_badge">Estorno</string>
+    <string name="filter_all">Todas</string>
+    <string name="field_length_counter">%1$d/%2$d</string>
 
     <!-- Opções de ordenação -->
     <string name="sort_by_label">Ordenar por</string>

@@ -39,6 +39,10 @@ import java.time.Instant
  *  2. The "Recent expenses" card always renders -- including its empty-state text -- and stays
  *     tappable through to the full expense list even with zero expenses in range.
  *  3. The unrelated "Recent income" plus button is untouched by this change (regression check).
+ *  4. Tapping a recent-expense row opens that expense (`onOpenExpense(id)`), not the full list.
+ *
+ * The plus buttons carry their "Add expense"/"Add income" content description on the clickable
+ * IconButton node itself, so `onNodeWithContentDescription(...).performClick()` hits the button.
  *
  * NOTE: on a real device screen the Dashboard content (balance card, pie chart, budget rows) can
  * exceed the viewport, so "Recent expenses" / "Add income" may not be composed by the LazyColumn
@@ -70,6 +74,7 @@ class DashboardAddExpenseEntryPointTest {
         onAddExpense: () -> Unit = {},
         onOpenIncomeList: (Period) -> Unit = {},
         onAddIncome: () -> Unit = {},
+        onOpenExpense: (String) -> Unit = {},
     ) {
         val viewModel =
             DashboardViewModel(
@@ -88,6 +93,8 @@ class DashboardAddExpenseEntryPointTest {
                         onOpenIncomeList = onOpenIncomeList,
                         onAddIncome = onAddIncome,
                         onOpenSettings = {},
+                        onOpenExpense = onOpenExpense,
+                        onOpenIncome = {},
                     ),
                 viewModel = viewModel,
             )
@@ -187,5 +194,22 @@ class DashboardAddExpenseEntryPointTest {
         composeTestRule.onNodeWithContentDescription("Add income").performClick()
 
         assertEquals(true, addIncomeClicked)
+    }
+
+    @Test
+    fun recentExpenseRow_tap_invokesOnOpenExpense_withThatExpensesId_notOnOpenList() {
+        var openedExpenseId: String? = null
+        var openedListWith: Period? = null
+        setDashboardContent(
+            expenses = listOf(expense(id = "e1")),
+            onOpenExpense = { id -> openedExpenseId = id },
+            onOpenList = { period -> openedListWith = period },
+        )
+        scrollToNode(hasText("Expense e1"))
+
+        composeTestRule.onNodeWithText("Expense e1").performClick()
+
+        assertEquals("e1", openedExpenseId)
+        assertNull(openedListWith)
     }
 }

@@ -102,6 +102,12 @@
     <string name="expense_list_deleted_snackbar">Deleted \"%1$s\"</string>
     <string name="expense_list_search_label">Search</string>
     <string name="expense_list_no_match">No expenses match \"%1$s\".</string>
+    <string name="expense_list_no_match_filter">No expenses match the selected filter.</string>
+    <string name="expense_field_refund">Refund</string>
+    <string name="expense_field_refund_hint">Money returned to you; reduces this category\'s spending</string>
+    <string name="expense_refund_badge">Refund</string>
+    <string name="filter_all">All</string>
+    <string name="field_length_counter">%1$d/%2$d</string>
 
     <!-- Sort options -->
     <string name="sort_by_label">Sort by</string>

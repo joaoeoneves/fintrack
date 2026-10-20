@@ -185,6 +185,9 @@ private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?>
             "category" to category.name,
             "date" to Timestamp(date.epochSecond, date.nano),
             "note" to note,
+            // Always written (including false) so an update that turns a refund back into a regular
+            // expense clears the flag.
+            "isRefund" to isRefund,
             "updatedAt" to FieldValue.serverTimestamp(),
         )
     if (includeCreatedAt) {
@@ -202,6 +205,7 @@ private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
     val category = ExpenseCategory.entries.find { it.name == categoryName }
     val date = getTimestamp("date")
     val note = getString("note")
+    val isRefund = get("isRefund") as? Boolean ?: false
 
     return when {
         name == null -> {
@@ -228,6 +232,7 @@ private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
                 category = category,
                 date = Instant.ofEpochSecond(date.seconds, date.nanoseconds.toLong()),
                 note = note,
+                isRefund = isRefund,
             )
     }
 }

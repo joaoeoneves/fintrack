@@ -109,8 +109,9 @@ different, nav-entry-scoped instance.
 ```
 users/{uid}/expenses/{expenseId}
   name: string
-  amountCents: number       // integer minor units — avoids float rounding errors
+  amountCents: number       // integer minor units, always > 0 — avoids float rounding errors
   category: string          // TRANSFER | INVESTMENTS | SHOPPING | RECURRING
+  isRefund: boolean         // optional, absent = false; a refund subtracts from its category
   date: timestamp
   note: string | null
   createdAt / updatedAt: timestamp

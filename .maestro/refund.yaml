@@ -1,0 +1,114 @@
+appId: com.joaoeoneves.fintrack
+---
+# Refund E2E flow for FinTrack.
+#
+# A refund is an expense with the "Refund" switch on. It shows as "+€12.34" with a "Refund" badge
+# and lowers the Dashboard's Spending total (and raises Net) instead of increasing it.
+#
+# Assumes the app is already signed in and lands on the Dashboard, same as golden-path.yaml.
+# Creates exactly one row, "Maestro E2E Refund", and deletes it at the end while the expense list is
+# search-filtered to that name, so no pre-existing data is ever touched.
+
+- launchApp
+
+# --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b.
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "Display currency"
+- tapOn: "Euro (€)"
+- tapOn: "Back"
+- assertVisible: "FinTrack"
+
+# --- 1: Capture the Dashboard's Spending amount. The balance card renders each column as a label
+# TextView ("Income" / "Spending" / "Saved & invested") with its amount TextView directly below, so
+# the Spending amount is the money text below "Spending", right of "Income" and left of
+# "Saved & invested". The value is stored as signed integer cents: strip every non-digit, and
+# negate if the text starts with a minus sign (ASCII "-" or U+2212).
+- assertVisible: "Spending"
+- copyTextFrom:
+    text: "[-−]?€[0-9.,]+"
+    below: "Spending"
+    rightOf: "Income"
+    leftOf: "Saved & invested"
+- evalScript: '${output.spendingBefore = (/^\s*[-−]/.test(maestro.copiedText) ? -1 : 1) * parseInt(maestro.copiedText.replace(/[^0-9]/g, ""), 10)}'
+
+# --- 2: Add a 12.34 refund via the "Recent expenses" card's plus button.
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
+- tapOn: "Add expense"
+- assertVisible: "Add expense"
+- tapOn: "Name"
+- inputText: "Maestro E2E Refund"
+- tapOn: "Amount"
+- inputText: "12.34"
+- hideKeyboard
+# The Refund switch row sits directly under Amount; the whole row is the toggle.
+- assertVisible: "Money returned to you; reduces this category's spending"
+- tapOn: "Money returned to you; reduces this category's spending"
+- takeScreenshot: build/maestro/refund-switch-on
+- tapOn: "Save"
+
+# --- 3: Back on the Dashboard, the recent row shows "+€12.34" plus the "Refund" badge.
+- scrollUntilVisible:
+    element: "Maestro E2E Refund"
+    direction: DOWN
+- assertVisible: "\\+€12\\.34"
+- assertVisible:
+    text: "Refund"
+    below: "Maestro E2E Refund"
+
+# --- 4: Spending dropped by exactly 12.34 (1234 cents).
+- scrollUntilVisible:
+    element: "Spending"
+    direction: UP
+- copyTextFrom:
+    text: "[-−]?€[0-9.,]+"
+    below: "Spending"
+    rightOf: "Income"
+    leftOf: "Saved & invested"
+- evalScript: '${output.spendingAfter = (/^\s*[-−]/.test(maestro.copiedText) ? -1 : 1) * parseInt(maestro.copiedText.replace(/[^0-9]/g, ""), 10)}'
+- assertTrue: ${output.spendingBefore - output.spendingAfter == 1234}
+
+# --- 5: Tapping the recent row opens its edit screen with the Refund switch still on.
+- scrollUntilVisible:
+    element: "Maestro E2E Refund"
+    direction: DOWN
+- scroll
+- tapOn: "Maestro E2E Refund"
+- assertVisible: "Edit expense"
+- assertVisible: "12\\.34"
+# The whole row is the toggleable node: it carries checked=true and contains the "Refund" label as
+# a child TextView, so match the row by containsChild.
+- assertVisible:
+    checked: true
+    containsChild: "Refund"
+- assertNotVisible:
+    checked: false
+    containsChild: "Refund"
+- back
+- assertVisible: "FinTrack"
+
+# --- 6: Delete it from the expense list while the list is search-filtered to its name.
+- scrollUntilVisible:
+    element: "See all expenses"
+    direction: DOWN
+- scroll
+- tapOn: "See all expenses"
+- assertVisible: "All expenses"
+- tapOn: "Search"
+- inputText: "Maestro E2E Refund"
+- hideKeyboard
+- assertVisible: "\\+€12\\.34"
+- tapOn: "Delete"
+- assertNotVisible: "\\+€12\\.34"
+- assertVisible: "Undo"
+- tapOn: "Maestro E2E Refund"
+- eraseText: 30
+- hideKeyboard
+- back
+- assertVisible: "FinTrack"

@@ -33,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
@@ -40,6 +41,7 @@ import com.joaoeoneves.fintrack.ui.common.SearchField
 import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 
@@ -57,6 +59,10 @@ fun ExpenseListScreen(
     // drive a controlled text field without dropping/reordering fast-typed characters.
     val query by viewModel.query.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Localized category labels, so the search query also matches the displayed category names.
+    val labels = ExpenseCategory.entries.associateWith { it.displayName }
+    LaunchedEffect(labels) { viewModel.onCategoryLabelsChanged(labels) }
 
     // Re-subscribes on resume so "This month" re-resolves after the calendar rolls over.
     OnResumeEffect(onResume = viewModel::onRetry)
@@ -95,6 +101,7 @@ fun ExpenseListScreen(
                         ExpenseListActions(
                             periodActions = viewModel.periodActions(),
                             onQueryChanged = viewModel::onQueryChanged,
+                            onCategorySelected = viewModel::onCategorySelected,
                             onSortSelected = viewModel::onSortSelected,
                             onOpenExpense = onOpenExpense,
                             onDelete = viewModel::onDeleteExpense,
@@ -137,6 +144,7 @@ private fun ExpenseListTopBar(onBack: () -> Unit) {
 private data class ExpenseListActions(
     val periodActions: PeriodActions,
     val onQueryChanged: (String) -> Unit,
+    val onCategorySelected: (ExpenseCategory?) -> Unit,
     val onSortSelected: (SortOption) -> Unit,
     val onOpenExpense: (String) -> Unit,
     val onDelete: (String) -> Unit,
@@ -168,6 +176,11 @@ private fun ExpenseListContent(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
 
+        CategoryFilterRow(
+            selected = state.categoryFilter,
+            onSelected = actions.onCategorySelected,
+        )
+
         SortDropdown(
             options = SortOption.entries,
             selected = state.sortOption,
@@ -179,6 +192,7 @@ private fun ExpenseListContent(
         ExpenseListItems(
             expenses = state.expenses,
             query = state.query,
+            categoryFilter = state.categoryFilter,
             onOpenExpense = actions.onOpenExpense,
             onDelete = actions.onDelete,
         )
@@ -189,6 +203,7 @@ private fun ExpenseListContent(
 private fun ExpenseListItems(
     expenses: List<Expense>,
     query: String,
+    categoryFilter: ExpenseCategory?,
     onOpenExpense: (String) -> Unit,
     onDelete: (String) -> Unit,
 ) {
@@ -202,10 +217,10 @@ private fun ExpenseListItems(
         ) {
             Text(
                 text =
-                    if (query.isBlank()) {
-                        stringResource(R.string.dashboard_no_expenses)
-                    } else {
-                        stringResource(R.string.expense_list_no_match, query)
+                    when {
+                        query.isNotBlank() -> stringResource(R.string.expense_list_no_match, query)
+                        categoryFilter != null -> stringResource(R.string.expense_list_no_match_filter)
+                        else -> stringResource(R.string.dashboard_no_expenses)
                     },
                 style = MaterialTheme.typography.bodyLarge,
             )

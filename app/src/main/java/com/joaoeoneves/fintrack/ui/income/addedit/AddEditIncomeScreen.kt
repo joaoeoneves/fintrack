@@ -33,7 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.ErrorState
+import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
@@ -168,6 +172,9 @@ private fun IncomeForm(
             value = form.note,
             onValueChange = actions.onNoteChanged,
             label = { Text(stringResource(R.string.field_note_optional)) },
+            supportingText = {
+                FieldSupportingText(error = null, length = form.note.codePointLength(), max = MAX_NOTE_LENGTH)
+            },
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -191,7 +198,13 @@ private fun IncomeSourceAndAmountFields(
         onValueChange = actions.onSourceChanged,
         label = { Text(stringResource(R.string.income_field_source)) },
         isError = form.sourceError != null,
-        supportingText = { form.sourceError?.let { Text(it) } },
+        supportingText = {
+            FieldSupportingText(
+                error = form.sourceError,
+                length = form.source.codePointLength(),
+                max = MAX_NAME_LENGTH,
+            )
+        },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )

@@ -6,7 +6,8 @@ import org.junit.Test
 import java.time.ZoneOffset
 
 /**
- * [ExpenseCsvParser] per-row validation that mirrors firestore.rules: positive `amountCents`, and
+ * [ExpenseCsvParser] per-row validation that mirrors firestore.rules: non-zero `amountCents` (negative
+ * values are refunds, covered in [ExpenseCsvRefundTest]), and
  * name/note length limits counted in Unicode code points. Split out of [ExpenseCsvParserTest] to
  * keep that class bounded.
  */
@@ -30,7 +31,7 @@ class ExpenseCsvParserLimitsTest {
     /** A string of exactly [count] code points, each a non-BMP emoji (2 UTF-16 chars apiece). */
     private fun emoji(count: Int) = "😀".repeat(count)
 
-    // ---- amountCents must be positive ----
+    // ---- amountCents must not be zero ----
 
     @Test
     fun amountCents_zero_isRowFailureMentioningAmountCents() {
@@ -40,17 +41,44 @@ class ExpenseCsvParserLimitsTest {
         val failure = result.failures.single()
         assertEquals(2, failure.rowNumber)
         assertTrue(failure.reason, failure.reason.contains("amountCents"))
-        assertEquals("amountCents must be positive: '0'", failure.reason)
+        assertEquals("amountCents must not be zero: '0'", failure.reason)
     }
 
     @Test
-    fun amountCents_negative_isRowFailureMentioningAmountCents() {
+    fun amountCents_negative_isAcceptedAsRefundWithPositiveAmount() {
         val result = parsed(row(amountCents = "-100"))
 
+        assertTrue(result.failures.isEmpty())
+        val expense = result.validExpenses.single()
+        assertEquals(100L, expense.amountCents)
+        assertTrue(expense.isRefund)
+    }
+
+    @Test
+    fun amountCents_negativeZero_isRejectedAsZero_withRawValueInMessage() {
+        val result = parsed(row(amountCents = "-0"))
+
         assertTrue(result.validExpenses.isEmpty())
-        val failure = result.failures.single()
-        assertTrue(failure.reason, failure.reason.contains("amountCents"))
-        assertTrue(failure.reason, failure.reason.contains("-100"))
+        assertEquals("amountCents must not be zero: '-0'", result.failures.single().reason)
+    }
+
+    @Test
+    fun amountCents_longMinValue_isInvalid_sinceItHasNoPositiveCounterpart() {
+        val raw = Long.MIN_VALUE.toString()
+
+        val result = parsed(row(amountCents = raw))
+
+        assertTrue(result.validExpenses.isEmpty())
+        assertEquals("Invalid amountCents value: '$raw'", result.failures.single().reason)
+    }
+
+    @Test
+    fun amountCents_longMinValuePlusOne_isAcceptedAsRefundOfLongMaxValue() {
+        val result = parsed(row(amountCents = (Long.MIN_VALUE + 1).toString()))
+
+        val expense = result.validExpenses.single()
+        assertEquals(Long.MAX_VALUE, expense.amountCents)
+        assertTrue(expense.isRefund)
     }
 
     @Test
@@ -65,12 +93,8 @@ class ExpenseCsvParserLimitsTest {
     fun amountCents_withSurroundingWhitespace_isTrimmedThenValidated() {
         val result = parsed(row(amountCents = " 0 "))
 
-        assertTrue(
-            result.failures
-                .single()
-                .reason
-                .contains("amountCents"),
-        )
+        // The raw (untrimmed) value is echoed back in the message.
+        assertEquals("amountCents must not be zero: ' 0 '", result.failures.single().reason)
     }
 
     // ---- name length ----
@@ -167,12 +191,13 @@ class ExpenseCsvParserLimitsTest {
                 row(name = "Good3", amountCents = "1"),
             )
 
-        assertEquals(listOf("Good1", "Good2", "Good3"), result.validExpenses.map { it.name })
+        // The negative row is a valid refund, not a failure.
+        assertEquals(listOf("Good1", "Good2", "Negative", "Good3"), result.validExpenses.map { it.name })
+        assertEquals(listOf(false, false, true, false), result.validExpenses.map { it.isRefund })
         val reasonsByRow = result.failures.associate { it.rowNumber to it.reason }
-        assertEquals(setOf(3, 4, 6, 7), reasonsByRow.keys)
-        assertTrue(reasonsByRow.getValue(3).contains("amountCents"))
+        assertEquals(setOf(3, 4, 6), reasonsByRow.keys)
+        assertEquals("amountCents must not be zero: '0'", reasonsByRow.getValue(3))
         assertEquals("Name exceeds 200 characters", reasonsByRow.getValue(4))
         assertEquals("Note exceeds 2000 characters", reasonsByRow.getValue(6))
-        assertTrue(reasonsByRow.getValue(7).contains("amountCents"))
     }
 }

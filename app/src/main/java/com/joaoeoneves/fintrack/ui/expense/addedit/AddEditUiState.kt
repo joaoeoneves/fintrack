@@ -9,6 +9,7 @@ data class ExpenseFormState(
     val category: ExpenseCategory = ExpenseCategory.SHOPPING,
     val date: Instant = Instant.now(),
     val note: String = "",
+    val isRefund: Boolean = false,
     val nameError: String? = null,
     val amountError: String? = null,
     val saveError: String? = null,

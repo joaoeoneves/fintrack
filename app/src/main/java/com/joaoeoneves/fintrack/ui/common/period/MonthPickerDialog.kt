@@ -10,8 +10,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import java.time.Month
 import java.time.YearMonth
@@ -91,19 +90,19 @@ private fun YearHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onPrevious, enabled = canGoBack) {
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = stringResource(R.string.cd_previous_year),
-            )
-        }
+        LabeledIconButton(
+            icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            contentDescription = stringResource(R.string.cd_previous_year),
+            onClick = onPrevious,
+            enabled = canGoBack,
+        )
         Text(text = year.toString(), style = MaterialTheme.typography.titleMedium)
-        IconButton(onClick = onNext, enabled = canGoForward) {
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(R.string.cd_next_year),
-            )
-        }
+        LabeledIconButton(
+            icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = stringResource(R.string.cd_next_year),
+            onClick = onNext,
+            enabled = canGoForward,
+        )
     }
 }
 

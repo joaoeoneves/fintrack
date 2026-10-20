@@ -219,7 +219,7 @@ class SettingsViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
             job.cancel()
         }
@@ -263,7 +263,7 @@ class SettingsViewModelTest {
             advanceUntilIdle()
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
 
             viewModel.dismissSignOutError()
             advanceUntilIdle()
@@ -308,7 +308,7 @@ class SettingsViewModelTest {
 
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
 
             authRepo.nextSignOutResult = Result.success(Unit)
@@ -319,7 +319,7 @@ class SettingsViewModelTest {
             // signOutError is never cleared automatically on a later success -- only
             // dismissSignOutError() clears it. Confirm that's still the (documented) behavior so a
             // future change to auto-clear it is a deliberate one, not an accident.
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
             job.cancel()
         }
 

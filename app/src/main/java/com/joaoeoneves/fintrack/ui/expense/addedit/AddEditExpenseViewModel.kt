@@ -8,6 +8,9 @@ import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -69,6 +72,7 @@ class AddEditExpenseViewModel
                                             category = existing.category,
                                             date = existing.date,
                                             note = existing.note ?: "",
+                                            isRefund = existing.isRefund,
                                             isEditMode = true,
                                             expenseId = existing.id,
                                         ),
@@ -90,7 +94,10 @@ class AddEditExpenseViewModel
 
         fun onRetry() = loadExpense()
 
-        fun onNameChanged(name: String) = updateForm { it.copy(name = name, nameError = null, saveError = null) }
+        fun onNameChanged(name: String) =
+            updateForm {
+                it.copy(name = limitInput(it.name, name, MAX_NAME_LENGTH), nameError = null, saveError = null)
+            }
 
         fun onAmountChanged(amountText: String) {
             updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
@@ -102,7 +109,11 @@ class AddEditExpenseViewModel
 
         fun onDateSelected(date: Instant) = updateForm { it.copy(date = date, saveError = null) }
 
-        fun onNoteChanged(note: String) = updateForm { it.copy(note = note, saveError = null) }
+        fun onNoteChanged(note: String) {
+            updateForm { it.copy(note = limitInput(it.note, note, MAX_NOTE_LENGTH), saveError = null) }
+        }
+
+        fun onRefundChanged(isRefund: Boolean) = updateForm { it.copy(isRefund = isRefund, saveError = null) }
 
         fun onSave() {
             val current = _uiState.value
@@ -131,6 +142,7 @@ class AddEditExpenseViewModel
                         category = form.category,
                         date = form.date,
                         note = form.note.trim().ifBlank { null },
+                        isRefund = form.isRefund,
                     )
                 val result =
                     if (form.isEditMode) {

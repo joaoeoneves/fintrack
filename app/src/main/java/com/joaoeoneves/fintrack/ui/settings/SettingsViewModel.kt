@@ -37,8 +37,8 @@ class SettingsViewModel
         // (bypassing Hilt) with only the original 3 positional args keep compiling; Hilt itself
         // always supplies both in production. When languageRepository is null (test-only), the
         // language always reads as AppLanguage.PORTUGUESE, matching SettingsUiState()'s own default.
-        // When context is null, the signOutError fallback below matches the exact literal those
-        // tests assert on.
+        // When context is null, signOutError falls back to the literal "Sign-out failed" (the
+        // English error_sign_out_failed string), which is what those tests assert on.
         private val languageRepository: LanguageRepository? = null,
         @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
@@ -79,9 +79,9 @@ class SettingsViewModel
 
         fun signOut() {
             viewModelScope.launch {
-                authRepository.signOut().onFailure { e ->
-                    val fallback = context?.getString(R.string.error_sign_out_failed) ?: "Sign-out failed"
-                    signOutError.value = e.message ?: fallback
+                authRepository.signOut().onFailure {
+                    // Deliberately not e.message: raw SDK messages aren't user-facing.
+                    signOutError.value = context?.getString(R.string.error_sign_out_failed) ?: "Sign-out failed"
                 }
             }
         }

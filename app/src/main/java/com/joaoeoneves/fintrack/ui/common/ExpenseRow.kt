@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,10 +48,17 @@ fun ExpenseRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ExpenseRowLeading(expense = expense, dateFormatter = dateFormatter, modifier = Modifier.weight(1f))
+        // Refunds are money coming back, so they read like income: "+" and the primary color.
+        val (sign, amountColor) =
+            if (expense.isRefund) {
+                "+" to MaterialTheme.colorScheme.primary
+            } else {
+                "-" to MaterialTheme.colorScheme.onSurface
+            }
         Text(
-            text = "-${formatAmountCents(expense.amountCents)}",
+            text = "$sign${formatAmountCents(expense.amountCents)}",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = amountColor,
         )
     }
 }
@@ -85,12 +93,18 @@ private fun ExpenseRowLeading(
                     .padding(start = 12.dp)
                     .weight(1f),
         ) {
-            Text(
-                text = expense.name,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = expense.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (expense.isRefund) {
+                    RefundBadge(modifier = Modifier.padding(start = 8.dp))
+                }
+            }
             Text(
                 text =
                     stringResource(
@@ -105,4 +119,20 @@ private fun ExpenseRowLeading(
             )
         }
     }
+}
+
+@Composable
+private fun RefundBadge(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.expense_refund_badge),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
+        maxLines = 1,
+        modifier =
+            modifier
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(4.dp),
+                ).padding(horizontal = 6.dp, vertical = 2.dp),
+    )
 }

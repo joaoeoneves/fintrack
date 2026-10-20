@@ -30,6 +30,8 @@ fun FinTrackNavHost(
                         onOpenIncomeList = { period -> navController.navigate(IncomeList(period.encode())) },
                         onAddIncome = { navController.navigate(AddEditIncome()) },
                         onOpenSettings = { navController.navigate(Settings) },
+                        onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
+                        onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
                     ),
             )
         }

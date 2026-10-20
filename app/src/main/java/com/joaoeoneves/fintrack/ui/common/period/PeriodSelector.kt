@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
+import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import java.time.Instant
 import java.time.ZoneId
 
@@ -98,12 +98,11 @@ fun PeriodSelector(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isMonthPeriod) {
-            IconButton(onClick = actions.onPrevious) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = stringResource(R.string.cd_previous_month),
-                )
-            }
+            LabeledIconButton(
+                icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(R.string.cd_previous_month),
+                onClick = actions.onPrevious,
+            )
         }
         PeriodMenuButton(
             period = period,
@@ -120,12 +119,12 @@ fun PeriodSelector(
             modifier = Modifier.weight(1f, fill = false),
         )
         if (isMonthPeriod) {
-            IconButton(onClick = actions.onNext, enabled = canGoToNextMonth) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = stringResource(R.string.cd_next_month),
-                )
-            }
+            LabeledIconButton(
+                icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.cd_next_month),
+                onClick = actions.onNext,
+                enabled = canGoToNextMonth,
+            )
         }
     }
 

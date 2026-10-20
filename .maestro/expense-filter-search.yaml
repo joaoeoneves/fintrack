@@ -1,0 +1,114 @@
+appId: com.joaoeoneves.fintrack
+---
+# Expense-list category filter + extended search E2E flow for FinTrack.
+#
+# The expense list has a horizontally scrollable row of single-select category FilterChips ("All",
+# "Transfer", "Investments", "Shopping", "Recurring"; persisted across visits), and its search now
+# also matches the note, the category name and the amount.
+#
+# Assumes the app is already signed in and lands on the Dashboard, same as golden-path.yaml.
+# Creates "Maestro E2E Filter A" (Shopping, note "maestro-note-xyz") and "Maestro E2E Filter B"
+# (Transfer) and deletes both while the list is search-filtered to "Maestro E2E Filter", so no
+# pre-existing data is ever touched. Ends with the search cleared and the chip reset to "All".
+
+- launchApp
+
+# --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b.
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "Display currency"
+- tapOn: "Euro (€)"
+- tapOn: "Back"
+- assertVisible: "FinTrack"
+
+# --- 1: Add A (Shopping, with a note) and B (Transfer).
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
+- tapOn: "Add expense"
+- assertVisible: "Add expense"
+- tapOn: "Name"
+- inputText: "Maestro E2E Filter A"
+- tapOn: "Amount"
+- inputText: "11.11"
+- hideKeyboard
+- tapOn: "Category"
+- tapOn: "Shopping"
+- tapOn: "Note \\(optional\\)"
+- inputText: "maestro-note-xyz"
+- hideKeyboard
+- tapOn: "Save"
+- assertVisible: "FinTrack"
+
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
+- tapOn: "Add expense"
+- assertVisible: "Add expense"
+- tapOn: "Name"
+- inputText: "Maestro E2E Filter B"
+- tapOn: "Amount"
+- inputText: "22.22"
+- hideKeyboard
+- tapOn: "Category"
+- tapOn: "Transfer"
+- tapOn: "Save"
+- assertVisible: "FinTrack"
+
+# --- 2: Open the list. Searching the note matches only A.
+- scrollUntilVisible:
+    element: "See all expenses"
+    direction: DOWN
+- scroll
+- tapOn: "See all expenses"
+- assertVisible: "All expenses"
+- assertVisible: "All"
+- tapOn: "Search"
+- inputText: "maestro-note-xyz"
+- hideKeyboard
+- assertVisible: "Maestro E2E Filter A"
+- assertNotVisible: "Maestro E2E Filter B"
+
+# --- 3: Search by name shows both; the "Transfer" chip narrows it to B, "All" shows both again.
+# Rows render their category as "<Category> • <date>", so the bare "Transfer"/"All" text only
+# matches the chip itself.
+- tapOn: "maestro-note-xyz"
+- eraseText: 30
+- inputText: "Maestro E2E Filter"
+- hideKeyboard
+- assertVisible: "Maestro E2E Filter A"
+- assertVisible: "Maestro E2E Filter B"
+- tapOn: "Transfer"
+- assertVisible: "Maestro E2E Filter B"
+- assertNotVisible: "Maestro E2E Filter A"
+- takeScreenshot: build/maestro/expense-filter-transfer
+- tapOn: "All"
+- assertVisible: "Maestro E2E Filter A"
+- assertVisible: "Maestro E2E Filter B"
+
+# --- 4: Delete both while the list only contains this flow's two rows.
+- tapOn: "Delete"
+- assertVisible: "Undo"
+- tapOn: "Delete"
+- assertNotVisible: "Maestro E2E Filter A"
+- assertNotVisible: "Maestro E2E Filter B"
+
+# --- 5: Clear the search, make sure the chip is back on "All", and return to the Dashboard.
+- tapOn: "Maestro E2E Filter"
+- eraseText: 30
+- hideKeyboard
+- tapOn: "All"
+# FilterChip exposes its selection as checked=true on the clickable chip node, whose child is the
+# label TextView.
+- assertVisible:
+    checked: true
+    containsChild: "All"
+- assertNotVisible:
+    checked: true
+    containsChild: "Transfer"
+- back
+- assertVisible: "FinTrack"

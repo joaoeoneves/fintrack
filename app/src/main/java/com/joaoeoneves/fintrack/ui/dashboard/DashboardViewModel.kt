@@ -15,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.domain.model.netCents
 import com.joaoeoneves.fintrack.domain.model.savingsRate
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
@@ -94,7 +95,11 @@ class DashboardViewModel
                     CategoryBudget(
                         category = category,
                         limitCents = budgets.find { it.category == category }?.limitCents,
-                        spentCents = monthExpenses.filter { it.category == category }.sumOf { it.amountCents },
+                        spentCents =
+                            monthExpenses
+                                .filter { it.category == category }
+                                .netCents()
+                                .coerceAtLeast(0),
                     )
                 }
             }
@@ -186,11 +191,11 @@ class DashboardViewModel
                 ExpenseCategory.entries.map { category ->
                     CategoryTotal(
                         category = category,
-                        totalCents = filter { it.category == category }.sumOf { it.amountCents },
+                        totalCents = filter { it.category == category }.netCents(),
                     )
                 }
-            val spendingCents = filter { it.category.kind == CategoryKind.SPENDING }.sumOf { it.amountCents }
-            val savedCents = filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.amountCents }
+            val spendingCents = filter { it.category.kind == CategoryKind.SPENDING }.netCents()
+            val savedCents = filter { it.category.kind == CategoryKind.SAVING }.netCents()
             val incomeCents = income.sumOf { it.amountCents }
             return DashboardUiState.Content(
                 period = header.period,

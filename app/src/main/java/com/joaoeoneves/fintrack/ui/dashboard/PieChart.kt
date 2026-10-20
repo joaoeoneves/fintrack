@@ -144,6 +144,15 @@ private fun buildChartContentDescription(
 }
 
 /**
+ * The slices as drawn by the chart: a category whose refunds exceed its expenses has a negative net
+ * total, which can't be drawn as an arc, so it is shown as zero instead.
+ */
+fun List<CategoryTotal>.clampedForChart(): List<CategoryTotal> =
+    map { slice ->
+        slice.copy(totalCents = slice.totalCents.coerceAtLeast(0))
+    }
+
+/**
  * Custom Canvas-based donut chart showing the share of outflow per category, with the total outflow
  * centered inside the ring and a legend rendered alongside it.
  */
@@ -152,11 +161,12 @@ fun PieChart(
     slices: List<CategoryTotal>,
     modifier: Modifier = Modifier,
 ) {
-    val total = slices.sumOf { it.totalCents }
-    val sliceColors = slices.map { it.category.color }
+    val chartSlices = slices.clampedForChart()
+    val total = chartSlices.sumOf { it.totalCents }
+    val sliceColors = chartSlices.map { it.category.color }
     val strokeWidthPx = with(LocalDensity.current) { RING_STROKE_WIDTH.toPx() }
 
-    val chartContentDescription = buildChartContentDescription(slices, total)
+    val chartContentDescription = buildChartContentDescription(chartSlices, total)
 
     Row(
         modifier = modifier,
@@ -177,7 +187,7 @@ fun PieChart(
                 val inset = strokeWidthPx / 2
                 val arcSize = Size(size.width - strokeWidthPx, size.height - strokeWidthPx)
                 var startAngle = ARC_START_ANGLE_DEGREES
-                slices.forEachIndexed { index, slice ->
+                chartSlices.forEachIndexed { index, slice ->
                     val sweep = (slice.totalCents.toFloat() / total.toFloat()) * FULL_CIRCLE_DEGREES
                     if (sweep > 0f) {
                         drawArc(
@@ -203,7 +213,7 @@ fun PieChart(
                     .weight(1f)
                     .padding(start = 16.dp),
         ) {
-            slices.forEach { slice ->
+            chartSlices.forEach { slice ->
                 PieChartLegendRow(slice, totalCents = total)
             }
         }

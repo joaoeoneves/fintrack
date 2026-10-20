@@ -40,10 +40,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
+import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
@@ -184,21 +184,11 @@ private fun DashboardContent(
         }
 
         item {
-            RecentExpensesCard(
-                state = state,
-                onOpenList = callbacks.onOpenList,
-                onAddExpense = callbacks.onAddExpense,
-                modifier = cardModifier,
-            )
+            RecentExpensesCard(state = state, callbacks = callbacks, modifier = cardModifier)
         }
 
         item {
-            RecentIncomeCard(
-                state = state,
-                onOpenIncomeList = callbacks.onOpenIncomeList,
-                onAddIncome = callbacks.onAddIncome,
-                modifier = cardModifier,
-            )
+            RecentIncomeCard(state = state, callbacks = callbacks, modifier = cardModifier)
         }
     }
 }
@@ -214,10 +204,10 @@ private fun budgetSectionTitle(state: DashboardUiState.Content): String =
 @Composable
 private fun RecentIncomeCard(
     state: DashboardUiState.Content,
-    onOpenIncomeList: (Period) -> Unit,
-    onAddIncome: () -> Unit,
+    callbacks: DashboardCallbacks,
     modifier: Modifier = Modifier,
 ) {
+    val onOpenIncomeList = callbacks.onOpenIncomeList
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
@@ -237,9 +227,11 @@ private fun RecentIncomeCard(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(onClick = onAddIncome) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add_income))
-                }
+                LabeledIconButton(
+                    icon = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.action_add_income),
+                    onClick = callbacks.onAddIncome,
+                )
             }
 
             if (state.recentIncome.isEmpty()) {
@@ -255,7 +247,7 @@ private fun RecentIncomeCard(
                 state.recentIncome.forEach { income ->
                     IncomeRow(
                         income = income,
-                        onClick = { onOpenIncomeList(state.period) },
+                        onClick = { callbacks.onOpenIncome(income.id) },
                     )
                     HorizontalDivider()
                 }
@@ -279,10 +271,10 @@ private fun RecentIncomeCard(
 @Composable
 private fun RecentExpensesCard(
     state: DashboardUiState.Content,
-    onOpenList: (Period) -> Unit,
-    onAddExpense: () -> Unit,
+    callbacks: DashboardCallbacks,
     modifier: Modifier = Modifier,
 ) {
+    val onOpenList = callbacks.onOpenList
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
@@ -302,9 +294,11 @@ private fun RecentExpensesCard(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(onClick = onAddExpense) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add_expense))
-                }
+                LabeledIconButton(
+                    icon = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.action_add_expense),
+                    onClick = callbacks.onAddExpense,
+                )
             }
 
             if (state.recentExpenses.isEmpty()) {
@@ -320,7 +314,7 @@ private fun RecentExpensesCard(
                 state.recentExpenses.forEach { expense ->
                     ExpenseRow(
                         expense = expense,
-                        onClick = { onOpenList(state.period) },
+                        onClick = { callbacks.onOpenExpense(expense.id) },
                     )
                     HorizontalDivider()
                 }

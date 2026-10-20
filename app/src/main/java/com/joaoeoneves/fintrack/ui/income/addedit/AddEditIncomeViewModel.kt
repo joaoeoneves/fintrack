@@ -7,6 +7,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
@@ -92,7 +95,13 @@ class AddEditIncomeViewModel
         fun onRetry() = loadIncome()
 
         fun onSourceChanged(source: String) {
-            updateForm { it.copy(source = source, sourceError = null, saveError = null) }
+            updateForm {
+                it.copy(
+                    source = limitInput(it.source, source, MAX_NAME_LENGTH),
+                    sourceError = null,
+                    saveError = null,
+                )
+            }
         }
 
         fun onAmountChanged(amountText: String) {
@@ -101,7 +110,9 @@ class AddEditIncomeViewModel
 
         fun onDateSelected(date: Instant) = updateForm { it.copy(date = date, saveError = null) }
 
-        fun onNoteChanged(note: String) = updateForm { it.copy(note = note, saveError = null) }
+        fun onNoteChanged(note: String) {
+            updateForm { it.copy(note = limitInput(it.note, note, MAX_NOTE_LENGTH), saveError = null) }
+        }
 
         fun onSave() {
             val current = _uiState.value

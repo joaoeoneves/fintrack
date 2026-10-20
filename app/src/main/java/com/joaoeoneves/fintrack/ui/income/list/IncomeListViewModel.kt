@@ -36,6 +36,19 @@ import javax.inject.Inject
 // disappears, so a quick configuration change doesn't tear down and immediately re-establish it.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
+/** The repository's entries for the selected period, before the query/filter/sort are applied. */
+private sealed interface PeriodItems<out T> {
+    data class Loaded<T>(
+        val period: Period,
+        val canGoToNextMonth: Boolean,
+        val items: List<T>,
+    ) : PeriodItems<T>
+
+    data class Failed(
+        val message: String,
+    ) : PeriodItems<Nothing>
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class IncomeListViewModel
@@ -61,10 +74,8 @@ class IncomeListViewModel
             )
 
         // Public so the screen can bind the search field's displayed value directly to this,
-        // instead of to Content.query (which only updates after a round trip through the
-        // repository's live Firestore listener). Binding to the round-tripped value is too slow
-        // for a controlled text field and drops/reorders characters typed faster than the
-        // round trip completes.
+        // instead of to Content.query (which only updates after the derived uiState recomputes).
+        // A controlled text field bound to the derived value can drop/reorder fast-typed characters.
         val query: StateFlow<String> = savedStateHandle.getStateFlow(KEY_QUERY, "")
         private val sortOption = savedStateHandle.getStateFlow(KEY_SORT_OPTION, IncomeSortOption.DATE_DESC)
         private val retryTrigger = MutableStateFlow(0)
@@ -72,29 +83,33 @@ class IncomeListViewModel
         private val undoEvents = Channel<Income>(Channel.BUFFERED)
         val undoEvent: Flow<Income> = undoEvents.receiveAsFlow()
 
+        // Only the period and the retry trigger drive the Firestore subscription; the query, filter
+        // and sort are applied afterwards (below), so typing or changing them never re-subscribes.
+        private val periodItems: Flow<PeriodItems<Income>> =
+            combine(selection.token, retryTrigger) { token, _ -> token }
+                .flatMapLatest { token ->
+                    // "Now" is read on every (re)subscription so an ON_RESUME retry after the
+                    // calendar rolls over re-resolves CurrentMonth and canGoToNextMonth.
+                    val now = clock.instant()
+                    val period = decodePeriod(token, now, clock.zone)
+                    val canGoToNextMonth = period.canGoToNextMonth(now, clock.zone)
+                    val instantRange = period.toInstantRange(now, clock.zone)
+                    incomeRepository
+                        .observeIncome(instantRange.startInclusive, instantRange.endExclusive)
+                        .map<List<Income>, PeriodItems<Income>> { PeriodItems.Loaded(period, canGoToNextMonth, it) }
+                        .catch { e ->
+                            val fallback =
+                                context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
+                            emit(PeriodItems.Failed(e.message ?: fallback))
+                        }
+                }
+
         val uiState: StateFlow<IncomeListUiState> =
-            combine(
-                selection.token,
-                query,
-                sortOption,
-                retryTrigger,
-            ) { token, q, sort, _ ->
-                Triple(token, q, sort)
-            }.flatMapLatest { (token, q, sort) ->
-                // "Now" is read on every (re)subscription so an ON_RESUME retry after the calendar
-                // rolls over re-resolves CurrentMonth and canGoToNextMonth.
-                val now = clock.instant()
-                val period = decodePeriod(token, now, clock.zone)
-                val canGoToNextMonth = period.canGoToNextMonth(now, clock.zone)
-                val instantRange = period.toInstantRange(now, clock.zone)
-                incomeRepository
-                    .observeIncome(instantRange.startInclusive, instantRange.endExclusive)
-                    .map<List<Income>, IncomeListUiState> { income ->
-                        income.toContent(period, canGoToNextMonth, q, sort)
-                    }.catch { e ->
-                        val fallback = context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
-                        emit(IncomeListUiState.Error(e.message ?: fallback))
-                    }
+            combine(periodItems, query, sortOption) { items, q, sort ->
+                when (items) {
+                    is PeriodItems.Loaded -> items.items.toListContent(items.period, items.canGoToNextMonth, q, sort)
+                    is PeriodItems.Failed -> IncomeListUiState.Error(items.message)
+                }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -139,34 +154,6 @@ class IncomeListViewModel
             viewModelScope.launch {
                 incomeRepository.addIncome(income)
             }
-        }
-
-        private fun List<Income>.toContent(
-            period: Period,
-            canGoToNextMonth: Boolean,
-            query: String,
-            sort: IncomeSortOption,
-        ): IncomeListUiState.Content {
-            val filtered =
-                if (query.isBlank()) {
-                    this
-                } else {
-                    filter { it.source.contains(query, ignoreCase = true) }
-                }
-            val sorted =
-                when (sort) {
-                    IncomeSortOption.DATE_DESC -> filtered.sortedByDescending { it.date }
-                    IncomeSortOption.DATE_ASC -> filtered.sortedBy { it.date }
-                    IncomeSortOption.AMOUNT_DESC -> filtered.sortedByDescending { it.amountCents }
-                    IncomeSortOption.AMOUNT_ASC -> filtered.sortedBy { it.amountCents }
-                }
-            return IncomeListUiState.Content(
-                period = period,
-                canGoToNextMonth = canGoToNextMonth,
-                query = query,
-                sortOption = sort,
-                income = sorted,
-            )
         }
 
         private companion object {

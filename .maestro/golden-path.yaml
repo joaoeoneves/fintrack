@@ -118,10 +118,10 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "-€12\\.34"
 
 # --- 3: Edit it (change the amount) and confirm the change persists ---
-# Tapping a row on the Dashboard's "Recent expenses" card navigates to the full list (not directly
-# to edit) -- tap the expense again once there to open it in edit mode.
-- tapOn: "Maestro E2E Test Expense"
-- assertVisible: "All expenses"
+# Tapping a row on the Dashboard's "Recent expenses" card opens that expense's edit screen directly,
+# and Save pops back to the Dashboard. The extra plain scroll brings the row fully inside the
+# LazyColumn's clip bounds before tapping (see income-tracking.yaml step 4).
+- scroll
 - tapOn: "Maestro E2E Test Expense"
 - assertVisible: "Edit expense"
 # In edit mode the amount is prefilled with the *locale's* decimal separator (no longer the
@@ -135,11 +135,22 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 
-# Back on the full list, the updated amount should be visible.
-- assertVisible: "All expenses"
-- assertVisible: "Maestro E2E Test Expense"
+# Back on the Dashboard, the recent row shows the updated amount.
+- assertVisible: "FinTrack"
+- scrollUntilVisible:
+    element: "Maestro E2E Test Expense"
+    direction: DOWN
 - assertVisible: "-€56\\.78"
 - assertNotVisible: "-€12\\.34"
+
+# Open the full list via "See all expenses" for the delete step below.
+- scrollUntilVisible:
+    element: "See all expenses"
+    direction: DOWN
+- scroll
+- tapOn: "See all expenses"
+- assertVisible: "All expenses"
+- assertVisible: "Maestro E2E Test Expense"
 
 # --- 4: Delete it and confirm it's gone ---
 # Deletion is now immediate (tap or swipe the row) — there is no confirmation dialog anymore.

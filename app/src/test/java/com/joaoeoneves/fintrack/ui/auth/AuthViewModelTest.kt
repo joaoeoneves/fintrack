@@ -301,6 +301,24 @@ class AuthViewModelTest {
             assertEquals(AuthUiState.Error("translated sign-out failure"), viewModel.uiState.value)
         }
 
+    @Test
+    fun signOut_failure_withNonNullMessage_andRealContext_usesContextGetString_neverRawMessage() =
+        runTest(testDispatcher) {
+            val repo =
+                FakeAuthRepository(
+                    initialUser = user,
+                    nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
+                )
+            val appContext = FakeStringContext(R.string.error_sign_out_failed, "translated sign-out failure")
+            val viewModel = AuthViewModel(repo, appContext)
+            advanceUntilIdle()
+
+            viewModel.signOut()
+            advanceUntilIdle()
+
+            assertEquals(AuthUiState.Error("translated sign-out failure"), viewModel.uiState.value)
+        }
+
     // ---- signOut: success (relies on the fake's flow, not a ViewModel shortcut) ----
 
     @Test
@@ -342,7 +360,7 @@ class AuthViewModelTest {
     // against the real fake instead of a bespoke local subclass.
 
     @Test
-    fun signOut_failure_setsErrorState_withUnderlyingMessage() =
+    fun signOut_failure_setsGenericErrorState_notUnderlyingMessage() =
         runTest(testDispatcher) {
             val repo =
                 FakeAuthRepository(
@@ -355,7 +373,7 @@ class AuthViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals(AuthUiState.Error("network unavailable"), viewModel.uiState.value)
+            assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
         }
 
     @Test
@@ -395,7 +413,7 @@ class AuthViewModelTest {
             // own flow still reflects the signed-in user (i.e. FakeAuthRepository.signOut() did not
             // clear userFlow.value on failure), even though the ViewModel's uiState surfaces an Error.
             assertEquals(user, currentValueOf(repo.observeCurrentUser()))
-            assertEquals(AuthUiState.Error("network unavailable"), viewModel.uiState.value)
+            assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
         }
 
     @Test
@@ -411,7 +429,7 @@ class AuthViewModelTest {
 
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals(AuthUiState.Error("network unavailable"), viewModel.uiState.value)
+            assertEquals(AuthUiState.Error("Sign-out failed"), viewModel.uiState.value)
             assertEquals(user, currentValueOf(repo.observeCurrentUser()))
 
             // Reconfigure the fake to succeed on the next call and retry.

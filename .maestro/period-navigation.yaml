@@ -28,19 +28,20 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Back"
 - assertVisible: "FinTrack"
 
-# The "Next month" content description lives on the IconButton's inner Icon node, which Maestro
-# always reports as enabled; the enabled/disabled state is on the clickable IconButton parent. So the
-# enabled checks below target that direct parent via containsChild instead of the icon text itself.
-# Maestro 2.6.1 never matches `enabled: true` combined with containsChild (even on an enabled
-# button), so "Next is enabled" is asserted as "the disabled Next button is not visible".
+# The month/year arrow IconButtons carry their content description ("Previous month"/"Next month",
+# "Previous year"/"Next year") on the clickable button node itself, the same node that holds the
+# enabled/disabled state. So the arrow checks below match `text: "<label>"` together with
+# `enabled: true/false` directly on that one node.
 #
 # --- 1: Default is the current month: month label, both arrows, Next disabled, budgets title
 # "Budgets (this month)".
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
-- assertVisible: "Previous month"
 - assertVisible:
+    text: "Previous month"
+    enabled: true
+- assertVisible:
+    text: "Next month"
     enabled: false
-    containsChild: "Next month"
 - scrollUntilVisible:
     element: "Budgets \\(this month\\)"
     direction: DOWN
@@ -57,9 +58,9 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: ${output.currentMonthLabel}
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
 - assertVisible: "Next month"
-- assertNotVisible:
-    enabled: false
-    containsChild: "Next month"
+- assertVisible:
+    text: "Next month"
+    enabled: true
 - copyTextFrom:
     text: "[A-Z][a-z]+ [0-9]{4}"
 - evalScript: ${output.previousMonthLabel = maestro.copiedText}
@@ -82,9 +83,9 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "All expenses"
 - assertVisible: ${output.previousMonthLabel}
 - assertVisible: "Next month"
-- assertNotVisible:
-    enabled: false
-    containsChild: "Next month"
+- assertVisible:
+    text: "Next month"
+    enabled: true
 - back
 
 # --- 4: Next month returns to the current month: "Budgets (this month)" and Next disabled again.
@@ -94,8 +95,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Next month"
 - assertVisible: ${output.currentMonthLabel}
 - assertVisible:
+    text: "Next month"
     enabled: false
-    containsChild: "Next month"
 - scrollUntilVisible:
     element: "Budgets \\(this month\\)"
     direction: DOWN
@@ -113,16 +114,26 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Last 12 months"
 - assertVisible: "Custom range.*"
 - tapOn: "Choose month.*"
-- assertVisible: "Previous year"
-- assertVisible: "Next year"
+# The picker opens on the current year: "Next year" is disabled (no future years), "Previous year"
+# is enabled.
+- assertVisible:
+    text: "Next year"
+    enabled: false
+- assertVisible:
+    text: "Previous year"
+    enabled: true
 - tapOn: "Previous year"
+# One year back, "Next year" becomes enabled.
+- assertVisible:
+    text: "Next year"
+    enabled: true
 - tapOn: "Jan"
 - assertNotVisible: "Previous year"
 - assertVisible: "January [0-9]{4}"
 - assertVisible: "Next month"
-- assertNotVisible:
-    enabled: false
-    containsChild: "Next month"
+- assertVisible:
+    text: "Next month"
+    enabled: true
 
 # Cancel closes the month picker without changing the period.
 - tapOn: "Change period"
@@ -155,5 +166,5 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: ${output.currentMonthLabel}
 - assertVisible: "Previous month"
 - assertVisible:
+    text: "Next month"
     enabled: false
-    containsChild: "Next month"

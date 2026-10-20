@@ -2,10 +2,14 @@ package com.joaoeoneves.fintrack.data.csv
 
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.codePointLength
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeParseException
+import kotlin.math.abs
 
 private const val EXPECTED_HEADER = "name,amountcents,category,date,note"
 private const val EXPECTED_COLUMN_COUNT = 5
@@ -15,14 +19,6 @@ private const val COLUMN_AMOUNT_CENTS = 1
 private const val COLUMN_CATEGORY = 2
 private const val COLUMN_DATE = 3
 private const val COLUMN_NOTE = 4
-
-// Mirror the size limits enforced by firestore.rules for expense documents, so rows the server
-// would reject are reported as row failures at preview time instead of failing the import batch.
-private const val MAX_NAME_LENGTH = 200
-private const val MAX_NOTE_LENGTH = 2000
-
-/** Length in Unicode code points (what Firestore rules' `size()` counts), not UTF-16 chars. */
-private fun String.codePointLength(): Int = codePointCount(0, length)
 
 /** Human-readable category name also accepted in the CSV `category` column. */
 private fun ExpenseCategory.canonicalName(): String =
@@ -71,7 +67,10 @@ sealed interface CsvImportOutcome {
 
 /**
  * Parses expense CSV text in the format documented by the `seed-data` skill:
- * header `name,amountCents,category,date,note`, one row per expense.
+ * header `name,amountCents,category,date,note`, one row per expense. A negative `amountCents`
+ * denotes a refund (imported as a positive amount with [Expense.isRefund] set); zero is rejected.
+ * Name/note lengths are checked against the same limits firestore.rules enforces, so rows the
+ * server would reject are reported as row failures at preview time instead of failing the batch.
  */
 object ExpenseCsvParser {
     fun parse(
@@ -129,7 +128,8 @@ object ExpenseCsvParser {
         val rawNote = fields[COLUMN_NOTE]
 
         val name = fields[COLUMN_NAME].trim()
-        val amountCents = rawAmount.trim().toLongOrNull()
+        // Long.MIN_VALUE has no positive counterpart, so it is treated as invalid.
+        val amountCents = rawAmount.trim().toLongOrNull()?.takeIf { it != Long.MIN_VALUE }
         val category = parseCategory(rawCategory.trim())
         val date = parseDate(rawDate.trim(), zone)
         val note = rawNote.ifBlank { null }
@@ -139,7 +139,7 @@ object ExpenseCsvParser {
             name.codePointLength() > MAX_NAME_LENGTH ->
                 ParsedRow.Invalid("Name exceeds $MAX_NAME_LENGTH characters")
             amountCents == null -> ParsedRow.Invalid("Invalid amountCents value: '$rawAmount'")
-            amountCents <= 0 -> ParsedRow.Invalid("amountCents must be positive: '$rawAmount'")
+            amountCents == 0L -> ParsedRow.Invalid("amountCents must not be zero: '$rawAmount'")
             category == null -> ParsedRow.Invalid("Unknown category: '$rawCategory'")
             date == null -> ParsedRow.Invalid("Invalid date: '$rawDate'")
             note != null && note.codePointLength() > MAX_NOTE_LENGTH ->
@@ -149,10 +149,11 @@ object ExpenseCsvParser {
                     Expense(
                         id = "",
                         name = name,
-                        amountCents = amountCents,
+                        amountCents = abs(amountCents),
                         category = category,
                         date = date,
                         note = note,
+                        isRefund = amountCents < 0,
                     ),
                 )
         }

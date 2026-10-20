@@ -174,4 +174,82 @@ class FirestoreExpenseRepositoryTest {
         val logs = ShadowLog.getLogsForTag(TAG)
         assertTrue("expected the doc id in the log message, got: $logs", logs.any { it.msg.contains("doc-id-12345") })
     }
+
+    // ---- isRefund ----
+
+    @Test
+    fun isRefundTrue_parsesAsRefund() {
+        val fields = validFields() + ("isRefund" to TestDocumentSnapshots.booleanValue(true))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "refund1", fields = fields)
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(true, result?.isRefund)
+        assertEquals(500L, result?.amountCents)
+        assertEquals(-500L, result?.signedAmountCents)
+    }
+
+    @Test
+    fun isRefundFalse_parsesAsRegularExpense() {
+        val fields = validFields() + ("isRefund" to TestDocumentSnapshots.booleanValue(false))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "regular1", fields = fields)
+
+        assertEquals(false, toExpenseOrNull(snapshot)?.isRefund)
+    }
+
+    @Test
+    fun isRefundAbsent_legacyDoc_defaultsToFalse_andIsNotDropped() {
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "legacy1", fields = validFields())
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(false, result?.isRefund)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun isRefundWrongType_defaultsToFalse_andIsNotDropped() {
+        val fields = validFields() + ("isRefund" to TestDocumentSnapshots.stringValue("true"))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "weird1", fields = fields)
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(false, result?.isRefund)
+        assertEquals("Coffee", result?.name)
+    }
+
+    @Test
+    fun toFirestoreMap_alwaysContainsIsRefund_forBothRefundsAndRegularExpenses() {
+        val base =
+            Expense(
+                id = "e1",
+                name = "Coffee",
+                amountCents = 500L,
+                category = com.joaoeoneves.fintrack.domain.model.ExpenseCategory.SHOPPING,
+                date = Instant.parse("2024-01-15T00:00:00Z"),
+                note = null,
+            )
+
+        val regular = toFirestoreMap(base, includeCreatedAt = false)
+        val refund = toFirestoreMap(base.copy(isRefund = true), includeCreatedAt = true)
+
+        assertTrue(regular.containsKey("isRefund"))
+        assertEquals(false, regular["isRefund"])
+        assertEquals(true, refund["isRefund"])
+        // amountCents is always stored as the positive magnitude; the flag carries the sign.
+        assertEquals(500L, refund["amountCents"])
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun toFirestoreMap(
+        expense: Expense,
+        includeCreatedAt: Boolean,
+    ): Map<String, Any?> {
+        val method =
+            Class
+                .forName("com.joaoeoneves.fintrack.data.FirestoreExpenseRepositoryKt")
+                .getDeclaredMethod("toFirestoreMap", Expense::class.java, Boolean::class.javaPrimitiveType)
+        method.isAccessible = true
+        return method.invoke(null, expense, includeCreatedAt) as Map<String, Any?>
+    }
 }

@@ -7,7 +7,8 @@ private const val HEADER = "name,amountCents,category,date,note"
 
 /**
  * Writes [Expense] lists to CSV text in the format documented by the `seed-data` skill. The output
- * of [write] is guaranteed to be read back with zero failures by [ExpenseCsvParser.parse].
+ * of [write] is guaranteed to be read back with zero failures by [ExpenseCsvParser.parse]. Refunds
+ * are written with a negative `amountCents` ([Expense.signedAmountCents]).
  */
 object ExpenseCsvWriter {
     fun write(expenses: List<Expense>): String {
@@ -16,7 +17,7 @@ object ExpenseCsvWriter {
             lines +=
                 listOf(
                     escapeCsvField(expense.name),
-                    expense.amountCents.toString(),
+                    expense.signedAmountCents.toString(),
                     escapeCsvField(expense.category.canonicalName()),
                     expense.date.toString(),
                     escapeCsvField(expense.note.orEmpty()),
