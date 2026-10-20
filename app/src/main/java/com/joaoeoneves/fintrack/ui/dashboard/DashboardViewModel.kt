@@ -4,22 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.CategoryKind
-import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.domain.model.anchorMonth
+import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
-import com.joaoeoneves.fintrack.domain.model.netCents
-import com.joaoeoneves.fintrack.domain.model.savingsRate
-import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
-import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
@@ -39,7 +32,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
-import java.time.YearMonth
 import java.time.ZoneId
 import javax.inject.Inject
 
@@ -54,51 +46,19 @@ private const val RECENT_ITEMS_LIMIT = 5
 // SavedStateHandle key of the selected period token.
 private const val KEY_PERIOD = "period"
 
-/** The resolved, period-derived header fields of [DashboardUiState.Content]. */
-private data class PeriodHeader(
-    val period: Period,
-    val canGoToNextMonth: Boolean,
-    val budgetMonth: YearMonth,
-    val budgetMonthIsCurrent: Boolean,
-)
-
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel
     @Inject
     constructor(
-        private val expenseRepository: ExpenseRepository,
+        private val observePeriodOverview: ObservePeriodOverview,
         private val budgetRepository: BudgetRepository,
-        private val incomeRepository: IncomeRepository,
         savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
         private val selection =
             PeriodSelection(savedStateHandle, KEY_PERIOD, Period.CurrentMonth.encode(), clock)
         private val retryTrigger = MutableStateFlow(0)
-
-        private fun budgetProgress(
-            month: YearMonth,
-            zone: ZoneId,
-        ): Flow<List<CategoryBudget>> {
-            val monthRange = month.toInstantRange(zone)
-            return combine(
-                expenseRepository.observeExpenses(monthRange.startInclusive, monthRange.endExclusive),
-                budgetRepository.observeBudgets(),
-            ) { monthExpenses, budgets ->
-                ExpenseCategory.entries.map { category ->
-                    CategoryBudget(
-                        category = category,
-                        limitCents = budgets.find { it.category == category }?.limitCents,
-                        spentCents =
-                            monthExpenses
-                                .filter { it.category == category }
-                                .netCents()
-                                .coerceAtLeast(0),
-                    )
-                }
-            }
-        }
 
         val uiState: StateFlow<DashboardUiState> =
             combine(selection.token, retryTrigger) { token, _ -> token }
@@ -118,22 +78,8 @@ class DashboardViewModel
             now: Instant,
         ): Flow<DashboardUiState> {
             val zone = clock.zone
-            val currentMonth = currentYearMonth(now, zone)
-            val budgetMonth = period.anchorMonth(now, zone) ?: currentMonth
-            val header =
-                PeriodHeader(
-                    period = period,
-                    canGoToNextMonth = period.canGoToNextMonth(now, zone),
-                    budgetMonth = budgetMonth,
-                    budgetMonthIsCurrent = budgetMonth == currentMonth,
-                )
-            val range = period.toInstantRange(now, zone)
-            return combine(
-                expenseRepository.observeExpenses(range.startInclusive, range.endExclusive),
-                budgetProgress(budgetMonth, zone),
-                incomeRepository.observeIncome(range.startInclusive, range.endExclusive),
-            ) { expenses, budgets, income -> expenses.toContent(header, budgets, income) }
-                .map<DashboardUiState.Content, DashboardUiState> { content -> content }
+            return observePeriodOverview(period, now, zone, RECENT_ITEMS_LIMIT)
+                .map<PeriodOverview, DashboardUiState> { overview -> overview.toContent(period, now, zone) }
                 .catch { e -> emit(DashboardUiState.Error(e.messageOr(R.string.error_generic_fallback))) }
         }
 
@@ -171,37 +117,26 @@ class DashboardViewModel
             }
         }
 
-        private fun List<Expense>.toContent(
-            header: PeriodHeader,
-            budgets: List<CategoryBudget>,
-            income: List<Income>,
-        ): DashboardUiState.Content {
-            val categoryTotals =
-                ExpenseCategory.entries.map { category ->
-                    CategoryTotal(
-                        category = category,
-                        totalCents = filter { it.category == category }.netCents(),
-                    )
-                }
-            val spendingCents = filter { it.category.kind == CategoryKind.SPENDING }.netCents()
-            val savedCents = filter { it.category.kind == CategoryKind.SAVING }.netCents()
-            val incomeCents = income.sumOf { it.amountCents }
-            return DashboardUiState.Content(
-                period = header.period,
-                canGoToNextMonth = header.canGoToNextMonth,
-                budgetMonth = header.budgetMonth,
-                budgetMonthIsCurrent = header.budgetMonthIsCurrent,
-                expenses = this,
-                categoryTotals = categoryTotals,
-                outflowCents = spendingCents + savedCents,
-                spendingCents = spendingCents,
-                savedCents = savedCents,
-                savingsRate = savingsRate(savedCents = savedCents, incomeCents = incomeCents),
-                recentExpenses = sortedByDescending { it.date }.take(RECENT_ITEMS_LIMIT),
+        private fun PeriodOverview.toContent(
+            period: Period,
+            now: Instant,
+            zone: ZoneId,
+        ): DashboardUiState.Content =
+            DashboardUiState.Content(
+                period = period,
+                canGoToNextMonth = period.canGoToNextMonth(now, zone),
+                budgetMonth = budgetMonth,
+                budgetMonthIsCurrent = budgetMonth == currentYearMonth(now, zone),
+                expenses = transactions.expenses,
+                categoryTotals = summary.categoryTotals,
+                outflowCents = summary.outflowCents,
+                spendingCents = summary.spendingCents,
+                savedCents = summary.savedCents,
+                savingsRate = summary.savingsRate,
+                recentExpenses = recent.expenses,
                 budgets = budgets,
-                incomeCents = incomeCents,
-                netCents = incomeCents - spendingCents - savedCents,
-                recentIncome = income.sortedByDescending { it.date }.take(RECENT_ITEMS_LIMIT),
+                incomeCents = summary.incomeCents,
+                netCents = summary.netCents,
+                recentIncome = recent.income,
             )
-        }
     }

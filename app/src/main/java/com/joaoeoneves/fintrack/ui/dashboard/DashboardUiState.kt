@@ -1,29 +1,14 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.YearMonth
 
-data class CategoryTotal(
-    val category: ExpenseCategory,
-    val totalCents: Long,
-)
-
-/**
- * Progress of a single [ExpenseCategory] against its budget limit for the dashboard's budget
- * month (see [DashboardUiState.Content.budgetMonth]). [limitCents] is `null` when no budget has
- * been set for the category.
- */
-data class CategoryBudget(
-    val category: ExpenseCategory,
-    val limitCents: Long?,
-    val spentCents: Long,
-) {
-    val isOverBudget: Boolean get() = limitCents != null && spentCents > limitCents
-}
+// Aliases kept so the dashboard composables can keep referring to the moved domain types unqualified.
+typealias CategoryTotal = com.joaoeoneves.fintrack.domain.model.CategoryTotal
+typealias CategoryBudget = com.joaoeoneves.fintrack.domain.model.CategoryBudget
 
 sealed interface DashboardUiState {
     data object Loading : DashboardUiState

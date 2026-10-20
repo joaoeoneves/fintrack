@@ -44,3 +44,12 @@ data class InstantRange(
     val startInclusive: Instant,
     val endExclusive: Instant,
 )
+
+/** Whether [instant] falls within this `[startInclusive, endExclusive)` range. */
+operator fun InstantRange.contains(instant: Instant): Boolean = instant >= startInclusive && instant < endExclusive
+
+/** Whether [other] lies entirely within this range (both are half-open). */
+fun InstantRange.encloses(other: InstantRange): Boolean {
+    val startsInside = other.startInclusive >= startInclusive
+    return startsInside && other.endExclusive <= endExclusive
+}

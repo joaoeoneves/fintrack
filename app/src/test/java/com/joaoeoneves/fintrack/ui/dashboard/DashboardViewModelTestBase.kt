@@ -67,7 +67,7 @@ open class DashboardViewModelTestBase {
         incomeRepository: IncomeRepository = FakeIncomeRepository(),
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         clock: Clock = this.clock,
-    ) = DashboardViewModel(expenseRepository, budgetRepository, incomeRepository, savedStateHandle, clock)
+    ) = dashboardViewModel(expenseRepository, budgetRepository, incomeRepository, savedStateHandle, clock)
 
     /** Starts collecting [viewModel]'s uiState in the background and runs it to idle. */
     protected fun TestScope.collect(viewModel: DashboardViewModel) {

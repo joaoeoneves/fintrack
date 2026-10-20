@@ -7,16 +7,19 @@ import java.time.Instant
  * (e.g. a product return), which reduces its category's spending instead of adding to it.
  */
 data class Expense(
-    val id: String,
+    override val id: String,
     val name: String,
-    val amountCents: Long,
+    override val amountCents: Long,
     val category: ExpenseCategory,
-    val date: Instant,
-    val note: String?,
+    override val date: Instant,
+    override val note: String?,
     val isRefund: Boolean = false,
-) {
+) : Transaction {
     /** [amountCents] with its sign applied: negative for refunds, positive otherwise. */
     val signedAmountCents: Long get() = if (isRefund) -amountCents else amountCents
+
+    /** Balance effect: a regular expense lowers the balance, a refund raises it. */
+    override val cashFlowCents: Long get() = -signedAmountCents
 }
 
 /** The net outflow of these expenses: regular expenses minus refunds (may be negative). */

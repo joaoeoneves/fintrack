@@ -77,7 +77,7 @@ class DashboardAddExpenseEntryPointTest {
         onOpenExpense: (String) -> Unit = {},
     ) {
         val viewModel =
-            DashboardViewModel(
+            dashboardViewModel(
                 FakeExpenseRepository(expenses),
                 FakeBudgetRepository(),
                 FakeIncomeRepository(),

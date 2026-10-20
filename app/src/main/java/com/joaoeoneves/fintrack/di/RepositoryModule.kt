@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.di
 
+import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
 import com.joaoeoneves.fintrack.data.FirebaseAuthRepository
 import com.joaoeoneves.fintrack.data.FirestoreBudgetRepository
 import com.joaoeoneves.fintrack.data.FirestoreExpenseRepository
@@ -14,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
+import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -34,6 +36,9 @@ interface RepositoryModule {
 
     @Binds
     fun bindIncomeRepository(impl: FirestoreIncomeRepository): IncomeRepository
+
+    @Binds
+    fun bindTransactionRepository(impl: CombinedTransactionRepository): TransactionRepository
 
     @Binds
     @Singleton
