@@ -3,12 +3,9 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
-import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,9 +29,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
+import java.util.Locale
 
 /**
- * [AddEditExpenseViewModel] in-flight save guarding (`isSaving`) and currency-aware amount
+ * [AddEditExpenseViewModel] in-flight save guarding (`isSaving`) and locale-aware amount
  * prefill/parsing. Split out of [AddEditExpenseViewModelTest] to keep that class bounded; uses
  * Robolectric for the same `toRoute` / `Bundle` reason documented there.
  */
@@ -54,6 +52,9 @@ class AddEditExpenseViewModelSavingTest {
             note = null,
         )
 
+    private val originalLocale: Locale = Locale.getDefault()
+    private val originalFormatLocale: Locale = Locale.getDefault(Locale.Category.FORMAT)
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -62,17 +63,20 @@ class AddEditExpenseViewModelSavingTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        Locale.setDefault(originalLocale)
+        Locale.setDefault(Locale.Category.FORMAT, originalFormatLocale)
     }
+
+    /** Edit-mode prefill follows the default FORMAT locale; `setDefault(Locale)` also sets it. */
+    private fun useLocale(tag: String) = Locale.setDefault(Locale.forLanguageTag(tag))
 
     private fun viewModel(
         repository: ExpenseRepository,
         expenseId: String? = null,
-        currencyRepository: CurrencyRepository? = null,
     ) = AddEditExpenseViewModel(
         repository,
         SavedStateHandle(if (expenseId != null) mapOf("expenseId" to expenseId) else emptyMap()),
         context = null,
-        currencyRepository = currencyRepository,
     )
 
     private fun AddEditExpenseViewModel.form() = (uiState.value as AddEditUiState.Ready).form
@@ -220,42 +224,45 @@ class AddEditExpenseViewModelSavingTest {
             assertEquals(0, repo.addCalls)
         }
 
-    // ---- currency-aware prefill & parsing ----
+    // ---- locale-aware prefill & parsing ----
 
     @Test
-    fun editPrefill_eurCurrency_usesCommaSeparator() =
+    fun editPrefill_ptPtLocale_usesCommaSeparator() =
         runTest(testDispatcher) {
-            val currency = FakeCurrencyRepository(CurrencyOption.EUR)
-            val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1", currency)
+            useLocale("pt-PT")
+            val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1")
             advanceUntilIdle()
 
             assertEquals("12,50", vm.form().amountText)
         }
 
     @Test
-    fun editPrefill_usdCurrency_usesDotSeparator() =
+    fun editPrefill_enUsLocale_usesDotSeparator() =
         runTest(testDispatcher) {
-            val currency = FakeCurrencyRepository(CurrencyOption.USD)
-            val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1", currency)
+            useLocale("en-US")
+            val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1")
             advanceUntilIdle()
 
             assertEquals("12.50", vm.form().amountText)
         }
 
     @Test
-    fun editPrefill_noCurrencyRepository_usesDotSeparator() =
+    fun editPrefill_followsFormatLocale_notDisplayLocale() =
         runTest(testDispatcher) {
-            val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1", currencyRepository = null)
+            Locale.setDefault(Locale.US)
+            Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("pt-PT"))
+            val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1")
             advanceUntilIdle()
 
-            assertEquals("12.50", vm.form().amountText)
+            assertEquals("12,50", vm.form().amountText)
         }
 
     @Test
-    fun editPrefill_eur_savedUnchanged_roundTripsToSameCents() =
+    fun editPrefill_ptPt_savedUnchanged_roundTripsToSameCents() =
         runTest(testDispatcher) {
+            useLocale("pt-PT")
             val repo = FakeExpenseRepository(listOf(existing))
-            val vm = viewModel(repo, "e1", FakeCurrencyRepository(CurrencyOption.EUR))
+            val vm = viewModel(repo, "e1")
             advanceUntilIdle()
 
             vm.onSave()

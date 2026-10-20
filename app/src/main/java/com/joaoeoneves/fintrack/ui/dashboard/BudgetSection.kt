@@ -36,22 +36,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.color
-import com.joaoeoneves.fintrack.ui.common.decimalSeparator
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
+import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 
 /**
- * Shows per-category budget progress for the current calendar month, with the ability to tap a
- * row to set, change or remove that category's limit.
+ * Shows per-category budget progress for the dashboard's budget month (described by [title]), with
+ * the ability to tap a row to set, change or remove that category's limit.
  */
 @Composable
 fun BudgetSection(
     budgets: List<CategoryBudget>,
+    title: String,
     onSetBudget: (ExpenseCategory, Long) -> Unit,
     onClearBudget: (ExpenseCategory) -> Unit,
     modifier: Modifier = Modifier,
@@ -65,7 +66,7 @@ fun BudgetSection(
     ) {
         Column {
             Text(
-                text = stringResource(R.string.dashboard_budgets_title),
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
@@ -194,7 +195,7 @@ private fun EditBudgetDialog(
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val decimalSeparator = LocalCurrency.current.decimalSeparator
+    val decimalSeparator = decimalSeparatorFor(currentLocale())
     var amountText by remember { mutableStateOf(budget.limitCents?.toAmountInputText(decimalSeparator) ?: "") }
     var error by remember { mutableStateOf<String?>(null) }
     val invalidAmountMessage = stringResource(R.string.error_invalid_amount)

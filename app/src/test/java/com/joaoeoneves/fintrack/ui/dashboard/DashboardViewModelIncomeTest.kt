@@ -1,215 +1,175 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.Period
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.temporal.ChronoUnit
 
 /**
- * Income/net-balance tests for [DashboardViewModel], plus observeIncome's error-state handling
- * (mirrors observeExpenses' error-state handling). See [DashboardViewModelTestBase] for shared
- * fixtures/setup, and [DashboardViewModelExpenseTest]/[DashboardViewModelBudgetTest] for the rest of
- * the coverage that used to live in one large class.
+ * Income, net balance and savings-rate tests for [DashboardViewModel], plus observeIncome's
+ * error-state handling. See [DashboardViewModelTestBase] for shared fixtures/setup.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
-    // ---- income / net balance: scoped to the currently-selected TimeRange (not the calendar-month budget range) ----
+    private val delta = 1e-9
 
     @Test
-    fun incomeCents_sumsIncomeWithinSelectedTimeRange_excludesIncomeOutsideIt() =
+    fun incomeCents_sumsIncomeWithinCurrentMonth_excludesOtherMonths() =
         runTest(testDispatcher) {
-            val insideOneMonth = income(id = "inside", amountCents = 250_000L, date = now.minus(3, ChronoUnit.DAYS))
-            val outsideOneMonth = income(id = "outside", amountCents = 999_999L, date = now.minus(40, ChronoUnit.DAYS))
-            val expenseRepo = FakeExpenseRepository()
-            val incomeRepo = FakeIncomeRepository(listOf(insideOneMonth, outsideOneMonth))
-            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+            val inside = income(id = "inside", amountCents = 250_000L, date = daysAgo(3))
+            val lastMonth = income(id = "sep", amountCents = 999_999L, date = noonOn(previousMonth, 30))
+            val viewModel = viewModel(incomeRepository = FakeIncomeRepository(listOf(inside, lastMonth)))
+            collect(viewModel)
 
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = viewModel.uiState.value as DashboardUiState.Content
-            assertEquals(TimeRange.ONE_MONTH, content.timeRange)
+            val content = viewModel.content()
             assertEquals(250_000L, content.incomeCents)
-            assertEquals(listOf(insideOneMonth), content.recentIncome)
-
-            job.cancel()
+            assertEquals(listOf(inside), content.recentIncome)
         }
 
     @Test
-    fun incomeCents_emptyIncomeRepository_isZero() =
+    fun emptyIncome_isZero_andSavingsRateIsNull() =
         runTest(testDispatcher) {
-            val expenseRepo = FakeExpenseRepository()
-            val incomeRepo = FakeIncomeRepository()
-            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+            val investment =
+                expense(id = "i", amountCents = 5_000L, category = ExpenseCategory.INVESTMENTS, date = daysAgo(1))
+            val viewModel = viewModel(expenseRepository = FakeExpenseRepository(listOf(investment)))
+            collect(viewModel)
 
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = viewModel.uiState.value as DashboardUiState.Content
+            val content = viewModel.content()
             assertEquals(0L, content.incomeCents)
             assertTrue(content.recentIncome.isEmpty())
-
-            job.cancel()
+            assertNull(content.savingsRate)
+            assertEquals(-5_000L, content.netCents)
         }
 
     @Test
-    fun netCents_equalsIncomeMinusExpenses_forSelectedTimeRange() =
+    fun netCents_isIncomeMinusSpendingMinusSaved_andSavingsRateIsSavedOverIncome() =
         runTest(testDispatcher) {
-            val expenseThisMonth =
-                expense(
-                    id = "e1",
-                    amountCents = 12_000L,
-                    category = ExpenseCategory.SHOPPING,
-                    date = now.minus(2, ChronoUnit.DAYS),
+            val expenses =
+                listOf(
+                    expense("shop", 12_000L, ExpenseCategory.SHOPPING, daysAgo(2)),
+                    expense("rent", 80_000L, ExpenseCategory.RECURRING, daysAgo(3)),
+                    expense("etf", 75_000L, ExpenseCategory.INVESTMENTS, daysAgo(4)),
                 )
-            val incomeThisMonth = income(id = "i1", amountCents = 300_000L, date = now.minus(1, ChronoUnit.DAYS))
-            val expenseRepo = FakeExpenseRepository(listOf(expenseThisMonth))
-            val incomeRepo = FakeIncomeRepository(listOf(incomeThisMonth))
-            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+            val salary = income(id = "salary", amountCents = 300_000L, date = daysAgo(1))
+            val viewModel =
+                viewModel(
+                    expenseRepository = FakeExpenseRepository(expenses),
+                    incomeRepository = FakeIncomeRepository(listOf(salary)),
+                )
+            collect(viewModel)
 
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = viewModel.uiState.value as DashboardUiState.Content
+            val content = viewModel.content()
             assertEquals(300_000L, content.incomeCents)
-            assertEquals(12_000L, content.totalCents)
-            assertEquals(288_000L, content.netCents)
-
-            job.cancel()
+            assertEquals(92_000L, content.spendingCents)
+            assertEquals(75_000L, content.savedCents)
+            assertEquals(167_000L, content.outflowCents)
+            assertEquals(133_000L, content.netCents)
+            assertEquals(0.25, content.savingsRate!!, delta)
         }
 
     @Test
-    fun netCents_negativeWhenExpensesExceedIncome() =
+    fun netCents_negativeWhenOutflowExceedsIncome_savingsRateAboveOneWhenSavedExceedsIncome() =
         runTest(testDispatcher) {
-            val bigExpense = expense(id = "e1", amountCents = 50_000L, category = ExpenseCategory.SHOPPING, date = now)
-            val smallIncome = income(id = "i1", amountCents = 10_000L, date = now)
-            val expenseRepo = FakeExpenseRepository(listOf(bigExpense))
-            val incomeRepo = FakeIncomeRepository(listOf(smallIncome))
-            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+            val etf = expense(id = "etf", amountCents = 50_000L, category = ExpenseCategory.INVESTMENTS, date = now)
+            val small = income(id = "i1", amountCents = 10_000L, date = now)
+            val viewModel =
+                viewModel(
+                    expenseRepository = FakeExpenseRepository(listOf(etf)),
+                    incomeRepository = FakeIncomeRepository(listOf(small)),
+                )
+            collect(viewModel)
 
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = viewModel.uiState.value as DashboardUiState.Content
+            val content = viewModel.content()
             assertEquals(-40_000L, content.netCents)
+            assertEquals(5.0, content.savingsRate!!, delta)
+        }
 
-            job.cancel()
+    @Test
+    fun incomeWithoutSavings_hasZeroSavingsRate_notNull() =
+        runTest(testDispatcher) {
+            val salary = income(id = "i", amountCents = 1_000L, date = now)
+            val viewModel = viewModel(incomeRepository = FakeIncomeRepository(listOf(salary)))
+            collect(viewModel)
+
+            val content = viewModel.content()
+            assertEquals(0.0, content.savingsRate!!, delta)
+            assertEquals(1_000L, content.netCents)
         }
 
     @Test
     fun netCents_zeroWhenNoIncomeAndNoExpenses() =
         runTest(testDispatcher) {
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), FakeIncomeRepository())
+            val viewModel = viewModel()
+            collect(viewModel)
 
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = viewModel.uiState.value as DashboardUiState.Content
+            val content = viewModel.content()
             assertEquals(0L, content.incomeCents)
-            assertEquals(0L, content.totalCents)
+            assertEquals(0L, content.outflowCents)
             assertEquals(0L, content.netCents)
-
-            job.cancel()
+            assertNull(content.savingsRate)
         }
 
     @Test
     fun recentIncome_returnsTop5ByDateDescending_whenMoreThan5InRange() =
         runTest(testDispatcher) {
-            // 7 income entries inside the range, at distinct days, in scrambled insertion order.
-            val i1 = income(id = "i1", amountCents = 100L, date = now.minus(1, ChronoUnit.DAYS))
-            val i2 = income(id = "i2", amountCents = 100L, date = now.minus(2, ChronoUnit.DAYS))
-            val i3 = income(id = "i3", amountCents = 100L, date = now.minus(3, ChronoUnit.DAYS))
-            val i4 = income(id = "i4", amountCents = 100L, date = now.minus(4, ChronoUnit.DAYS))
-            val i5 = income(id = "i5", amountCents = 100L, date = now.minus(5, ChronoUnit.DAYS))
-            val i6 = income(id = "i6", amountCents = 100L, date = now.minus(6, ChronoUnit.DAYS))
-            val i7 = income(id = "i7", amountCents = 100L, date = now.minus(7, ChronoUnit.DAYS))
-            val incomeRepo = FakeIncomeRepository(listOf(i4, i1, i7, i2, i6, i3, i5))
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
+            val all = (1..7).map { income(id = "i$it", amountCents = 100L, date = daysAgo(it.toLong())) }
+            val scrambled = listOf(all[3], all[0], all[6], all[1], all[5], all[2], all[4])
+            val viewModel = viewModel(incomeRepository = FakeIncomeRepository(scrambled))
+            collect(viewModel)
 
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = viewModel.uiState.value as DashboardUiState.Content
-            assertEquals(listOf(i1, i2, i3, i4, i5), content.recentIncome)
+            val content = viewModel.content()
+            assertEquals(all.take(5), content.recentIncome)
             assertEquals(700L, content.incomeCents)
-
-            job.cancel()
         }
 
     @Test
-    fun income_inDifferentTimeRangeBucketThanExpenses_isFilteredIndependently() =
+    fun selectingPreviousMonth_switchesIncomeAndExpensesTogether() =
         runTest(testDispatcher) {
-            // Income lands within the current month but *outside* the current week; the expense is
-            // the reverse (inside the week, and therefore also inside the month). Selecting
-            // ONE_WEEK should include the expense but exclude the income; selecting ONE_MONTH
-            // should include both.
-            val incomeOutsideWeekInsideMonth =
-                income(id = "income-month-only", amountCents = 400_000L, date = now.minus(20, ChronoUnit.DAYS))
-            val expenseInsideWeek =
-                expense(
-                    id = "expense-week",
-                    amountCents = 5_000L,
-                    category = ExpenseCategory.SHOPPING,
-                    date = now.minus(1, ChronoUnit.DAYS),
+            val sepIncome = income(id = "sep-in", amountCents = 400_000L, date = noonOn(previousMonth, 25))
+            val octIncome = income(id = "oct-in", amountCents = 100_000L, date = daysAgo(1))
+            val sepExpense = expense(id = "sep-ex", amountCents = 5_000L, date = noonOn(previousMonth, 2))
+            val viewModel =
+                viewModel(
+                    expenseRepository = FakeExpenseRepository(listOf(sepExpense)),
+                    incomeRepository = FakeIncomeRepository(listOf(sepIncome, octIncome)),
                 )
-            val expenseRepo = FakeExpenseRepository(listOf(expenseInsideWeek))
-            val incomeRepo = FakeIncomeRepository(listOf(incomeOutsideWeekInsideMonth))
-            val viewModel = DashboardViewModel(expenseRepo, FakeBudgetRepository(), incomeRepo)
+            collect(viewModel)
+            assertEquals(100_000L, viewModel.content().netCents)
 
-            val job = launch { viewModel.uiState.collect {} }
+            viewModel.onPeriodSelected(Period.Month(previousMonth))
             advanceUntilIdle()
 
-            val monthContent = viewModel.uiState.value as DashboardUiState.Content
-            assertEquals(TimeRange.ONE_MONTH, monthContent.timeRange)
-            assertEquals(400_000L, monthContent.incomeCents)
-            assertEquals(5_000L, monthContent.totalCents)
-            assertEquals(395_000L, monthContent.netCents)
-
-            viewModel.onTimeRangeSelected(TimeRange.ONE_WEEK)
-            advanceUntilIdle()
-
-            val weekContent = viewModel.uiState.value as DashboardUiState.Content
-            assertEquals(TimeRange.ONE_WEEK, weekContent.timeRange)
-            // Income from 20 days ago is excluded from the one-week bucket...
-            assertEquals(0L, weekContent.incomeCents)
-            assertTrue(weekContent.recentIncome.isEmpty())
-            // ...while the expense (1 day ago) is still included.
-            assertEquals(5_000L, weekContent.totalCents)
-            assertEquals(-5_000L, weekContent.netCents)
-
-            job.cancel()
+            val content = viewModel.content()
+            assertEquals(400_000L, content.incomeCents)
+            assertEquals(5_000L, content.outflowCents)
+            assertEquals(395_000L, content.netCents)
+            assertEquals(listOf(sepIncome), content.recentIncome)
         }
 
-    // ---- observeIncome failure -> Error state (mirrors observeExpenses failure handling) ----
+    // ---- observeIncome failure -> Error state ----
 
     @Test
-    fun observeIncomeFailure_beforeFirstCollection_surfacesErrorState_withUnderlyingMessage() =
+    fun observeIncomeFailure_surfacesErrorState_withUnderlyingMessage() =
         runTest(testDispatcher) {
             val incomeRepo = FakeIncomeRepository()
             incomeRepo.nextObserveIncomeError = IllegalStateException("Firestore unavailable")
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
-
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
+            val viewModel = viewModel(incomeRepository = incomeRepo)
+            collect(viewModel)
 
             assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
-
-            job.cancel()
         }
 
     @Test
@@ -217,35 +177,25 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val incomeRepo = FakeIncomeRepository()
             incomeRepo.nextObserveIncomeError = RuntimeException()
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
-
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
+            val viewModel = viewModel(incomeRepository = incomeRepo)
+            collect(viewModel)
 
             assertEquals(DashboardUiState.Error("Something went wrong"), viewModel.uiState.value)
-
-            job.cancel()
         }
 
     @Test
     fun onRetry_afterClearingObserveIncomeError_transitionsFromErrorBackToContent() =
         runTest(testDispatcher) {
-            val existingIncome = income(id = "i1", amountCents = 1_000L, date = now.minus(1, ChronoUnit.DAYS))
-            val incomeRepo = FakeIncomeRepository(listOf(existingIncome))
+            val incomeRepo = FakeIncomeRepository(listOf(income(id = "i1", amountCents = 1_000L, date = daysAgo(1))))
             incomeRepo.nextObserveIncomeError = IllegalStateException("Firestore unavailable")
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), incomeRepo)
-
-            val job = launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
+            val viewModel = viewModel(incomeRepository = incomeRepo)
+            collect(viewModel)
             assertEquals(DashboardUiState.Error("Firestore unavailable"), viewModel.uiState.value)
 
             incomeRepo.nextObserveIncomeError = null
             viewModel.onRetry()
             advanceUntilIdle()
 
-            val content = viewModel.uiState.value as DashboardUiState.Content
-            assertEquals(1_000L, content.incomeCents)
-
-            job.cancel()
+            assertEquals(1_000L, viewModel.content().incomeCents)
         }
 }

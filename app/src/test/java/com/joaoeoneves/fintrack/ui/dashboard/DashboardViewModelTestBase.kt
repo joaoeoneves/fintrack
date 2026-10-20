@@ -1,42 +1,44 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
+import android.content.Context
+import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.data.FakeBudgetRepository
+import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
+import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.robolectric.annotation.Config
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalTime
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 /**
- * Shared fixtures/setup for [DashboardViewModel] tests. The original single test class grew past
- * detekt's LargeClass threshold, so it's split by feature area into [DashboardViewModelExpenseTest]
- * (loading/filtering/error-state for expenses), [DashboardViewModelBudgetTest] (budgets, over-budget,
- * onSetBudget, monthRange recompute), and [DashboardViewModelIncomeTest] (income/net-balance and its
- * own error-state handling) -- each of which extends this base for the common
- * Robolectric/coroutine-dispatcher/fixture-builder boilerplate.
+ * Shared fixtures/setup for [DashboardViewModel] tests, split by feature area into
+ * [DashboardViewModelExpenseTest], [DashboardViewModelBudgetTest], [DashboardViewModelBudgetEditTest],
+ * [DashboardViewModelIncomeTest] and [DashboardViewModelPeriodTest].
  *
- * All expense/income fixtures are anchored relative to a real `Instant.now()` (as the ViewModel
- * itself uses `Instant.now()` internally to compute its query ranges) with margins comfortably
- * inside/outside each [com.joaoeoneves.fintrack.domain.model.TimeRange] bucket, to avoid boundary
- * flakiness.
- *
- * Budget-related fixtures additionally need to land inside/outside the *current calendar month*
- * (via [com.joaoeoneves.fintrack.domain.model.currentCalendarMonthRange], which -- like
- * [com.joaoeoneves.fintrack.domain.model.TimeRange.toInstantRange] -- is called with real defaults
- * inside the ViewModel and has no test seam to override "now"). Where a fixture would need to be both
- * "more than a week old" and "still within the current calendar month" -- which is impossible during
- * the first several days of a month -- the test uses `org.junit.Assume.assumeTrue` to skip itself
- * gracefully rather than risk flakiness.
+ * "Now" is a fixed [clock] (2026-10-20 12:00 UTC) injected into the ViewModel, so every fixture
+ * lands deterministically inside/outside the current month -- no `Instant.now()` and no
+ * Assume-based "near a month boundary" skips.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Config(application = Application::class)
@@ -53,16 +55,38 @@ open class DashboardViewModelTestBase {
         Dispatchers.resetMain()
     }
 
-    protected val now: Instant = Instant.now()
-    protected val zone: ZoneId = ZoneId.systemDefault()
-    protected val currentMonth: YearMonth = YearMonth.from(now.atZone(zone))
+    protected val zone: ZoneId = ZoneOffset.UTC
+    protected val now: Instant = Instant.parse("2026-10-20T12:00:00Z")
+    protected val clock: Clock = Clock.fixed(now, zone)
+    protected val currentMonth: YearMonth = YearMonth.of(2026, 10)
+    protected val previousMonth: YearMonth = YearMonth.of(2026, 9)
+
+    @Suppress("LongParameterList")
+    protected fun viewModel(
+        expenseRepository: ExpenseRepository = FakeExpenseRepository(),
+        budgetRepository: BudgetRepository = FakeBudgetRepository(),
+        incomeRepository: IncomeRepository = FakeIncomeRepository(),
+        savedStateHandle: SavedStateHandle = SavedStateHandle(),
+        clock: Clock = this.clock,
+        context: Context? = null,
+    ) = DashboardViewModel(expenseRepository, budgetRepository, incomeRepository, savedStateHandle, clock, context)
+
+    /** Starts collecting [viewModel]'s uiState in the background and runs it to idle. */
+    protected fun TestScope.collect(viewModel: DashboardViewModel) {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+    }
+
+    protected fun DashboardViewModel.content() = uiState.value as DashboardUiState.Content
+
+    protected fun daysAgo(days: Long): Instant = now.minus(days, ChronoUnit.DAYS)
 
     // Named `name` after `id` (no test needs a distinct display name), keeping this under detekt's
     // LongParameterList threshold.
     protected fun expense(
         id: String,
         amountCents: Long,
-        category: ExpenseCategory,
+        category: ExpenseCategory = ExpenseCategory.SHOPPING,
         date: Instant,
         note: String? = null,
     ) = Expense(id = id, name = id, amountCents = amountCents, category = category, date = date, note = note)

@@ -6,7 +6,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,21 +25,22 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
  * Unit tests for [ExpenseListViewModel].
  *
  * [ExpenseListViewModel]'s constructor eagerly calls `savedStateHandle.toRoute<ExpenseList>()`,
- * and `ExpenseList.timeRange` has no default value, so *any* construction (not just edit-mode-like
- * paths) requires a populated [SavedStateHandle]. Decoding that requires routing the stored enum
- * value through `androidx.core.os.BundleKt.bundleOf` -> a real `android.os.Bundle`, which isn't
+ * and `ExpenseList.period` (a period token string) has no default value, so *any* construction
+ * requires a populated [SavedStateHandle]. Decoding that requires routing the stored value
+ * through `androidx.core.os.BundleKt.bundleOf` -> a real `android.os.Bundle`, which isn't
  * stubbed on a plain JVM unit test ("Method putCharSequence in android.os.Bundle not mocked").
  * Running under [RobolectricTestRunner] provides a real (shadowed) `Bundle` implementation, which
- * resolves this: `SavedStateHandle(mapOf("timeRange" to TimeRange.X))` round-trips correctly
- * through `toRoute<ExpenseList>()`, verified by construction succeeding and
- * `uiState`/`onTimeRangeSelected` reflecting the seeded/subsequent value.
+ * resolves this: `SavedStateHandle(mapOf("period" to token))` round-trips correctly through
+ * `toRoute<ExpenseList>()`. Period-specific behavior lives in [ExpenseListViewModelPeriodTest].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -57,7 +58,10 @@ class ExpenseListViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private val now = Instant.now()
+    // Fixed "now" (2026-10-20 12:00 UTC); every fixture in this class lands inside October 2026
+    // unless deliberately placed 20+ days back (in September).
+    private val now: Instant = Instant.parse("2026-10-20T12:00:00Z")
+    private val clock: Clock = Clock.fixed(now, ZoneOffset.UTC)
 
     private fun expense(
         id: String,
@@ -70,69 +74,8 @@ class ExpenseListViewModelTest {
 
     private fun viewModel(
         repository: com.joaoeoneves.fintrack.domain.repository.ExpenseRepository,
-        initialTimeRange: TimeRange = TimeRange.ONE_MONTH,
-    ) = ExpenseListViewModel(repository, SavedStateHandle(mapOf("timeRange" to initialTimeRange)))
-
-    // ---- construction / initial timeRange from route ----
-
-    @Test
-    fun construction_seedsTimeRangeFromRoute() =
-        runTest(testDispatcher) {
-            val repo = FakeExpenseRepository()
-            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_WEEK)
-
-            val job = launch { vm.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = vm.uiState.value as ExpenseListUiState.Content
-            assertEquals(TimeRange.ONE_WEEK, content.timeRange)
-
-            job.cancel()
-        }
-
-    @Test
-    fun construction_withEachTimeRangeValue_decodesCorrectly() =
-        runTest(testDispatcher) {
-            for (range in TimeRange.entries) {
-                val repo = FakeExpenseRepository()
-                val vm = viewModel(repo, initialTimeRange = range)
-                val job = launch { vm.uiState.collect {} }
-                advanceUntilIdle()
-
-                val content = vm.uiState.value as ExpenseListUiState.Content
-                assertEquals(range, content.timeRange)
-
-                job.cancel()
-            }
-        }
-
-    // ---- onTimeRangeSelected ----
-
-    @Test
-    fun onTimeRangeSelected_changesFilterAndReQueriesRepository() =
-        runTest(testDispatcher) {
-            val withinWeek =
-                expense(id = "within-week", amountCents = 1_000L, date = now.minus(2, ChronoUnit.DAYS))
-            val withinMonthNotWeek =
-                expense(id = "within-month", amountCents = 2_000L, date = now.minus(20, ChronoUnit.DAYS))
-            val repo = FakeExpenseRepository(listOf(withinWeek, withinMonthNotWeek))
-            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
-
-            val job = launch { vm.uiState.collect {} }
-            advanceUntilIdle()
-
-            val monthContent = vm.uiState.value as ExpenseListUiState.Content
-            assertEquals(2, monthContent.expenses.size)
-
-            vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
-            advanceUntilIdle()
-
-            val weekContent = vm.uiState.value as ExpenseListUiState.Content
-            assertEquals(TimeRange.ONE_WEEK, weekContent.timeRange)
-            assertEquals(listOf(withinWeek), weekContent.expenses)
-
-            job.cancel()
-        }
+        initialPeriod: String = "current",
+    ) = ExpenseListViewModel(repository, SavedStateHandle(mapOf("period" to initialPeriod)), clock)
 
     // ---- search / query ----
 
@@ -501,7 +444,8 @@ class ExpenseListViewModelTest {
             val vm =
                 ExpenseListViewModel(
                     repo,
-                    SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH)),
+                    SavedStateHandle(mapOf("period" to "current")),
+                    clock,
                     context,
                 )
 
@@ -525,7 +469,7 @@ class ExpenseListViewModelTest {
             advanceUntilIdle()
             assertEquals(ExpenseListUiState.Error("Firestore unavailable"), vm.uiState.value)
 
-            // Clear the error on the underlying fake, then retry. Since timeRange/query/sortOption
+            // Clear the error on the underlying fake, then retry. Since period/query/sortOption
             // haven't changed, only the retry-trigger bump forces flatMapLatest to re-subscribe --
             // proving onRetry() isn't a no-op swallowed by the combined key's equality-based dedup.
             repo.nextObserveExpensesError = null
@@ -539,7 +483,7 @@ class ExpenseListViewModelTest {
         }
 
     @Test
-    fun onRetry_doesNotResetCurrentQuerySortOptionOrTimeRangeSelections() =
+    fun onRetry_doesNotResetCurrentQuerySortOptionOrPeriodSelections() =
         runTest(testDispatcher) {
             val coffee =
                 expense(id = "1", name = "Morning Coffee", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
@@ -548,22 +492,22 @@ class ExpenseListViewModelTest {
             val groceries =
                 expense(id = "3", name = "Groceries", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
             val repo = FakeExpenseRepository(listOf(coffee, coffeeOld, groceries))
-            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
+            val vm = viewModel(repo, initialPeriod = "rolling:THREE_MONTHS")
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
             vm.onQueryChanged("coffee")
             vm.onSortSelected(SortOption.AMOUNT_ASC)
-            vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
+            vm.onPeriodSelected(Period.CurrentMonth)
             advanceUntilIdle()
 
             val beforeRetry = vm.uiState.value as ExpenseListUiState.Content
             assertEquals("coffee", beforeRetry.query)
             assertEquals(SortOption.AMOUNT_ASC, beforeRetry.sortOption)
-            assertEquals(TimeRange.ONE_WEEK, beforeRetry.timeRange)
-            // within one week: only "coffee" (2 days ago) matches the query; coffeeOld (20 days ago)
-            // and groceries (doesn't match query) are excluded.
+            assertEquals(Period.CurrentMonth, beforeRetry.period)
+            // within the current month: only "coffee" (2 days ago) matches the query; coffeeOld
+            // (20 days ago, i.e. September) and groceries (doesn't match query) are excluded.
             assertEquals(listOf(coffee), beforeRetry.expenses)
 
             vm.onRetry()
@@ -572,20 +516,20 @@ class ExpenseListViewModelTest {
             val afterRetry = vm.uiState.value as ExpenseListUiState.Content
             assertEquals("coffee", afterRetry.query)
             assertEquals(SortOption.AMOUNT_ASC, afterRetry.sortOption)
-            assertEquals(TimeRange.ONE_WEEK, afterRetry.timeRange)
+            assertEquals(Period.CurrentMonth, afterRetry.period)
             assertEquals(listOf(coffee), afterRetry.expenses)
 
             job.cancel()
         }
 
-    // ---- process death: query/sortOption now live in SavedStateHandle, same as timeRange already did ----
+    // ---- process death: query/sortOption now live in SavedStateHandle, same as the period selection ----
 
     @Test
     fun processDeathSimulation_queryAndSortOption_surviveRecreationViaSameSavedStateHandle() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
-            val original = ExpenseListViewModel(repo, savedStateHandle)
+            val savedStateHandle = SavedStateHandle(mapOf("period" to "current"))
+            val original = ExpenseListViewModel(repo, savedStateHandle, clock)
 
             val originalJob = launch { original.uiState.collect {} }
             advanceUntilIdle()
@@ -597,14 +541,14 @@ class ExpenseListViewModelTest {
             // Simulate process death + recreation: construct a *new* ViewModel instance with the
             // *same* SavedStateHandle object, exactly as the real Android framework hands back a
             // restored SavedStateHandle after process death, instead of a fresh empty one.
-            val recreated = ExpenseListViewModel(repo, savedStateHandle)
+            val recreated = ExpenseListViewModel(repo, savedStateHandle, clock)
             val recreatedJob = launch { recreated.uiState.collect {} }
             advanceUntilIdle()
 
             val content = recreated.uiState.value as ExpenseListUiState.Content
             assertEquals("foo", content.query)
             assertEquals(SortOption.AMOUNT_ASC, content.sortOption)
-            assertEquals(TimeRange.ONE_MONTH, content.timeRange)
+            assertEquals(Period.CurrentMonth, content.period)
 
             recreatedJob.cancel()
         }
@@ -616,8 +560,8 @@ class ExpenseListViewModelTest {
             // onQueryChanged/onSortSelected called against it must still default to ""/DATE_DESC,
             // not crash or throw on the getStateFlow(key, default) lookup.
             val repo = FakeExpenseRepository()
-            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
-            val vm = ExpenseListViewModel(repo, savedStateHandle)
+            val savedStateHandle = SavedStateHandle(mapOf("period" to "current"))
+            val vm = ExpenseListViewModel(repo, savedStateHandle, clock)
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()

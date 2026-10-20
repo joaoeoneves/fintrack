@@ -32,13 +32,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import kotlin.math.roundToInt
 
 // Same ring diameter as the original restyle, but a thinner stroke (26dp vs 32dp) so the inner
-// hole has more room for the total-spent amount at realistic (even large) values.
+// hole has more room for the total-outflow amount at realistic (even large) values.
 //
 // An earlier attempt at this also grew RING_SIZE itself (160dp -> 176dp) to guarantee no overlap
 // for large totals, but that ate directly into the legend Column's width (same Row, legend has
@@ -70,7 +71,8 @@ private const val FULL_CIRCLE_DEGREES = 360f
 private const val ARC_START_ANGLE_DEGREES = -90f
 
 /**
- * The "Total Spent" label and formatted amount centered inside the ring's hole. The amount uses
+ * The "Total outflow" label (spending plus saving, i.e. the sum of every slice, so slice
+ * percentages stay consistent with it) and formatted amount centered inside the ring's hole. The amount uses
  * auto-sizing text bounded to the hole's diameter so it always fits regardless of how many digits
  * the total has, instead of a fixed style that can overflow into the ring for larger totals.
  */
@@ -81,7 +83,7 @@ private fun PieChartCenterLabel(totalCents: Long) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = stringResource(R.string.dashboard_total_spent),
+            text = stringResource(R.string.dashboard_total_outflow),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -110,9 +112,15 @@ fun percentageOf(
     return ((amountCents.toDouble() / totalCents.toDouble()) * PERCENT_SCALE).roundToInt()
 }
 
+private fun List<CategoryTotal>.totalOf(kind: CategoryKind): Long {
+    val ofKind = filter { it.category.kind == kind }
+    return ofKind.sumOf { it.totalCents }
+}
+
 /**
- * Builds the accessibility content description for the whole donut chart: the total spent amount
- * followed by a per-category breakdown (name, percentage, and amount) for each slice.
+ * Builds the accessibility content description for the whole donut chart: the total outflow split
+ * into spending and saved/invested (by [CategoryKind]), followed by a per-category breakdown
+ * (name, percentage, and amount) for each slice.
  */
 @Composable
 private fun buildChartContentDescription(
@@ -120,6 +128,8 @@ private fun buildChartContentDescription(
     total: Long,
 ): String {
     val totalText = formatAmountCents(total)
+    val spendingText = formatAmountCents(slices.totalOf(CategoryKind.SPENDING))
+    val savedText = formatAmountCents(slices.totalOf(CategoryKind.SAVING))
     val perCategoryCd =
         slices.map { slice ->
             stringResource(
@@ -129,12 +139,12 @@ private fun buildChartContentDescription(
                 formatAmountCents(slice.totalCents),
             )
         }
-    return stringResource(R.string.cd_pie_chart_total, totalText) +
+    return stringResource(R.string.cd_pie_chart_total, totalText, spendingText, savedText) +
         if (perCategoryCd.isNotEmpty()) " " + perCategoryCd.joinToString(separator = ". ") else ""
 }
 
 /**
- * Custom Canvas-based donut chart showing the share of spending per category, with the total spent
+ * Custom Canvas-based donut chart showing the share of outflow per category, with the total outflow
  * centered inside the ring and a legend rendered alongside it.
  */
 @Composable

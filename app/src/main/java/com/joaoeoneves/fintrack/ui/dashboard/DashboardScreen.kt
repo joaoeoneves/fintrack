@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,13 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.TrendingDown
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -38,24 +33,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
-import com.joaoeoneves.fintrack.ui.common.TimeRangeFilterRow
-import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +86,12 @@ fun DashboardScreen(
             is DashboardUiState.Content -> {
                 DashboardContent(
                     state = state,
-                    onTimeRangeSelected = viewModel::onTimeRangeSelected,
+                    periodActions =
+                        PeriodActions(
+                            onPrevious = viewModel::onPreviousMonth,
+                            onNext = viewModel::onNextMonth,
+                            onSelect = viewModel::onPeriodSelected,
+                        ),
                     callbacks = callbacks,
                     budgetActions =
                         BudgetActions(
@@ -149,7 +147,7 @@ private data class BudgetActions(
 @Composable
 private fun DashboardContent(
     state: DashboardUiState.Content,
-    onTimeRangeSelected: (TimeRange) -> Unit,
+    periodActions: PeriodActions,
     callbacks: DashboardCallbacks,
     budgetActions: BudgetActions,
     modifier: Modifier = Modifier,
@@ -164,7 +162,11 @@ private fun DashboardContent(
         contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
-            TimeRangeFilterRow(selected = state.timeRange, onSelected = onTimeRangeSelected)
+            PeriodSelector(
+                period = state.period,
+                canGoToNextMonth = state.canGoToNextMonth,
+                actions = periodActions,
+            )
         }
 
         item { BalanceSummaryCard(state = state, modifier = cardModifier) }
@@ -174,6 +176,7 @@ private fun DashboardContent(
         item {
             BudgetSection(
                 budgets = state.budgets,
+                title = budgetSectionTitle(state),
                 onSetBudget = budgetActions.onSetBudget,
                 onClearBudget = budgetActions.onClearBudget,
                 modifier = cardModifier,
@@ -201,9 +204,17 @@ private fun DashboardContent(
 }
 
 @Composable
+private fun budgetSectionTitle(state: DashboardUiState.Content): String =
+    if (state.budgetMonthIsCurrent) {
+        stringResource(R.string.dashboard_budgets_title)
+    } else {
+        stringResource(R.string.dashboard_budgets_title_month, formatMonthLabel(state.budgetMonth, currentLocale()))
+    }
+
+@Composable
 private fun RecentIncomeCard(
     state: DashboardUiState.Content,
-    onOpenIncomeList: (TimeRange) -> Unit,
+    onOpenIncomeList: (Period) -> Unit,
     onAddIncome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -217,7 +228,7 @@ private fun RecentIncomeCard(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenIncomeList(state.timeRange) }
+                        .clickable { onOpenIncomeList(state.period) }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -244,7 +255,7 @@ private fun RecentIncomeCard(
                 state.recentIncome.forEach { income ->
                     IncomeRow(
                         income = income,
-                        onClick = { onOpenIncomeList(state.timeRange) },
+                        onClick = { onOpenIncomeList(state.period) },
                     )
                     HorizontalDivider()
                 }
@@ -256,7 +267,7 @@ private fun RecentIncomeCard(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenIncomeList(state.timeRange) }
+                            .clickable { onOpenIncomeList(state.period) }
                             .padding(16.dp),
                     textAlign = TextAlign.Center,
                 )
@@ -268,7 +279,7 @@ private fun RecentIncomeCard(
 @Composable
 private fun RecentExpensesCard(
     state: DashboardUiState.Content,
-    onOpenList: (TimeRange) -> Unit,
+    onOpenList: (Period) -> Unit,
     onAddExpense: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -282,7 +293,7 @@ private fun RecentExpensesCard(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenList(state.timeRange) }
+                        .clickable { onOpenList(state.period) }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -309,7 +320,7 @@ private fun RecentExpensesCard(
                 state.recentExpenses.forEach { expense ->
                     ExpenseRow(
                         expense = expense,
-                        onClick = { onOpenList(state.timeRange) },
+                        onClick = { onOpenList(state.period) },
                     )
                     HorizontalDivider()
                 }
@@ -321,125 +332,12 @@ private fun RecentExpensesCard(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenList(state.timeRange) }
+                            .clickable { onOpenList(state.period) }
                             .padding(16.dp),
                     textAlign = TextAlign.Center,
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun BalanceSummaryCard(
-    state: DashboardUiState.Content,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_net_balance),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            NetBalanceAmountText(netCents = state.netCents)
-
-            HorizontalDivider()
-
-            BalanceStatsRow(state = state, modifier = Modifier.padding(top = 16.dp))
-        }
-    }
-}
-
-@Composable
-private fun NetBalanceAmountText(netCents: Long) {
-    Text(
-        text = formatAmountCents(netCents),
-        style = MaterialTheme.typography.headlineLarge,
-        fontWeight = FontWeight.Bold,
-        color = if (netCents < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-    )
-}
-
-@Composable
-private fun BalanceStatsRow(
-    state: DashboardUiState.Content,
-    modifier: Modifier = Modifier,
-) {
-    Row(modifier = modifier.fillMaxWidth()) {
-        BalanceSummaryColumn(
-            stat =
-                BalanceStat(
-                    label = stringResource(R.string.dashboard_income_label),
-                    amountCents = state.incomeCents,
-                    icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    tint = MaterialTheme.colorScheme.primary,
-                    amountColor = MaterialTheme.colorScheme.primary,
-                ),
-            modifier = Modifier.weight(1f),
-        )
-        BalanceSummaryColumn(
-            stat =
-                BalanceStat(
-                    label = stringResource(R.string.dashboard_expenses_label),
-                    amountCents = state.totalCents,
-                    icon = Icons.AutoMirrored.Filled.TrendingDown,
-                    tint = MaterialTheme.colorScheme.error,
-                    amountColor = MaterialTheme.colorScheme.onSurface,
-                ),
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-/** A single income/expenses stat shown by [BalanceSummaryColumn], bundled to keep its parameter list short. */
-private data class BalanceStat(
-    val label: String,
-    val amountCents: Long,
-    val icon: ImageVector,
-    val tint: Color,
-    val amountColor: Color,
-)
-
-@Composable
-private fun BalanceSummaryColumn(
-    stat: BalanceStat,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(stat.tint.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(imageVector = stat.icon, contentDescription = null, tint = stat.tint)
-        }
-        Text(
-            text = stat.label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Text(
-            text = formatAmountCents(stat.amountCents),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = stat.amountColor,
-        )
     }
 }
 

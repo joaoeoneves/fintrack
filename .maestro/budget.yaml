@@ -15,8 +15,10 @@ appId: com.joaoeoneves.fintrack
 
 - launchApp
 
-# --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b. EUR uses ',' as the decimal
-# separator, which is what the "100,50" entry/prefill assertions below rely on.
+# --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b. Money now follows the app
+# locale via NumberFormat, so English + EUR renders the limit as "€100.50" and the dialog prefill
+# uses the locale's '.' separator ("100.50"). The limit is still *typed* as "100,50" to prove the
+# dialog keeps accepting ',' as the decimal separator (B4) regardless of locale.
 - tapOn:
     text: "Settings|Definições"
 - tapOn: "English"
@@ -44,16 +46,16 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 - assertNotVisible: "Set budget for Recurring"
-- assertVisible: ".*100,50€.*"
+- assertVisible: ".*€100\\.50.*"
 
-# --- 2: Reopen -- prefilled with the EUR separator, and Remove is offered (B9) ---
+# --- 2: Reopen -- prefilled with the locale's separator, and Remove is offered (B9) ---
 - tapOn: "Recurring"
 - assertVisible: "Set budget for Recurring"
-- assertVisible: "100,50"
+- assertVisible: "100\\.50"
 - assertVisible: "Remove"
 - tapOn: "Remove"
 - assertNotVisible: "Set budget for Recurring"
-- assertNotVisible: ".*100,50€.*"
+- assertNotVisible: ".*€100\\.50.*"
 - assertVisible: ".* spent — no limit set"
 
 # --- 3: Set it again, then clear the field and Save -- an empty field removes the limit (B9) ---
@@ -63,15 +65,15 @@ appId: com.joaoeoneves.fintrack
 - inputText: "100,50"
 - hideKeyboard
 - tapOn: "Save"
-- assertVisible: ".*100,50€.*"
+- assertVisible: ".*€100\\.50.*"
 
 - tapOn: "Recurring"
-- assertVisible: "100,50"
-- tapOn: "100,50"
+- assertVisible: "100\\.50"
+- tapOn: "100\\.50"
 - eraseText: 20
 - hideKeyboard
 - tapOn: "Save"
 - assertNotVisible: "Set budget for Recurring"
-- assertNotVisible: ".*100,50€.*"
+- assertNotVisible: ".*€100\\.50.*"
 - assertVisible: ".* spent — no limit set"
 # Recurring is back to no limit, exactly as this flow found it.

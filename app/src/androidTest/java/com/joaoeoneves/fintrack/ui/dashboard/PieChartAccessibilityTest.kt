@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import android.content.res.Configuration
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -11,6 +13,7 @@ import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Locale
 
 /**
  * Instrumented Compose UI tests for the TalkBack accessibility support added to [PieChart] and its
@@ -18,16 +21,20 @@ import org.junit.runner.RunWith
  *
  * Both the ring `Box` and each legend row `Row` now use `Modifier.clearAndSetSemantics { ... }` to
  * collapse their children into a single, purpose-built `contentDescription` instead of leaving
- * TalkBack to read fragmented child nodes (a bare "Total Spent" label plus a separately-announced
+ * TalkBack to read fragmented child nodes (a bare "Total outflow" label plus a separately-announced
  * amount; a category name with no announced percentage or amount). These tests confirm both that
  * the new merged description is reachable with the exact expected content *and* that the old
  * fragmented text nodes are genuinely gone (i.e. `clearAndSetSemantics` subsumed the children,
  * rather than merely decorating them, which would leave the fragmented nodes still independently
  * reachable and TalkBack double-announcing).
  *
- * Uses [CurrencyOption.USD] (prefixed "$", period-decimal), same pattern as
+ * Uses [CurrencyOption.USD] with the en-US locale pinned through [LocalConfiguration] (money now
+ * follows the app locale via NumberFormat), same pattern as
  * [com.joaoeoneves.fintrack.ui.common.CurrencyFormatTest], for deterministic, easily-hand-computed
  * formatted-amount assertions.
+ *
+ * The ring summary splits the total outflow by category kind: SHOPPING + RECURRING + TRANSFER are
+ * spending ($90.00), INVESTMENTS is saved/invested ($10.00).
  */
 @RunWith(AndroidJUnit4::class)
 class PieChartAccessibilityTest {
@@ -44,19 +51,25 @@ class PieChartAccessibilityTest {
 
     private fun setPieChartContent(slices: List<CategoryTotal>) {
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalCurrency provides CurrencyOption.USD) {
+            val configuration = Configuration(LocalConfiguration.current).apply { setLocale(Locale.US) }
+            CompositionLocalProvider(
+                LocalConfiguration provides configuration,
+                LocalCurrency provides CurrencyOption.USD,
+            ) {
                 PieChart(slices = slices)
             }
         }
     }
 
     @Test
-    fun ringNode_hasContentDescription_withFormattedTotal() {
+    fun ringNode_hasContentDescription_withFormattedTotalAndSpendingSavedSplit() {
         setPieChartContent(slices)
 
         composeTestRule
-            .onNodeWithContentDescription("Total spent: $100.00.", substring = true)
-            .assertExists()
+            .onNodeWithContentDescription(
+                "Outflow breakdown. Total outflow: $100.00 (spending $90.00, saved or invested $10.00).",
+                substring = true,
+            ).assertExists()
     }
 
     @Test
@@ -71,13 +84,13 @@ class PieChartAccessibilityTest {
 
     @Test
     fun oldFragmentedTextNodes_areNoLongerIndependentlyReachable() {
-        // Before the fix, "Total Spent" and the bare category names/amounts were each their own
-        // semantics node. clearAndSetSemantics on the ring Box and each legend Row should have
+        // Before the fix, the center label ("Total outflow", formerly "Total Spent") and the bare
+        // category names/amounts were each their own semantics node. clearAndSetSemantics on the ring Box and each legend Row should have
         // subsumed all of that -- if any of these still resolve, the merge didn't actually replace
         // the children's semantics, just added a redundant description alongside them.
         setPieChartContent(slices)
 
-        composeTestRule.onNodeWithText("Total Spent").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Total outflow").assertDoesNotExist()
         composeTestRule.onNodeWithText("Shopping").assertDoesNotExist()
         composeTestRule.onNodeWithText("Recurring").assertDoesNotExist()
         composeTestRule.onNodeWithText("Transfer").assertDoesNotExist()
@@ -89,11 +102,12 @@ class PieChartAccessibilityTest {
     fun emptySlices_doesNotCrash_andRingStillHasSummaryDescriptionWithoutPerCategoryClause() {
         setPieChartContent(emptyList())
 
-        // Total is 0 for no slices -> "$0.00", and no per-category clause should be appended
+        // Total is 0 for no slices -> "$0.00" everywhere, and no per-category clause is appended
         // (perCategoryCd.isNotEmpty() guard), so the full description is exactly the total
         // sentence with no trailing ". <category>, ..." fragment.
         composeTestRule
-            .onNodeWithContentDescription("Expense breakdown. Total spent: $0.00.")
-            .assertExists()
+            .onNodeWithContentDescription(
+                "Outflow breakdown. Total outflow: $0.00 (spending $0.00, saved or invested $0.00).",
+            ).assertExists()
     }
 }

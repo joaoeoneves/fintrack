@@ -3,8 +3,6 @@ package com.joaoeoneves.fintrack.ui.dashboard
 import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.testutil.FakeStringContext
@@ -54,7 +52,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
                 FakeBudgetRepository(
                     listOf(Budget(ExpenseCategory.SHOPPING, 10_000L), Budget(ExpenseCategory.TRANSFER, 4_000L)),
                 )
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), budgetRepo, FakeIncomeRepository())
+            val viewModel = viewModel(budgetRepository = budgetRepo)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
             assertEquals(10_000L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
@@ -71,7 +69,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
     @Test
     fun onClearBudget_categoryWithoutLimit_isNoOp_emitsNothing() =
         runTest(testDispatcher) {
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), FakeIncomeRepository())
+            val viewModel = viewModel()
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
@@ -87,7 +85,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
             budgetRepo.nextClearBudgetError = IllegalStateException("raw firestore detail")
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), budgetRepo, FakeIncomeRepository())
+            val viewModel = viewModel(budgetRepository = budgetRepo)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
@@ -103,8 +101,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val budgetRepo = FakeBudgetRepository(nextClearBudgetError = IllegalStateException("boom"))
             val context = FakeStringContext(R.string.error_budget_remove_failed, "translated remove failure")
-            val viewModel =
-                DashboardViewModel(FakeExpenseRepository(), budgetRepo, FakeIncomeRepository(), context)
+            val viewModel = viewModel(budgetRepository = budgetRepo, context = context)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
@@ -119,7 +116,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
     @Test
     fun onSetBudget_success_emitsNoErrorEvent() =
         runTest(testDispatcher) {
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), FakeBudgetRepository(), FakeIncomeRepository())
+            val viewModel = viewModel()
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
@@ -135,7 +132,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 5_000L)))
             budgetRepo.nextSetBudgetError = IllegalStateException("raw firestore detail")
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), budgetRepo, FakeIncomeRepository())
+            val viewModel = viewModel(budgetRepository = budgetRepo)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
@@ -150,7 +147,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
     fun onSetBudget_failureThenRetry_secondAttemptSucceeds_withoutAnotherErrorEvent() =
         runTest(testDispatcher) {
             val budgetRepo = FakeBudgetRepository(nextSetBudgetError = IllegalStateException("transient"))
-            val viewModel = DashboardViewModel(FakeExpenseRepository(), budgetRepo, FakeIncomeRepository())
+            val viewModel = viewModel(budgetRepository = budgetRepo)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
@@ -168,8 +165,7 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val budgetRepo = FakeBudgetRepository(nextSetBudgetError = IllegalStateException("boom"))
             val context = FakeStringContext(R.string.error_budget_save_failed, "translated save failure")
-            val viewModel =
-                DashboardViewModel(FakeExpenseRepository(), budgetRepo, FakeIncomeRepository(), context)
+            val viewModel = viewModel(budgetRepository = budgetRepo, context = context)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 

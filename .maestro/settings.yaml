@@ -18,12 +18,11 @@
 # ($)" first to pin a known baseline regardless of starting state, then exercises the live-update
 # round trip, and finishes back on USD either way.
 #
-# EUR renders with a comma decimal separator and a *suffixed* symbol ("1330,40€"), while every
-# other currency (including USD) keeps the period-decimal/prefixed-symbol style ("$1330.40") --
-# see CurrencyDisplay.kt/CurrencyFormat.kt. The step-2 post-EUR assertion below therefore uses
-# ".*€.*" (not "€.*", which would require the text to *start* with the symbol and can
-# never match a suffixed amount like "196,96€") -- this was caught as a real regression by
-# the tester agent when the EUR-default + EUR-suffix changes landed together.
+# Money formatting follows the *app locale* via NumberFormat (CurrencyFormat.kt), not the currency:
+# English + EUR renders "€1,330.40" (prefixed, period decimal), pt-PT + EUR renders "1330,40 €"
+# (suffixed after a non-breaking space U+00A0/U+202F, comma decimal). The post-EUR assertion uses
+# ".*€.*" so it matches either placement. Step 2b switches to Português to prove the locale-driven
+# format; Maestro's "\s" does not match NBSP, so the regex uses "." for the separator before "€".
 #
 # Step 2/3 assert that switching currency/theme in Settings takes effect immediately on the
 # already-running Dashboard, in the same app process, with no restart required. This depends on
@@ -37,6 +36,13 @@
 appId: com.joaoeoneves.fintrack
 ---
 - launchApp
+
+# --- 0: Pin English first (fresh installs default to Português; the Settings entry point's label is
+# itself locale-dependent, so match either), mirroring golden-path.yaml's step 0.
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
 
 # --- 1: Open Settings via the gear icon on the Dashboard ---
 - assertVisible: "FinTrack"
@@ -77,6 +83,29 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Back"
 - assertVisible:
     text: ".*€.*"
+
+# --- 2b: Language drives the money format -- switch to Português while on EUR and confirm the
+# Dashboard renders a pt-PT amount (comma decimal, symbol suffixed after a non-breaking space,
+# e.g. "12,34 €"), then switch back to English. Selecting a language recreates the activity but
+# stays on Settings, so "back" returns to the Dashboard (same as step 0).
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element: "Português"
+    direction: DOWN
+- tapOn: "Português"
+- back
+- assertVisible: "Saldo líquido"
+- assertVisible:
+    text: ".*[0-9],[0-9]{2}.?€.*"
+- tapOn: "Definições"
+- scrollUntilVisible:
+    element: "English"
+    direction: DOWN
+- tapOn: "English"
+- back
+- assertVisible: "Net Balance"
+- assertVisible:
+    text: ".*€[0-9.,]+.*"
 
 # Switch back to USD before the flow ends -- other flows assume "$".
 - tapOn: "Settings"

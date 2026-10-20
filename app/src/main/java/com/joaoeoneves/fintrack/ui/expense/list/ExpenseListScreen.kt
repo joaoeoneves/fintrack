@@ -33,14 +33,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
+import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.SearchField
 import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
-import com.joaoeoneves.fintrack.ui.common.TimeRangeFilterRow
-import java.util.Locale
+import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,14 +57,18 @@ fun ExpenseListScreen(
     // drive a controlled text field without dropping/reordering fast-typed characters.
     val query by viewModel.query.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Re-subscribes on resume so "This month" re-resolves after the calendar rolls over.
+    OnResumeEffect(onResume = viewModel::onRetry)
     val undoLabel = stringResource(R.string.action_undo)
     val deletedSnackbarTemplate = stringResource(R.string.expense_list_deleted_snackbar)
+    val locale = currentLocale()
 
     LaunchedEffect(Unit) {
         viewModel.undoEvent.collect { expense ->
             val result =
                 snackbarHostState.showSnackbar(
-                    message = String.format(Locale.getDefault(), deletedSnackbarTemplate, expense.name),
+                    message = String.format(locale, deletedSnackbarTemplate, expense.name),
                     actionLabel = undoLabel,
                 )
             if (result == SnackbarResult.ActionPerformed) {
@@ -88,7 +93,7 @@ fun ExpenseListScreen(
                     query = query,
                     actions =
                         ExpenseListActions(
-                            onTimeRangeSelected = viewModel::onTimeRangeSelected,
+                            periodActions = viewModel.periodActions(),
                             onQueryChanged = viewModel::onQueryChanged,
                             onSortSelected = viewModel::onSortSelected,
                             onOpenExpense = onOpenExpense,
@@ -112,6 +117,9 @@ fun ExpenseListScreen(
     }
 }
 
+private fun ExpenseListViewModel.periodActions(): PeriodActions =
+    PeriodActions(onPrevious = ::onPreviousMonth, onNext = ::onNextMonth, onSelect = ::onPeriodSelected)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpenseListTopBar(onBack: () -> Unit) {
@@ -127,7 +135,7 @@ private fun ExpenseListTopBar(onBack: () -> Unit) {
 
 /** Bundles the expense list's row-level and filter actions to keep [ExpenseListContent]'s own parameter list short. */
 private data class ExpenseListActions(
-    val onTimeRangeSelected: (TimeRange) -> Unit,
+    val periodActions: PeriodActions,
     val onQueryChanged: (String) -> Unit,
     val onSortSelected: (SortOption) -> Unit,
     val onOpenExpense: (String) -> Unit,
@@ -147,7 +155,11 @@ private fun ExpenseListContent(
                 .fillMaxSize()
                 .padding(contentPadding),
     ) {
-        TimeRangeFilterRow(selected = state.timeRange, onSelected = actions.onTimeRangeSelected)
+        PeriodSelector(
+            period = state.period,
+            canGoToNextMonth = state.canGoToNextMonth,
+            actions = actions.periodActions,
+        )
 
         SearchField(
             query = query,

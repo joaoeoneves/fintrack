@@ -40,11 +40,14 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "US Dollar ($)"
 - tapOn: "Back"
 
-# --- 1: Dashboard loads with the balance summary card (net balance + income/expenses columns) ---
+# --- 1: Dashboard loads with the balance summary card (net balance + income / spending / saved &
+# invested columns). The outflow column was renamed "Expenses" -> "Spending", and investments now
+# count as saved ("Saved & invested") rather than as spending.
 - assertVisible: "FinTrack"
 - assertVisible: "Net Balance"
 - assertVisible: "Income"
-- assertVisible: "Expenses"
+- assertVisible: "Spending"
+- assertVisible: "Saved & invested"
 
 # --- 2: Scroll down to the "Recent income" section and add two income entries. A second,
 # distinctly-named entry ("Freelance Payment") is added alongside the original test entry so the
@@ -164,19 +167,28 @@ appId: com.joaoeoneves.fintrack
 
 # --- 5: Delete both via each row's Delete affordance and confirm the undo snackbar appears ---
 # Deletion is immediate (mirrors the expense list) — an undo snackbar ("Deleted "<source>"" /
-# "Undo") appears. The row's trash-icon IconButton has contentDescription "Delete". With sort
-# restored to "Newest first" above, "Freelance Payment" (newer) is the first "Delete" match;
-# deleting it leaves "Maestro E2E Test Salary" as the next (and now only) "Delete" match.
-- tapOn:
-    text: "Delete"
-    index: 0
-- assertNotVisible: "Freelance Payment"
-- assertVisible: "Undo"
-- tapOn:
-    text: "Delete"
-    index: 0
+# "Undo") appears. The row's trash-icon IconButton has contentDescription "Delete".
+# Each delete is done with the list search-filtered down to exactly that one row, so the "Delete"
+# tap can never hit a pre-existing real income entry.
+- tapOn: "Search"
+- inputText: "Freelance Payment"
+- hideKeyboard
+- assertVisible: "Freelance Payment"
 - assertNotVisible: "Maestro E2E Test Salary"
+- tapOn: "Delete"
+- assertNotVisible: "+\\$50\\.00"
 - assertVisible: "Undo"
+- tapOn: "Freelance Payment"
+- eraseText: 30
+- inputText: "Maestro E2E Test Salary"
+- hideKeyboard
+- assertNotVisible: "Freelance Payment"
+- tapOn: "Delete"
+- assertNotVisible: "+\\$100\\.00"
+- assertVisible: "Undo"
+- tapOn: "Maestro E2E Test Salary"
+- eraseText: 30
+- hideKeyboard
 # Let the undo snackbars time out on their own so both income entries stay deleted.
 
 # Return to the dashboard, leaving app state as found.

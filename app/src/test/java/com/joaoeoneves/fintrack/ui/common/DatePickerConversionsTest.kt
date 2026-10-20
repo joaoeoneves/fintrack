@@ -156,4 +156,52 @@ class DatePickerConversionsTest {
         assertEquals(LocalDate.of(2026, 11, 1), local.toLocalDate())
         assertEquals(LocalTime.of(1, 30), local.toLocalTime())
     }
+
+    // ---- utcMillisToLocalDate / LocalDate.toUtcMillis (date-range picker) ----
+
+    @Test
+    fun utcMillisToLocalDate_utcMidnight_isThatDate() {
+        assertEquals(LocalDate.of(2026, 10, 15), utcMillisToLocalDate(utcMidnightMillis(LocalDate.of(2026, 10, 15))))
+    }
+
+    @Test
+    fun utcMillisToLocalDate_lastMillisOfUtcDay_isStillThatDate() {
+        val lastMillis = utcMidnightMillis(LocalDate.of(2026, 10, 16)) - 1
+
+        assertEquals(LocalDate.of(2026, 10, 15), utcMillisToLocalDate(lastMillis))
+    }
+
+    @Test
+    fun toUtcMillis_isUtcMidnight() {
+        assertEquals(Instant.parse("2026-10-15T00:00:00Z").toEpochMilli(), LocalDate.of(2026, 10, 15).toUtcMillis())
+    }
+
+    @Test
+    fun toUtcMillis_utcMillisToLocalDate_roundTrip_acrossEdgeDates() {
+        val dates =
+            listOf(
+                LocalDate.of(1970, 1, 1),
+                LocalDate.of(1969, 12, 31),
+                LocalDate.of(2028, 2, 29),
+                LocalDate.of(2026, 3, 29),
+                LocalDate.of(2026, 10, 25),
+                LocalDate.of(2026, 12, 31),
+            )
+        for (date in dates) {
+            assertEquals(date, utcMillisToLocalDate(date.toUtcMillis()))
+        }
+    }
+
+    @Test
+    fun toUtcMillis_ignoresDefaultZone() {
+        val original = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Tokyo"))
+            assertEquals(utcMidnightMillis(LocalDate.of(2026, 10, 15)), LocalDate.of(2026, 10, 15).toUtcMillis())
+            val millis = utcMidnightMillis(LocalDate.of(2026, 10, 15))
+            assertEquals(LocalDate.of(2026, 10, 15), utcMillisToLocalDate(millis))
+        } finally {
+            java.util.TimeZone.setDefault(original)
+        }
+    }
 }

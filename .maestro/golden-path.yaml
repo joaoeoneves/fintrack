@@ -24,7 +24,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "English"
 - back
 
-# --- 0b: Pin currency to EUR before the "-12,34€"/"-56,78€" assertions below. Fresh installs now
+# --- 0b: Pin currency to EUR before the "-€12.34"/"-€56.78" assertions below. Fresh installs now
 # default to EUR, but this device may have an explicit USD selection persisted from a prior run of
 # settings.yaml or income-tracking.yaml (an explicit selection is never retroactively changed by
 # what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
@@ -41,7 +41,11 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Euro (€)"
 - tapOn: "Back"
 
-# --- 1: Dashboard loads with filter pills, balance summary card, pie legend ---
+# --- 1: Dashboard loads with the period selector, balance summary card, pie legend ---
+# The period selector replaced the old 1W/1M/3M/6M/1Y chips: previous/next month arrows (content
+# descriptions "Previous month"/"Next month") around a tappable month label ("October 2026"). The
+# default period is the current calendar month, matched by a generic "<Month> <yyyy>" regex so the
+# flow doesn't go stale when the calendar rolls over.
 # The "Add expense" entry point lives on the Dashboard's "Recent expenses" card header (a plus
 # IconButton next to the section title, mirroring the "Recent income" card exactly) -- see step 2
 # below. ExpenseListScreen itself has no add control of its own, just back navigation.
@@ -58,14 +62,16 @@ appId: com.joaoeoneves.fintrack
 # visible" intent for all four regardless of scroll position, and keeps matching whichever of the
 # two (legend content-desc or Budgets-section literal text) happens to be on screen.
 - assertVisible: "FinTrack"
-- assertVisible: "1W"
-- assertVisible: "1M"
-- assertVisible: "3M"
-- assertVisible: "6M"
-- assertVisible: "1Y"
+- assertVisible: "Previous month"
+- assertVisible: "Next month"
+- assertVisible: "[A-Z][a-z]+ [0-9]{4}"
 - assertVisible: "Net Balance"
 - assertVisible: "Income"
-- assertVisible: "Expenses"
+# The balance card's outflow column is now "Spending" (was "Expenses"); investments count as saved,
+# shown in their own "Saved & invested" column, plus a "Savings rate: NN%" (or "—") line.
+- assertVisible: "Spending"
+- assertVisible: "Saved & invested"
+- assertVisible: "Savings rate.*"
 - assertVisible: ".*Transfer.*"
 - assertVisible: ".*Investments.*"
 - assertVisible: ".*Shopping.*"
@@ -103,13 +109,13 @@ appId: com.joaoeoneves.fintrack
 
 # Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
 # up immediately in the "Recent expenses" card (it sorts by date descending, and this row is the
-# most recent). Fresh installs now default to EUR (comma-decimal, suffixed symbol), so the row
-# shows "-12,34€" rather than a USD "-$12.34".
+# most recent). Money formatting now follows the app locale via NumberFormat, so English + EUR
+# renders as "-€12.34" (prefixed symbol, period decimal).
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
 - assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "-12,34€"
+- assertVisible: "-€12\\.34"
 
 # --- 3: Edit it (change the amount) and confirm the change persists ---
 # Tapping a row on the Dashboard's "Recent expenses" card navigates to the full list (not directly
@@ -118,12 +124,13 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "All expenses"
 - tapOn: "Maestro E2E Test Expense"
 - assertVisible: "Edit expense"
-# B4: in edit mode the amount is prefilled with the display currency's decimal separator -- EUR
-# (pinned in step 0b) uses ',' so the field must show "12,34", not "12.34".
-- assertVisible: "12,34"
+# In edit mode the amount is prefilled with the *locale's* decimal separator (no longer the
+# currency's) -- English (pinned in step 0) uses '.', so the field shows "12.34".
+- assertVisible: "12\\.34"
 - tapOn: "Amount"
 - eraseText
-# B4: the amount field accepts ',' as the decimal separator (decimal keyboard).
+# B4: the amount field still accepts ',' as the decimal separator even in English, proving comma
+# parsing keeps working regardless of the locale's own separator.
 - inputText: "56,78"
 - hideKeyboard
 - tapOn: "Save"
@@ -131,25 +138,41 @@ appId: com.joaoeoneves.fintrack
 # Back on the full list, the updated amount should be visible.
 - assertVisible: "All expenses"
 - assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "-56,78€"
-- assertNotVisible: "-12,34€"
+- assertVisible: "-€56\\.78"
+- assertNotVisible: "-€12\\.34"
 
 # --- 4: Delete it and confirm it's gone ---
 # Deletion is now immediate (tap or swipe the row) — there is no confirmation dialog anymore.
 # Instead an undo snackbar ("Deleted "<name>"" / "Undo") appears. The row's trash-icon IconButton
 # has contentDescription "Delete" (no visible label) — matched by its accessibility text rather
 # than a raw coordinate.
+# Filter the list down to this flow's own row first so the "Delete" tap can never hit a
+# pre-existing real expense (e.g. another expense dated today sorting above it).
+- tapOn: "Search"
+- inputText: "Maestro E2E Test Expense"
+- hideKeyboard
+- assertVisible: "-€56\\.78"
 - tapOn: "Delete"
-- assertNotVisible: "Maestro E2E Test Expense"
+- assertNotVisible: "-€56\\.78"
 - assertVisible: "Undo"
-# Let the undo snackbar time out on its own so the expense stays deleted.
+# Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.
+- tapOn: "Maestro E2E Test Expense"
+- eraseText: 30
+- hideKeyboard
 
-# --- 5: Exercise at least one time-range filter chip (ExpenseListScreen has its own filter row) ---
-- tapOn: "1W"
-- assertVisible: "1W"
-- tapOn: "3M"
-- assertVisible: "3M"
+# --- 5: Exercise the list's own period selector (ExpenseListScreen has the same PeriodSelector as
+# the Dashboard). Open the period menu via the label's dropdown icon (content description "Change
+# period"), pick a rolling window, and check the label reflects it; then restore "This month".
+- tapOn: "Change period"
+- assertVisible: "This month"
+- tapOn: "Last 3 months"
+- assertVisible: "Last 3 months"
+# Rolling windows have no month arrows.
+- assertNotVisible: "Previous month"
 
-# Restore the default 1-month filter and return to the dashboard, leaving app state as found.
-- tapOn: "1M"
+# Restore the default current-month period and return to the dashboard, leaving app state as found.
+- tapOn: "Change period"
+- tapOn: "This month"
+- assertVisible: "[A-Z][a-z]+ [0-9]{4}"
+- assertVisible: "Previous month"
 - back

@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.testutil.FakeStringContext
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +25,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
@@ -34,7 +36,8 @@ import java.time.temporal.ChronoUnit
  *
  * Like `ExpenseListViewModel`, the constructor eagerly calls
  * `savedStateHandle.toRoute<IncomeList>()`, which requires a real (shadowed) `android.os.Bundle`
- * to decode the `TimeRange` enum arg -- hence [RobolectricTestRunner].
+ * to decode the `period` token arg -- hence [RobolectricTestRunner]. Period-specific behavior lives in
+ * [IncomeListViewModelPeriodTest].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -52,7 +55,10 @@ class IncomeListViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private val now = Instant.now()
+    // Fixed "now" (2026-10-20 12:00 UTC); every fixture in this class lands inside October 2026
+    // unless deliberately placed 20+ days back (in September).
+    private val now: Instant = Instant.parse("2026-10-20T12:00:00Z")
+    private val clock: Clock = Clock.fixed(now, ZoneOffset.UTC)
 
     private fun income(
         id: String,
@@ -64,87 +70,8 @@ class IncomeListViewModelTest {
 
     private fun viewModel(
         repository: IncomeRepository,
-        initialTimeRange: TimeRange = TimeRange.ONE_MONTH,
-    ) = IncomeListViewModel(repository, SavedStateHandle(mapOf("timeRange" to initialTimeRange)))
-
-    // ---- construction / initial timeRange from route ----
-
-    @Test
-    fun construction_seedsTimeRangeFromRoute() =
-        runTest(testDispatcher) {
-            val repo = FakeIncomeRepository()
-            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_WEEK)
-
-            val job = launch { vm.uiState.collect {} }
-            advanceUntilIdle()
-
-            val content = vm.uiState.value as IncomeListUiState.Content
-            assertEquals(TimeRange.ONE_WEEK, content.timeRange)
-
-            job.cancel()
-        }
-
-    @Test
-    fun construction_withEachTimeRangeValue_decodesCorrectly() =
-        runTest(testDispatcher) {
-            for (range in TimeRange.entries) {
-                val repo = FakeIncomeRepository()
-                val vm = viewModel(repo, initialTimeRange = range)
-                val job = launch { vm.uiState.collect {} }
-                advanceUntilIdle()
-
-                val content = vm.uiState.value as IncomeListUiState.Content
-                assertEquals(range, content.timeRange)
-
-                job.cancel()
-            }
-        }
-
-    // ---- onTimeRangeSelected ----
-
-    @Test
-    fun onTimeRangeSelected_changesFilterAndReQueriesRepository() =
-        runTest(testDispatcher) {
-            val withinWeek = income(id = "within-week", amountCents = 1_000L, date = now.minus(2, ChronoUnit.DAYS))
-            val withinMonthNotWeek =
-                income(id = "within-month", amountCents = 2_000L, date = now.minus(20, ChronoUnit.DAYS))
-            val repo = FakeIncomeRepository(listOf(withinWeek, withinMonthNotWeek))
-            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
-
-            val job = launch { vm.uiState.collect {} }
-            advanceUntilIdle()
-
-            val monthContent = vm.uiState.value as IncomeListUiState.Content
-            assertEquals(2, monthContent.income.size)
-
-            vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
-            advanceUntilIdle()
-
-            val weekContent = vm.uiState.value as IncomeListUiState.Content
-            assertEquals(TimeRange.ONE_WEEK, weekContent.timeRange)
-            assertEquals(listOf(withinWeek), weekContent.income)
-
-            job.cancel()
-        }
-
-    @Test
-    fun onTimeRangeSelected_toRangeWithNoIncome_producesEmptyContent_notBrokenState() =
-        runTest(testDispatcher) {
-            val onlyOldIncome = income(id = "old", amountCents = 1_000L, date = now.minus(200, ChronoUnit.DAYS))
-            val repo = FakeIncomeRepository(listOf(onlyOldIncome))
-            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
-
-            val job = launch { vm.uiState.collect {} }
-            advanceUntilIdle()
-
-            vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
-            advanceUntilIdle()
-
-            val content = vm.uiState.value as IncomeListUiState.Content
-            assertTrue(content.income.isEmpty())
-
-            job.cancel()
-        }
+        initialPeriod: String = "current",
+    ) = IncomeListViewModel(repository, SavedStateHandle(mapOf("period" to initialPeriod)), clock)
 
     // ---- search / query ----
 
@@ -513,7 +440,8 @@ class IncomeListViewModelTest {
             val vm =
                 IncomeListViewModel(
                     repo,
-                    SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH)),
+                    SavedStateHandle(mapOf("period" to "current")),
+                    clock,
                     context,
                 )
 
@@ -537,7 +465,7 @@ class IncomeListViewModelTest {
             advanceUntilIdle()
             assertEquals(IncomeListUiState.Error("Firestore unavailable"), vm.uiState.value)
 
-            // Clear the error on the underlying fake, then retry. Since timeRange itself hasn't
+            // Clear the error on the underlying fake, then retry. Since the period itself hasn't
             // changed, only the retry-trigger bump forces flatMapLatest to re-subscribe -- proving
             // onRetry() isn't a no-op swallowed by StateFlow's equality-based dedup.
             repo.nextObserveIncomeError = null
@@ -551,7 +479,7 @@ class IncomeListViewModelTest {
         }
 
     @Test
-    fun onRetry_doesNotResetCurrentQuerySortOptionOrTimeRangeSelections() =
+    fun onRetry_doesNotResetCurrentQuerySortOptionOrPeriodSelections() =
         runTest(testDispatcher) {
             val salary =
                 income(id = "1", source = "Monthly Salary", amountCents = 500L, date = now.minus(2, ChronoUnit.DAYS))
@@ -559,22 +487,22 @@ class IncomeListViewModelTest {
                 income(id = "2", source = "Old Salary", amountCents = 100L, date = now.minus(20, ChronoUnit.DAYS))
             val bonus = income(id = "3", source = "Bonus", amountCents = 3_000L, date = now.minus(2, ChronoUnit.DAYS))
             val repo = FakeIncomeRepository(listOf(salary, salaryOld, bonus))
-            val vm = viewModel(repo, initialTimeRange = TimeRange.ONE_MONTH)
+            val vm = viewModel(repo, initialPeriod = "rolling:THREE_MONTHS")
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
             vm.onQueryChanged("salary")
             vm.onSortSelected(IncomeSortOption.AMOUNT_ASC)
-            vm.onTimeRangeSelected(TimeRange.ONE_WEEK)
+            vm.onPeriodSelected(Period.CurrentMonth)
             advanceUntilIdle()
 
             val beforeRetry = vm.uiState.value as IncomeListUiState.Content
             assertEquals("salary", beforeRetry.query)
             assertEquals(IncomeSortOption.AMOUNT_ASC, beforeRetry.sortOption)
-            assertEquals(TimeRange.ONE_WEEK, beforeRetry.timeRange)
-            // within one week: only "salary" (2 days ago) matches the query; salaryOld (20 days ago)
-            // and bonus (doesn't match query) are excluded.
+            assertEquals(Period.CurrentMonth, beforeRetry.period)
+            // within the current month: only "salary" (2 days ago) matches the query; salaryOld
+            // (20 days ago, i.e. September) and bonus (doesn't match query) are excluded.
             assertEquals(listOf(salary), beforeRetry.income)
 
             vm.onRetry()
@@ -583,20 +511,20 @@ class IncomeListViewModelTest {
             val afterRetry = vm.uiState.value as IncomeListUiState.Content
             assertEquals("salary", afterRetry.query)
             assertEquals(IncomeSortOption.AMOUNT_ASC, afterRetry.sortOption)
-            assertEquals(TimeRange.ONE_WEEK, afterRetry.timeRange)
+            assertEquals(Period.CurrentMonth, afterRetry.period)
             assertEquals(listOf(salary), afterRetry.income)
 
             job.cancel()
         }
 
-    // ---- process death: query/sortOption live in SavedStateHandle, same as timeRange already did ----
+    // ---- process death: query/sortOption live in SavedStateHandle, same as the period selection ----
 
     @Test
     fun processDeathSimulation_queryAndSortOption_surviveRecreationViaSameSavedStateHandle() =
         runTest(testDispatcher) {
             val repo = FakeIncomeRepository()
-            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
-            val original = IncomeListViewModel(repo, savedStateHandle)
+            val savedStateHandle = SavedStateHandle(mapOf("period" to "current"))
+            val original = IncomeListViewModel(repo, savedStateHandle, clock)
 
             val originalJob = launch { original.uiState.collect {} }
             advanceUntilIdle()
@@ -608,14 +536,14 @@ class IncomeListViewModelTest {
             // Simulate process death + recreation: construct a *new* ViewModel instance with the
             // *same* SavedStateHandle object, exactly as the real Android framework hands back a
             // restored SavedStateHandle after process death, instead of a fresh empty one.
-            val recreated = IncomeListViewModel(repo, savedStateHandle)
+            val recreated = IncomeListViewModel(repo, savedStateHandle, clock)
             val recreatedJob = launch { recreated.uiState.collect {} }
             advanceUntilIdle()
 
             val content = recreated.uiState.value as IncomeListUiState.Content
             assertEquals("foo", content.query)
             assertEquals(IncomeSortOption.AMOUNT_ASC, content.sortOption)
-            assertEquals(TimeRange.ONE_MONTH, content.timeRange)
+            assertEquals(Period.CurrentMonth, content.period)
 
             recreatedJob.cancel()
         }
@@ -627,8 +555,8 @@ class IncomeListViewModelTest {
             // onQueryChanged/onSortSelected called against it must still default to ""/DATE_DESC,
             // not crash or throw on the getStateFlow(key, default) lookup.
             val repo = FakeIncomeRepository()
-            val savedStateHandle = SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH))
-            val vm = IncomeListViewModel(repo, savedStateHandle)
+            val savedStateHandle = SavedStateHandle(mapOf("period" to "current"))
+            val vm = IncomeListViewModel(repo, savedStateHandle, clock)
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()

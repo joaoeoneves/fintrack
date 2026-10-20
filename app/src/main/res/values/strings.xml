@@ -19,7 +19,12 @@
     <string name="cd_delete">Delete</string>
     <string name="cd_change_date">Change date</string>
     <string name="cd_settings">Settings</string>
-    <string name="cd_pie_chart_total">Expense breakdown. Total spent: %1$s.</string>
+    <string name="cd_previous_month">Previous month</string>
+    <string name="cd_next_month">Next month</string>
+    <string name="cd_previous_year">Previous year</string>
+    <string name="cd_next_year">Next year</string>
+    <string name="cd_change_period">Change period</string>
+    <string name="cd_pie_chart_total">Outflow breakdown. Total outflow: %1$s (spending %2$s, saved or invested %3$s).</string>
     <string name="cd_pie_chart_category_item">%1$s, %2$d percent, %3$s</string>
 
     <!-- Shared form field labels -->
@@ -52,6 +57,15 @@
     <!-- Currencies: deliberately NOT extracted to string resources. CurrencyOption.displayName
          in CurrencyDisplay.kt stays hardcoded English on purpose. See that file's KDoc. -->
 
+    <!-- Period selector -->
+    <string name="period_this_month">This month</string>
+    <string name="period_choose_month">Choose month…</string>
+    <string name="period_last_3_months">Last 3 months</string>
+    <string name="period_last_6_months">Last 6 months</string>
+    <string name="period_last_12_months">Last 12 months</string>
+    <string name="period_custom_range">Custom range…</string>
+    <string name="period_select_dates">Select dates</string>
+
     <!-- Dashboard -->
     <string name="dashboard_budgets_title">Budgets (this month)</string>
     <string name="dashboard_recent_expenses">Recent expenses</string>
@@ -61,10 +75,14 @@
     <string name="dashboard_see_all_income">See all income</string>
     <string name="dashboard_net_balance">Net Balance</string>
     <string name="dashboard_income_label">Income</string>
-    <string name="dashboard_expenses_label">Expenses</string>
+    <string name="dashboard_expenses_label">Spending</string>
     <string name="dashboard_no_expenses">No expenses in this period yet.</string>
     <string name="dashboard_recent_expenses_empty">No expenses yet</string>
-    <string name="dashboard_total_spent">Total Spent</string>
+    <string name="dashboard_total_outflow">Total outflow</string>
+    <string name="dashboard_saved_label">Saved &amp; invested</string>
+    <string name="dashboard_savings_rate">Savings rate: %1$s</string>
+    <string name="dashboard_savings_rate_unavailable">—</string>
+    <string name="dashboard_budgets_title_month">Budgets (%1$s)</string>
 
     <!-- Budgets -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>

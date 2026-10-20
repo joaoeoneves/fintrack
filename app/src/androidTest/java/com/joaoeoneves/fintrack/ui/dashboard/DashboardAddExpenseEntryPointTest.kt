@@ -8,18 +8,20 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.Period
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Clock
 import java.time.Instant
 
 /**
@@ -64,9 +66,9 @@ class DashboardAddExpenseEntryPointTest {
 
     private fun setDashboardContent(
         expenses: List<Expense> = emptyList(),
-        onOpenList: (TimeRange) -> Unit = {},
+        onOpenList: (Period) -> Unit = {},
         onAddExpense: () -> Unit = {},
-        onOpenIncomeList: (TimeRange) -> Unit = {},
+        onOpenIncomeList: (Period) -> Unit = {},
         onAddIncome: () -> Unit = {},
     ) {
         val viewModel =
@@ -74,6 +76,8 @@ class DashboardAddExpenseEntryPointTest {
                 FakeExpenseRepository(expenses),
                 FakeBudgetRepository(),
                 FakeIncomeRepository(),
+                SavedStateHandle(),
+                Clock.systemDefaultZone(),
             )
         composeTestRule.setContent {
             DashboardScreen(
@@ -147,31 +151,31 @@ class DashboardAddExpenseEntryPointTest {
 
     @Test
     fun recentExpensesCard_remainsTappable_whenNoExpensesInRange_andNavigatesToFullList() {
-        var openedListWith: TimeRange? = null
+        var openedListWith: Period? = null
         setDashboardContent(
             expenses = emptyList(),
-            onOpenList = { range -> openedListWith = range },
+            onOpenList = { period -> openedListWith = period },
         )
         scrollToNode(hasText("Recent expenses"))
 
         assertNull(openedListWith)
         composeTestRule.onNodeWithText("Recent expenses").performClick()
 
-        assertEquals(TimeRange.ONE_MONTH, openedListWith)
+        assertEquals(Period.CurrentMonth, openedListWith)
     }
 
     @Test
     fun recentExpensesCard_stillTappable_whenExpensesArePresent() {
-        var openedListWith: TimeRange? = null
+        var openedListWith: Period? = null
         setDashboardContent(
             expenses = listOf(expense(id = "e1")),
-            onOpenList = { range -> openedListWith = range },
+            onOpenList = { period -> openedListWith = period },
         )
         scrollToNode(hasText("Recent expenses"))
 
         composeTestRule.onNodeWithText("Recent expenses").performClick()
 
-        assertEquals(TimeRange.ONE_MONTH, openedListWith)
+        assertEquals(Period.CurrentMonth, openedListWith)
     }
 
     @Test

@@ -19,7 +19,12 @@
     <string name="cd_delete">Eliminar</string>
     <string name="cd_change_date">Alterar data</string>
     <string name="cd_settings">Definições</string>
-    <string name="cd_pie_chart_total">Resumo de despesas. Total gasto: %1$s.</string>
+    <string name="cd_previous_month">Mês anterior</string>
+    <string name="cd_next_month">Mês seguinte</string>
+    <string name="cd_previous_year">Ano anterior</string>
+    <string name="cd_next_year">Ano seguinte</string>
+    <string name="cd_change_period">Alterar período</string>
+    <string name="cd_pie_chart_total">Resumo de saídas. Total de saídas: %1$s (gastos %2$s, poupado ou investido %3$s).</string>
     <string name="cd_pie_chart_category_item">%1$s, %2$d por cento, %3$s</string>
 
     <!-- Rótulos de campos partilhados -->
@@ -52,6 +57,15 @@
     <!-- Moedas: deliberadamente NÃO extraídas para recursos de string. CurrencyOption.displayName
          em CurrencyDisplay.kt mantém-se fixo em inglês, de propósito. Ver o KDoc desse ficheiro. -->
 
+    <!-- Seletor de período -->
+    <string name="period_this_month">Este mês</string>
+    <string name="period_choose_month">Escolher mês…</string>
+    <string name="period_last_3_months">Últimos 3 meses</string>
+    <string name="period_last_6_months">Últimos 6 meses</string>
+    <string name="period_last_12_months">Últimos 12 meses</string>
+    <string name="period_custom_range">Intervalo personalizado…</string>
+    <string name="period_select_dates">Selecionar datas</string>
+
     <!-- Painel principal -->
     <string name="dashboard_budgets_title">Orçamentos (este mês)</string>
     <string name="dashboard_recent_expenses">Despesas recentes</string>
@@ -61,10 +75,14 @@
     <string name="dashboard_see_all_income">Ver todos os rendimentos</string>
     <string name="dashboard_net_balance">Saldo líquido</string>
     <string name="dashboard_income_label">Rendimentos</string>
-    <string name="dashboard_expenses_label">Despesas</string>
+    <string name="dashboard_expenses_label">Gastos</string>
     <string name="dashboard_no_expenses">Ainda não há despesas neste período.</string>
     <string name="dashboard_recent_expenses_empty">Ainda sem despesas</string>
-    <string name="dashboard_total_spent">Total gasto</string>
+    <string name="dashboard_total_outflow">Total de saídas</string>
+    <string name="dashboard_saved_label">Poupado e investido</string>
+    <string name="dashboard_savings_rate">Taxa de poupança: %1$s</string>
+    <string name="dashboard_savings_rate_unavailable">—</string>
+    <string name="dashboard_budgets_title_month">Orçamentos (%1$s)</string>
 
     <!-- Orçamentos -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>

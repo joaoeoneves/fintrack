@@ -8,9 +8,7 @@ import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
-import com.joaoeoneves.fintrack.ui.common.decimalSeparator
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,10 +17,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,9 +34,6 @@ class AddEditExpenseViewModel
         // production. When null (test-only), the fallbacks below match the exact literals those
         // tests assert on.
         @param:ApplicationContext private val context: Context? = null,
-        // Nullable with a default for the same reason as context: when null (test-only), edit-mode
-        // amounts are prefilled with '.' as the decimal separator.
-        private val currencyRepository: CurrencyRepository? = null,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditExpense>()
 
@@ -62,7 +57,9 @@ class AddEditExpenseViewModel
                     expenseRepository
                         .getExpense(expenseId)
                         .onSuccess { existing ->
-                            val separator = currencyRepository?.observeCurrency()?.first()?.decimalSeparator ?: '.'
+                            // Prefill with the locale's own decimal separator, matching how amounts
+                            // are displayed (parseAmountCents accepts either '.' or ',').
+                            val separator = decimalSeparatorFor(Locale.getDefault(Locale.Category.FORMAT))
                             _uiState.value =
                                 if (existing != null) {
                                     AddEditUiState.Ready(

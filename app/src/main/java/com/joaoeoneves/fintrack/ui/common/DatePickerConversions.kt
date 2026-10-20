@@ -33,3 +33,12 @@ fun datePickerMillisToInstant(
     val timeOfDay = original.atZone(zone).toLocalTime()
     return ZonedDateTime.of(pickedDate, timeOfDay, zone).toInstant()
 }
+
+/** The calendar date a Material3 date picker's UTC-midnight [utcMillis] stands for. */
+fun utcMillisToLocalDate(utcMillis: Long): LocalDate {
+    val utcDateTime = Instant.ofEpochMilli(utcMillis).atZone(ZoneOffset.UTC)
+    return utcDateTime.toLocalDate()
+}
+
+/** This date as the UTC-midnight millis Material3's date pickers work in. */
+fun LocalDate.toUtcMillis(): Long = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()

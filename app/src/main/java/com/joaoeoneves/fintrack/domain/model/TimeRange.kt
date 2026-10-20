@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.domain.model
 
-import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.ZoneId
 
@@ -9,17 +8,13 @@ private const val THREE_MONTHS_COUNT = 3L
 private const val SIX_MONTHS_COUNT = 6L
 
 /**
- * A rolling time-range filter, always ending "today" (inclusive) in a given time zone.
+ * A rolling time-range filter, always ending "today" (inclusive) in a given time zone. Wrapped by
+ * [Period.Rolling]; calendar months are the primary period and are modelled by [Period] directly.
  */
-@Serializable
-enum class TimeRange(
-    val label: String,
-) {
-    ONE_WEEK("1W"),
-    ONE_MONTH("1M"),
-    THREE_MONTHS("3M"),
-    SIX_MONTHS("6M"),
-    ONE_YEAR("1Y"),
+enum class TimeRange {
+    THREE_MONTHS,
+    SIX_MONTHS,
+    ONE_YEAR,
     ;
 
     /**
@@ -33,8 +28,6 @@ enum class TimeRange(
         val today = now.atZone(zone).toLocalDate()
         val startDate =
             when (this) {
-                ONE_WEEK -> today.minusWeeks(1)
-                ONE_MONTH -> today.minusMonths(1)
                 THREE_MONTHS -> today.minusMonths(THREE_MONTHS_COUNT)
                 SIX_MONTHS -> today.minusMonths(SIX_MONTHS_COUNT)
                 ONE_YEAR -> today.minusYears(1)

@@ -9,10 +9,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.TimeRange
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Clock
 import java.time.Instant
 
 /**
@@ -50,7 +50,8 @@ class ExpenseListAddExpenseButtonTest {
         val viewModel =
             ExpenseListViewModel(
                 FakeExpenseRepository(expenses),
-                SavedStateHandle(mapOf("timeRange" to TimeRange.ONE_MONTH)),
+                SavedStateHandle(mapOf("period" to "current")),
+                Clock.systemDefaultZone(),
             )
         composeTestRule.setContent {
             ExpenseListScreen(

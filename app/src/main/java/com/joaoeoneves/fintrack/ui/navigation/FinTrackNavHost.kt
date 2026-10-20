@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
@@ -24,9 +25,9 @@ fun FinTrackNavHost(
             DashboardScreen(
                 callbacks =
                     DashboardCallbacks(
-                        onOpenList = { timeRange -> navController.navigate(ExpenseList(timeRange)) },
+                        onOpenList = { period -> navController.navigate(ExpenseList(period.encode())) },
                         onAddExpense = { navController.navigate(AddEditExpense()) },
-                        onOpenIncomeList = { timeRange -> navController.navigate(IncomeList(timeRange)) },
+                        onOpenIncomeList = { period -> navController.navigate(IncomeList(period.encode())) },
                         onAddIncome = { navController.navigate(AddEditIncome()) },
                         onOpenSettings = { navController.navigate(Settings) },
                     ),

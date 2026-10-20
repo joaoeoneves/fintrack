@@ -25,22 +25,6 @@ class TimeRangeTest {
     private val expectedEndExclusive = startOfDayUtc("2026-07-15")
 
     @Test
-    fun oneWeek_rangeIsLast7DaysThroughEndOfToday() {
-        val range = TimeRange.ONE_WEEK.toInstantRange(now = now, zone = zone)
-
-        assertEquals(startOfDayUtc("2026-07-07"), range.startInclusive)
-        assertEquals(expectedEndExclusive, range.endExclusive)
-    }
-
-    @Test
-    fun oneMonth_rangeIsLast1MonthThroughEndOfToday() {
-        val range = TimeRange.ONE_MONTH.toInstantRange(now = now, zone = zone)
-
-        assertEquals(startOfDayUtc("2026-06-14"), range.startInclusive)
-        assertEquals(expectedEndExclusive, range.endExclusive)
-    }
-
-    @Test
     fun threeMonths_rangeIsLast3MonthsThroughEndOfToday() {
         val range = TimeRange.THREE_MONTHS.toInstantRange(now = now, zone = zone)
 
@@ -71,8 +55,8 @@ class TimeRangeTest {
         val lateInDay = Instant.parse("2026-07-14T23:59:59Z")
         val earlyInDay = Instant.parse("2026-07-14T00:00:01Z")
 
-        val lateRange = TimeRange.ONE_WEEK.toInstantRange(now = lateInDay, zone = zone)
-        val earlyRange = TimeRange.ONE_WEEK.toInstantRange(now = earlyInDay, zone = zone)
+        val lateRange = TimeRange.THREE_MONTHS.toInstantRange(now = lateInDay, zone = zone)
+        val earlyRange = TimeRange.THREE_MONTHS.toInstantRange(now = earlyInDay, zone = zone)
 
         assertEquals(expectedEndExclusive, lateRange.endExclusive)
         assertEquals(expectedEndExclusive, earlyRange.endExclusive)
@@ -83,9 +67,9 @@ class TimeRangeTest {
     fun now_exactlyAtMidnight_stillIncludesFullDay() {
         val midnight = startOfDayUtc("2026-07-14")
 
-        val range = TimeRange.ONE_WEEK.toInstantRange(now = midnight, zone = zone)
+        val range = TimeRange.THREE_MONTHS.toInstantRange(now = midnight, zone = zone)
 
-        assertEquals(startOfDayUtc("2026-07-07"), range.startInclusive)
+        assertEquals(startOfDayUtc("2026-04-14"), range.startInclusive)
         assertEquals(expectedEndExclusive, range.endExclusive)
     }
 
@@ -95,25 +79,25 @@ class TimeRangeTest {
     // behavior directly since it's easy to get wrong when reasoning about it informally.
 
     @Test
-    fun oneMonth_fromMarch31_clampsToFebruary28_nonLeapYear() {
+    fun threeMonths_fromMay31_clampsToFebruary28_nonLeapYear() {
         // 2026 is not a leap year, so February has 28 days.
-        val marchNow = Instant.parse("2026-03-31T12:00:00Z")
+        val mayNow = Instant.parse("2026-05-31T12:00:00Z")
 
-        val range = TimeRange.ONE_MONTH.toInstantRange(now = marchNow, zone = zone)
+        val range = TimeRange.THREE_MONTHS.toInstantRange(now = mayNow, zone = zone)
 
         assertEquals(startOfDayUtc("2026-02-28"), range.startInclusive)
-        assertEquals(startOfDayUtc("2026-04-01"), range.endExclusive)
+        assertEquals(startOfDayUtc("2026-06-01"), range.endExclusive)
     }
 
     @Test
-    fun oneMonth_fromMarch31_clampsToFebruary29_leapYear() {
+    fun threeMonths_fromMay31_clampsToFebruary29_leapYear() {
         // 2028 is a leap year, so February has 29 days.
-        val marchNow = Instant.parse("2028-03-31T12:00:00Z")
+        val mayNow = Instant.parse("2028-05-31T12:00:00Z")
 
-        val range = TimeRange.ONE_MONTH.toInstantRange(now = marchNow, zone = zone)
+        val range = TimeRange.THREE_MONTHS.toInstantRange(now = mayNow, zone = zone)
 
         assertEquals(startOfDayUtc("2028-02-29"), range.startInclusive)
-        assertEquals(startOfDayUtc("2028-04-01"), range.endExclusive)
+        assertEquals(startOfDayUtc("2028-06-01"), range.endExclusive)
     }
 
     @Test
@@ -144,17 +128,17 @@ class TimeRangeTest {
         // 2026-07-14T15:30:00Z is 2026-07-15 01:30 in Tokyo (+9), i.e. a different calendar day.
         val tokyo = ZoneId.of("Asia/Tokyo")
 
-        val utcRange = TimeRange.ONE_WEEK.toInstantRange(now = now, zone = zone)
-        val tokyoRange = TimeRange.ONE_WEEK.toInstantRange(now = now, zone = tokyo)
+        val utcRange = TimeRange.THREE_MONTHS.toInstantRange(now = now, zone = zone)
+        val tokyoRange = TimeRange.THREE_MONTHS.toInstantRange(now = now, zone = tokyo)
 
         assertEquals(
-            Instant.parse("2026-07-07T00:00:00Z"),
+            Instant.parse("2026-04-14T00:00:00Z"),
             utcRange.startInclusive,
         )
         // Tokyo's "today" is 2026-07-15, so its start-of-day boundaries are shifted by one day
         // relative to UTC, expressed as UTC instants (Tokyo midnight == UTC-9h).
         assertEquals(
-            Instant.parse("2026-07-07T15:00:00Z"), // 2026-07-08T00:00 JST - 9h
+            Instant.parse("2026-04-14T15:00:00Z"), // 2026-04-15T00:00 JST - 9h
             tokyoRange.startInclusive,
         )
         assertEquals(
@@ -164,9 +148,17 @@ class TimeRangeTest {
     }
 
     @Test
+    fun onlyThreeRollingRangesRemain() {
+        assertEquals(
+            listOf(TimeRange.THREE_MONTHS, TimeRange.SIX_MONTHS, TimeRange.ONE_YEAR),
+            TimeRange.entries,
+        )
+    }
+
+    @Test
     fun defaultParameters_useSystemDefaultZoneAndCurrentInstant_doesNotThrow() {
         // Smoke test for the default-argument overload actually used in production call sites.
-        val range = TimeRange.ONE_MONTH.toInstantRange()
+        val range = TimeRange.THREE_MONTHS.toInstantRange()
 
         assertTrue(range.startInclusive.isBefore(range.endExclusive))
     }
