@@ -288,4 +288,38 @@
         <item quantity="one">%d record could not be copied and was skipped.</item>
         <item quantity="other">%d records could not be copied and were skipped.</item>
     </plurals>
+
+    <string name="plan_title">Monthly plan</string>
+    <string name="plan_safe_to_spend">Safe to spend</string>
+    <string name="plan_safe_to_spend_month">Safe to spend (%1$s)</string>
+    <string name="plan_over_by">Over plan by %1$s</string>
+    <string name="plan_expected_income">Expected income</string>
+    <string name="plan_expected_vs_received">%1$s · received %2$s</string>
+    <string name="plan_planned_allocations">Planned allocations</string>
+    <string name="plan_planned_spending">Planned spending</string>
+    <string name="plan_planned_saving">Planned saving</string>
+    <string name="plan_leftover">Leftover</string>
+    <string name="plan_left_in_budgets">Left in spending budgets</string>
+    <plurals name="plan_daily_allowance">
+        <item quantity="one">≈ %1$s/day for %2$d day</item>
+        <item quantity="other">≈ %1$s/day for %2$d days</item>
+    </plurals>
+    <string name="plan_current_plan_caption">Based on your current plan</string>
+    <string name="plan_edit">Edit plan</string>
+    <string name="plan_setup_title">Plan your month</string>
+    <string name="plan_setup_message">Add your expected income to see what\'s free to spend.</string>
+    <string name="plan_allocations">Allocations</string>
+    <string name="plan_not_planned">Not planned</string>
+    <string name="plan_add_income_line">Add income line</string>
+    <string name="plan_income_line_new">New income line</string>
+    <string name="plan_income_line_edit">Edit income line</string>
+    <string name="plan_field_label">Label</string>
+    <string name="plan_field_amount">Amount</string>
+    <string name="error_plan_label_required">Enter a label</string>
+    <string name="error_plan_label_too_long">At most 50 characters</string>
+    <string name="error_plan_save_failed">Couldn\'t save the plan</string>
+    <string name="dashboard_breakdown_actual">Actual</string>
+    <string name="dashboard_breakdown_planned">Planned</string>
+    <string name="dashboard_planned_per_month">Planned / month</string>
+    <string name="cd_pie_chart_planned_total">Planned allocation. Total: %1$s (spending %2$s, saving %3$s).</string>
 </resources>

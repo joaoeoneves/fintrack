@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -77,13 +78,16 @@ private const val ARC_START_ANGLE_DEGREES = -90f
  * the total has, instead of a fixed style that can overflow into the ring for larger totals.
  */
 @Composable
-private fun PieChartCenterLabel(totalCents: Long) {
+private fun PieChartCenterLabel(
+    label: String,
+    totalCents: Long,
+) {
     Column(
         modifier = Modifier.width(RING_HOLE_CONTENT_SIZE),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = stringResource(R.string.dashboard_total_outflow),
+            text = label,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -126,6 +130,7 @@ private fun List<CategoryTotal>.totalOf(kind: CategoryKind): Long {
 private fun buildChartContentDescription(
     slices: List<CategoryTotal>,
     total: Long,
+    @StringRes totalDescriptionRes: Int,
 ): String {
     val totalText = formatAmountCents(total)
     val spendingText = formatAmountCents(slices.totalOf(CategoryKind.SPENDING))
@@ -139,7 +144,7 @@ private fun buildChartContentDescription(
                 formatAmountCents(slice.totalCents),
             )
         }
-    return stringResource(R.string.cd_pie_chart_total, totalText, spendingText, savedText) +
+    return stringResource(totalDescriptionRes, totalText, spendingText, savedText) +
         if (perCategoryCd.isNotEmpty()) " " + perCategoryCd.joinToString(separator = ". ") else ""
 }
 
@@ -160,13 +165,15 @@ fun List<CategoryTotal>.clampedForChart(): List<CategoryTotal> =
 fun PieChart(
     slices: List<CategoryTotal>,
     modifier: Modifier = Modifier,
+    centerLabel: String = stringResource(R.string.dashboard_total_outflow),
+    @StringRes totalDescriptionRes: Int = R.string.cd_pie_chart_total,
 ) {
     val chartSlices = slices.clampedForChart()
     val total = chartSlices.sumOf { it.totalCents }
     val sliceColors = chartSlices.map { it.category.color }
     val strokeWidthPx = with(LocalDensity.current) { RING_STROKE_WIDTH.toPx() }
 
-    val chartContentDescription = buildChartContentDescription(chartSlices, total)
+    val chartContentDescription = buildChartContentDescription(chartSlices, total, totalDescriptionRes)
 
     Row(
         modifier = modifier,
@@ -204,7 +211,7 @@ fun PieChart(
                 }
             }
 
-            PieChartCenterLabel(total)
+            PieChartCenterLabel(centerLabel, total)
         }
 
         Column(

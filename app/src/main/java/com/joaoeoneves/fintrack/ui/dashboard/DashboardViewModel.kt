@@ -9,8 +9,10 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
+import com.joaoeoneves.fintrack.domain.model.dailyAllowanceOf
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -121,12 +123,13 @@ class DashboardViewModel
             period: Period,
             now: Instant,
             zone: ZoneId,
-        ): DashboardUiState.Content =
-            DashboardUiState.Content(
+        ): DashboardUiState.Content {
+            val isCurrentMonth = budgetMonth == currentYearMonth(now, zone)
+            return DashboardUiState.Content(
                 period = period,
                 canGoToNextMonth = period.canGoToNextMonth(now, zone),
                 budgetMonth = budgetMonth,
-                budgetMonthIsCurrent = budgetMonth == currentYearMonth(now, zone),
+                budgetMonthIsCurrent = isCurrentMonth,
                 expenses = transactions.expenses,
                 categoryTotals = summary.categoryTotals,
                 outflowCents = summary.outflowCents,
@@ -138,5 +141,14 @@ class DashboardViewModel
                 incomeCents = summary.incomeCents,
                 netCents = summary.netCents,
                 recentIncome = recent.income,
+                plan = plan,
+                plannedSlices = budgets.plannedSlices(),
+                dailyAllowance =
+                    if (isCurrentMonth) {
+                        dailyAllowanceOf(plan.safeToSpendCents, budgetMonth, now.atZone(zone).toLocalDate())
+                    } else {
+                        null
+                    },
             )
+        }
     }

@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import com.joaoeoneves.fintrack.domain.model.DailyAllowance
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.YearMonth
@@ -18,6 +20,9 @@ sealed interface DashboardUiState {
      *   for month periods, otherwise the current month.
      * @property outflowCents everything that left in the period, i.e. [spendingCents] + [savedCents].
      * @property netCents income minus all outflow (spending and saving alike).
+     * @property plan the monthly plan evaluated for [budgetMonth].
+     * @property plannedSlices the planned allocation per category, for the "Planned" donut.
+     * @property dailyAllowance what can be spent per remaining day; only for the current month.
      * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
      */
     data class Content(
@@ -36,6 +41,9 @@ sealed interface DashboardUiState {
         val incomeCents: Long,
         val netCents: Long,
         val recentIncome: List<Income>,
+        val plan: MonthlyPlanSummary,
+        val plannedSlices: List<CategoryTotal>,
+        val dailyAllowance: DailyAllowance?,
     ) : DashboardUiState
 
     data class Error(

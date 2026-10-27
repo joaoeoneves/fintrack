@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.expense.list.ExpenseListScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.income.list.IncomeListScreen
+import com.joaoeoneves.fintrack.ui.plan.MonthlyPlanScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
 
@@ -33,6 +34,7 @@ fun FinTrackNavHost(
                         onOpenSettings = { navController.navigate(Settings) },
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
+                        onOpenMonthlyPlan = { navController.navigate(MonthlyPlan) },
                     ),
             )
         }
@@ -65,6 +67,9 @@ fun FinTrackNavHost(
                 onBack = { navController.popBackStack() },
                 onOpenCategories = { navController.navigate(Categories) },
             )
+        }
+        composable<MonthlyPlan> {
+            MonthlyPlanScreen(onBack = { navController.popBackStack() })
         }
         composable<Categories> {
             CategoriesScreen(onBack = { navController.popBackStack() })

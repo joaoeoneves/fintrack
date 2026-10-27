@@ -95,6 +95,7 @@ class DashboardAddExpenseEntryPointTest {
                         onOpenSettings = {},
                         onOpenExpense = onOpenExpense,
                         onOpenIncome = {},
+                        onOpenMonthlyPlan = {},
                     ),
                 viewModel = viewModel,
             )

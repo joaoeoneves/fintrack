@@ -176,7 +176,15 @@ private fun DashboardContent(
 
         item { BalanceSummaryCard(state = state, modifier = cardModifier) }
 
-        item { DashboardSummary(state = state, modifier = cardModifier) }
+        item {
+            MonthlyPlanCard(
+                state = state,
+                onOpenMonthlyPlan = callbacks.onOpenMonthlyPlan,
+                modifier = cardModifier,
+            )
+        }
+
+        item { SpendingBreakdownCard(state = state, modifier = cardModifier) }
 
         item {
             BudgetSection(
@@ -345,39 +353,4 @@ private fun SeeAllExpensesLink(onClick: () -> Unit) {
                 .padding(16.dp),
         textAlign = TextAlign.Center,
     )
-}
-
-@Composable
-private fun DashboardSummary(
-    state: DashboardUiState.Content,
-    modifier: Modifier = Modifier,
-) {
-    if (state.expenses.isEmpty()) {
-        Box(
-            modifier =
-                modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_no_expenses),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
-    } else {
-        Card(
-            modifier = modifier,
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        ) {
-            PieChart(
-                slices = state.categoryTotals,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-            )
-        }
-    }
 }

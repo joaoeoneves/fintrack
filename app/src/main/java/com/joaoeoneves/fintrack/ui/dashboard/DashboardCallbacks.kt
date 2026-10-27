@@ -17,4 +17,6 @@ data class DashboardCallbacks(
     val onOpenExpense: (String) -> Unit,
     /** Opens the given income entry (by id) for editing; used by the recent-income rows. */
     val onOpenIncome: (String) -> Unit,
+    /** Opens the monthly plan screen. */
+    val onOpenMonthlyPlan: () -> Unit,
 )

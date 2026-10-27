@@ -35,3 +35,6 @@ object Settings
 
 @Serializable
 object Categories
+
+@Serializable
+object MonthlyPlan

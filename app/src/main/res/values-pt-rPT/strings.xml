@@ -294,4 +294,39 @@
         <item quantity="many">%d de registos não puderam ser copiados e foram ignorados.</item>
         <item quantity="other">%d registos não puderam ser copiados e foram ignorados.</item>
     </plurals>
+
+    <string name="plan_title">Plano mensal</string>
+    <string name="plan_safe_to_spend">Disponível para gastar</string>
+    <string name="plan_safe_to_spend_month">Disponível para gastar (%1$s)</string>
+    <string name="plan_over_by">Acima do plano em %1$s</string>
+    <string name="plan_expected_income">Rendimento previsto</string>
+    <string name="plan_expected_vs_received">%1$s · recebido %2$s</string>
+    <string name="plan_planned_allocations">Alocações planeadas</string>
+    <string name="plan_planned_spending">Gastos planeados</string>
+    <string name="plan_planned_saving">Poupança planeada</string>
+    <string name="plan_leftover">Sobra</string>
+    <string name="plan_left_in_budgets">Restante nos orçamentos</string>
+    <plurals name="plan_daily_allowance">
+        <item quantity="one">≈ %1$s/dia durante %2$d dia</item>
+        <item quantity="many">≈ %1$s/dia durante %2$d dias</item>
+        <item quantity="other">≈ %1$s/dia durante %2$d dias</item>
+    </plurals>
+    <string name="plan_current_plan_caption">Com base no plano atual</string>
+    <string name="plan_edit">Editar plano</string>
+    <string name="plan_setup_title">Planeie o seu mês</string>
+    <string name="plan_setup_message">Adicione o rendimento previsto para ver quanto pode gastar.</string>
+    <string name="plan_allocations">Alocações</string>
+    <string name="plan_not_planned">Sem plano</string>
+    <string name="plan_add_income_line">Adicionar rendimento</string>
+    <string name="plan_income_line_new">Novo rendimento</string>
+    <string name="plan_income_line_edit">Editar rendimento</string>
+    <string name="plan_field_label">Descrição</string>
+    <string name="plan_field_amount">Valor</string>
+    <string name="error_plan_label_required">Introduza uma descrição</string>
+    <string name="error_plan_label_too_long">Máximo de 50 caracteres</string>
+    <string name="error_plan_save_failed">Não foi possível guardar o plano</string>
+    <string name="dashboard_breakdown_actual">Real</string>
+    <string name="dashboard_breakdown_planned">Planeado</string>
+    <string name="dashboard_planned_per_month">Planeado / mês</string>
+    <string name="cd_pie_chart_planned_total">Alocação planeada. Total: %1$s (gastos %2$s, poupança %3$s).</string>
 </resources>
