@@ -63,11 +63,11 @@ class SettingsViewModelLanguageTest {
         }
 
     @Test
-    fun language_beforeCollection_isDefaultPortuguese() =
+    fun language_beforeCollection_isDefaultSystem() =
         runTest(testDispatcher) {
             val vm = viewModel(FakeLanguageRepository(AppLanguage.ENGLISH))
 
-            assertEquals(AppLanguage.PORTUGUESE, vm.uiState.value.language)
+            assertEquals(AppLanguage.SYSTEM, vm.uiState.value.language)
         }
 
     @Test
@@ -111,7 +111,7 @@ class SettingsViewModelLanguageTest {
         }
 
     @Test
-    fun noLanguageRepository_defaultsToPortuguese_andSetLanguageIsNoOp() =
+    fun noLanguageRepository_defaultsToSystem_andSetLanguageIsNoOp() =
         runTest(testDispatcher) {
             val vm = viewModel(null)
             collect(vm)
@@ -119,6 +119,6 @@ class SettingsViewModelLanguageTest {
             vm.setLanguage(AppLanguage.ENGLISH)
             advanceUntilIdle()
 
-            assertEquals(AppLanguage.PORTUGUESE, vm.uiState.value.language)
+            assertEquals(AppLanguage.SYSTEM, vm.uiState.value.language)
         }
 }

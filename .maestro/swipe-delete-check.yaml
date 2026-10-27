@@ -188,5 +188,5 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "All income"
 - back
 - scrollUntilVisible:
-    element: "Net Balance"
+    element: "Net balance"
     direction: UP

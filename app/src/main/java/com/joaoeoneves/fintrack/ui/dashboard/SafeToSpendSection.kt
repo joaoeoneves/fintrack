@@ -99,7 +99,8 @@ private fun PlanContent(
         if (state.budgetMonthIsCurrent) {
             stringResource(R.string.plan_safe_to_spend)
         } else {
-            stringResource(R.string.plan_safe_to_spend_month, formatMonthLabel(state.budgetMonth, currentLocale()))
+            val month = formatMonthLabel(state.budgetMonth, currentLocale(), titlecase = false)
+            stringResource(R.string.plan_safe_to_spend_month, month)
         }
     Column(modifier = modifier.fillMaxWidth()) {
         SectionTitle(

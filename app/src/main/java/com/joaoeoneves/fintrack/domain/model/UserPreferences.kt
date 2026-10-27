@@ -4,5 +4,5 @@ package com.joaoeoneves.fintrack.domain.model
 data class UserPreferences(
     val theme: ThemePreference = ThemePreference.DARK,
     val currency: CurrencyOption = CurrencyOption.EUR,
-    val language: AppLanguage = AppLanguage.PORTUGUESE,
+    val language: AppLanguage = AppLanguage.SYSTEM,
 )

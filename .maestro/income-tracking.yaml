@@ -3,7 +3,7 @@
 # Assumes the app is already signed in (persisted Credential Manager / Firebase Auth session) —
 # real Google Sign-In cannot be scripted headlessly by Maestro, so this flow starts from the
 # Dashboard, same as golden-path.yaml. If the app instead shows a sign-in screen, that's a sign
-# the persisted session was lost and this flow will fail fast at the "Net Balance" assertion below.
+# the persisted session was lost and this flow will fail fast at the "Net balance" assertion below.
 appId: com.joaoeoneves.fintrack
 ---
 - launchApp
@@ -41,13 +41,13 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Back"
 
 # --- 1: Dashboard loads with the balance summary card (net balance + income / spending / saved &
-# invested columns). The outflow column was renamed "Expenses" -> "Spending", and investments now
+# invested columns). The outflow column is labelled "Expenses", and investments now
 # count as saved ("Saved & invested") rather than as spending.
 - assertVisible:
     id: "dashboard_list"
-- assertVisible: "Net Balance"
+- assertVisible: "Net balance"
 - assertVisible: "Income"
-- assertVisible: "Spending"
+- assertVisible: "Expenses"
 - assertVisible: "Saved & invested"
 
 # --- 2: Scroll down to the "Recent income" section and add two income entries. A second,
@@ -87,7 +87,7 @@ appId: com.joaoeoneves.fintrack
 # left to unit tests, which cover the math precisely; this flow only asserts the feature is wired
 # end-to-end and doesn't silently regress expense totals.)
 - scrollUntilVisible:
-    element: "Net Balance"
+    element: "Net balance"
     direction: UP
 - assertVisible: "Income"
 
@@ -197,5 +197,5 @@ appId: com.joaoeoneves.fintrack
 # Return to the dashboard, leaving app state as found.
 - back
 - scrollUntilVisible:
-    element: "Net Balance"
+    element: "Net balance"
     direction: UP

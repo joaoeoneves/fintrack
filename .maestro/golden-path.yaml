@@ -66,11 +66,11 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Previous month"
 - assertVisible: "Next month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
-- assertVisible: "Net Balance"
+- assertVisible: "Net balance"
 - assertVisible: "Income"
-# The balance card's outflow column is now "Spending" (was "Expenses"); investments count as saved,
+# The balance card's outflow column is "Expenses"; investments count as saved,
 # shown in their own "Saved & invested" column, plus a "Savings rate: NN%" (or "—") line.
-- assertVisible: "Spending"
+- assertVisible: "Expenses"
 - assertVisible: "Saved & invested"
 - assertVisible: "Savings rate.*"
 - assertVisible: ".*Transfer.*"
@@ -86,7 +86,7 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - takeScreenshot: build/maestro/golden-path-dashboard-bottom
 - scrollUntilVisible:
-    element: "Net Balance"
+    element: "Net balance"
     direction: UP
 
 # --- 2: Add a new expense via the Dashboard's floating add pill ---

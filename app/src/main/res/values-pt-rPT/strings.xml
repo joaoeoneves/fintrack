@@ -33,13 +33,13 @@
     <string name="field_note_optional">Nota (opcional)</string>
 
     <!-- Erros/estados partilhados -->
-    <string name="error_state_title">Ocorreu um problema.</string>
-    <string name="error_generic_fallback">Ocorreu um problema</string>
+    <string name="error_state_title">Ocorreu um erro</string>
+    <string name="error_generic_fallback">Ocorreu um erro</string>
     <string name="error_invalid_amount">Introduza um montante válido</string>
-    <string name="error_sign_in_failed">Falha ao iniciar sessão</string>
+    <string name="error_sign_in_failed">Não foi possível iniciar sessão</string>
     <string name="error_budget_save_failed">Não foi possível guardar o orçamento</string>
     <string name="error_budget_remove_failed">Não foi possível remover o orçamento</string>
-    <string name="error_sign_out_failed">Falha ao terminar sessão</string>
+    <string name="error_sign_out_failed">Não foi possível terminar sessão</string>
 
     <!-- Autenticação -->
     <string name="auth_subtitle">Inicie sessão para acompanhar as suas despesas</string>
@@ -85,7 +85,7 @@
     <string name="dashboard_see_all_income">Ver todos os rendimentos</string>
     <string name="dashboard_net_balance">Saldo líquido</string>
     <string name="dashboard_income_label">Rendimentos</string>
-    <string name="dashboard_expenses_label">Gastos</string>
+    <string name="dashboard_expenses_label">Despesas</string>
     <string name="dashboard_no_expenses">Ainda não há despesas neste período.</string>
     <string name="dashboard_recent_expenses_empty">Ainda sem despesas</string>
     <string name="dashboard_total_outflow">Total de saídas</string>
@@ -114,9 +114,9 @@
     <string name="expense_list_search_label">Pesquisar</string>
     <string name="expense_list_no_match">Nenhuma despesa corresponde a \"%1$s\".</string>
     <string name="expense_list_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
-    <string name="expense_field_refund">Estorno</string>
+    <string name="expense_field_refund">Reembolso</string>
     <string name="expense_field_refund_hint">Dinheiro devolvido; reduz os gastos desta categoria</string>
-    <string name="expense_refund_badge">Estorno</string>
+    <string name="expense_refund_badge">Reembolso</string>
     <string name="filter_all">Todas</string>
     <string name="field_length_counter">%1$d/%2$d</string>
 
@@ -128,7 +128,11 @@
 
     <!-- Importar/exportar -->
     <string name="import_preview_title">Pré-visualização da importação</string>
-    <string name="import_preview_summary">%1$d linhas prontas para importar, %2$d falharam</string>
+    <plurals name="import_preview_summary">
+        <item quantity="one">%1$d linha pronta a importar, %2$d falharam</item>
+        <item quantity="many">%1$d de linhas prontas a importar, %2$d falharam</item>
+        <item quantity="other">%1$d linhas prontas a importar, %2$d falharam</item>
+    </plurals>
     <string name="import_preview_row_failure">Linha %1$d: %2$s</string>
     <string name="label_import_complete">Importação concluída</string>
     <string name="label_import_partial_failure">Importação parcialmente concluída</string>
@@ -169,18 +173,18 @@
     <string name="settings_section_currency">Moeda</string>
     <string name="settings_section_data">Dados</string>
     <string name="settings_section_account">Conta</string>
-    <string name="settings_section_about">Acerca</string>
-    <string name="settings_currency_label">Moeda de exibição</string>
+    <string name="settings_section_about">Acerca de</string>
+    <string name="settings_currency_label">Moeda de apresentação</string>
     <string name="settings_import_csv">Importar CSV (despesas)</string>
     <string name="settings_export_csv">Exportar CSV (despesas)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
-    <string name="label_sign_out_failed">Falha ao terminar sessão</string>
+    <string name="label_sign_out_failed">Não foi possível terminar sessão</string>
     <string name="settings_guest_account">Convidado — os dados ficam guardados apenas neste dispositivo</string>
     <string name="action_sign_in_to_sync">Iniciar sessão para sincronizar</string>
     <string name="action_leave_guest_mode">Sair do modo convidado</string>
     <string name="leave_guest_confirm_title">Sair do modo convidado?</string>
     <string name="leave_guest_confirm_message">Os seus dados ficam neste dispositivo; escolha Continuar como convidado para os voltar a ver.</string>
-    <string name="label_sign_in_failed">Falha ao iniciar sessão</string>
+    <string name="label_sign_in_failed">Não foi possível iniciar sessão</string>
     <string name="about_version">Versão %1$s</string>
     <string name="about_font_license">Licença da fonte Inter (SIL OFL 1.1)</string>
     <string name="about_version_unknown">desconhecida</string>
@@ -192,6 +196,7 @@
 
     <!-- Seletor de idioma. Cada idioma mantém o seu próprio nome (autónimo), tal como no seletor
          de idioma de qualquer aplicação: "English" e "Português" não são traduzidos, mesmo aqui. -->
+    <string name="language_system">Predefinição do sistema</string>
     <string name="language_english">English</string>
     <string name="language_portuguese">Português</string>
 
@@ -222,11 +227,11 @@
     <string name="category_field_icon">Ícone</string>
     <string name="category_field_color">Cor</string>
     <string name="category_field_kind">Tipo</string>
-    <string name="category_kind_spending">Despesa</string>
+    <string name="category_kind_spending">Gastos</string>
     <string name="category_kind_saving">Poupança</string>
     <string name="category_action_edit">Editar</string>
     <string name="category_action_archive">Arquivar</string>
-    <string name="category_action_unarchive">Restaurar</string>
+    <string name="category_action_unarchive">Desarquivar</string>
     <string name="category_action_delete">Eliminar</string>
     <string name="category_move_up">Mover para cima</string>
     <string name="category_move_down">Mover para baixo</string>
@@ -234,20 +239,20 @@
     <string name="cd_category_icon_option">Ícone %1$d</string>
     <string name="cd_category_color_option">Cor %1$d</string>
     <string name="category_delete_confirm">Eliminar \"%1$s\"?</string>
-    <string name="category_in_use_message">\"%1$s\" é usada por despesas, num orçamento ou num item recorrente. Arquivar em vez disso?</string>
-    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas, num orçamento ou num item recorrente e não pode ser eliminada.</string>
-    <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação. Arquivar em vez disso?</string>
-    <string name="category_cannot_verify_archived_message">Não é possível verificar a utilização sem ligação. Tente novamente quando estiver online.</string>
+    <string name="category_in_use_message">\"%1$s\" é usada por despesas, orçamentos ou itens recorrentes. Arquivar em vez disso?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas, orçamentos ou itens recorrentes e não pode ser eliminada.</string>
+    <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação à internet. Arquivar em vez disso?</string>
+    <string name="category_cannot_verify_archived_message">Não é possível verificar a utilização sem ligação à internet. Tente novamente quando estiver ligado.</string>
     <string name="error_category_name_required">Introduza um nome</string>
     <string name="error_category_name_too_long">Máximo de 50 caracteres</string>
     <string name="error_category_name_duplicate">Já existe uma categoria com este nome</string>
     <string name="error_category_last_active">Pelo menos uma categoria tem de ficar ativa</string>
     <string name="error_category_save_failed">Não foi possível guardar a categoria</string>
 
-    <!-- Backup -->
+    <!-- Cópia de segurança -->
     <string name="settings_section_backup">Cópia de segurança</string>
-    <string name="settings_export_backup">Exportar cópia de segurança (JSON)</string>
-    <string name="settings_restore_backup">Restaurar cópia de segurança (JSON)</string>
+    <string name="settings_export_backup">Exportar cópia (JSON)</string>
+    <string name="settings_restore_backup">Restaurar cópia (JSON)</string>
     <string name="settings_backup_guest_hint">Exporte uma cópia de segurança para mover os seus dados para outro dispositivo</string>
     <string name="settings_backup_signed_in_hint">Guarde uma cópia dos seus dados num ficheiro JSON</string>
     <string name="action_restore">Restaurar</string>
@@ -276,7 +281,7 @@
 
     <!-- Migrar dados locais para a conta -->
     <string name="migration_offer_title">Copiar os dados deste dispositivo para a sua conta?</string>
-    <string name="migration_offer_message">Tem dados guardados apenas neste dispositivo:\n\n%1$s\n\nCopiá-los para a sua conta para os sincronizar em todo o lado? Nada é removido deste dispositivo a menos que o escolha.</string>
+    <string name="migration_offer_message">Tem dados guardados apenas neste dispositivo:\n\n%1$s\n\nCopiá-los para a sua conta, para os sincronizar em todos os dispositivos? Nada é removido deste dispositivo, a menos que o decida.</string>
     <string name="migration_action_copy">Copiar</string>
     <string name="migration_action_not_now">Agora não</string>
     <string name="migration_running_title">A copiar os seus dados</string>
@@ -311,11 +316,11 @@
     <string name="plan_over_by">Acima do plano em %1$s</string>
     <string name="plan_expected_income">Rendimento previsto</string>
     <string name="plan_received">recebido %1$s</string>
-    <string name="plan_planned_allocations">Alocações planeadas</string>
+    <string name="plan_planned_allocations">Afetações planeadas</string>
     <string name="plan_planned_spending">Gastos planeados</string>
     <string name="plan_planned_saving">Poupança planeada</string>
-    <string name="plan_leftover">Sobra</string>
-    <string name="plan_left_in_budgets">Restante nos orçamentos</string>
+    <string name="plan_leftover">Restante</string>
+    <string name="plan_left_in_budgets">Restante nos orçamentos de gastos</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/dia durante %2$d dia</item>
         <item quantity="many">≈ %1$s/dia durante %2$d dias</item>
@@ -325,13 +330,13 @@
     <string name="plan_edit">Editar plano</string>
     <string name="plan_setup_title">Planeie o seu mês</string>
     <string name="plan_setup_message">Adicione o rendimento previsto para ver quanto pode gastar.</string>
-    <string name="plan_allocations">Alocações</string>
+    <string name="plan_allocations">Afetações</string>
     <string name="plan_not_planned">Sem plano</string>
     <string name="plan_add_income_line">Adicionar rendimento</string>
     <string name="plan_income_line_new">Novo rendimento</string>
     <string name="plan_income_line_edit">Editar rendimento</string>
     <string name="plan_field_label">Descrição</string>
-    <string name="plan_field_amount">Valor</string>
+    <string name="plan_field_amount">Montante</string>
     <string name="error_plan_label_required">Introduza uma descrição</string>
     <string name="error_plan_label_too_long">Máximo de 50 caracteres</string>
     <string name="error_plan_save_failed">Não foi possível guardar o plano</string>
@@ -346,9 +351,9 @@
     <string name="recurring_title">Recorrentes</string>
     <string name="recurring_add">Adicionar recorrente</string>
     <string name="recurring_edit_title">Editar recorrente</string>
-    <string name="recurring_upcoming_title">Contas e rendimentos a chegar</string>
+    <string name="recurring_upcoming_title">Próximas contas e rendimentos</string>
     <string name="recurring_confirm">Confirmar</string>
-    <string name="recurring_skip">Saltar</string>
+    <string name="recurring_skip">Ignorar</string>
     <string name="recurring_overdue">Em atraso</string>
     <string name="recurring_due_today">Hoje</string>
     <plurals name="recurring_more_overdue">
@@ -361,7 +366,7 @@
     <string name="recurring_annual_income">Rendimentos recorrentes: %1$s/ano</string>
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar contas e rendimentos recorrentes</string>
-    <string name="recurring_added">\'%1$s\' adicionado</string>
+    <string name="recurring_added">Adicionado: \'%1$s\'</string>
     <string name="recurring_per_month">%1$s / mês</string>
     <string name="recurring_per_year">%1$s / ano</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
@@ -390,14 +395,14 @@
     <string name="error_recurring_month_required">Escolha um mês</string>
     <string name="error_recurring_too_long">Este texto é demasiado longo</string>
 
-    <!-- Day headers in transaction lists -->
+    <!-- Cabeçalhos de dia nas listas de transações -->
     <string name="day_header_today">Hoje</string>
     <string name="day_header_yesterday">Ontem</string>
 
     <!-- Redesenho do painel -->
     <string name="action_see_all">Ver tudo</string>
     <string name="dashboard_add_expense_short">Despesa</string>
-    <string name="dashboard_add_income_short">Receita</string>
+    <string name="dashboard_add_income_short">Rendimento</string>
     <string name="cd_balance_chart">Saldo ao longo do período, de %1$s a %2$s</string>
     <string name="period_tab_1m">1M</string>
     <string name="period_tab_3m">3M</string>

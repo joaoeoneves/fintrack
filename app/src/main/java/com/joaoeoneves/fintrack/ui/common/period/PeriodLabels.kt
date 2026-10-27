@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.common.period
 
+import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
@@ -7,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.mediumDateFormatter
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -15,16 +17,19 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Formats [yearMonth] as e.g. "October 2026" / "Outubro 2026", with the first letter titlecased
- * (Portuguese month names are lowercase).
- *
- * Uses the format-style "MMMM" rather than the standalone "LLLL": under desugared java.time on
- * API 24–25, "LLLL" can print the month number instead of its name.
+ * Formats [yearMonth] with the locale's own "year + month name" shape ("October 2026" /
+ * "outubro de 2026"). With [titlecase] the first letter is capitalised, for standalone labels
+ * (selector pill, picker header); pass false when the label sits inside a sentence or brackets.
  */
 fun formatMonthLabel(
     yearMonth: YearMonth,
     locale: Locale,
-): String = DateTimeFormatter.ofPattern("MMMM yyyy", locale).format(yearMonth).titlecaseFirst(locale)
+    titlecase: Boolean = true,
+): String {
+    val pattern = DateFormat.getBestDateTimePattern(locale, "yMMMM")
+    val text = DateTimeFormatter.ofPattern(pattern, locale).format(yearMonth)
+    return if (titlecase) text.titlecaseFirst(locale) else text
+}
 
 /** Short, titlecased month name for the month picker grid, e.g. "Oct" / "Out". */
 fun formatShortMonthName(
@@ -32,13 +37,13 @@ fun formatShortMonthName(
     locale: Locale,
 ): String = DateTimeFormatter.ofPattern("MMM", locale).format(yearMonth).titlecaseFirst(locale)
 
-/** Formats an inclusive custom range as e.g. "Oct 1, 2026 – Oct 15, 2026". */
+/** Formats an inclusive custom range as e.g. "Oct 1, 2026 – Oct 15, 2026" (locale-dependent). */
 fun formatCustomRangeLabel(
     start: LocalDate,
     endInclusive: LocalDate,
     locale: Locale,
 ): String {
-    val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy", locale)
+    val formatter = mediumDateFormatter(locale)
     return "${formatter.format(start)} – ${formatter.format(endInclusive)}"
 }
 

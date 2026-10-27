@@ -41,6 +41,7 @@ import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.icon
+import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
@@ -147,9 +148,10 @@ internal fun ArchivedCategoryRow(
             Text(stringResource(R.string.category_action_unarchive))
         }
         if (!category.builtIn) {
-            TextButton(onClick = { actions.onDelete(category.id) }) {
-                Text(stringResource(R.string.category_action_delete))
-            }
+            DestructiveTextButton(
+                text = stringResource(R.string.category_action_delete),
+                onClick = { actions.onDelete(category.id) },
+            )
         }
     }
 }

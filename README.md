@@ -75,7 +75,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
     dividers, color only for meaning: gains, overspending, category data), set in Inter with tabular
     figures, with shared-axis screen transitions and motion that respects the system's reduced-motion
     setting.
-  - **Language**: English or Portuguese (or the system language), switched in-app. Theme, language and
+  - **Language**: English or Portuguese (pt-PT), or the system language (the default on a fresh install; any other system language falls back to English), switched in-app. Theme, language and
     currency are stored locally (DataStore) and synced across your devices through Firestore.
   - **Display currency**: USD, EUR, GBP, JPY, CAD or AUD. Purely cosmetic: it changes the symbol and
     formatting, with no exchange-rate conversion.
@@ -104,7 +104,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 | Typeface | [Inter](https://rsms.me/inter/) (bundled static TTFs) |
 | CI | GitHub Actions |
 
-Min SDK 24, target/compile SDK 36, Java 11 source/target compatibility.
+Min SDK 26, target/compile SDK 36, Java 11 source/target compatibility.
 
 ### Architecture
 

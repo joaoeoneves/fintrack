@@ -43,8 +43,10 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.ui.common.color
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Amount
@@ -297,7 +299,7 @@ private fun BreakdownRow(entry: BreakdownEntry) {
             modifier = Modifier.weight(1f).padding(start = Dimens.Space12),
         )
         Text(
-            text = "${entry.percent}%",
+            text = formatPercent(entry.percent, currentLocale()),
             style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
             color = FinTrackTheme.colors.textSecondary,
             textAlign = TextAlign.End,

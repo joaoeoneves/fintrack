@@ -170,7 +170,7 @@ private fun UpcomingRow(
         Text(
             text = occurrenceLabel(row.date, today),
             style = MaterialTheme.typography.bodySmall,
-            color = FinTrackTheme.colors.textSecondary,
+            color = if (row.isDue) FinTrackTheme.colors.accentText else FinTrackTheme.colors.textSecondary,
         )
         if (row.overdueCount > 0) {
             Text(

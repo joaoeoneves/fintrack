@@ -55,7 +55,7 @@ fun SectionTitle(
 }
 
 /**
- * Quiet trailing link of a [SectionTitle] ("See all", "Edit plan", "Manage"). When
+ * Accent-coloured trailing link of a [SectionTitle] ("See all", "Edit plan", "Manage"). When
  * [contentDescription] is set it replaces the visible [text] for accessibility.
  */
 @Composable
@@ -76,7 +76,7 @@ fun SectionAction(
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = FinTrackTheme.colors.textSecondary,
+            color = FinTrackTheme.colors.accentText,
             modifier =
                 if (contentDescription != null) {
                     Modifier.clearAndSetSemantics { this.contentDescription = contentDescription }

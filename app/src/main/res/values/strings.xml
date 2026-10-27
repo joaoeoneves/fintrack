@@ -33,20 +33,20 @@
     <string name="field_note_optional">Note (optional)</string>
 
     <!-- Shared error/state strings -->
-    <string name="error_state_title">Something went wrong.</string>
+    <string name="error_state_title">Something went wrong</string>
     <string name="error_generic_fallback">Something went wrong</string>
     <string name="error_invalid_amount">Enter a valid amount</string>
-    <string name="error_sign_in_failed">Sign-in failed</string>
-    <string name="error_budget_save_failed">Failed to save budget</string>
-    <string name="error_budget_remove_failed">Failed to remove budget</string>
-    <string name="error_sign_out_failed">Sign-out failed</string>
+    <string name="error_sign_in_failed">Couldn\'t sign in</string>
+    <string name="error_budget_save_failed">Couldn\'t save the budget</string>
+    <string name="error_budget_remove_failed">Couldn\'t remove the budget</string>
+    <string name="error_sign_out_failed">Couldn\'t sign out</string>
 
     <!-- Auth -->
     <string name="auth_subtitle">Sign in to track your expenses</string>
     <string name="auth_sign_in_with_google">Sign in with Google</string>
     <string name="auth_continue_as_guest">Continue as guest</string>
     <string name="auth_guest_hint">Your data stays only on this device</string>
-    <string name="error_guest_start_failed">Could not start guest mode</string>
+    <string name="error_guest_start_failed">Couldn\'t start guest mode</string>
 
     <!-- Expense/income row shared -->
     <string name="row_category_date">%1$s • %2$s</string>
@@ -83,9 +83,9 @@
     <string name="dashboard_recent_income">Recent income</string>
     <string name="dashboard_no_income">No income in this period yet.</string>
     <string name="dashboard_see_all_income">See all income</string>
-    <string name="dashboard_net_balance">Net Balance</string>
+    <string name="dashboard_net_balance">Net balance</string>
     <string name="dashboard_income_label">Income</string>
-    <string name="dashboard_expenses_label">Spending</string>
+    <string name="dashboard_expenses_label">Expenses</string>
     <string name="dashboard_no_expenses">No expenses in this period yet.</string>
     <string name="dashboard_recent_expenses_empty">No expenses yet</string>
     <string name="dashboard_total_outflow">Total outflow</string>
@@ -106,7 +106,7 @@
     <string name="expense_field_category">Category</string>
     <string name="error_name_required">Name is required</string>
     <string name="error_category_required">Choose a category</string>
-    <string name="error_failed_save_expense">Failed to save expense</string>
+    <string name="error_failed_save_expense">Couldn\'t save the expense</string>
 
     <!-- Expense list -->
     <string name="expense_list_title">All expenses</string>
@@ -128,14 +128,17 @@
 
     <!-- Import/export -->
     <string name="import_preview_title">Import preview</string>
-    <string name="import_preview_summary">%1$d rows ready to import, %2$d failed</string>
+    <plurals name="import_preview_summary">
+        <item quantity="one">%1$d row ready to import, %2$d failed</item>
+        <item quantity="other">%1$d rows ready to import, %2$d failed</item>
+    </plurals>
     <string name="import_preview_row_failure">Row %1$d: %2$s</string>
     <string name="label_import_complete">Import complete</string>
     <string name="label_import_partial_failure">Import partially completed</string>
     <string name="label_import_failed">Import failed</string>
     <string name="label_export_complete">Export complete</string>
     <string name="label_export_failed">Export failed</string>
-    <string name="error_import_read_file">Could not read the selected file</string>
+    <string name="error_import_read_file">Couldn\'t read the selected file</string>
     <string name="error_import_failed">Import failed</string>
     <string name="error_csv_empty">The file is empty</string>
     <string name="error_csv_header">Unrecognized header — expected name,amountCents,category,date,note</string>
@@ -147,14 +150,14 @@
     <string name="error_csv_row_category_unknown">Unknown category: \'%1$s\'</string>
     <string name="error_csv_row_date_invalid">Invalid date: \'%1$s\'</string>
     <string name="error_csv_row_note_too_long">Note is too long (maximum: %1$d)</string>
-    <string name="error_export_write_file">Could not write the export file</string>
+    <string name="error_export_write_file">Couldn\'t write the export file</string>
     <string name="error_export_failed">Export failed</string>
 
     <!-- Add/edit income -->
     <string name="income_edit_title">Edit income</string>
     <string name="income_field_source">Source</string>
     <string name="error_source_required">Source is required</string>
-    <string name="error_failed_save_income">Failed to save income</string>
+    <string name="error_failed_save_income">Couldn\'t save the income</string>
 
     <!-- Income list -->
     <string name="income_list_title">All income</string>
@@ -174,15 +177,15 @@
     <string name="settings_import_csv">Import CSV (expenses)</string>
     <string name="settings_export_csv">Export CSV (expenses)</string>
     <string name="settings_signed_in_fallback">Signed in</string>
-    <string name="label_sign_out_failed">Sign-out failed</string>
+    <string name="label_sign_out_failed">Couldn\'t sign out</string>
     <string name="settings_guest_account">Guest — data is stored only on this device</string>
     <string name="action_sign_in_to_sync">Sign in to sync</string>
     <string name="action_leave_guest_mode">Leave guest mode</string>
     <string name="leave_guest_confirm_title">Leave guest mode?</string>
     <string name="leave_guest_confirm_message">Your data stays on this device; choose Continue as guest to see it again.</string>
-    <string name="label_sign_in_failed">Sign-in failed</string>
+    <string name="label_sign_in_failed">Couldn\'t sign in</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_font_license">Inter font licence (SIL OFL 1.1)</string>
+    <string name="about_font_license">Inter font license (SIL OFL 1.1)</string>
     <string name="about_version_unknown">unknown</string>
 
     <!-- Theme -->
@@ -193,6 +196,7 @@
     <!-- Language picker. "language_portuguese" is intentionally NOT translated in values-pt-rPT:
          every language keeps its own name written in that language, the standard convention for
          in-app language pickers. -->
+    <string name="language_system">System default</string>
     <string name="language_english">English</string>
     <string name="language_portuguese">Português</string>
 
@@ -224,7 +228,7 @@
     <string name="category_kind_saving">Saving</string>
     <string name="category_action_edit">Edit</string>
     <string name="category_action_archive">Archive</string>
-    <string name="category_action_unarchive">Restore</string>
+    <string name="category_action_unarchive">Unarchive</string>
     <string name="category_action_delete">Delete</string>
     <string name="category_move_up">Move up</string>
     <string name="category_move_down">Move down</string>
@@ -249,7 +253,7 @@
     <string name="settings_backup_guest_hint">Export a backup to move your data to another device</string>
     <string name="settings_backup_signed_in_hint">Save a copy of your data as a JSON file</string>
     <string name="action_restore">Restore</string>
-    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nBudgets: %3$d\nCategories: %4$d\nPlanned income: %5$d\nRecurring items: %6$d</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nBudgets: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring items: %6$d</string>
     <string name="backup_export_done_title">Backup exported</string>
     <string name="backup_export_done_message">Your backup was saved.\n\n%1$s</string>
     <string name="backup_export_failed_title">Export failed</string>
@@ -262,10 +266,10 @@
     <string name="backup_error_invalid">This file is not a valid FinTrack backup</string>
     <string name="backup_error_unsupported_version">This backup was made by a newer version of FinTrack. Update the app to restore it.</string>
     <string name="backup_error_too_large">This file is too large to be a FinTrack backup</string>
-    <string name="backup_error_read">Could not read the selected file</string>
-    <string name="backup_error_write">Could not write the backup file</string>
-    <string name="backup_error_export_failed">Could not create the backup</string>
-    <string name="backup_error_restore_failed">Could not restore the backup. Your current data was not changed.</string>
+    <string name="backup_error_read">Couldn\'t read the selected file</string>
+    <string name="backup_error_write">Couldn\'t write the backup file</string>
+    <string name="backup_error_export_failed">Couldn\'t create the backup</string>
+    <string name="backup_error_restore_failed">Couldn\'t restore the backup. Your current data was not changed.</string>
     <plurals name="backup_restore_skipped">
         <item quantity="one">%d invalid record in the file will be skipped.</item>
         <item quantity="other">%d invalid records in the file will be skipped.</item>
@@ -283,7 +287,7 @@
         <item quantity="one">Copied %1$d of %2$d record.</item>
         <item quantity="other">Copied %1$d of %2$d records.</item>
     </plurals>
-    <string name="migration_error_title">Could not copy your data</string>
+    <string name="migration_error_title">Couldn\'t copy your data</string>
     <string name="migration_error_offline">You appear to be offline. Connect to the internet and try again.</string>
     <string name="migration_error_failed">Something went wrong while copying. Your data on this device is untouched.</string>
     <string name="migration_error_remove_failed">Your data was copied, but it could not be removed from this device.</string>
@@ -308,7 +312,7 @@
     <string name="plan_planned_allocations">Planned allocations</string>
     <string name="plan_planned_spending">Planned spending</string>
     <string name="plan_planned_saving">Planned saving</string>
-    <string name="plan_leftover">Leftover</string>
+    <string name="plan_leftover">Remaining</string>
     <string name="plan_left_in_budgets">Left in spending budgets</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/day for %2$d day</item>

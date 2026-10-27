@@ -8,7 +8,8 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * App-specific semantic colors that have no Material 3 role: money direction, hairline dividers,
- * the two surface tones and the secondary text colour. Read through [FinTrackTheme.colors].
+ * the two surface tones, the secondary text colour and the gold accent (fill, text, soft tint).
+ * Read through [FinTrackTheme.colors].
  */
 @Immutable
 data class FinTrackColors(
@@ -19,6 +20,8 @@ data class FinTrackColors(
     val surface2: Color,
     val textSecondary: Color,
     val accent: Color,
+    /** Accent as text/icon colour (vs. [accent], a fill); separate so each can be tuned for contrast. */
+    val accentText: Color,
 )
 
 val LocalFinTrackColors =

@@ -64,7 +64,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            mkdir -p maestro-out && for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; test ! -f maestro-out/FAILED
+            mkdir -p maestro-out/screens && for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; test ! -f maestro-out/FAILED
 
       - name: Upload Maestro results
         if: always()

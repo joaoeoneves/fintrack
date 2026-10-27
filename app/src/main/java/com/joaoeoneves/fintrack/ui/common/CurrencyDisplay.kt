@@ -5,21 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import java.util.Currency
+import java.util.Locale
+
+/** Symbol of a [CurrencyOption] as written in [locale] ("$" in en-US, "US$" in pt-PT). */
+fun CurrencyOption.symbol(locale: Locale): String = Currency.getInstance(name).getSymbol(locale)
 
 /**
- * Symbol printed alongside formatted amounts for a [CurrencyOption], shared across the currency
- * picker.
+ * Whether [locale] writes this currency's symbol before the number ("€1,234.56") rather than after
+ * it ("1.234,56 €"), derived from how [formatAmount] actually lays an amount out.
  */
-val CurrencyOption.symbol: String
-    get() =
-        when (this) {
-            CurrencyOption.USD -> "$"
-            CurrencyOption.EUR -> "€"
-            CurrencyOption.GBP -> "£"
-            CurrencyOption.JPY -> "¥"
-            CurrencyOption.CAD -> "CA$"
-            CurrencyOption.AUD -> "A$"
-        }
+fun CurrencyOption.symbolLeads(locale: Locale): Boolean = formatAmount(1L, this, locale).startsWith(symbol(locale))
 
 /**
  * String resource of the human-readable name of a [CurrencyOption]. Plain (non-composable) so it

@@ -16,6 +16,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.symbol
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsChoiceRow
@@ -42,7 +43,7 @@ private val AppLanguage.label: String
     @Composable
     get() =
         when (this) {
-            AppLanguage.SYSTEM -> stringResource(R.string.theme_system)
+            AppLanguage.SYSTEM -> stringResource(R.string.language_system)
             AppLanguage.ENGLISH -> stringResource(R.string.language_english)
             AppLanguage.PORTUGUESE -> stringResource(R.string.language_portuguese)
         }
@@ -88,12 +89,13 @@ fun CurrencySection(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val locale = currentLocale()
 
     SettingsGroup(label = stringResource(R.string.settings_section_currency), modifier = modifier) {
         Box {
             SettingsRow(
                 title = stringResource(R.string.settings_currency_label),
-                value = "${selected.displayName} (${selected.symbol})",
+                value = "${selected.displayName} (${selected.symbol(locale)})",
                 onClick = { expanded = true },
                 showChevron = true,
             )
@@ -105,7 +107,7 @@ fun CurrencySection(
             ) {
                 CurrencyOption.entries.forEach { option ->
                     DropdownMenuItem(
-                        text = { Text("${option.displayName} (${option.symbol})") },
+                        text = { Text("${option.displayName} (${option.symbol(locale)})") },
                         onClick = {
                             onSelected(option)
                             expanded = false

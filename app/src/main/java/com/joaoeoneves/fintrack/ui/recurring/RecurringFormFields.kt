@@ -26,11 +26,12 @@ import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
-import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
 import com.joaoeoneves.fintrack.ui.common.symbol
+import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
@@ -58,10 +59,12 @@ internal fun RecurringTypeAndNameFields(
     onChange: (RecurringForm) -> Unit,
     autoFocusAmount: Boolean = false,
 ) {
+    val affix = rememberCurrencyAffix()
     BorderlessAmountField(
         value = form.amountText,
         onValueChange = { onChange(form.copy(amountText = it)) },
-        currencySymbol = LocalCurrency.current.symbol,
+        currencySymbol = affix.symbol,
+        symbolLeads = affix.leads,
         label = stringResource(R.string.field_amount),
         isError = errors?.amount != null,
         autoFocus = autoFocusAmount,
