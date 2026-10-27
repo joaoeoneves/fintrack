@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
@@ -16,6 +17,7 @@ import com.joaoeoneves.fintrack.data.backup.BackupDocument
 import com.joaoeoneves.fintrack.data.backup.BackupRepository
 import com.joaoeoneves.fintrack.data.backup.BackupRepositoryTestBase
 import com.joaoeoneves.fintrack.data.backup.PlanBackupSource
+import com.joaoeoneves.fintrack.data.backup.PlanSingletonSources
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.testutil.MutableClock
@@ -75,7 +77,7 @@ abstract class BackupViewModelTestBase : BackupRepositoryTestBase() {
                 FakeRecurringRepository(),
                 FakeMonthSettingsRepository(),
                 FakeCategoryGroupRepository(),
-                FakeSalaryProfileRepository(),
+                PlanSingletonSources(FakeSalaryProfileRepository(), FakeGoalRepository()),
             ),
             FakeCategoryRepository(),
             prefsStore,

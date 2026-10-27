@@ -114,21 +114,11 @@ fun ExpectedIncomeCard(
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
         WorkingDaysRow(state = workingDays, onClick = actions.onEditWorkingDays)
         Hairline()
-        lines.forEach { line ->
-            val inMonth = line.isActiveIn(workingDays.month)
-            AmountRow(
-                label = line.label,
-                value =
-                    if (inMonth) {
-                        formatAmountCents(line.amountIn(workingDays.month, workingDays.days))
-                    } else {
-                        stringResource(R.string.plan_not_this_month)
-                    },
-                modifier = Modifier.clickable { actions.onEdit(line.id) },
-                badge = if (line.isManaged) stringResource(R.string.plan_from_salary_profile) else null,
-            )
-            Hairline()
-        }
+        val (managed, manual) = lines.partition { it.isManaged }
+        if (managed.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_from_salary_profile))
+        managed.forEach { IncomeLineRow(it, workingDays, actions) }
+        if (managed.isNotEmpty() && manual.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_other_income))
+        manual.forEach { IncomeLineRow(it, workingDays, actions) }
         if (canAdd) {
             GhostButton(
                 text = stringResource(R.string.plan_add_income_line),
@@ -137,6 +127,36 @@ fun ExpectedIncomeCard(
             )
         }
     }
+}
+
+@Composable
+private fun IncomeGroupHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = FinTrackTheme.colors.textSecondary,
+        modifier = Modifier.padding(top = Dimens.Space12),
+    )
+}
+
+@Composable
+private fun IncomeLineRow(
+    line: PlannedIncome,
+    workingDays: WorkingDaysState,
+    actions: ExpectedIncomeActions,
+) {
+    val inMonth = line.isActiveIn(workingDays.month)
+    AmountRow(
+        label = line.label,
+        value =
+            if (inMonth) {
+                formatAmountCents(line.amountIn(workingDays.month, workingDays.days))
+            } else {
+                stringResource(R.string.plan_not_this_month)
+            },
+        modifier = Modifier.clickable { actions.onEdit(line.id) },
+    )
+    Hairline()
 }
 
 /** One row per category with its planned amount; tap one to set, change or remove it. */

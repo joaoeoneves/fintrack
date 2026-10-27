@@ -7,6 +7,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -32,3 +33,9 @@ fun FinTrackSnackbarHost(
         )
     }
 }
+
+/**
+ * Shows a short message on the app shell's snackbar host, which outlives the screen that asked (e.g. one that
+ * navigates away straight after). A no-op outside the shell.
+ */
+val LocalAppSnackbar = staticCompositionLocalOf<(String) -> Unit> { {} }

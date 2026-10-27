@@ -4,9 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
-import com.joaoeoneves.fintrack.ui.plan.MonthChips
 
-/** The meal allowance per working day and the months it is not paid in. */
+/** The meal allowance per working day (paid every month; days off are set in the Plan's working days). */
 @Composable
 internal fun MealSection(
     form: SalaryForm,
@@ -19,14 +18,7 @@ internal fun MealSection(
             value = form.meal,
             onChange = { onChange(form.copy(meal = it)) },
             invalid = SalaryField.MEAL in invalid,
-        )
-        MonthChips(
-            title = stringResource(R.string.plan_not_paid_in),
-            selected = form.mealSkip,
-            onToggle = { month ->
-                val skip = form.mealSkip
-                onChange(form.copy(mealSkip = if (month in skip) skip - month else skip + month))
-            },
+            hint = stringResource(R.string.salary_meal_hint),
         )
     }
 }
@@ -63,10 +55,10 @@ internal fun FlexSection(
                 invalid = SalaryField.FLEX_ANNUAL in invalid,
             )
         }
-        MonthChips(
+        SalaryMonthPicker(
             title = stringResource(R.string.salary_flex_first_month),
-            selected = setOf(form.flexFirstMonth),
-            onToggle = { onChange(form.copy(flexFirstMonth = it)) },
+            selected = form.flexFirstMonth,
+            onChange = { onChange(form.copy(flexFirstMonth = it)) },
         )
     }
 }
@@ -87,10 +79,10 @@ internal fun ExtrasSection(
                 invalid = SalaryField.PROFIT_SHARE in invalid,
             )
             if (form.profitMultiplier.isNotBlank()) {
-                MonthChips(
+                SalaryMonthPicker(
                     title = stringResource(R.string.salary_profit_month),
-                    selected = setOf(form.profitMonth),
-                    onToggle = { onChange(form.copy(profitMonth = it)) },
+                    selected = form.profitMonths,
+                    onChange = { onChange(form.copy(profitMonths = it)) },
                 )
             }
         }
@@ -101,10 +93,10 @@ internal fun ExtrasSection(
             invalid = SalaryField.BONUS in invalid,
         )
         if (form.bonus.isNotBlank()) {
-            MonthChips(
+            SalaryMonthPicker(
                 title = stringResource(R.string.salary_bonus_month),
-                selected = setOf(form.bonusMonth),
-                onToggle = { onChange(form.copy(bonusMonth = it)) },
+                selected = form.bonusMonth,
+                onChange = { onChange(form.copy(bonusMonth = it)) },
             )
         }
     }

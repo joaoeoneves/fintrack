@@ -3,7 +3,10 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
+import com.joaoeoneves.fintrack.domain.model.Earmark
+import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
@@ -19,6 +22,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,6 +35,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
+import java.time.YearMonth
 import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,7 +54,7 @@ class SalaryProfileViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = SalaryProfileViewModel(profiles, ManageSalaryProfile(profiles, income), clock)
+    private fun viewModel() = SalaryProfileViewModel(profiles, ManageSalaryProfile(profiles, income), income, clock)
 
     private fun TestScope.started(vm: SalaryProfileViewModel): SalaryProfileViewModel {
         backgroundScope.launch { vm.uiState.collect {} }
@@ -216,5 +221,91 @@ class SalaryProfileViewModelTest {
             val vm = started(viewModel())
 
             assertEquals(java.time.YearMonth.of(2026, 10), vm.content().month)
+        }
+
+    private val manual = PlannedIncome("m1", "Side gig", 5_000, 0)
+
+    private suspend fun TestScope.saveWith(vararg existing: PlannedIncome): SalaryProfileViewModel {
+        existing.forEach { income.savePlannedIncome(it) }
+        val vm = started(viewModel())
+        vm.onFormChange(SalaryForm(base = "1000", spreadPpm = SPREAD_FULL_PPM))
+        advanceUntilIdle()
+        vm.onSave(labels)
+        advanceUntilIdle()
+        return vm
+    }
+
+    private suspend fun SalaryProfileViewModel.nextEventOrNull() = withTimeoutOrNull(1) { eventFlow.first() }
+
+    @Test
+    fun save_noManualMonthlyLines_emitsDone_noDuplicates() =
+        runTest(dispatcher) {
+            val vm = saveWith()
+
+            assertTrue(vm.duplicates.value.isEmpty())
+            assertEquals(SalaryProfileEvent.Done, vm.eventFlow.first())
+        }
+
+    @Test
+    fun save_ignoresEarmarkedYearlyOnceAndManagedLines() =
+        runTest(dispatcher) {
+            val vm =
+                saveWith(
+                    manual.copy(id = "e", earmark = Earmark.Group("g")),
+                    manual.copy(id = "y", frequency = IncomeFrequency.YEARLY, monthOfYear = 5),
+                    manual.copy(id = "o", frequency = IncomeFrequency.ONCE, yearMonth = YearMonth.of(2026, 12)),
+                )
+
+            assertTrue(vm.duplicates.value.isEmpty())
+            assertEquals(SalaryProfileEvent.Done, vm.eventFlow.first())
+        }
+
+    @Test
+    fun save_withManualMonthlyLine_setsDuplicates_andHoldsBackDone() =
+        runTest(dispatcher) {
+            val vm = saveWith(manual)
+
+            assertEquals(listOf("m1"), vm.duplicates.value.map { it.id })
+            assertNull(vm.nextEventOrNull())
+        }
+
+    @Test
+    fun removeDuplicates_deletesThem_thenDone() =
+        runTest(dispatcher) {
+            val vm = saveWith(manual, manual.copy(id = "m2"))
+
+            vm.onRemoveDuplicates(setOf("m1"))
+            advanceUntilIdle()
+
+            assertFalse(income.lines.any { it.id == "m1" })
+            assertTrue(income.lines.any { it.id == "m2" })
+            assertTrue(vm.duplicates.value.isEmpty())
+            assertEquals(SalaryProfileEvent.Done, vm.eventFlow.first())
+        }
+
+    @Test
+    fun keepDuplicates_keepsLines_thenDone() =
+        runTest(dispatcher) {
+            val vm = saveWith(manual)
+
+            vm.onKeepDuplicates()
+            advanceUntilIdle()
+
+            assertTrue(income.lines.any { it.id == "m1" })
+            assertTrue(vm.duplicates.value.isEmpty())
+            assertEquals(SalaryProfileEvent.Done, vm.eventFlow.first())
+        }
+
+    @Test
+    fun removeDuplicates_deleteFailure_emitsFailed() =
+        runTest(dispatcher) {
+            val vm = saveWith(manual)
+            income.nextDeleteError = IllegalStateException("boom")
+
+            vm.onRemoveDuplicates(setOf("m1"))
+            advanceUntilIdle()
+
+            assertEquals(SalaryProfileEvent.Failed, vm.eventFlow.first())
+            assertTrue(vm.duplicates.value.isEmpty())
         }
 }

@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.insights
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -8,6 +9,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -65,6 +69,32 @@ fun InsightsScreen(
     }
 }
 
+/** The breakdown with a Category | Group switch (only when groups exist; otherwise just by category). */
+@Composable
+private fun BreakdownCard(
+    breakdown: InsightsBreakdown,
+    modifier: Modifier = Modifier,
+) {
+    var byGroup by rememberSaveable { mutableStateOf(false) }
+    val showGroups = byGroup && breakdown.hasGroups
+    Column(modifier = modifier) {
+        if (breakdown.hasGroups) {
+            SegmentedTextTabs(
+                options = listOf(false, true),
+                selected = showGroups,
+                label = { stringResource(if (it) R.string.insights_by_group else R.string.insights_by_category) },
+                onSelect = { byGroup = it },
+                modifier = Modifier.padding(bottom = Dimens.Space8),
+            )
+        }
+        if (showGroups) {
+            GroupBreakdown(groups = breakdown.groups)
+        } else {
+            CategoryBreakdownSection(breakdown = breakdown)
+        }
+    }
+}
+
 @Composable
 private fun InsightsContent(
     state: InsightsUiState.Content,
@@ -98,10 +128,15 @@ private fun InsightsContent(
                     modifier = Modifier.padding(top = Dimens.Space32),
                 )
             } else {
-                CategoryBreakdownSection(
+                BreakdownCard(
                     breakdown = state.breakdown,
                     modifier = Modifier.padding(top = Dimens.Space16),
                 )
+            }
+        }
+        if (state.split.spendingCents > 0) {
+            item(key = "split") {
+                SpendingSplitCard(split = state.split, modifier = Modifier.padding(top = Dimens.Space24))
             }
         }
     }

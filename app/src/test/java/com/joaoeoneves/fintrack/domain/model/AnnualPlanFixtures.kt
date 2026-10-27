@@ -81,7 +81,8 @@ internal fun planInputs(
     groups: List<CategoryGroup> = emptyList(),
     settings: List<MonthSettings> = emptyList(),
     expenses: List<Expense> = emptyList(),
-) = AnnualPlanInputs(lines, budgets, recurring, categories, groups, settings, expenses)
+    goals: List<SavingsGoal> = emptyList(),
+) = AnnualPlanInputs(lines, budgets, recurring, categories, groups, settings, expenses, goals)
 
 internal fun planFixed(
     id: String,

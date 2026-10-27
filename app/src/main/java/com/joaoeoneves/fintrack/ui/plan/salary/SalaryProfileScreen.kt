@@ -45,6 +45,7 @@ fun SalaryProfileScreen(
     viewModel: SalaryProfileViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val duplicates by viewModel.duplicates.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val failedMessage = stringResource(R.string.error_plan_save_failed)
     val separator = decimalSeparatorFor(currentLocale())
@@ -61,8 +62,7 @@ fun SalaryProfileScreen(
         SalaryLineLabels(
             netSalary = stringResource(R.string.salary_line_net),
             meal = stringResource(R.string.salary_group_meal),
-            holiday = stringResource(R.string.salary_line_holiday),
-            christmas = stringResource(R.string.salary_line_christmas),
+            subsidy = stringResource(R.string.salary_line_subsidy),
             flex = stringResource(R.string.salary_group_flex),
             profitShare = stringResource(R.string.salary_breakdown_profit_share),
             bonus = stringResource(R.string.salary_field_bonus),
@@ -90,6 +90,13 @@ fun SalaryProfileScreen(
                     modifier = contentModifier,
                 )
         }
+    }
+    if (duplicates.isNotEmpty()) {
+        SalaryDuplicatesDialog(
+            lines = duplicates,
+            onRemove = viewModel::onRemoveDuplicates,
+            onKeep = viewModel::onKeepDuplicates,
+        )
     }
 }
 

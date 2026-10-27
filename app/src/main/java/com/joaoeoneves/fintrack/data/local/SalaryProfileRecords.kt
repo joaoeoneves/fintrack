@@ -32,6 +32,7 @@ internal fun LocalSalaryProfile.toDomain(): SalaryProfile =
         flexWithdrawalFeePpm = flexWithdrawalFeePpm,
         profitShareMultiplierPpm = profitShareMultiplierPpm,
         profitShareMonth = profitShareMonth,
+        profitShareMonths = profitShareMonths.toSet(),
         bonusCents = bonusCents,
         bonusMonth = bonusMonth,
     )
@@ -58,6 +59,7 @@ internal fun SalaryProfile.toLocal(): LocalSalaryProfile =
         flexWithdrawalFeePpm = flexWithdrawalFeePpm,
         profitShareMultiplierPpm = profitShareMultiplierPpm,
         profitShareMonth = profitShareMonth,
+        profitShareMonths = profitShareMonths.sorted(),
         bonusCents = bonusCents,
         bonusMonth = bonusMonth,
     )
@@ -102,5 +104,8 @@ internal fun validateSalaryProfile(profile: LocalSalaryProfile) {
     require(months.all { it in range }) { "Months must be 1..12" }
     require(profile.mealSkipMonths.size <= MAX_MONTH_OF_YEAR && profile.mealSkipMonths.all { it in range }) {
         "Skipped months must be at most 12 values of 1..12"
+    }
+    require(profile.profitShareMonths.size <= MAX_MONTH_OF_YEAR && profile.profitShareMonths.all { it in range }) {
+        "Profit share months must be at most 12 values of 1..12"
     }
 }

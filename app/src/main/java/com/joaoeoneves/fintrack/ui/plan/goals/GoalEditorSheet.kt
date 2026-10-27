@@ -1,0 +1,74 @@
+package com.joaoeoneves.fintrack.ui.plan.goals
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.GoalTargetType
+import com.joaoeoneves.fintrack.domain.model.SavingsGoal
+import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
+import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import java.time.Clock
+import java.time.LocalDate
+
+/**
+ * Bottom sheet to add ([goal] `null`) or edit a savings goal: name, target, ANNUAL or TOTAL, the dates and initial
+ * amount of a TOTAL one, the recurring items and the category whose expenses count towards it.
+ */
+@Composable
+fun GoalEditorSheet(
+    goal: SavingsGoal?,
+    options: GoalEditorOptions,
+    onSave: (SavingsGoal) -> Unit,
+    onDelete: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val decimalSeparator = decimalSeparatorFor(currentLocale())
+    val today = remember { LocalDate.now(Clock.systemDefaultZone()) }
+    var draft by remember { mutableStateOf(draftOf(goal, decimalSeparator, today)) }
+    FinTrackBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            text = stringResource(if (goal == null) R.string.goal_new else R.string.goal_edit),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = Dimens.Space12),
+        )
+        Column(
+            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        ) {
+            GoalBasicFields(draft = draft, onChange = { draft = it })
+            if (draft.type == GoalTargetType.TOTAL) GoalTotalFields(draft = draft, onChange = { draft = it })
+            GoalLinkFields(draft = draft, options = options, onChange = { draft = it })
+        }
+        PrimaryPillButton(
+            text = stringResource(R.string.action_save),
+            onClick = {
+                if (draft.valid) onSave(draft.toGoal(goal)) else draft = draft.copy(showErrors = true)
+            },
+            modifier = Modifier.padding(top = Dimens.Space16),
+        )
+        if (goal != null) {
+            DestructiveTextButton(
+                text = stringResource(R.string.action_remove),
+                onClick = { onDelete(goal.id) },
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
+    }
+}

@@ -11,6 +11,7 @@ import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.plannedSlices
+import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
@@ -86,7 +87,9 @@ class InsightsViewModel
                                 categoryTotals = overview.summary.categoryTotals,
                                 plannedSlices = overview.budgets.plannedSlices(),
                                 hasExpenses = overview.transactions.expenses.isNotEmpty(),
+                                groups = overview.periodGroups,
                             ),
+                        split = spendingSplitOf(overview.transactions.expenses),
                     )
                 }.catch { e ->
                     Log.w(TAG, "Insights flow failed", e)

@@ -1,10 +1,9 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.DEFAULT_MEAL_SKIP_MONTH
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 8
+internal const val LOCAL_SCHEMA_VERSION = 9
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -29,6 +28,8 @@ data class LocalDataDocument(
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),
     /** The salary profile singleton (absent in schema v1 to v7 files). */
     val salaryProfile: LocalSalaryProfile? = null,
+    /** Savings goals (absent in schema v1 to v8 files). */
+    val goals: List<LocalSavingsGoal> = emptyList(),
 ) {
     /** Whether there is no user data at all. */
     val isEmpty: Boolean get() =
@@ -40,7 +41,8 @@ data class LocalDataDocument(
             recurring.isEmpty() &&
             monthSettings.isEmpty() &&
             categoryGroups.isEmpty() &&
-            salaryProfile == null
+            salaryProfile == null &&
+            goals.isEmpty()
 }
 
 @Serializable
@@ -127,6 +129,25 @@ data class LocalCategoryGroup(
 )
 
 /**
+ * A savings goal (schema v9): [targetType] is a [com.joaoeoneves.fintrack.domain.model.GoalTargetType] name, dates
+ * are ISO `yyyy-MM-dd`, [linkedRecurringIds] the recurring items whose generated expenses count towards it.
+ */
+@Serializable
+data class LocalSavingsGoal(
+    val id: String,
+    val name: String,
+    val targetCents: Long,
+    val targetType: String = "ANNUAL",
+    val startDate: String,
+    val targetDate: String? = null,
+    val initialCents: Long = 0L,
+    val linkedRecurringIds: List<String> = emptyList(),
+    val linkedCategoryId: String? = null,
+    val archived: Boolean = false,
+    val order: Int = 0,
+)
+
+/**
  * The salary profile (schema v8): rates in ppm, amounts in cents, the input mode as a
  * [com.joaoeoneves.fintrack.domain.model.SalaryInputMode] name. Absent fields take the domain defaults.
  */
@@ -143,7 +164,7 @@ data class LocalSalaryProfile(
     val netHolidayLumpCents: Long? = null,
     val netChristmasLumpCents: Long? = null,
     val mealRatePerDayCents: Long? = null,
-    val mealSkipMonths: List<Int> = listOf(DEFAULT_MEAL_SKIP_MONTH),
+    val mealSkipMonths: List<Int> = emptyList(),
     val holidaySubsidyMonth: Int = 6,
     val christmasSubsidyMonth: Int = 12,
     val flexPpm: Int? = null,
@@ -152,6 +173,7 @@ data class LocalSalaryProfile(
     val flexWithdrawalFeePpm: Int = 0,
     val profitShareMultiplierPpm: Int? = null,
     val profitShareMonth: Int? = null,
+    val profitShareMonths: List<Int> = emptyList(),
     val bonusCents: Long? = null,
     val bonusMonth: Int? = null,
 )

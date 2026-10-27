@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
+import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.testutil.day
@@ -11,9 +12,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /** [LocalRecurringItem] mapping (Robolectric because dropping a bad record logs through `android.util.Log`). */
 @RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class RecurringRecordsTest {
     private val full =
         recurringItem(

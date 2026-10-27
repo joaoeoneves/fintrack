@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
+import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
 import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
@@ -86,6 +87,7 @@ internal fun RemoteAccountSnapshot.after(plan: MigrationPlan) =
         budgetCategoryIds = budgetCategoryIds + plan.budgets.map { it.categoryId },
         plannedIncomeIds = plannedIncomeIds + plan.plannedIncome.map { it.id },
         recurringIds = recurringIds + plan.recurring.map { it.id },
+        goalIds = goalIds + plan.goals.map { it.id },
         monthSettingsIds = monthSettingsIds + plan.monthSettings.map { it.month },
         categoryGroups = categoryGroups + plan.categoryGroups.map { it.toDomain() },
         categories = categories + plan.categories.mapNotNull { it.toDomainOrNull() },
@@ -105,4 +107,17 @@ internal fun localRecurring(
     frequency = "MONTHLY",
     dayOfMonth = 15,
     startDate = "2026-01-01",
+)
+
+internal fun localGoal(
+    id: String,
+    categoryId: String? = null,
+    recurringIds: List<String> = emptyList(),
+) = LocalSavingsGoal(
+    id = id,
+    name = "Goal $id",
+    targetCents = 120_000,
+    startDate = "2026-01-01",
+    linkedRecurringIds = recurringIds,
+    linkedCategoryId = categoryId,
 )

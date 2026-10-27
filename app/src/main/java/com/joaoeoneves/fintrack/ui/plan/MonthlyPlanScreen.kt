@@ -11,14 +11,12 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +37,9 @@ import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanActions
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
 import com.joaoeoneves.fintrack.ui.plan.annual.PlanTab
+import com.joaoeoneves.fintrack.ui.plan.goals.CollectPlanErrors
+import com.joaoeoneves.fintrack.ui.plan.goals.GoalsSection
+import com.joaoeoneves.fintrack.ui.plan.goals.GoalsViewModel
 import com.joaoeoneves.fintrack.ui.settings.RecurringSection
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -53,13 +54,11 @@ fun PlanScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
-    LaunchedEffect(Unit) {
-        viewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
-    }
-    LaunchedEffect(Unit) {
-        groupsViewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
-    }
+    val goalsViewModel: GoalsViewModel = hiltViewModel()
+    CollectPlanErrors(
+        snackbarHostState = snackbarHostState,
+        events = listOf(viewModel.errorEvent, groupsViewModel.errorEvent, goalsViewModel.errorEvent),
+    )
 
     LargeTitleScaffold(
         title = stringResource(R.string.nav_plan),
@@ -178,6 +177,7 @@ private fun MonthlyPlanContent(
             )
         }
         groupsItem(state, groupsViewModel, onManage = { managingGroups = true }, modifier = cardModifier)
+        item { GoalsSection(modifier = cardModifier) }
         plannedVsActualItem(state.progress, viewModel, cardModifier)
         item { RecurringSection(onOpen = navigation.onOpenRecurring, modifier = cardModifier) }
     }

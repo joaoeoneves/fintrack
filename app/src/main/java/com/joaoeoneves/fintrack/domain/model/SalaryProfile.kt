@@ -20,9 +20,6 @@ val SUBSIDY_SPREADS_PPM: List<Int> = listOf(SPREAD_NONE_PPM, SPREAD_HALF_PPM, SP
 /** Default social-security rate (11%). */
 const val DEFAULT_SS_PPM = 110_000
 
-/** Default month (August) the meal allowance is not paid in. */
-const val DEFAULT_MEAL_SKIP_MONTH = 8
-
 const val DEFAULT_HOLIDAY_SUBSIDY_MONTH = 6
 const val DEFAULT_CHRISTMAS_SUBSIDY_MONTH = 12
 const val DEFAULT_FLEX_FIRST_MONTH = 1
@@ -35,6 +32,8 @@ const val MANAGED_NET_SALARY = "profile_net_salary"
 const val MANAGED_MEAL = "profile_meal"
 const val MANAGED_HOLIDAY = "profile_holiday"
 const val MANAGED_CHRISTMAS = "profile_christmas"
+
+/** The key the single profit-share line used before it could be split over several months (legacy, cleaned up). */
 const val MANAGED_PROFIT_SHARE = "profile_profit_share"
 const val MANAGED_BONUS = "profile_bonus"
 
@@ -44,17 +43,19 @@ const val FLEX_PAYMENTS = 4
 /** The managed key of the flexible-benefit payment [index] (0..3). */
 fun managedFlexKey(index: Int): String = "profile_flex_q${index + 1}"
 
+/** The managed key of the profit-share line paid in [month] (1..12). */
+fun managedProfitShareKey(month: Int): String = "${MANAGED_PROFIT_SHARE}_$month"
+
 /** Every key a managed line can carry. */
 val MANAGED_KEYS: List<String> =
     listOf(MANAGED_NET_SALARY, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS, MANAGED_PROFIT_SHARE, MANAGED_BONUS) +
-        List(FLEX_PAYMENTS, ::managedFlexKey)
+        List(FLEX_PAYMENTS, ::managedFlexKey) + List(MAX_MONTH_OF_YEAR) { managedProfitShareKey(it + 1) }
 
 /** Default (English) labels of the generated lines; the UI passes localized ones. Existing lines keep theirs. */
 data class SalaryLineLabels(
     val netSalary: String = "Net salary",
     val meal: String = "Meal allowance",
-    val holiday: String = "Holiday subsidy",
-    val christmas: String = "Christmas subsidy",
+    val subsidy: String = "Subsidy",
     val flex: String = "Flexible benefits",
     val profitShare: String = "Profit share",
     val bonus: String = "Bonus",
@@ -82,7 +83,8 @@ data class SalaryProfile(
     val netHolidayLumpCents: Long? = null,
     val netChristmasLumpCents: Long? = null,
     val mealRatePerDayCents: Long? = null,
-    val mealSkipMonths: Set<Int> = setOf(DEFAULT_MEAL_SKIP_MONTH),
+    /** Legacy: no longer written nor used to generate lines (the meal allowance is paid every month). */
+    val mealSkipMonths: Set<Int> = emptySet(),
     val holidaySubsidyMonth: Int = DEFAULT_HOLIDAY_SUBSIDY_MONTH,
     val christmasSubsidyMonth: Int = DEFAULT_CHRISTMAS_SUBSIDY_MONTH,
     val flexPpm: Int? = null,
@@ -90,10 +92,20 @@ data class SalaryProfile(
     val flexFirstMonth: Int = DEFAULT_FLEX_FIRST_MONTH,
     val flexWithdrawalFeePpm: Int = 0,
     val profitShareMultiplierPpm: Int? = null,
+    /** Legacy single month; read only when [profitShareMonths] is empty. */
     val profitShareMonth: Int? = null,
+    val profitShareMonths: Set<Int> = emptySet(),
     val bonusCents: Long? = null,
     val bonusMonth: Int? = null,
 ) {
     /** The subsidy IRS rate actually used: the explicit one or the base rate. */
     val effectiveIrsSubsidiesPpm: Int get() = irsSubsidiesPpm ?: irsBasePpm
+
+    /** The months the profit share is paid in, ascending: the chosen ones, the legacy month or the default. */
+    val effectiveProfitShareMonths: List<Int>
+        get() =
+            profitShareMonths
+                .ifEmpty { setOfNotNull(profitShareMonth) }
+                .sorted()
+                .ifEmpty { listOf(DEFAULT_EXTRA_PAY_MONTH) }
 }

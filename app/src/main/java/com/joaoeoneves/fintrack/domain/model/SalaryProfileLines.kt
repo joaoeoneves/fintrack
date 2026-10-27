@@ -58,8 +58,10 @@ private fun wantedLines(
     profile: SalaryProfile,
     breakdown: SalaryBreakdown,
     labels: SalaryLineLabels,
-): List<WantedLine> =
-    listOf(
+): List<WantedLine> {
+    val firstSubsidyMonth = minOf(profile.holidaySubsidyMonth, profile.christmasSubsidyMonth)
+    val secondSubsidyMonth = maxOf(profile.holidaySubsidyMonth, profile.christmasSubsidyMonth)
+    return listOf(
         WantedLine(
             MANAGED_NET_SALARY,
             labels.netSalary,
@@ -72,35 +74,41 @@ private fun wantedLines(
             breakdown.mealRatePerDayCents,
             basis = IncomeBasis.PER_WORKING_DAY,
             frequency = IncomeFrequency.MONTHLY,
-            skipMonths = profile.mealSkipMonths,
         ),
         WantedLine(
             MANAGED_HOLIDAY,
-            labels.holiday,
+            labels.subsidy,
             breakdown.holidayLumpNetCents,
-            monthOfYear = profile.holidaySubsidyMonth,
+            monthOfYear = firstSubsidyMonth,
         ),
         WantedLine(
             MANAGED_CHRISTMAS,
-            labels.christmas,
+            labels.subsidy,
             breakdown.christmasLumpNetCents,
-            monthOfYear = profile.christmasSubsidyMonth,
+            monthOfYear = secondSubsidyMonth,
         ),
-    ) + flexLines(profile, breakdown, labels) +
-        listOf(
-            WantedLine(
-                MANAGED_PROFIT_SHARE,
-                labels.profitShare,
-                breakdown.profitShareCents,
-                monthOfYear = profile.profitShareMonth ?: DEFAULT_EXTRA_PAY_MONTH,
-            ),
-            WantedLine(
-                MANAGED_BONUS,
-                labels.bonus,
-                breakdown.bonusCents,
-                monthOfYear = profile.bonusMonth ?: DEFAULT_EXTRA_PAY_MONTH,
-            ),
+    ) + flexLines(profile, breakdown, labels) + profitShareLines(profile, breakdown, labels) +
+        WantedLine(
+            MANAGED_BONUS,
+            labels.bonus,
+            breakdown.bonusCents,
+            monthOfYear = profile.bonusMonth ?: DEFAULT_EXTRA_PAY_MONTH,
         )
+}
+
+/** One profit-share line per month, the total split equally (floored) with the remainder on the last month. */
+private fun profitShareLines(
+    profile: SalaryProfile,
+    breakdown: SalaryBreakdown,
+    labels: SalaryLineLabels,
+): List<WantedLine> {
+    val months = profile.effectiveProfitShareMonths
+    val share = breakdown.profitShareCents / months.size
+    return months.mapIndexed { index, month ->
+        val remainder = if (index == months.lastIndex) breakdown.profitShareCents - share * months.size else 0L
+        WantedLine(managedProfitShareKey(month), labels.profitShare, share + remainder, monthOfYear = month)
+    }
+}
 
 /** The four quarterly flexible-benefit lines, paid in the first month, +3, +6 and +9 (wrapping past December). */
 private fun flexLines(

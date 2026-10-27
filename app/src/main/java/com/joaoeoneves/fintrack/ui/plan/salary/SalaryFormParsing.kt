@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
+import com.joaoeoneves.fintrack.domain.model.DEFAULT_CHRISTMAS_SUBSIDY_MONTH
+import com.joaoeoneves.fintrack.domain.model.DEFAULT_HOLIDAY_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_SS_PPM
 import com.joaoeoneves.fintrack.domain.model.MAX_PROFIT_SHARE_PPM
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
@@ -95,9 +97,8 @@ private fun SalaryForm.grossProfile(reader: FieldReader): SalaryProfile =
         ssPpm = reader.percent(SalaryField.SS, ss) ?: DEFAULT_SS_PPM,
         irsJovemExemptPpm = reader.percent(SalaryField.EXEMPT, exempt) ?: 0,
         mealRatePerDayCents = reader.cents(SalaryField.MEAL, meal),
-        mealSkipMonths = mealSkip,
-        holidaySubsidyMonth = holidayMonth,
-        christmasSubsidyMonth = christmasMonth,
+        holidaySubsidyMonth = subsidyMonthPair().first,
+        christmasSubsidyMonth = subsidyMonthPair().second,
         flexPpm = reader.percent(SalaryField.FLEX_PERCENT, flexPercent),
         flexFirstMonth = flexFirstMonth,
         flexWithdrawalFeePpm = reader.percent(SalaryField.FLEX_FEE, flexFee) ?: 0,
@@ -111,9 +112,8 @@ private fun SalaryForm.netProfile(reader: FieldReader): SalaryProfile =
         netHolidayLumpCents = reader.cents(SalaryField.NET_HOLIDAY, netHoliday),
         netChristmasLumpCents = reader.cents(SalaryField.NET_CHRISTMAS, netChristmas),
         mealRatePerDayCents = reader.cents(SalaryField.MEAL, meal),
-        mealSkipMonths = mealSkip,
-        holidaySubsidyMonth = holidayMonth,
-        christmasSubsidyMonth = christmasMonth,
+        holidaySubsidyMonth = subsidyMonthPair().first,
+        christmasSubsidyMonth = subsidyMonthPair().second,
         flexAnnualCents = reader.cents(SalaryField.FLEX_ANNUAL, flexAnnual),
         flexFirstMonth = flexFirstMonth,
         bonusCents = reader.cents(SalaryField.BONUS, bonus),
@@ -127,8 +127,20 @@ private fun SalaryProfile.withExtras(
     val multiplier = if (gross) reader.multiplier(SalaryField.PROFIT_SHARE, form.profitMultiplier) else null
     return copy(
         profitShareMultiplierPpm = multiplier,
-        profitShareMonth = form.profitMonth.takeIf { multiplier != null },
+        profitShareMonths = if (multiplier != null) form.profitMonths.toSet() else emptySet(),
         bonusMonth = form.bonusMonth.takeIf { bonusCents != null },
+    )
+}
+
+/**
+ * The (earlier, later) subsidy months: the two picked ones in order, both the same month when only one is
+ * picked, the defaults when none.
+ */
+internal fun SalaryForm.subsidyMonthPair(): Pair<Int, Int> {
+    val months = subsidyMonths.distinct().sorted()
+    return Pair(
+        months.firstOrNull() ?: DEFAULT_HOLIDAY_SUBSIDY_MONTH,
+        months.lastOrNull() ?: DEFAULT_CHRISTMAS_SUBSIDY_MONTH,
     )
 }
 
