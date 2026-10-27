@@ -133,6 +133,12 @@ appId: com.joaoeoneves.fintrack
 - extendedWaitUntil:
     visible: "Act Test Income"
     timeout: 10000
+# Let the snackbar dismiss and the row placement animation settle before swiping the restored row
+# again (a swipe during the animation can register as a tap and open "Edit income").
+- extendedWaitUntil:
+    notVisible: "Undo"
+    timeout: 15000
+- waitForAnimationToEnd
 
 # --- 6: Clean up: swipe-delete both rows for good (let the Undo snackbar time out) ---
 - scrollUntilVisible:

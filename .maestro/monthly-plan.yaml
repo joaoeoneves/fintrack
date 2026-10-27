@@ -13,7 +13,18 @@ appId: com.joaoeoneves.fintrack
 # golden-path.yaml. Assumes Food has no allocation and the plan has no income lines to begin with;
 # everything this flow adds is removed again at the end.
 
+- clearState
 - launchApp
+- extendedWaitUntil:
+    visible:
+      id: "continue_as_guest"
+    timeout: 25000
+- tapOn:
+    id: "continue_as_guest"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 15000
 
 # --- 0: Pin English + EUR, mirroring budget.yaml ---
 - tapOn:
