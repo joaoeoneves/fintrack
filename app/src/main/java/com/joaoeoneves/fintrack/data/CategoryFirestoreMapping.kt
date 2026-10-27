@@ -23,7 +23,9 @@ internal const val DEFAULT_CATEGORY_COLOR_KEY = "slate"
  * derived from the id, never trusted from the document. A non-built-in document without a name is
  * malformed and dropped.
  */
-internal fun DocumentSnapshot.toCategoryOrNull(): Category? {
+internal fun DocumentSnapshot.toCategoryOrNull(): Category? = mapOrNull("category") { parseCategory() }
+
+private fun DocumentSnapshot.parseCategory(): Category? {
     val categoryId = CategoryId(id)
     val builtIn = BuiltInCategories.byId(categoryId)
     val name = getString("name")?.takeIf { it.isNotBlank() }

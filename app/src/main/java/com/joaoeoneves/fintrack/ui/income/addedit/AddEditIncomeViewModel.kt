@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.income.addedit
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +12,6 @@ import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
@@ -27,6 +27,8 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Locale
 import javax.inject.Inject
+
+private const val TAG = "AddEditIncomeViewModel"
 
 @HiltViewModel
 class AddEditIncomeViewModel
@@ -78,7 +80,9 @@ class AddEditIncomeViewModel
                                     )
                                 }
                         }.onFailure { e ->
-                            _uiState.value = AddEditIncomeUiState.Error(e.messageOr(R.string.error_generic_fallback))
+                            Log.w(TAG, "Failed to load income", e)
+                            _uiState.value =
+                                AddEditIncomeUiState.Error(UiText.StringResource(R.string.error_generic_fallback))
                         }
                 } else {
                     _uiState.value = AddEditIncomeUiState.Ready(IncomeFormState(date = Instant.now()))
@@ -146,7 +150,8 @@ class AddEditIncomeViewModel
                     }.onFailure { e ->
                         val latest = _uiState.value
                         if (latest is AddEditIncomeUiState.Ready) {
-                            val saveError = e.messageOr(R.string.error_failed_save_income)
+                            Log.w(TAG, "Failed to save income", e)
+                            val saveError = UiText.StringResource(R.string.error_failed_save_income)
                             _uiState.value =
                                 AddEditIncomeUiState.Ready(latest.form.copy(isSaving = false, saveError = saveError))
                         }

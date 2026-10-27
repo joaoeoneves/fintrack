@@ -98,7 +98,9 @@ class FirestoreBudgetRepository
 
         // The doc id is the category id. Any id is kept (even one matching no known category), so a
         // budget left behind by a deleted category still shows up and can be cleared.
-        private fun DocumentSnapshot.toBudgetOrNull(): Budget? {
+        private fun DocumentSnapshot.toBudgetOrNull(): Budget? = mapOrNull("budget") { parseBudget() }
+
+        private fun DocumentSnapshot.parseBudget(): Budget? {
             val limitCents = getLong("limitCents")
             if (limitCents == null) {
                 Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'limitCents'")

@@ -50,7 +50,8 @@ service cloud.firestore {
     }
 
     function isValidExpense(userId, data) {
-      return data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
+      return data.keys().hasOnly(['name', 'amountCents', 'category', 'date', 'note', 'isRefund', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
         && isKnownCategory(userId, data.category)
@@ -59,7 +60,8 @@ service cloud.firestore {
     }
 
     function isValidIncome(data) {
-      return data.keys().hasAll(['source', 'amountCents', 'date'])
+      return data.keys().hasOnly(['source', 'amountCents', 'date', 'note', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['source', 'amountCents', 'date'])
         && data.source is string && data.source.size() > 0 && data.source.size() <= 200
         && isValidAmountCents(data.amountCents)
         && data.date is timestamp
@@ -67,7 +69,8 @@ service cloud.firestore {
     }
 
     function isValidBudget(data) {
-      return data.keys().hasAll(['limitCents'])
+      return data.keys().hasOnly(['limitCents', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['limitCents'])
         && data.limitCents is int && data.limitCents > 0;
     }
 

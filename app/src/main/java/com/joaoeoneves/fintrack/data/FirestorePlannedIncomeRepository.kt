@@ -81,7 +81,9 @@ internal fun PlannedIncome.toFirestoreMap(): Map<String, Any?> =
 private fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
     documents.mapNotNull { it.toPlannedIncomeOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
 
-private fun DocumentSnapshot.toPlannedIncomeOrNull(): PlannedIncome? {
+private fun DocumentSnapshot.toPlannedIncomeOrNull() = mapOrNull("plannedIncome") { parsePlannedIncome() }
+
+private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
     val label = getString("label")
     val amountCents = getLong("amountCents")
     val order = getLong("order")
@@ -90,7 +92,13 @@ private fun DocumentSnapshot.toPlannedIncomeOrNull(): PlannedIncome? {
         label == null -> dropped("label")
         amountCents == null -> dropped("amountCents")
         order == null -> dropped("order")
-        else -> PlannedIncome(id = id, label = label, amountCents = amountCents, order = order.toInt())
+        else ->
+            PlannedIncome(
+                id = id,
+                label = label,
+                amountCents = amountCents,
+                order = order.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt(),
+            )
     }
 }
 

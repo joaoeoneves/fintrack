@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
@@ -177,7 +178,7 @@ class AddEditExpenseViewModelSavingTest {
             advanceUntilIdle()
 
             assertFalse(vm.form().isSaving)
-            assertEquals(UiText.Dynamic("offline"), vm.form().saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_expense), vm.form().saveError)
             assertEquals(0, savedCount())
 
             vm.onSave()

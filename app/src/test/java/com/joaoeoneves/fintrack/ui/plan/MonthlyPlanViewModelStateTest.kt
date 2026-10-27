@@ -1,9 +1,8 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
-import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -71,7 +70,7 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
             collect(vm)
 
             assertEquals(
-                MonthlyPlanUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                MonthlyPlanUiState.Error(genericErrorText),
                 vm.uiState.value,
             )
         }

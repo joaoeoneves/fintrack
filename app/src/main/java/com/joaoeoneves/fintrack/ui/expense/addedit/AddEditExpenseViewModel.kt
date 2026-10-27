@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.expense.addedit
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,7 +16,6 @@ import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Locale
 import javax.inject.Inject
+
+private const val TAG = "AddEditExpenseViewModel"
 
 // How long (in ms) the category listener is kept alive after the last collector disappears.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
@@ -96,7 +98,9 @@ class AddEditExpenseViewModel
                                     )
                                 }
                         }.onFailure { e ->
-                            _uiState.value = AddEditUiState.Error(e.messageOr(R.string.error_generic_fallback))
+                            Log.w(TAG, "Failed to load expense", e)
+                            _uiState.value =
+                                AddEditUiState.Error(UiText.StringResource(R.string.error_generic_fallback))
                         }
                 } else {
                     val category =
@@ -176,7 +180,8 @@ class AddEditExpenseViewModel
                     }.onFailure { e ->
                         val latest = _uiState.value
                         if (latest is AddEditUiState.Ready) {
-                            val saveError = e.messageOr(R.string.error_failed_save_expense)
+                            Log.w(TAG, "Failed to save expense", e)
+                            val saveError = UiText.StringResource(R.string.error_failed_save_expense)
                             _uiState.value =
                                 AddEditUiState.Ready(latest.form.copy(isSaving = false, saveError = saveError))
                         }

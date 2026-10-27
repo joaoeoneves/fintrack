@@ -71,6 +71,10 @@ jobs:
       - name: detekt
         run: ./gradlew detekt
 
+      # Fails the build on lint errors only (warnings are reported, not fatal).
+      - name: Android lint
+        run: ./gradlew lintDebug
+
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
 
@@ -90,4 +94,5 @@ jobs:
             app/build/reports/ktlint
             app/build/reports/detekt
             app/build/reports/tests
+            app/build/reports/lint-results-debug.*
           retention-days: 7

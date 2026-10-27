@@ -145,7 +145,9 @@ private fun QuerySnapshot.toRecurringList(): List<RecurringItem> =
     documents.mapNotNull { it.toRecurringOrNull() }.sortedWith(compareBy({ it.startDate }, { it.id }))
 
 /** Maps a document, or drops it (logged) when a required field is missing or invalid. */
-internal fun DocumentSnapshot.toRecurringOrNull(): RecurringItem? {
+internal fun DocumentSnapshot.toRecurringOrNull(): RecurringItem? = mapOrNull("recurring") { parseRecurring() }
+
+private fun DocumentSnapshot.parseRecurring(): RecurringItem? {
     val type = getString("type")?.let { raw -> RecurringType.entries.find { it.name == raw } }
     val frequency = getString("frequency")?.let { raw -> RecurringFrequency.entries.find { it.name == raw } }
     val name = getString("name")
@@ -177,8 +179,8 @@ internal fun DocumentSnapshot.toRecurringOrNull(): RecurringItem? {
             categoryId = getString("category")?.takeIf { it.isNotBlank() }?.let(::CategoryId),
             note = getString("note"),
             frequency = checkNotNull(frequency),
-            dayOfMonth = checkNotNull(dayOfMonth).toInt(),
-            monthOfYear = getLong("monthOfYear")?.toInt(),
+            dayOfMonth = checkNotNull(dayOfMonth).toIntClamped(),
+            monthOfYear = getLong("monthOfYear")?.toIntClamped(),
             startDate = checkNotNull(startDate),
             endDate = parseDate("endDate"),
             handledThrough = parseDate("handledThrough"),
@@ -206,3 +208,5 @@ private fun DocumentSnapshot.isUnparsableDate(field: String): Boolean {
     val raw = getString(field)
     return raw != null && parseDate(field) == null
 }
+
+private fun Long.toIntClamped(): Int = coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
