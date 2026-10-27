@@ -2,10 +2,12 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
@@ -14,13 +16,10 @@ import com.joaoeoneves.fintrack.domain.model.contains
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encloses
+import com.joaoeoneves.fintrack.domain.model.groupProgressOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.recentActivity
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
-import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
-import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -39,10 +38,7 @@ class ObservePeriodOverview
     @Inject
     constructor(
         private val transactionRepository: TransactionRepository,
-        private val budgetRepository: BudgetRepository,
-        private val plannedIncomeRepository: PlannedIncomeRepository,
-        private val categoryRepository: CategoryRepository,
-        private val monthSettingsRepository: MonthSettingsRepository,
+        private val sources: PlanDataSources,
     ) {
         operator fun invoke(
             period: Period,
@@ -54,13 +50,19 @@ class ObservePeriodOverview
             val budgetMonth = period.anchorMonth(now, zone) ?: currentYearMonth(now, zone)
             val budgetRange = budgetMonth.toInstantRange(zone)
             val transactions = transactionRepository.observeTransactions(range)
+            val planInputs =
+                combine(
+                    sources.budgets.observeBudgets(),
+                    sources.plannedIncome.observePlannedIncome(),
+                    sources.monthSettings.observeMonthSettings(),
+                    sources.categories.observeCategories(),
+                ) { budgets, lines, settings, catalog -> PlanInputs(budgets, lines, settings, catalog) }
             val inputs =
                 combine(
-                    budgetRepository.observeBudgets(),
-                    plannedIncomeRepository.observePlannedIncome(),
-                    monthSettingsRepository.observeMonthSettings(),
-                    categoryRepository.observeCategories(),
-                ) { budgets, lines, settings, catalog -> PlanInputs(budgets, lines, settings, catalog) }
+                    planInputs,
+                    sources.groups.observeGroups(),
+                    sources.recurring.observeRecurring(),
+                ) { plan, groups, recurring -> OverviewInputs(plan, groups, recurring) }
             return if (range.encloses(budgetRange)) {
                 combine(transactions, inputs) { tx, plan ->
                     val month =
@@ -82,10 +84,18 @@ class ObservePeriodOverview
             budgetMonth: YearMonth,
             transactions: TransactionsInRange,
             monthTransactions: TransactionsInRange,
-            plan: PlanInputs,
+            inputs: OverviewInputs,
             recentLimit: Int,
         ): PeriodOverview {
-            val rows = budgetProgressOf(monthTransactions.expenses, plan.budgets, plan.categories)
+            val plan = inputs.plan
+            val rows =
+                budgetProgressOf(
+                    monthTransactions.expenses,
+                    plan.budgets,
+                    plan.categories,
+                    inputs.recurring,
+                    budgetMonth,
+                )
             val override = plan.monthSettings.firstOrNull { it.month == budgetMonth }?.workingDaysOverride
             return PeriodOverview(
                 budgetMonth = budgetMonth,
@@ -101,6 +111,8 @@ class ObservePeriodOverview
                         workingDays = effectiveWorkingDays(budgetMonth, override),
                     ),
                 recent = transactions.recentActivity(recentLimit),
+                groups = groupProgressOf(rows, plan.categories, inputs.groups),
+                recurring = inputs.recurring,
             )
         }
     }
@@ -111,4 +123,11 @@ private class PlanInputs(
     val plannedIncome: List<PlannedIncome>,
     val monthSettings: List<MonthSettings>,
     val categories: List<Category>,
+)
+
+/** [PlanInputs] with the category groups and recurring items, combined once more to stay within five flows. */
+private class OverviewInputs(
+    val plan: PlanInputs,
+    val groups: List<CategoryGroup>,
+    val recurring: List<RecurringItem>,
 )

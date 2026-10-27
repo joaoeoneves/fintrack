@@ -14,6 +14,7 @@ interface CategoryRepository {
         iconKey: String,
         colorKey: String,
         kind: CategoryKind,
+        groupId: String? = null,
     ): Result<CategoryId>
 
     suspend fun updateCategory(category: Category): Result<Unit>
@@ -21,6 +22,15 @@ interface CategoryRepository {
     suspend fun setArchived(
         id: CategoryId,
         archived: Boolean,
+    ): Result<Unit>
+
+    /**
+     * Files the category under the group [groupId] (`null` ungroups it). For a built-in this writes its
+     * override document.
+     */
+    suspend fun setGroup(
+        id: CategoryId,
+        groupId: String?,
     ): Result<Unit>
 
     /** Persists [orderedIds]' positions as each category's order. */

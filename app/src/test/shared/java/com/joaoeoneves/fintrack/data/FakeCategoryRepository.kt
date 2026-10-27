@@ -42,6 +42,7 @@ class FakeCategoryRepository(
         iconKey: String,
         colorKey: String,
         kind: CategoryKind,
+        groupId: String?,
     ): Result<CategoryId> =
         write {
             val catalog = mergeCategories(docsFlow.value)
@@ -62,6 +63,7 @@ class FakeCategoryRepository(
                     order = nextOrder,
                     archived = false,
                     builtIn = false,
+                    groupId = groupId,
                 )
             upsert(category)
             id
@@ -77,6 +79,20 @@ class FakeCategoryRepository(
             val current = requireNotNull(mergeCategories(docsFlow.value).find { it.id == id }) { "Unknown category" }
             upsert(current.copy(archived = archived))
         }
+
+    override suspend fun setGroup(
+        id: CategoryId,
+        groupId: String?,
+    ): Result<Unit> =
+        write {
+            val current = requireNotNull(mergeCategories(docsFlow.value).find { it.id == id }) { "Unknown category" }
+            upsert(current.copy(groupId = groupId))
+        }
+
+    /** Clears the group of every stored category filed under [groupId], as deleting that group does. */
+    fun ungroup(groupId: String) {
+        docsFlow.value = docsFlow.value.map { if (it.groupId == groupId) it.copy(groupId = null) else it }
+    }
 
     override suspend fun reorder(orderedIds: List<CategoryId>): Result<Unit> =
         write {

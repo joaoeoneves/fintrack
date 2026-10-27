@@ -20,6 +20,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.PlannedSource
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -172,7 +173,14 @@ private fun AllocationRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
             )
-            if (category.archived && allocation.limitCents != null) {
+            if (allocation.plannedSource == PlannedSource.RECURRING) {
+                Text(
+                    text = stringResource(R.string.plan_from_recurring),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+            if (category.archived && allocation.planned != null) {
                 Text(
                     text = stringResource(R.string.plan_archived_hint),
                     style = MaterialTheme.typography.bodySmall,
@@ -181,7 +189,7 @@ private fun AllocationRow(
             }
         }
         Text(
-            text = allocation.limitCents?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),
+            text = allocation.planned?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),
             style = Amount,
         )
     }

@@ -11,8 +11,8 @@ import java.time.YearMonth
  * @property extrasExpectedCents sum of the yearly and one-off lines landing in the month; kept out of
  * [incomeBasisCents] and so out of safe-to-spend.
  * @property actualIncomeCents sum of the income dated in the month.
- * @property plannedSpendingCents sum of the limits of spending buckets.
- * @property plannedSavingCents sum of the limits of saving buckets.
+ * @property plannedSpendingCents sum of the planned amounts (budget limits, else recurring) of spending buckets.
+ * @property plannedSavingCents sum of the planned amounts of saving buckets.
  * @property committedCents over all buckets, the larger of the limit (or 0) and the spend.
  * @property remainingInBucketsCents over spending buckets with a limit, what is left of each limit.
  * @property isConfigured whether any planned income line exists.
@@ -47,16 +47,16 @@ fun monthlyPlanOf(
     workingDays: Int,
 ): MonthlyPlanSummary {
     val (extras, regular) = plannedIncome.partition { it.isExtra }
-    val limited = buckets.filter { it.limitCents != null }
+    val limited = buckets.filter { it.planned != null }
     val spendingLimited = limited.filter { it.category.kind == CategoryKind.SPENDING }
     return MonthlyPlanSummary(
         expectedIncomeCents = regular.sumOf { it.amountIn(month, workingDays) },
         extrasExpectedCents = extras.sumOf { it.amountIn(month, workingDays) },
         actualIncomeCents = monthIncome.sumOf { it.amountCents },
-        plannedSpendingCents = spendingLimited.sumOf { it.limitCents ?: 0L },
-        plannedSavingCents = limited.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.limitCents ?: 0L },
-        committedCents = buckets.sumOf { maxOf(it.limitCents ?: 0L, it.spentCents) },
-        remainingInBucketsCents = spendingLimited.sumOf { maxOf((it.limitCents ?: 0L) - it.spentCents, 0L) },
+        plannedSpendingCents = spendingLimited.sumOf { it.planned ?: 0L },
+        plannedSavingCents = limited.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.planned ?: 0L },
+        committedCents = buckets.sumOf { maxOf(it.planned ?: 0L, it.spentCents) },
+        remainingInBucketsCents = spendingLimited.sumOf { maxOf((it.planned ?: 0L) - it.spentCents, 0L) },
         isConfigured = plannedIncome.isNotEmpty(),
     )
 }
@@ -64,7 +64,7 @@ fun monthlyPlanOf(
 /** Buckets with a positive limit as chart slices of their planned amount, in the given (catalog) order. */
 fun List<CategoryBudget>.plannedSlices(): List<CategoryTotal> =
     mapNotNull { bucket ->
-        bucket.limitCents?.takeIf { it > 0 }?.let { CategoryTotal(bucket.category, it) }
+        bucket.planned?.takeIf { it > 0 }?.let { CategoryTotal(bucket.category, it) }
     }
 
 /** What can be spent per remaining day: [cents] over [daysLeft] days, today included. */

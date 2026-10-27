@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data.backup
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
+import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
 import com.joaoeoneves.fintrack.data.local.validateExpense
 import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validateMonthSettings
@@ -76,8 +77,9 @@ object BackupCodec {
             } catch (e: IllegalArgumentException) {
                 return BackupDecodeResult.Invalid(e.message ?: "Malformed backup")
             }
-        // Per-version migrations: 1 -> 2 added plannedIncome, 2 -> 3 recurring and 3 -> 4 monthSettings and
-        // the income-line basis/frequency fields (absent = empty / defaults).
+        // Per-version migrations: 1 -> 2 added plannedIncome, 2 -> 3 recurring, 3 -> 4 monthSettings and the
+        // income-line basis/frequency fields and 4 -> 5 categoryGroups, category groupId and budget skipMonths
+        // (absent = empty / defaults).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)
@@ -90,17 +92,21 @@ object BackupCodec {
         val categories = keepValid(document.categories, { it.id }) { validateCategory(it) }
         val known = categoryIdsWithBuiltIns(categories)
         val budgets =
-            keepValid(document.budgets, { it.categoryId }) { validateBudget(it.categoryId, it.limitCents, known) }
+            keepValid(document.budgets, { it.categoryId }) {
+                validateBudget(it.categoryId, it.limitCents, known, it.skipMonths)
+            }
         val expenses = keepValid(document.expenses, { it.id }) { validateExpense(it, known) }
         val income = keepValid(document.income, { it.id }) { validateIncome(it) }
         val plannedIncome = keepValid(document.plannedIncome, { it.id }) { validatePlannedIncome(it) }
         val recurring = keepValid(document.recurring, { it.id }) { validateRecurring(it, known) }
         val monthSettings = keepValid(document.monthSettings, { it.month }) { validateMonthSettings(it) }
+        val categoryGroups = keepValid(document.categoryGroups, { it.id }) { validateCategoryGroup(it) }
         val skipped =
             (document.categories.size - categories.size) + (document.budgets.size - budgets.size) +
                 (document.expenses.size - expenses.size) + (document.income.size - income.size) +
                 (document.plannedIncome.size - plannedIncome.size) + (document.recurring.size - recurring.size) +
-                (document.monthSettings.size - monthSettings.size)
+                (document.monthSettings.size - monthSettings.size) +
+                (document.categoryGroups.size - categoryGroups.size)
         return BackupDecodeResult.Success(
             document.copy(
                 categories = categories,
@@ -110,6 +116,7 @@ object BackupCodec {
                 plannedIncome = plannedIncome,
                 recurring = recurring,
                 monthSettings = monthSettings,
+                categoryGroups = categoryGroups,
             ),
             skipped,
         )

@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.repository.BuiltInCategoryNames
+import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.CategoryMovePreview
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
@@ -45,6 +46,7 @@ class CategoriesViewModel
         private val checkCategoryUsage: CheckCategoryUsage,
         private val builtInCategoryNames: BuiltInCategoryNames,
         private val moveCategoryItems: MoveCategoryItems,
+        private val categoryGroupRepository: CategoryGroupRepository,
     ) : ViewModel() {
         private val editor = MutableStateFlow<CategoryEditorState?>(null)
         private val deleteDialog = MutableStateFlow<DeleteDialogState?>(null)
@@ -66,13 +68,15 @@ class CategoriesViewModel
                 editor,
                 deleteDialog,
                 moveDialog,
-            ) { categories, editorState, dialog, move ->
+                categoryGroupRepository.observeGroups().catch { emit(emptyList()) },
+            ) { categories, editorState, dialog, move, groups ->
                 CategoriesUiState.Content(
                     active = categories.active(),
                     archived = categories.filter { it.archived },
                     editor = editorState,
                     deleteDialog = dialog,
                     moveDialog = move,
+                    groups = groups,
                 )
             }.stateIn(
                 viewModelScope,
@@ -96,6 +100,7 @@ class CategoriesViewModel
                                 iconKey = category.iconKey,
                                 colorKey = category.colorKey,
                                 kind = category.kind,
+                                groupId = category.groupId,
                             ),
                     )
             }
@@ -116,7 +121,13 @@ class CategoriesViewModel
             }
             launchWrite(onSuccess = { editor.value = null }) {
                 if (existing == null) {
-                    categoryRepository.addCategory(draft.name.trim(), draft.iconKey, draft.colorKey, draft.kind)
+                    categoryRepository.addCategory(
+                        draft.name.trim(),
+                        draft.iconKey,
+                        draft.colorKey,
+                        draft.kind,
+                        draft.groupId,
+                    )
                 } else {
                     categoryRepository.updateCategory(
                         existing.copy(
@@ -124,6 +135,7 @@ class CategoriesViewModel
                             iconKey = draft.iconKey,
                             colorKey = draft.colorKey,
                             kind = draft.kind,
+                            groupId = draft.groupId,
                         ),
                     )
                 }

@@ -27,7 +27,8 @@ class SessionBudgetRepository
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
-        ): Result<Unit> = switch.call { it.setBudget(categoryId, limitCents) }
+            skipMonths: Set<Int>,
+        ): Result<Unit> = switch.call { it.setBudget(categoryId, limitCents, skipMonths) }
 
         override suspend fun clearBudget(categoryId: CategoryId): Result<Unit> =
             switch.call {

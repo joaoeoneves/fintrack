@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data.migration
 import com.joaoeoneves.fintrack.data.backup.withPlaceholderCategories
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
+import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
@@ -11,6 +12,7 @@ import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
+import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
 import com.joaoeoneves.fintrack.data.local.validateExpense
 import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validateMonthSettings
@@ -18,6 +20,7 @@ import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
 import com.joaoeoneves.fintrack.data.local.validateRecurring
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.effectiveName
 import com.joaoeoneves.fintrack.domain.model.mergeCategories
@@ -33,6 +36,8 @@ data class RemoteAccountSnapshot(
     val categories: List<Category>,
     /** Months (`yyyy-MM`) the account already has settings for. */
     val monthSettingsIds: Set<String> = emptySet(),
+    /** The account's category groups. */
+    val categoryGroups: List<CategoryGroup> = emptyList(),
 )
 
 /**
@@ -49,10 +54,11 @@ data class MigrationPlan(
     val recurring: List<LocalRecurringItem>,
     val skipped: Int,
     val monthSettings: List<LocalMonthSettings> = emptyList(),
+    val categoryGroups: List<LocalCategoryGroup> = emptyList(),
 ) {
     val total: Int get() =
         categories.size + budgets.size + expenses.size + income.size + plannedIncome.size + recurring.size +
-            monthSettings.size
+            monthSettings.size + categoryGroups.size
 }
 
 private fun String.nameKey(): String = trim().lowercase()
@@ -72,6 +78,9 @@ private class CategoryResolution(
  * - custom categories: a local id already in the account is kept as is (nothing to write); else a
  *   category with the same trimmed, case-insensitive name is reused (local id remapped); else it is
  *   written under its own id, ordered after the account's categories;
+ * - category groups: a local id already in the account is kept as is; else a group with the same trimmed,
+ *   case-insensitive name is reused (the categories are remapped to it); else it is written under its own id,
+ *   ordered after the account's groups. Categories are copied with their group remapped (none when unresolved);
  * - built-in overrides and budgets: what the account already has wins;
  * - planned income: if the account has any line, the account wins and none is copied; else every valid
  *   line is copied under its own id;
@@ -88,15 +97,16 @@ fun planMigration(
     val localMaxOrder = local.categories.maxOfOrNull { it.order } ?: -1
     val categories =
         withPlaceholderCategories(local.categories, local.expenses, local.budgets, localMaxOrder, local.recurring)
-    val resolution = resolveCategories(categories, remote)
+    val groups = resolveGroups(local.categoryGroups, remote)
+    val resolution = resolveCategories(categories, remote, groups.idMap)
     val known = BuiltInCategories.all.mapTo(mutableSetOf()) { it.id.value } + resolution.idMap.values
 
-    var skipped = resolution.skipped
+    var skipped = resolution.skipped + groups.skipped
     val budgets = mutableListOf<LocalBudget>()
     val seenBudgets = remote.budgetCategoryIds.toMutableSet()
     for (budget in local.budgets) {
         val mapped = resolution.targetOf(budget.categoryId)?.let { budget.copy(categoryId = it) }
-        if (mapped == null || !isValid { validateBudget(mapped.categoryId, mapped.limitCents, known) }) {
+        if (mapped == null || !isValid { mapped.validated(known) }) {
             skipped++
         } else if (seenBudgets.add(mapped.categoryId)) {
             budgets += mapped
@@ -127,6 +137,7 @@ fun planMigration(
         recurring,
         skipped,
         validMonthSettings,
+        groups.toWrite,
     )
 }
 
@@ -158,10 +169,13 @@ private fun plannedIncomeToCopy(
     return local.filter { isValid { validatePlannedIncome(it) } }
 }
 
+private fun LocalBudget.validated(known: Set<String>) = validateBudget(categoryId, limitCents, known, skipMonths)
+
 private inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSuccess
 
 private class CategoryResolver(
     private val remote: RemoteAccountSnapshot,
+    private val groupIdMap: Map<String, String>,
 ) {
     private val remoteIds = remote.categories.mapTo(mutableSetOf()) { it.id.value }
     private val nameToId = HashMap<String, String>()
@@ -185,12 +199,15 @@ private class CategoryResolver(
 
     // The account's own override of a built-in wins; otherwise the local one is copied.
     private fun resolveOverride(category: LocalCategory) {
-        if (category.id !in remoteIds && isValid { validateCategory(category) }) toWrite += category
+        val ready = category.withGroupRemapped()
+        if (category.id !in remoteIds && isValid { validateCategory(ready) }) toWrite += ready
     }
+
+    private fun LocalCategory.withGroupRemapped(): LocalCategory = copy(groupId = groupId?.let { groupIdMap[it] })
 
     private fun resolveCustom(category: LocalCategory) {
         val existing = category.name?.nameKey()?.let { nameToId[it] }
-        val ready = category.copy(order = nextOrder)
+        val ready = category.withGroupRemapped().copy(order = nextOrder)
         when {
             category.id in remoteIds -> idMap[category.id] = category.id
             existing != null -> idMap[category.id] = existing
@@ -208,4 +225,42 @@ private class CategoryResolver(
 private fun resolveCategories(
     local: List<LocalCategory>,
     remote: RemoteAccountSnapshot,
-): CategoryResolution = CategoryResolver(remote).resolve(local)
+    groupIdMap: Map<String, String>,
+): CategoryResolution = CategoryResolver(remote, groupIdMap).resolve(local)
+
+private class GroupResolution(
+    /** Local group id to the account group id it ends up as. */
+    val idMap: Map<String, String>,
+    val toWrite: List<LocalCategoryGroup>,
+    val skipped: Int,
+)
+
+// A local group already in the account (same id) or with the same name reuses the account's group.
+private fun resolveGroups(
+    local: List<LocalCategoryGroup>,
+    remote: RemoteAccountSnapshot,
+): GroupResolution {
+    val remoteIds = remote.categoryGroups.mapTo(mutableSetOf()) { it.id }
+    val nameToId = HashMap<String, String>()
+    remote.categoryGroups.forEach { nameToId.putIfAbsent(it.name.nameKey(), it.id) }
+    var nextOrder = (remote.categoryGroups.maxOfOrNull { it.order } ?: -1) + 1
+    val idMap = mutableMapOf<String, String>()
+    val toWrite = mutableListOf<LocalCategoryGroup>()
+    var skipped = 0
+    for (group in local.sortedWith(compareBy({ it.order }, { it.id }))) {
+        val existing = nameToId[group.name.nameKey()]
+        val ready = group.copy(order = nextOrder)
+        when {
+            group.id in remoteIds -> idMap[group.id] = group.id
+            existing != null -> idMap[group.id] = existing
+            isValid { validateCategoryGroup(ready) } -> {
+                nextOrder++
+                idMap[group.id] = group.id
+                toWrite += ready
+                nameToId[group.name.nameKey()] = group.id
+            }
+            else -> skipped++
+        }
+    }
+    return GroupResolution(idMap, toWrite, skipped)
+}

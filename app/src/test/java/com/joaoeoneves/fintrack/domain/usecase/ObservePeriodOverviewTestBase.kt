@@ -1,9 +1,11 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
+import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
@@ -31,14 +33,21 @@ abstract class ObservePeriodOverviewTestBase {
     protected val budgets = CountingBudgetRepository()
     protected val plannedIncome = FakePlannedIncomeRepository()
     protected val categories = FakeCategoryRepository()
+    protected val groups = FakeCategoryGroupRepository()
+    protected val recurring = FakeRecurringRepository()
 
     protected val useCase =
         ObservePeriodOverview(
             transactionRepository = CombinedTransactionRepository(expenses, income),
-            budgetRepository = budgets,
-            plannedIncomeRepository = plannedIncome,
-            categoryRepository = categories,
-            monthSettingsRepository = FakeMonthSettingsRepository(),
+            sources =
+                PlanDataSources(
+                    budgets = budgets,
+                    plannedIncome = plannedIncome,
+                    monthSettings = FakeMonthSettingsRepository(),
+                    categories = categories,
+                    groups = groups,
+                    recurring = recurring,
+                ),
         )
 
     protected suspend fun overview(

@@ -30,14 +30,16 @@ service cloud.firestore {
     // name null (= the built-in's localized default name); a user category must have one.
     function isValidCategoryDoc(categoryId, data) {
       let name = data.get('name', null);
-      return data.keys().hasOnly(['name', 'iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['name', 'iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn', 'groupId', 'createdAt',
+          'updatedAt'])
         && data.keys().hasAll(['iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn'])
         && (name == null || (name is string && name.size() > 0 && name.size() <= 50))
         && isValidKey(data.iconKey) && isValidKey(data.colorKey)
         && data.kind in ['SPENDING', 'SAVING']
         && data.order is int && data.archived is bool && data.builtIn is bool
         && data.builtIn == (categoryId in builtInCategoryIds())
-        && (data.builtIn || name != null);
+        && (data.builtIn || name != null)
+        && (data.get('groupId', null) == null || isCategoryIdShape(data.groupId));
     }
 
     function isValidAmountCents(amountCents) {
@@ -77,9 +79,10 @@ service cloud.firestore {
     }
 
     function isValidBudget(data) {
-      return data.keys().hasOnly(['limitCents', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['limitCents', 'skipMonths', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['limitCents'])
-        && data.limitCents is int && data.limitCents > 0 && data.limitCents <= 100000000000;
+        && data.limitCents is int && data.limitCents > 0 && data.limitCents <= 100000000000
+        && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
     }
 
     function isValidPlannedIncome(data) {
@@ -187,6 +190,23 @@ service cloud.firestore {
       return data.keys().hasOnly(['workingDays', 'updatedAt'])
         && data.keys().hasAll(['workingDays'])
         && data.workingDays is int && data.workingDays >= 0 && data.workingDays <= 23
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    // Each user can only read/write their own category groups (named buckets of categories). A category's
+    // groupId is shape-checked only: a dangling group is treated as ungrouped.
+    match /users/{userId}/categoryGroups/{groupId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && isCategoryIdShape(groupId)
+        && isValidCategoryGroup(request.resource.data);
+    }
+
+    function isValidCategoryGroup(data) {
+      return data.keys().hasOnly(['name', 'order', 'updatedAt'])
+        && data.keys().hasAll(['name', 'order'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 50
+        && data.order is int
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 

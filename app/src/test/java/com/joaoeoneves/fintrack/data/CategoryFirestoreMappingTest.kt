@@ -156,7 +156,7 @@ class CategoryFirestoreMappingTest {
         assertNull(override["name"])
         assertEquals(true, override["builtIn"])
         assertEquals(
-            setOf("name", "iconKey", "colorKey", "kind", "order", "archived", "builtIn", "updatedAt"),
+            setOf("name", "iconKey", "colorKey", "kind", "order", "archived", "builtIn", "groupId", "updatedAt"),
             override.keys,
         )
     }

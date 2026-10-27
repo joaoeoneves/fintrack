@@ -4,8 +4,10 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_CATEGORY_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import java.time.DateTimeException
 import java.time.Instant
@@ -46,9 +48,14 @@ internal fun validateBudget(
     categoryId: String,
     limitCents: Long,
     knownCategoryIds: Set<String>,
+    skipMonths: Collection<Int> = emptyList(),
 ) {
     requireKnownCategory(categoryId, knownCategoryIds)
     require(limitCents in 1..MAX_AMOUNT_CENTS) { "Budget limit must be 1..$MAX_AMOUNT_CENTS cents" }
+    val months = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
+    require(skipMonths.size <= MAX_MONTH_OF_YEAR && skipMonths.all { it in months }) {
+        "Skipped months must be at most 12 values of 1..12"
+    }
 }
 
 /** A category is written whole; a built-in's override may leave the name null, a user one may not. */
@@ -61,12 +68,13 @@ internal fun validateCategory(category: LocalCategory) {
     require(KEY_REGEX.matches(category.iconKey) && category.iconKey.length <= MAX_KEY_LENGTH) { "Invalid icon key" }
     require(KEY_REGEX.matches(category.colorKey) && category.colorKey.length <= MAX_KEY_LENGTH) { "Invalid color key" }
     require(CategoryKind.entries.any { it.name == category.kind }) { "Invalid category kind ${category.kind}" }
+    category.groupId?.let(::requireCategoryIdShape)
     // Blank-after-trim counts as no name: the mappers treat it that way, so validation must agree.
     val builtIn = category.id in BuiltInCategories.all.map { it.id.value }
     require(builtIn || !name.isNullOrBlank()) { "A user category needs a name" }
 }
 
-private fun requireCategoryIdShape(id: String) {
+internal fun requireCategoryIdShape(id: String) {
     require(id.isNotEmpty() && id.length <= MAX_CATEGORY_ID_LENGTH && CATEGORY_ID_REGEX.matches(id)) {
         "Invalid category id"
     }

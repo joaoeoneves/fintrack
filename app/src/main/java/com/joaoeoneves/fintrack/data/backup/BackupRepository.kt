@@ -58,6 +58,7 @@ class BackupRepository
                         plan.monthSettings.mapNotNull { settings ->
                             settings.workingDaysOverride?.let { localMonthSettingsOf(settings.month, it) }
                         },
+                    categoryGroups = plan.categoryGroups.map { it.toLocal() },
                     categories =
                         withPlaceholderCategories(
                             categories = categories.filter { it.needsStoring() }.map { it.toLocal() },

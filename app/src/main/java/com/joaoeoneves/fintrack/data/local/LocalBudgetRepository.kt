@@ -20,10 +20,11 @@ class LocalBudgetRepository
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
+            skipMonths: Set<Int>,
         ): Result<Unit> =
             store.update { doc ->
-                validateBudget(categoryId.value, limitCents, knownCategoryIds(doc))
-                val record = LocalBudget(categoryId.value, limitCents)
+                validateBudget(categoryId.value, limitCents, knownCategoryIds(doc), skipMonths)
+                val record = LocalBudget(categoryId.value, limitCents, skipMonths.sorted())
                 doc.copy(budgets = doc.budgets.upserted(record) { it.categoryId == record.categoryId }) to Unit
             }
 

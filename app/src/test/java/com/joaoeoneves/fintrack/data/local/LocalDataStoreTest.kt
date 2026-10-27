@@ -120,7 +120,7 @@ class LocalDataStoreTest : LocalStoreTestBase() {
         runStoreTest {
             newStore().replaceAll(sample)
             val text = dataFile.readText()
-            assertTrue(text.contains("\"schemaVersion\":4"))
+            assertTrue(text.contains("\"schemaVersion\":5"))
             assertTrue(text.contains("\"isRefund\":false"))
             assertFalse(text.contains("null"))
         }

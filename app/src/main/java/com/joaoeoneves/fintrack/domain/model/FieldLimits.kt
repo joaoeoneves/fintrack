@@ -9,6 +9,9 @@ const val MAX_NAME_LENGTH = 200
 /** Maximum length, in code points, of a user-defined category name. */
 const val MAX_CATEGORY_NAME_LENGTH = 50
 
+/** Maximum length, in code points, of a category group name. */
+const val MAX_GROUP_NAME_LENGTH = 50
+
 /** Maximum length, in code points, of an expense or income note. */
 const val MAX_NOTE_LENGTH = 2000
 
