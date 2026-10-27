@@ -6,6 +6,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.Source
+import com.joaoeoneves.fintrack.data.migration.chunkedForRules
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
@@ -18,6 +20,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.tasks.await
 import java.time.DateTimeException
 import java.time.LocalDate
 import javax.inject.Inject
@@ -75,6 +78,31 @@ class FirestoreRecurringRepository
                     .delete()
                     .addOnFailureListener { Log.w(TAG, "Delete recurring failed: $id", it) }
                 Unit
+            }
+        }
+
+        override suspend fun moveRecurringCategory(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Int> {
+            val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
+            return runCatchingCancellable {
+                val docs =
+                    collection(uid)
+                        .whereEqualTo("category", source.value)
+                        .get(Source.SERVER)
+                        .await()
+                        .documents
+                // Awaited, one batch at a time (see FirestoreExpenseRepository.moveExpensesToCategory).
+                for (chunk in docs.chunkedForRules { target }) {
+                    val batch = firestore.batch()
+                    chunk.forEach { doc ->
+                        val changes = mapOf("category" to target.value, "updatedAt" to FieldValue.serverTimestamp())
+                        batch.update(doc.reference, changes)
+                    }
+                    batch.commit().await()
+                }
+                docs.size
             }
         }
 

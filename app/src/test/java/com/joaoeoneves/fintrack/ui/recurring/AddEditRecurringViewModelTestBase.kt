@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +46,11 @@ abstract class AddEditRecurringViewModelTestBase {
     protected fun AddEditRecurringViewModel.ready() = uiState.value as AddEditRecurringUiState.Ready
 
     protected fun AddEditRecurringViewModel.fill() {
+        onFormChanged(ready().form.copy(name = "Gym", amountText = "20,00", category = BuiltInCategories.SHOPPING))
+    }
+
+    /** Like [fill] but leaves the category unset, as a new item starts. */
+    protected fun AddEditRecurringViewModel.fillWithoutCategory() {
         onFormChanged(ready().form.copy(name = "Gym", amountText = "20,00"))
     }
 }

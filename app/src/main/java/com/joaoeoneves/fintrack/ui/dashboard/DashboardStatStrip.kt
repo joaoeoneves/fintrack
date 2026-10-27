@@ -33,6 +33,7 @@ fun DashboardStatStrip(
     spendingCents: Long,
     savedCents: Long,
     modifier: Modifier = Modifier,
+    fixedSpendingCents: Long = 0L,
 ) {
     Row(modifier = modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         Stat(
@@ -45,6 +46,14 @@ fun DashboardStatStrip(
             label = stringResource(R.string.dashboard_expenses_label),
             cents = spendingCents,
             modifier = Modifier.weight(1f).padding(horizontal = Dimens.Space12),
+            detail =
+                fixedSpendingCents.takeIf { it > 0L }?.let {
+                    stringResource(
+                        R.string.dashboard_fixed_variable,
+                        formatAmountCents(it),
+                        formatAmountCents(spendingCents - it),
+                    )
+                },
         )
         VerticalHairline()
         Stat(
@@ -60,6 +69,7 @@ private fun Stat(
     label: String,
     cents: Long,
     modifier: Modifier = Modifier,
+    detail: String? = null,
 ) {
     Column(modifier = modifier) {
         Text(
@@ -75,6 +85,14 @@ private fun Stat(
             autoSize = TextAutoSize.StepBased(minFontSize = MIN_AMOUNT_SP.sp, maxFontSize = MAX_AMOUNT_SP.sp),
             modifier = Modifier.padding(top = Dimens.Space4),
         )
+        if (detail != null) {
+            Text(
+                text = detail,
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+                modifier = Modifier.padding(top = Dimens.Space4),
+            )
+        }
     }
 }
 

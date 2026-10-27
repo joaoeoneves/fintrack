@@ -30,10 +30,10 @@ class CategoriesViewModelTest : CategoriesViewModelTestBase() {
             val started = start(FakeCategoryRepository(listOf(gym, old)))
             val content = started.content()
             assertEquals(
-                BuiltInCategories.all.map { it.id } + gym.id,
+                BuiltInCategories.all.filterNot { it.archived }.map { it.id } + gym.id,
                 content.active.map { it.id },
             )
-            assertEquals(listOf(old.id), content.archived.map { it.id })
+            assertEquals(listOf(BuiltInCategories.RECURRING.id, old.id), content.archived.map { it.id })
             assertNull(content.editor)
             assertNull(content.deleteDialog)
         }

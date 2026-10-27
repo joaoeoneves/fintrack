@@ -34,7 +34,7 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
             val content = vm.content()
             assertTrue(content.incomeLines.isEmpty())
             assertFalse(content.summary.isConfigured)
-            assertEquals(BuiltInCategories.all, content.allocations.map { it.category })
+            assertEquals(BuiltInCategories.all.filterNot { it.archived }, content.allocations.map { it.category })
             assertTrue(content.canAddIncomeLine)
             assertEquals(null, content.editor)
         }

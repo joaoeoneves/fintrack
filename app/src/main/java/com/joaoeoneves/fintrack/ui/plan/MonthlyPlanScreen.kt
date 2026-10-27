@@ -73,7 +73,13 @@ private fun MonthlyPlanContent(
         contentPadding =
             PaddingValues(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.Space32),
     ) {
-        item { PlanSummaryCard(summary = state.summary, modifier = cardModifier) }
+        item {
+            PlanSummaryCard(
+                summary = state.summary,
+                modifier = cardModifier,
+                fixedThisMonthCents = state.fixedThisMonthCents,
+            )
+        }
         item {
             ExpectedIncomeCard(
                 lines = state.incomeLines,

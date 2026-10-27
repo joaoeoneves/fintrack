@@ -748,5 +748,12 @@ class AddEditExpenseViewModelTest {
         override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult = unsupported()
 
         override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> = unsupported()
+
+        override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> = unsupported()
+
+        override suspend fun moveExpensesToCategory(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Int> = unsupported()
     }
 }

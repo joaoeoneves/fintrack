@@ -41,7 +41,7 @@ private fun DocumentSnapshot.parseCategory(): Category? {
         colorKey = getString("colorKey") ?: builtIn?.colorKey ?: DEFAULT_CATEGORY_COLOR_KEY,
         kind = CategoryKind.entries.find { it.name == kindName } ?: builtIn?.kind ?: CategoryKind.SPENDING,
         order = getLong("order")?.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())?.toInt() ?: Int.MAX_VALUE,
-        archived = getBoolean("archived") ?: false,
+        archived = getBoolean("archived") ?: builtIn?.archived ?: false,
         builtIn = builtIn != null,
     )
 }

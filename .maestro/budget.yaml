@@ -6,7 +6,7 @@ appId: com.joaoeoneves.fintrack
 # Assumes the app is already signed in and lands on the Dashboard -- same assumption as
 # golden-path.yaml (real Google Sign-In cannot be scripted headlessly).
 #
-# Uses the "Recurring" category because it is the one category with no limit set on the shared
+# Uses the "Investments" category (an active built-in; archived "Recurring" gets no budget row) because it has no limit set on the shared
 # test account. Every limit this flow sets on it is removed again before the flow ends, so the
 # budgets data is left exactly as found (the other categories' limits are never touched).
 #
@@ -36,45 +36,45 @@ appId: com.joaoeoneves.fintrack
     element: "Budgets \\(this month\\)"
     direction: DOWN
 - scrollUntilVisible:
-    element: "Recurring"
+    element: "Investments"
     direction: DOWN
-- tapOn: "Recurring"
-- assertVisible: "Set budget for Recurring"
+- tapOn: "Investments"
+- assertVisible: "Set budget for Investments"
 # No limit yet, so no Remove button is offered.
 - assertNotVisible: "Remove"
 - tapOn: "Monthly limit"
 - inputText: "100,50"
 - hideKeyboard
 - tapOn: "Save"
-- assertNotVisible: "Set budget for Recurring"
+- assertNotVisible: "Set budget for Investments"
 - assertVisible: ".*€100\\.50.*"
 
 # --- 2: Reopen -- prefilled with the locale's separator, and Remove is offered (B9) ---
-- tapOn: "Recurring"
-- assertVisible: "Set budget for Recurring"
+- tapOn: "Investments"
+- assertVisible: "Set budget for Investments"
 - assertVisible: "100\\.50"
 - assertVisible: "Remove"
 - tapOn: "Remove"
-- assertNotVisible: "Set budget for Recurring"
+- assertNotVisible: "Set budget for Investments"
 - assertNotVisible: ".*€100\\.50.*"
 - assertVisible: ".* spent — no limit set"
 
 # --- 3: Set it again, then clear the field and Save -- an empty field removes the limit (B9) ---
-- tapOn: "Recurring"
-- assertVisible: "Set budget for Recurring"
+- tapOn: "Investments"
+- assertVisible: "Set budget for Investments"
 - tapOn: "Monthly limit"
 - inputText: "100,50"
 - hideKeyboard
 - tapOn: "Save"
 - assertVisible: ".*€100\\.50.*"
 
-- tapOn: "Recurring"
+- tapOn: "Investments"
 - assertVisible: "100\\.50"
 - tapOn: "100\\.50"
 - eraseText: 20
 - hideKeyboard
 - tapOn: "Save"
-- assertNotVisible: "Set budget for Recurring"
+- assertNotVisible: "Set budget for Investments"
 - assertNotVisible: ".*€100\\.50.*"
 - assertVisible: ".* spent — no limit set"
-# Recurring is back to no limit, exactly as this flow found it.
+# Investments is back to no limit, exactly as this flow found it.

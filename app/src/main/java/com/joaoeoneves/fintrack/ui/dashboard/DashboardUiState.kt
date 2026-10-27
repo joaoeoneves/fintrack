@@ -26,6 +26,7 @@ sealed interface DashboardUiState {
      * @property plan the monthly plan evaluated for [budgetMonth].
      * @property plannedSlices the planned allocation per category, for the "Planned" donut.
      * @property dailyAllowance what can be spent per remaining day; only for the current month.
+     * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
      * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
      */
     data class Content(
@@ -49,6 +50,7 @@ sealed interface DashboardUiState {
         val plan: MonthlyPlanSummary,
         val plannedSlices: List<CategoryTotal>,
         val dailyAllowance: DailyAllowance?,
+        val fixedSpendingCents: Long = 0L,
     ) : DashboardUiState
 
     data class Error(

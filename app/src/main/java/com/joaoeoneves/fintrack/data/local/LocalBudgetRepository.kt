@@ -31,4 +31,21 @@ class LocalBudgetRepository
             store.update { doc ->
                 doc.copy(budgets = doc.budgets.filterNot { it.categoryId == categoryId.value }) to Unit
             }
+
+        override suspend fun moveBudget(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Boolean> =
+            store.update { doc ->
+                require(target.value in knownCategoryIds(doc)) { "Unknown category ${target.value}" }
+                val sourceBudget = doc.budgets.find { it.categoryId == source.value }
+                val withoutSource = doc.budgets.filterNot { it.categoryId == source.value }
+                val budgets =
+                    if (sourceBudget == null || withoutSource.any { it.categoryId == target.value }) {
+                        withoutSource
+                    } else {
+                        withoutSource + sourceBudget.copy(categoryId = target.value)
+                    }
+                doc.copy(budgets = budgets) to (sourceBudget != null)
+            }
     }

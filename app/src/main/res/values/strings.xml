@@ -245,6 +245,30 @@
     <string name="error_category_name_duplicate">A category with this name already exists</string>
     <string name="error_category_last_active">At least one category must stay active</string>
     <string name="error_category_save_failed">Couldn\'t save the category</string>
+    <string name="category_action_move_items">Move items to…</string>
+    <string name="category_move_checking_title">Checking \"%1$s\"…</string>
+    <string name="category_move_nothing">Nothing uses \"%1$s\", so there is nothing to move.</string>
+    <string name="category_move_cannot_verify">Can\'t check what uses \"%1$s\" while offline. Try again when you\'re online.</string>
+    <string name="category_move_pick_title">Move items from \"%1$s\" to</string>
+    <string name="category_move_confirm_title">Move to \"%1$s\"?</string>
+    <string name="category_move_confirm_intro">From \"%1$s\":</string>
+    <plurals name="category_move_expenses">
+        <item quantity="one">%1$d expense</item>
+        <item quantity="other">%1$d expenses</item>
+    </plurals>
+    <plurals name="category_move_recurring">
+        <item quantity="one">%1$d recurring item</item>
+        <item quantity="other">%1$d recurring items</item>
+    </plurals>
+    <string name="category_move_budget">Its budget</string>
+    <string name="category_move_budget_merge">Its budget (\"%1$s\" already has one, which is kept; this one is dropped)</string>
+    <string name="category_action_move">Move</string>
+    <string name="category_move_moving">Moving…</string>
+    <string name="category_move_done">Items moved</string>
+    <string name="error_category_move_failed">Couldn\'t move all the items. Check your connection and try again.</string>
+    <string name="dashboard_fixed_variable">Fixed %1$s\nVariable %2$s</string>
+    <string name="plan_fixed_this_month">Fixed (recurring) this month</string>
+    <string name="plan_archived_hint">Archived category. Move its items in Settings, Categories.</string>
 
     <!-- Backup -->
     <string name="settings_section_backup">Backup</string>

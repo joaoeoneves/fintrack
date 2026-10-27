@@ -42,4 +42,17 @@ interface ExpenseRepository {
      * on-device data and does not need the network.
      */
     suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean>
+
+    /** How many expenses use [categoryId]; same server/offline behaviour as [hasExpenseWithCategory]. */
+    suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int>
+
+    /**
+     * Re-categorizes every expense of [source] to [target]; returns how many were moved. Signed in
+     * this is a series of awaited batches (needs the network); a failure partway leaves earlier
+     * batches applied, and running it again finishes the rest.
+     */
+    suspend fun moveExpensesToCategory(
+        source: CategoryId,
+        target: CategoryId,
+    ): Result<Int>
 }

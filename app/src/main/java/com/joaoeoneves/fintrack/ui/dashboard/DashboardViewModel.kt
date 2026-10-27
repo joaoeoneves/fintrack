@@ -141,6 +141,7 @@ class DashboardViewModel
                 categoryTotals = summary.categoryTotals,
                 outflowCents = summary.outflowCents,
                 spendingCents = summary.spendingCents,
+                fixedSpendingCents = summary.fixedSpendingCents,
                 savedCents = summary.savedCents,
                 savingsRate = summary.savingsRate,
                 recentExpenses = recent.expenses,

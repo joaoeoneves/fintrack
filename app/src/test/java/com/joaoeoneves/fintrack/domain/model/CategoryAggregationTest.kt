@@ -23,7 +23,8 @@ class CategoryAggregationTest {
     fun cashFlow_builtInsOnly_hasOneZeroRowEach() {
         val summary = cashFlowSummaryOf(emptyList(), emptyList(), BuiltInCategories.all)
 
-        assertEquals(BuiltInCategories.all.map { CategoryTotal(it, 0L) }, summary.categoryTotals)
+        val active = BuiltInCategories.all.filterNot { it.archived }
+        assertEquals(active.map { CategoryTotal(it, 0L) }, summary.categoryTotals)
     }
 
     @Test

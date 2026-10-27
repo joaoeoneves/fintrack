@@ -52,7 +52,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(BuiltInCategories.all, content.budgets.map { it.category })
+            assertEquals(BuiltInCategories.all.filterNot { it.archived }, content.budgets.map { it.category })
             assertTrue(content.budgets.all { it.limitCents == null && it.spentCents == 0L && !it.isOverBudget })
             assertEquals(currentMonth, content.budgetMonth)
             assertTrue(content.budgetMonthIsCurrent)
@@ -258,7 +258,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             advanceUntilIdle()
 
             val content = viewModel.content()
-            assertEquals(BuiltInCategories.all.size, content.budgets.size)
+            assertEquals(BuiltInCategories.all.filterNot { it.archived }.size, content.budgets.size)
             assertEquals(7_500L, content.budget(BuiltInCategories.SHOPPING).limitCents)
         }
 

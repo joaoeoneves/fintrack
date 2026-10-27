@@ -33,4 +33,9 @@ class SessionBudgetRepository
             switch.call {
                 it.clearBudget(categoryId)
             }
+
+        override suspend fun moveBudget(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Boolean> = switch.call { it.moveBudget(source, target) }
     }

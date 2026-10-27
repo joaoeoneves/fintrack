@@ -100,6 +100,30 @@ class CategoryFirestoreMappingTest {
     }
 
     @Test
+    fun recurringOverrideDoc_withoutArchivedField_staysArchivedByDefault() {
+        val category =
+            doc("RECURRING", mapOf("order" to TestDocumentSnapshots.longValue(2L))).toCategoryOrNull()
+
+        assertEquals(true, category?.archived)
+        assertEquals(true, category?.builtIn)
+    }
+
+    @Test
+    fun recurringOverrideDoc_withArchivedFalse_unarchivesIt() {
+        val category =
+            doc("RECURRING", mapOf("archived" to TestDocumentSnapshots.booleanValue(false))).toCategoryOrNull()
+
+        assertEquals(false, category?.archived)
+    }
+
+    @Test
+    fun otherBuiltInOverrideDoc_withoutArchivedField_isActive() {
+        val category = doc("FOOD", mapOf("order" to TestDocumentSnapshots.longValue(2L))).toCategoryOrNull()
+
+        assertEquals(false, category?.archived)
+    }
+
+    @Test
     fun builtInFlagInDoc_isNotTrusted() {
         val spoofed =
             doc("gym1", mapOf("name" to str("Gym"), "builtIn" to TestDocumentSnapshots.booleanValue(true)))

@@ -91,4 +91,24 @@ class LocalExpenseRepository
                     .expenses
                     .any { it.categoryId == categoryId.value }
             }
+
+        override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> =
+            runCatchingCancellable {
+                store.data
+                    .first()
+                    .expenses
+                    .count { it.categoryId == categoryId.value }
+            }
+
+        override suspend fun moveExpensesToCategory(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Int> =
+            store.update { doc ->
+                require(target.value in knownCategoryIds(doc)) { "Unknown category ${target.value}" }
+                val moved = doc.expenses.count { it.categoryId == source.value }
+                val expenses =
+                    doc.expenses.map { if (it.categoryId == source.value) it.copy(categoryId = target.value) else it }
+                doc.copy(expenses = expenses) to moved
+            }
     }

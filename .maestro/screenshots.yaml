@@ -59,7 +59,7 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 
 # --- 2: Seed demo data ---
-# Expenses (built-in categories: Food, Recurring, Shopping, Transfer, Investments).
+# Expenses (pickable built-in categories: Food, Shopping, Transfer, Investments; "Recurring" is archived).
 - tapOn:
     id: "dashboard_add_expense"
 - tapOn: "Name"
@@ -81,7 +81,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Amount"
 - inputText: "750.00"
 - hideKeyboard
-- tapOn: "Recurring"
+- tapOn: "Transfer"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
@@ -129,6 +129,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Amount"
 - inputText: "39.99"
 - hideKeyboard
+# The form no longer preselects a category; pick one explicitly.
+- tapOn: "Shopping"
 - tapOn: "Save"
 - assertVisible: "Internet"
 - takeScreenshot: maestro-out/screens/en-dark-recurring

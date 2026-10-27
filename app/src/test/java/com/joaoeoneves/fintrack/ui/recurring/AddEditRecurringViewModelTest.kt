@@ -23,7 +23,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddEditRecurringViewModelTest : AddEditRecurringViewModelTestBase() {
     @Test
-    fun newItem_defaultsToRecurringCategoryAndToday() =
+    fun newItem_hasNoCategoryAndStartsToday() =
         runTest(testDispatcher) {
             val vm = viewModel()
             assertEquals(AddEditRecurringUiState.Loading, vm.uiState.value)
@@ -33,25 +33,39 @@ class AddEditRecurringViewModelTest : AddEditRecurringViewModelTestBase() {
 
             assertFalse(vm.isEditRoute)
             assertFalse(state.isEditMode)
-            assertEquals(BuiltInCategories.RECURRING, state.form.category)
+            assertNull(state.form.category)
             assertEquals(day(2026, 3, 15), state.form.startDate)
             assertEquals("15", state.form.dayText)
         }
 
     @Test
-    fun newItem_archivedRecurringCategory_fallsBackToDefault() =
+    fun newItem_unarchivedRecurringCategory_isStillNotPreselected() =
         runTest(testDispatcher) {
-            val categories = FakeCategoryRepository(listOf(BuiltInCategories.RECURRING.copy(archived = true)))
+            val categories = FakeCategoryRepository(listOf(BuiltInCategories.RECURRING.copy(archived = false)))
             val vm = viewModel(categories = categories)
             advanceUntilIdle()
 
-            assertEquals(
-                BuiltInCategories.SHOPPING.id,
-                vm
-                    .ready()
-                    .form.category
-                    ?.id,
-            )
+            assertNull(vm.ready().form.category)
+        }
+
+    @Test
+    fun newItem_saveWithoutCategory_isRejectedUntilOneIsChosen() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository()
+            val vm = viewModel(repo)
+            advanceUntilIdle()
+            vm.fillWithoutCategory()
+
+            vm.onSave()
+            advanceUntilIdle()
+
+            assertTrue(repo.items.isEmpty())
+            assertNotNull(vm.ready().errors?.category)
+
+            vm.fill()
+            vm.onSave()
+            advanceUntilIdle()
+            assertEquals(1, repo.items.size)
         }
 
     @Test
