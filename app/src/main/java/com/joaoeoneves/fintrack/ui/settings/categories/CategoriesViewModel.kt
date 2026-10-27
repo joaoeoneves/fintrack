@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
@@ -9,8 +10,10 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.repository.BuiltInCategoryNames
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.usecase.CategoryMovePreview
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
+import com.joaoeoneves.fintrack.domain.usecase.MoveCategoryItems
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -27,10 +30,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TAG = "CategoriesViewModel"
+
 // How long (in ms) the underlying Firestore listener is kept alive after the last collector
 // disappears, so a configuration change doesn't tear it down and re-subscribe.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
+@Suppress("TooManyFunctions") // One handler per user action on the screen.
 @HiltViewModel
 class CategoriesViewModel
     @Inject
@@ -38,9 +44,11 @@ class CategoriesViewModel
         private val categoryRepository: CategoryRepository,
         private val checkCategoryUsage: CheckCategoryUsage,
         private val builtInCategoryNames: BuiltInCategoryNames,
+        private val moveCategoryItems: MoveCategoryItems,
     ) : ViewModel() {
         private val editor = MutableStateFlow<CategoryEditorState?>(null)
         private val deleteDialog = MutableStateFlow<DeleteDialogState?>(null)
+        private val moveDialog = MutableStateFlow<MoveDialogState?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
 
         // Latest catalog seen by uiState, read by the action handlers.
@@ -57,12 +65,14 @@ class CategoriesViewModel
                     .onEach { catalog = it },
                 editor,
                 deleteDialog,
-            ) { categories, editorState, dialog ->
+                moveDialog,
+            ) { categories, editorState, dialog, move ->
                 CategoriesUiState.Content(
                     active = categories.active(),
                     archived = categories.filter { it.archived },
                     editor = editorState,
                     deleteDialog = dialog,
+                    moveDialog = move,
                 )
             }.stateIn(
                 viewModelScope,
@@ -178,6 +188,63 @@ class CategoriesViewModel
 
         fun onDismissDelete() {
             deleteDialog.value = null
+        }
+
+        fun onMoveItemsRequested(id: CategoryId) {
+            val category = catalog.find { it.id == id }?.takeIf { it.archived } ?: return
+            moveDialog.value = MoveDialogState.Checking(category)
+            viewModelScope.launch {
+                val result = moveCategoryItems.preview(id)
+                moveDialog.update { current ->
+                    if (current is MoveDialogState.Checking && current.source.id == id) {
+                        result.fold<MoveDialogState, CategoryMovePreview>(
+                            onSuccess = { preview ->
+                                if (preview.isEmpty) {
+                                    MoveDialogState.NothingToMove(category)
+                                } else {
+                                    MoveDialogState.PickTarget(category, catalog.active().filter { it.id != id })
+                                }
+                            },
+                            onFailure = { MoveDialogState.CannotVerify(category) },
+                        )
+                    } else {
+                        current
+                    }
+                }
+            }
+        }
+
+        fun onMoveTargetPicked(target: Category) {
+            val dialog = moveDialog.value as? MoveDialogState.PickTarget ?: return
+            moveDialog.value = MoveDialogState.Checking(dialog.source)
+            viewModelScope.launch {
+                moveCategoryItems
+                    .preview(dialog.source.id, target.id)
+                    .onSuccess { moveDialog.value = MoveDialogState.Confirm(dialog.source, target, it) }
+                    .onFailure { moveDialog.value = MoveDialogState.CannotVerify(dialog.source) }
+            }
+        }
+
+        fun onConfirmMove() {
+            val dialog = moveDialog.value as? MoveDialogState.Confirm ?: return
+            moveDialog.value = MoveDialogState.Moving(dialog.source, dialog.target)
+            viewModelScope.launch {
+                moveCategoryItems(dialog.source.id, dialog.target.id)
+                    .onSuccess {
+                        moveDialog.value = null
+                        // Shown as a snackbar like the errors, which share this channel.
+                        errors.send(UiText.StringResource(R.string.category_move_done))
+                    }.onFailure { e ->
+                        Log.w(TAG, "Moving the items of ${dialog.source.id.value} failed", e)
+                        moveDialog.value = null
+                        errors.send(UiText.StringResource(R.string.error_category_move_failed))
+                    }
+            }
+        }
+
+        fun onDismissMove() {
+            // A running move can't be cancelled from the dialog; it finishes and reports on its own.
+            if (moveDialog.value !is MoveDialogState.Moving) moveDialog.value = null
         }
 
         private fun launchWrite(

@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirestoreBudgetRepository
@@ -91,6 +93,32 @@ class FirestoreBudgetRepository
             } catch (e: Exception) {
                 // Broad catch: see setBudget above.
                 Result.failure(e)
+            }
+        }
+
+        override suspend fun moveBudget(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Boolean> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val sourceRef = budgetsCollection(uid).document(source.value)
+                val targetRef = budgetsCollection(uid).document(target.value)
+                val sourceDoc = sourceRef.get(Source.SERVER).await()
+                if (sourceDoc.exists()) {
+                    val batch = firestore.batch()
+                    // Merge rule: an existing target budget wins; the source's is dropped.
+                    if (!targetRef.get(Source.SERVER).await().exists()) {
+                        val limit = sourceDoc.getLong("limitCents")
+                        requireNotNull(limit) { "Budget ${source.value} has no limit" }
+                        batch.set(targetRef, mapOf("limitCents" to limit, "updatedAt" to FieldValue.serverTimestamp()))
+                    }
+                    batch.delete(sourceRef)
+                    batch.commit().await()
+                }
+                sourceDoc.exists()
             }
         }
 

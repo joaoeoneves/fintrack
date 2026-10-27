@@ -30,9 +30,12 @@ fun List<Category>.optionsIncluding(current: Category?): List<Category> {
     return if (current == null || options.any { it.id == current.id }) options else options + current
 }
 
-/** Category for a new expense: Shopping while active, else the first active one, else Shopping. */
+/**
+ * Category for a new expense: Shopping while active, else the first active one, else Shopping. The
+ * retired [BuiltInCategories.RECURRING] is never picked, even if the user unarchived it.
+ */
 fun defaultCategory(categories: List<Category>): Category {
-    val active = categories.active()
+    val active = categories.active().filterNot { it.id == BuiltInCategories.RECURRING.id }
     return active.find { it.id == BuiltInCategories.SHOPPING.id }
         ?: active.firstOrNull()
         ?: BuiltInCategories.SHOPPING

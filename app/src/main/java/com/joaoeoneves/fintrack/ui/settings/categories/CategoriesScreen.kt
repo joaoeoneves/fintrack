@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
@@ -38,6 +39,14 @@ internal data class CategoryRowActions(
     val onMove: (CategoryId, MoveDirection) -> Unit,
     val onToggleArchived: (CategoryId) -> Unit,
     val onDelete: (CategoryId) -> Unit,
+    val onMoveItems: (CategoryId) -> Unit,
+)
+
+/** Callbacks of the "move items to…" dialogs. */
+internal data class MoveActions(
+    val onPickTarget: (Category) -> Unit,
+    val onConfirm: () -> Unit,
+    val onDismiss: () -> Unit,
 )
 
 /** Bundles [CategoriesContent]'s callbacks to keep its parameter list short. */
@@ -48,6 +57,7 @@ internal data class CategoriesActions(
     val onSave: (CategoryDraft) -> Unit,
     val onConfirmDelete: () -> Unit,
     val onDismissDelete: () -> Unit,
+    val move: MoveActions,
 )
 
 @Composable
@@ -73,12 +83,19 @@ fun CategoriesScreen(
                         onMove = viewModel::onMove,
                         onToggleArchived = viewModel::onToggleArchived,
                         onDelete = viewModel::onDeleteRequested,
+                        onMoveItems = viewModel::onMoveItemsRequested,
                     ),
                 onAdd = viewModel::onAdd,
                 onDismissEditor = viewModel::onDismissEditor,
                 onSave = viewModel::onSaveEditor,
                 onConfirmDelete = viewModel::onConfirmDelete,
                 onDismissDelete = viewModel::onDismissDelete,
+                move =
+                    MoveActions(
+                        onPickTarget = viewModel::onMoveTargetPicked,
+                        onConfirm = viewModel::onConfirmMove,
+                        onDismiss = viewModel::onDismissMove,
+                    ),
             ),
         onBack = onBack,
         snackbarHostState = snackbarHostState,
@@ -131,6 +148,7 @@ internal fun CategoriesContent(
                         onDismiss = actions.onDismissDelete,
                     )
                 }
+                state.moveDialog?.let { dialog -> CategoryMoveDialog(dialog, actions.move) }
             }
         }
     }

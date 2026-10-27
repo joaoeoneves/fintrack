@@ -45,6 +45,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Amount"
 - inputText: "500"
 - hideKeyboard
+# The form no longer preselects a category; pick one explicitly.
+- tapOn: "Shopping"
 # Frequency defaults to Monthly and "Day of month" to today; pin Monthly explicitly anyway.
 - tapOn: "Monthly"
 - tapOn: "Save"

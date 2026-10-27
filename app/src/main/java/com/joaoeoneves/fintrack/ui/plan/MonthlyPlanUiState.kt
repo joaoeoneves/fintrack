@@ -19,6 +19,7 @@ sealed interface MonthlyPlanUiState {
         val incomeLines: List<PlannedIncome>,
         val allocations: List<CategoryBudget>,
         val summary: MonthlyPlanSummary,
+        val fixedThisMonthCents: Long = 0L,
         val canAddIncomeLine: Boolean,
         val editor: IncomeLineEditorState?,
     ) : MonthlyPlanUiState

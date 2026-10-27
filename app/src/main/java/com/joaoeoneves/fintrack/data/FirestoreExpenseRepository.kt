@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data
 import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,6 +28,7 @@ import javax.inject.Inject
 
 private const val TAG = "FirestoreExpenseRepo"
 
+@Suppress("TooManyFunctions") // One override per ExpenseRepository operation.
 class FirestoreExpenseRepository
     @Inject
     constructor(
@@ -192,6 +194,50 @@ class FirestoreExpenseRepository
                     .get(Source.SERVER)
                     .await()
                     .isEmpty
+            }
+        }
+
+        override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                expensesCollection(uid)
+                    .whereEqualTo("category", categoryId.value)
+                    .count()
+                    .get(AggregateSource.SERVER)
+                    .await()
+                    .count
+                    .toInt()
+            }
+        }
+
+        override suspend fun moveExpensesToCategory(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Int> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val docs =
+                    expensesCollection(uid)
+                        .whereEqualTo("category", source.value)
+                        .get(Source.SERVER)
+                        .await()
+                        .documents
+                // Awaited commits, one batch at a time: a failure leaves earlier batches applied, and
+                // re-running the move picks up whatever is left. Every write references the target, so a
+                // batch costs rules a single category lookup.
+                for (chunk in docs.chunkedForRules { target }) {
+                    val batch = firestore.batch()
+                    chunk.forEach { doc ->
+                        val changes = mapOf("category" to target.value, "updatedAt" to FieldValue.serverTimestamp())
+                        batch.update(doc.reference, changes)
+                    }
+                    batch.commit().await()
+                }
+                docs.size
             }
         }
     }

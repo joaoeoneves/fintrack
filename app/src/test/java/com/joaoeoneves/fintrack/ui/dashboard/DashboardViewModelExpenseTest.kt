@@ -47,7 +47,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             assertEquals(0L, content.outflowCents)
             assertEquals(0L, content.spendingCents)
             assertEquals(0L, content.savedCents)
-            assertEquals(BuiltInCategories.all, content.categoryTotals.map { it.category })
+            assertEquals(BuiltInCategories.all.filterNot { it.archived }, content.categoryTotals.map { it.category })
             assertTrue(content.categoryTotals.all { it.totalCents == 0L })
         }
 

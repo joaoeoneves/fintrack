@@ -135,10 +135,13 @@ fun RecurringItem.toForm(
         endDate = endDate,
     )
 
-/** A blank form for a new item: starts and bills on [today]'s day (and month, for yearly items). */
+/**
+ * A blank form for a new item: starts and bills on [today]'s day (and month, for yearly items). The
+ * category is left unset unless given, so the user has to choose one explicitly.
+ */
 fun newRecurringForm(
     today: LocalDate,
-    category: Category,
+    category: Category? = null,
 ): RecurringForm =
     RecurringForm(
         startDate = today,

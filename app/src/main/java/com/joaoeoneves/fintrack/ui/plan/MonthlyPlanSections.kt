@@ -52,6 +52,7 @@ private fun AmountRow(
 fun PlanSummaryCard(
     summary: MonthlyPlanSummary,
     modifier: Modifier = Modifier,
+    fixedThisMonthCents: Long = 0L,
 ) {
     val negative = FinTrackTheme.colors.negative
     SettingsGroup(label = stringResource(R.string.plan_title), modifier = modifier) {
@@ -66,6 +67,10 @@ fun PlanSummaryCard(
             value = formatAmountCents(summary.plannedLeftoverCents),
             valueColor = if (summary.plannedLeftoverCents < 0) negative else MaterialTheme.colorScheme.onSurface,
         )
+        if (fixedThisMonthCents > 0L) {
+            Hairline()
+            AmountRow(stringResource(R.string.plan_fixed_this_month), formatAmountCents(fixedThisMonthCents))
+        }
     }
 }
 
@@ -143,6 +148,13 @@ private fun AllocationRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
             )
+            if (category.archived && allocation.limitCents != null) {
+                Text(
+                    text = stringResource(R.string.plan_archived_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
         }
         Text(
             text = allocation.limitCents?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),

@@ -16,6 +16,7 @@ class FakeBudgetRepository(
     var nextObserveBudgetsError: Throwable? = null,
     var nextSetBudgetError: Throwable? = null,
     var nextClearBudgetError: Throwable? = null,
+    var nextMoveBudgetError: Throwable? = null,
 ) : BudgetRepository {
     private val budgetsFlow = MutableStateFlow(initialBudgets)
 
@@ -49,5 +50,25 @@ class FakeBudgetRepository(
         }
         budgetsFlow.value = budgetsFlow.value.filterNot { it.categoryId == categoryId }
         return Result.success(Unit)
+    }
+
+    override suspend fun moveBudget(
+        source: CategoryId,
+        target: CategoryId,
+    ): Result<Boolean> {
+        nextMoveBudgetError?.let { error ->
+            nextMoveBudgetError = null
+            return Result.failure(error)
+        }
+        val current = budgetsFlow.value
+        val sourceBudget = current.find { it.categoryId == source }
+        val rest = current.filterNot { it.categoryId == source }
+        budgetsFlow.value =
+            if (sourceBudget == null || rest.any { it.categoryId == target }) {
+                rest
+            } else {
+                rest + sourceBudget.copy(categoryId = target)
+            }
+        return Result.success(sourceBudget != null)
     }
 }

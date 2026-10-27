@@ -8,10 +8,14 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
+import com.joaoeoneves.fintrack.domain.model.currentYearMonth
+import com.joaoeoneves.fintrack.domain.model.fixedSpendingCentsOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
+import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Clock
 import javax.inject.Inject
 
 private const val TAG = "MonthlyPlanViewModel"
@@ -41,6 +46,8 @@ class MonthlyPlanViewModel
         private val plannedIncomeRepository: PlannedIncomeRepository,
         private val budgetRepository: BudgetRepository,
         private val categoryRepository: CategoryRepository,
+        private val transactionRepository: TransactionRepository,
+        private val clock: Clock,
     ) : ViewModel() {
         private val editor = MutableStateFlow<IncomeLineEditorState?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
@@ -52,8 +59,10 @@ class MonthlyPlanViewModel
 
         val uiState: StateFlow<MonthlyPlanUiState> =
             retryTrigger
-                .flatMapLatest { planFlow(plannedIncomeRepository, budgetRepository, categoryRepository, editor) }
-                .stateIn(
+                .flatMapLatest {
+                    val fixed = fixedThisMonthFlow(transactionRepository, categoryRepository, clock)
+                    planFlow(plannedIncomeRepository, budgetRepository, categoryRepository, fixed, editor)
+                }.stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                     initialValue = MonthlyPlanUiState.Loading,
@@ -153,20 +162,23 @@ private fun planFlow(
     plannedIncomeRepository: PlannedIncomeRepository,
     budgetRepository: BudgetRepository,
     categoryRepository: CategoryRepository,
+    fixedThisMonth: Flow<Long>,
     editor: Flow<IncomeLineEditorState?>,
 ): Flow<MonthlyPlanUiState> =
     combine(
         plannedIncomeRepository.observePlannedIncome(),
         budgetRepository.observeBudgets(),
         categoryRepository.observeCategories(),
+        fixedThisMonth,
         editor,
-    ) { lines, budgets, categories, editorState ->
+    ) { lines, budgets, categories, fixedCents, editorState ->
         val allocations = budgetProgressOf(emptyList(), budgets, categories)
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
                 incomeLines = lines,
                 allocations = allocations,
                 summary = monthlyPlanOf(allocations, lines, emptyList()),
+                fixedThisMonthCents = fixedCents,
                 canAddIncomeLine = lines.size < MAX_PLANNED_INCOME_LINES,
                 editor = editorState,
             )
@@ -175,3 +187,18 @@ private fun planFlow(
         Log.w(TAG, "Failed to observe the monthly plan", e)
         emit(MonthlyPlanUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
     }
+
+/** Fixed (recurring) spending of the current calendar month, in cents. */
+private fun fixedThisMonthFlow(
+    transactionRepository: TransactionRepository,
+    categoryRepository: CategoryRepository,
+    clock: Clock,
+): Flow<Long> {
+    val zone = clock.zone
+    val range = currentYearMonth(clock.instant(), zone).toInstantRange(zone)
+    return combine(
+        transactionRepository.observeTransactions(range),
+        categoryRepository.observeCategories(),
+    ) { transactions, categories -> fixedSpendingCentsOf(transactions.expenses, categories) }
+        .catch { emit(0L) }
+}

@@ -173,11 +173,21 @@ class RecurringFormTest {
         assertEquals(BuiltInCategories.FOOD, form.category)
         assertEquals(day(2027, 1, 1), form.endDate)
 
-        val fresh = newRecurringForm(day(2026, 8, 31), BuiltInCategories.RECURRING)
+        val fresh = newRecurringForm(day(2026, 8, 31), BuiltInCategories.FOOD)
         assertEquals("31", fresh.dayText)
         assertEquals(8, fresh.monthOfYear)
         assertEquals(day(2026, 8, 31), fresh.startDate)
         assertEquals(RecurringType.EXPENSE, fresh.type)
-        assertEquals(BuiltInCategories.RECURRING, fresh.category)
+        assertEquals(BuiltInCategories.FOOD, fresh.category)
+    }
+
+    @Test
+    fun newForm_hasNoCategoryByDefault_andValidationRequiresOne() {
+        val fresh = newRecurringForm(day(2026, 8, 31))
+
+        assertNull(fresh.category)
+        val filled = fresh.copy(name = "Rent", amountText = "10,00")
+        assertEquals(msg(R.string.error_category_required), validateRecurringForm(filled)?.category)
+        assertNull(validateRecurringForm(filled.copy(category = BuiltInCategories.FOOD)))
     }
 }

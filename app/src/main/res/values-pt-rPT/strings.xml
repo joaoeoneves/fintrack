@@ -248,6 +248,32 @@
     <string name="error_category_name_duplicate">Já existe uma categoria com este nome</string>
     <string name="error_category_last_active">Pelo menos uma categoria tem de ficar ativa</string>
     <string name="error_category_save_failed">Não foi possível guardar a categoria</string>
+    <string name="category_action_move_items">Mover tudo para…</string>
+    <string name="category_move_checking_title">A verificar \"%1$s\"…</string>
+    <string name="category_move_nothing">Nada usa \"%1$s\", por isso não há nada para mover.</string>
+    <string name="category_move_cannot_verify">Não é possível verificar o que usa \"%1$s\" sem ligação à internet. Tente novamente quando estiver ligado.</string>
+    <string name="category_move_pick_title">Mover tudo de \"%1$s\" para</string>
+    <string name="category_move_confirm_title">Mover para \"%1$s\"?</string>
+    <string name="category_move_confirm_intro">De \"%1$s\":</string>
+    <plurals name="category_move_expenses">
+        <item quantity="one">%1$d despesa</item>
+        <item quantity="many">%1$d despesas</item>
+        <item quantity="other">%1$d despesas</item>
+    </plurals>
+    <plurals name="category_move_recurring">
+        <item quantity="one">%1$d item recorrente</item>
+        <item quantity="many">%1$d itens recorrentes</item>
+        <item quantity="other">%1$d itens recorrentes</item>
+    </plurals>
+    <string name="category_move_budget">O respetivo orçamento</string>
+    <string name="category_move_budget_merge">O respetivo orçamento (\"%1$s\" já tem um, que se mantém; este é descartado)</string>
+    <string name="category_action_move">Mover</string>
+    <string name="category_move_moving">A mover…</string>
+    <string name="category_move_done">Itens movidos</string>
+    <string name="error_category_move_failed">Não foi possível mover todos os itens. Verifique a ligação e tente novamente.</string>
+    <string name="dashboard_fixed_variable">Fixas %1$s\nVariáveis %2$s</string>
+    <string name="plan_fixed_this_month">Despesas fixas (recorrentes) este mês</string>
+    <string name="plan_archived_hint">Categoria arquivada. Mova os respetivos itens em Definições, Categorias.</string>
 
     <!-- Cópia de segurança -->
     <string name="settings_section_backup">Cópia de segurança</string>

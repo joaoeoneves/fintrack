@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.userCategory
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -20,6 +21,17 @@ class RecurringTransactionsTest {
     @Test
     fun id_isRecUnderscoreItemUnderscoreCompactDate() {
         assertEquals("rec_abc_20260305", occurrenceTransactionId("abc", day(2026, 3, 5)))
+    }
+
+    @Test
+    fun isRecurringOccurrenceId_trueForGeneratedIds_falseOtherwise() {
+        assertTrue(isRecurringOccurrenceId(occurrenceTransactionId("abc", day(2026, 3, 5))))
+        assertTrue(isRecurringOccurrenceId("rec_"))
+        assertFalse(isRecurringOccurrenceId(""))
+        assertFalse(isRecurringOccurrenceId("rec"))
+        assertFalse(isRecurringOccurrenceId("REC_abc"))
+        assertFalse(isRecurringOccurrenceId("xrec_abc"))
+        assertFalse(isRecurringOccurrenceId("5f3kA9"))
     }
 
     @Test

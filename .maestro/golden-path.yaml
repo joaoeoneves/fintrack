@@ -76,7 +76,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: ".*Transfer.*"
 - assertVisible: ".*Investments.*"
 - assertVisible: ".*Shopping.*"
-- assertVisible: ".*Recurring.*"
+# "Recurring" is archived by default, so it is no longer asserted in the pie legend.
 # B6: capture the Dashboard so the outer-Scaffold-padding removal can be checked visually (no
 # doubled gap above the top bar, last card not clipped above the nav bar).
 - takeScreenshot: build/maestro/golden-path-dashboard

@@ -368,6 +368,7 @@ private fun LazyListScope.balanceItems(
                 incomeCents = state.incomeCents,
                 spendingCents = state.spendingCents,
                 savedCents = state.savedCents,
+                fixedSpendingCents = state.fixedSpendingCents,
             )
         }
     }

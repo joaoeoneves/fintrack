@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
+import com.joaoeoneves.fintrack.domain.usecase.MoveCategoryItems
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +27,7 @@ abstract class CategoriesViewModelTestBase {
     protected val testDispatcher = StandardTestDispatcher()
     protected val expenses = FakeExpenseRepository()
     protected val budgets = FakeBudgetRepository()
+    protected val recurring = FakeRecurringRepository()
     protected val errors = mutableListOf<UiText>()
 
     protected val saveFailed = UiText.StringResource(R.string.error_category_save_failed)
@@ -43,8 +45,9 @@ abstract class CategoriesViewModelTestBase {
     protected fun newViewModel(repo: FakeCategoryRepository): CategoriesViewModel =
         CategoriesViewModel(
             repo,
-            CheckCategoryUsage(expenses, budgets, FakeRecurringRepository()),
+            CheckCategoryUsage(expenses, budgets, recurring),
             FakeBuiltInCategoryNames(),
+            MoveCategoryItems(expenses, budgets, recurring, testDispatcher),
         )
 
     /** Creates the view model, collects its state and events, and lets the first emission land. */

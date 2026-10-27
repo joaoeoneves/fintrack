@@ -13,4 +13,13 @@ interface BudgetRepository {
     ): Result<Unit>
 
     suspend fun clearBudget(categoryId: CategoryId): Result<Unit>
+
+    /**
+     * Moves the budget of [source] to [target]. When [target] already has a budget it is kept and the
+     * source's is dropped. Returns whether [source] had a budget. Awaited when signed in.
+     */
+    suspend fun moveBudget(
+        source: CategoryId,
+        target: CategoryId,
+    ): Result<Boolean>
 }
