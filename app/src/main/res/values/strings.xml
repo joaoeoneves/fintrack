@@ -426,6 +426,12 @@
     <string name="nav_insights">Insights</string>
     <string name="insights_title">Insights</string>
     <string name="insights_empty">No spending to analyse in this period yet.</string>
+    <string name="insights_split_title">Fixed vs variable</string>
+    <string name="insights_split_fixed">Fixed</string>
+    <string name="insights_split_variable">Variable</string>
+    <string name="insights_by_category">By category</string>
+    <string name="insights_by_group">By group</string>
+    <string name="cd_insights_split">Spending split: %1$s fixed, %2$s variable</string>
     <string name="plan_planned_vs_actual">Planned vs actual</string>
     <string name="home_recent_title">Recent activity</string>
     <string name="home_recent_empty">No activity yet</string>
