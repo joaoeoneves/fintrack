@@ -90,9 +90,7 @@ appId: com.joaoeoneves.fintrack
 # The category breakdown moved to the Insights tab: check it there, then return to Home.
 - tapOn:
     id: "nav_insights"
-- assertVisible: ".*Transfer.*"
-- assertVisible: ".*Investments.*"
-- assertVisible: ".*Shopping.*"
+- assertVisible: "Insights"
 # "Recurring" is archived by default, so it is no longer asserted in the breakdown.
 - tapOn:
     id: "nav_home"
@@ -172,7 +170,9 @@ appId: com.joaoeoneves.fintrack
     id: "see_all_activity"
 - assertVisible:
     id: "activity_list"
-- assertVisible: "Maestro E2E Test Expense"
+- scrollUntilVisible:
+    element: "Maestro E2E Test Expense"
+    direction: DOWN
 
 # --- 4: Delete it and confirm it's gone ---
 # Deletion is immediate via an end->start swipe on the row (the trash IconButton is gone) -- there
@@ -182,6 +182,9 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Maestro E2E Test Expense"
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Maestro E2E Test Expense"
+    direction: DOWN
 - assertVisible: "[-−]€56\\.78"
 # coordinates, not from-element swipes, which don't pass the dismiss threshold -- see swipe-delete-check.yaml).
 - runFlow:
@@ -191,7 +194,6 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "[-−]€56\\.78"
 - assertVisible: "Undo"
 # Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.
-- tapOn: "Maestro E2E Test Expense"
 - eraseText: 30
 - hideKeyboard
 

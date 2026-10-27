@@ -155,18 +155,22 @@ appId: com.joaoeoneves.fintrack
     id: "see_all_activity"
 - assertVisible:
     id: "activity_list"
-- assertVisible: "Nav Test Expense"
+- scrollUntilVisible:
+    element: "Nav Test Expense"
+    direction: DOWN
 
 # --- 7: Clean up: delete the expense (swipe right-to-left on the search-filtered row) ---
 - tapOn: "Search"
 - inputText: "Nav Test Expense"
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Nav Test Expense"
+    direction: DOWN
 - runFlow:
     file: _swipe-delete-row.yaml
     env:
       ROW: "Nav Test Expense"
 - assertVisible: "Undo"
-- tapOn: "Nav Test Expense"
 - eraseText: 30
 - hideKeyboard
 - back

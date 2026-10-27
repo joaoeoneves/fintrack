@@ -108,14 +108,12 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - assertVisible: "Act Test Income"
 - assertNotVisible: "Act Test Expense"
-- tapOn: "Act Test Inc"
 - eraseText: 30
 - inputText: "zzz-no-match"
 - hideKeyboard
 - assertNotVisible: "Act Test Income"
 - assertNotVisible: "Act Test Expense"
 - assertVisible: "Nothing matches.*"
-- tapOn: "zzz-no-match"
 - eraseText: 30
 - hideKeyboard
 - scrollUntilVisible:

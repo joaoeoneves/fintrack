@@ -30,8 +30,7 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
-- tapOn:
-    id: "nav_home"
+- tapOn: "Back"
 - assertVisible:
     id: "dashboard_list"
 
