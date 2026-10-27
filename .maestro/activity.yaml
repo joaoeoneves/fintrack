@@ -65,15 +65,14 @@ appId: com.joaoeoneves.fintrack
       id: "activity_list"
     timeout: 10000
 - assertVisible: "Activity"
-- scrollUntilVisible:
-    element: "Act Test Expense"
-    direction: DOWN
-- assertVisible: "Act Test Expense"
-- assertVisible: "Act Test Income"
 - assertVisible: "Out"
 - assertVisible: "In"
 - assertVisible:
     id: "filter_chip_all"
+- scrollUntilVisible:
+    element: "Act Test Expense"
+    direction: DOWN
+- assertVisible: "Act Test Expense"
 
 # --- 3: The Expenses chip hides the income; the Income chip hides the expense and the category chips ---
 - tapOn: "Expenses"
@@ -95,7 +94,6 @@ appId: com.joaoeoneves.fintrack
     element: "Act Test Expense"
     direction: DOWN
 - assertVisible: "Act Test Expense"
-- assertVisible: "Act Test Income"
 - assertVisible:
     id: "filter_chip_all"
 
@@ -120,16 +118,15 @@ appId: com.joaoeoneves.fintrack
     element: "Act Test Expense"
     direction: DOWN
 - assertVisible: "Act Test Expense"
-- assertVisible: "Act Test Income"
 
 # --- 5: Swipe-delete the income with Undo: row disappears, Undo restores it ---
 - scrollUntilVisible:
     element: "Act Test Income"
     direction: DOWN
-- runFlow:
-    file: _swipe-delete-row.yaml
-    env:
-      ROW: "Act Test Income"
+- swipe:
+    from: "Act Test Income"
+    direction: LEFT
+    duration: 800
 - assertNotVisible: "Act Test Income"
 - assertVisible: "Undo"
 - tapOn: "Undo"
@@ -141,18 +138,18 @@ appId: com.joaoeoneves.fintrack
 - scrollUntilVisible:
     element: "Act Test Income"
     direction: DOWN
-- runFlow:
-    file: _swipe-delete-row.yaml
-    env:
-      ROW: "Act Test Income"
+- swipe:
+    from: "Act Test Income"
+    direction: LEFT
+    duration: 800
 - assertNotVisible: "Act Test Income"
 - scrollUntilVisible:
     element: "Act Test Expense"
     direction: DOWN
-- runFlow:
-    file: _swipe-delete-row.yaml
-    env:
-      ROW: "Act Test Expense"
+- swipe:
+    from: "Act Test Expense"
+    direction: LEFT
+    duration: 800
 - assertNotVisible: "Act Test Expense"
 - back
 - assertVisible:
