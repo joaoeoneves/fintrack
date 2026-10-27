@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.active
+import com.joaoeoneves.fintrack.domain.repository.BuiltInCategoryNames
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
@@ -36,6 +37,7 @@ class CategoriesViewModel
     constructor(
         private val categoryRepository: CategoryRepository,
         private val checkCategoryUsage: CheckCategoryUsage,
+        private val builtInCategoryNames: BuiltInCategoryNames,
     ) : ViewModel() {
         private val editor = MutableStateFlow<CategoryEditorState?>(null)
         private val deleteDialog = MutableStateFlow<DeleteDialogState?>(null)
@@ -96,7 +98,8 @@ class CategoriesViewModel
         fun onSaveEditor(draft: CategoryDraft) {
             val state = editor.value ?: return
             val existing = state.editingId?.let { id -> catalog.find { it.id == id } }
-            val error = validateCategoryName(draft.name, existing, catalog)
+            val localizedNames = builtInCategoryNames.localizedNames()
+            val error = validateCategoryName(draft.name, existing, catalog, localizedNames)
             if (error != null) {
                 editor.value = state.copy(nameError = error)
                 return
@@ -107,7 +110,7 @@ class CategoriesViewModel
                 } else {
                     categoryRepository.updateCategory(
                         existing.copy(
-                            customName = resolveCustomName(draft.name, existing),
+                            customName = resolveCustomName(draft.name, existing, localizedNames),
                             iconKey = draft.iconKey,
                             colorKey = draft.colorKey,
                             kind = draft.kind,

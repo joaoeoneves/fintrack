@@ -33,20 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
-
-/** Localized default names of the built-in categories. */
-private val builtInNameRes: Map<CategoryId, Int> =
-    mapOf(
-        BuiltInCategories.TRANSFER.id to R.string.category_transfer,
-        BuiltInCategories.INVESTMENTS.id to R.string.category_investments,
-        BuiltInCategories.SHOPPING.id to R.string.category_shopping,
-        BuiltInCategories.FOOD.id to R.string.category_food,
-        BuiltInCategories.RECURRING.id to R.string.category_recurring,
-    )
 
 /**
  * Human-readable label for a [Category], shared across dashboard, list, and add/edit screens: the

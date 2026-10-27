@@ -18,13 +18,15 @@ private const val DEFAULT_ICON_KEY = "label"
 /**
  * Validates a category [name] typed in the editor. [editing] is the category being edited (`null`
  * when creating); [all] is the whole catalog, archived included. Blank is only allowed for a
- * built-in (it reverts to the localized default name). Only the English canonical names and ids of
- * the built-ins are reserved.
+ * built-in (it reverts to the localized default name). The built-ins' ids, English canonical names
+ * and every localized default name in [localizedBuiltInNames] are reserved (except the edited
+ * built-in's own), so switching the app language can't create a collision.
  */
 fun validateCategoryName(
     name: String,
     editing: Category?,
     all: List<Category>,
+    localizedBuiltInNames: Map<CategoryId, Set<String>> = emptyMap(),
 ): UiText? {
     val trimmed = name.trim()
     return when {
@@ -36,7 +38,9 @@ fun validateCategoryName(
             UiText.StringResource(R.string.error_category_name_too_long)
         }
 
-        isDuplicateName(trimmed, editing, all) -> UiText.StringResource(R.string.error_category_name_duplicate)
+        isDuplicateName(trimmed, editing, all, localizedBuiltInNames) -> {
+            UiText.StringResource(R.string.error_category_name_duplicate)
+        }
 
         else -> null
     }
@@ -46,24 +50,32 @@ private fun isDuplicateName(
     trimmed: String,
     editing: Category?,
     all: List<Category>,
+    localizedBuiltInNames: Map<CategoryId, Set<String>>,
 ): Boolean {
     val taken =
         all.filter { it.id != editing?.id }.map { it.effectiveName() } +
-            builtInEnglishNames.filterKeys { it != editing?.id }.flatMap { (id, name) -> listOf(id.value, name) }
+            builtInEnglishNames.filterKeys { it != editing?.id }.flatMap { (id, name) -> listOf(id.value, name) } +
+            localizedBuiltInNames.filterKeys { it != editing?.id }.values.flatten()
     return taken.any { it.equals(trimmed, ignoreCase = true) }
 }
 
 /**
  * The `customName` to store for [name]: trimmed, or `null` when blank or (for a built-in) equal to
- * its own English default name, so it keeps following the app language.
+ * its own English default name or any of its own localized names, so it keeps following the app
+ * language.
  */
 fun resolveCustomName(
     name: String,
     editing: Category?,
+    localizedBuiltInNames: Map<CategoryId, Set<String>> = emptyMap(),
 ): String? {
     val trimmed = name.trim()
     val isOwnDefault =
-        editing?.builtIn == true && trimmed.equals(canonicalNameOf(editing.id), ignoreCase = true)
+        editing?.builtIn == true &&
+            (
+                trimmed.equals(canonicalNameOf(editing.id), ignoreCase = true) ||
+                    localizedBuiltInNames[editing.id].orEmpty().any { it.equals(trimmed, ignoreCase = true) }
+            )
     return trimmed.takeUnless { it.isEmpty() || isOwnDefault }
 }
 
