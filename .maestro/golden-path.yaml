@@ -37,6 +37,12 @@ appId: com.joaoeoneves.fintrack
 # the end of this flow is needed, same reasoning as the language pin above.
 - tapOn:
     text: "Settings|Definições"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Display currency"
+    direction: DOWN
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"

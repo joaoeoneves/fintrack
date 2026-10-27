@@ -59,7 +59,7 @@ appId: com.joaoeoneves.fintrack
     id: "activity_list"
 - tapOn:
     id: "nav_plan"
-- assertVisible: "Add income line"
+- assertVisible: "Monthly plan"
 - tapOn:
     id: "nav_insights"
 - assertVisible: "Change period"
@@ -82,7 +82,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Last 3 months"
 - tapOn:
     id: "nav_plan"
-- assertVisible: "Add income line"
+- assertVisible: "Monthly plan"
 - tapOn:
     id: "nav_activity"
 - assertNotVisible:
@@ -100,7 +100,7 @@ appId: com.joaoeoneves.fintrack
 # --- 4: System back from a non-Home tab root goes to Home (Plan, then Activity) ---
 - tapOn:
     id: "nav_plan"
-- assertVisible: "Add income line"
+- assertVisible: "Monthly plan"
 - back
 - assertVisible:
     id: "dashboard_list"

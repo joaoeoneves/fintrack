@@ -65,6 +65,9 @@ appId: com.joaoeoneves.fintrack
       id: "activity_list"
     timeout: 10000
 - assertVisible: "Activity"
+- scrollUntilVisible:
+    element: "Act Test Expense"
+    direction: DOWN
 - assertVisible: "Act Test Expense"
 - assertVisible: "Act Test Income"
 - assertVisible: "Out"
@@ -74,14 +77,23 @@ appId: com.joaoeoneves.fintrack
 
 # --- 3: The Expenses chip hides the income; the Income chip hides the expense and the category chips ---
 - tapOn: "Expenses"
+- scrollUntilVisible:
+    element: "Act Test Expense"
+    direction: DOWN
 - assertVisible: "Act Test Expense"
 - assertNotVisible: "Act Test Income"
 - tapOn: "Income"
+- scrollUntilVisible:
+    element: "Act Test Income"
+    direction: DOWN
 - assertVisible: "Act Test Income"
 - assertNotVisible: "Act Test Expense"
 - assertNotVisible:
     id: "filter_chip_all"
 - tapOn: "All"
+- scrollUntilVisible:
+    element: "Act Test Expense"
+    direction: DOWN
 - assertVisible: "Act Test Expense"
 - assertVisible: "Act Test Income"
 - assertVisible:
@@ -91,6 +103,9 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Act Test Inc"
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Act Test Income"
+    direction: DOWN
 - assertVisible: "Act Test Income"
 - assertNotVisible: "Act Test Expense"
 - tapOn: "Act Test Inc"
@@ -103,10 +118,16 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "zzz-no-match"
 - eraseText: 30
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Act Test Expense"
+    direction: DOWN
 - assertVisible: "Act Test Expense"
 - assertVisible: "Act Test Income"
 
 # --- 5: Swipe-delete the income with Undo: row disappears, Undo restores it ---
+- scrollUntilVisible:
+    element: "Act Test Income"
+    direction: DOWN
 - runFlow:
     file: _swipe-delete-row.yaml
     env:
@@ -119,11 +140,17 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 
 # --- 6: Clean up: swipe-delete both rows for good (let the Undo snackbar time out) ---
+- scrollUntilVisible:
+    element: "Act Test Income"
+    direction: DOWN
 - runFlow:
     file: _swipe-delete-row.yaml
     env:
       ROW: "Act Test Income"
 - assertNotVisible: "Act Test Income"
+- scrollUntilVisible:
+    element: "Act Test Expense"
+    direction: DOWN
 - runFlow:
     file: _swipe-delete-row.yaml
     env:

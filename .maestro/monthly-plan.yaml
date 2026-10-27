@@ -22,6 +22,12 @@ appId: com.joaoeoneves.fintrack
 - back
 - tapOn:
     text: "Settings|Definições"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Display currency"
+    direction: DOWN
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn:
