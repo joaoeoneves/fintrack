@@ -437,6 +437,12 @@
     <string name="nav_insights">Análise</string>
     <string name="insights_title">Análise</string>
     <string name="insights_empty">Ainda não há despesas para analisar neste período.</string>
+    <string name="insights_split_title">Fixo vs. variável</string>
+    <string name="insights_split_fixed">Fixo</string>
+    <string name="insights_split_variable">Variável</string>
+    <string name="insights_by_category">Por categoria</string>
+    <string name="insights_by_group">Por grupo</string>
+    <string name="cd_insights_split">Divisão da despesa: %1$s fixo, %2$s variável</string>
     <string name="plan_planned_vs_actual">Planeado vs real</string>
     <string name="home_recent_title">Movimentos recentes</string>
     <string name="home_recent_empty">Ainda sem movimentos</string>

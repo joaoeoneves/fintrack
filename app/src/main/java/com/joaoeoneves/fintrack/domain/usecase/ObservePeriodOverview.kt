@@ -117,6 +117,7 @@ class ObservePeriodOverview
                 recent = transactions.recentActivity(recentLimit),
                 groups = groupProgressOf(rows, plan.categories, inputs.groups),
                 recurring = inputs.recurring,
+                periodGroups = periodGroupsOf(transactions, plan.categories, inputs.groups),
                 pots =
                     potsOf(
                         buckets = rows,
@@ -128,6 +129,13 @@ class ObservePeriodOverview
             )
         }
     }
+
+/** Spent per group over the whole period's [transactions] (planned amounts are left out). */
+private fun periodGroupsOf(
+    transactions: TransactionsInRange,
+    categories: List<Category>,
+    groups: List<CategoryGroup>,
+) = groupProgressOf(budgetProgressOf(transactions.expenses, emptyList(), categories), categories, groups)
 
 /** The plan-side flows of an overview, combined once so the main combine stays within five flows. */
 private class PlanInputs(
