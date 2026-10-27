@@ -194,9 +194,10 @@ class MonthlyPlanViewModel
         fun onSetAllocation(
             category: Category,
             limitCents: Long,
+            skipMonths: Set<Int> = emptySet(),
         ) {
             viewModelScope.launch {
-                repositories.budgets.setBudget(category.id, limitCents).onFailure { reportFailure(it) }
+                repositories.budgets.setBudget(category.id, limitCents, skipMonths).onFailure { reportFailure(it) }
             }
         }
 
@@ -235,7 +236,7 @@ private fun planFlow(
             settings to editorState
         },
     ) { lines, budgets, categories, overview, (settings, editorState) ->
-        val allocations = budgetProgressOf(emptyList(), budgets, categories)
+        val allocations = budgetProgressOf(emptyList(), budgets, categories, overview.recurring, overview.budgetMonth)
         val workingDays = workingDaysOf(overview.budgetMonth, settings)
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
@@ -249,6 +250,7 @@ private fun planFlow(
                 canAddIncomeLine = lines.size < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
                 editor = editorState,
+                groups = overview.groups,
             )
         content
     }.catch { e ->

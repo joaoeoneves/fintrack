@@ -40,12 +40,16 @@ fun PlanScreen(
     onOpenSettings: () -> Unit,
     onOpenRecurring: () -> Unit,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
+    groupsViewModel: CategoryGroupsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
         viewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
+    }
+    LaunchedEffect(Unit) {
+        groupsViewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
     }
 
     LargeTitleScaffold(
@@ -61,7 +65,8 @@ fun PlanScreen(
             is MonthlyPlanUiState.Error ->
                 ErrorState(message = state.message.asString(), onRetry = viewModel::onRetry, modifier = contentModifier)
 
-            is MonthlyPlanUiState.Content -> MonthlyPlanContent(state, viewModel, onOpenRecurring, contentModifier)
+            is MonthlyPlanUiState.Content ->
+                MonthlyPlanContent(state, viewModel, groupsViewModel, onOpenRecurring, contentModifier)
         }
     }
 }
@@ -70,11 +75,13 @@ fun PlanScreen(
 private fun MonthlyPlanContent(
     state: MonthlyPlanUiState.Content,
     viewModel: MonthlyPlanViewModel,
+    groupsViewModel: CategoryGroupsViewModel,
     onOpenRecurring: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editingAllocation by remember { mutableStateOf<CategoryBudget?>(null) }
     var editingWorkingDays by remember { mutableStateOf(false) }
+    var managingGroups by remember { mutableStateOf(false) }
     val cardModifier = Modifier.fillMaxWidth()
 
     LazyColumn(
@@ -105,6 +112,7 @@ private fun MonthlyPlanContent(
                 modifier = cardModifier,
             )
         }
+        groupsItem(state, groupsViewModel, onManage = { managingGroups = true }, modifier = cardModifier)
         plannedVsActualItem(state.progress, viewModel, cardModifier)
         item { RecurringSection(onOpen = onOpenRecurring, modifier = cardModifier) }
     }
@@ -115,6 +123,9 @@ private fun MonthlyPlanContent(
             onSave = viewModel::onSetWorkingDays,
             onDismiss = { editingWorkingDays = false },
         )
+    }
+    if (managingGroups) {
+        ManageGroupsDialog(groupsViewModel, onDismiss = { managingGroups = false })
     }
     PlanDialogs(
         state = state,
@@ -145,8 +156,8 @@ private fun PlanDialogs(
     editingAllocation?.let { budget ->
         EditBudgetDialog(
             budget = budget,
-            onSave = {
-                viewModel.onSetAllocation(budget.category, it)
+            onSave = { limitCents, skipMonths ->
+                viewModel.onSetAllocation(budget.category, limitCents, skipMonths)
                 onCloseAllocation()
             },
             onRemove = {
@@ -186,7 +197,7 @@ private fun LazyListScope.plannedVsActualItem(
     viewModel: MonthlyPlanViewModel,
     modifier: Modifier,
 ) {
-    val planned = progress.filter { it.limitCents != null }
+    val planned = progress.filter { it.planned != null }
     if (planned.isEmpty()) return
     item {
         BudgetSection(
@@ -197,4 +208,52 @@ private fun LazyListScope.plannedVsActualItem(
             modifier = modifier.padding(top = Dimens.Space24),
         )
     }
+}
+
+/** The "Groups" card; the suggested starter set is created with the names in the current language. */
+private fun LazyListScope.groupsItem(
+    state: MonthlyPlanUiState.Content,
+    groupsViewModel: CategoryGroupsViewModel,
+    onManage: () -> Unit,
+    modifier: Modifier,
+) {
+    item {
+        val defined by groupsViewModel.groups.collectAsStateWithLifecycle()
+        val names =
+            SuggestedGroupNames(
+                recurring = stringResource(R.string.group_suggested_recurring),
+                investments = stringResource(R.string.group_suggested_investments),
+                food = stringResource(R.string.group_suggested_food),
+                other = stringResource(R.string.group_suggested_other),
+            )
+        GroupsCard(
+            groups = state.groups,
+            hasGroups = defined?.isNotEmpty(),
+            actions =
+                GroupsActions(
+                    onCreateSuggested = { groupsViewModel.onCreateSuggested(names) },
+                    onManage = onManage,
+                ),
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun ManageGroupsDialog(
+    groupsViewModel: CategoryGroupsViewModel,
+    onDismiss: () -> Unit,
+) {
+    val groups by groupsViewModel.groups.collectAsStateWithLifecycle()
+    ManageGroupsSheet(
+        groups = groups.orEmpty(),
+        actions =
+            ManageGroupsActions(
+                onAdd = groupsViewModel::onAdd,
+                onRename = groupsViewModel::onRename,
+                onMove = groupsViewModel::onMove,
+                onDelete = groupsViewModel::onDelete,
+            ),
+        onDismiss = onDismiss,
+    )
 }

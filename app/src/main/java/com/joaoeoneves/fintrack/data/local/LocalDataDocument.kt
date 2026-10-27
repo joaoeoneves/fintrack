@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 4
+internal const val LOCAL_SCHEMA_VERSION = 5
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -24,6 +24,8 @@ data class LocalDataDocument(
     val recurring: List<LocalRecurringItem> = emptyList(),
     /** Per-month plan settings (absent in schema v1 to v3 files). */
     val monthSettings: List<LocalMonthSettings> = emptyList(),
+    /** Category groups (absent in schema v1 to v4 files). */
+    val categoryGroups: List<LocalCategoryGroup> = emptyList(),
 ) {
     /** Whether there is no user data at all. */
     val isEmpty: Boolean get() =
@@ -33,7 +35,8 @@ data class LocalDataDocument(
             categories.isEmpty() &&
             plannedIncome.isEmpty() &&
             recurring.isEmpty() &&
-            monthSettings.isEmpty()
+            monthSettings.isEmpty() &&
+            categoryGroups.isEmpty()
 }
 
 @Serializable
@@ -61,6 +64,8 @@ data class LocalIncome(
 data class LocalBudget(
     val categoryId: String,
     val limitCents: Long,
+    /** Month numbers 1..12 the limit does not apply to (absent in schema v1 to v4 files). */
+    val skipMonths: List<Int> = emptyList(),
 )
 
 @Serializable
@@ -96,4 +101,14 @@ data class LocalCategory(
     val kind: String,
     val order: Int,
     val archived: Boolean = false,
+    /** Id of the [LocalCategoryGroup] this category is filed under (absent in schema v1 to v4 files). */
+    val groupId: String? = null,
+)
+
+/** A named bucket of categories; [order] is its position in the list. */
+@Serializable
+data class LocalCategoryGroup(
+    val id: String,
+    val name: String,
+    val order: Int,
 )

@@ -467,4 +467,27 @@
     <string name="plan_extras_this_month">Extras este mês</string>
     <string name="cd_fewer_working_days">Menos dias úteis</string>
     <string name="cd_more_working_days">Mais dias úteis</string>
+
+    <string name="plan_groups_title">Grupos</string>
+    <string name="plan_groups_empty">Agrupe as suas categorias (alimentação, investimentos, …) para ver o plano de cada grupo num relance.</string>
+    <string name="plan_groups_suggest">Criar grupos sugeridos</string>
+    <string name="plan_groups_manage">Gerir grupos</string>
+    <string name="plan_group_other">Outros</string>
+    <string name="plan_from_recurring">a partir de recorrentes</string>
+    <string name="cd_group_toggle">Mostrar as categorias de %1$s</string>
+    <string name="group_suggested_recurring">Recorrentes</string>
+    <string name="group_suggested_investments">Investimentos</string>
+    <string name="group_suggested_food">Alimentação</string>
+    <string name="group_suggested_other">Outros</string>
+    <string name="groups_manage_title">Gerir grupos</string>
+    <string name="groups_none_yet">Ainda não há grupos</string>
+    <string name="groups_field_name">Nome do grupo</string>
+    <string name="groups_add">Adicionar grupo</string>
+    <string name="groups_rename">Mudar o nome</string>
+    <string name="groups_delete_title">Eliminar \"%1$s\"?</string>
+    <string name="groups_delete_message">As categorias mantêm-se, sem grupo.</string>
+    <string name="error_group_save_failed">Não foi possível guardar o grupo</string>
+    <string name="category_field_group">Grupo</string>
+    <string name="category_group_none">Sem grupo</string>
+    <string name="plan_not_in">Exceto em</string>
 </resources>

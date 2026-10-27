@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.backup
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
+import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -13,6 +14,7 @@ import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -55,6 +57,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         plannedIncome: List<PlannedIncome> = emptyList(),
         recurring: List<RecurringItem> = emptyList(),
         monthSettings: List<MonthSettings> = emptyList(),
+        groups: List<CategoryGroup> = emptyList(),
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
@@ -63,6 +66,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
             FakePlannedIncomeRepository(plannedIncome),
             FakeRecurringRepository(recurring),
             FakeMonthSettingsRepository(monthSettings),
+            FakeCategoryGroupRepository(groups),
         ),
         FakeCategoryRepository(categoryDocs),
         prefsStore,

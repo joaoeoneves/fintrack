@@ -65,9 +65,11 @@ internal fun LocalIncome.toDomainOrNull(): Income? =
 internal fun Income.toLocal(): LocalIncome =
     LocalIncome(id = id, source = source, amountCents = amountCents, date = date.toString(), note = note)
 
-internal fun LocalBudget.toDomain(): Budget = Budget(categoryId = CategoryId(categoryId), limitCents = limitCents)
+internal fun LocalBudget.toDomain(): Budget =
+    Budget(categoryId = CategoryId(categoryId), limitCents = limitCents, skipMonths = skipMonths.toSet())
 
-internal fun Budget.toLocal(): LocalBudget = LocalBudget(categoryId = categoryId.value, limitCents = limitCents)
+internal fun Budget.toLocal(): LocalBudget =
+    LocalBudget(categoryId = categoryId.value, limitCents = limitCents, skipMonths = skipMonths.sorted())
 
 /**
  * Leniently maps a stored category like the Firestore mapper does: unknown kind falls back to the
@@ -92,6 +94,7 @@ internal fun LocalCategory.toDomainOrNull(): Category? {
         order = order,
         archived = archived,
         builtIn = builtIn != null,
+        groupId = groupId?.takeIf { it.isNotBlank() },
     )
 }
 
@@ -104,6 +107,7 @@ internal fun Category.toLocal(): LocalCategory =
         kind = kind.name,
         order = order,
         archived = archived,
+        groupId = groupId,
     )
 
 /** The merged catalog (built-ins plus stored categories), never empty. */

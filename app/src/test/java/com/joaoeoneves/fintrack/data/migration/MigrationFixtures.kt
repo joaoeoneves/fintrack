@@ -7,9 +7,11 @@ import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
+import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 
 @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
 internal fun remoteSnapshot(
@@ -20,6 +22,7 @@ internal fun remoteSnapshot(
     recurringIds: Set<String> = emptySet(),
     categories: List<Category> = emptyList(),
     monthSettingsIds: Set<String> = emptySet(),
+    categoryGroups: List<CategoryGroup> = emptyList(),
 ) = RemoteAccountSnapshot(
     expenseIds,
     incomeIds,
@@ -28,6 +31,7 @@ internal fun remoteSnapshot(
     recurringIds,
     categories,
     monthSettingsIds,
+    categoryGroups,
 )
 
 @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
@@ -83,6 +87,7 @@ internal fun RemoteAccountSnapshot.after(plan: MigrationPlan) =
         plannedIncomeIds = plannedIncomeIds + plan.plannedIncome.map { it.id },
         recurringIds = recurringIds + plan.recurring.map { it.id },
         monthSettingsIds = monthSettingsIds + plan.monthSettings.map { it.month },
+        categoryGroups = categoryGroups + plan.categoryGroups.map { it.toDomain() },
         categories = categories + plan.categories.mapNotNull { it.toDomainOrNull() },
     )
 

@@ -11,11 +11,11 @@ class BackupCodecMonthSettingsTest {
     private val oldLine = """{"id":"p","label":"Pay","amountCents":5,"order":0}"""
 
     @Test
-    fun v3File_decodesToV4_withEmptyMonthSettings_andDefaultedLines() {
+    fun v3File_decodesToV5_withEmptyMonthSettings_andDefaultedLines() {
         val result = BackupCodec.decode("""{$header,"schemaVersion":3,"plannedIncome":[$oldLine]}""").success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(4, result.document.schemaVersion)
+        assertEquals(5, result.document.schemaVersion)
         assertTrue(result.document.monthSettings.isEmpty())
         val line = result.document.plannedIncome.single()
         assertEquals("FIXED", line.basis)
@@ -27,7 +27,7 @@ class BackupCodecMonthSettingsTest {
     fun v1AndV2Files_stillDecode() {
         listOf(1, 2).forEach { v ->
             val result = BackupCodec.decode("""{$header,"schemaVersion":$v}""").success()
-            assertEquals(4, result.document.schemaVersion)
+            assertEquals(5, result.document.schemaVersion)
         }
     }
 

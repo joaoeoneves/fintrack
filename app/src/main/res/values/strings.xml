@@ -454,4 +454,27 @@
     <string name="plan_extras_this_month">Extras this month</string>
     <string name="cd_fewer_working_days">Fewer working days</string>
     <string name="cd_more_working_days">More working days</string>
+
+    <string name="plan_groups_title">Groups</string>
+    <string name="plan_groups_empty">Group your categories (food, investments, …) to see each group\'s plan at a glance.</string>
+    <string name="plan_groups_suggest">Create suggested groups</string>
+    <string name="plan_groups_manage">Manage groups</string>
+    <string name="plan_group_other">Other</string>
+    <string name="plan_from_recurring">from recurring</string>
+    <string name="cd_group_toggle">Show categories of %1$s</string>
+    <string name="group_suggested_recurring">Recurring</string>
+    <string name="group_suggested_investments">Investments</string>
+    <string name="group_suggested_food">Food</string>
+    <string name="group_suggested_other">Other</string>
+    <string name="groups_manage_title">Manage groups</string>
+    <string name="groups_none_yet">No groups yet</string>
+    <string name="groups_field_name">Group name</string>
+    <string name="groups_add">Add group</string>
+    <string name="groups_rename">Rename</string>
+    <string name="groups_delete_title">Delete \"%1$s\"?</string>
+    <string name="groups_delete_message">Its categories stay, without a group.</string>
+    <string name="error_group_save_failed">Couldn\'t save the group</string>
+    <string name="category_field_group">Group</string>
+    <string name="category_group_none">No group</string>
+    <string name="plan_not_in">Not in</string>
 </resources>

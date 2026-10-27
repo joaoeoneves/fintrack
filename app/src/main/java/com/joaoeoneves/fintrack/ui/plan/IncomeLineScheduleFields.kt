@@ -124,7 +124,7 @@ private fun OnceMonthPicker(
 /** Twelve month chips under an optional [title]; [onToggle] gets the tapped month number (1..12). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MonthChips(
+internal fun MonthChips(
     title: String?,
     selected: Set<Int>,
     onToggle: (Int) -> Unit,

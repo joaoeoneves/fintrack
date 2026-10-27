@@ -28,6 +28,7 @@ class FakeBudgetRepository(
     override suspend fun setBudget(
         categoryId: CategoryId,
         limitCents: Long,
+        skipMonths: Set<Int>,
     ): Result<Unit> {
         nextSetBudgetError?.let { error ->
             nextSetBudgetError = null
@@ -36,9 +37,11 @@ class FakeBudgetRepository(
         val current = budgetsFlow.value
         budgetsFlow.value =
             if (current.any { it.categoryId == categoryId }) {
-                current.map { if (it.categoryId == categoryId) it.copy(limitCents = limitCents) else it }
+                current.map {
+                    if (it.categoryId == categoryId) it.copy(limitCents = limitCents, skipMonths = skipMonths) else it
+                }
             } else {
-                current + Budget(categoryId = categoryId, limitCents = limitCents)
+                current + Budget(categoryId = categoryId, limitCents = limitCents, skipMonths = skipMonths)
             }
         return Result.success(Unit)
     }

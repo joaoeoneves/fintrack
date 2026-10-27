@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,17 +26,19 @@ import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
+import com.joaoeoneves.fintrack.ui.plan.MonthChips
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 @Composable
 internal fun EditBudgetDialog(
     budget: CategoryBudget,
-    onSave: (Long) -> Unit,
+    onSave: (Long, Set<Int>) -> Unit,
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val decimalSeparator = decimalSeparatorFor(currentLocale())
     var amountText by remember { mutableStateOf(budget.limitCents?.toAmountInputText(decimalSeparator).orEmpty()) }
+    var skipMonths by remember { mutableStateOf(budget.skipMonths) }
     var error by remember { mutableStateOf<String?>(null) }
     val invalidAmountMessage = stringResource(R.string.error_invalid_amount)
     val hasLimit = budget.limitCents != null
@@ -57,6 +61,16 @@ internal fun EditBudgetDialog(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth(),
         )
+        Column(
+            modifier = Modifier.padding(top = Dimens.Space16),
+            verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        ) {
+            MonthChips(
+                title = stringResource(R.string.plan_not_in),
+                selected = skipMonths,
+                onToggle = { skipMonths = if (it in skipMonths) skipMonths - it else skipMonths + it },
+            )
+        }
         PrimaryPillButton(
             text = stringResource(R.string.action_save),
             onClick = {
@@ -66,7 +80,7 @@ internal fun EditBudgetDialog(
                     amountText.isBlank() -> if (hasLimit) onRemove() else onDismiss()
                     else ->
                         parseAmountCents(amountText)
-                            .onSuccess { cents -> onSave(cents) }
+                            .onSuccess { cents -> onSave(cents, skipMonths) }
                             .onFailure { error = invalidAmountMessage }
                 }
             },

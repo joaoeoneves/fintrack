@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.backup
 import android.app.Application
 import android.net.Uri
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
+import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -72,6 +73,7 @@ abstract class BackupViewModelTestBase : BackupRepositoryTestBase() {
                 FakePlannedIncomeRepository(),
                 FakeRecurringRepository(),
                 FakeMonthSettingsRepository(),
+                FakeCategoryGroupRepository(),
             ),
             FakeCategoryRepository(),
             prefsStore,

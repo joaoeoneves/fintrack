@@ -7,9 +7,11 @@ import kotlinx.coroutines.flow.Flow
 interface BudgetRepository {
     fun observeBudgets(): Flow<List<Budget>>
 
+    /** Sets the budget as a whole: [skipMonths] replaces the previous skipped months. */
     suspend fun setBudget(
         categoryId: CategoryId,
         limitCents: Long,
+        skipMonths: Set<Int> = emptySet(),
     ): Result<Unit>
 
     suspend fun clearBudget(categoryId: CategoryId): Result<Unit>

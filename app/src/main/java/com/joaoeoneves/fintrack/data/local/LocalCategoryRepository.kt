@@ -25,6 +25,7 @@ class LocalCategoryRepository
             iconKey: String,
             colorKey: String,
             kind: CategoryKind,
+            groupId: String?,
         ): Result<CategoryId> =
             store.update { doc ->
                 val nextOrder =
@@ -42,6 +43,7 @@ class LocalCategoryRepository
                         colorKey = colorKey,
                         kind = kind.name,
                         order = nextOrder,
+                        groupId = groupId,
                     )
                 validateCategory(record)
                 doc.copy(categories = doc.categories + record) to CategoryId(record.id)
@@ -57,6 +59,15 @@ class LocalCategoryRepository
             store.update { doc ->
                 val current = requireNotNull(doc.catalog().find { it.id == id }) { "Unknown category ${id.value}" }
                 doc.withCategories(listOf(current.copy(archived = archived).toLocal())) to Unit
+            }
+
+        override suspend fun setGroup(
+            id: CategoryId,
+            groupId: String?,
+        ): Result<Unit> =
+            store.update { doc ->
+                val current = requireNotNull(doc.catalog().find { it.id == id }) { "Unknown category ${id.value}" }
+                doc.withCategories(listOf(current.copy(groupId = groupId).toLocal())) to Unit
             }
 
         override suspend fun reorder(orderedIds: List<CategoryId>): Result<Unit> =

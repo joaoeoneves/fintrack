@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
+import com.joaoeoneves.fintrack.domain.model.GroupProgress
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
@@ -21,6 +22,7 @@ sealed interface MonthlyPlanUiState {
      * @property canAddIncomeLine whether the line cap has not been reached yet.
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
      * @property editor the income-line sheet, or `null` when it is closed.
+     * @property groups planned vs actual per category group (and the implicit "Other") for [period]'s month.
      */
     data class Content(
         val incomeLines: List<PlannedIncome>,
@@ -33,6 +35,7 @@ sealed interface MonthlyPlanUiState {
         val canAddIncomeLine: Boolean,
         val workingDays: WorkingDaysState,
         val editor: IncomeLineEditorState?,
+        val groups: List<GroupProgress> = emptyList(),
     ) : MonthlyPlanUiState
 
     data class Error(

@@ -2,16 +2,21 @@ package com.joaoeoneves.fintrack.ui.dashboard
 
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
+import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
+import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
+import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import java.time.Clock
 
 /**
@@ -39,6 +44,8 @@ data class DashboardRepositories(
     val categoryRepository: CategoryRepository,
     val plannedIncomeRepository: PlannedIncomeRepository = FakePlannedIncomeRepository(),
     val monthSettingsRepository: MonthSettingsRepository = FakeMonthSettingsRepository(),
+    val categoryGroupRepository: CategoryGroupRepository = FakeCategoryGroupRepository(),
+    val recurringRepository: RecurringRepository = FakeRecurringRepository(),
 )
 
 /** Like the five-parameter overload, but with an explicit [DashboardRepositories.categoryRepository]. */
@@ -58,8 +65,13 @@ fun observePeriodOverviewOf(repositories: DashboardRepositories): ObservePeriodO
     ObservePeriodOverview(
         transactionRepository =
             CombinedTransactionRepository(repositories.expenseRepository, repositories.incomeRepository),
-        budgetRepository = repositories.budgetRepository,
-        plannedIncomeRepository = repositories.plannedIncomeRepository,
-        categoryRepository = repositories.categoryRepository,
-        monthSettingsRepository = repositories.monthSettingsRepository,
+        sources =
+            PlanDataSources(
+                budgets = repositories.budgetRepository,
+                plannedIncome = repositories.plannedIncomeRepository,
+                monthSettings = repositories.monthSettingsRepository,
+                categories = repositories.categoryRepository,
+                groups = repositories.categoryGroupRepository,
+                recurring = repositories.recurringRepository,
+            ),
     )

@@ -60,6 +60,7 @@ class FirestoreCategoryRepository
             iconKey: String,
             colorKey: String,
             kind: CategoryKind,
+            groupId: String?,
         ): Result<CategoryId> =
             withUid { uid ->
                 val docRef = collection(uid).document()
@@ -80,6 +81,7 @@ class FirestoreCategoryRepository
                         order = nextOrder,
                         archived = false,
                         builtIn = false,
+                        groupId = groupId,
                     )
                 val data = category.toFirestoreMap() + ("createdAt" to FieldValue.serverTimestamp())
                 docRef.set(data).addOnFailureListener { Log.w(TAG, "Add category write ${docRef.id} failed", it) }
@@ -96,6 +98,16 @@ class FirestoreCategoryRepository
                 val current =
                     requireNotNull(observeCategories().first().find { it.id == id }) { "Unknown category ${id.value}" }
                 write(uid, current.copy(archived = archived))
+            }
+
+        override suspend fun setGroup(
+            id: CategoryId,
+            groupId: String?,
+        ): Result<Unit> =
+            withUid { uid ->
+                val current =
+                    requireNotNull(observeCategories().first().find { it.id == id }) { "Unknown category ${id.value}" }
+                write(uid, current.copy(groupId = groupId))
             }
 
         override suspend fun reorder(orderedIds: List<CategoryId>): Result<Unit> =

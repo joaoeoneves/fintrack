@@ -138,7 +138,12 @@ internal fun CategoriesContent(
             is CategoriesUiState.Content -> {
                 CategoryList(state, actions.rows, Modifier.padding(innerPadding))
                 state.editor?.let { editor ->
-                    CategoryEditorDialog(editor, onSave = actions.onSave, onDismiss = actions.onDismissEditor)
+                    CategoryEditorDialog(
+                        state = editor,
+                        groups = state.groups,
+                        onSave = actions.onSave,
+                        onDismiss = actions.onDismissEditor,
+                    )
                 }
                 state.deleteDialog?.let { dialog ->
                     CategoryDeleteDialog(
