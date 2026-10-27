@@ -126,15 +126,17 @@ appId: com.joaoeoneves.fintrack
 - tapOn:
     id: "nav_plan"
 - scrollUntilVisible:
-    element: "Add income line"
+    element: "Salary"
     direction: UP
-
 - tapOn: "Salary"
 - assertVisible: "Edit income line"
 - tapOn: "Remove"
 - assertNotVisible: "Edit income line"
 - assertNotVisible: "Salary"
 
+- scrollUntilVisible:
+    element: "Meal allowance"
+    direction: UP
 - tapOn: "Meal allowance"
 - assertVisible: "Edit income line"
 - tapOn: "Remove"

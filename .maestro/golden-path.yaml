@@ -195,7 +195,6 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Undo"
 # Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.
 - eraseText: 30
-- hideKeyboard
 
 # --- 5: Exercise the list's own period selector (ExpenseListScreen has the same PeriodSelector as
 # the Dashboard). Open the period menu via the label's dropdown icon (content description "Change

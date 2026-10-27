@@ -113,13 +113,19 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Act Test Expense"
 - assertVisible: "Nothing matches.*"
 - eraseText: 30
-- hideKeyboard
 - scrollUntilVisible:
     element: "Act Test Expense"
     direction: DOWN
 - assertVisible: "Act Test Expense"
 
 # --- 5: Swipe-delete the income with Undo: row disappears, Undo restores it ---
+# (re-enter the tab: the keyboard-hide above can leave us on Home)
+- tapOn:
+    id: "nav_activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity_list"
+    timeout: 10000
 - tapOn: "Search"
 - inputText: "Act Test Income"
 - hideKeyboard
@@ -147,6 +153,7 @@ appId: com.joaoeoneves.fintrack
 - extendedWaitUntil:
     visible: "Undo"
     timeout: 10000
+- tapOn: "Search"
 - eraseText: 30
 - inputText: "Act Test Expense"
 - hideKeyboard
@@ -159,7 +166,6 @@ appId: com.joaoeoneves.fintrack
     visible: "Undo"
     timeout: 10000
 - eraseText: 30
-- hideKeyboard
 - back
 - assertVisible:
     id: "dashboard_list"
