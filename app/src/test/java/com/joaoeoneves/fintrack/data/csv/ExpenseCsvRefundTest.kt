@@ -76,7 +76,7 @@ class ExpenseCsvRefundTest {
             val result = parse("name,amountCents,category,date,note\nX,$raw,Shopping,2024-01-15,")
 
             assertTrue(raw, result.validExpenses.isEmpty())
-            assertEquals("amountCents must not be zero: '$raw'", result.failures.single().reason)
+            assertEquals(CsvRowError.ZeroAmount(raw), result.failures.single().reason)
         }
     }
 
@@ -86,6 +86,6 @@ class ExpenseCsvRefundTest {
 
         val result = parse("name,amountCents,category,date,note\nX,$raw,Shopping,2024-01-15,")
 
-        assertEquals("Invalid amountCents value: '$raw'", result.failures.single().reason)
+        assertEquals(CsvRowError.InvalidAmount(raw), result.failures.single().reason)
     }
 }

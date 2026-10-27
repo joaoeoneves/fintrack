@@ -67,7 +67,7 @@ class ImportExportViewModel
                     when (val outcome = ExpenseCsvParser.parse(text, categories = categories)) {
                         is CsvImportOutcome.Parsed ->
                             ImportUiState.Preview(outcome.result.validExpenses, outcome.result.failures)
-                        is CsvImportOutcome.Error -> ImportUiState.Error(UiText.Dynamic(outcome.message))
+                        is CsvImportOutcome.Error -> ImportUiState.Error(outcome.error.toUiText())
                     }
             }
         }

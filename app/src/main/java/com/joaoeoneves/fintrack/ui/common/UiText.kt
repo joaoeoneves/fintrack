@@ -17,20 +17,23 @@ sealed interface UiText {
 
     data class StringResource(
         @param:StringRes val resId: Int,
+        val args: List<Any> = emptyList(),
     ) : UiText
 }
 
 /** Resolves this text inside a Composable, in the current locale. */
+@Suppress("SpreadOperator")
 @Composable
 fun UiText.asString(): String =
     when (this) {
         is UiText.Dynamic -> value
-        is UiText.StringResource -> stringResource(resId)
+        is UiText.StringResource -> stringResource(resId, *args.toTypedArray())
     }
 
 /** Resolves this text outside composition (e.g. inside a `LaunchedEffect`). */
+@Suppress("SpreadOperator")
 fun UiText.asString(resources: Resources): String =
     when (this) {
         is UiText.Dynamic -> value
-        is UiText.StringResource -> resources.getString(resId)
+        is UiText.StringResource -> resources.getString(resId, *args.toTypedArray())
     }

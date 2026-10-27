@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 
 @Composable
@@ -34,7 +35,13 @@ fun ImportPreviewDialog(
                 if (state.failures.isNotEmpty()) {
                     LazyColumn(modifier = Modifier.heightIn(max = 240.dp)) {
                         items(state.failures) { failure ->
-                            Text(stringResource(R.string.import_preview_row_failure, failure.rowNumber, failure.reason))
+                            Text(
+                                stringResource(
+                                    R.string.import_preview_row_failure,
+                                    failure.rowNumber,
+                                    failure.reason.toUiText().asString(),
+                                ),
+                            )
                         }
                     }
                 }

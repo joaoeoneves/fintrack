@@ -29,7 +29,7 @@ private sealed interface ParsedRow {
     ) : ParsedRow
 
     data class Invalid(
-        val reason: String,
+        val reason: CsvRowError,
     ) : ParsedRow
 }
 
@@ -37,8 +37,41 @@ private sealed interface ParsedRow {
 data class CsvRowFailure(
     val rowNumber: Int,
     val rawLine: String,
-    val reason: String,
+    val reason: CsvRowError,
 )
+
+/** Why a single CSV data row was rejected; carries only the data needed to describe it. */
+sealed interface CsvRowError {
+    data class WrongColumnCount(
+        val found: Int,
+    ) : CsvRowError
+
+    data object NameRequired : CsvRowError
+
+    data class NameTooLong(
+        val max: Int,
+    ) : CsvRowError
+
+    data class InvalidAmount(
+        val raw: String,
+    ) : CsvRowError
+
+    data class ZeroAmount(
+        val raw: String,
+    ) : CsvRowError
+
+    data class UnknownCategory(
+        val raw: String,
+    ) : CsvRowError
+
+    data class InvalidDate(
+        val raw: String,
+    ) : CsvRowError
+
+    data class NoteTooLong(
+        val max: Int,
+    ) : CsvRowError
+}
 
 /** Result of parsing a whole CSV document: successfully parsed expenses plus any row failures. */
 data class CsvParseResult(
@@ -54,8 +87,15 @@ sealed interface CsvImportOutcome {
     ) : CsvImportOutcome
 
     data class Error(
-        val message: String,
+        val error: CsvImportError,
     ) : CsvImportOutcome
+}
+
+/** Fatal reason a CSV document could not be parsed at all. */
+sealed interface CsvImportError {
+    data object Empty : CsvImportError
+
+    data object UnrecognizedHeader : CsvImportError
 }
 
 /**
@@ -86,9 +126,9 @@ object ExpenseCsvParser {
             nonBlankLines.firstOrNull()?.let { header -> splitCsvLine(header).map { it.trim().lowercase() } }
 
         return when {
-            nonBlankLines.isEmpty() -> CsvImportOutcome.Error("The file is empty")
+            nonBlankLines.isEmpty() -> CsvImportOutcome.Error(CsvImportError.Empty)
             headerColumns?.joinToString(",") != EXPECTED_HEADER ->
-                CsvImportOutcome.Error("Unrecognized header — expected name,amountCents,category,date,note")
+                CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader)
             else -> CsvImportOutcome.Parsed(parseDataLines(nonBlankLines.drop(1), zone, categories))
         }
     }
@@ -105,7 +145,7 @@ object ExpenseCsvParser {
             val rowNumber = index + 2 // header is row 1, first data row is row 2
             val fields = splitCsvLine(line)
             if (fields.size != EXPECTED_COLUMN_COUNT) {
-                failures += CsvRowFailure(rowNumber, line, "Expected 5 columns, found ${fields.size}")
+                failures += CsvRowFailure(rowNumber, line, CsvRowError.WrongColumnCount(fields.size))
                 return@forEachIndexed
             }
 
@@ -136,15 +176,15 @@ object ExpenseCsvParser {
         val note = rawNote.ifBlank { null }
 
         return when {
-            name.isEmpty() -> ParsedRow.Invalid("Name is required")
+            name.isEmpty() -> ParsedRow.Invalid(CsvRowError.NameRequired)
             name.codePointLength() > MAX_NAME_LENGTH ->
-                ParsedRow.Invalid("Name exceeds $MAX_NAME_LENGTH characters")
-            amountCents == null -> ParsedRow.Invalid("Invalid amountCents value: '$rawAmount'")
-            amountCents == 0L -> ParsedRow.Invalid("amountCents must not be zero: '$rawAmount'")
-            category == null -> ParsedRow.Invalid("Unknown category: '$rawCategory'")
-            date == null -> ParsedRow.Invalid("Invalid date: '$rawDate'")
+                ParsedRow.Invalid(CsvRowError.NameTooLong(MAX_NAME_LENGTH))
+            amountCents == null -> ParsedRow.Invalid(CsvRowError.InvalidAmount(rawAmount))
+            amountCents == 0L -> ParsedRow.Invalid(CsvRowError.ZeroAmount(rawAmount))
+            category == null -> ParsedRow.Invalid(CsvRowError.UnknownCategory(rawCategory))
+            date == null -> ParsedRow.Invalid(CsvRowError.InvalidDate(rawDate))
             note != null && note.codePointLength() > MAX_NOTE_LENGTH ->
-                ParsedRow.Invalid("Note exceeds $MAX_NOTE_LENGTH characters")
+                ParsedRow.Invalid(CsvRowError.NoteTooLong(MAX_NOTE_LENGTH))
             else ->
                 ParsedRow.Valid(
                     Expense(

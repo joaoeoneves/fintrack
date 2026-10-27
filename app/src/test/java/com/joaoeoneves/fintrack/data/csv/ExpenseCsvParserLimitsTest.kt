@@ -40,8 +40,7 @@ class ExpenseCsvParserLimitsTest {
         assertTrue(result.validExpenses.isEmpty())
         val failure = result.failures.single()
         assertEquals(2, failure.rowNumber)
-        assertTrue(failure.reason, failure.reason.contains("amountCents"))
-        assertEquals("amountCents must not be zero: '0'", failure.reason)
+        assertEquals(CsvRowError.ZeroAmount("0"), failure.reason)
     }
 
     @Test
@@ -59,7 +58,7 @@ class ExpenseCsvParserLimitsTest {
         val result = parsed(row(amountCents = "-0"))
 
         assertTrue(result.validExpenses.isEmpty())
-        assertEquals("amountCents must not be zero: '-0'", result.failures.single().reason)
+        assertEquals(CsvRowError.ZeroAmount("-0"), result.failures.single().reason)
     }
 
     @Test
@@ -69,7 +68,7 @@ class ExpenseCsvParserLimitsTest {
         val result = parsed(row(amountCents = raw))
 
         assertTrue(result.validExpenses.isEmpty())
-        assertEquals("Invalid amountCents value: '$raw'", result.failures.single().reason)
+        assertEquals(CsvRowError.InvalidAmount(raw), result.failures.single().reason)
     }
 
     @Test
@@ -94,7 +93,7 @@ class ExpenseCsvParserLimitsTest {
         val result = parsed(row(amountCents = " 0 "))
 
         // The raw (untrimmed) value is echoed back in the message.
-        assertEquals("amountCents must not be zero: ' 0 '", result.failures.single().reason)
+        assertEquals(CsvRowError.ZeroAmount(" 0 "), result.failures.single().reason)
     }
 
     // ---- name length ----
@@ -114,7 +113,7 @@ class ExpenseCsvParserLimitsTest {
         val result = parsed(row(name = "a".repeat(201)))
 
         assertTrue(result.validExpenses.isEmpty())
-        assertEquals("Name exceeds 200 characters", result.failures.single().reason)
+        assertEquals(CsvRowError.NameTooLong(200), result.failures.single().reason)
     }
 
     @Test
@@ -131,7 +130,7 @@ class ExpenseCsvParserLimitsTest {
     fun name_201EmojiCodePoints_isRejected() {
         val result = parsed(row(name = emoji(201)))
 
-        assertEquals("Name exceeds 200 characters", result.failures.single().reason)
+        assertEquals(CsvRowError.NameTooLong(200), result.failures.single().reason)
     }
 
     @Test
@@ -159,7 +158,7 @@ class ExpenseCsvParserLimitsTest {
         val result = parsed(row(note = "n".repeat(2001)))
 
         assertTrue(result.validExpenses.isEmpty())
-        assertEquals("Note exceeds 2000 characters", result.failures.single().reason)
+        assertEquals(CsvRowError.NoteTooLong(2000), result.failures.single().reason)
     }
 
     @Test
@@ -196,8 +195,8 @@ class ExpenseCsvParserLimitsTest {
         assertEquals(listOf(false, false, true, false), result.validExpenses.map { it.isRefund })
         val reasonsByRow = result.failures.associate { it.rowNumber to it.reason }
         assertEquals(setOf(3, 4, 6), reasonsByRow.keys)
-        assertEquals("amountCents must not be zero: '0'", reasonsByRow.getValue(3))
-        assertEquals("Name exceeds 200 characters", reasonsByRow.getValue(4))
-        assertEquals("Note exceeds 2000 characters", reasonsByRow.getValue(6))
+        assertEquals(CsvRowError.ZeroAmount("0"), reasonsByRow.getValue(3))
+        assertEquals(CsvRowError.NameTooLong(200), reasonsByRow.getValue(4))
+        assertEquals(CsvRowError.NoteTooLong(2000), reasonsByRow.getValue(6))
     }
 }

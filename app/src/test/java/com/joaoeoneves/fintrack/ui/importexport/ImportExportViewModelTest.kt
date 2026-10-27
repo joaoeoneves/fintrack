@@ -126,10 +126,10 @@ class ImportExportViewModelTest {
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
 
-            // Parser-level errors (CsvImportOutcome.Error) carry their own message as Dynamic text.
+            // Parser-level errors (CsvImportOutcome.Error) map to a typed localized message.
             val state = viewModel.importState.value
             assertTrue("expected Error but was $state", state is ImportUiState.Error)
-            assertTrue((state as ImportUiState.Error).message is UiText.Dynamic)
+            assertEquals(UiText.StringResource(R.string.error_csv_empty), (state as ImportUiState.Error).message)
         }
 
     @Test

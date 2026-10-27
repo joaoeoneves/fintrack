@@ -330,7 +330,7 @@ class ExpenseCsvParserTest {
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
         assertEquals(3, failure.rowNumber)
-        assertTrue(failure.reason.contains("category", ignoreCase = true))
+        assertEquals(CsvRowError.UnknownCategory("NotACategory"), failure.reason)
     }
 
     @Test
@@ -375,7 +375,7 @@ class ExpenseCsvParserTest {
 
         val outcome = ExpenseCsvParser.parse(csv)
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader), outcome)
     }
 
     @Test
@@ -407,8 +407,7 @@ class ExpenseCsvParserTest {
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
         assertEquals(3, failure.rowNumber)
-        assertTrue(failure.reason.contains("category", ignoreCase = true))
-        assertTrue(failure.reason.contains("NotACategory"))
+        assertEquals(CsvRowError.UnknownCategory("NotACategory"), failure.reason)
     }
 
     @Test
@@ -422,8 +421,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("amountCents", ignoreCase = true),
+                .reason is CsvRowError.InvalidAmount,
         )
     }
 
@@ -439,8 +437,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("amountCents", ignoreCase = true),
+                .reason is CsvRowError.InvalidAmount,
         )
     }
 
@@ -455,8 +452,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("amountCents", ignoreCase = true),
+                .reason is CsvRowError.InvalidAmount,
         )
     }
 
@@ -469,8 +465,7 @@ class ExpenseCsvParserTest {
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
-        assertTrue(failure.reason.contains("date", ignoreCase = true))
-        assertTrue(failure.reason.contains("not-a-date"))
+        assertEquals(CsvRowError.InvalidDate("not-a-date"), failure.reason)
     }
 
     @Test
@@ -482,8 +477,7 @@ class ExpenseCsvParserTest {
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
-        assertTrue(failure.reason.contains("5"))
-        assertTrue(failure.reason.contains("4"))
+        assertEquals(CsvRowError.WrongColumnCount(4), failure.reason)
     }
 
     @Test
@@ -495,8 +489,7 @@ class ExpenseCsvParserTest {
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
-        assertTrue(failure.reason.contains("5"))
-        assertTrue(failure.reason.contains("6"))
+        assertEquals(CsvRowError.WrongColumnCount(6), failure.reason)
     }
 
     @Test
@@ -510,8 +503,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("Name", ignoreCase = true),
+                .reason == CsvRowError.NameRequired,
         )
     }
 
@@ -528,7 +520,7 @@ class ExpenseCsvParserTest {
     fun allWhitespaceFile_producesError() {
         val outcome = ExpenseCsvParser.parse("   \n\n   \t\n")
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.Empty), outcome)
     }
 
     @Test
@@ -551,7 +543,7 @@ class ExpenseCsvParserTest {
 
         val outcome = ExpenseCsvParser.parse(csv)
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader), outcome)
     }
 
     @Test
@@ -560,7 +552,7 @@ class ExpenseCsvParserTest {
 
         val outcome = ExpenseCsvParser.parse(csv)
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader), outcome)
     }
 
     // ---- mixed valid + multiple failure types in one parse ----
@@ -586,9 +578,9 @@ class ExpenseCsvParserTest {
 
         assertEquals(4, result.failures.size)
         val byRow = result.failures.associateBy { it.rowNumber }
-        assertTrue(byRow.getValue(3).reason.contains("category", ignoreCase = true))
-        assertTrue(byRow.getValue(4).reason.contains("amountCents", ignoreCase = true))
-        assertTrue(byRow.getValue(5).reason.contains("date", ignoreCase = true))
-        assertTrue(byRow.getValue(6).reason.contains("5"))
+        assertEquals(CsvRowError.UnknownCategory("NotACategory"), byRow.getValue(3).reason)
+        assertEquals(CsvRowError.InvalidAmount("notanumber"), byRow.getValue(4).reason)
+        assertEquals(CsvRowError.InvalidDate("not-a-date"), byRow.getValue(5).reason)
+        assertEquals(CsvRowError.WrongColumnCount(4), byRow.getValue(6).reason)
     }
 }

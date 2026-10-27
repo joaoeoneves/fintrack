@@ -99,7 +99,7 @@ class ExpenseCsvCustomCategoryTest {
         val result = parse("A,100,Holiday,2026-10-01,")
 
         assertTrue(result.validExpenses.isEmpty())
-        assertEquals("Unknown category: 'Holiday'", result.failures.single().reason)
+        assertEquals(CsvRowError.UnknownCategory("Holiday"), result.failures.single().reason)
     }
 
     @Test
@@ -108,7 +108,7 @@ class ExpenseCsvCustomCategoryTest {
 
         check(outcome is CsvImportOutcome.Parsed)
         assertEquals(
-            "Unknown category: 'Gym'",
+            CsvRowError.UnknownCategory("Gym"),
             outcome.result.failures
                 .single()
                 .reason,

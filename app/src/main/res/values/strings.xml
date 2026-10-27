@@ -137,6 +137,16 @@
     <string name="label_export_failed">Export failed</string>
     <string name="error_import_read_file">Could not read the selected file</string>
     <string name="error_import_failed">Import failed</string>
+    <string name="error_csv_empty">The file is empty</string>
+    <string name="error_csv_header">Unrecognized header — expected name,amountCents,category,date,note</string>
+    <string name="error_csv_row_columns">Expected 5 columns, found %1$d</string>
+    <string name="error_csv_row_name_required">Name is required</string>
+    <string name="error_csv_row_name_too_long">Name is too long (maximum: %1$d)</string>
+    <string name="error_csv_row_amount_invalid">Invalid amountCents value: \'%1$s\'</string>
+    <string name="error_csv_row_amount_zero">amountCents must not be zero: \'%1$s\'</string>
+    <string name="error_csv_row_category_unknown">Unknown category: \'%1$s\'</string>
+    <string name="error_csv_row_date_invalid">Invalid date: \'%1$s\'</string>
+    <string name="error_csv_row_note_too_long">Note is too long (maximum: %1$d)</string>
     <string name="error_export_write_file">Could not write the export file</string>
     <string name="error_export_failed">Export failed</string>
 

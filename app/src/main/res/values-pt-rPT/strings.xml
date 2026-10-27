@@ -137,6 +137,16 @@
     <string name="label_export_failed">Falha na exportação</string>
     <string name="error_import_read_file">Não foi possível ler o ficheiro selecionado</string>
     <string name="error_import_failed">Falha na importação</string>
+    <string name="error_csv_empty">O ficheiro está vazio</string>
+    <string name="error_csv_header">Cabeçalho não reconhecido — esperado name,amountCents,category,date,note</string>
+    <string name="error_csv_row_columns">Esperadas 5 colunas, encontradas %1$d</string>
+    <string name="error_csv_row_name_required">O nome é obrigatório</string>
+    <string name="error_csv_row_name_too_long">O nome é demasiado longo (máximo: %1$d)</string>
+    <string name="error_csv_row_amount_invalid">Valor de amountCents inválido: \'%1$s\'</string>
+    <string name="error_csv_row_amount_zero">amountCents não pode ser zero: \'%1$s\'</string>
+    <string name="error_csv_row_category_unknown">Categoria desconhecida: \'%1$s\'</string>
+    <string name="error_csv_row_date_invalid">Data inválida: \'%1$s\'</string>
+    <string name="error_csv_row_note_too_long">A nota é demasiado longa (máximo: %1$d)</string>
     <string name="error_export_write_file">Não foi possível escrever o ficheiro de exportação</string>
     <string name="error_export_failed">Falha na exportação</string>
 
