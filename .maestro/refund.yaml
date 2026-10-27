@@ -94,10 +94,12 @@ appId: com.joaoeoneves.fintrack
 
 # --- 6: Delete it from the expense list while the list is search-filtered to its name.
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_activity"
 - assertVisible: "All expenses"
 - tapOn: "Search"
 - inputText: "Maestro E2E Refund"

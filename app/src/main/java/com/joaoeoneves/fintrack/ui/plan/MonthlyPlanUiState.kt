@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.ui.common.UiText
 
@@ -12,6 +13,8 @@ sealed interface MonthlyPlanUiState {
      * @property incomeLines the expected-income lines, in display order.
      * @property allocations one row per category with its planned limit (or none).
      * @property summary the plan's totals; it has no actual income or spend side, only planned amounts.
+     * @property period the selected month (month periods only) the [progress] and fixed spending are measured on.
+     * @property progress per-category planned limit against what was actually spent in [period].
      * @property canAddIncomeLine whether the line cap has not been reached yet.
      * @property editor the income-line dialog, or `null` when it is closed.
      */
@@ -19,6 +22,9 @@ sealed interface MonthlyPlanUiState {
         val incomeLines: List<PlannedIncome>,
         val allocations: List<CategoryBudget>,
         val summary: MonthlyPlanSummary,
+        val period: Period,
+        val canGoToNextMonth: Boolean,
+        val progress: List<CategoryBudget>,
         val fixedThisMonthCents: Long = 0L,
         val canAddIncomeLine: Boolean,
         val editor: IncomeLineEditorState?,

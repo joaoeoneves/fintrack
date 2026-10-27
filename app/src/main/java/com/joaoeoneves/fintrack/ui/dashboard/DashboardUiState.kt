@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.YearMonth
 
@@ -17,14 +18,13 @@ sealed interface DashboardUiState {
     data object Loading : DashboardUiState
 
     /**
-     * @property budgetMonth the calendar month budgets are evaluated against: the selected month
-     *   for month periods, otherwise the current month.
+     * @property budgetMonth the calendar month the plan is evaluated against: the selected month.
      * @property income every income entry in the period; with [expenses] and [range] it feeds the balance chart.
      * @property range the instant range [period] covers.
      * @property outflowCents everything that left in the period, i.e. [spendingCents] + [savedCents].
      * @property netCents income minus all outflow (spending and saving alike).
      * @property plan the monthly plan evaluated for [budgetMonth].
-     * @property plannedSlices the planned allocation per category, for the "Planned" donut.
+     * @property recent the latest expenses and income merged, newest first, at most [RECENT_ITEMS_LIMIT].
      * @property dailyAllowance what can be spent per remaining day; only for the current month.
      * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
      * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
@@ -37,18 +37,14 @@ sealed interface DashboardUiState {
         val expenses: List<Expense>,
         val income: List<Income>,
         val range: InstantRange,
-        val categoryTotals: List<CategoryTotal>,
         val outflowCents: Long,
         val spendingCents: Long,
         val savedCents: Long,
         val savingsRate: Double?,
-        val recentExpenses: List<Expense>,
-        val budgets: List<CategoryBudget>,
+        val recent: List<Transaction>,
         val incomeCents: Long,
         val netCents: Long,
-        val recentIncome: List<Income>,
         val plan: MonthlyPlanSummary,
-        val plannedSlices: List<CategoryTotal>,
         val dailyAllowance: DailyAllowance?,
         val fixedSpendingCents: Long = 0L,
     ) : DashboardUiState
@@ -57,3 +53,13 @@ sealed interface DashboardUiState {
         val message: UiText,
     ) : DashboardUiState
 }
+
+/** How many entries Home's merged "recent activity" preview shows. */
+const val RECENT_ITEMS_LIMIT = 5
+
+/** The [limit] newest of [expenses] and [income] together, newest first. */
+fun mergeRecent(
+    expenses: List<Expense>,
+    income: List<Income>,
+    limit: Int = RECENT_ITEMS_LIMIT,
+): List<Transaction> = (expenses + income).sortedByDescending { it.date }.take(limit)

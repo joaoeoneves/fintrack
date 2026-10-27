@@ -34,9 +34,8 @@ import java.time.temporal.ChronoUnit
  * Unit tests for [IncomeListViewModel], mirroring [com.joaoeoneves.fintrack.ui.expense.list.ExpenseListViewModelTest]'s
  * coverage/conventions, including query/sort support.
  *
- * Like `ExpenseListViewModel`, the constructor eagerly calls
- * `savedStateHandle.toRoute<IncomeList>()`, which requires a real (shadowed) `android.os.Bundle`
- * to decode the `period` token arg -- hence [RobolectricTestRunner]. Period-specific behavior lives in
+ * Like `ExpenseListViewModel`, the initial period comes from the "period" key of the SavedStateHandle
+ * (Robolectric supplies the real `Bundle` it needs). Period-specific behavior lives in
  * [IncomeListViewModelPeriodTest].
  */
 @OptIn(ExperimentalCoroutinesApi::class)

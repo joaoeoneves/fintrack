@@ -77,22 +77,15 @@
     <string name="period_select_dates">Select dates</string>
 
     <!-- Dashboard -->
-    <string name="dashboard_budgets_title">Budgets (this month)</string>
-    <string name="dashboard_recent_expenses">Recent expenses</string>
-    <string name="dashboard_see_all_expenses">See all expenses</string>
-    <string name="dashboard_recent_income">Recent income</string>
     <string name="dashboard_no_income">No income in this period yet.</string>
-    <string name="dashboard_see_all_income">See all income</string>
     <string name="dashboard_net_balance">Net balance</string>
     <string name="dashboard_income_label">Income</string>
     <string name="dashboard_expenses_label">Expenses</string>
     <string name="dashboard_no_expenses">No expenses in this period yet.</string>
-    <string name="dashboard_recent_expenses_empty">No expenses yet</string>
     <string name="dashboard_total_outflow">Total outflow</string>
     <string name="dashboard_saved_label">Saved &amp; invested</string>
     <string name="dashboard_savings_rate">Savings rate: %1$s</string>
     <string name="dashboard_savings_rate_unavailable">—</string>
-    <string name="dashboard_budgets_title_month">Budgets (%1$s)</string>
 
     <!-- Budgets -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
@@ -427,4 +420,14 @@
     <string name="cd_period_tab_3m">3 months</string>
     <string name="cd_period_tab_6m">6 months</string>
     <string name="cd_period_tab_1y">12 months</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_activity">Activity</string>
+    <string name="nav_plan">Plan</string>
+    <string name="nav_insights">Insights</string>
+    <string name="insights_title">Insights</string>
+    <string name="insights_empty">No spending to analyse in this period yet.</string>
+    <string name="plan_planned_vs_actual">Planned vs actual</string>
+    <string name="home_recent_title">Recent activity</string>
+    <string name="home_recent_empty">No activity yet</string>
+    <string name="dashboard_see_all_activity">See all activity</string>
 </resources>

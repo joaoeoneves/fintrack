@@ -49,6 +49,7 @@ import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.insights.InsightsBreakdown
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -116,20 +117,20 @@ fun rankedBreakdown(slices: List<CategoryTotal>): List<BreakdownEntry> {
 }
 
 /**
- * The dashboard's breakdown block: total outflow (or the planned total), an "Actual | Planned"
+ * The Insights tab's breakdown block: total outflow (or the planned total), an "Actual | Planned"
  * switch when the plan has planned allocations, and the stateless [CategoryBreakdown] below it.
  */
 @Composable
 fun CategoryBreakdownSection(
-    state: DashboardUiState.Content,
+    breakdown: InsightsBreakdown,
     modifier: Modifier = Modifier,
 ) {
-    val hasPlanned = state.plannedSlices.isNotEmpty()
+    val hasPlanned = breakdown.plannedSlices.isNotEmpty()
     var showPlanned by rememberSaveable { mutableStateOf(false) }
     val planned = showPlanned && hasPlanned
-    val slices = if (planned) state.plannedSlices else state.categoryTotals
+    val slices = if (planned) breakdown.plannedSlices else breakdown.categoryTotals
 
-    if (state.expenses.isEmpty() && !hasPlanned) {
+    if (!breakdown.hasExpenses && !hasPlanned) {
         BreakdownEmpty(modifier)
         return
     }
@@ -146,7 +147,7 @@ fun CategoryBreakdownSection(
                     null
                 },
         )
-        if (!planned && state.expenses.isEmpty()) {
+        if (!planned && !breakdown.hasExpenses) {
             BreakdownEmpty()
         } else {
             Text(

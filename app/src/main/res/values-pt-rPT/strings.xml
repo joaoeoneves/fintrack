@@ -77,22 +77,15 @@
     <string name="period_select_dates">Selecionar datas</string>
 
     <!-- Painel principal -->
-    <string name="dashboard_budgets_title">Orçamentos (este mês)</string>
-    <string name="dashboard_recent_expenses">Despesas recentes</string>
-    <string name="dashboard_see_all_expenses">Ver todas as despesas</string>
-    <string name="dashboard_recent_income">Rendimentos recentes</string>
     <string name="dashboard_no_income">Ainda não há rendimentos neste período.</string>
-    <string name="dashboard_see_all_income">Ver todos os rendimentos</string>
     <string name="dashboard_net_balance">Saldo líquido</string>
     <string name="dashboard_income_label">Rendimentos</string>
     <string name="dashboard_expenses_label">Despesas</string>
     <string name="dashboard_no_expenses">Ainda não há despesas neste período.</string>
-    <string name="dashboard_recent_expenses_empty">Ainda sem despesas</string>
     <string name="dashboard_total_outflow">Total de saídas</string>
     <string name="dashboard_saved_label">Poupado e investido</string>
     <string name="dashboard_savings_rate">Taxa de poupança: %1$s</string>
     <string name="dashboard_savings_rate_unavailable">—</string>
-    <string name="dashboard_budgets_title_month">Orçamentos (%1$s)</string>
 
     <!-- Orçamentos -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
@@ -438,4 +431,14 @@
     <string name="cd_period_tab_3m">3 meses</string>
     <string name="cd_period_tab_6m">6 meses</string>
     <string name="cd_period_tab_1y">12 meses</string>
+    <string name="nav_home">Início</string>
+    <string name="nav_activity">Movimentos</string>
+    <string name="nav_plan">Plano</string>
+    <string name="nav_insights">Análise</string>
+    <string name="insights_title">Análise</string>
+    <string name="insights_empty">Ainda não há despesas para analisar neste período.</string>
+    <string name="plan_planned_vs_actual">Planeado vs real</string>
+    <string name="home_recent_title">Movimentos recentes</string>
+    <string name="home_recent_empty">Ainda sem movimentos</string>
+    <string name="dashboard_see_all_activity">Ver todos os movimentos</string>
 </resources>

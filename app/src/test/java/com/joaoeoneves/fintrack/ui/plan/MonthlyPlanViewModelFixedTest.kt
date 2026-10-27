@@ -1,9 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
-import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.testutil.testExpense
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,20 +58,12 @@ class MonthlyPlanViewModelFixedTest : MonthlyPlanViewModelTestBase() {
         }
 
     @Test
-    fun expensesFailure_degradesToZero_planStillShown() =
+    fun expensesFailure_surfacesErrorState() =
         runTest(testDispatcher) {
             val failing = FakeExpenseRepository(nextObserveExpensesError = IllegalStateException("boom"))
-            val vm =
-                MonthlyPlanViewModel(
-                    incomeRepo,
-                    budgetRepo,
-                    categoryRepo,
-                    CombinedTransactionRepository(failing, FakeIncomeRepository()),
-                    clock,
-                )
+            val vm = viewModel(expenses = failing)
             collect(vm)
 
-            assertTrue(vm.uiState.value is MonthlyPlanUiState.Content)
-            assertEquals(0L, vm.content().fixedThisMonthCents)
+            assertTrue(vm.uiState.value is MonthlyPlanUiState.Error)
         }
 }

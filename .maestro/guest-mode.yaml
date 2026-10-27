@@ -114,10 +114,10 @@ appId: com.joaoeoneves.fintrack
 # --- 6: Clean up -- delete the expense via the full list (delete is swipe-only, right-to-left) ---
 - scrollUntilVisible:
     element:
-      id: "see_all_expenses"
+      id: "see_all_activity"
     direction: DOWN
 - tapOn:
-    id: "see_all_expenses"
+    id: "see_all_activity"
 - assertVisible: "All expenses"
 # Filter first so only this row exists in the list.
 - tapOn: "Search"

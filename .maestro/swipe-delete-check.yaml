@@ -58,9 +58,11 @@ appId: com.joaoeoneves.fintrack
 
 # Back on the Dashboard -- open the full list to reach the swipeable row.
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_activity"
 - assertVisible: "All expenses"
 - assertVisible: "Swipe Test Expense A"
 # TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
@@ -86,9 +88,11 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Save"
 
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_activity"
 - assertVisible: "All expenses"
 - assertVisible: "Swipe Test Expense B"
 # StartToEnd is disabled (enableDismissFromStartToEnd = false): the row must survive this swipe.
@@ -125,10 +129,14 @@ appId: com.joaoeoneves.fintrack
 # next, since the two checks are close enough together that the Firestore round-trip can still be
 # in flight when the second one runs.
 - scrollUntilVisible:
-    element: "See all income"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all income"
+- tapOn:
+    id: "see_all_activity"
+# "See all" opens the Activity tab on Expenses; switch to the Income segment.
+- tapOn: "Income"
 - assertVisible: "All income"
 # extendedWaitUntil (not assertVisible) on purpose: verified 2026-07-21 that a plain assertVisible
 # here is a genuine flake, not element-matching noise. Navigating straight from Save into "See all
@@ -162,10 +170,14 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Save"
 
 - scrollUntilVisible:
-    element: "See all income"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all income"
+- tapOn:
+    id: "see_all_activity"
+# "See all" opens the Activity tab on Expenses; switch to the Income segment.
+- tapOn: "Income"
 - assertVisible: "All income"
 # Same extendedWaitUntil-over-assertVisible rationale as the "Swipe Test Income A" block above.
 - extendedWaitUntil:

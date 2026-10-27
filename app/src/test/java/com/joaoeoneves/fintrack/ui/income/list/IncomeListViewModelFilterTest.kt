@@ -30,7 +30,7 @@ import java.time.temporal.ChronoUnit
 
 /**
  * [IncomeListViewModel] note/amount query matching and the guarantee that only period/retry
- * changes re-subscribe the repository. Robolectric for the `toRoute` / `Bundle` reason documented
+ * changes re-subscribe the repository. Robolectric for the `Bundle` reason documented
  * on [IncomeListViewModelTest].
  */
 @OptIn(ExperimentalCoroutinesApi::class)

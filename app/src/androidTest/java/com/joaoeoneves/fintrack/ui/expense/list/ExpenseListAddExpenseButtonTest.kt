@@ -18,10 +18,10 @@ import java.time.Instant
 
 /**
  * Instrumented Compose UI tests confirming [ExpenseListScreen] has no add-expense control of its
- * own -- the add-expense entry point now lives exclusively on the Dashboard's "Recent expenses"
- * card header (see [com.joaoeoneves.fintrack.ui.dashboard.DashboardAddExpenseEntryPointTest]).
- * `ExpenseListScreen`'s top bar is back to just back-navigation, the same shape as
- * `IncomeListScreen`'s top bar, both when the list is populated and when it's empty.
+ * own -- the add-expense entry point lives exclusively on Home's floating add pill (see
+ * [com.joaoeoneves.fintrack.ui.dashboard.DashboardAddExpenseEntryPointTest]). The screen is hosted
+ * in the Activity tab (`onBack = null`), the same shape as `IncomeListScreen`, both when the list
+ * is populated and when it's empty.
  *
  * Exercises the real [ExpenseListScreen] composable with an [ExpenseListViewModel] constructed
  * directly against an in-memory fake (bypassing Hilt entirely, same pattern as the JVM
@@ -57,7 +57,7 @@ class ExpenseListAddExpenseButtonTest {
             )
         composeTestRule.setContent {
             ExpenseListScreen(
-                onBack = {},
+                onBack = null,
                 onOpenExpense = {},
                 viewModel = viewModel,
             )

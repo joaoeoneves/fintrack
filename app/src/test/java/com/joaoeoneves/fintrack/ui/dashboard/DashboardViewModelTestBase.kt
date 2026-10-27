@@ -33,7 +33,7 @@ import java.time.temporal.ChronoUnit
 
 /**
  * Shared fixtures/setup for [DashboardViewModel] tests, split by feature area into
- * [DashboardViewModelExpenseTest], [DashboardViewModelBudgetTest], [DashboardViewModelBudgetEditTest],
+ * [DashboardViewModelExpenseTest], [DashboardViewModelBudgetTest],
  * [DashboardViewModelIncomeTest], [DashboardViewModelPeriodTest], [DashboardViewModelRefundTest] and
  * [DashboardViewModelFoodCategoryTest].
  *

@@ -97,10 +97,14 @@ appId: com.joaoeoneves.fintrack
 # header comment for the full explanation). A plain extra scroll after scrollUntilVisible and
 # before tapping "See all income" reliably brings it fully into view first.
 - scrollUntilVisible:
-    element: "See all income"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all income"
+- tapOn:
+    id: "see_all_activity"
+# "See all" opens the Activity tab on Expenses; switch to the Income segment.
+- tapOn: "Income"
 - assertVisible: "All income"
 - assertVisible: "Maestro E2E Test Salary"
 - assertVisible: "+$100.00"

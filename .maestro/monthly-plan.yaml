@@ -1,9 +1,10 @@
 appId: com.joaoeoneves.fintrack
 ---
-# Monthly plan E2E flow: Dashboard "Plan your month" CTA / "Edit plan" -> Monthly plan screen ->
-# add two income lines (Salary 2000, Meal allowance 200) -> allocate 300 to Food -> back on the
-# Dashboard the "Safe to spend" card shows ~1,900.00 -> Planned toggle in the spending breakdown
-# card lists Food -> cleanup (remove both income lines, clear the Food allocation).
+# Monthly plan E2E flow: Home "Plan your month" CTA / "Edit plan" -> Plan tab ->
+# add two income lines (Salary 2000, Meal allowance 200) -> allocate 300 to Food -> the "Planned vs
+# actual" card lists Food -> back on Home the "Safe to spend" card shows ~1,900.00 -> Planned toggle
+# in the Insights tab's breakdown lists Food -> cleanup (remove both income lines, clear the Food
+# allocation). The Plan tab is a bottom-bar root: no back arrow, system back returns to Home.
 #
 # STATUS: written but NOT YET RUN on a device/emulator -- selectors are taken from strings.xml and
 # the plan composables, so expect small tweaks on the first real run.
@@ -23,16 +24,21 @@ appId: com.joaoeoneves.fintrack
     text: "Settings|Definições"
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
-- tapOn: "Back"
+- tapOn:
+    id: "nav_home"
 - assertVisible:
     id: "dashboard_list"
 
-# --- 1: Open the plan from the Dashboard card (CTA when empty, "Edit plan" otherwise) ---
+# --- 1: Open the Plan tab from Home's Safe-to-spend card (CTA when empty, "Edit plan" otherwise) ---
 - scrollUntilVisible:
     element: "Plan your month|Edit plan"
     direction: DOWN
 - tapOn: "Plan your month|Edit plan"
-- assertVisible: "Monthly plan"
+- assertVisible:
+    id: "nav_plan"
+- assertVisible: "Add income line"
+# The Plan tab has its own month picker.
+- assertVisible: "Previous month"
 
 # --- 2: Add income lines ---
 - tapOn: "Add income line"
@@ -75,9 +81,14 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Save"
 - assertNotVisible: "Set budget for Food"
 - assertVisible: ".*300\\.00.*"
+# A planned allocation also appears in the "Planned vs actual" card.
+- scrollUntilVisible:
+    element: "Planned vs actual"
+    direction: DOWN
 
-# --- 4: Back to the Dashboard: safe to spend = 2,200 - 300 = ~1,900 ---
-- tapOn: "Back"
+# --- 4: Back to Home (tab switch): safe to spend = 2,200 - 300 = ~1,900 ---
+- tapOn:
+    id: "nav_home"
 - assertVisible:
     id: "dashboard_list"
 - scrollUntilVisible:
@@ -85,7 +96,9 @@ appId: com.joaoeoneves.fintrack
     direction: UP
 - assertVisible: ".*1,?900\\.00.*"
 
-# --- 5: Planned toggle in the spending breakdown card lists Food ---
+# --- 5: Planned toggle in the Insights tab's spending breakdown lists Food ---
+- tapOn:
+    id: "nav_insights"
 - scrollUntilVisible:
     element: "Planned"
     direction: DOWN
@@ -94,11 +107,9 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: ".*Food.*"
 
 # --- 6: Cleanup -- remove both income lines and clear the Food allocation ---
-- scrollUntilVisible:
-    element: "Edit plan"
-    direction: UP
-- tapOn: "Edit plan"
-- assertVisible: "Monthly plan"
+- tapOn:
+    id: "nav_plan"
+- assertVisible: "Add income line"
 
 - tapOn: "Salary"
 - assertVisible: "Edit income line"
@@ -120,6 +131,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Remove"
 - assertNotVisible: "Set budget for Food"
 
-- tapOn: "Back"
+- tapOn:
+    id: "nav_home"
 - assertVisible:
     id: "dashboard_list"

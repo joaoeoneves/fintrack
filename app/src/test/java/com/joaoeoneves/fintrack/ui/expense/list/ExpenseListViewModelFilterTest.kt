@@ -36,7 +36,7 @@ import java.time.temporal.ChronoUnit
 /**
  * [ExpenseListViewModel] category filter, extended query matching (note/label/amount), refund
  * sorting/undo, and the guarantee that only period/retry changes re-subscribe the repository.
- * Robolectric for the same `toRoute` / `Bundle` reason documented on [ExpenseListViewModelTest].
+ * Robolectric for the same `Bundle` reason documented on [ExpenseListViewModelTest].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)

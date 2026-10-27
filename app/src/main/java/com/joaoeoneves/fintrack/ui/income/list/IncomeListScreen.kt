@@ -44,7 +44,7 @@ import java.time.ZoneId
 
 @Composable
 fun IncomeListScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onOpenIncome: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: IncomeListViewModel = hiltViewModel(),

@@ -34,14 +34,9 @@ import java.time.temporal.ChronoUnit
 /**
  * Unit tests for [ExpenseListViewModel].
  *
- * [ExpenseListViewModel]'s constructor eagerly calls `savedStateHandle.toRoute<ExpenseList>()`,
- * and `ExpenseList.period` (a period token string) has no default value, so *any* construction
- * requires a populated [SavedStateHandle]. Decoding that requires routing the stored value
- * through `androidx.core.os.BundleKt.bundleOf` -> a real `android.os.Bundle`, which isn't
- * stubbed on a plain JVM unit test ("Method putCharSequence in android.os.Bundle not mocked").
- * Running under [RobolectricTestRunner] provides a real (shadowed) `Bundle` implementation, which
- * resolves this: `SavedStateHandle(mapOf("period" to token))` round-trips correctly through
- * `toRoute<ExpenseList>()`. Period-specific behavior lives in [ExpenseListViewModelPeriodTest].
+ * The initial period is read from the "period" key of the [SavedStateHandle] (absent means the current
+ * month). Robolectric supplies the real `android.os.Bundle` that [SavedStateHandle] needs.
+ * Period-specific behavior lives in [ExpenseListViewModelPeriodTest].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)

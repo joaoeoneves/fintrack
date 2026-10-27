@@ -57,10 +57,12 @@ appId: com.joaoeoneves.fintrack
 
 # --- 2: Open the list. Searching the note matches only A.
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_activity"
 - assertVisible: "All expenses"
 - assertVisible:
     id: "filter_chip_all"

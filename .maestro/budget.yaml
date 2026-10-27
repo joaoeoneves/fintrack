@@ -1,17 +1,18 @@
 appId: com.joaoeoneves.fintrack
 ---
-# Dashboard budget dialog E2E flow (B9 "Remove" button / empty-field-removes-limit, plus B4
+# Plan-tab allocation/budget dialog E2E flow (B9 "Remove" button / empty-field-removes-limit, plus B4
 # comma-decimal amount entry inside the dialog).
 #
-# Assumes the app is already signed in and lands on the Dashboard -- same assumption as
+# Budgets moved off Home: the limit is edited from the Plan tab (Allocations card rows, and the
+# "Planned vs actual" card rows once a limit exists). Assumes the app is already signed in and lands on Home -- same assumption as
 # golden-path.yaml (real Google Sign-In cannot be scripted headlessly).
 #
 # Uses the "Investments" category (an active built-in; archived "Recurring" gets no budget row) because it has no limit set on the shared
 # test account. Every limit this flow sets on it is removed again before the flow ends, so the
 # budgets data is left exactly as found (the other categories' limits are never touched).
 #
-# The "no limit" assertions match budget_spent_no_limit ("%1$s spent — no limit set") with a
-# regex on the spent prefix, since the spent amount depends on the current month's data.
+# "No limit" is asserted via the Allocations row's "Not planned" label (the "Planned vs actual"
+# card only lists categories that have a limit).
 
 - launchApp
 
@@ -31,9 +32,11 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     id: "dashboard_list"
 
-# --- 1: Set a limit using a comma decimal (B4) ---
+# --- 1: On the Plan tab, set a limit using a comma decimal (B4) ---
+- tapOn:
+    id: "nav_plan"
 - scrollUntilVisible:
-    element: "Budgets \\(this month\\)"
+    element: "Allocations"
     direction: DOWN
 - scrollUntilVisible:
     element: "Investments"
@@ -57,7 +60,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Remove"
 - assertNotVisible: "Set budget for Investments"
 - assertNotVisible: ".*€100\\.50.*"
-- assertVisible: ".* spent — no limit set"
+- assertVisible: "Not planned"
 
 # --- 3: Set it again, then clear the field and Save -- an empty field removes the limit (B9) ---
 - tapOn: "Investments"
@@ -76,5 +79,5 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Save"
 - assertNotVisible: "Set budget for Investments"
 - assertNotVisible: ".*€100\\.50.*"
-- assertVisible: ".* spent — no limit set"
+- assertVisible: "Not planned"
 # Investments is back to no limit, exactly as this flow found it.

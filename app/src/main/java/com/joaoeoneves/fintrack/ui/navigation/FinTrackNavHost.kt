@@ -4,27 +4,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.dropUnlessResumed
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.ui.activity.ActivityHost
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
-import com.joaoeoneves.fintrack.ui.expense.list.ExpenseListScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
-import com.joaoeoneves.fintrack.ui.income.list.IncomeListScreen
-import com.joaoeoneves.fintrack.ui.plan.MonthlyPlanScreen
+import com.joaoeoneves.fintrack.ui.insights.InsightsScreen
+import com.joaoeoneves.fintrack.ui.plan.PlanScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
 
+/** The app's navigation graph: one nested graph per bottom-bar tab plus the screens shared by all tabs. */
 @Composable
 fun FinTrackNavHost(
     modifier: Modifier = Modifier,
@@ -34,61 +35,115 @@ fun FinTrackNavHost(
     val transitions = remember(reducedMotion) { NavTransitions(reducedMotion) }
     NavHost(
         navController = navController,
-        startDestination = Dashboard,
+        startDestination = HomeGraph,
         modifier = modifier,
-        enterTransition = { transitions.enter() },
+        enterTransition = {
+            if (isTabSwitch(initialState.destination, targetState.destination)) {
+                transitions.fadeEnter()
+            } else {
+                transitions.enter()
+            }
+        },
         exitTransition = {
-            if (targetState.destination.isForm()) transitions.exitUnderForm() else transitions.exit()
+            when {
+                isTabSwitch(initialState.destination, targetState.destination) -> transitions.fadeExit()
+                targetState.destination.isForm() -> transitions.exitUnderForm()
+                else -> transitions.exit()
+            }
         },
         popEnterTransition = {
-            if (initialState.destination.isForm()) transitions.popEnterUnderForm() else transitions.popEnter()
+            when {
+                isTabSwitch(initialState.destination, targetState.destination) -> transitions.fadeEnter()
+                initialState.destination.isForm() -> transitions.popEnterUnderForm()
+                else -> transitions.popEnter()
+            }
         },
-        popExitTransition = { transitions.popExit() },
+        popExitTransition = {
+            if (isTabSwitch(initialState.destination, targetState.destination)) {
+                transitions.fadeExit()
+            } else {
+                transitions.popExit()
+            }
+        },
     ) {
-        composable<Dashboard> {
+        homeRoutes(navController)
+        activityRoutes(navController)
+        planRoutes(navController)
+        insightsRoutes(navController)
+        sharedRoutes(navController, transitions)
+    }
+}
+
+private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
+    navigation<HomeGraph>(startDestination = Home) {
+        composable<Home> {
             DashboardScreen(
                 callbacks =
                     DashboardCallbacks(
-                        onOpenList = { period -> navController.navigate(ExpenseList(period.encode())) },
                         onAddExpense = { navController.navigate(AddEditExpense()) },
-                        onOpenIncomeList = { period -> navController.navigate(IncomeList(period.encode())) },
                         onAddIncome = { navController.navigate(AddEditIncome()) },
                         onOpenSettings = { navController.navigate(Settings) },
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
-                        onOpenMonthlyPlan = { navController.navigate(MonthlyPlan) },
-                        onOpenRecurring = { navController.navigate(RecurringList) },
+                        onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
+                        onOpenPlan = { navController.navigateToTab(TopLevelTab.PLAN) },
+                        onOpenRecurring = {
+                            navController.navigateToTab(TopLevelTab.PLAN)
+                            navController.navigate(RecurringList)
+                        },
                     ),
             )
-        }
-        transactionRoutes(navController, transitions)
-        composable<Settings> {
-            SettingsScreen(
-                onBack = dropUnlessResumed { navController.popBackStack() },
-                onOpenCategories = { navController.navigate(Categories) },
-                onOpenRecurring = { navController.navigate(RecurringList) },
-            )
-        }
-        composable<MonthlyPlan> {
-            MonthlyPlanScreen(onBack = dropUnlessResumed { navController.popBackStack() })
-        }
-        recurringRoutes(navController, transitions)
-        composable<Categories> {
-            CategoriesScreen(onBack = dropUnlessResumed { navController.popBackStack() })
         }
     }
 }
 
-/** Add/edit forms enter from the bottom; the screen beneath them fades instead of sliding sideways. */
-private fun NavDestination.isForm(): Boolean {
-    val forms = listOf(hasRoute<AddEditExpense>(), hasRoute<AddEditIncome>(), hasRoute<AddEditRecurring>())
-    return forms.any { it }
+private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
+    navigation<ActivityGraph>(startDestination = Activity()) {
+        composable<Activity> { entry ->
+            ActivityHost(
+                showIncomeFirst = entry.toRoute<Activity>().type == ACTIVITY_TYPE_INCOME,
+                onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
+                onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
+                onOpenSettings = { navController.navigate(Settings) },
+            )
+        }
+    }
 }
 
-private fun NavGraphBuilder.recurringRoutes(
+private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
+    navigation<PlanGraph>(startDestination = PlanHome) {
+        composable<PlanHome> {
+            PlanScreen(
+                onOpenSettings = { navController.navigate(Settings) },
+                onOpenRecurring = { navController.navigate(RecurringList) },
+            )
+        }
+    }
+}
+
+private fun NavGraphBuilder.insightsRoutes(navController: NavHostController) {
+    navigation<InsightsGraph>(startDestination = Insights()) {
+        composable<Insights> {
+            InsightsScreen(onOpenSettings = { navController.navigate(Settings) })
+        }
+    }
+}
+
+/** Screens pushed on top of whichever tab is current; the bottom bar is hidden on all of them. */
+private fun NavGraphBuilder.sharedRoutes(
     navController: NavHostController,
     transitions: NavTransitions,
 ) {
+    composable<Settings> {
+        SettingsScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onOpenCategories = { navController.navigate(Categories) },
+            onOpenRecurring = { navController.navigate(RecurringList) },
+        )
+    }
+    composable<Categories> {
+        CategoriesScreen(onBack = dropUnlessResumed { navController.popBackStack() })
+    }
     composable<RecurringList> {
         RecurringListScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
@@ -104,18 +159,6 @@ private fun NavGraphBuilder.recurringRoutes(
             onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }
-}
-
-private fun NavGraphBuilder.transactionRoutes(
-    navController: NavHostController,
-    transitions: NavTransitions,
-) {
-    composable<ExpenseList> {
-        ExpenseListScreen(
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
-        )
-    }
     composable<AddEditExpense>(
         enterTransition = { transitions.enterFromBottom() },
         popExitTransition = { transitions.popExitToBottom() },
@@ -123,12 +166,6 @@ private fun NavGraphBuilder.transactionRoutes(
         AddEditExpenseScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },
             onCancel = dropUnlessResumed { navController.popBackStack() },
-        )
-    }
-    composable<IncomeList> {
-        IncomeListScreen(
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
         )
     }
     composable<AddEditIncome>(

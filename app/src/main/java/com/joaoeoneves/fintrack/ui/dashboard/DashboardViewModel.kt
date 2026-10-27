@@ -5,7 +5,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
@@ -13,14 +12,12 @@ import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.dailyAllowanceOf
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
-import com.joaoeoneves.fintrack.domain.model.plannedSlices
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
+import com.joaoeoneves.fintrack.ui.common.period.asMonthPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,9 +26,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -43,10 +38,6 @@ private const val TAG = "DashboardViewModel"
 // disappears, so a quick configuration change doesn't tear down and immediately re-establish them.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
-// How many of the most recent expenses/income entries are surfaced in the dashboard's "recent
-// activity" preview.
-private const val RECENT_ITEMS_LIMIT = 5
-
 // SavedStateHandle key of the selected period token.
 private const val KEY_PERIOD = "period"
 
@@ -56,7 +47,6 @@ class DashboardViewModel
     @Inject
     constructor(
         private val observePeriodOverview: ObservePeriodOverview,
-        private val budgetRepository: BudgetRepository,
         savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
@@ -90,7 +80,8 @@ class DashboardViewModel
                 }
         }
 
-        fun onPeriodSelected(period: Period) = selection.select(period)
+        /** Home is month-only: rolling and custom periods (now on Insights) fall back to the current month. */
+        fun onPeriodSelected(period: Period) = selection.select(period.asMonthPeriod())
 
         fun onPreviousMonth() = selection.previous()
 
@@ -98,30 +89,6 @@ class DashboardViewModel
 
         fun onRetry() {
             retryTrigger.value++
-        }
-
-        private val budgetErrors = Channel<UiText>(Channel.BUFFERED)
-
-        /** One-shot user-facing messages for budget writes that failed, shown as a snackbar. */
-        val budgetErrorEvent: Flow<UiText> = budgetErrors.receiveAsFlow()
-
-        fun onSetBudget(
-            category: Category,
-            limitCents: Long,
-        ) {
-            viewModelScope.launch {
-                budgetRepository.setBudget(category.id, limitCents).onFailure {
-                    budgetErrors.send(UiText.StringResource(R.string.error_budget_save_failed))
-                }
-            }
-        }
-
-        fun onClearBudget(category: Category) {
-            viewModelScope.launch {
-                budgetRepository.clearBudget(category.id).onFailure {
-                    budgetErrors.send(UiText.StringResource(R.string.error_budget_remove_failed))
-                }
-            }
         }
 
         private fun PeriodOverview.toContent(
@@ -138,19 +105,15 @@ class DashboardViewModel
                 expenses = transactions.expenses,
                 income = transactions.income,
                 range = transactions.range,
-                categoryTotals = summary.categoryTotals,
                 outflowCents = summary.outflowCents,
                 spendingCents = summary.spendingCents,
                 fixedSpendingCents = summary.fixedSpendingCents,
                 savedCents = summary.savedCents,
                 savingsRate = summary.savingsRate,
-                recentExpenses = recent.expenses,
-                budgets = budgets,
+                recent = mergeRecent(recent.expenses, recent.income),
                 incomeCents = summary.incomeCents,
                 netCents = summary.netCents,
-                recentIncome = recent.income,
                 plan = plan,
-                plannedSlices = budgets.plannedSlices(),
                 dailyAllowance =
                     if (isCurrentMonth) {
                         dailyAllowanceOf(plan.safeToSpendCents, budgetMonth, now.atZone(zone).toLocalDate())

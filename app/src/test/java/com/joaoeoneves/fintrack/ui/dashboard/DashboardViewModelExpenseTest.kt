@@ -43,12 +43,10 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             assertEquals(Period.CurrentMonth, content.period)
             assertFalse(content.canGoToNextMonth)
             assertTrue(content.expenses.isEmpty())
-            assertTrue(content.recentExpenses.isEmpty())
+            assertTrue(content.recent.isEmpty())
             assertEquals(0L, content.outflowCents)
             assertEquals(0L, content.spendingCents)
             assertEquals(0L, content.savedCents)
-            assertEquals(BuiltInCategories.all.filterNot { it.archived }, content.categoryTotals.map { it.category })
-            assertTrue(content.categoryTotals.all { it.totalCents == 0L })
         }
 
     @Test
@@ -72,7 +70,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun categoryTotals_sumPerCategory_andSplitIntoSpendingAndSaved() =
+    fun categories_areSplitIntoSpendingAndSaved() =
         runTest(testDispatcher) {
             val expenses =
                 listOf(
@@ -91,11 +89,6 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            val totalsByCategory = content.categoryTotals.associate { it.category to it.totalCents }
-            assertEquals(1_500L, totalsByCategory.getValue(BuiltInCategories.SHOPPING))
-            assertEquals(2_000L, totalsByCategory.getValue(BuiltInCategories.TRANSFER))
-            assertEquals(3_000L, totalsByCategory.getValue(BuiltInCategories.INVESTMENTS))
-            assertEquals(4_000L, totalsByCategory.getValue(BuiltInCategories.RECURRING))
             assertEquals(7_500L, content.spendingCents)
             assertEquals(3_000L, content.savedCents)
             assertEquals(10_500L, content.outflowCents)
@@ -128,7 +121,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun recentExpenses_returnsTop5ByDateDescending_whenMoreThan5InRange() =
+    fun recent_returnsTop5ByDateDescending_whenMoreThan5InRange() =
         runTest(testDispatcher) {
             val all = (1..7).map { expense(id = "e$it", amountCents = 100L, date = daysAgo(it.toLong())) }
             val scrambled = listOf(all[3], all[0], all[6], all[1], all[5], all[2], all[4])
@@ -136,7 +129,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(all.take(5), content.recentExpenses)
+            assertEquals(all.take(5), content.recent)
             assertEquals(7, content.expenses.size)
         }
 

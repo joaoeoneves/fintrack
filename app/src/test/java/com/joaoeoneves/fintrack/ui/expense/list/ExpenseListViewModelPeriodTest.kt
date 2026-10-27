@@ -38,7 +38,7 @@ import java.time.ZoneOffset
 /**
  * Period behavior of [ExpenseListViewModel]: the route's "period" token seeds the initial period,
  * user selections are stored under "selectedPeriod" and win over the route value on recreation,
- * and month navigation re-queries the repository. Robolectric is needed for `toRoute` (see
+ * and month navigation re-queries the repository. Robolectric is needed for the SavedStateHandle `Bundle` (see
  * [ExpenseListViewModelTest]).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -106,6 +106,29 @@ class ExpenseListViewModelPeriodTest {
                 assertEquals(period.toString(), expected, content.expenses.toSet())
                 assertEquals(period is Period.Month, content.canGoToNextMonth)
             }
+        }
+
+    @Test
+    fun missingPeriodArgument_defaultsToCurrentMonth() =
+        runTest(testDispatcher) {
+            val content = content(viewModel(SavedStateHandle()))
+
+            assertEquals(Period.CurrentMonth, content.period)
+            assertEquals(listOf(oct), content.expenses)
+            assertFalse(content.canGoToNextMonth)
+        }
+
+    @Test
+    fun missingPeriodArgument_stillAllowsMonthNavigation() =
+        runTest(testDispatcher) {
+            val vm = viewModel(SavedStateHandle())
+            content(vm)
+
+            vm.onPreviousMonth()
+            advanceUntilIdle()
+
+            assertEquals(Period.Month(YearMonth.of(2026, 9)), vm.current().period)
+            assertEquals(listOf(sep), vm.current().expenses)
         }
 
     @Test

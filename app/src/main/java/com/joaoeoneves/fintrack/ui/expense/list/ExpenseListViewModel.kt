@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
@@ -13,12 +12,12 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
+import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
-import com.joaoeoneves.fintrack.ui.navigation.ExpenseList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -36,6 +35,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import javax.inject.Inject
+
+// The "period" argument of the Activity route (or the legacy list routes): only the initial period.
+private const val ARG_PERIOD = "period"
 
 private const val TAG = "ExpenseListViewModel"
 
@@ -72,7 +74,7 @@ class ExpenseListViewModel
             PeriodSelection(
                 savedStateHandle = savedStateHandle,
                 key = KEY_SELECTED_PERIOD,
-                initialToken = savedStateHandle.toRoute<ExpenseList>().period,
+                initialToken = savedStateHandle.get<String>(ARG_PERIOD) ?: Period.CurrentMonth.encode(),
                 clock = clock,
             )
 
