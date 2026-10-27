@@ -7,6 +7,10 @@ updates:
     groups:
       minor-and-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # 4.17 breaks every Robolectric test on JDK 21 ("Failed to interact with raw FileDescriptor internals").
+      - dependency-name: org.robolectric:robolectric
+        versions: ["4.17"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
