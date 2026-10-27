@@ -42,10 +42,11 @@ import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenCategories: () -> Unit,
+    onOpenRecurring: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
-    importExportViewModel: ImportExportViewModel = hiltViewModel(),
 ) {
+    val importExportViewModel: ImportExportViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val importState by importExportViewModel.importState.collectAsStateWithLifecycle()
     val exportState by importExportViewModel.exportState.collectAsStateWithLifecycle()
@@ -75,6 +76,7 @@ fun SettingsScreen(
                 onSignInToSync = { viewModel.signInToSync(context) },
                 onLeaveGuestMode = viewModel::leaveGuestMode,
                 onOpenCategories = onOpenCategories,
+                onOpenRecurring = onOpenRecurring,
             ),
         modifier = modifier,
     )
@@ -115,6 +117,7 @@ private data class SettingsActions(
     val onSignInToSync: () -> Unit,
     val onLeaveGuestMode: () -> Unit,
     val onOpenCategories: () -> Unit,
+    val onOpenRecurring: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -163,6 +166,7 @@ private fun SettingsScaffold(
                 modifier = sectionModifier,
             )
             CategoriesSection(onOpen = actions.onOpenCategories, modifier = sectionModifier)
+            RecurringSection(onOpen = actions.onOpenRecurring, modifier = sectionModifier)
             DataSection(
                 onImportClick = actions.onImportClick,
                 onExportClick = actions.onExportClick,

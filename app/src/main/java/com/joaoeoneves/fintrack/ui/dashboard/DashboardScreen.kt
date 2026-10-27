@@ -53,22 +53,36 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
+import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringCard
+import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringModel
+import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
+import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
+import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     callbacks: DashboardCallbacks,
     viewModel: DashboardViewModel = hiltViewModel(),
+    upcomingViewModel: UpcomingRecurringViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val upcomingState by upcomingViewModel.uiState.collectAsStateWithLifecycle()
 
-    OnResumeEffect(onResume = viewModel::onRetry)
+    OnResumeEffect(
+        onResume = {
+            viewModel.onRetry()
+            upcomingViewModel.onRetry()
+        },
+    )
 
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
         viewModel.budgetErrorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
     }
+    UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
+    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, callbacks)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -91,18 +105,8 @@ fun DashboardScreen(
             is DashboardUiState.Content -> {
                 DashboardContent(
                     state = state,
-                    periodActions =
-                        PeriodActions(
-                            onPrevious = viewModel::onPreviousMonth,
-                            onNext = viewModel::onNextMonth,
-                            onSelect = viewModel::onPeriodSelected,
-                        ),
+                    actions = actions,
                     callbacks = callbacks,
-                    budgetActions =
-                        BudgetActions(
-                            onSetBudget = viewModel::onSetBudget,
-                            onClearBudget = viewModel::onClearBudget,
-                        ),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -149,12 +153,40 @@ private data class BudgetActions(
     val onClearBudget: (Category) -> Unit,
 )
 
+private fun dashboardActions(
+    viewModel: DashboardViewModel,
+    upcomingViewModel: UpcomingRecurringViewModel,
+    upcomingState: UpcomingRecurringUiState,
+    callbacks: DashboardCallbacks,
+) = DashboardActions(
+    period =
+        PeriodActions(
+            onPrevious = viewModel::onPreviousMonth,
+            onNext = viewModel::onNextMonth,
+            onSelect = viewModel::onPeriodSelected,
+        ),
+    budget = BudgetActions(onSetBudget = viewModel::onSetBudget, onClearBudget = viewModel::onClearBudget),
+    upcoming =
+        UpcomingRecurringModel(
+            state = upcomingState,
+            onConfirm = upcomingViewModel::onConfirm,
+            onSkip = upcomingViewModel::onSkip,
+            onManage = callbacks.onOpenRecurring,
+        ),
+)
+
+/** Everything the dashboard content can do besides navigation, bundled for detekt's LongParameterList. */
+private data class DashboardActions(
+    val period: PeriodActions,
+    val budget: BudgetActions,
+    val upcoming: UpcomingRecurringModel,
+)
+
 @Composable
 private fun DashboardContent(
     state: DashboardUiState.Content,
-    periodActions: PeriodActions,
+    actions: DashboardActions,
     callbacks: DashboardCallbacks,
-    budgetActions: BudgetActions,
     modifier: Modifier = Modifier,
 ) {
     val cardModifier =
@@ -170,7 +202,7 @@ private fun DashboardContent(
             PeriodSelector(
                 period = state.period,
                 canGoToNextMonth = state.canGoToNextMonth,
-                actions = periodActions,
+                actions = actions.period,
             )
         }
 
@@ -184,14 +216,16 @@ private fun DashboardContent(
             )
         }
 
+        item { UpcomingRecurringCard(model = actions.upcoming, modifier = cardModifier) }
+
         item { SpendingBreakdownCard(state = state, modifier = cardModifier) }
 
         item {
             BudgetSection(
                 budgets = state.budgets,
                 title = budgetSectionTitle(state),
-                onSetBudget = budgetActions.onSetBudget,
-                onClearBudget = budgetActions.onClearBudget,
+                onSetBudget = actions.budget.onSetBudget,
+                onClearBudget = actions.budget.onClearBudget,
                 modifier = cardModifier,
             )
         }

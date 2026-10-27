@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.common
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.material.icons.Icons
@@ -36,6 +37,7 @@ fun ReadOnlyDateField(
     onDateSelected: (Instant) -> Unit,
     modifier: Modifier = Modifier,
     zone: ZoneId = ZoneId.systemDefault(),
+    @StringRes labelRes: Int = R.string.field_date,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val displayDateFormatter = rememberLocaleAwareDateFormatter().withZone(zone)
@@ -53,7 +55,7 @@ fun ReadOnlyDateField(
         readOnly = true,
         value = displayDateFormatter.format(date),
         onValueChange = {},
-        label = { Text(stringResource(R.string.field_date)) },
+        label = { Text(stringResource(labelRes)) },
         interactionSource = dateFieldInteractionSource,
         trailingIcon = {
             IconButton(onClick = { showDatePicker = true }) {

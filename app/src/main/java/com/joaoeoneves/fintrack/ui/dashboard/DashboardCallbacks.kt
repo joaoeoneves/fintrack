@@ -19,4 +19,6 @@ data class DashboardCallbacks(
     val onOpenIncome: (String) -> Unit,
     /** Opens the monthly plan screen. */
     val onOpenMonthlyPlan: () -> Unit,
+    /** Opens the recurring items list. */
+    val onOpenRecurring: () -> Unit,
 )

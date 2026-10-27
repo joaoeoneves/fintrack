@@ -12,4 +12,8 @@ object TestTags {
     const val DASHBOARD_SETTINGS = "dashboard_settings"
     const val SEE_ALL_EXPENSES = "see_all_expenses"
     const val EXPENSE_LIST = "expense_list"
+    const val RECURRING_CARD = "recurring_card"
+    const val RECURRING_CONFIRM = "recurring_confirm"
+    const val RECURRING_SKIP = "recurring_skip"
+    const val RECURRING_ADD = "recurring_add"
 }

@@ -329,4 +329,54 @@
     <string name="dashboard_breakdown_planned">Planeado</string>
     <string name="dashboard_planned_per_month">Planeado / mês</string>
     <string name="cd_pie_chart_planned_total">Alocação planeada. Total: %1$s (gastos %2$s, poupança %3$s).</string>
+
+    <!-- Recorrentes -->
+    <string name="settings_section_recurring">Recorrentes</string>
+    <string name="settings_manage_recurring">Gerir contas e rendimentos recorrentes</string>
+    <string name="recurring_title">Recorrentes</string>
+    <string name="recurring_add">Adicionar recorrente</string>
+    <string name="recurring_edit_title">Editar recorrente</string>
+    <string name="recurring_upcoming_title">Contas e rendimentos a chegar</string>
+    <string name="recurring_confirm">Confirmar</string>
+    <string name="recurring_skip">Saltar</string>
+    <string name="recurring_overdue">Em atraso</string>
+    <string name="recurring_due_today">Hoje</string>
+    <plurals name="recurring_more_overdue">
+        <item quantity="one">+%d em atraso</item>
+        <item quantity="many">+%d em atraso</item>
+        <item quantity="other">+%d em atraso</item>
+    </plurals>
+    <string name="recurring_nothing_due">Nada a vencer em breve</string>
+    <string name="recurring_annual_cost">Despesas recorrentes: %1$s/ano (%2$s/mês)</string>
+    <string name="recurring_annual_income">Rendimentos recorrentes: %1$s/ano</string>
+    <string name="recurring_manage">Gerir</string>
+    <string name="recurring_empty_cta">Configurar contas e rendimentos recorrentes</string>
+    <string name="recurring_added">\'%1$s\' adicionado</string>
+    <string name="recurring_per_month">%1$s / mês</string>
+    <string name="recurring_per_year">%1$s / ano</string>
+    <string name="recurring_next_due">Próximo: %1$s</string>
+    <string name="recurring_section_active">Ativos</string>
+    <string name="recurring_section_inactive">Em pausa e terminados</string>
+    <string name="recurring_list_empty">Ainda não há itens recorrentes</string>
+    <string name="recurring_paused">Em pausa</string>
+    <string name="recurring_ended">Terminado</string>
+    <string name="recurring_pause">Pausar</string>
+    <string name="recurring_resume">Retomar</string>
+    <string name="recurring_delete_confirm">Eliminar \"%1$s\"? As transações já criadas são mantidas.</string>
+    <string name="recurring_type_expense">Despesa</string>
+    <string name="recurring_type_income">Rendimento</string>
+    <string name="recurring_frequency_monthly">Mensal</string>
+    <string name="recurring_frequency_yearly">Anual</string>
+    <string name="recurring_day_of_month">Dia do mês</string>
+    <string name="recurring_month">Mês</string>
+    <string name="recurring_starts">Começa em</string>
+    <string name="recurring_end_date">Data de fim</string>
+    <string name="recurring_end_date_add">Adicionar data de fim</string>
+    <string name="recurring_end_date_clear">Remover data de fim</string>
+    <string name="error_recurring_save_failed">Não foi possível guardar o item recorrente</string>
+    <string name="error_recurring_not_found">Este item recorrente já não existe</string>
+    <string name="error_recurring_end_before_start">A data de fim não pode ser anterior à data de início</string>
+    <string name="error_recurring_day_invalid">Introduza um dia entre 1 e 31</string>
+    <string name="error_recurring_month_required">Escolha um mês</string>
+    <string name="error_recurring_too_long">Este texto é demasiado longo</string>
 </resources>

@@ -1,0 +1,108 @@
+appId: com.joaoeoneves.fintrack
+---
+# Recurring bills & income E2E flow: Settings -> "Manage recurring bills & income" -> recurring list
+# -> add a monthly expense "Maestro Rent" (500, day = today, which the form defaults to) -> back on
+# the Dashboard the "Upcoming bills & income" card lists it with Confirm -> Confirm -> the expense
+# shows up in "Recent expenses" -> cleanup (delete the created expense, then the recurring item).
+#
+# STATUS: written but NOT RUN yet on a device/emulator -- selectors come from strings.xml and the
+# recurring composables (TestTags RECURRING_ADD / RECURRING_CONFIRM, exposed as resource ids), so
+# expect small tweaks on the first real run.
+#
+# Assumes the app is already signed in (or in guest mode) and lands on the Dashboard, like
+# golden-path.yaml. Assumes no existing recurring item is named "Maestro Rent"; everything this
+# flow adds is removed again at the end.
+
+- launchApp
+
+# --- 0: Pin English + EUR, mirroring monthly-plan.yaml ---
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- back
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "Display currency"
+- tapOn: "Euro (€)"
+- tapOn: "Back"
+- assertVisible: "FinTrack"
+
+# --- 1: Open the recurring list from Settings ---
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element: "Manage recurring bills & income"
+    direction: DOWN
+- tapOn: "Manage recurring bills & income"
+- assertVisible: "Recurring"
+
+# --- 2: Add a monthly expense due today ---
+- tapOn:
+    id: "recurring_add"
+- assertVisible: "Add recurring"
+- tapOn: "Name"
+- inputText: "Maestro Rent"
+- tapOn: "Amount"
+- inputText: "500"
+- hideKeyboard
+# Frequency defaults to Monthly and "Day of month" to today; pin Monthly explicitly anyway.
+- tapOn: "Monthly"
+- tapOn: "Save"
+- assertNotVisible: "Add recurring"
+- assertVisible: "Maestro Rent"
+
+# --- 3: Back to the Dashboard: Upcoming card shows it as due today ---
+- tapOn: "Back"
+- tapOn: "Back"
+- assertVisible: "FinTrack"
+- scrollUntilVisible:
+    element:
+      id: "recurring_card"
+    direction: DOWN
+- assertVisible: "Upcoming bills & income"
+- assertVisible: "Maestro Rent"
+- assertVisible:
+    id: "recurring_confirm"
+
+# --- 4: Confirm -> expense is created and appears in Recent expenses ---
+- tapOn:
+    id: "recurring_confirm"
+- assertNotVisible:
+    id: "recurring_confirm"
+- scrollUntilVisible:
+    element: "Recent expenses"
+    direction: DOWN
+- assertVisible: "Maestro Rent"
+- assertVisible: ".*500\\.00.*"
+
+# --- 5: Cleanup: delete the created expense via the full list ---
+- scrollUntilVisible:
+    element: "See all expenses"
+    direction: DOWN
+- tapOn: "See all expenses"
+- assertVisible: "All expenses"
+- tapOn: "Search"
+- inputText: "Maestro Rent"
+- hideKeyboard
+- tapOn: "Delete"
+- assertVisible: "Undo"
+- tapOn: "Maestro Rent"
+- eraseText: 30
+- hideKeyboard
+- back
+
+# --- 6: Cleanup: delete the recurring item ---
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element: "Manage recurring bills & income"
+    direction: DOWN
+- tapOn: "Manage recurring bills & income"
+- assertVisible: "Maestro Rent"
+- tapOn: "Delete"
+- assertVisible: "Delete \"Maestro Rent\"\\? Transactions already created are kept\\."
+- tapOn:
+    text: "Delete"
+    index: 1
+- assertNotVisible: "Maestro Rent"
+- tapOn: "Back"
+- tapOn: "Back"
+- assertVisible: "FinTrack"

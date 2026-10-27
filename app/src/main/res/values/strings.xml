@@ -322,4 +322,53 @@
     <string name="dashboard_breakdown_planned">Planned</string>
     <string name="dashboard_planned_per_month">Planned / month</string>
     <string name="cd_pie_chart_planned_total">Planned allocation. Total: %1$s (spending %2$s, saving %3$s).</string>
+
+    <!-- Recurring -->
+    <string name="settings_section_recurring">Recurring</string>
+    <string name="settings_manage_recurring">Manage recurring bills &amp; income</string>
+    <string name="recurring_title">Recurring</string>
+    <string name="recurring_add">Add recurring</string>
+    <string name="recurring_edit_title">Edit recurring</string>
+    <string name="recurring_upcoming_title">Upcoming bills &amp; income</string>
+    <string name="recurring_confirm">Confirm</string>
+    <string name="recurring_skip">Skip</string>
+    <string name="recurring_overdue">Overdue</string>
+    <string name="recurring_due_today">Today</string>
+    <plurals name="recurring_more_overdue">
+        <item quantity="one">+%d more overdue</item>
+        <item quantity="other">+%d more overdue</item>
+    </plurals>
+    <string name="recurring_nothing_due">Nothing due soon</string>
+    <string name="recurring_annual_cost">Recurring expenses: %1$s/year (%2$s/month)</string>
+    <string name="recurring_annual_income">Recurring income: %1$s/year</string>
+    <string name="recurring_manage">Manage</string>
+    <string name="recurring_empty_cta">Set up recurring bills &amp; income</string>
+    <string name="recurring_added">Added \'%1$s\'</string>
+    <string name="recurring_per_month">%1$s / month</string>
+    <string name="recurring_per_year">%1$s / year</string>
+    <string name="recurring_next_due">Next: %1$s</string>
+    <string name="recurring_section_active">Active</string>
+    <string name="recurring_section_inactive">Paused and ended</string>
+    <string name="recurring_list_empty">No recurring items yet</string>
+    <string name="recurring_paused">Paused</string>
+    <string name="recurring_ended">Ended</string>
+    <string name="recurring_pause">Pause</string>
+    <string name="recurring_resume">Resume</string>
+    <string name="recurring_delete_confirm">Delete \"%1$s\"? Transactions already created are kept.</string>
+    <string name="recurring_type_expense">Expense</string>
+    <string name="recurring_type_income">Income</string>
+    <string name="recurring_frequency_monthly">Monthly</string>
+    <string name="recurring_frequency_yearly">Yearly</string>
+    <string name="recurring_day_of_month">Day of month</string>
+    <string name="recurring_month">Month</string>
+    <string name="recurring_starts">Starts</string>
+    <string name="recurring_end_date">End date</string>
+    <string name="recurring_end_date_add">Add end date</string>
+    <string name="recurring_end_date_clear">Remove end date</string>
+    <string name="error_recurring_save_failed">Couldn\'t save the recurring item</string>
+    <string name="error_recurring_not_found">This recurring item no longer exists</string>
+    <string name="error_recurring_end_before_start">The end date can\'t be before the start date</string>
+    <string name="error_recurring_day_invalid">Enter a day from 1 to 31</string>
+    <string name="error_recurring_month_required">Choose a month</string>
+    <string name="error_recurring_too_long">This text is too long</string>
 </resources>

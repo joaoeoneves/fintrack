@@ -38,3 +38,11 @@ object Categories
 
 @Serializable
 object MonthlyPlan
+
+@Serializable
+object RecurringList
+
+@Serializable
+data class AddEditRecurring(
+    val recurringId: String? = null,
+)
