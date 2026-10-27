@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -420,7 +421,7 @@ class AddEditExpenseViewModelTest {
             // from it would silently overwrite/upsert the real record.
             assertFalse(state is AddEditUiState.Ready)
 
-            assertEquals(UiText.Dynamic("Firestore unavailable"), (state as AddEditUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditUiState.Error).message)
         }
 
     @Test
@@ -433,7 +434,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Error
-            assertEquals(UiText.StringResource(R.string.error_generic_fallback), state.message)
+            assertEquals(genericErrorText, state.message)
         }
 
     // ---- onRetry ----
@@ -485,7 +486,7 @@ class AddEditExpenseViewModelTest {
 
             val state = viewModel.uiState.value
             assertTrue(state is AddEditUiState.Error)
-            assertEquals(UiText.Dynamic("second failure"), (state as AddEditUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditUiState.Error).message)
         }
 
     // ---- edit mode: save ----
@@ -580,7 +581,7 @@ class AddEditExpenseViewModelTest {
 
             assertTrue(events.isEmpty())
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals(UiText.Dynamic("boom"), state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_expense), state.form.saveError)
             assertNull(state.form.nameError)
             assertNull(state.form.amountError)
 
@@ -627,7 +628,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals(UiText.Dynamic("Expense with id e1 not found"), state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_expense), state.form.saveError)
         }
 
     @Test

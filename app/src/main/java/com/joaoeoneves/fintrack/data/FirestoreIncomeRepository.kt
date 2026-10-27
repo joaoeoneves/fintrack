@@ -193,7 +193,9 @@ internal fun Income.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?>
 
 private fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
 
-private fun DocumentSnapshot.toIncomeOrNull(): Income? {
+private fun DocumentSnapshot.toIncomeOrNull(): Income? = mapOrNull("income") { parseIncome() }
+
+private fun DocumentSnapshot.parseIncome(): Income? {
     val source = getString("source")
     val amountCents = getLong("amountCents")
     val date = getTimestamp("date")

@@ -2,12 +2,11 @@ package com.joaoeoneves.fintrack.ui.income.list
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
-import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
-import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -411,7 +410,7 @@ class IncomeListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            assertEquals(IncomeListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
+            assertEquals(IncomeListUiState.Error(genericErrorText), vm.uiState.value)
 
             job.cancel()
         }
@@ -427,7 +426,7 @@ class IncomeListViewModelTest {
             advanceUntilIdle()
 
             assertEquals(
-                IncomeListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                IncomeListUiState.Error(genericErrorText),
                 vm.uiState.value,
             )
 
@@ -444,7 +443,7 @@ class IncomeListViewModelTest {
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
-            assertEquals(IncomeListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
+            assertEquals(IncomeListUiState.Error(genericErrorText), vm.uiState.value)
 
             // Clear the error on the underlying fake, then retry. Since the period itself hasn't
             // changed, only the retry-trigger bump forces flatMapLatest to re-subscribe -- proving

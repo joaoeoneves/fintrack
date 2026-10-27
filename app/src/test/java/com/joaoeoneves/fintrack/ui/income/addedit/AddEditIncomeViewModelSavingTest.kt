@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.income.addedit
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
@@ -172,7 +173,7 @@ class AddEditIncomeViewModelSavingTest {
             advanceUntilIdle()
 
             assertFalse(vm.form().isSaving)
-            assertEquals(UiText.Dynamic("offline"), vm.form().saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_income), vm.form().saveError)
             assertEquals(0, savedCount())
 
             vm.onSave()

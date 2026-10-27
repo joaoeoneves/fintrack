@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -388,7 +389,7 @@ class AddEditIncomeViewModelTest {
             // from it would silently overwrite/upsert the real record.
             assertFalse(state is AddEditIncomeUiState.Ready)
 
-            assertEquals(UiText.Dynamic("Firestore unavailable"), (state as AddEditIncomeUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditIncomeUiState.Error).message)
         }
 
     @Test
@@ -401,7 +402,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Error
-            assertEquals(UiText.StringResource(R.string.error_generic_fallback), state.message)
+            assertEquals(genericErrorText, state.message)
         }
 
     // ---- onRetry ----
@@ -451,7 +452,7 @@ class AddEditIncomeViewModelTest {
 
             val state = viewModel.uiState.value
             assertTrue(state is AddEditIncomeUiState.Error)
-            assertEquals(UiText.Dynamic("second failure"), (state as AddEditIncomeUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditIncomeUiState.Error).message)
         }
 
     // ---- edit mode: save ----
@@ -515,7 +516,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals(UiText.Dynamic("Income with id i1 not found"), state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_income), state.form.saveError)
         }
 
     @Test
@@ -573,7 +574,7 @@ class AddEditIncomeViewModelTest {
 
             assertTrue(events.isEmpty())
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals(UiText.Dynamic("boom"), state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_income), state.form.saveError)
             assertNull(state.form.sourceError)
             assertNull(state.form.amountError)
 

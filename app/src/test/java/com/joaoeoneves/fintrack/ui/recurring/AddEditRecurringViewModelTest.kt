@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.testutil.day
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.userCategory
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -83,7 +84,7 @@ class AddEditRecurringViewModelTest : AddEditRecurringViewModelTestBase() {
             val failing = viewModel(FakeRecurringRepository(nextObserveError = IllegalStateException("x")), id = "r1")
             advanceUntilIdle()
             assertEquals(
-                AddEditRecurringUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                AddEditRecurringUiState.Error(genericErrorText),
                 failing.uiState.value,
             )
         }

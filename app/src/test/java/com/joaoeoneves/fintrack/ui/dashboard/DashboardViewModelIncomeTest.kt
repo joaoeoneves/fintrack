@@ -1,12 +1,11 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
-import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -171,7 +170,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             val viewModel = viewModel(incomeRepository = incomeRepo)
             collect(viewModel)
 
-            assertEquals(DashboardUiState.Error(UiText.Dynamic("Firestore unavailable")), viewModel.uiState.value)
+            assertEquals(DashboardUiState.Error(genericErrorText), viewModel.uiState.value)
         }
 
     @Test
@@ -183,7 +182,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             assertEquals(
-                DashboardUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                DashboardUiState.Error(genericErrorText),
                 viewModel.uiState.value,
             )
         }
@@ -195,7 +194,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             incomeRepo.nextObserveIncomeError = IllegalStateException("Firestore unavailable")
             val viewModel = viewModel(incomeRepository = incomeRepo)
             collect(viewModel)
-            assertEquals(DashboardUiState.Error(UiText.Dynamic("Firestore unavailable")), viewModel.uiState.value)
+            assertEquals(DashboardUiState.Error(genericErrorText), viewModel.uiState.value)
 
             incomeRepo.nextObserveIncomeError = null
             viewModel.onRetry()

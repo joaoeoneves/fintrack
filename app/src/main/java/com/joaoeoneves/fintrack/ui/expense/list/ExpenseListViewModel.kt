@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,7 +17,6 @@ import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import com.joaoeoneves.fintrack.ui.navigation.ExpenseList
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,6 +36,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import javax.inject.Inject
+
+private const val TAG = "ExpenseListViewModel"
 
 // How long (in ms) the underlying Firestore listener is kept alive after the last collector
 // disappears, so a quick configuration change doesn't tear down and immediately re-establish it.
@@ -113,7 +115,10 @@ class ExpenseListViewModel
                     expenseRepository
                         .observeExpenses(instantRange.startInclusive, instantRange.endExclusive)
                         .map<List<Expense>, PeriodItems<Expense>> { PeriodItems.Loaded(period, canGoToNextMonth, it) }
-                        .catch { e -> emit(PeriodItems.Failed(e.messageOr(R.string.error_generic_fallback))) }
+                        .catch { e ->
+                            Log.w(TAG, "Expense list flow failed", e)
+                            emit(PeriodItems.Failed(UiText.StringResource(R.string.error_generic_fallback)))
+                        }
                 }
 
         val uiState: StateFlow<ExpenseListUiState> =

@@ -2,14 +2,13 @@ package com.joaoeoneves.fintrack.ui.expense.list
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
-import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -422,7 +421,7 @@ class ExpenseListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            assertEquals(ExpenseListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
+            assertEquals(ExpenseListUiState.Error(genericErrorText), vm.uiState.value)
 
             job.cancel()
         }
@@ -438,7 +437,7 @@ class ExpenseListViewModelTest {
             advanceUntilIdle()
 
             assertEquals(
-                ExpenseListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                ExpenseListUiState.Error(genericErrorText),
                 vm.uiState.value,
             )
 
@@ -455,7 +454,7 @@ class ExpenseListViewModelTest {
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
-            assertEquals(ExpenseListUiState.Error(UiText.Dynamic("Firestore unavailable")), vm.uiState.value)
+            assertEquals(ExpenseListUiState.Error(genericErrorText), vm.uiState.value)
 
             // Clear the error on the underlying fake, then retry. Since period/query/sortOption
             // haven't changed, only the retry-trigger bump forces flatMapLatest to re-subscribe --

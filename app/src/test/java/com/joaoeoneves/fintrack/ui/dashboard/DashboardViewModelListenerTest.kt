@@ -1,14 +1,13 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
-import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
 import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
-import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.testutil.genericErrorText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -92,7 +91,7 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
                 )
             collect(viewModel)
 
-            assertEquals(DashboardUiState.Error(UiText.Dynamic("budgets down")), viewModel.uiState.value)
+            assertEquals(DashboardUiState.Error(genericErrorText), viewModel.uiState.value)
         }
 
     @Test
@@ -102,7 +101,7 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             assertEquals(
-                DashboardUiState.Error(UiText.StringResource(R.string.error_generic_fallback)),
+                DashboardUiState.Error(genericErrorText),
                 viewModel.uiState.value,
             )
         }
@@ -117,6 +116,6 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.THREE_MONTHS))
             collect(viewModel)
 
-            assertEquals(DashboardUiState.Error(UiText.Dynamic("budgets down")), viewModel.uiState.value)
+            assertEquals(DashboardUiState.Error(genericErrorText), viewModel.uiState.value)
         }
 }

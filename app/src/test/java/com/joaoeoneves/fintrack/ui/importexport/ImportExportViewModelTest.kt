@@ -220,7 +220,7 @@ class ImportExportViewModelTest {
             assertTrue("expected PartialFailure but was $state", state is ImportUiState.PartialFailure)
             val partial = state as ImportUiState.PartialFailure
             assertEquals(2, partial.succeededCount)
-            assertEquals(UiText.Dynamic("Firestore batch commit failed"), partial.message)
+            assertEquals(UiText.StringResource(R.string.error_import_failed), partial.message)
 
             // The reported succeededCount must match what's actually durably stored, not just a
             // number surfaced in UI state.
@@ -276,7 +276,7 @@ class ImportExportViewModelTest {
 
             val state = viewModel.importState.value
             assertTrue("expected Error, not PartialFailure, but was $state", state is ImportUiState.Error)
-            assertEquals(UiText.Dynamic("Not signed in"), (state as ImportUiState.Error).message)
+            assertEquals(UiText.StringResource(R.string.error_import_failed), (state as ImportUiState.Error).message)
             assertTrue(repo.getAllExpenses().getOrThrow().isEmpty())
         }
 

@@ -13,7 +13,6 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.common.messageOr
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -78,15 +77,16 @@ class ImportExportViewModel
             viewModelScope.launch {
                 _importState.value = ImportUiState.Importing
                 val result = expenseRepository.addExpenses(preview.validExpenses)
+                result.failure?.let { Log.w(TAG, "Import failed after ${result.succeededCount} rows", it) }
                 _importState.value =
                     when {
                         result.isCompleteSuccess -> ImportUiState.Done(result.succeededCount)
                         result.succeededCount > 0 ->
                             ImportUiState.PartialFailure(
                                 result.succeededCount,
-                                result.failure.messageOr(R.string.error_import_failed),
+                                UiText.StringResource(R.string.error_import_failed),
                             )
-                        else -> ImportUiState.Error(result.failure.messageOr(R.string.error_import_failed))
+                        else -> ImportUiState.Error(UiText.StringResource(R.string.error_import_failed))
                     }
             }
         }
@@ -121,7 +121,8 @@ class ImportExportViewModel
                                 ExportUiState.Error(UiText.StringResource(R.string.error_export_write_file))
                             }
                     }.onFailure { e ->
-                        _exportState.value = ExportUiState.Error(e.messageOr(R.string.error_export_failed))
+                        Log.w(TAG, "Export failed", e)
+                        _exportState.value = ExportUiState.Error(UiText.StringResource(R.string.error_export_failed))
                     }
             }
         }

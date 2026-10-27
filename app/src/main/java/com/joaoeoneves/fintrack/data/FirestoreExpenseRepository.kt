@@ -223,7 +223,9 @@ internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?
 
 private fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
 
-private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
+private fun DocumentSnapshot.toExpenseOrNull(): Expense? = mapOrNull("expense") { parseExpense() }
+
+private fun DocumentSnapshot.parseExpense(): Expense? {
     val name = getString("name")
     val amountCents = getLong("amountCents")
     // An id matching no built-in (a user category, resolved later against the catalog, or a deleted

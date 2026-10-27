@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,7 +17,6 @@ import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.common.messageOr
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,6 +36,8 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
+
+private const val TAG = "DashboardViewModel"
 
 // How long (in ms) the underlying Firestore listeners are kept alive after the last collector
 // disappears, so a quick configuration change doesn't tear down and immediately re-establish them.
@@ -82,7 +84,10 @@ class DashboardViewModel
             val zone = clock.zone
             return observePeriodOverview(period, now, zone, RECENT_ITEMS_LIMIT)
                 .map<PeriodOverview, DashboardUiState> { overview -> overview.toContent(period, now, zone) }
-                .catch { e -> emit(DashboardUiState.Error(e.messageOr(R.string.error_generic_fallback))) }
+                .catch { e ->
+                    Log.w(TAG, "Dashboard flow failed", e)
+                    emit(DashboardUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
+                }
         }
 
         fun onPeriodSelected(period: Period) = selection.select(period)

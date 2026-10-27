@@ -7,7 +7,7 @@ import androidx.compose.ui.res.stringResource
 
 /**
  * User-facing text produced by a ViewModel without it needing a [android.content.Context]: either
- * a raw [Dynamic] string (e.g. an exception message) or a [StringResource] the UI resolves in the
+ * a raw [Dynamic] string (e.g. a validation message) or a [StringResource] the UI resolves in the
  * current locale.
  */
 sealed interface UiText {
@@ -34,8 +34,3 @@ fun UiText.asString(resources: Resources): String =
         is UiText.Dynamic -> value
         is UiText.StringResource -> resources.getString(resId)
     }
-
-/** This throwable's message as [UiText.Dynamic], or [fallback] when it has none. */
-fun Throwable?.messageOr(
-    @StringRes fallback: Int,
-): UiText = this?.message?.let(UiText::Dynamic) ?: UiText.StringResource(fallback)
