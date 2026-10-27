@@ -56,6 +56,7 @@ class BackupRepository
                     monthSettings = plan.monthSettings.filterNot { it.isBlank }.map { it.toLocal() },
                     categoryGroups = plan.categoryGroups.map { it.toLocal() },
                     salaryProfile = plan.salaryProfile?.toLocal(),
+                    goals = plan.goals.map { it.toLocal() },
                     categories =
                         withPlaceholderCategories(
                             categories = categories.filter { it.needsStoring() }.map { it.toLocal() },

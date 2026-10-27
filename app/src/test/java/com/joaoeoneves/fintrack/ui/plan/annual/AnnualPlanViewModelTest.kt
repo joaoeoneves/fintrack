@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
@@ -78,6 +79,7 @@ class AnnualPlanViewModelTest {
                     FakeCategoryGroupRepository(),
                     FakeRecurringRepository(),
                 ),
+                FakeGoalRepository(),
             ),
             handle,
             clock,

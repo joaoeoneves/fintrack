@@ -588,4 +588,28 @@
     <string name="annual_leftover_caption">Rendimento menos despesa planeada, %1$s</string>
     <string name="annual_empty_title">Nada planeado para %1$s</string>
     <string name="annual_empty_message">Adicione rendimento e dotações na vista Mês para ver o ano.</string>
+
+    <string name="plan_goals_title">Objetivos</string>
+    <string name="plan_goals_add">Adicionar um objetivo</string>
+    <string name="plan_goals_from_investments">Criar a partir dos investimentos</string>
+    <string name="goal_new">Novo objetivo</string>
+    <string name="goal_edit">Editar objetivo</string>
+    <string name="goal_field_name">Nome</string>
+    <string name="goal_field_target">Meta</string>
+    <string name="goal_field_target_date">Data-alvo</string>
+    <string name="goal_field_initial">Já poupado (opcional)</string>
+    <string name="goal_target_date_add">Adicionar data-alvo</string>
+    <string name="goal_target_date_clear">Remover data-alvo</string>
+    <string name="goal_error_dates">A data-alvo é anterior à data de início</string>
+    <string name="goal_type_annual">Anual</string>
+    <string name="goal_type_total">Total</string>
+    <string name="goal_status_on_track">Em linha</string>
+    <string name="goal_status_behind">Atrasado</string>
+    <string name="goal_status_done">Concluído</string>
+    <string name="goal_link_recurring">Ligar a recorrentes</string>
+    <string name="goal_link_category">Ligar a uma categoria</string>
+    <string name="goal_link_category_none">Nenhuma</string>
+    <string name="error_goal_save_failed">Não foi possível guardar o objetivo</string>
+    <string name="annual_goals_title">Objetivos</string>
+    <string name="annual_goal_planned_of_target">%1$s planeados de %2$s</string>
 </resources>

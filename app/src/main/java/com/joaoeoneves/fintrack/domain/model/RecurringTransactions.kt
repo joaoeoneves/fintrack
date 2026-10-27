@@ -14,7 +14,10 @@ private val ID_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE
 fun occurrenceTransactionId(
     itemId: String,
     date: LocalDate,
-): String = "$OCCURRENCE_ID_PREFIX${itemId}_${ID_DATE_FORMAT.format(date)}"
+): String = "${occurrenceIdPrefix(itemId)}${ID_DATE_FORMAT.format(date)}"
+
+/** The prefix (`rec_<itemId>_`) shared by the ids of every transaction generated from item [itemId]. */
+fun occurrenceIdPrefix(itemId: String): String = "$OCCURRENCE_ID_PREFIX${itemId}_"
 
 private const val OCCURRENCE_ID_PREFIX = "rec_"
 

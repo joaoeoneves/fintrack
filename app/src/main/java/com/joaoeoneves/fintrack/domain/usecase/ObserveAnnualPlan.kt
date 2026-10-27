@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.annualPlanOf
 import com.joaoeoneves.fintrack.domain.model.resolvedWith
+import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,6 +23,7 @@ class ObserveAnnualPlan
     constructor(
         private val transactionRepository: TransactionRepository,
         private val sources: PlanDataSources,
+        private val goalRepository: GoalRepository,
     ) {
         operator fun invoke(
             year: Int,
@@ -47,14 +49,16 @@ class ObserveAnnualPlan
                     sources.categories.observeCategories(),
                 ) { budgets, lines, settings, catalog -> AnnualPlanSources(budgets, lines, settings, catalog) }
             val extraInputs =
-                combine(sources.groups.observeGroups(), sources.recurring.observeRecurring()) { groups, recurring ->
-                    groups to recurring
-                }
+                combine(
+                    sources.groups.observeGroups(),
+                    sources.recurring.observeRecurring(),
+                    goalRepository.observeGoals(),
+                ) { groups, recurring, goals -> Triple(groups, recurring, goals) }
             return combine(
                 planInputs,
                 extraInputs,
                 transactionRepository.observeTransactions(InstantRange(start, end)),
-            ) { plan, (groups, recurring), transactions ->
+            ) { plan, (groups, recurring, goals), transactions ->
                 annualPlanOf(
                     year,
                     AnnualPlanInputs(
@@ -65,6 +69,7 @@ class ObserveAnnualPlan
                         groups = groups,
                         monthSettings = plan.monthSettings,
                         yearExpenses = transactions.expenses.resolvedWith(plan.categories),
+                        goals = goals,
                     ),
                 )
             }
