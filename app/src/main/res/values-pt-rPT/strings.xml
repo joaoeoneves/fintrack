@@ -224,8 +224,8 @@
     <string name="cd_category_icon_option">Ícone %1$d</string>
     <string name="cd_category_color_option">Cor %1$d</string>
     <string name="category_delete_confirm">Eliminar \"%1$s\"?</string>
-    <string name="category_in_use_message">\"%1$s\" é usada por despesas ou num orçamento. Arquivar em vez disso?</string>
-    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas ou num orçamento e não pode ser eliminada.</string>
+    <string name="category_in_use_message">\"%1$s\" é usada por despesas, num orçamento ou num item recorrente. Arquivar em vez disso?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas, num orçamento ou num item recorrente e não pode ser eliminada.</string>
     <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação. Arquivar em vez disso?</string>
     <string name="category_cannot_verify_archived_message">Não é possível verificar a utilização sem ligação. Tente novamente quando estiver online.</string>
     <string name="error_category_name_required">Introduza um nome</string>

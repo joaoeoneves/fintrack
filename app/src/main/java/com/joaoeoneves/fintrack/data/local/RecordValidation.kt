@@ -71,7 +71,7 @@ private fun requireCategoryIdShape(id: String) {
     }
 }
 
-private fun requireKnownCategory(
+internal fun requireKnownCategory(
     id: String,
     known: Set<String>,
 ) {
@@ -79,7 +79,7 @@ private fun requireKnownCategory(
     require(id in known) { "Unknown category $id" }
 }
 
-private fun requireText(
+internal fun requireText(
     value: String,
     max: Int,
     label: String,
@@ -87,7 +87,7 @@ private fun requireText(
     require(value.isNotEmpty() && value.codePointLength() <= max) { "$label must be 1..$max characters" }
 }
 
-private fun requireValidNote(note: String?) {
+internal fun requireValidNote(note: String?) {
     require(note == null || note.codePointLength() <= MAX_NOTE_LENGTH) { "Note exceeds $MAX_NOTE_LENGTH characters" }
 }
 

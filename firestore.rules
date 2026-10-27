@@ -79,6 +79,32 @@ service cloud.firestore {
         && data.order is int;
     }
 
+    function isDateString(d) {
+      return d is string && d.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isOptionalDate(data, key) {
+      return !(key in data) || data[key] == null || isDateString(data[key]);
+    }
+
+    function isValidRecurring(userId, data) {
+      return data.keys().hasOnly(['type', 'name', 'amountCents', 'category', 'note', 'frequency',
+          'dayOfMonth', 'monthOfYear', 'startDate', 'endDate', 'handledThrough', 'active', 'updatedAt'])
+        && data.keys().hasAll(['type', 'name', 'amountCents', 'frequency', 'dayOfMonth', 'startDate', 'active'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && isValidAmountCents(data.amountCents)
+        && ((data.type == 'EXPENSE' && isKnownCategory(userId, data.get('category', null)))
+          || (data.type == 'INCOME' && data.get('category', null) == null))
+        && data.dayOfMonth is int && data.dayOfMonth >= 1 && data.dayOfMonth <= 31
+        && ((data.frequency == 'MONTHLY' && data.get('monthOfYear', null) == null)
+          || (data.frequency == 'YEARLY' && data.get('monthOfYear', null) is int
+            && data.monthOfYear >= 1 && data.monthOfYear <= 12))
+        && isDateString(data.startDate)
+        && isOptionalDate(data, 'endDate') && isOptionalDate(data, 'handledThrough')
+        && data.active is bool
+        && isValidNote(data);
+    }
+
     // Each user can only read/write their own expenses, and every write must
     // carry a well-typed name/amount/category/date (a modified client can no
     // longer smuggle in a negative amount or an unknown category string). The category must be a
@@ -119,6 +145,13 @@ service cloud.firestore {
     match /users/{userId}/plannedIncome/{lineId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidPlannedIncome(request.resource.data);
+    }
+
+    // Each user can only read/write their own recurring templates (rent, subscriptions, salary).
+    // Confirming an occurrence writes the expense/income and bumps handledThrough in one batch.
+    match /users/{userId}/recurring/{itemId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidRecurring(userId, request.resource.data);
     }
 
     function isValidPreferences(data) {

@@ -1,0 +1,106 @@
+package com.joaoeoneves.fintrack.data
+
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
+import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import java.time.LocalDate
+
+/**
+ * In-memory [RecurringRepository] intended for tests. Items are exposed sorted by start date then id,
+ * like the real implementations; a blank id on save gets a generated one. [confirmOccurrence] records
+ * the transaction in [confirmedTransactions] and moves the item's cursor, as the real one does
+ * atomically. Each `next*Error` fails exactly the next call of that kind.
+ */
+class FakeRecurringRepository(
+    initialItems: List<RecurringItem> = emptyList(),
+    var nextObserveError: Throwable? = null,
+    var nextSaveError: Throwable? = null,
+    var nextDeleteError: Throwable? = null,
+    var nextSetHandledError: Throwable? = null,
+    var nextConfirmError: Throwable? = null,
+) : RecurringRepository {
+    private val itemsFlow = MutableStateFlow(initialItems)
+    private val confirmed = mutableListOf<Transaction>()
+    private var nextId = 1
+
+    /** Current items in insertion order (unsorted), for assertions. */
+    val items: List<RecurringItem> get() = itemsFlow.value
+
+    /** Transactions stored by [confirmOccurrence], in call order. */
+    val confirmedTransactions: List<Transaction> get() = confirmed.toList()
+
+    /** Replaces every item, e.g. to simulate a remote change. */
+    fun setItems(items: List<RecurringItem>) {
+        itemsFlow.value = items
+    }
+
+    override fun observeRecurring(): Flow<List<RecurringItem>> {
+        nextObserveError?.let { error -> return flow { throw error } }
+        return itemsFlow.map { list -> list.sortedWith(compareBy({ it.startDate }, { it.id })) }
+    }
+
+    override suspend fun saveRecurring(item: RecurringItem): Result<String> {
+        nextSaveError?.let { error ->
+            nextSaveError = null
+            return Result.failure(error)
+        }
+        val saved = if (item.id.isBlank()) item.copy(id = "rec${nextId++}") else item
+        val current = itemsFlow.value
+        itemsFlow.value =
+            if (current.any { it.id == saved.id }) {
+                current.map { if (it.id == saved.id) saved else it }
+            } else {
+                current + saved
+            }
+        return Result.success(saved.id)
+    }
+
+    override suspend fun deleteRecurring(id: String): Result<Unit> {
+        nextDeleteError?.let { error ->
+            nextDeleteError = null
+            return Result.failure(error)
+        }
+        itemsFlow.value = itemsFlow.value.filterNot { it.id == id }
+        return Result.success(Unit)
+    }
+
+    override suspend fun setHandledThrough(
+        id: String,
+        date: LocalDate?,
+    ): Result<Unit> {
+        nextSetHandledError?.let { error ->
+            nextSetHandledError = null
+            return Result.failure(error)
+        }
+        return withCursor(id, date).map { }
+    }
+
+    override suspend fun confirmOccurrence(
+        itemId: String,
+        occurrence: LocalDate,
+        transaction: Transaction,
+    ): Result<String> {
+        nextConfirmError?.let { error ->
+            nextConfirmError = null
+            return Result.failure(error)
+        }
+        return withCursor(itemId, occurrence).map {
+            confirmed += transaction
+            transaction.id
+        }
+    }
+
+    private fun withCursor(
+        id: String,
+        date: LocalDate?,
+    ): Result<Unit> {
+        val current = itemsFlow.value
+        if (current.none { it.id == id }) return Result.failure(NoSuchElementException("Recurring item $id not found"))
+        itemsFlow.value = current.map { if (it.id == id) it.copy(handledThrough = date) else it }
+        return Result.success(Unit)
+    }
+}

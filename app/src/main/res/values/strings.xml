@@ -222,8 +222,8 @@
     <string name="cd_category_icon_option">Icon %1$d</string>
     <string name="cd_category_color_option">Color %1$d</string>
     <string name="category_delete_confirm">Delete \"%1$s\"?</string>
-    <string name="category_in_use_message">\"%1$s\" is used by expenses or a budget. Archive it instead?</string>
-    <string name="category_in_use_archived_message">\"%1$s\" is used by expenses or a budget and can\'t be deleted.</string>
+    <string name="category_in_use_message">\"%1$s\" is used by expenses, a budget or a recurring item. Archive it instead?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" is used by expenses, a budget or a recurring item and can\'t be deleted.</string>
     <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
     <string name="category_cannot_verify_archived_message">Can\'t check usage while offline. Try again when you\'re online.</string>
     <string name="error_category_name_required">Enter a name</string>

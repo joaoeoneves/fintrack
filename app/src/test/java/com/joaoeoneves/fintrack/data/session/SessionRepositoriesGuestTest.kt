@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.data.local.LocalBudgetRepository
 import com.joaoeoneves.fintrack.data.local.LocalCategoryRepository
 import com.joaoeoneves.fintrack.data.local.LocalExpenseRepository
 import com.joaoeoneves.fintrack.data.local.LocalIncomeRepository
+import com.joaoeoneves.fintrack.data.local.LocalRecurringRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
@@ -96,7 +97,7 @@ class SessionRepositoriesGuestTest : LocalStoreTestBase() {
     fun checkCategoryUsage_worksOffline_withLocalRepositories() =
         runStoreTest {
             val id = categories.addCategory("Gym", "home", "teal", CategoryKind.SPENDING).getOrThrow()
-            val useCase = CheckCategoryUsage(expenses, budgets)
+            val useCase = CheckCategoryUsage(expenses, budgets, LocalRecurringRepository(store, ids))
 
             assertFalse(useCase(id).getOrThrow().inUse)
 

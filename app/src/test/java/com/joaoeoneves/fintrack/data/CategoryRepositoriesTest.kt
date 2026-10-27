@@ -159,7 +159,8 @@ class CategoryRepositoriesTest {
     private fun usage(
         expenses: FakeExpenseRepository = FakeExpenseRepository(),
         budgets: FakeBudgetRepository = FakeBudgetRepository(),
-    ) = CheckCategoryUsage(expenses, budgets)
+        recurring: FakeRecurringRepository = FakeRecurringRepository(),
+    ) = CheckCategoryUsage(expenses, budgets, recurring)
 
     @Test
     fun usage_unused() =

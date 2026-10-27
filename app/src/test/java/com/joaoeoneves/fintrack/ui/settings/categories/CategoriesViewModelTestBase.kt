@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeBuiltInCategoryNames
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +41,11 @@ abstract class CategoriesViewModelTestBase {
     }
 
     protected fun newViewModel(repo: FakeCategoryRepository): CategoriesViewModel =
-        CategoriesViewModel(repo, CheckCategoryUsage(expenses, budgets), FakeBuiltInCategoryNames())
+        CategoriesViewModel(
+            repo,
+            CheckCategoryUsage(expenses, budgets, FakeRecurringRepository()),
+            FakeBuiltInCategoryNames(),
+        )
 
     /** Creates the view model, collects its state and events, and lets the first emission land. */
     protected fun TestScope.start(repo: FakeCategoryRepository): CategoriesViewModel {

@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 2
+internal const val LOCAL_SCHEMA_VERSION = 3
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -20,6 +20,8 @@ data class LocalDataDocument(
     val categories: List<LocalCategory> = emptyList(),
     /** Expected-income lines of the monthly plan (absent in schema v1 files). */
     val plannedIncome: List<LocalPlannedIncome> = emptyList(),
+    /** Recurring bill/income templates (absent in schema v1 and v2 files). */
+    val recurring: List<LocalRecurringItem> = emptyList(),
 ) {
     /** Whether there is no user data at all. */
     val isEmpty: Boolean get() =
@@ -27,7 +29,8 @@ data class LocalDataDocument(
             income.isEmpty() &&
             budgets.isEmpty() &&
             categories.isEmpty() &&
-            plannedIncome.isEmpty()
+            plannedIncome.isEmpty() &&
+            recurring.isEmpty()
 }
 
 @Serializable
