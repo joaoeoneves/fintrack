@@ -1,28 +1,10 @@
 appId: com.joaoeoneves.fintrack
 ---
-# Helper (not a standalone flow): deletes the Activity-list row whose text matches ${ROW} with an
-# end->start swipe. The Activity header (title, month, totals, chips, search) scrolls with the list,
-# so a fixed-coordinate swipe no longer lands on a row. Element-based swipe first; if the row is
-# still there (from-element swipes sometimes stop short of the dismiss threshold, see
-# swipe-delete-check.yaml) fall back to coordinate swipes at heights where the first row sits once
-# the list is search-filtered.
+# Helper (not a standalone flow): swipes the only Activity row left after searching for its name.
+# Use it with the list filtered to a single row; that row sits at ~59% of the screen height on the
+# CI emulator (Pixel 6 profile). Coordinates are used because swiping "from" the row text did not
+# dismiss it reliably (the search field contains the same text and the swipe registered as a tap).
 - swipe:
-    from: "${ROW}"
-    direction: LEFT
-    duration: 800
-- runFlow:
-    when:
-      visible: "${ROW}"
-    commands:
-      - swipe:
-          start: "90%, 70%"
-          end: "10%, 70%"
-          duration: 800
-- runFlow:
-    when:
-      visible: "${ROW}"
-    commands:
-      - swipe:
-          start: "90%, 80%"
-          end: "10%, 80%"
-          duration: 800
+    start: 92%, 59%
+    end: 8%, 59%
+    duration: 500
