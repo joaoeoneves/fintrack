@@ -64,7 +64,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            mkdir -p maestro-out/screens && for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; test ! -f maestro-out/FAILED
+            mkdir -p maestro-out/screens && for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; true
 
       - name: Collect screenshots
         if: always()
@@ -86,6 +86,28 @@ jobs:
           name: maestro-results
           path: maestro-out/
           if-no-files-found: ignore
+
+      - name: Report results
+        if: always()
+        run: |
+          {
+            echo "### Maestro results"
+            for f in maestro-out/*.xml; do
+              [ -f "$f" ] || continue
+              name=$(basename "$f" .xml)
+              if grep -q "<failure" "$f"; then
+                echo "- ❌ $name: $(grep -o '<failure>[^<]*' "$f" | head -1 | sed 's/<failure>//')"
+              else
+                echo "- ✅ $name"
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Manual runs are used to iterate on flows: report failures in the summary without failing the run
+          # (and emailing). The weekly scheduled run stays strict.
+          if [ -f maestro-out/FAILED ]; then
+            echo "::warning::Some Maestro flows failed — see the summary and the maestro-results artifact."
+            if [ "${{ github.event_name }}" = "schedule" ]; then exit 1; fi
+          fi
 
       - name: Remove credentials
         if: always()
