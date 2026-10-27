@@ -27,6 +27,9 @@ const val MAX_PLANNED_INCOME_LINES = 20
 /** Most working days a month can be set to (the longest possible Monday to Friday count). */
 const val MAX_WORKING_DAYS = 23
 
+/** Most days off a single month can hold; mirrors the bound in `firestore.rules`. */
+const val MAX_DAYS_OFF = 23
+
 // The length counter appears once a field is more than 4/5 (80%) of the way to its limit.
 private const val COUNTER_THRESHOLD_NUMERATOR = 4
 private const val COUNTER_THRESHOLD_DENOMINATOR = 5

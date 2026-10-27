@@ -65,4 +65,29 @@ class WorkingDaysTest {
             }
         }
     }
+
+    @Test
+    fun effectiveWorkingDays_subtractsDaysOffFromTheCalendarCount() {
+        val month = YearMonth.of(2026, 10)
+
+        assertEquals(18, effectiveWorkingDays(month, null, 3))
+        assertEquals(21, effectiveWorkingDays(month, null, 0))
+    }
+
+    @Test
+    fun effectiveWorkingDays_overrideWinsOverDaysOff() {
+        val month = YearMonth.of(2026, 10)
+
+        assertEquals(15, effectiveWorkingDays(month, 15, 5))
+        assertEquals(0, effectiveWorkingDays(month, 0, 5))
+    }
+
+    @Test
+    fun effectiveWorkingDays_clampsAtZero() {
+        val month = YearMonth.of(2026, 10)
+
+        assertEquals(0, effectiveWorkingDays(month, null, 21))
+        assertEquals(0, effectiveWorkingDays(month, null, MAX_DAYS_OFF))
+        assertEquals(0, effectiveWorkingDays(month, null, 500))
+    }
 }

@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 5
+internal const val LOCAL_SCHEMA_VERSION = 6
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -22,7 +22,7 @@ data class LocalDataDocument(
     val plannedIncome: List<LocalPlannedIncome> = emptyList(),
     /** Recurring bill/income templates (absent in schema v1 and v2 files). */
     val recurring: List<LocalRecurringItem> = emptyList(),
-    /** Per-month plan settings (absent in schema v1 to v3 files). */
+    /** Per-month plan settings (absent in schema v1 to v3 files; `daysOff` since v6). */
     val monthSettings: List<LocalMonthSettings> = emptyList(),
     /** Category groups (absent in schema v1 to v4 files). */
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),
@@ -84,11 +84,15 @@ data class LocalPlannedIncome(
     val skipMonths: List<Int> = emptyList(),
 )
 
-/** A month's manual working-days count; [month] is ISO `yyyy-MM` and doubles as the record id. */
+/**
+ * A month's manual working-days count and/or days off; [month] is ISO `yyyy-MM` and doubles as the record id.
+ * [workingDays] is absent in a record that only holds days off, [daysOff] absent (0) in files before schema v6.
+ */
 @Serializable
 data class LocalMonthSettings(
     val month: String,
-    val workingDays: Int,
+    val workingDays: Int? = null,
+    val daysOff: Int = 0,
 )
 
 @Serializable

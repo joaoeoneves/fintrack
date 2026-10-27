@@ -45,11 +45,13 @@ sealed interface MonthlyPlanUiState {
 
 /**
  * The working days of [month]: [days] is what plans use (the override when [overridden], else the calendar
- * count); [calendarDays] is the automatic count and [holidays] how many weekdays of the month are holidays.
+ * count minus [daysOff]); [calendarDays] is the plain calendar count (holidays out, days off not) and
+ * [holidays] how many weekdays of the month are holidays.
  */
 data class WorkingDaysState(
     val month: YearMonth,
     val days: Int,
+    val daysOff: Int = 0,
     val calendarDays: Int,
     val holidays: Int,
     val overridden: Boolean,

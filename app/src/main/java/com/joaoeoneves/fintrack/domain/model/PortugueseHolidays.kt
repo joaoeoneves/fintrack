@@ -5,6 +5,7 @@ import java.time.Month
 
 private const val GOOD_FRIDAY_OFFSET_DAYS = -2L
 private const val CORPUS_CHRISTI_OFFSET_DAYS = 60L
+private const val CARNIVAL_OFFSET_DAYS = -47L
 
 // Calendar dates (month, day), self-describing as written.
 @Suppress("MagicNumber")
@@ -54,3 +55,6 @@ fun portugueseNationalHolidays(year: Int): Set<LocalDate> {
             easter.plusDays(CORPUS_CHRISTI_OFFSET_DAYS)
     ).toSet()
 }
+
+/** Carnival Tuesday of [year] (Easter minus 47 days): an optional holiday, deliberately not a national one. */
+fun carnivalTuesday(year: Int): LocalDate = easterSunday(year).plusDays(CARNIVAL_OFFSET_DAYS)
