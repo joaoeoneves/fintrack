@@ -45,12 +45,13 @@ import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Amount
+import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
-import com.joaoeoneves.fintrack.ui.theme.SectionLabel
 import kotlin.math.roundToInt
 
 // The multiplier used to convert a fractional share into a whole-number percentage.
@@ -131,36 +132,49 @@ fun CategoryBreakdownSection(
         return
     }
     Column(modifier = modifier.fillMaxWidth()) {
-        if (hasPlanned) {
-            SegmentedTextTabs(
-                options = listOf(false, true),
-                selected = planned,
-                label = {
-                    stringResource(
-                        if (it) R.string.dashboard_breakdown_planned else R.string.dashboard_breakdown_actual,
-                    )
+        SectionTitle(
+            title =
+                stringResource(
+                    if (planned) R.string.dashboard_planned_per_month else R.string.dashboard_total_outflow,
+                ),
+            trailing =
+                if (hasPlanned) {
+                    { ActualPlannedTabs(planned = planned, onSelect = { showPlanned = it }) }
+                } else {
+                    null
                 },
-                onSelect = { showPlanned = it },
-                modifier = Modifier.width(TabsWidth).padding(bottom = Dimens.Space16),
-            )
-        }
+        )
         if (!planned && state.expenses.isEmpty()) {
             BreakdownEmpty()
         } else {
-            BreakdownHeader(
-                label =
-                    stringResource(
-                        if (planned) R.string.dashboard_planned_per_month else R.string.dashboard_total_outflow,
-                    ),
-                totalCents = slices.clampedForChart().sumOf { it.totalCents },
+            Text(
+                text = formatAmountCents(slices.clampedForChart().sumOf { it.totalCents }),
+                style = AmountLarge,
+                maxLines = 1,
             )
             CategoryBreakdown(
                 slices = slices,
                 totalDescriptionRes = if (planned) R.string.cd_pie_chart_planned_total else R.string.cd_pie_chart_total,
-                modifier = Modifier.padding(top = Dimens.Space12),
+                modifier = Modifier.padding(top = Dimens.Space16),
             )
         }
     }
+}
+
+@Composable
+private fun ActualPlannedTabs(
+    planned: Boolean,
+    onSelect: (Boolean) -> Unit,
+) {
+    SegmentedTextTabs(
+        options = listOf(false, true),
+        selected = planned,
+        label = {
+            stringResource(if (it) R.string.dashboard_breakdown_planned else R.string.dashboard_breakdown_actual)
+        },
+        onSelect = onSelect,
+        modifier = Modifier.width(TabsWidth),
+    )
 }
 
 @Composable
@@ -171,21 +185,6 @@ private fun BreakdownEmpty(modifier: Modifier = Modifier) {
         color = FinTrackTheme.colors.textSecondary,
         modifier = modifier.fillMaxWidth().padding(vertical = Dimens.Space8),
     )
-}
-
-@Composable
-private fun BreakdownHeader(
-    label: String,
-    totalCents: Long,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        Text(text = label, style = SectionLabel, color = FinTrackTheme.colors.textSecondary)
-        Text(text = formatAmountCents(totalCents), style = Amount, maxLines = 1)
-    }
 }
 
 /**

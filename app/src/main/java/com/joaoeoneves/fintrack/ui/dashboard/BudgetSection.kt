@@ -31,6 +31,7 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
+import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -65,7 +66,7 @@ fun BudgetSection(
     var editingBudget by remember { mutableStateOf<CategoryBudget?>(null) }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        SectionTitle(title = title)
         budgets.forEach { budget ->
             BudgetRow(budget = budget, onClick = { editingBudget = budget })
         }

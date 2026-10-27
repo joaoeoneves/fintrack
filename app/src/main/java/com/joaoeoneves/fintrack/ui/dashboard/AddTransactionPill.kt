@@ -65,6 +65,11 @@ class PillVisibility {
     var visible by mutableStateOf(true)
         private set
 
+    /** Brings the pill back, e.g. when the list has been scrolled to its end. */
+    fun show() {
+        visible = true
+    }
+
     val connection =
         object : NestedScrollConnection {
             override fun onPreScroll(

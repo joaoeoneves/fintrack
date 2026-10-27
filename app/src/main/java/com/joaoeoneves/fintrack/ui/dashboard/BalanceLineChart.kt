@@ -49,9 +49,9 @@ import com.joaoeoneves.fintrack.ui.theme.SectionLabel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-private val ChartHeight = 200.dp
-private val LabelBand = 28.dp
-private val VerticalInset = 12.dp
+private val ChartHeight = 140.dp
+private val LabelBand = 24.dp
+private val VerticalInset = 8.dp
 private val StrokeWidth = 1.5.dp
 private val DotRadius = 5.dp
 private val DotHaloRadius = 9.dp

@@ -24,7 +24,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "English"
 - back
 
-# --- 0b: Pin currency to EUR before the "-€12.34"/"-€56.78" assertions below. Fresh installs now
+# --- 0b: Pin currency to EUR before the "−€12.34"/"−€56.78" assertions below. Fresh installs now
 # default to EUR, but this device may have an explicit USD selection persisted from a prior run of
 # settings.yaml or income-tracking.yaml (an explicit selection is never retroactively changed by
 # what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
@@ -107,12 +107,12 @@ appId: com.joaoeoneves.fintrack
 # Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
 # up immediately in the "Recent expenses" card (it sorts by date descending, and this row is the
 # most recent). Money formatting now follows the app locale via NumberFormat, so English + EUR
-# renders as "-€12.34" (prefixed symbol, period decimal).
+# renders as "[-−]€12.34" (prefixed symbol, period decimal).
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
 - assertVisible: "Maestro E2E Test Expense"
-- assertVisible: "-€12\\.34"
+- assertVisible: "[-−]€12\\.34"
 
 # --- 3: Edit it (change the amount) and confirm the change persists ---
 # Tapping a row on the Dashboard's "Recent expenses" card opens that expense's edit screen directly,
@@ -138,8 +138,8 @@ appId: com.joaoeoneves.fintrack
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
-- assertVisible: "-€56\\.78"
-- assertNotVisible: "-€12\\.34"
+- assertVisible: "[-−]€56\\.78"
+- assertNotVisible: "[-−]€12\\.34"
 
 # Open the full list via "See all expenses" for the delete step below.
 - scrollUntilVisible:
@@ -158,14 +158,14 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Maestro E2E Test Expense"
 - hideKeyboard
-- assertVisible: "-€56\\.78"
+- assertVisible: "[-−]€56\\.78"
 # TODO calibrate on first real run: y% estimated for the single search-filtered row (explicit
 # coordinates, not from-element swipes, which don't pass the dismiss threshold -- see swipe-delete-check.yaml).
 - swipe:
     start: "90%, 40%"
     end: "10%, 40%"
     duration: 800
-- assertNotVisible: "-€56\\.78"
+- assertNotVisible: "[-−]€56\\.78"
 - assertVisible: "Undo"
 # Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.
 - tapOn: "Maestro E2E Test Expense"

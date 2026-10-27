@@ -42,7 +42,7 @@ appId: com.joaoeoneves.fintrack
     element: "Maestro E2E Recent Expense"
     direction: DOWN
 - scroll
-- assertVisible: "-€23\\.45"
+- assertVisible: "[-−]€23\\.45"
 - tapOn: "Maestro E2E Recent Expense"
 - assertVisible: "Edit expense"
 - assertVisible: "Maestro E2E Recent Expense"
@@ -86,13 +86,13 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Expense"
 - hideKeyboard
-- assertVisible: "-€23\\.45"
+- assertVisible: "[-−]€23\\.45"
 # TODO calibrate on first real run: y% estimated for the single search-filtered row
 - swipe:
     start: "90%, 40%"
     end: "10%, 40%"
     duration: 800
-- assertNotVisible: "-€23\\.45"
+- assertNotVisible: "[-−]€23\\.45"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Recent Expense"
 - eraseText: 30

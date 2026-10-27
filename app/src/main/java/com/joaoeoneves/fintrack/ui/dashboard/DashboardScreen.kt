@@ -1,15 +1,20 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,8 +28,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
@@ -51,6 +58,7 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -81,6 +89,7 @@ fun DashboardScreen(
     val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, callbacks)
 
     val pill = remember { PillVisibility() }
+    val listState = rememberLazyListState()
     val content = uiState as? DashboardUiState.Content
 
     Scaffold(
@@ -90,6 +99,7 @@ fun DashboardScreen(
                 state = content,
                 actions = actions.period,
                 onOpenSettings = callbacks.onOpenSettings,
+                scrolled = listState.canScrollBackward,
             )
         },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
@@ -108,7 +118,7 @@ fun DashboardScreen(
             uiState = uiState,
             actions = actions,
             callbacks = callbacks,
-            pill = pill,
+            scroll = DashboardScroll(pill, listState),
             contentPadding = innerPadding,
         )
     }
@@ -119,7 +129,7 @@ private fun DashboardBody(
     uiState: DashboardUiState,
     actions: DashboardActions,
     callbacks: DashboardCallbacks,
-    pill: PillVisibility,
+    scroll: DashboardScroll,
     contentPadding: PaddingValues,
 ) {
     when (uiState) {
@@ -137,7 +147,7 @@ private fun DashboardBody(
                 state = uiState,
                 actions = actions,
                 callbacks = callbacks,
-                pill = pill,
+                scroll = scroll,
                 contentPadding = contentPadding,
             )
         }
@@ -152,39 +162,61 @@ private fun DashboardBody(
     }
 }
 
-/** Period selector on the left (once content is loaded), settings on the right; no title. */
+/**
+ * Period selector on the left (once content is loaded), settings on the right; no title. Solid
+ * background, with a hairline along its bottom edge that fades in once content is [scrolled] under it.
+ */
 @Composable
 private fun DashboardTopBar(
     state: DashboardUiState.Content?,
     actions: PeriodActions,
     onOpenSettings: () -> Unit,
+    scrolled: Boolean,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = Dimens.Space8),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(modifier = Modifier.weight(1f)) {
-            if (state != null) {
-                PeriodSelector(
-                    period = state.period,
-                    canGoToNextMonth = state.canGoToNextMonth,
-                    actions = actions,
-                    alignment = Alignment.Start,
-                )
+    val separator by animateFloatAsState(if (scrolled) 1f else 0f, label = "topBarSeparator")
+    Box(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = Dimens.Space8),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                if (state != null) {
+                    PeriodSelector(
+                        period = state.period,
+                        canGoToNextMonth = state.canGoToNextMonth,
+                        actions = actions,
+                        alignment = Alignment.Start,
+                    )
+                }
             }
+            LabeledIconButton(
+                icon = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.cd_settings),
+                onClick = onOpenSettings,
+                modifier = Modifier.testTag(TestTags.DASHBOARD_SETTINGS),
+            )
         }
-        LabeledIconButton(
-            icon = Icons.Default.Settings,
-            contentDescription = stringResource(R.string.cd_settings),
-            onClick = onOpenSettings,
-            modifier = Modifier.testTag(TestTags.DASHBOARD_SETTINGS),
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(Dimens.HairlineThickness)
+                    .graphicsLayer { alpha = separator }
+                    .background(FinTrackTheme.colors.hairline),
         )
     }
 }
+
+/** The list's scroll state plus the add-pill visibility driven by it. */
+private data class DashboardScroll(
+    val pill: PillVisibility,
+    val listState: LazyListState,
+)
 
 /** Bundles the budget write callbacks to keep [DashboardContent] under detekt's LongParameterList. */
 private data class BudgetActions(
@@ -236,7 +268,7 @@ private fun DashboardContent(
     state: DashboardUiState.Content,
     actions: DashboardActions,
     callbacks: DashboardCallbacks,
-    pill: PillVisibility,
+    scroll: DashboardScroll,
     contentPadding: PaddingValues,
 ) {
     val zone = remember { ZoneId.systemDefault() }
@@ -256,7 +288,13 @@ private fun DashboardContent(
             onScrub = { scrubbedIndex = it },
         )
 
+    val (pill, listState) = scroll
+    LaunchedEffect(listState) {
+        snapshotFlow { !listState.canScrollForward }.collect { atEnd -> if (atEnd) pill.show() }
+    }
+
     LazyColumn(
+        state = listState,
         modifier =
             Modifier
                 .fillMaxSize()
@@ -307,12 +345,12 @@ private fun LazyListScope.balanceItems(
                 series = chart.series,
                 startDate = chart.startDate,
                 onScrub = chart.onScrub,
-                modifier = Modifier.animateItem().padding(top = Dimens.Space16),
+                modifier = Modifier.animateItem().padding(top = Dimens.Space8),
             )
         }
     }
     item(key = "tabs") {
-        ScreenItem(Modifier.padding(top = Dimens.Space16)) {
+        ScreenItem(Modifier.padding(top = Dimens.Space8)) {
             SegmentedTextTabs(
                 options = PeriodTab.entries,
                 selected = state.period.toTab(),

@@ -1,22 +1,15 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
@@ -27,6 +20,8 @@ import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.dayHeaderOf
 import com.joaoeoneves.fintrack.ui.common.groupByDay
+import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
+import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
@@ -108,32 +103,22 @@ private fun RecentHeader(
     seeAll: SeeAllLink?,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .clickable(role = Role.Button, onClick = onOpenList)
-                    .padding(vertical = Dimens.Space8),
-        )
-        if (seeAll != null) {
-            Box(
-                modifier =
-                    seeAll.modifier
-                        .clickable(role = Role.Button, onClick = onOpenList)
-                        .padding(start = Dimens.Space16, top = Dimens.Space8, bottom = Dimens.Space8),
-            ) {
-                Text(
-                    text = stringResource(R.string.action_see_all),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = FinTrackTheme.colors.textSecondary,
-                    modifier = Modifier.clearAndSetSemantics { contentDescription = seeAll.description },
-                )
-            }
-        }
-    }
+    SectionTitle(
+        title = title,
+        onTitleClick = onOpenList,
+        modifier = modifier,
+        trailing =
+            seeAll?.let {
+                {
+                    SectionAction(
+                        text = stringResource(R.string.action_see_all),
+                        onClick = onOpenList,
+                        contentDescription = it.description,
+                        modifier = it.modifier,
+                    )
+                }
+            },
+    )
 }
 
 @Composable

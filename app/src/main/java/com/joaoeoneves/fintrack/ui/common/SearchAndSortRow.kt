@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
@@ -32,6 +34,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 private val SortChipMinHeight = 40.dp
+private val SortIconSize = 18.dp
 
 /**
  * Search text field shared between the expense and income list screens: a rounded filled field
@@ -91,9 +94,15 @@ fun <T> SortDropdown(
                     .clip(CircleShape)
                     .background(FinTrackTheme.colors.surface2)
                     .clickable { expanded = true }
-                    .padding(start = Dimens.Space16, end = Dimens.Space8),
+                    .padding(start = Dimens.Space12, end = Dimens.Space4),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Sort,
+                contentDescription = null,
+                tint = FinTrackTheme.colors.textSecondary,
+                modifier = Modifier.padding(end = Dimens.Space8).size(SortIconSize),
+            )
             Text(
                 text = optionLabel(selected),
                 style = MaterialTheme.typography.labelLarge,

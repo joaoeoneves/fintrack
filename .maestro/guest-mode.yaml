@@ -43,7 +43,7 @@ appId: com.joaoeoneves.fintrack
     element: "Maestro Guest Expense"
     direction: DOWN
 - assertVisible: "Maestro Guest Expense"
-- assertVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
 
 # --- 3: Restart the app (no clearState) -- guest session and data persist ---
 - stopApp
@@ -54,7 +54,7 @@ appId: com.joaoeoneves.fintrack
 - scrollUntilVisible:
     element: "Maestro Guest Expense"
     direction: DOWN
-- assertVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
 
 # --- 4: Settings -> Leave guest mode -> confirm -> back on the sign-in screen ---
 - scrollUntilVisible:
@@ -82,7 +82,7 @@ appId: com.joaoeoneves.fintrack
 - scrollUntilVisible:
     element: "Maestro Guest Expense"
     direction: DOWN
-- assertVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
 
 # --- 6: Clean up -- delete the expense via the full list (filter first so only this row is hit) ---
 - scrollUntilVisible:
@@ -94,11 +94,11 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Maestro Guest Expense"
 - hideKeyboard
-- assertVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
 # TODO calibrate on first real run: y% estimated for the single search-filtered row
 - swipe:
     start: "90%, 40%"
     end: "10%, 40%"
     duration: 800
-- assertNotVisible: "-€7\\.77"
+- assertNotVisible: "[-−]€7\\.77"
 - back

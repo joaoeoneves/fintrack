@@ -52,12 +52,18 @@ fun formatAmount(
 
 /**
  * Composable counterpart of [formatAmount], using the [LocalCurrency] and the configuration's
- * locale (see [currentLocale]). Negative amounts are formatted natively by the locale.
+ * locale (see [currentLocale]). Negative amounts use the locale's layout with a typographic minus ([MINUS_SIGN]).
  */
 @Composable
 fun formatAmountCents(amountCents: Long): String {
     val locale = currentLocale()
     val currency = LocalCurrency.current
     val formatter = remember(locale, currency) { currencyFormatter(locale, currency) }
-    return formatter.format(BigDecimal.valueOf(amountCents, CENTS_SCALE))
+    return formatter.format(BigDecimal.valueOf(amountCents, CENTS_SCALE)).withTypographicMinus()
 }
+
+/** Typographic minus sign (U+2212), wider and better aligned with tabular figures than the ASCII hyphen. */
+const val MINUS_SIGN = "\u2212"
+
+/** Swaps the ASCII hyphen-minus a locale puts on negative amounts for [MINUS_SIGN] (display only). */
+fun String.withTypographicMinus(): String = replace("-", MINUS_SIGN)

@@ -1,9 +1,7 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -175,19 +173,16 @@ private fun ExpenseListContent(
             categories = categories.optionsIncluding(state.categoryFilter?.let(categories::resolve)),
             selected = state.categoryFilter,
             onSelected = actions.onCategorySelected,
+            leading = {
+                SortDropdown(
+                    options = SortOption.entries,
+                    selected = state.sortOption,
+                    onSelected = actions.onSortSelected,
+                    optionLabel = { it.label },
+                )
+            },
+            modifier = Modifier.padding(bottom = Dimens.Space8),
         )
-
-        Row(
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-        ) {
-            SortDropdown(
-                options = SortOption.entries,
-                selected = state.sortOption,
-                onSelected = actions.onSortSelected,
-                optionLabel = { it.label },
-            )
-        }
 
         ExpenseListItems(
             state = state,

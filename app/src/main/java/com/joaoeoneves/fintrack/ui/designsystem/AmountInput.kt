@@ -25,7 +25,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -39,7 +38,6 @@ private val AmountTextStyle =
         lineHeight = 60.sp,
         letterSpacing = (-1).sp,
         fontFeatureSettings = "tnum",
-        textAlign = TextAlign.Center,
     )
 
 private val AmountMinWidth = 40.dp

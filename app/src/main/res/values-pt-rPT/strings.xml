@@ -300,7 +300,7 @@
     <string name="plan_safe_to_spend_month">Disponível para gastar (%1$s)</string>
     <string name="plan_over_by">Acima do plano em %1$s</string>
     <string name="plan_expected_income">Rendimento previsto</string>
-    <string name="plan_expected_vs_received">%1$s · recebido %2$s</string>
+    <string name="plan_received">recebido %1$s</string>
     <string name="plan_planned_allocations">Alocações planeadas</string>
     <string name="plan_planned_spending">Gastos planeados</string>
     <string name="plan_planned_saving">Poupança planeada</string>

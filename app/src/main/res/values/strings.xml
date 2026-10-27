@@ -294,7 +294,7 @@
     <string name="plan_safe_to_spend_month">Safe to spend (%1$s)</string>
     <string name="plan_over_by">Over plan by %1$s</string>
     <string name="plan_expected_income">Expected income</string>
-    <string name="plan_expected_vs_received">%1$s · received %2$s</string>
+    <string name="plan_received">received %1$s</string>
     <string name="plan_planned_allocations">Planned allocations</string>
     <string name="plan_planned_spending">Planned spending</string>
     <string name="plan_planned_saving">Planned saving</string>

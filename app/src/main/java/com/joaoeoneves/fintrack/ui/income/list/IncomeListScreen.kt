@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.ui.income.list
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -143,20 +146,24 @@ private fun IncomeListContent(
             actions = actions.periodActions,
         )
 
-        SearchField(
-            query = query,
-            onQueryChanged = actions.onQueryChanged,
-            label = stringResource(R.string.income_list_search_label),
+        Row(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
-        )
-
-        SortDropdown(
-            options = IncomeSortOption.entries,
-            selected = state.sortOption,
-            onSelected = actions.onSortSelected,
-            optionLabel = { it.label },
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
-        )
+            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SearchField(
+                query = query,
+                onQueryChanged = actions.onQueryChanged,
+                label = stringResource(R.string.income_list_search_label),
+                modifier = Modifier.weight(1f),
+            )
+            SortDropdown(
+                options = IncomeSortOption.entries,
+                selected = state.sortOption,
+                onSelected = actions.onSortSelected,
+                optionLabel = { it.label },
+            )
+        }
 
         IncomeListItems(
             income = state.income,

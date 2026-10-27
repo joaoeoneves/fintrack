@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -27,11 +26,12 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
+import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import com.joaoeoneves.fintrack.ui.theme.SectionLabel
 import kotlin.math.abs
 
 private const val MIN_SAFE_SP = 20
@@ -102,7 +102,10 @@ private fun PlanContent(
             stringResource(R.string.plan_safe_to_spend_month, formatMonthLabel(state.budgetMonth, currentLocale()))
         }
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = title, style = SectionLabel, color = FinTrackTheme.colors.textSecondary)
+        SectionTitle(
+            title = title,
+            trailing = { SectionAction(text = stringResource(R.string.plan_edit), onClick = onOpenMonthlyPlan) },
+        )
         Text(
             text =
                 if (safe >= 0) {
@@ -130,37 +133,14 @@ private fun PlanContent(
             )
         }
         PlanRows(plan = state.plan, modifier = Modifier.padding(top = Dimens.Space16))
-        PlanFooter(showCaption = !state.budgetMonthIsCurrent, onOpenMonthlyPlan = onOpenMonthlyPlan)
-    }
-}
-
-@Composable
-private fun PlanFooter(
-    showCaption: Boolean,
-    onOpenMonthlyPlan: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (showCaption) {
+        if (!state.budgetMonthIsCurrent) {
             Text(
                 text = stringResource(R.string.plan_current_plan_caption),
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.padding(top = Dimens.Space12),
             )
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
         }
-        Text(
-            text = stringResource(R.string.plan_edit),
-            style = MaterialTheme.typography.labelLarge,
-            modifier =
-                Modifier
-                    .clickable(role = Role.Button, onClick = onOpenMonthlyPlan)
-                    .padding(start = Dimens.Space16, top = Dimens.Space12, bottom = Dimens.Space12),
-        )
     }
 }
 
@@ -173,12 +153,8 @@ private fun PlanRows(
         Hairline()
         PlanRow(
             label = stringResource(R.string.plan_expected_income),
-            value =
-                stringResource(
-                    R.string.plan_expected_vs_received,
-                    formatAmountCents(plan.expectedIncomeCents),
-                    formatAmountCents(plan.actualIncomeCents),
-                ),
+            value = formatAmountCents(plan.expectedIncomeCents),
+            subValue = stringResource(R.string.plan_received, formatAmountCents(plan.actualIncomeCents)),
         )
         Hairline()
         PlanRow(
@@ -198,9 +174,14 @@ private fun PlanRows(
 private fun PlanRow(
     label: String,
     value: String,
+    subValue: String? = null,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = Dimens.SettingsRowMinHeight)
+                .padding(vertical = Dimens.Space8),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -210,6 +191,16 @@ private fun PlanRow(
             color = FinTrackTheme.colors.textSecondary,
             modifier = Modifier.weight(1f),
         )
-        Text(text = value, style = Amount.copy(fontSize = 14.sp), maxLines = 1)
+        Column(horizontalAlignment = Alignment.End) {
+            Text(text = value, style = Amount.copy(fontSize = 14.sp), maxLines = 1)
+            if (subValue != null) {
+                Text(
+                    text = subValue,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                    maxLines = 1,
+                )
+            }
+        }
     }
 }

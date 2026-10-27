@@ -38,6 +38,8 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
+import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.pressScale
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -86,7 +88,6 @@ fun UpcomingRecurringCard(
         if (state.overview.hasItems) {
             UpcomingContent(state = state, model = model)
         } else {
-            Hairline()
             Row(
                 modifier =
                     Modifier
@@ -118,24 +119,10 @@ private fun UpcomingContent(
     model: UpcomingRecurringModel,
 ) {
     val rows = state.overview.upcoming
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(R.string.recurring_upcoming_title),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = stringResource(R.string.recurring_manage),
-            style = MaterialTheme.typography.labelLarge,
-            modifier =
-                Modifier
-                    .clickable(role = Role.Button, onClick = model.onManage)
-                    .padding(start = Dimens.Space16, top = Dimens.Space8, bottom = Dimens.Space8),
-        )
-    }
+    SectionTitle(
+        title = stringResource(R.string.recurring_upcoming_title),
+        trailing = { SectionAction(text = stringResource(R.string.recurring_manage), onClick = model.onManage) },
+    )
     if (rows.isEmpty()) {
         Text(
             text = stringResource(R.string.recurring_nothing_due),

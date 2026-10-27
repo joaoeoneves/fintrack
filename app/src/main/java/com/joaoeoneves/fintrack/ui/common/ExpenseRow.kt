@@ -42,7 +42,7 @@ fun ExpenseRow(
         if (expense.isRefund) {
             "+" to FinTrackTheme.colors.positive
         } else {
-            "-" to MaterialTheme.colorScheme.onSurface
+            MINUS_SIGN to MaterialTheme.colorScheme.onSurface
         }
     TransactionRow(
         icon = expense.category.icon,
