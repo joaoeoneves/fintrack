@@ -4,6 +4,8 @@ import android.app.Application
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalExpense
+import com.joaoeoneves.fintrack.data.local.LocalIncome
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -19,8 +21,9 @@ class PendingWriteTest {
         categories: List<LocalCategory> = emptyList(),
         budgets: List<LocalBudget> = emptyList(),
         expenses: List<LocalExpense> = emptyList(),
-        income: List<com.joaoeoneves.fintrack.data.local.LocalIncome> = emptyList(),
-    ) = MigrationPlan(categories, budgets, expenses, income, 0)
+        income: List<LocalIncome> = emptyList(),
+        plannedIncome: List<LocalPlannedIncome> = emptyList(),
+    ) = MigrationPlan(categories, budgets, expenses, income, plannedIncome, 0)
 
     private fun List<List<PendingWrite>>.distinctCustomPerBatch() =
         map { batch ->

@@ -59,6 +59,7 @@ class FirestoreAccountMigrator
                 expenseIds = ids("expenses"),
                 incomeIds = ids("income"),
                 budgetCategoryIds = ids("budgets"),
+                plannedIncomeIds = ids("plannedIncome"),
                 categories = categories,
             )
         }

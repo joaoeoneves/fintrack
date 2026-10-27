@@ -66,7 +66,14 @@ fun BackupDialogs(
 
 @Composable
 private fun countsText(counts: BackupCounts): String =
-    stringResource(R.string.backup_counts, counts.expenses, counts.income, counts.budgets, counts.categories)
+    stringResource(
+        R.string.backup_counts,
+        counts.expenses,
+        counts.income,
+        counts.budgets,
+        counts.categories,
+        counts.plannedIncome,
+    )
 
 @Composable
 private fun RestoreConfirmDialog(

@@ -41,7 +41,7 @@ class BackupViewModelExportTest : BackupViewModelTestBase() {
             vm.onExportTargetSelected(uri)
             settle()
 
-            assertEquals(BackupExportState.Done(BackupCounts(1, 0, 0, 0)), vm.exportState.value)
+            assertEquals(BackupExportState.Done(BackupCounts(1, 0, 0, 0, 0)), vm.exportState.value)
             val doc = BackupCodec.decode(file.readText()).success().document
             assertEquals(listOf("e1"), doc.expenses.map { it.id })
             assertEquals("2026-10-27T10:00:00Z", doc.exportedAt)

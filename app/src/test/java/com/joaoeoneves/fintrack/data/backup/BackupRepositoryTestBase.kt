@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
@@ -12,6 +13,7 @@ import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,10 +47,11 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         income: List<Income> = emptyList(),
         budgets: List<Budget> = emptyList(),
         categoryDocs: List<Category> = emptyList(),
+        plannedIncome: List<PlannedIncome> = emptyList(),
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
-        FakeBudgetRepository(budgets),
+        PlanBackupSource(FakeBudgetRepository(budgets), FakePlannedIncomeRepository(plannedIncome)),
         FakeCategoryRepository(categoryDocs),
         prefsStore,
         restorer,

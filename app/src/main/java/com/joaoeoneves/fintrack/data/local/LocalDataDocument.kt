@@ -22,7 +22,12 @@ data class LocalDataDocument(
     val plannedIncome: List<LocalPlannedIncome> = emptyList(),
 ) {
     /** Whether there is no user data at all. */
-    val isEmpty: Boolean get() = expenses.isEmpty() && income.isEmpty() && budgets.isEmpty() && categories.isEmpty()
+    val isEmpty: Boolean get() =
+        expenses.isEmpty() &&
+            income.isEmpty() &&
+            budgets.isEmpty() &&
+            categories.isEmpty() &&
+            plannedIncome.isEmpty()
 }
 
 @Serializable

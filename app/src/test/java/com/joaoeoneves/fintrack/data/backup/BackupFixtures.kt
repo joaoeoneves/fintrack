@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 
 internal const val EXPORTED_AT = "2026-10-27T10:00:00Z"
 
@@ -20,6 +21,13 @@ internal fun backupIncome(
     amountCents: Long = 5000,
     date: String = "2026-03-01T08:00:00Z",
 ) = LocalIncome(id, "Salary", amountCents, date)
+
+internal fun backupPlanned(
+    id: String = "p1",
+    label: String = "Salary",
+    amountCents: Long = 200_000,
+    order: Int = 0,
+) = LocalPlannedIncome(id, label, amountCents, order)
 
 internal fun backupCategory(
     id: String = "gym",

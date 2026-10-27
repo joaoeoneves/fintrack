@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.Budget
@@ -69,7 +70,7 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
         runStoreTest {
             val doc = repository().build()
 
-            assertEquals(BackupCounts(0, 0, 0, 0), doc.counts())
+            assertEquals(BackupCounts(0, 0, 0, 0, 0), doc.counts())
         }
 
     @Test
@@ -142,7 +143,10 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
                 BackupRepository(
                     FakeExpenseRepository(),
                     FakeIncomeRepository(),
-                    FakeBudgetRepository(nextObserveBudgetsError = IllegalStateException("boom")),
+                    PlanBackupSource(
+                        FakeBudgetRepository(nextObserveBudgetsError = IllegalStateException("boom")),
+                        FakePlannedIncomeRepository(),
+                    ),
                     FakeCategoryRepository(),
                     prefsStore,
                     restorer,

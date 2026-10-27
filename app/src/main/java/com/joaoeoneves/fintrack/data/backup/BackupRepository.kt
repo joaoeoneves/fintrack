@@ -6,7 +6,6 @@ import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
@@ -22,7 +21,7 @@ class BackupRepository
     constructor(
         private val expenseRepository: ExpenseRepository,
         private val incomeRepository: IncomeRepository,
-        private val budgetRepository: BudgetRepository,
+        private val planBackupSource: PlanBackupSource,
         private val categoryRepository: CategoryRepository,
         private val preferencesStore: UserPreferencesStore,
         private val restorer: GuestBackupRestorer,
@@ -32,7 +31,8 @@ class BackupRepository
             runCatchingCancellable {
                 val expenses = expenseRepository.getAllExpenses().getOrThrow()
                 val income = incomeRepository.getAllIncome().getOrThrow()
-                val budgets = budgetRepository.observeBudgets().first()
+                val plan = planBackupSource.read()
+                val budgets = plan.budgets
                 val categories = categoryRepository.observeCategories().first()
                 val prefs = preferencesStore.data.first()
                 val localExpenses = expenses.map { it.toLocal() }
@@ -50,6 +50,7 @@ class BackupRepository
                     expenses = localExpenses,
                     income = income.map { it.toLocal() },
                     budgets = localBudgets,
+                    plannedIncome = plan.plannedIncome.map { it.toLocal() },
                     categories =
                         withPlaceholderCategories(
                             categories = categories.filter { it.needsStoring() }.map { it.toLocal() },

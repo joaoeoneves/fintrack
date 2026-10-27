@@ -239,7 +239,7 @@
     <string name="settings_backup_guest_hint">Export a backup to move your data to another device</string>
     <string name="settings_backup_signed_in_hint">Save a copy of your data as a JSON file</string>
     <string name="action_restore">Restore</string>
-    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nBudgets: %3$d\nCategories: %4$d</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nBudgets: %3$d\nCategories: %4$d\nPlanned income: %5$d</string>
     <string name="backup_export_done_title">Backup exported</string>
     <string name="backup_export_done_message">Your backup was saved.\n\n%1$s</string>
     <string name="backup_export_failed_title">Export failed</string>

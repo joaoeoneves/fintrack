@@ -175,7 +175,14 @@ class LocalDataMigrationViewModel
         }
     }
 
-private fun LocalDataDocument.counts() = BackupCounts(expenses.size, income.size, budgets.size, categories.size)
+private fun LocalDataDocument.counts() =
+    BackupCounts(
+        expenses = expenses.size,
+        income = income.size,
+        budgets = budgets.size,
+        categories = categories.size,
+        plannedIncome = plannedIncome.size,
+    )
 
 private suspend fun MigrationOfferStore.markHandledLogged(revision: Long) {
     markHandled(revision).onFailure { Log.w(TAG, "Could not record the handled migration revision", it) }

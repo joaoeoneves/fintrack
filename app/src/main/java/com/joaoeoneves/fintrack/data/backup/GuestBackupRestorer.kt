@@ -32,6 +32,7 @@ class GuestBackupRestorer
                             income = document.income,
                             budgets = document.budgets,
                             categories = document.categories,
+                            plannedIncome = document.plannedIncome,
                         ),
                     ).getOrThrow()
                 document.preferences?.let { backup ->

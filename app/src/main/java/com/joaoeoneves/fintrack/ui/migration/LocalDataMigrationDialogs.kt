@@ -96,6 +96,7 @@ private fun OfferDialog(
                         counts.income,
                         counts.budgets,
                         counts.categories,
+                        counts.plannedIncome,
                     ),
                 ),
             )

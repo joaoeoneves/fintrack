@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
@@ -13,8 +14,9 @@ internal fun remoteSnapshot(
     expenseIds: Set<String> = emptySet(),
     incomeIds: Set<String> = emptySet(),
     budgetCategoryIds: Set<String> = emptySet(),
+    plannedIncomeIds: Set<String> = emptySet(),
     categories: List<Category> = emptyList(),
-) = RemoteAccountSnapshot(expenseIds, incomeIds, budgetCategoryIds, categories)
+) = RemoteAccountSnapshot(expenseIds, incomeIds, budgetCategoryIds, plannedIncomeIds, categories)
 
 internal fun localDoc(
     expenses: List<LocalExpense> = emptyList(),
@@ -41,6 +43,13 @@ internal fun localIncome(
     amountCents: Long = 5000,
 ) = LocalIncome(id, "Salary", amountCents, "2026-03-01T08:00:00Z")
 
+internal fun localPlanned(
+    id: String,
+    amountCents: Long = 200_000,
+    label: String = "Salary $id",
+    order: Int = 0,
+) = LocalPlannedIncome(id, label, amountCents, order)
+
 internal fun localCategory(
     id: String,
     name: String? = id,
@@ -56,5 +65,6 @@ internal fun RemoteAccountSnapshot.after(plan: MigrationPlan) =
         expenseIds = expenseIds + plan.expenses.map { it.id },
         incomeIds = incomeIds + plan.income.map { it.id },
         budgetCategoryIds = budgetCategoryIds + plan.budgets.map { it.categoryId },
+        plannedIncomeIds = plannedIncomeIds + plan.plannedIncome.map { it.id },
         categories = categories + plan.categories.mapNotNull { it.toDomainOrNull() },
     )

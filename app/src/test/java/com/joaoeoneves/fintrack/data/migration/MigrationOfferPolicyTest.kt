@@ -29,6 +29,14 @@ class MigrationOfferPolicyTest {
     }
 
     @Test
+    fun onlyPlannedIncome_offers() {
+        val onlyPlan = localDoc(revision = 3).copy(plannedIncome = listOf(localPlanned("p1")))
+
+        assertFalse(onlyPlan.isEmpty)
+        assertTrue(shouldOfferMigration(signedIn, onlyPlan, null))
+    }
+
+    @Test
     fun sameRevisionHandled_doesNotOffer() {
         assertFalse(shouldOfferMigration(signedIn, data, 3L))
     }

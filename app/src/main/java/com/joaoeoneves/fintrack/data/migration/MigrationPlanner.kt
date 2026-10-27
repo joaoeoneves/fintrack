@@ -6,10 +6,12 @@ import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateExpense
 import com.joaoeoneves.fintrack.data.local.validateIncome
+import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
@@ -21,6 +23,7 @@ data class RemoteAccountSnapshot(
     val expenseIds: Set<String>,
     val incomeIds: Set<String>,
     val budgetCategoryIds: Set<String>,
+    val plannedIncomeIds: Set<String>,
     /** Stored category documents only (built-in overrides plus user categories). */
     val categories: List<Category>,
 )
@@ -35,9 +38,10 @@ data class MigrationPlan(
     val budgets: List<LocalBudget>,
     val expenses: List<LocalExpense>,
     val income: List<LocalIncome>,
+    val plannedIncome: List<LocalPlannedIncome>,
     val skipped: Int,
 ) {
-    val total: Int get() = categories.size + budgets.size + expenses.size + income.size
+    val total: Int get() = categories.size + budgets.size + expenses.size + income.size + plannedIncome.size
 }
 
 private fun String.nameKey(): String = trim().lowercase()
@@ -58,6 +62,8 @@ private class CategoryResolution(
  *   category with the same trimmed, case-insensitive name is reused (local id remapped); else it is
  *   written under its own id, ordered after the account's categories;
  * - built-in overrides and budgets: what the account already has wins;
+ * - planned income: if the account has any line, the account wins and none is copied; else every valid
+ *   line is copied under its own id;
  * - expenses and income keep their ids; ids already in the account are skipped, so re-planning
  *   after a partial run only returns what is left.
  */
@@ -91,7 +97,18 @@ fun planMigration(
     for (item in local.income.filter { it.id !in remote.incomeIds }) {
         if (isValid { validateIncome(item) }) income += item else skipped++
     }
-    return MigrationPlan(resolution.toWrite, budgets, expenses, income, skipped)
+    val plannedIncome = plannedIncomeToCopy(local.plannedIncome, remote)
+    if (remote.plannedIncomeIds.isEmpty()) skipped += local.plannedIncome.size - plannedIncome.size
+    return MigrationPlan(resolution.toWrite, budgets, expenses, income, plannedIncome, skipped)
+}
+
+/** Valid local lines to copy; none when the account already has any line (the account wins). */
+private fun plannedIncomeToCopy(
+    local: List<LocalPlannedIncome>,
+    remote: RemoteAccountSnapshot,
+): List<LocalPlannedIncome> {
+    if (remote.plannedIncomeIds.isNotEmpty()) return emptyList()
+    return local.filter { isValid { validatePlannedIncome(it) } }
 }
 
 private inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSuccess

@@ -4,13 +4,14 @@ import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import kotlinx.serialization.Serializable
 
 /** Marker written into every backup file's `format` field. */
 const val BACKUP_FORMAT = "fintrack-backup"
 
 /** Version written into [BackupDocument.schemaVersion]; a file with a higher one is refused. */
-const val BACKUP_SCHEMA_VERSION = 1
+const val BACKUP_SCHEMA_VERSION = 2
 
 /**
  * A portable JSON backup of one data set (works from both guest and signed-in mode). The record
@@ -29,6 +30,8 @@ data class BackupDocument(
     val income: List<LocalIncome> = emptyList(),
     val budgets: List<LocalBudget> = emptyList(),
     val categories: List<LocalCategory> = emptyList(),
+    /** Added in schema version 2; absent (empty) in version 1 files. */
+    val plannedIncome: List<LocalPlannedIncome> = emptyList(),
 )
 
 /** App preferences as enum names; an unrecognized name leaves the current value alone on restore. */
@@ -45,8 +48,16 @@ data class BackupCounts(
     val income: Int,
     val budgets: Int,
     val categories: Int,
+    val plannedIncome: Int,
 ) {
-    val total: Int get() = expenses + income + budgets + categories
+    val total: Int get() = expenses + income + budgets + categories + plannedIncome
 }
 
-fun BackupDocument.counts(): BackupCounts = BackupCounts(expenses.size, income.size, budgets.size, categories.size)
+fun BackupDocument.counts(): BackupCounts =
+    BackupCounts(
+        expenses = expenses.size,
+        income = income.size,
+        budgets = budgets.size,
+        categories = categories.size,
+        plannedIncome = plannedIncome.size,
+    )

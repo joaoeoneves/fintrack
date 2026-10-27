@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateExpense
 import com.joaoeoneves.fintrack.data.local.validateIncome
+import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -73,8 +74,9 @@ object BackupCodec {
             } catch (e: IllegalArgumentException) {
                 return BackupDecodeResult.Invalid(e.message ?: "Malformed backup")
             }
-        // Per-version migrations go here; version 1 is the only one so far.
+        // Per-version migrations: 1 -> 2 only added plannedIncome (absent = empty).
         return when (document.schemaVersion) {
+            1 -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
         }
@@ -88,11 +90,19 @@ object BackupCodec {
             keepValid(document.budgets, { it.categoryId }) { validateBudget(it.categoryId, it.limitCents, known) }
         val expenses = keepValid(document.expenses, { it.id }) { validateExpense(it, known) }
         val income = keepValid(document.income, { it.id }) { validateIncome(it) }
+        val plannedIncome = keepValid(document.plannedIncome, { it.id }) { validatePlannedIncome(it) }
         val skipped =
             (document.categories.size - categories.size) + (document.budgets.size - budgets.size) +
-                (document.expenses.size - expenses.size) + (document.income.size - income.size)
+                (document.expenses.size - expenses.size) + (document.income.size - income.size) +
+                (document.plannedIncome.size - plannedIncome.size)
         return BackupDecodeResult.Success(
-            document.copy(categories = categories, budgets = budgets, expenses = expenses, income = income),
+            document.copy(
+                categories = categories,
+                budgets = budgets,
+                expenses = expenses,
+                income = income,
+                plannedIncome = plannedIncome,
+            ),
             skipped,
         )
     }

@@ -116,7 +116,8 @@ abstract class LocalDataMigrationViewModelTestBase : LocalStoreTestBase() {
         income: Int = 0,
         budgets: Int = 0,
         categories: Int = 0,
-    ) = BackupCounts(expenses, income, budgets, categories)
+        plannedIncome: Int = 0,
+    ) = BackupCounts(expenses, income, budgets, categories, plannedIncome)
 
     protected fun assertText(
         expectedRes: Int,

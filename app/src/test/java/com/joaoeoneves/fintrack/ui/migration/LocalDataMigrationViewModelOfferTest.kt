@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.migration
 
 import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.domain.model.Session
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
@@ -17,6 +18,16 @@ class LocalDataMigrationViewModelOfferTest : LocalDataMigrationViewModelTestBase
             settle()
 
             assertEquals(MigrationUiState.Offer(counts(expenses = 2, budgets = 1)), vm.uiState.value)
+        }
+
+    @Test
+    fun onlyPlannedIncome_showsOfferWithPlannedIncomeCount() =
+        runStoreTest {
+            store.update { it.copy(plannedIncome = listOf(LocalPlannedIncome("p1", "Pay", 100, 0))) to Unit }
+            val vm = viewModel()
+            settle()
+
+            assertEquals(MigrationUiState.Offer(counts(expenses = 0, plannedIncome = 1)), vm.uiState.value)
         }
 
     @Test

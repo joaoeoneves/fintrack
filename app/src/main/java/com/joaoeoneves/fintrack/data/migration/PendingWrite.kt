@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import com.google.firebase.firestore.FieldValue
+import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.data.toFirestoreMap
 import com.joaoeoneves.fintrack.domain.model.CategoryId
@@ -13,7 +14,7 @@ internal class PendingWrite(
 )
 
 /**
- * The planned writes grouped into batches, in commit order: categories, budgets, expenses, income.
+ * The planned writes grouped into batches, in commit order: categories, budgets, expenses, income, planned income.
  * Every batch holds at most 400 writes; budget and expense batches also respect the rules' cap on
  * distinct custom categories. A planned record that cannot be mapped is a bug (the planner validates
  * everything) and throws instead of being silently dropped.
@@ -52,5 +53,10 @@ internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
                 PendingWrite("income", local.id, domain.toFirestoreMap(includeCreatedAt = true))
             }
         }
-    return categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches + expenseBatches + incomeBatches
+    val plannedIncomeBatches =
+        plannedIncome.chunked(BATCH_CHUNK_SIZE).map { chunk ->
+            chunk.map { local -> PendingWrite("plannedIncome", local.id, local.toDomain().toFirestoreMap()) }
+        }
+    return categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches + expenseBatches + incomeBatches +
+        plannedIncomeBatches
 }
