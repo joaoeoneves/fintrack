@@ -10,9 +10,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.domain.model.encode
-import com.joaoeoneves.fintrack.ui.activity.ActivityHost
+import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
+import com.joaoeoneves.fintrack.ui.activity.ActivityScreen
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
@@ -99,12 +99,16 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
 
 private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
     navigation<ActivityGraph>(startDestination = Activity()) {
-        composable<Activity> { entry ->
-            ActivityHost(
-                showIncomeFirst = entry.toRoute<Activity>().type == ACTIVITY_TYPE_INCOME,
-                onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
-                onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
-                onOpenSettings = { navController.navigate(Settings) },
+        composable<Activity> {
+            ActivityScreen(
+                callbacks =
+                    ActivityCallbacks(
+                        onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
+                        onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
+                        onAddExpense = { navController.navigate(AddEditExpense()) },
+                        onAddIncome = { navController.navigate(AddEditIncome()) },
+                        onOpenSettings = { navController.navigate(Settings) },
+                    ),
             )
         }
     }

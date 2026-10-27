@@ -189,7 +189,7 @@ appId: com.joaoeoneves.fintrack
     id: "see_all_activity"
 - extendedWaitUntil:
     visible:
-      id: "expense_list"
+      id: "activity_list"
     timeout: 10000
 - takeScreenshot: maestro-out/screens/en-dark-expense-list
 # Bottom-bar tabs: Plan, Insights, then back to Activity, and finally Home.
@@ -308,7 +308,7 @@ appId: com.joaoeoneves.fintrack
     id: "see_all_activity"
 - extendedWaitUntil:
     visible:
-      id: "expense_list"
+      id: "activity_list"
     timeout: 10000
 - takeScreenshot: maestro-out/screens/pt-light-expense-list
 # Bottom-bar tabs: Plan, Insights, then back to Activity, and finally Home.

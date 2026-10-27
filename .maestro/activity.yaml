@@ -1,0 +1,134 @@
+# Unified Activity list E2E flow for FinTrack (guest mode, runs on CI without a Google account).
+#
+# Covers: an expense and an income both show under the "All" type chip; the "Expenses" chip hides the
+# income; the "Income" chip hides the expense (and the category chips); search narrows the list; swipe
+# to delete shows Undo, and Undo brings the row back.
+#
+# Self-contained: clearState, guest mode, English pinned. Leaves no data behind (guest data is local).
+appId: com.joaoeoneves.fintrack
+---
+- clearState
+- launchApp
+
+# --- 0: Sign-in -> Continue as guest -> Home; pin English so the text assertions are deterministic ---
+- extendedWaitUntil:
+    visible:
+      id: "continue_as_guest"
+    timeout: 25000
+- tapOn:
+    id: "continue_as_guest"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 15000
+- tapOn:
+    id: "dashboard_settings"
+- tapOn: "English"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+
+# --- 1: Add one expense and one income from Home ---
+- tapOn: "Add expense"
+- tapOn: "Name"
+- inputText: "Act Test Expense"
+- tapOn: "Amount"
+- inputText: "11.00"
+- hideKeyboard
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+- tapOn: "Add income"
+- tapOn: "Source"
+- inputText: "Act Test Income"
+- tapOn: "Amount"
+- inputText: "22.00"
+- hideKeyboard
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+
+# --- 2: Both rows show under All (the default type chip) ---
+- tapOn:
+    id: "nav_activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity_list"
+    timeout: 10000
+- assertVisible: "Activity"
+- assertVisible: "Act Test Expense"
+- assertVisible: "Act Test Income"
+- assertVisible: "Out"
+- assertVisible: "In"
+- assertVisible:
+    id: "filter_chip_all"
+
+# --- 3: The Expenses chip hides the income; the Income chip hides the expense and the category chips ---
+- tapOn: "Expenses"
+- assertVisible: "Act Test Expense"
+- assertNotVisible: "Act Test Income"
+- tapOn: "Income"
+- assertVisible: "Act Test Income"
+- assertNotVisible: "Act Test Expense"
+- assertNotVisible:
+    id: "filter_chip_all"
+- tapOn: "All"
+- assertVisible: "Act Test Expense"
+- assertVisible: "Act Test Income"
+- assertVisible:
+    id: "filter_chip_all"
+
+# --- 4: Search narrows the list across both types ---
+- tapOn: "Search"
+- inputText: "Act Test Inc"
+- hideKeyboard
+- assertVisible: "Act Test Income"
+- assertNotVisible: "Act Test Expense"
+- tapOn: "Act Test Inc"
+- eraseText: 30
+- inputText: "zzz-no-match"
+- hideKeyboard
+- assertNotVisible: "Act Test Income"
+- assertNotVisible: "Act Test Expense"
+- assertVisible: "Nothing matches.*"
+- tapOn: "zzz-no-match"
+- eraseText: 30
+- hideKeyboard
+- assertVisible: "Act Test Expense"
+- assertVisible: "Act Test Income"
+
+# --- 5: Swipe-delete the income with Undo: row disappears, Undo restores it ---
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Act Test Income"
+- assertNotVisible: "Act Test Income"
+- assertVisible: "Undo"
+- tapOn: "Undo"
+- extendedWaitUntil:
+    visible: "Act Test Income"
+    timeout: 10000
+
+# --- 6: Clean up: swipe-delete both rows for good (let the Undo snackbar time out) ---
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Act Test Income"
+- assertNotVisible: "Act Test Income"
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Act Test Expense"
+- assertNotVisible: "Act Test Expense"
+- back
+- assertVisible:
+    id: "dashboard_list"

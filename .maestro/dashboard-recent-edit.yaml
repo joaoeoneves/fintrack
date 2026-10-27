@@ -76,22 +76,20 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Edit income"
 - assertVisible: "Maestro E2E Recent Income"
 
-# --- 3: The "Recent activity" title still opens the Activity tab (Expenses segment); delete the
+# --- 3: The "Recent activity" title still opens the Activity tab (unified list); delete the
 # expense there while the list is search-filtered to its name.
 - scrollUntilVisible:
     element: "Recent activity"
     direction: UP
 - tapOn: "Recent activity"
-- assertVisible: "All expenses"
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Expense"
 - hideKeyboard
 - assertVisible: "[-−]€23\\.45"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Recent Expense"
 - assertNotVisible: "[-−]€23\\.45"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Recent Expense"
@@ -109,18 +107,15 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn:
     id: "see_all_activity"
-# "See all" opens the Activity tab on Expenses; switch to the Income segment.
-- tapOn: "Income"
-- assertVisible: "All income"
+# "See all" opens the unified Activity list (type chip All): income rows show without switching.
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Income"
 - hideKeyboard
 - assertVisible: "\\+€34\\.56"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Recent Income"
 - assertNotVisible: "\\+€34\\.56"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Recent Income"

@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.expense.list
+package com.joaoeoneves.fintrack.ui.activity
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll

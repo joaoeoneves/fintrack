@@ -44,24 +44,9 @@ data class Insights(
     val period: String? = null,
 )
 
-/**
- * Superseded by [Activity] and no longer registered in the nav graph; removed with pass A2.
- * [period] is an encoded [com.joaoeoneves.fintrack.domain.model.Period] token, see `Period.encode()`.
- */
-@Serializable
-data class ExpenseList(
-    val period: String,
-)
-
 @Serializable
 data class AddEditExpense(
     val expenseId: String? = null,
-)
-
-/** Superseded by [Activity] like [ExpenseList]; removed with pass A2. */
-@Serializable
-data class IncomeList(
-    val period: String,
 )
 
 @Serializable

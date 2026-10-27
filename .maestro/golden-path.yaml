@@ -156,7 +156,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "[-−]€56\\.78"
 - assertNotVisible: "[-−]€12\\.34"
 
-# Open the Activity tab (Expenses segment) via "See all" for the delete step below.
+# Open the Activity tab (unified list) via "See all" for the delete step below.
 - scrollUntilVisible:
     element:
       id: "see_all_activity"
@@ -164,7 +164,6 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 - assertVisible:
     id: "activity_list"
 - assertVisible: "Maestro E2E Test Expense"
@@ -178,12 +177,11 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Maestro E2E Test Expense"
 - hideKeyboard
 - assertVisible: "[-−]€56\\.78"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row (explicit
 # coordinates, not from-element swipes, which don't pass the dismiss threshold -- see swipe-delete-check.yaml).
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Test Expense"
 - assertNotVisible: "[-−]€56\\.78"
 - assertVisible: "Undo"
 # Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.

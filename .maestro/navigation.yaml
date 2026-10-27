@@ -57,7 +57,6 @@ appId: com.joaoeoneves.fintrack
     id: "nav_activity"
 - assertVisible:
     id: "activity_list"
-- assertVisible: "All expenses"
 - tapOn:
     id: "nav_plan"
 - assertVisible: "Add income line"
@@ -69,12 +68,13 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     id: "dashboard_list"
 
-# --- 3: A tab keeps its state. Activity: pick the Income segment; Insights: pick a rolling period.
+# --- 3: A tab keeps its state. Activity: pick the Income type chip; Insights: pick a rolling period.
 # Leave both and come back -- the choices are still there. ---
 - tapOn:
     id: "nav_activity"
 - tapOn: "Income"
-- assertVisible: "All income"
+- assertNotVisible:
+    id: "filter_chip_all"
 - tapOn:
     id: "nav_insights"
 - tapOn: "Change period"
@@ -85,7 +85,11 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Add income line"
 - tapOn:
     id: "nav_activity"
-- assertVisible: "All income"
+- assertNotVisible:
+    id: "filter_chip_all"
+- tapOn: "All"
+- assertVisible:
+    id: "filter_chip_all"
 - tapOn:
     id: "nav_insights"
 - assertVisible: "Last 3 months"
@@ -141,7 +145,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     id: "nav_plan"
 
-# --- 6: "See all" on Home opens the Activity tab (Expenses segment) with the new expense ---
+# --- 6: "See all" on Home opens the Activity tab (unified list) with the new expense ---
 - scrollUntilVisible:
     element: "Nav Test Expense"
     direction: DOWN
@@ -151,18 +155,16 @@ appId: com.joaoeoneves.fintrack
     id: "see_all_activity"
 - assertVisible:
     id: "activity_list"
-- assertVisible: "All expenses"
 - assertVisible: "Nav Test Expense"
 
 # --- 7: Clean up: delete the expense (swipe right-to-left on the search-filtered row) ---
 - tapOn: "Search"
 - inputText: "Nav Test Expense"
 - hideKeyboard
-# TODO calibrate on first CI run: y% of the single search-filtered row below the Activity segments (unverified)
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Nav Test Expense"
 - assertVisible: "Undo"
 - tapOn: "Nav Test Expense"
 - eraseText: 30

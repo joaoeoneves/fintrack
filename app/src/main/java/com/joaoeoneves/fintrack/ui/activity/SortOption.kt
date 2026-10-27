@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.expense.list
+package com.joaoeoneves.fintrack.ui.activity
 
 enum class SortOption {
     DATE_DESC,

@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.dashboard
+package com.joaoeoneves.fintrack.ui.designsystem
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,11 +24,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +46,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.TestTags
-import com.joaoeoneves.fintrack.ui.designsystem.pressScale
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
@@ -86,6 +88,20 @@ class PillVisibility {
                 return Offset.Zero
             }
         }
+}
+
+/**
+ * Wires [this] to [listState]: the pill never hides while the list cannot scroll further, and comes
+ * back if a late scroll delta hides it again at the end.
+ */
+@Composable
+fun PillVisibility.BindTo(listState: LazyListState) {
+    val pill = this
+    LaunchedEffect(listState, pill) {
+        pill.canScrollForward = { listState.canScrollForward }
+        // Keyed on "at end while hidden" so it re-fires if a late scroll delta hides the pill again.
+        snapshotFlow { !listState.canScrollForward && !pill.visible }.collect { stuck -> if (stuck) pill.show() }
+    }
 }
 
 /**
