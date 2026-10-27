@@ -167,3 +167,15 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
     baselineProfile(project(":baselineprofile"))
 }
+
+// The baseline profile plugin clones `release` (including `optimization { enable = true }`) into
+// nonMinifiedRelease and leaves R8 on, which obfuscates the generated profile. The profile must be
+// generated against un-obfuscated classes, so turn optimization off for that build type only. This
+// runs in finalizeDsl because the plugin creates the type after the buildTypes block above.
+androidComponents {
+    finalizeDsl { extension ->
+        extension.buildTypes
+            .getByName("nonMinifiedRelease")
+            .optimization.enable = false
+    }
+}
