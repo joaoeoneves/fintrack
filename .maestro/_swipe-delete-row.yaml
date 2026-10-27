@@ -1,27 +1,10 @@
 appId: com.joaoeoneves.fintrack
 ---
-# Helper (not a standalone flow): swipes the Activity row whose text matches ${ROW} from end to start.
-# When the list is filtered by searching for the row's name, the search field matches too (it sits
-# above the row), so the row is then the second match.
-- runFlow:
-    when:
-      visible:
-        text: "${ROW}"
-        index: 1
-    commands:
-      - swipe:
-          from:
-            text: "${ROW}"
-            index: 1
-          direction: LEFT
-          duration: 600
-- runFlow:
-    when:
-      notVisible:
-        text: "${ROW}"
-        index: 1
-    commands:
-      - swipe:
-          from: "${ROW}"
-          direction: LEFT
-          duration: 600
+# Helper (not a standalone flow): swipes the only Activity row left after searching for its name.
+# Use it with the list filtered to a single row; that row sits at ~59% of the screen height on the
+# CI emulator (Pixel 6 profile). Coordinates are used because swiping "from" the row text did not
+# dismiss it reliably (the search field contains the same text and the swipe registered as a tap).
+- swipe:
+    start: 92%, 59%
+    end: 8%, 59%
+    duration: 500

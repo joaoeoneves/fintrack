@@ -120,43 +120,46 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Act Test Expense"
 
 # --- 5: Swipe-delete the income with Undo: row disappears, Undo restores it ---
-- scrollUntilVisible:
-    element: "Act Test Income"
-    direction: DOWN
-- swipe:
-    from: "Act Test Income"
-    direction: LEFT
-    duration: 800
-- assertNotVisible: "Act Test Income"
-- assertVisible: "Undo"
+- tapOn: "Search"
+- inputText: "Act Test Income"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Act Test Income"
+    timeout: 10000
+- runFlow:
+    file: _swipe-delete-row.yaml
+- extendedWaitUntil:
+    visible: "Undo"
+    timeout: 10000
 - tapOn: "Undo"
 - extendedWaitUntil:
     visible: "Act Test Income"
     timeout: 10000
-# Let the snackbar dismiss and the row placement animation settle before swiping the restored row
-# again (a swipe during the animation can register as a tap and open "Edit income").
+# Let the snackbar dismiss and the row placement animation settle before swiping again.
 - extendedWaitUntil:
     notVisible: "Undo"
     timeout: 15000
 - waitForAnimationToEnd
 
-# --- 6: Clean up: swipe-delete both rows for good (let the Undo snackbar time out) ---
-- scrollUntilVisible:
-    element: "Act Test Income"
-    direction: DOWN
-- swipe:
-    from: "Act Test Income"
-    direction: LEFT
-    duration: 800
-- assertNotVisible: "Act Test Income"
-- scrollUntilVisible:
-    element: "Act Test Expense"
-    direction: DOWN
-- swipe:
-    from: "Act Test Expense"
-    direction: LEFT
-    duration: 800
-- assertNotVisible: "Act Test Expense"
+# --- 6: Clean up: swipe-delete both rows for good ---
+- runFlow:
+    file: _swipe-delete-row.yaml
+- extendedWaitUntil:
+    visible: "Undo"
+    timeout: 10000
+- eraseText: 30
+- inputText: "Act Test Expense"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Act Test Expense"
+    timeout: 10000
+- runFlow:
+    file: _swipe-delete-row.yaml
+- extendedWaitUntil:
+    visible: "Undo"
+    timeout: 10000
+- eraseText: 30
+- hideKeyboard
 - back
 - assertVisible:
     id: "dashboard_list"

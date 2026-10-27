@@ -125,7 +125,9 @@ appId: com.joaoeoneves.fintrack
 # --- 6: Cleanup -- remove both income lines and clear the Food allocation ---
 - tapOn:
     id: "nav_plan"
-- assertVisible: "Add income line"
+- scrollUntilVisible:
+    element: "Add income line"
+    direction: UP
 
 - tapOn: "Salary"
 - assertVisible: "Edit income line"
