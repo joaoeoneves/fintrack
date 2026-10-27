@@ -1,0 +1,148 @@
+package com.joaoeoneves.fintrack.ui.recurring
+
+import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.MAX_DAY_OF_MONTH
+import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
+import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MIN_DAY_OF_MONTH
+import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
+import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
+import com.joaoeoneves.fintrack.domain.model.RecurringType
+import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
+import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
+import java.time.LocalDate
+
+/**
+ * The add/edit recurring form as typed: text fields stay strings until [validateRecurringForm]
+ * accepts them and [toItem] converts them. [monthOfYear] is only used (and required) for yearly
+ * items, [category] only for expenses.
+ */
+data class RecurringForm(
+    val startDate: LocalDate,
+    val type: RecurringType = RecurringType.EXPENSE,
+    val name: String = "",
+    val amountText: String = "",
+    val category: Category? = null,
+    val note: String = "",
+    val frequency: RecurringFrequency = RecurringFrequency.MONTHLY,
+    val dayText: String = "",
+    val monthOfYear: Int? = null,
+    val endDate: LocalDate? = null,
+)
+
+/** Per-field validation messages; a `null` field is valid. */
+data class RecurringFormErrors(
+    val name: UiText? = null,
+    val amount: UiText? = null,
+    val category: UiText? = null,
+    val day: UiText? = null,
+    val month: UiText? = null,
+    val endDate: UiText? = null,
+    val note: UiText? = null,
+) {
+    val hasAny: Boolean
+        get() = listOf(name, amount, category, day, month, endDate, note).any { it != null }
+}
+
+private fun message(resId: Int): UiText = UiText.StringResource(resId)
+
+/**
+ * Checks everything the Firestore rules check (so a signed-in write is never silently rejected):
+ * a non-blank trimmed name of at most [MAX_NAME_LENGTH] code points, a positive amount, a known
+ * category for expenses, a day of month in range, a month for yearly items, a note of at most
+ * [MAX_NOTE_LENGTH] code points and an end date not before the start date. Returns `null` when valid.
+ */
+fun validateRecurringForm(form: RecurringForm): RecurringFormErrors? {
+    val name = form.name.trim()
+    val errors =
+        RecurringFormErrors(
+            name =
+                when {
+                    name.isEmpty() -> message(R.string.error_name_required)
+                    name.codePointLength() > MAX_NAME_LENGTH -> message(R.string.error_recurring_too_long)
+                    else -> null
+                },
+            amount = message(R.string.error_invalid_amount).takeIf { parseAmountCents(form.amountText).isFailure },
+            category =
+                message(R.string.error_category_required).takeIf {
+                    form.type == RecurringType.EXPENSE && (form.category == null || form.category.isUnknown)
+                },
+            day =
+                message(R.string.error_recurring_day_invalid).takeIf {
+                    form.dayText.trim().toIntOrNull() !in dayRange
+                },
+            month =
+                message(R.string.error_recurring_month_required).takeIf {
+                    form.frequency == RecurringFrequency.YEARLY && form.monthOfYear !in monthRange
+                },
+            endDate =
+                message(R.string.error_recurring_end_before_start).takeIf {
+                    form.endDate != null && form.endDate < form.startDate
+                },
+            note =
+                message(R.string.error_recurring_too_long).takeIf {
+                    form.note.trim().codePointLength() > MAX_NOTE_LENGTH
+                },
+        )
+    return errors.takeIf { it.hasAny }
+}
+
+private val dayRange = MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH
+private val monthRange = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
+
+/**
+ * The item this (already validated) form describes: text trimmed, the category dropped for income,
+ * the month dropped for monthly items. Keeps [existing]'s id, handled-through cursor and active
+ * flag when editing; a new item is active with a blank id.
+ */
+fun RecurringForm.toItem(existing: RecurringItem?): RecurringItem =
+    RecurringItem(
+        id = existing?.id.orEmpty(),
+        type = type,
+        name = name.trim(),
+        amountCents = parseAmountCents(amountText).getOrThrow(),
+        categoryId = category?.id.takeIf { type == RecurringType.EXPENSE },
+        note = note.trim().ifBlank { null },
+        frequency = frequency,
+        dayOfMonth = dayText.trim().toInt(),
+        monthOfYear = monthOfYear.takeIf { frequency == RecurringFrequency.YEARLY },
+        startDate = startDate,
+        endDate = endDate,
+        handledThrough = existing?.handledThrough,
+        active = existing?.active ?: true,
+    )
+
+/** This item as an editable form; [category] is the item's resolved category (expenses only). */
+fun RecurringItem.toForm(
+    category: Category?,
+    decimalSeparator: Char,
+): RecurringForm =
+    RecurringForm(
+        startDate = startDate,
+        type = type,
+        name = name,
+        amountText = amountCents.toAmountInputText(decimalSeparator),
+        category = category,
+        note = note.orEmpty(),
+        frequency = frequency,
+        dayText = dayOfMonth.toString(),
+        monthOfYear = monthOfYear,
+        endDate = endDate,
+    )
+
+/** A blank form for a new item: starts and bills on [today]'s day (and month, for yearly items). */
+fun newRecurringForm(
+    today: LocalDate,
+    category: Category,
+): RecurringForm =
+    RecurringForm(
+        startDate = today,
+        category = category,
+        dayText = today.dayOfMonth.toString(),
+        monthOfYear = today.monthValue,
+    )

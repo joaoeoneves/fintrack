@@ -5,6 +5,9 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.TestDocumentSnapshots
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.testutil.FirebaseTestApp
 import org.junit.Assert.assertEquals
@@ -79,7 +82,7 @@ class FirestoreExpenseRepositoryTest {
                 id = "good1",
                 name = "Coffee",
                 amountCents = 500L,
-                category = com.joaoeoneves.fintrack.domain.model.ExpenseCategory.SHOPPING,
+                category = BuiltInCategories.SHOPPING,
                 date = Instant.parse("2024-01-15T00:00:00Z"),
                 note = "with milk",
             ),
@@ -140,18 +143,58 @@ class FirestoreExpenseRepositoryTest {
     }
 
     @Test
-    fun malformedDoc_invalidCategoryEnumValue_isDroppedAsNull_andLogsWarning() {
+    fun unknownCategoryId_isKept_withUnknownPlaceholder_andNoWarning() {
         val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("NOT_A_REAL_CATEGORY"))
         val snapshot = TestDocumentSnapshots.found(firestore, id = "bad-category-enum", fields = fields)
 
         val result = toExpenseOrNull(snapshot)
 
-        assertNull(result)
-        val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue(
-            "expected a warning log for invalid 'category', got: $logs",
-            logs.any { it.msg.contains("'category'") },
-        )
+        assertEquals(Category.unknown(CategoryId("NOT_A_REAL_CATEGORY")), result?.category)
+        assertEquals("bad-category-enum", result?.id)
+        assertEquals(500L, result?.amountCents)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun blankCategory_isDroppedAsNull_andLogsWarning() {
+        val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("  "))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "blank-category", fields = fields)
+
+        assertNull(toExpenseOrNull(snapshot))
+        assertTrue(ShadowLog.getLogsForTag(TAG).any { it.msg.contains("'category'") })
+    }
+
+    @Test
+    fun builtInCategoryId_resolvesToTheBuiltIn() {
+        BuiltInCategories.all.forEach { builtIn ->
+            val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue(builtIn.id.value))
+            val snapshot = TestDocumentSnapshots.found(firestore, id = "e-${builtIn.id.value}", fields = fields)
+
+            assertEquals(builtIn, toExpenseOrNull(snapshot)?.category)
+        }
+    }
+
+    @Test
+    fun foodCategory_parsesToFood_andIsNotDropped() {
+        val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("FOOD"))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "food1", fields = fields)
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(BuiltInCategories.FOOD, result?.category)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun unknownCategoryName_groceries_isKept_asUnknownPlaceholder() {
+        val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("GROCERIES"))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "groceries", fields = fields)
+
+        val category = toExpenseOrNull(snapshot)?.category
+
+        assertEquals(CategoryId("GROCERIES"), category?.id)
+        assertTrue(category?.isUnknown == true)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
     }
 
     @Test
@@ -173,5 +216,83 @@ class FirestoreExpenseRepositoryTest {
 
         val logs = ShadowLog.getLogsForTag(TAG)
         assertTrue("expected the doc id in the log message, got: $logs", logs.any { it.msg.contains("doc-id-12345") })
+    }
+
+    // ---- isRefund ----
+
+    @Test
+    fun isRefundTrue_parsesAsRefund() {
+        val fields = validFields() + ("isRefund" to TestDocumentSnapshots.booleanValue(true))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "refund1", fields = fields)
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(true, result?.isRefund)
+        assertEquals(500L, result?.amountCents)
+        assertEquals(-500L, result?.signedAmountCents)
+    }
+
+    @Test
+    fun isRefundFalse_parsesAsRegularExpense() {
+        val fields = validFields() + ("isRefund" to TestDocumentSnapshots.booleanValue(false))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "regular1", fields = fields)
+
+        assertEquals(false, toExpenseOrNull(snapshot)?.isRefund)
+    }
+
+    @Test
+    fun isRefundAbsent_legacyDoc_defaultsToFalse_andIsNotDropped() {
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "legacy1", fields = validFields())
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(false, result?.isRefund)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun isRefundWrongType_defaultsToFalse_andIsNotDropped() {
+        val fields = validFields() + ("isRefund" to TestDocumentSnapshots.stringValue("true"))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "weird1", fields = fields)
+
+        val result = toExpenseOrNull(snapshot)
+
+        assertEquals(false, result?.isRefund)
+        assertEquals("Coffee", result?.name)
+    }
+
+    @Test
+    fun toFirestoreMap_alwaysContainsIsRefund_forBothRefundsAndRegularExpenses() {
+        val base =
+            Expense(
+                id = "e1",
+                name = "Coffee",
+                amountCents = 500L,
+                category = BuiltInCategories.SHOPPING,
+                date = Instant.parse("2024-01-15T00:00:00Z"),
+                note = null,
+            )
+
+        val regular = toFirestoreMap(base, includeCreatedAt = false)
+        val refund = toFirestoreMap(base.copy(isRefund = true), includeCreatedAt = true)
+
+        assertTrue(regular.containsKey("isRefund"))
+        assertEquals(false, regular["isRefund"])
+        assertEquals(true, refund["isRefund"])
+        // amountCents is always stored as the positive magnitude; the flag carries the sign.
+        assertEquals(500L, refund["amountCents"])
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun toFirestoreMap(
+        expense: Expense,
+        includeCreatedAt: Boolean,
+    ): Map<String, Any?> {
+        val method =
+            Class
+                .forName("com.joaoeoneves.fintrack.data.FirestoreExpenseRepositoryKt")
+                .getDeclaredMethod("toFirestoreMap", Expense::class.java, Boolean::class.javaPrimitiveType)
+        method.isAccessible = true
+        return method.invoke(null, expense, includeCreatedAt) as Map<String, Any?>
     }
 }

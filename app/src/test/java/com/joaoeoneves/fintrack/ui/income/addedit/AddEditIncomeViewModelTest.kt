@@ -5,8 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.testutil.genericErrorText
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -141,7 +143,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals("Source is required", state.form.sourceError)
+            assertEquals(UiText.StringResource(R.string.error_source_required), state.form.sourceError)
             assertFalse(addCalled)
         }
 
@@ -163,7 +165,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals("Enter a valid amount", state.form.amountError)
+            assertEquals(UiText.StringResource(R.string.error_invalid_amount), state.form.amountError)
             assertFalse(addCalled)
         }
 
@@ -180,7 +182,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals("Enter a valid amount", state.form.amountError)
+            assertEquals(UiText.StringResource(R.string.error_invalid_amount), state.form.amountError)
         }
 
     @Test
@@ -194,8 +196,8 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals("Source is required", state.form.sourceError)
-            assertEquals("Enter a valid amount", state.form.amountError)
+            assertEquals(UiText.StringResource(R.string.error_source_required), state.form.sourceError)
+            assertEquals(UiText.StringResource(R.string.error_invalid_amount), state.form.amountError)
         }
 
     @Test
@@ -387,7 +389,7 @@ class AddEditIncomeViewModelTest {
             // from it would silently overwrite/upsert the real record.
             assertFalse(state is AddEditIncomeUiState.Ready)
 
-            assertEquals("Firestore unavailable", (state as AddEditIncomeUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditIncomeUiState.Error).message)
         }
 
     @Test
@@ -400,25 +402,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Error
-            assertEquals("Something went wrong", state.message)
-        }
-
-    @Test
-    fun editMode_getIncomeFails_andRealContext_usesContextGetString_notHardcodedFallback() =
-        runTest(testDispatcher) {
-            val repo = FakeIncomeRepository()
-            repo.nextGetIncomeError = IllegalStateException()
-            val context =
-                FakeStringContext(
-                    R.string.error_generic_fallback,
-                    "translated something went wrong",
-                )
-            val viewModel = AddEditIncomeViewModel(repo, SavedStateHandle(mapOf("incomeId" to "i1")), context)
-
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value as AddEditIncomeUiState.Error
-            assertEquals("translated something went wrong", state.message)
+            assertEquals(genericErrorText, state.message)
         }
 
     // ---- onRetry ----
@@ -468,7 +452,7 @@ class AddEditIncomeViewModelTest {
 
             val state = viewModel.uiState.value
             assertTrue(state is AddEditIncomeUiState.Error)
-            assertEquals("second failure", (state as AddEditIncomeUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditIncomeUiState.Error).message)
         }
 
     // ---- edit mode: save ----
@@ -532,7 +516,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals("Income with id i1 not found", state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_income), state.form.saveError)
         }
 
     @Test
@@ -590,7 +574,7 @@ class AddEditIncomeViewModelTest {
 
             assertTrue(events.isEmpty())
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals("boom", state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_income), state.form.saveError)
             assertNull(state.form.sourceError)
             assertNull(state.form.amountError)
 
@@ -610,7 +594,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertEquals("Failed to save income", state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_income), state.form.saveError)
         }
 
     @Test
@@ -707,6 +691,6 @@ class AddEditIncomeViewModelTest {
 
         override suspend fun getAllIncome(): Result<List<Income>> = throw UnsupportedOperationException("unused")
 
-        override suspend fun addIncomeList(income: List<Income>): Result<Int> = throw UnsupportedOperationException()
+        override suspend fun addIncomeList(income: List<Income>): BulkAddResult = throw UnsupportedOperationException()
     }
 }

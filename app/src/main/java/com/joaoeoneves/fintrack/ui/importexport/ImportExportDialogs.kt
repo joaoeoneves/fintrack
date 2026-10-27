@@ -4,14 +4,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 
 @Composable
 fun ImportPreviewDialog(
@@ -19,14 +21,15 @@ fun ImportPreviewDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.import_preview_title)) },
         text = {
             Column {
                 Text(
-                    stringResource(
-                        R.string.import_preview_summary,
+                    pluralStringResource(
+                        R.plurals.import_preview_summary,
+                        state.validExpenses.size,
                         state.validExpenses.size,
                         state.failures.size,
                     ),
@@ -34,7 +37,13 @@ fun ImportPreviewDialog(
                 if (state.failures.isNotEmpty()) {
                     LazyColumn(modifier = Modifier.heightIn(max = 240.dp)) {
                         items(state.failures) { failure ->
-                            Text(stringResource(R.string.import_preview_row_failure, failure.rowNumber, failure.reason))
+                            Text(
+                                stringResource(
+                                    R.string.import_preview_row_failure,
+                                    failure.rowNumber,
+                                    failure.reason.toUiText().asString(),
+                                ),
+                            )
                         }
                     }
                 }
@@ -62,7 +71,7 @@ fun MessageDialog(
     message: String,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(message) },

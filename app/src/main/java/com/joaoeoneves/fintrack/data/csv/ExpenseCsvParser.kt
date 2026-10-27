@@ -1,11 +1,17 @@
 package com.joaoeoneves.fintrack.data.csv
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.domain.model.resolve
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeParseException
+import kotlin.math.abs
 
 private const val EXPECTED_HEADER = "name,amountcents,category,date,note"
 private const val EXPECTED_COLUMN_COUNT = 5
@@ -16,12 +22,56 @@ private const val COLUMN_CATEGORY = 2
 private const val COLUMN_DATE = 3
 private const val COLUMN_NOTE = 4
 
+/** Outcome of validating a single, correctly-shaped CSV data row. */
+private sealed interface ParsedRow {
+    data class Valid(
+        val expense: Expense,
+    ) : ParsedRow
+
+    data class Invalid(
+        val reason: CsvRowError,
+    ) : ParsedRow
+}
+
 /** A single CSV data row that failed to parse into an [Expense]. */
 data class CsvRowFailure(
     val rowNumber: Int,
     val rawLine: String,
-    val reason: String,
+    val reason: CsvRowError,
 )
+
+/** Why a single CSV data row was rejected; carries only the data needed to describe it. */
+sealed interface CsvRowError {
+    data class WrongColumnCount(
+        val found: Int,
+    ) : CsvRowError
+
+    data object NameRequired : CsvRowError
+
+    data class NameTooLong(
+        val max: Int,
+    ) : CsvRowError
+
+    data class InvalidAmount(
+        val raw: String,
+    ) : CsvRowError
+
+    data class ZeroAmount(
+        val raw: String,
+    ) : CsvRowError
+
+    data class UnknownCategory(
+        val raw: String,
+    ) : CsvRowError
+
+    data class InvalidDate(
+        val raw: String,
+    ) : CsvRowError
+
+    data class NoteTooLong(
+        val max: Int,
+    ) : CsvRowError
+}
 
 /** Result of parsing a whole CSV document: successfully parsed expenses plus any row failures. */
 data class CsvParseResult(
@@ -37,18 +87,34 @@ sealed interface CsvImportOutcome {
     ) : CsvImportOutcome
 
     data class Error(
-        val message: String,
+        val error: CsvImportError,
     ) : CsvImportOutcome
+}
+
+/** Fatal reason a CSV document could not be parsed at all. */
+sealed interface CsvImportError {
+    data object Empty : CsvImportError
+
+    data object UnrecognizedHeader : CsvImportError
 }
 
 /**
  * Parses expense CSV text in the format documented by the `seed-data` skill:
- * header `name,amountCents,category,date,note`, one row per expense.
+ * header `name,amountCents,category,date,note`, one row per expense. A negative `amountCents`
+ * denotes a refund (imported as a positive amount with [Expense.isRefund] set); zero is rejected.
+ * Name/note lengths are checked against the same limits firestore.rules enforces, so rows the
+ * server would reject are reported as row failures at preview time instead of failing the batch.
+ *
+ * The `category` column is matched case-insensitively (after trimming) against the [categories]
+ * catalog: first by id (archived categories included), then by display name (the user's name, else
+ * the built-in's English name), then by a built-in's English name. Callers should pass the user's
+ * real catalog; the default only knows the built-ins.
  */
 object ExpenseCsvParser {
     fun parse(
         csvText: String,
         zone: ZoneId = ZoneId.systemDefault(),
+        categories: List<Category> = BuiltInCategories.all,
     ): CsvImportOutcome {
         val normalizedText = csvText.removePrefix("\uFEFF")
         val lines =
@@ -60,16 +126,17 @@ object ExpenseCsvParser {
             nonBlankLines.firstOrNull()?.let { header -> splitCsvLine(header).map { it.trim().lowercase() } }
 
         return when {
-            nonBlankLines.isEmpty() -> CsvImportOutcome.Error("The file is empty")
+            nonBlankLines.isEmpty() -> CsvImportOutcome.Error(CsvImportError.Empty)
             headerColumns?.joinToString(",") != EXPECTED_HEADER ->
-                CsvImportOutcome.Error("Unrecognized header — expected name,amountCents,category,date,note")
-            else -> CsvImportOutcome.Parsed(parseDataLines(nonBlankLines.drop(1), zone))
+                CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader)
+            else -> CsvImportOutcome.Parsed(parseDataLines(nonBlankLines.drop(1), zone, categories))
         }
     }
 
     private fun parseDataLines(
         dataLines: List<String>,
         zone: ZoneId,
+        categories: List<Category>,
     ): CsvParseResult {
         val validExpenses = mutableListOf<Expense>()
         val failures = mutableListOf<CsvRowFailure>()
@@ -78,68 +145,70 @@ object ExpenseCsvParser {
             val rowNumber = index + 2 // header is row 1, first data row is row 2
             val fields = splitCsvLine(line)
             if (fields.size != EXPECTED_COLUMN_COUNT) {
-                failures += CsvRowFailure(rowNumber, line, "Expected 5 columns, found ${fields.size}")
+                failures += CsvRowFailure(rowNumber, line, CsvRowError.WrongColumnCount(fields.size))
                 return@forEachIndexed
             }
 
-            val rawName = fields[COLUMN_NAME]
-            val rawAmount = fields[COLUMN_AMOUNT_CENTS]
-            val rawCategory = fields[COLUMN_CATEGORY]
-            val rawDate = fields[COLUMN_DATE]
-            val rawNote = fields[COLUMN_NOTE]
-
-            val name = rawName.trim()
-            if (name.isEmpty()) {
-                failures += CsvRowFailure(rowNumber, line, "Name is required")
-                return@forEachIndexed
+            when (val row = parseRow(fields, zone, categories)) {
+                is ParsedRow.Valid -> validExpenses += row.expense
+                is ParsedRow.Invalid -> failures += CsvRowFailure(rowNumber, line, row.reason)
             }
-
-            val amountCents = rawAmount.trim().toLongOrNull()
-            if (amountCents == null) {
-                failures += CsvRowFailure(rowNumber, line, "Invalid amountCents value: '$rawAmount'")
-                return@forEachIndexed
-            }
-
-            val category = parseCategory(rawCategory.trim())
-            if (category == null) {
-                failures += CsvRowFailure(rowNumber, line, "Unknown category: '$rawCategory'")
-                return@forEachIndexed
-            }
-
-            val date = parseDate(rawDate.trim(), zone)
-            if (date == null) {
-                failures += CsvRowFailure(rowNumber, line, "Invalid date: '$rawDate'")
-                return@forEachIndexed
-            }
-
-            val note = rawNote.ifBlank { null }
-
-            validExpenses +=
-                Expense(
-                    id = "",
-                    name = name,
-                    amountCents = amountCents,
-                    category = category,
-                    date = date,
-                    note = note,
-                )
         }
 
         return CsvParseResult(validExpenses, failures)
     }
 
-    private fun parseCategory(raw: String): ExpenseCategory? =
-        ExpenseCategory.entries.find { category ->
-            category.name.equals(raw, ignoreCase = true) || category.canonicalName().equals(raw, ignoreCase = true)
-        }
+    private fun parseRow(
+        fields: List<String>,
+        zone: ZoneId,
+        categories: List<Category>,
+    ): ParsedRow {
+        val rawAmount = fields[COLUMN_AMOUNT_CENTS]
+        val rawCategory = fields[COLUMN_CATEGORY]
+        val rawDate = fields[COLUMN_DATE]
+        val rawNote = fields[COLUMN_NOTE]
 
-    private fun ExpenseCategory.canonicalName(): String =
-        when (this) {
-            ExpenseCategory.TRANSFER -> "Transfer"
-            ExpenseCategory.INVESTMENTS -> "Investments"
-            ExpenseCategory.SHOPPING -> "Shopping"
-            ExpenseCategory.RECURRING -> "Recurring"
+        val name = fields[COLUMN_NAME].trim()
+        // Long.MIN_VALUE has no positive counterpart, so it is treated as invalid.
+        val amountCents = rawAmount.trim().toLongOrNull()?.takeIf { it != Long.MIN_VALUE }
+        val category = parseCategory(rawCategory.trim(), categories)
+        val date = parseDate(rawDate.trim(), zone)
+        val note = rawNote.ifBlank { null }
+
+        return when {
+            name.isEmpty() -> ParsedRow.Invalid(CsvRowError.NameRequired)
+            name.codePointLength() > MAX_NAME_LENGTH ->
+                ParsedRow.Invalid(CsvRowError.NameTooLong(MAX_NAME_LENGTH))
+            amountCents == null -> ParsedRow.Invalid(CsvRowError.InvalidAmount(rawAmount))
+            amountCents == 0L -> ParsedRow.Invalid(CsvRowError.ZeroAmount(rawAmount))
+            category == null -> ParsedRow.Invalid(CsvRowError.UnknownCategory(rawCategory))
+            date == null -> ParsedRow.Invalid(CsvRowError.InvalidDate(rawDate))
+            note != null && note.codePointLength() > MAX_NOTE_LENGTH ->
+                ParsedRow.Invalid(CsvRowError.NoteTooLong(MAX_NOTE_LENGTH))
+            else ->
+                ParsedRow.Valid(
+                    Expense(
+                        id = "",
+                        name = name,
+                        amountCents = abs(amountCents),
+                        category = category,
+                        date = date,
+                        note = note,
+                        isRefund = amountCents < 0,
+                    ),
+                )
         }
+    }
+
+    private fun parseCategory(
+        raw: String,
+        categories: List<Category>,
+    ): Category? =
+        categories.find { it.id.value.equals(raw, ignoreCase = true) }
+            ?: categories.find { it.canonicalName().equals(raw, ignoreCase = true) }
+            ?: builtInCanonicalNames.entries
+                .find { (_, name) -> name.equals(raw, ignoreCase = true) }
+                ?.let { (id, _) -> categories.resolve(id) }
 
     private fun parseDate(
         raw: String,

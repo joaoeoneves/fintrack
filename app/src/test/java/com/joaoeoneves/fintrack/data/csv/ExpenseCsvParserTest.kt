@@ -1,6 +1,6 @@
 package com.joaoeoneves.fintrack.data.csv
 
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -53,7 +53,7 @@ class ExpenseCsvParserTest {
         val coffee = result.validExpenses[0]
         assertEquals("Coffee", coffee.name)
         assertEquals(500L, coffee.amountCents)
-        assertEquals(ExpenseCategory.SHOPPING, coffee.category)
+        assertEquals(BuiltInCategories.SHOPPING, coffee.category)
         // Full offset-aware instant: unaffected by the zone argument.
         assertEquals(Instant.parse("2024-01-15T00:00:00Z"), coffee.date)
         assertEquals("with milk", coffee.note)
@@ -62,7 +62,7 @@ class ExpenseCsvParserTest {
         val rent = result.validExpenses[1]
         assertEquals("Rent", rent.name)
         assertEquals(150_000L, rent.amountCents)
-        assertEquals(ExpenseCategory.RECURRING, rent.category)
+        assertEquals(BuiltInCategories.RECURRING, rent.category)
         // Bare date: resolved against the passed-in zone, not hardcoded UTC.
         assertEquals(LocalDate.parse("2024-02-01").atStartOfDay(zone).toInstant(), rent.date)
         assertNull(rent.note)
@@ -84,7 +84,7 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.failures.isEmpty())
         assertEquals(
-            listOf(ExpenseCategory.SHOPPING, ExpenseCategory.SHOPPING, ExpenseCategory.SHOPPING),
+            listOf(BuiltInCategories.SHOPPING, BuiltInCategories.SHOPPING, BuiltInCategories.SHOPPING),
             result.validExpenses.map { it.category },
         )
     }
@@ -102,20 +102,21 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.failures.isEmpty())
         assertEquals(
-            listOf(ExpenseCategory.TRANSFER, ExpenseCategory.TRANSFER),
+            listOf(BuiltInCategories.TRANSFER, BuiltInCategories.TRANSFER),
             result.validExpenses.map { it.category },
         )
     }
 
     @Test
-    fun category_acceptsAllFourValues() {
+    fun category_acceptsEveryCanonicalName() {
         val csv =
             """
             $header
             A,100,Transfer,2024-01-01,
             B,100,Investments,2024-01-01,
             C,100,Shopping,2024-01-01,
-            D,100,Recurring,2024-01-01,
+            D,100,Food,2024-01-01,
+            E,100,Recurring,2024-01-01,
             """.trimIndent()
 
         val result = parsed(csv)
@@ -123,10 +124,11 @@ class ExpenseCsvParserTest {
         assertTrue(result.failures.isEmpty())
         assertEquals(
             listOf(
-                ExpenseCategory.TRANSFER,
-                ExpenseCategory.INVESTMENTS,
-                ExpenseCategory.SHOPPING,
-                ExpenseCategory.RECURRING,
+                BuiltInCategories.TRANSFER,
+                BuiltInCategories.INVESTMENTS,
+                BuiltInCategories.SHOPPING,
+                BuiltInCategories.FOOD,
+                BuiltInCategories.RECURRING,
             ),
             result.validExpenses.map { it.category },
         )
@@ -285,7 +287,7 @@ class ExpenseCsvParserTest {
         val rent = result.validExpenses[1]
         assertEquals("Rent", rent.name)
         assertEquals(150_000L, rent.amountCents)
-        assertEquals(ExpenseCategory.RECURRING, rent.category)
+        assertEquals(BuiltInCategories.RECURRING, rent.category)
         assertEquals(LocalDate.parse("2024-02-01").atStartOfDay(zone).toInstant(), rent.date)
         assertNull(rent.note)
     }
@@ -328,7 +330,7 @@ class ExpenseCsvParserTest {
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
         assertEquals(3, failure.rowNumber)
-        assertTrue(failure.reason.contains("category", ignoreCase = true))
+        assertEquals(CsvRowError.UnknownCategory("NotACategory"), failure.reason)
     }
 
     @Test
@@ -362,18 +364,18 @@ class ExpenseCsvParserTest {
         val coffee = result.validExpenses.single()
         assertEquals("Coffee", coffee.name)
         assertEquals(500L, coffee.amountCents)
-        assertEquals(ExpenseCategory.SHOPPING, coffee.category)
+        assertEquals(BuiltInCategories.SHOPPING, coffee.category)
         assertEquals("with milk", coffee.note)
     }
 
     @Test
     fun bomPrefixedFile_withActuallyWrongHeader_stillProducesError() {
-        val bom = "﻿"
+        val bom = ""
         val csv = "$bom" + "foo,bar,baz,qux,quux\nA,100,Shopping,2024-01-01,\n"
 
         val outcome = ExpenseCsvParser.parse(csv)
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader), outcome)
     }
 
     @Test
@@ -405,8 +407,7 @@ class ExpenseCsvParserTest {
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
         assertEquals(3, failure.rowNumber)
-        assertTrue(failure.reason.contains("category", ignoreCase = true))
-        assertTrue(failure.reason.contains("NotACategory"))
+        assertEquals(CsvRowError.UnknownCategory("NotACategory"), failure.reason)
     }
 
     @Test
@@ -420,8 +421,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("amountCents", ignoreCase = true),
+                .reason is CsvRowError.InvalidAmount,
         )
     }
 
@@ -437,8 +437,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("amountCents", ignoreCase = true),
+                .reason is CsvRowError.InvalidAmount,
         )
     }
 
@@ -453,8 +452,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("amountCents", ignoreCase = true),
+                .reason is CsvRowError.InvalidAmount,
         )
     }
 
@@ -467,8 +465,7 @@ class ExpenseCsvParserTest {
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
-        assertTrue(failure.reason.contains("date", ignoreCase = true))
-        assertTrue(failure.reason.contains("not-a-date"))
+        assertEquals(CsvRowError.InvalidDate("not-a-date"), failure.reason)
     }
 
     @Test
@@ -480,8 +477,7 @@ class ExpenseCsvParserTest {
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
-        assertTrue(failure.reason.contains("5"))
-        assertTrue(failure.reason.contains("4"))
+        assertEquals(CsvRowError.WrongColumnCount(4), failure.reason)
     }
 
     @Test
@@ -493,8 +489,7 @@ class ExpenseCsvParserTest {
         assertTrue(result.validExpenses.isEmpty())
         assertEquals(1, result.failures.size)
         val failure = result.failures.single()
-        assertTrue(failure.reason.contains("5"))
-        assertTrue(failure.reason.contains("6"))
+        assertEquals(CsvRowError.WrongColumnCount(6), failure.reason)
     }
 
     @Test
@@ -508,8 +503,7 @@ class ExpenseCsvParserTest {
         assertTrue(
             result.failures
                 .single()
-                .reason
-                .contains("Name", ignoreCase = true),
+                .reason == CsvRowError.NameRequired,
         )
     }
 
@@ -526,7 +520,7 @@ class ExpenseCsvParserTest {
     fun allWhitespaceFile_producesError() {
         val outcome = ExpenseCsvParser.parse("   \n\n   \t\n")
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.Empty), outcome)
     }
 
     @Test
@@ -549,7 +543,7 @@ class ExpenseCsvParserTest {
 
         val outcome = ExpenseCsvParser.parse(csv)
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader), outcome)
     }
 
     @Test
@@ -558,7 +552,7 @@ class ExpenseCsvParserTest {
 
         val outcome = ExpenseCsvParser.parse(csv)
 
-        assertTrue(outcome is CsvImportOutcome.Error)
+        assertEquals(CsvImportOutcome.Error(CsvImportError.UnrecognizedHeader), outcome)
     }
 
     // ---- mixed valid + multiple failure types in one parse ----
@@ -584,9 +578,9 @@ class ExpenseCsvParserTest {
 
         assertEquals(4, result.failures.size)
         val byRow = result.failures.associateBy { it.rowNumber }
-        assertTrue(byRow.getValue(3).reason.contains("category", ignoreCase = true))
-        assertTrue(byRow.getValue(4).reason.contains("amountCents", ignoreCase = true))
-        assertTrue(byRow.getValue(5).reason.contains("date", ignoreCase = true))
-        assertTrue(byRow.getValue(6).reason.contains("5"))
+        assertEquals(CsvRowError.UnknownCategory("NotACategory"), byRow.getValue(3).reason)
+        assertEquals(CsvRowError.InvalidAmount("notanumber"), byRow.getValue(4).reason)
+        assertEquals(CsvRowError.InvalidDate("not-a-date"), byRow.getValue(5).reason)
+        assertEquals(CsvRowError.WrongColumnCount(4), byRow.getValue(6).reason)
     }
 }

@@ -8,10 +8,15 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.Source
+import com.joaoeoneves.fintrack.data.migration.chunkedForRules
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -21,7 +26,6 @@ import java.time.Instant
 import javax.inject.Inject
 
 private const val TAG = "FirestoreExpenseRepo"
-private const val BATCH_CHUNK_SIZE = 400
 
 class FirestoreExpenseRepository
     @Inject
@@ -63,12 +67,18 @@ class FirestoreExpenseRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = expense.toFirestoreMap(includeCreatedAt = true)
-                val reference = expensesCollection(uid).add(data).await()
-                Result.success(reference.id)
+                val collection = expensesCollection(uid)
+                val docRef = if (expense.id.isBlank()) collection.document() else collection.document(expense.id)
+                // Not awaited: the write lands in Firestore's local cache immediately and syncs when
+                // the device is online. Awaiting would suspend until server acknowledgement, which
+                // hangs the save indefinitely while offline.
+                docRef.set(data).addOnFailureListener { Log.w(TAG, "Add expense write ${docRef.id} failed", it) }
+                Result.success(docRef.id)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Broad catch: Firestore Task failures aren't narrowly typed (network, permission,
-                // and server errors all surface as generic/undocumented exception subtypes here);
-                // convert any failure into a Result for the caller.
+                // Broad catch: Firestore can throw synchronously for invalid input/state with
+                // undocumented exception subtypes; convert any failure into a Result for the caller.
                 Result.failure(e)
             }
         }
@@ -79,8 +89,12 @@ class FirestoreExpenseRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val data = expense.toFirestoreMap(includeCreatedAt = false)
-                expensesCollection(uid).document(expense.id).update(data).await()
+                val docRef = expensesCollection(uid).document(expense.id)
+                // Not awaited: see addExpense above.
+                docRef.update(data).addOnFailureListener { Log.w(TAG, "Update expense write ${docRef.id} failed", it) }
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addExpense above.
                 Result.failure(e)
@@ -93,19 +107,13 @@ class FirestoreExpenseRepository
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
                 val docRef = expensesCollection(uid).document(id)
-                firestore
-                    .runTransaction<Unit> { transaction ->
-                        val snapshot = transaction.get(docRef)
-                        if (!snapshot.exists()) {
-                            throw NoSuchElementException("Expense with id $id not found")
-                        }
-                        transaction.delete(docRef)
-                        Unit
-                    }.await()
+                // Not awaited (see addExpense above); deleting a missing document is a no-op.
+                docRef.delete().addOnFailureListener { Log.w(TAG, "Delete expense write ${docRef.id} failed", it) }
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Broad catch: covers both Firestore Task failures and the NoSuchElementException
-                // thrown above when the document is missing, converting either into a Result.
+                // Broad catch: see addExpense above.
                 Result.failure(e)
             }
         }
@@ -122,6 +130,8 @@ class FirestoreExpenseRepository
                         .await()
                         .toExpenseOrNull()
                 Result.success(expense)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addExpense above.
                 Result.failure(e)
@@ -135,6 +145,8 @@ class FirestoreExpenseRepository
             return try {
                 val snapshot = expensesCollection(uid).get().await()
                 Result.success(snapshot.toExpenses())
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Broad catch: see addExpense above.
                 Result.failure(e)
@@ -147,7 +159,7 @@ class FirestoreExpenseRepository
                     ?: return BulkAddResult(0, IllegalStateException("Not signed in"))
             var total = 0
             var failure: Throwable? = null
-            for (chunk in expenses.chunked(BATCH_CHUNK_SIZE)) {
+            for (chunk in expenses.importChunks()) {
                 try {
                     val batch = firestore.batch()
                     chunk.forEach { expense ->
@@ -156,6 +168,8 @@ class FirestoreExpenseRepository
                     }
                     batch.commit().await()
                     total += chunk.size
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     // Broad catch: see addExpense above.
                     failure = e
@@ -164,16 +178,41 @@ class FirestoreExpenseRepository
             }
             return BulkAddResult(total, failure)
         }
+
+        override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            // Server-only on purpose: the local cache may hold only part of the collection, so a cache
+            // miss can't prove the category is unused. Fails while offline.
+            return runCatchingCancellable {
+                !expensesCollection(uid)
+                    .whereEqualTo("category", categoryId.value)
+                    .limit(1)
+                    .get(Source.SERVER)
+                    .await()
+                    .isEmpty
+            }
+        }
     }
 
-private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
+/**
+ * Splits these expenses into write batches of at most 400 expenses that reference at most 15
+ * distinct non-built-in categories (see [chunkedForRules]).
+ */
+internal fun List<Expense>.importChunks(): List<List<Expense>> = chunkedForRules { it.category.id }
+
+internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
     val map =
         mutableMapOf<String, Any?>(
             "name" to name,
             "amountCents" to amountCents,
-            "category" to category.name,
+            "category" to category.id.value,
             "date" to Timestamp(date.epochSecond, date.nano),
             "note" to note,
+            // Always written (including false) so an update that turns a refund back into a regular
+            // expense clears the flag.
+            "isRefund" to isRefund,
             "updatedAt" to FieldValue.serverTimestamp(),
         )
     if (includeCreatedAt) {
@@ -184,13 +223,20 @@ private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?>
 
 private fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
 
-private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
+private fun DocumentSnapshot.toExpenseOrNull(): Expense? = mapOrNull("expense") { parseExpense() }
+
+private fun DocumentSnapshot.parseExpense(): Expense? {
     val name = getString("name")
     val amountCents = getLong("amountCents")
-    val categoryName = getString("category")
-    val category = ExpenseCategory.entries.find { it.name == categoryName }
+    // An id matching no built-in (a user category, resolved later against the catalog, or a deleted
+    // one) becomes a placeholder rather than dropping the expense; only a missing id is malformed.
+    val category =
+        getString("category")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { raw -> BuiltInCategories.byId(CategoryId(raw)) ?: Category.unknown(CategoryId(raw)) }
     val date = getTimestamp("date")
     val note = getString("note")
+    val isRefund = get("isRefund") as? Boolean ?: false
 
     return when {
         name == null -> {
@@ -217,6 +263,7 @@ private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
                 category = category,
                 date = Instant.ofEpochSecond(date.seconds, date.nanoseconds.toLong()),
                 note = note,
+                isRefund = isRefund,
             )
     }
 }

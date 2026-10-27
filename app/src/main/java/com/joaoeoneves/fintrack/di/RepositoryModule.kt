@@ -1,19 +1,20 @@
 package com.joaoeoneves.fintrack.di
 
+import com.joaoeoneves.fintrack.data.CategoryResolvingExpenseRepository
+import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
 import com.joaoeoneves.fintrack.data.FirebaseAuthRepository
-import com.joaoeoneves.fintrack.data.FirestoreBudgetRepository
-import com.joaoeoneves.fintrack.data.FirestoreExpenseRepository
-import com.joaoeoneves.fintrack.data.FirestoreIncomeRepository
-import com.joaoeoneves.fintrack.data.SharedPrefsCurrencyRepository
-import com.joaoeoneves.fintrack.data.SharedPrefsLanguageRepository
-import com.joaoeoneves.fintrack.data.SharedPrefsThemeRepository
+import com.joaoeoneves.fintrack.data.session.DefaultSessionRepository
+import com.joaoeoneves.fintrack.data.session.SessionBudgetRepository
+import com.joaoeoneves.fintrack.data.session.SessionCategoryRepository
+import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
+import com.joaoeoneves.fintrack.data.session.SessionIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
-import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
-import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
+import com.joaoeoneves.fintrack.domain.repository.SessionRepository
+import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -24,26 +25,28 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 interface RepositoryModule {
     @Binds
-    fun bindExpenseRepository(impl: FirestoreExpenseRepository): ExpenseRepository
+    @RawExpenses
+    fun bindRawExpenseRepository(impl: SessionExpenseRepository): ExpenseRepository
+
+    @Binds
+    fun bindExpenseRepository(impl: CategoryResolvingExpenseRepository): ExpenseRepository
+
+    @Binds
+    fun bindCategoryRepository(impl: SessionCategoryRepository): CategoryRepository
 
     @Binds
     fun bindAuthRepository(impl: FirebaseAuthRepository): AuthRepository
 
     @Binds
-    fun bindBudgetRepository(impl: FirestoreBudgetRepository): BudgetRepository
+    fun bindBudgetRepository(impl: SessionBudgetRepository): BudgetRepository
 
     @Binds
-    fun bindIncomeRepository(impl: FirestoreIncomeRepository): IncomeRepository
-
-    @Binds
-    @Singleton
-    fun bindThemeRepository(impl: SharedPrefsThemeRepository): ThemeRepository
+    fun bindIncomeRepository(impl: SessionIncomeRepository): IncomeRepository
 
     @Binds
     @Singleton
-    fun bindCurrencyRepository(impl: SharedPrefsCurrencyRepository): CurrencyRepository
+    fun bindSessionRepository(impl: DefaultSessionRepository): SessionRepository
 
     @Binds
-    @Singleton
-    fun bindLanguageRepository(impl: SharedPrefsLanguageRepository): LanguageRepository
+    fun bindTransactionRepository(impl: CombinedTransactionRepository): TransactionRepository
 }

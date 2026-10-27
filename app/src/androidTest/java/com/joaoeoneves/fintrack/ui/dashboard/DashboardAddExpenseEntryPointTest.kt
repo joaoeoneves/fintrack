@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -8,18 +7,20 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.Period
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Clock
 import java.time.Instant
 
 /**
@@ -37,12 +38,14 @@ import java.time.Instant
  *  2. The "Recent expenses" card always renders -- including its empty-state text -- and stays
  *     tappable through to the full expense list even with zero expenses in range.
  *  3. The unrelated "Recent income" plus button is untouched by this change (regression check).
+ *  4. Tapping a recent-expense row opens that expense (`onOpenExpense(id)`), not the full list.
  *
- * NOTE: on a real device screen the Dashboard content (balance card, pie chart, budget rows) can
- * exceed the viewport, so "Recent expenses" / "Add income" may not be composed by the LazyColumn
- * yet without scrolling. Tests that need those nodes scroll the dashboard's own LazyColumn
- * (identified generically via [hasScrollAction]) to the target node first, rather than relying on
- * [androidx.compose.ui.test.junit4.ComposeTestRule.waitUntil], which never scrolls.
+ * The plus buttons carry their "Add expense"/"Add income" content description on the clickable
+ * IconButton node itself, so `onNodeWithContentDescription(...).performClick()` hits the button.
+ *
+ * NOTE: "Add expense"/"Add income" are content descriptions on the floating add pill in the
+ * Scaffold FAB slot, outside the LazyColumn, so they are clicked directly. The "Recent expenses"
+ * card and its rows are inside the LazyColumn and may need [scrollToNode] first.
  */
 @RunWith(AndroidJUnit4::class)
 class DashboardAddExpenseEntryPointTest {
@@ -57,23 +60,26 @@ class DashboardAddExpenseEntryPointTest {
         id = id,
         name = "Expense $id",
         amountCents = amountCents,
-        category = ExpenseCategory.SHOPPING,
+        category = BuiltInCategories.SHOPPING,
         date = date,
         note = null,
     )
 
     private fun setDashboardContent(
         expenses: List<Expense> = emptyList(),
-        onOpenList: (TimeRange) -> Unit = {},
+        onOpenList: (Period) -> Unit = {},
         onAddExpense: () -> Unit = {},
-        onOpenIncomeList: (TimeRange) -> Unit = {},
+        onOpenIncomeList: (Period) -> Unit = {},
         onAddIncome: () -> Unit = {},
+        onOpenExpense: (String) -> Unit = {},
     ) {
         val viewModel =
-            DashboardViewModel(
+            dashboardViewModel(
                 FakeExpenseRepository(expenses),
                 FakeBudgetRepository(),
                 FakeIncomeRepository(),
+                SavedStateHandle(),
+                Clock.systemDefaultZone(),
             )
         composeTestRule.setContent {
             DashboardScreen(
@@ -84,6 +90,10 @@ class DashboardAddExpenseEntryPointTest {
                         onOpenIncomeList = onOpenIncomeList,
                         onAddIncome = onAddIncome,
                         onOpenSettings = {},
+                        onOpenExpense = onOpenExpense,
+                        onOpenIncome = {},
+                        onOpenMonthlyPlan = {},
+                        onOpenRecurring = {},
                     ),
                 viewModel = viewModel,
             )
@@ -110,7 +120,6 @@ class DashboardAddExpenseEntryPointTest {
             expenses = emptyList(),
             onAddExpense = { addExpenseClicked = true },
         )
-        scrollToNode(hasContentDescription("Add expense"))
 
         assertEquals(false, addExpenseClicked)
         composeTestRule.onNodeWithContentDescription("Add expense").performClick()
@@ -125,7 +134,6 @@ class DashboardAddExpenseEntryPointTest {
             expenses = listOf(expense(id = "e1")),
             onAddExpense = { addExpenseClicked = true },
         )
-        scrollToNode(hasContentDescription("Add expense"))
 
         assertEquals(false, addExpenseClicked)
         composeTestRule.onNodeWithContentDescription("Add expense").performClick()
@@ -147,41 +155,57 @@ class DashboardAddExpenseEntryPointTest {
 
     @Test
     fun recentExpensesCard_remainsTappable_whenNoExpensesInRange_andNavigatesToFullList() {
-        var openedListWith: TimeRange? = null
+        var openedListWith: Period? = null
         setDashboardContent(
             expenses = emptyList(),
-            onOpenList = { range -> openedListWith = range },
+            onOpenList = { period -> openedListWith = period },
         )
         scrollToNode(hasText("Recent expenses"))
 
         assertNull(openedListWith)
         composeTestRule.onNodeWithText("Recent expenses").performClick()
 
-        assertEquals(TimeRange.ONE_MONTH, openedListWith)
+        assertEquals(Period.CurrentMonth, openedListWith)
     }
 
     @Test
     fun recentExpensesCard_stillTappable_whenExpensesArePresent() {
-        var openedListWith: TimeRange? = null
+        var openedListWith: Period? = null
         setDashboardContent(
             expenses = listOf(expense(id = "e1")),
-            onOpenList = { range -> openedListWith = range },
+            onOpenList = { period -> openedListWith = period },
         )
         scrollToNode(hasText("Recent expenses"))
 
         composeTestRule.onNodeWithText("Recent expenses").performClick()
 
-        assertEquals(TimeRange.ONE_MONTH, openedListWith)
+        assertEquals(Period.CurrentMonth, openedListWith)
     }
 
     @Test
     fun recentIncomeAddButton_isUnaffectedByThisChange_stillInvokesOnAddIncome() {
         var addIncomeClicked = false
         setDashboardContent(onAddIncome = { addIncomeClicked = true })
-        scrollToNode(hasContentDescription("Add income"))
 
         composeTestRule.onNodeWithContentDescription("Add income").performClick()
 
         assertEquals(true, addIncomeClicked)
+    }
+
+    @Test
+    fun recentExpenseRow_tap_invokesOnOpenExpense_withThatExpensesId_notOnOpenList() {
+        var openedExpenseId: String? = null
+        var openedListWith: Period? = null
+        setDashboardContent(
+            expenses = listOf(expense(id = "e1")),
+            onOpenExpense = { id -> openedExpenseId = id },
+            onOpenList = { period -> openedListWith = period },
+        )
+        scrollToNode(hasText("Expense e1"))
+
+        composeTestRule.onNodeWithText("Expense e1").performClick()
+
+        assertEquals("e1", openedExpenseId)
+        assertNull(openedListWith)
     }
 }

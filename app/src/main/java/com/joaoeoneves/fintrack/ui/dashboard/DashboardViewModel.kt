@@ -1,20 +1,26 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import android.content.Context
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.model.TimeRange
-import com.joaoeoneves.fintrack.domain.model.currentCalendarMonthRange
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.PeriodOverview
+import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
+import com.joaoeoneves.fintrack.domain.model.currentYearMonth
+import com.joaoeoneves.fintrack.domain.model.dailyAllowanceOf
+import com.joaoeoneves.fintrack.domain.model.decodePeriod
+import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
-import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
+import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,10 +29,15 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
+
+private const val TAG = "DashboardViewModel"
 
 // How long (in ms) the underlying Firestore listeners are kept alive after the last collector
 // disappears, so a quick configuration change doesn't tear down and immediately re-establish them.
@@ -36,99 +47,115 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 // activity" preview.
 private const val RECENT_ITEMS_LIMIT = 5
 
+// SavedStateHandle key of the selected period token.
+private const val KEY_PERIOD = "period"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel
     @Inject
     constructor(
-        private val expenseRepository: ExpenseRepository,
+        private val observePeriodOverview: ObservePeriodOverview,
         private val budgetRepository: BudgetRepository,
-        private val incomeRepository: IncomeRepository,
-        // Nullable with a default so existing unit tests that construct this ViewModel directly
-        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
-        // production. When null (test-only), the fallback below matches the exact literal those
-        // tests assert on.
-        @param:ApplicationContext private val context: Context? = null,
+        savedStateHandle: SavedStateHandle,
+        private val clock: Clock,
     ) : ViewModel() {
-        private val timeRange = MutableStateFlow(TimeRange.ONE_MONTH)
+        private val selection =
+            PeriodSelection(savedStateHandle, KEY_PERIOD, Period.CurrentMonth.encode(), clock)
         private val retryTrigger = MutableStateFlow(0)
 
-        private fun budgetProgress(): Flow<List<CategoryBudget>> {
-            val monthRange = currentCalendarMonthRange()
-            return combine(
-                expenseRepository.observeExpenses(monthRange.startInclusive, monthRange.endExclusive),
-                budgetRepository.observeBudgets(),
-            ) { monthExpenses, budgets ->
-                ExpenseCategory.entries.map { category ->
-                    CategoryBudget(
-                        category = category,
-                        limitCents = budgets.find { it.category == category }?.limitCents,
-                        spentCents = monthExpenses.filter { it.category == category }.sumOf { it.amountCents },
-                    )
-                }
-            }
-        }
-
         val uiState: StateFlow<DashboardUiState> =
-            combine(timeRange, retryTrigger) { range, _ -> range }
-                .flatMapLatest { range ->
-                    val instantRange = range.toInstantRange(now = Instant.now())
-                    combine(
-                        expenseRepository.observeExpenses(instantRange.startInclusive, instantRange.endExclusive),
-                        budgetProgress(),
-                        incomeRepository.observeIncome(instantRange.startInclusive, instantRange.endExclusive),
-                    ) { expenses, budgets, income -> expenses.toContent(range, budgets, income) }
-                        .map<DashboardUiState.Content, DashboardUiState> { content -> content }
-                        .catch { e ->
-                            val fallback =
-                                context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
-                            emit(DashboardUiState.Error(e.message ?: fallback))
-                        }
+            combine(selection.token, retryTrigger) { token, _ -> token }
+                // "Now" is read here, on every (re)subscription, so an ON_RESUME retry after the
+                // calendar rolls over re-resolves CurrentMonth and canGoToNextMonth.
+                .flatMapLatest { token ->
+                    val now = clock.instant()
+                    contentFlow(decodePeriod(token, now, clock.zone), now)
                 }.stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                     initialValue = DashboardUiState.Loading,
                 )
 
-        fun onTimeRangeSelected(range: TimeRange) {
-            timeRange.value = range
+        private fun contentFlow(
+            period: Period,
+            now: Instant,
+        ): Flow<DashboardUiState> {
+            val zone = clock.zone
+            return observePeriodOverview(period, now, zone, RECENT_ITEMS_LIMIT)
+                .map<PeriodOverview, DashboardUiState> { overview -> overview.toContent(period, now, zone) }
+                .catch { e ->
+                    Log.w(TAG, "Dashboard flow failed", e)
+                    emit(DashboardUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
+                }
         }
+
+        fun onPeriodSelected(period: Period) = selection.select(period)
+
+        fun onPreviousMonth() = selection.previous()
+
+        fun onNextMonth() = selection.next()
 
         fun onRetry() {
             retryTrigger.value++
         }
 
+        private val budgetErrors = Channel<UiText>(Channel.BUFFERED)
+
+        /** One-shot user-facing messages for budget writes that failed, shown as a snackbar. */
+        val budgetErrorEvent: Flow<UiText> = budgetErrors.receiveAsFlow()
+
         fun onSetBudget(
-            category: ExpenseCategory,
+            category: Category,
             limitCents: Long,
         ) {
-            viewModelScope.launch { budgetRepository.setBudget(category, limitCents) }
+            viewModelScope.launch {
+                budgetRepository.setBudget(category.id, limitCents).onFailure {
+                    budgetErrors.send(UiText.StringResource(R.string.error_budget_save_failed))
+                }
+            }
         }
 
-        private fun List<Expense>.toContent(
-            range: TimeRange,
-            budgets: List<CategoryBudget>,
-            income: List<Income>,
-        ): DashboardUiState.Content {
-            val categoryTotals =
-                ExpenseCategory.entries.map { category ->
-                    CategoryTotal(
-                        category = category,
-                        totalCents = filter { it.category == category }.sumOf { it.amountCents },
-                    )
+        fun onClearBudget(category: Category) {
+            viewModelScope.launch {
+                budgetRepository.clearBudget(category.id).onFailure {
+                    budgetErrors.send(UiText.StringResource(R.string.error_budget_remove_failed))
                 }
-            val totalCents = sumOf { it.amountCents }
-            val incomeCents = income.sumOf { it.amountCents }
+            }
+        }
+
+        private fun PeriodOverview.toContent(
+            period: Period,
+            now: Instant,
+            zone: ZoneId,
+        ): DashboardUiState.Content {
+            val isCurrentMonth = budgetMonth == currentYearMonth(now, zone)
             return DashboardUiState.Content(
-                timeRange = range,
-                expenses = this,
-                categoryTotals = categoryTotals,
-                totalCents = totalCents,
-                recentExpenses = sortedByDescending { it.date }.take(RECENT_ITEMS_LIMIT),
+                period = period,
+                canGoToNextMonth = period.canGoToNextMonth(now, zone),
+                budgetMonth = budgetMonth,
+                budgetMonthIsCurrent = isCurrentMonth,
+                expenses = transactions.expenses,
+                income = transactions.income,
+                range = transactions.range,
+                categoryTotals = summary.categoryTotals,
+                outflowCents = summary.outflowCents,
+                spendingCents = summary.spendingCents,
+                savedCents = summary.savedCents,
+                savingsRate = summary.savingsRate,
+                recentExpenses = recent.expenses,
                 budgets = budgets,
-                incomeCents = incomeCents,
-                netCents = incomeCents - totalCents,
-                recentIncome = income.sortedByDescending { it.date }.take(RECENT_ITEMS_LIMIT),
+                incomeCents = summary.incomeCents,
+                netCents = summary.netCents,
+                recentIncome = recent.income,
+                plan = plan,
+                plannedSlices = budgets.plannedSlices(),
+                dailyAllowance =
+                    if (isCurrentMonth) {
+                        dailyAllowanceOf(plan.safeToSpendCents, budgetMonth, now.atZone(zone).toLocalDate())
+                    } else {
+                        null
+                    },
             )
         }
     }

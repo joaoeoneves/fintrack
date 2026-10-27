@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.domain.repository
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
@@ -34,4 +35,11 @@ interface ExpenseRepository {
     suspend fun getAllExpenses(): Result<List<Expense>>
 
     suspend fun addExpenses(expenses: List<Expense>): BulkAddResult
+
+    /**
+     * Whether any expense uses the category with [categoryId]. When signed in this needs the server
+     * (a local cache can be incomplete), so it can fail while offline; as a guest it scans the
+     * on-device data and does not need the network.
+     */
+    suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean>
 }

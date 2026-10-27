@@ -1,23 +1,32 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
-import android.content.Context
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
+import com.joaoeoneves.fintrack.domain.model.decodePeriod
+import com.joaoeoneves.fintrack.domain.model.toInstantRange
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import com.joaoeoneves.fintrack.ui.navigation.ExpenseList
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -25,12 +34,27 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.Instant
+import java.time.Clock
 import javax.inject.Inject
+
+private const val TAG = "ExpenseListViewModel"
 
 // How long (in ms) the underlying Firestore listener is kept alive after the last collector
 // disappears, so a quick configuration change doesn't tear down and immediately re-establish it.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
+/** The repository's entries for the selected period, before the query/filter/sort are applied. */
+private sealed interface PeriodItems<out T> {
+    data class Loaded<T>(
+        val period: Period,
+        val canGoToNextMonth: Boolean,
+        val items: List<T>,
+    ) : PeriodItems<T>
+
+    data class Failed(
+        val message: UiText,
+    ) : PeriodItems<Nothing>
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -38,20 +62,23 @@ class ExpenseListViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
+        categoryRepository: CategoryRepository,
         private val savedStateHandle: SavedStateHandle,
-        // Nullable with a default so existing unit tests that construct this ViewModel directly
-        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
-        // production. When null (test-only), the fallback below matches the exact literal those
-        // tests assert on.
-        @param:ApplicationContext private val context: Context? = null,
+        private val clock: Clock,
     ) : ViewModel() {
-        private val timeRange = MutableStateFlow(savedStateHandle.toRoute<ExpenseList>().timeRange)
+        // The route's own "period" argument is only the initial value; the user's later choices
+        // are stored under a separate key so the route argument itself is never overwritten.
+        private val selection =
+            PeriodSelection(
+                savedStateHandle = savedStateHandle,
+                key = KEY_SELECTED_PERIOD,
+                initialToken = savedStateHandle.toRoute<ExpenseList>().period,
+                clock = clock,
+            )
 
         // Public so the screen can bind the search field's displayed value directly to this,
-        // instead of to Content.query (which only updates after a round trip through the
-        // repository's live Firestore listener). Binding to the round-tripped value is too slow
-        // for a controlled text field and drops/reorders characters typed faster than the
-        // round trip completes.
+        // instead of to Content.query (which only updates after the derived uiState recomputes).
+        // A controlled text field bound to the derived value can drop/reorder fast-typed characters.
         val query: StateFlow<String> = savedStateHandle.getStateFlow(KEY_QUERY, "")
         private val sortOption = savedStateHandle.getStateFlow(KEY_SORT_OPTION, SortOption.DATE_DESC)
         private val retryTrigger = MutableStateFlow(0)
@@ -59,35 +86,82 @@ class ExpenseListViewModel
         private val undoEvents = Channel<Expense>(Channel.BUFFERED)
         val undoEvent: Flow<Expense> = undoEvents.receiveAsFlow()
 
+        /** The full category catalog (archived included), for the filter chips and labels. */
+        val categories: StateFlow<List<Category>> =
+            categoryRepository
+                .observeCategories()
+                .catch { emit(BuiltInCategories.all) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), BuiltInCategories.all)
+
+        // Persisted in the SavedStateHandle as the id's raw String (a value class isn't Bundle-able).
+        private val selectedCategory =
+            MutableStateFlow(savedStateHandle.get<String>(KEY_CATEGORY_FILTER)?.let(::CategoryId))
+        val categoryFilter: StateFlow<CategoryId?> = selectedCategory.asStateFlow()
+
+        // Localized category labels the query is also matched against; pushed in by the screen.
+        private val categoryLabels = MutableStateFlow<Map<CategoryId, String>>(emptyMap())
+
+        // Only the period and the retry trigger drive the Firestore subscription; the query, filter
+        // and sort are applied afterwards (below), so typing or changing them never re-subscribes.
+        private val periodItems: Flow<PeriodItems<Expense>> =
+            combine(selection.token, retryTrigger) { token, _ -> token }
+                .flatMapLatest { token ->
+                    // "Now" is read on every (re)subscription so an ON_RESUME retry after the
+                    // calendar rolls over re-resolves CurrentMonth and canGoToNextMonth.
+                    val now = clock.instant()
+                    val period = decodePeriod(token, now, clock.zone)
+                    val canGoToNextMonth = period.canGoToNextMonth(now, clock.zone)
+                    val instantRange = period.toInstantRange(now, clock.zone)
+                    expenseRepository
+                        .observeExpenses(instantRange.startInclusive, instantRange.endExclusive)
+                        .map<List<Expense>, PeriodItems<Expense>> { PeriodItems.Loaded(period, canGoToNextMonth, it) }
+                        .catch { e ->
+                            Log.w(TAG, "Expense list flow failed", e)
+                            emit(PeriodItems.Failed(UiText.StringResource(R.string.error_generic_fallback)))
+                        }
+                }
+
         val uiState: StateFlow<ExpenseListUiState> =
             combine(
-                timeRange,
+                periodItems,
                 query,
+                categoryFilter,
+                categoryLabels,
                 sortOption,
-                retryTrigger,
-            ) { range, q, sort, _ ->
-                Triple(range, q, sort)
-            }.flatMapLatest { (range, q, sort) ->
-                val instantRange = range.toInstantRange(now = Instant.now())
-                expenseRepository
-                    .observeExpenses(instantRange.startInclusive, instantRange.endExclusive)
-                    .map<List<Expense>, ExpenseListUiState> { expenses -> expenses.toContent(range, q, sort) }
-                    .catch { e ->
-                        val fallback = context?.getString(R.string.error_generic_fallback) ?: "Something went wrong"
-                        emit(ExpenseListUiState.Error(e.message ?: fallback))
-                    }
+            ) { items, q, category, labels, sort ->
+                when (items) {
+                    is PeriodItems.Loaded ->
+                        items.items.toListContent(
+                            period = items.period,
+                            canGoToNextMonth = items.canGoToNextMonth,
+                            filter = ExpenseListFilter(query = q, category = category, categoryLabels = labels),
+                            sort = sort,
+                        )
+                    is PeriodItems.Failed -> ExpenseListUiState.Error(items.message)
+                }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                 initialValue = ExpenseListUiState.Loading,
             )
 
-        fun onTimeRangeSelected(range: TimeRange) {
-            timeRange.value = range
-        }
+        fun onPeriodSelected(period: Period) = selection.select(period)
+
+        fun onPreviousMonth() = selection.previous()
+
+        fun onNextMonth() = selection.next()
 
         fun onQueryChanged(newQuery: String) {
             savedStateHandle[KEY_QUERY] = newQuery
+        }
+
+        fun onCategorySelected(id: CategoryId?) {
+            savedStateHandle[KEY_CATEGORY_FILTER] = id?.value
+            selectedCategory.value = id
+        }
+
+        fun onCategoryLabelsChanged(labels: Map<CategoryId, String>) {
+            categoryLabels.value = labels
         }
 
         fun onSortSelected(sort: SortOption) {
@@ -120,34 +194,10 @@ class ExpenseListViewModel
             }
         }
 
-        private fun List<Expense>.toContent(
-            range: TimeRange,
-            query: String,
-            sort: SortOption,
-        ): ExpenseListUiState.Content {
-            val filtered =
-                if (query.isBlank()) {
-                    this
-                } else {
-                    filter { it.name.contains(query, ignoreCase = true) }
-                }
-            val sorted =
-                when (sort) {
-                    SortOption.DATE_DESC -> filtered.sortedByDescending { it.date }
-                    SortOption.DATE_ASC -> filtered.sortedBy { it.date }
-                    SortOption.AMOUNT_DESC -> filtered.sortedByDescending { it.amountCents }
-                    SortOption.AMOUNT_ASC -> filtered.sortedBy { it.amountCents }
-                }
-            return ExpenseListUiState.Content(
-                timeRange = range,
-                query = query,
-                sortOption = sort,
-                expenses = sorted,
-            )
-        }
-
         private companion object {
             private const val KEY_QUERY = "query"
             private const val KEY_SORT_OPTION = "sortOption"
+            private const val KEY_CATEGORY_FILTER = "categoryFilter"
+            private const val KEY_SELECTED_PERIOD = "selectedPeriod"
         }
     }

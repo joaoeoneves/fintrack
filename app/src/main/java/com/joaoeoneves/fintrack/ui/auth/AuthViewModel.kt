@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.repository.AuthRepository
+import com.joaoeoneves.fintrack.domain.model.Session
+import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
+import com.joaoeoneves.fintrack.domain.repository.SessionRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,20 +19,21 @@ import javax.inject.Inject
 class AuthViewModel
     @Inject
     constructor(
-        private val authRepository: AuthRepository,
-        // Nullable with a default so existing unit tests that construct this ViewModel directly
-        // (bypassing Hilt) keep compiling; Hilt itself always supplies a real ApplicationContext in
-        // production. When null (test-only), the fallback strings below match the exact literals
-        // those tests assert on.
-        @param:ApplicationContext private val appContext: Context? = null,
+        private val sessionRepository: SessionRepository,
     ) : ViewModel() {
-        private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
+        private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Starting)
         val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
         init {
             viewModelScope.launch {
-                authRepository.observeCurrentUser().collect { user ->
-                    _uiState.value = if (user != null) AuthUiState.SignedIn(user) else AuthUiState.Idle
+                sessionRepository.session.collect { session ->
+                    _uiState.value =
+                        when (session) {
+                            Session.Loading -> AuthUiState.Starting
+                            Session.SignedOut -> AuthUiState.Idle
+                            Session.Guest -> AuthUiState.Guest
+                            is Session.SignedIn -> AuthUiState.SignedIn(session.user)
+                        }
                 }
             }
         }
@@ -38,23 +41,37 @@ class AuthViewModel
         fun signIn(context: Context) {
             viewModelScope.launch {
                 _uiState.value = AuthUiState.Loading
-                val result = authRepository.signIn(context)
+                val result = sessionRepository.signIn(context)
                 result.fold(
                     onSuccess = { user -> _uiState.value = AuthUiState.SignedIn(user) },
                     onFailure = { e ->
-                        val fallback = appContext?.getString(R.string.error_sign_in_failed) ?: "Sign-in failed"
-                        _uiState.value = AuthUiState.Error(e.message ?: fallback)
+                        _uiState.value =
+                            if (e is SignInCancelledException) {
+                                AuthUiState.Idle
+                            } else {
+                                // Deliberately not e.message: raw SDK/credential-provider messages
+                                // aren't user-facing (the repository logs the details instead).
+                                AuthUiState.Error(UiText.StringResource(R.string.error_sign_in_failed))
+                            }
                     },
                 )
             }
         }
 
+        fun continueAsGuest() {
+            viewModelScope.launch {
+                sessionRepository.continueAsGuest().onFailure {
+                    _uiState.value = AuthUiState.Error(UiText.StringResource(R.string.error_guest_start_failed))
+                }
+            }
+        }
+
         fun signOut() {
             viewModelScope.launch {
-                val result = authRepository.signOut()
-                result.onFailure { e ->
-                    val fallback = appContext?.getString(R.string.error_sign_out_failed) ?: "Sign-out failed"
-                    _uiState.value = AuthUiState.Error(e.message ?: fallback)
+                val result = sessionRepository.signOut()
+                result.onFailure {
+                    // Deliberately not e.message (see signIn above).
+                    _uiState.value = AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed))
                 }
             }
         }

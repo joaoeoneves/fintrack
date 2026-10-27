@@ -20,5 +20,5 @@ interface IncomeRepository {
 
     suspend fun getAllIncome(): Result<List<Income>>
 
-    suspend fun addIncomeList(income: List<Income>): Result<Int>
+    suspend fun addIncomeList(income: List<Income>): BulkAddResult
 }

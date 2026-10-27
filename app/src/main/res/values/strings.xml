@@ -4,6 +4,7 @@
     <!-- Shared actions -->
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_remove">Remove</string>
     <string name="action_ok">OK</string>
     <string name="action_retry">Retry</string>
     <string name="action_undo">Undo</string>
@@ -18,7 +19,12 @@
     <string name="cd_delete">Delete</string>
     <string name="cd_change_date">Change date</string>
     <string name="cd_settings">Settings</string>
-    <string name="cd_pie_chart_total">Expense breakdown. Total spent: %1$s.</string>
+    <string name="cd_previous_month">Previous month</string>
+    <string name="cd_next_month">Next month</string>
+    <string name="cd_previous_year">Previous year</string>
+    <string name="cd_next_year">Next year</string>
+    <string name="cd_change_period">Change period</string>
+    <string name="cd_pie_chart_total">Outflow breakdown. Total outflow: %1$s (spending %2$s, saved or invested %3$s).</string>
     <string name="cd_pie_chart_category_item">%1$s, %2$d percent, %3$s</string>
 
     <!-- Shared form field labels -->
@@ -27,15 +33,20 @@
     <string name="field_note_optional">Note (optional)</string>
 
     <!-- Shared error/state strings -->
-    <string name="error_state_title">Something went wrong.</string>
+    <string name="error_state_title">Something went wrong</string>
     <string name="error_generic_fallback">Something went wrong</string>
     <string name="error_invalid_amount">Enter a valid amount</string>
-    <string name="error_sign_in_failed">Sign-in failed</string>
-    <string name="error_sign_out_failed">Sign-out failed</string>
+    <string name="error_sign_in_failed">Couldn\'t sign in</string>
+    <string name="error_budget_save_failed">Couldn\'t save the budget</string>
+    <string name="error_budget_remove_failed">Couldn\'t remove the budget</string>
+    <string name="error_sign_out_failed">Couldn\'t sign out</string>
 
     <!-- Auth -->
     <string name="auth_subtitle">Sign in to track your expenses</string>
     <string name="auth_sign_in_with_google">Sign in with Google</string>
+    <string name="auth_continue_as_guest">Continue as guest</string>
+    <string name="auth_guest_hint">Your data stays only on this device</string>
+    <string name="error_guest_start_failed">Couldn\'t start guest mode</string>
 
     <!-- Expense/income row shared -->
     <string name="row_category_date">%1$s • %2$s</string>
@@ -44,10 +55,26 @@
     <string name="category_transfer">Transfer</string>
     <string name="category_investments">Investments</string>
     <string name="category_shopping">Shopping</string>
+    <string name="category_food">Food</string>
     <string name="category_recurring">Recurring</string>
+    <string name="category_unknown">Unknown category</string>
 
-    <!-- Currencies: deliberately NOT extracted to string resources. CurrencyOption.displayName
-         in CurrencyDisplay.kt stays hardcoded English on purpose. See that file's KDoc. -->
+    <!-- Currencies -->
+    <string name="currency_usd">US Dollar</string>
+    <string name="currency_eur">Euro</string>
+    <string name="currency_gbp">British Pound</string>
+    <string name="currency_jpy">Japanese Yen</string>
+    <string name="currency_cad">Canadian Dollar</string>
+    <string name="currency_aud">Australian Dollar</string>
+
+    <!-- Period selector -->
+    <string name="period_this_month">This month</string>
+    <string name="period_choose_month">Choose month…</string>
+    <string name="period_last_3_months">Last 3 months</string>
+    <string name="period_last_6_months">Last 6 months</string>
+    <string name="period_last_12_months">Last 12 months</string>
+    <string name="period_custom_range">Custom range…</string>
+    <string name="period_select_dates">Select dates</string>
 
     <!-- Dashboard -->
     <string name="dashboard_budgets_title">Budgets (this month)</string>
@@ -56,12 +83,16 @@
     <string name="dashboard_recent_income">Recent income</string>
     <string name="dashboard_no_income">No income in this period yet.</string>
     <string name="dashboard_see_all_income">See all income</string>
-    <string name="dashboard_net_balance">Net Balance</string>
+    <string name="dashboard_net_balance">Net balance</string>
     <string name="dashboard_income_label">Income</string>
     <string name="dashboard_expenses_label">Expenses</string>
     <string name="dashboard_no_expenses">No expenses in this period yet.</string>
     <string name="dashboard_recent_expenses_empty">No expenses yet</string>
-    <string name="dashboard_total_spent">Total Spent</string>
+    <string name="dashboard_total_outflow">Total outflow</string>
+    <string name="dashboard_saved_label">Saved &amp; invested</string>
+    <string name="dashboard_savings_rate">Savings rate: %1$s</string>
+    <string name="dashboard_savings_rate_unavailable">—</string>
+    <string name="dashboard_budgets_title_month">Budgets (%1$s)</string>
 
     <!-- Budgets -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
@@ -74,16 +105,22 @@
     <string name="expense_field_name">Name</string>
     <string name="expense_field_category">Category</string>
     <string name="error_name_required">Name is required</string>
-    <string name="error_failed_save_expense">Failed to save expense</string>
+    <string name="error_category_required">Choose a category</string>
+    <string name="error_failed_save_expense">Couldn\'t save the expense</string>
 
     <!-- Expense list -->
     <string name="expense_list_title">All expenses</string>
     <string name="expense_list_deleted_snackbar">Deleted \"%1$s\"</string>
     <string name="expense_list_search_label">Search</string>
     <string name="expense_list_no_match">No expenses match \"%1$s\".</string>
+    <string name="expense_list_no_match_filter">No expenses match the selected filter.</string>
+    <string name="expense_field_refund">Refund</string>
+    <string name="expense_field_refund_hint">Money returned to you; reduces this category\'s spending</string>
+    <string name="expense_refund_badge">Refund</string>
+    <string name="filter_all">All</string>
+    <string name="field_length_counter">%1$d/%2$d</string>
 
     <!-- Sort options -->
-    <string name="sort_by_label">Sort by</string>
     <string name="sort_newest_first">Newest first</string>
     <string name="sort_oldest_first">Oldest first</string>
     <string name="sort_highest_amount">Highest amount</string>
@@ -91,23 +128,36 @@
 
     <!-- Import/export -->
     <string name="import_preview_title">Import preview</string>
-    <string name="import_preview_summary">%1$d rows ready to import, %2$d failed</string>
+    <plurals name="import_preview_summary">
+        <item quantity="one">%1$d row ready to import, %2$d failed</item>
+        <item quantity="other">%1$d rows ready to import, %2$d failed</item>
+    </plurals>
     <string name="import_preview_row_failure">Row %1$d: %2$s</string>
     <string name="label_import_complete">Import complete</string>
     <string name="label_import_partial_failure">Import partially completed</string>
     <string name="label_import_failed">Import failed</string>
     <string name="label_export_complete">Export complete</string>
     <string name="label_export_failed">Export failed</string>
-    <string name="error_import_read_file">Could not read the selected file</string>
+    <string name="error_import_read_file">Couldn\'t read the selected file</string>
     <string name="error_import_failed">Import failed</string>
-    <string name="error_export_write_file">Could not write the export file</string>
+    <string name="error_csv_empty">The file is empty</string>
+    <string name="error_csv_header">Unrecognized header — expected name,amountCents,category,date,note</string>
+    <string name="error_csv_row_columns">Expected 5 columns, found %1$d</string>
+    <string name="error_csv_row_name_required">Name is required</string>
+    <string name="error_csv_row_name_too_long">Name is too long (maximum: %1$d)</string>
+    <string name="error_csv_row_amount_invalid">Invalid amountCents value: \'%1$s\'</string>
+    <string name="error_csv_row_amount_zero">amountCents must not be zero: \'%1$s\'</string>
+    <string name="error_csv_row_category_unknown">Unknown category: \'%1$s\'</string>
+    <string name="error_csv_row_date_invalid">Invalid date: \'%1$s\'</string>
+    <string name="error_csv_row_note_too_long">Note is too long (maximum: %1$d)</string>
+    <string name="error_export_write_file">Couldn\'t write the export file</string>
     <string name="error_export_failed">Export failed</string>
 
     <!-- Add/edit income -->
     <string name="income_edit_title">Edit income</string>
     <string name="income_field_source">Source</string>
     <string name="error_source_required">Source is required</string>
-    <string name="error_failed_save_income">Failed to save income</string>
+    <string name="error_failed_save_income">Couldn\'t save the income</string>
 
     <!-- Income list -->
     <string name="income_list_title">All income</string>
@@ -127,8 +177,15 @@
     <string name="settings_import_csv">Import CSV (expenses)</string>
     <string name="settings_export_csv">Export CSV (expenses)</string>
     <string name="settings_signed_in_fallback">Signed in</string>
-    <string name="label_sign_out_failed">Sign-out failed</string>
+    <string name="label_sign_out_failed">Couldn\'t sign out</string>
+    <string name="settings_guest_account">Guest — data is stored only on this device</string>
+    <string name="action_sign_in_to_sync">Sign in to sync</string>
+    <string name="action_leave_guest_mode">Leave guest mode</string>
+    <string name="leave_guest_confirm_title">Leave guest mode?</string>
+    <string name="leave_guest_confirm_message">Your data stays on this device; choose Continue as guest to see it again.</string>
+    <string name="label_sign_in_failed">Couldn\'t sign in</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_font_license">Inter font license (SIL OFL 1.1)</string>
     <string name="about_version_unknown">unknown</string>
 
     <!-- Theme -->
@@ -139,6 +196,7 @@
     <!-- Language picker. "language_portuguese" is intentionally NOT translated in values-pt-rPT:
          every language keeps its own name written in that language, the standard convention for
          in-app language pickers. -->
+    <string name="language_system">System default</string>
     <string name="language_english">English</string>
     <string name="language_portuguese">Português</string>
 
@@ -154,4 +212,195 @@
         <item quantity="one">%1$d expense was imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
         <item quantity="other">%1$d expenses were imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
     </plurals>
+
+    <string name="settings_section_categories">Categories</string>
+    <string name="settings_manage_categories">Manage categories</string>
+    <string name="categories_title">Categories</string>
+    <string name="categories_add">Add category</string>
+    <string name="categories_archived_header">Archived</string>
+    <string name="category_edit_title">Edit category</string>
+    <string name="category_new_title">New category</string>
+    <string name="category_field_name">Name</string>
+    <string name="category_field_icon">Icon</string>
+    <string name="category_field_color">Color</string>
+    <string name="category_field_kind">Type</string>
+    <string name="category_kind_spending">Spending</string>
+    <string name="category_kind_saving">Saving</string>
+    <string name="category_action_edit">Edit</string>
+    <string name="category_action_archive">Archive</string>
+    <string name="category_action_unarchive">Unarchive</string>
+    <string name="category_action_delete">Delete</string>
+    <string name="category_move_up">Move up</string>
+    <string name="category_move_down">Move down</string>
+    <string name="cd_category_more_actions">More actions for %1$s</string>
+    <string name="cd_category_icon_option">Icon %1$d</string>
+    <string name="cd_category_color_option">Color %1$d</string>
+    <string name="category_delete_confirm">Delete \"%1$s\"?</string>
+    <string name="category_in_use_message">\"%1$s\" is used by expenses, a budget or a recurring item. Archive it instead?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" is used by expenses, a budget or a recurring item and can\'t be deleted.</string>
+    <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
+    <string name="category_cannot_verify_archived_message">Can\'t check usage while offline. Try again when you\'re online.</string>
+    <string name="error_category_name_required">Enter a name</string>
+    <string name="error_category_name_too_long">At most 50 characters</string>
+    <string name="error_category_name_duplicate">A category with this name already exists</string>
+    <string name="error_category_last_active">At least one category must stay active</string>
+    <string name="error_category_save_failed">Couldn\'t save the category</string>
+
+    <!-- Backup -->
+    <string name="settings_section_backup">Backup</string>
+    <string name="settings_export_backup">Export backup (JSON)</string>
+    <string name="settings_restore_backup">Restore backup (JSON)</string>
+    <string name="settings_backup_guest_hint">Export a backup to move your data to another device</string>
+    <string name="settings_backup_signed_in_hint">Save a copy of your data as a JSON file</string>
+    <string name="action_restore">Restore</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nBudgets: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring items: %6$d</string>
+    <string name="backup_export_done_title">Backup exported</string>
+    <string name="backup_export_done_message">Your backup was saved.\n\n%1$s</string>
+    <string name="backup_export_failed_title">Export failed</string>
+    <string name="backup_restore_confirm_title">Restore this backup?</string>
+    <string name="backup_restore_confirm_message">The backup file contains:\n\n%1$s</string>
+    <string name="backup_restore_replace_warning">The data currently on this device will be replaced. Export a backup first if you want to keep it.</string>
+    <string name="backup_restore_done_title">Backup restored</string>
+    <string name="backup_restore_done_message">Restored:\n\n%1$s</string>
+    <string name="backup_restore_failed_title">Restore failed</string>
+    <string name="backup_error_invalid">This file is not a valid FinTrack backup</string>
+    <string name="backup_error_unsupported_version">This backup was made by a newer version of FinTrack. Update the app to restore it.</string>
+    <string name="backup_error_too_large">This file is too large to be a FinTrack backup</string>
+    <string name="backup_error_read">Couldn\'t read the selected file</string>
+    <string name="backup_error_write">Couldn\'t write the backup file</string>
+    <string name="backup_error_export_failed">Couldn\'t create the backup</string>
+    <string name="backup_error_restore_failed">Couldn\'t restore the backup. Your current data was not changed.</string>
+    <plurals name="backup_restore_skipped">
+        <item quantity="one">%d invalid record in the file will be skipped.</item>
+        <item quantity="other">%d invalid records in the file will be skipped.</item>
+    </plurals>
+
+    <!-- Migrate local data to the account -->
+    <string name="migration_offer_title">Copy this device\'s data to your account?</string>
+    <string name="migration_offer_message">You have data saved only on this device:\n\n%1$s\n\nCopy it to your account so it syncs everywhere? Nothing is removed from this device unless you choose to.</string>
+    <string name="migration_action_copy">Copy</string>
+    <string name="migration_action_not_now">Not now</string>
+    <string name="migration_running_title">Copying your data</string>
+    <string name="migration_preparing">Preparing…</string>
+    <string name="migration_progress">Copied %1$d of %2$d</string>
+    <plurals name="migration_partial_progress">
+        <item quantity="one">Copied %1$d of %2$d record.</item>
+        <item quantity="other">Copied %1$d of %2$d records.</item>
+    </plurals>
+    <string name="migration_error_title">Couldn\'t copy your data</string>
+    <string name="migration_error_offline">You appear to be offline. Connect to the internet and try again.</string>
+    <string name="migration_error_failed">Something went wrong while copying. Your data on this device is untouched.</string>
+    <string name="migration_error_remove_failed">Your data was copied, but it could not be removed from this device.</string>
+    <string name="migration_done_title">Data copied</string>
+    <plurals name="migration_done_message">
+        <item quantity="one">%1$d record was copied to your account. Remove the copy on this device?</item>
+        <item quantity="other">%1$d records were copied to your account. Remove the copy on this device?</item>
+    </plurals>
+    <string name="migration_action_remove_local">Remove from this device</string>
+    <string name="migration_action_keep">Keep</string>
+    <plurals name="migration_done_skipped">
+        <item quantity="one">%d record could not be copied and was skipped.</item>
+        <item quantity="other">%d records could not be copied and were skipped.</item>
+    </plurals>
+
+    <string name="plan_title">Monthly plan</string>
+    <string name="plan_safe_to_spend">Safe to spend</string>
+    <string name="plan_safe_to_spend_month">Safe to spend (%1$s)</string>
+    <string name="plan_over_by">Over plan by %1$s</string>
+    <string name="plan_expected_income">Expected income</string>
+    <string name="plan_received">received %1$s</string>
+    <string name="plan_planned_allocations">Planned allocations</string>
+    <string name="plan_planned_spending">Planned spending</string>
+    <string name="plan_planned_saving">Planned saving</string>
+    <string name="plan_leftover">Remaining</string>
+    <string name="plan_left_in_budgets">Left in spending budgets</string>
+    <plurals name="plan_daily_allowance">
+        <item quantity="one">≈ %1$s/day for %2$d day</item>
+        <item quantity="other">≈ %1$s/day for %2$d days</item>
+    </plurals>
+    <string name="plan_current_plan_caption">Based on your current plan</string>
+    <string name="plan_edit">Edit plan</string>
+    <string name="plan_setup_title">Plan your month</string>
+    <string name="plan_setup_message">Add your expected income to see what\'s free to spend.</string>
+    <string name="plan_allocations">Allocations</string>
+    <string name="plan_not_planned">Not planned</string>
+    <string name="plan_add_income_line">Add income line</string>
+    <string name="plan_income_line_new">New income line</string>
+    <string name="plan_income_line_edit">Edit income line</string>
+    <string name="plan_field_label">Label</string>
+    <string name="plan_field_amount">Amount</string>
+    <string name="error_plan_label_required">Enter a label</string>
+    <string name="error_plan_label_too_long">At most 50 characters</string>
+    <string name="error_plan_save_failed">Couldn\'t save the plan</string>
+    <string name="dashboard_breakdown_actual">Actual</string>
+    <string name="dashboard_breakdown_planned">Planned</string>
+    <string name="dashboard_planned_per_month">Planned / month</string>
+    <string name="cd_pie_chart_planned_total">Planned allocation. Total: %1$s (spending %2$s, saving %3$s).</string>
+
+    <!-- Recurring -->
+    <string name="settings_section_recurring">Recurring</string>
+    <string name="settings_manage_recurring">Manage recurring bills &amp; income</string>
+    <string name="recurring_title">Recurring</string>
+    <string name="recurring_add">Add recurring</string>
+    <string name="recurring_edit_title">Edit recurring</string>
+    <string name="recurring_upcoming_title">Upcoming bills &amp; income</string>
+    <string name="recurring_confirm">Confirm</string>
+    <string name="recurring_skip">Skip</string>
+    <string name="recurring_overdue">Overdue</string>
+    <string name="recurring_due_today">Today</string>
+    <plurals name="recurring_more_overdue">
+        <item quantity="one">+%d more overdue</item>
+        <item quantity="other">+%d more overdue</item>
+    </plurals>
+    <string name="recurring_nothing_due">Nothing due soon</string>
+    <string name="recurring_annual_cost">Recurring expenses: %1$s/year (%2$s/month)</string>
+    <string name="recurring_annual_income">Recurring income: %1$s/year</string>
+    <string name="recurring_manage">Manage</string>
+    <string name="recurring_empty_cta">Set up recurring bills &amp; income</string>
+    <string name="recurring_added">Added \'%1$s\'</string>
+    <string name="recurring_per_month">%1$s / month</string>
+    <string name="recurring_per_year">%1$s / year</string>
+    <string name="recurring_next_due">Next: %1$s</string>
+    <string name="recurring_section_active">Active</string>
+    <string name="recurring_section_inactive">Paused and ended</string>
+    <string name="recurring_list_empty">No recurring items yet</string>
+    <string name="recurring_paused">Paused</string>
+    <string name="recurring_ended">Ended</string>
+    <string name="recurring_pause">Pause</string>
+    <string name="recurring_resume">Resume</string>
+    <string name="recurring_delete_confirm">Delete \"%1$s\"? Transactions already created are kept.</string>
+    <string name="recurring_type_expense">Expense</string>
+    <string name="recurring_type_income">Income</string>
+    <string name="recurring_frequency_monthly">Monthly</string>
+    <string name="recurring_frequency_yearly">Yearly</string>
+    <string name="recurring_day_of_month">Day of month</string>
+    <string name="recurring_month">Month</string>
+    <string name="recurring_starts">Starts</string>
+    <string name="recurring_end_date">End date</string>
+    <string name="recurring_end_date_add">Add end date</string>
+    <string name="recurring_end_date_clear">Remove end date</string>
+    <string name="error_recurring_save_failed">Couldn\'t save the recurring item</string>
+    <string name="error_recurring_not_found">This recurring item no longer exists</string>
+    <string name="error_recurring_end_before_start">The end date can\'t be before the start date</string>
+    <string name="error_recurring_day_invalid">Enter a day from 1 to 31</string>
+    <string name="error_recurring_month_required">Choose a month</string>
+    <string name="error_recurring_too_long">This text is too long</string>
+
+    <!-- Day headers in transaction lists -->
+    <string name="day_header_today">Today</string>
+    <string name="day_header_yesterday">Yesterday</string>
+
+    <!-- Dashboard redesign -->
+    <string name="action_see_all">See all</string>
+    <string name="dashboard_add_expense_short">Expense</string>
+    <string name="dashboard_add_income_short">Income</string>
+    <string name="cd_balance_chart">Balance over the period, from %1$s to %2$s</string>
+    <string name="period_tab_1m">1M</string>
+    <string name="period_tab_3m">3M</string>
+    <string name="period_tab_6m">6M</string>
+    <string name="period_tab_1y">1Y</string>
+    <string name="cd_period_tab_1m">1 month</string>
+    <string name="cd_period_tab_3m">3 months</string>
+    <string name="cd_period_tab_6m">6 months</string>
+    <string name="cd_period_tab_1y">12 months</string>
 </resources>

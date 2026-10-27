@@ -1,11 +1,13 @@
 package com.joaoeoneves.fintrack.ui.settings
 
-import com.joaoeoneves.fintrack.data.FakeAuthRepository
+import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
+import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +27,7 @@ import org.junit.Test
 /**
  * Unit tests for [SettingsViewModel], backed by local [FakeThemeRepository] / [FakeCurrencyRepository]
  * fakes (no existing fakes under `app/src/main` for either repository, mirroring the pattern used by
- * [com.joaoeoneves.fintrack.ui.theme.ThemeViewModelTest]) and the existing [FakeAuthRepository], which
+ * [com.joaoeoneves.fintrack.ui.theme.ThemeViewModelTest]) and the existing [FakeSessionRepository], which
  * already supports configuring the next `signOut()` result.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -60,7 +62,7 @@ class SettingsViewModelTest {
             // regardless of what the repositories are actually seeded with.
             val themeRepo = FakeThemeRepository(ThemePreference.DARK)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.EUR)
-            val authRepo = FakeAuthRepository(initialUser = user)
+            val authRepo = FakeSessionRepository(initialUser = user)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
 
             assertEquals(SettingsUiState(), viewModel.uiState.value)
@@ -71,7 +73,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.DARK)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.EUR)
-            val authRepo = FakeAuthRepository(initialUser = user)
+            val authRepo = FakeSessionRepository(initialUser = user)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
 
             val job = launch { viewModel.uiState.collect {} }
@@ -94,7 +96,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val authRepo = FakeAuthRepository(initialUser = null)
+            val authRepo = FakeSessionRepository(initialUser = null)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
 
             val job = launch { viewModel.uiState.collect {} }
@@ -111,7 +113,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val authRepo = FakeAuthRepository(initialUser = null)
+            val authRepo = FakeSessionRepository(initialUser = null)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -129,7 +131,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val authRepo = FakeAuthRepository(initialUser = null)
+            val authRepo = FakeSessionRepository(initialUser = null)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -148,7 +150,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val authRepo = FakeAuthRepository(initialUser = null)
+            val authRepo = FakeSessionRepository(initialUser = null)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -166,7 +168,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val authRepo = FakeAuthRepository(initialUser = null)
+            val authRepo = FakeSessionRepository(initialUser = null)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -186,7 +188,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val authRepo = FakeAuthRepository(initialUser = user)
+            val authRepo = FakeSessionRepository(initialUser = user)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -208,7 +210,7 @@ class SettingsViewModelTest {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
             val authRepo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )
@@ -219,7 +221,7 @@ class SettingsViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
             job.cancel()
         }
@@ -230,7 +232,7 @@ class SettingsViewModelTest {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
             val authRepo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(RuntimeException()),
                 )
@@ -241,7 +243,7 @@ class SettingsViewModelTest {
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertEquals("Sign-out failed", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
             job.cancel()
         }
@@ -254,7 +256,7 @@ class SettingsViewModelTest {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
             val authRepo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )
@@ -263,7 +265,7 @@ class SettingsViewModelTest {
             advanceUntilIdle()
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
 
             viewModel.dismissSignOutError()
             advanceUntilIdle()
@@ -280,7 +282,7 @@ class SettingsViewModelTest {
         runTest(testDispatcher) {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val authRepo = FakeAuthRepository(initialUser = user)
+            val authRepo = FakeSessionRepository(initialUser = user)
             val viewModel = SettingsViewModel(themeRepo, currencyRepo, authRepo)
             val job = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -298,7 +300,7 @@ class SettingsViewModelTest {
             val themeRepo = FakeThemeRepository(ThemePreference.SYSTEM)
             val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
             val authRepo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )
@@ -308,7 +310,7 @@ class SettingsViewModelTest {
 
             viewModel.signOut()
             advanceUntilIdle()
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             assertEquals(user, viewModel.uiState.value.currentUser)
 
             authRepo.nextSignOutResult = Result.success(Unit)
@@ -319,7 +321,7 @@ class SettingsViewModelTest {
             // signOutError is never cleared automatically on a later success -- only
             // dismissSignOutError() clears it. Confirm that's still the (documented) behavior so a
             // future change to auto-clear it is a deliberate one, not an accident.
-            assertEquals("network unavailable", viewModel.uiState.value.signOutError)
+            assertEquals(UiText.StringResource(R.string.error_sign_out_failed), viewModel.uiState.value.signOutError)
             job.cancel()
         }
 
@@ -339,23 +341,5 @@ class SettingsViewModelTest {
         }
 
         fun currentPreference(): ThemePreference = preferenceFlow.value
-    }
-
-    /**
-     * Minimal in-memory [CurrencyRepository] fake, local to this test file since no fake exists
-     * under `app/src/main` for this repository.
-     */
-    private class FakeCurrencyRepository(
-        initial: CurrencyOption = CurrencyOption.USD,
-    ) : CurrencyRepository {
-        private val currencyFlow = MutableStateFlow(initial)
-
-        override fun observeCurrency(): Flow<CurrencyOption> = currencyFlow
-
-        override suspend fun setCurrency(currency: CurrencyOption) {
-            currencyFlow.value = currency
-        }
-
-        fun currentCurrency(): CurrencyOption = currencyFlow.value
     }
 }

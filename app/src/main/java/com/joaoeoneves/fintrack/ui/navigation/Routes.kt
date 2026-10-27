@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.navigation
 
-import com.joaoeoneves.fintrack.domain.model.TimeRange
 import kotlinx.serialization.Serializable
 
 /**
@@ -9,9 +8,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 object Dashboard
 
+/** [period] is an encoded [com.joaoeoneves.fintrack.domain.model.Period] token, see `Period.encode()`. */
 @Serializable
 data class ExpenseList(
-    val timeRange: TimeRange,
+    val period: String,
 )
 
 @Serializable
@@ -19,9 +19,10 @@ data class AddEditExpense(
     val expenseId: String? = null,
 )
 
+/** [period] is an encoded [com.joaoeoneves.fintrack.domain.model.Period] token, see `Period.encode()`. */
 @Serializable
 data class IncomeList(
-    val timeRange: TimeRange,
+    val period: String,
 )
 
 @Serializable
@@ -31,3 +32,17 @@ data class AddEditIncome(
 
 @Serializable
 object Settings
+
+@Serializable
+object Categories
+
+@Serializable
+object MonthlyPlan
+
+@Serializable
+object RecurringList
+
+@Serializable
+data class AddEditRecurring(
+    val recurringId: String? = null,
+)

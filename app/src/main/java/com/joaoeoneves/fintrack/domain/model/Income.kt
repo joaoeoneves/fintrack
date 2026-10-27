@@ -3,9 +3,12 @@ package com.joaoeoneves.fintrack.domain.model
 import java.time.Instant
 
 data class Income(
-    val id: String,
+    override val id: String,
     val source: String,
-    val amountCents: Long,
-    val date: Instant,
-    val note: String?,
-)
+    override val amountCents: Long,
+    override val date: Instant,
+    override val note: String?,
+) : Transaction {
+    /** Balance effect: income always raises the balance. */
+    override val cashFlowCents: Long get() = amountCents
+}

@@ -1,6 +1,6 @@
 # FinTrack
 
-[![CI](https://github.com/joaoeoneves/FinTrack/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoeoneves/FinTrack/actions/workflows/ci.yml)
+[![CI](https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
@@ -24,6 +24,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
   - [Tech stack](#tech-stack)
   - [Architecture](#architecture)
   - [Data model](#data-model--firestore)
+  - [Download](#download)
   - [Getting started](#getting-started)
   - [Common commands](#common-commands)
   - [Testing](#testing)
@@ -36,45 +37,74 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 
 ### Features
 
-- **Expense tracking** — add/edit/delete expenses with a name, amount, one of four fixed categories
-  (Transfer, Investments, Shopping, Recurring), date, and an optional note.
+- **Expense tracking** — add/edit/delete expenses with a name, amount, category, date, and an optional
+  note. Five built-in categories (Transfer, Investments, Shopping, Food, Recurring) plus your own.
 - **Income tracking** — a separate, parallel entity (free-text source like "Salary" or "Freelance" instead
   of a fixed category), kept intentionally independent of expenses so it could be added later with zero
   risk to the existing expense code.
-- **Dashboard** — time-range filters (1 week / 1 month / 3 months / 6 months / 1 year), a pie chart of
-  spend by category, the last 5 expenses and last 5 income entries, and a **net balance** figure (income
-  minus expenses) for the selected range.
+- **Dashboard** — a large **net balance** (income minus expenses) that counts up on change, a minimal
+  cumulative-balance line chart you can long-press and scrub (with haptic ticks), 1M / 3M / 6M / 1Y period
+  tabs plus month navigation and custom ranges, an income / spending / saved strip, a category breakdown
+  (segmented bar + ranked list), and the latest expenses and income grouped by day.
 - **Per-category budget limits** — set a monthly limit per category; the Dashboard shows progress bars
   against the current calendar month (independent of the rolling time-range filter) with an over-budget
   visual state.
-- **Full expense/income lists** — swipe-to-dismiss delete with an Undo snackbar, plus a trash-icon button
-  for discoverability.
-- **CSV import/export** — for expenses (income CSV support is a deliberate fast-follow, not yet built).
+- **Monthly plan / "safe to spend"** — list your expected income (e.g. salary, meal allowance); the
+  category budgets are the planned allocations. A Dashboard card shows what's still free to spend this
+  month (income minus, per category, the larger of planned and actual), expected vs received income,
+  what's left in spending budgets and a daily allowance; the category breakdown toggles between actual and
+  planned. Edited on its own "Monthly plan" screen.
+- **Recurring transactions** — rent, subscriptions, salary: monthly or yearly templates with an explicit
+  billing day (clamped to short months), start/end dates and pause/resume. An Upcoming card on the
+  Dashboard lists due and soon-due occurrences with one-tap Confirm (creates the expense/income with a
+  deterministic id, so it's never duplicated) or Skip, and shows the annualized cost of recurring expenses.
+- **Full expense/income lists** — the same time-range filters, text search, and sorting (newest/oldest
+  first, highest/lowest amount), rows grouped under day headers; swipe-to-delete with an Undo snackbar
+  (also exposed as a "Delete" accessibility action).
+- **CSV import/export** — for expenses, from Settings (income CSV support is a deliberate fast-follow, not
+  yet built).
 - **Google Sign-In** via Credential Manager (not the legacy `GoogleSignInClient` API) + Firebase Auth.
-- **Dark mode** — a full, intentional Material 3 dark color scheme (not an auto-inverted afterthought),
-  following the system setting by default, with a manual light/dark override in the Dashboard's overflow
-  menu.
-- **Offline-friendly** — Firestore's built-in local cache is the only persistence layer; there's no local
-  Room database, so data survives offline use and syncs back once reconnected.
+- **Guest mode** — "Continue as guest" uses the full app with everything stored only on the device (one
+  JSON file, no Firebase). Signing in later offers to copy the guest data into the account (categories
+  with the same name are merged, nothing is duplicated, an interrupted copy can be retried), then to
+  remove it from the device.
+- **JSON backup** — export all data and preferences to a versioned `fintrack-backup` JSON file (signed in
+  or as a guest) and restore it as a guest, e.g. to move to another phone.
+- **Settings** — reached from the Dashboard's gear icon:
+  - **Theme**: system default, light or dark. The design is dark-first and monochrome (true black, hairline
+    dividers, color only for meaning: gains, overspending, category data), set in Inter with tabular
+    figures, with shared-axis screen transitions and motion that respects the system's reduced-motion
+    setting.
+  - **Language**: English or Portuguese (pt-PT), or the system language (the default on a fresh install; any other system language falls back to English), switched in-app. Theme, language and
+    currency are stored locally (DataStore) and synced across your devices through Firestore.
+  - **Display currency**: USD, EUR, GBP, JPY, CAD or AUD. Purely cosmetic: it changes the symbol and
+    formatting, with no exchange-rate conversion.
+  - **Categories**: add your own (name, icon, color, spending or saving), rename/recolor the built-ins,
+    reorder, archive (hidden from pickers, kept on existing data) or delete unused ones.
+  - CSV import/export, JSON backup, and the account (or guest) card.
+- **Offline-friendly** — for signed-in users Firestore's built-in local cache is the only persistence
+  layer (no Room), so data survives offline use and syncs back once reconnected; guest data is local by
+  design.
 
 ### Tech stack
 
 | Layer | Choice |
 |---|---|
-| Language | Kotlin 2.2 |
+| Language | Kotlin 2.4 |
 | UI | Jetpack Compose + Material 3 |
 | Architecture | MVVM — ViewModels hold state/logic, composables stay declarative |
 | Async | Coroutines + `Flow`, `StateFlow` for UI state (`collectAsStateWithLifecycle`) |
 | DI | Hilt |
 | Navigation | Compose Navigation, type-safe routes |
 | Auth | Firebase Auth + Google Sign-In via `androidx.credentials` (Credential Manager) |
-| Persistence | Firebase Firestore only — no Room/local database |
+| Persistence | Firebase Firestore when signed in; a kotlinx.serialization JSON file in guest mode (no Room either way) + Preferences DataStore for theme/currency/language and session state |
 | Lint/format | ktlint + detekt |
-| Unit tests | JUnit4 + Robolectric (where Android framework classes are needed, e.g. `SharedPreferences`) |
+| Unit tests | JUnit4 + Robolectric (where Android framework classes are needed, e.g. the legacy `SharedPreferences` migration) |
 | E2E tests | [Maestro](https://maestro.mobile.dev) |
+| Typeface | [Inter](https://rsms.me/inter/) (bundled static TTFs) |
 | CI | GitHub Actions |
 
-Min SDK 24, target/compile SDK 36, Java 11 source/target compatibility.
+Min SDK 26, target/compile SDK 36, Java 11 source/target compatibility.
 
 ### Architecture
 
@@ -83,7 +113,8 @@ Single module (`:app`), package `com.joaoeoneves.fintrack`, organized as:
 ```
 app/src/main/java/com/joaoeoneves/fintrack/
 ├── ui/            Compose screens and components (dashboard, expense/, income/, auth/, theme/, ...)
-├── data/          Repository implementations (Firestore + Fake), CSV import/export
+├── data/          Repository implementations: Firestore, local/ (guest JSON store), session/ (switches
+│                  between them), backup/, migration/, preferences/, CSV import/export
 ├── domain/        Domain models and repository interfaces
 ├── di/            Hilt modules
 app/src/test/          Unit tests (JVM, mirrors the app/src/main package structure)
@@ -91,8 +122,11 @@ app/src/androidTest/   Instrumented tests
 .maestro/              E2E flows (YAML), run against a real emulator/device
 ```
 
-Each repository has a real Firestore-backed implementation and a `Fake*` in-memory implementation (used in
-unit tests), bound via Hilt in `di/RepositoryModule.kt`. Cross-cutting state (auth, theme preference) is
+Each repository has a Firestore-backed implementation, a local JSON-backed implementation for guest mode
+(`data/local/`) and a `Fake*` in-memory implementation (unit tests only). Hilt binds the domain interfaces
+to `Session*Repository` delegates (`data/session/`) that route every call to the local or Firestore
+implementation for the current session, so ViewModels don't know which one they're using and a guest never
+instantiates Firestore. Cross-cutting state (auth, theme preference) is
 resolved once in `MainActivity` and threaded down through the nav graph as plain callback/value parameters
 — not re-resolved via `hiltViewModel()` inside individual nav destinations, which could otherwise pick up a
 different, nav-entry-scoped instance.
@@ -102,8 +136,10 @@ different, nav-entry-scoped instance.
 ```
 users/{uid}/expenses/{expenseId}
   name: string
-  amountCents: number       // integer minor units — avoids float rounding errors
-  category: string          // TRANSFER | INVESTMENTS | SHOPPING | RECURRING
+  amountCents: number       // integer minor units, always > 0 — avoids float rounding errors
+  category: string          // category id: a built-in (TRANSFER | INVESTMENTS | SHOPPING | FOOD |
+                            // RECURRING) or a users/{uid}/categories document id
+  isRefund: boolean         // optional, absent = false; a refund subtracts from its category
   date: timestamp
   note: string | null
   createdAt / updatedAt: timestamp
@@ -115,13 +151,76 @@ users/{uid}/income/{incomeId}
   note: string | null
   createdAt / updatedAt: timestamp
 
-users/{uid}/budgets/{categoryName}
+users/{uid}/budgets/{categoryId}
   limitCents: number
+  updatedAt: timestamp
+
+users/{uid}/plannedIncome/{lineId}    // expected-income lines of the monthly plan (max 10, client-side)
+  label: string             // 1..50 chars
+  amountCents: number
+  order: number
+  updatedAt: timestamp
+
+users/{uid}/recurring/{itemId}        // recurring expense/income templates
+  type: string              // EXPENSE | INCOME
+  name: string              // 1..200 chars (expense name / income source)
+  amountCents: number
+  category: string | null   // EXPENSE only
+  note: string | null
+  frequency: string         // MONTHLY | YEARLY
+  dayOfMonth: number        // 1..31, clamped to the month's length
+  monthOfYear: number|null  // 1..12, YEARLY only
+  startDate / endDate: string        // yyyy-MM-dd; endDate optional, inclusive
+  handledThrough: string | null      // last confirmed/skipped occurrence (cursor)
+  active: boolean
+  updatedAt: timestamp
+// Confirming an occurrence writes expenses|income/rec_<itemId>_<yyyyMMdd> and advances the cursor in one batch.
+
+users/{uid}/categories/{categoryId}   // user categories (generated ids) and optional overrides
+  name: string | null       //   of the built-ins (same id; null name = localized default)
+  iconKey / colorKey: string
+  kind: string              // SPENDING | SAVING
+  order: number
+  archived / builtIn: boolean
+  createdAt / updatedAt: timestamp
+
+users/{uid}/settings/preferences       // theme, currency and language, synced across devices
+  theme: string             // SYSTEM | LIGHT | DARK
+  currency: string          // USD | EUR | GBP | JPY | CAD | AUD
+  language: string          // SYSTEM | ENGLISH | PORTUGUESE
   updatedAt: timestamp
 ```
 
 Security rules ([`firestore.rules`](firestore.rules)) restrict every collection to
 `request.auth.uid == userId` — a user can only ever read/write their own documents.
+
+### Local data file / backup format
+
+Guest data lives in `filesDir/guest-data.json` (`LocalDataDocument`: `schemaVersion`, `revision`, and lists
+of expenses, income, budgets and categories mirroring the Firestore documents, with ISO-8601 dates). Writes
+are atomic (temp file + rename); a corrupt or newer-schema file is moved aside to
+`guest-data.corrupt-<millis>.json` rather than deleted. After a successful "Remove from this device" following a migration to an account,
+the previous file is kept once as `guest-data.migrated.json` (a single safety copy, overwritten next time). The backup file uses the same record shapes inside
+a `{ "format": "fintrack-backup", "schemaVersion": 3, "exportedAt", "appVersion", "preferences", ... }`
+envelope; records that fail validation are skipped and reported on restore.
+
+### Download
+
+A debug-signed APK of the latest version is attached to the
+[latest release](https://github.com/joaoeoneves/fintrack/releases/latest) (Android 7.0+).
+
+#### Releases
+
+Pushing a tag `vX.Y` (e.g. `v1.1`) runs `.github/workflows/release.yml`, which builds a release-signed APK
+(`versionName` = `X.Y`, `versionCode` = `X*100 + Y`) and attaches it to a GitHub Release. Required repository
+secrets: `GOOGLE_SERVICES_JSON_BASE64`, `FINTRACK_KEYSTORE_BASE64`, `FINTRACK_KEYSTORE_PASSWORD`,
+`FINTRACK_KEY_ALIAS`, `FINTRACK_KEY_PASSWORD`. Locally, the same `FINTRACK_*` values can go in
+`~/.gradle/gradle.properties` (`FINTRACK_KEYSTORE_FILE` is the keystore path); without them `assembleRelease`
+produces an unsigned APK.
+
+To install and update, add `https://github.com/joaoeoneves/fintrack` as a source in
+[Obtainium](https://obtainium.imranr.dev/). v1.0 was debug-signed, so moving to the signed builds requires
+uninstalling the app once (this clears local data; Firestore data is unaffected).
 
 ### Getting started
 
@@ -160,13 +259,16 @@ Run from the repository root via the Gradle wrapper:
 Three layers, deliberately kept separate:
 
 1. **Unit tests** (`app/src/test`) — JVM, run against `Fake*Repository` implementations, no device needed.
-   Robolectric is used where a real Android framework class is unavoidable (e.g. `SharedPreferences`).
+   Robolectric is used where a real Android framework class is unavoidable (e.g. the legacy `SharedPreferences` migration).
 2. **Instrumented tests** (`app/src/androidTest`) — on-device/emulator, currently minimal; most real
    on-device verification happens through Maestro instead (see below).
 3. **Maestro E2E flows** (`.maestro/*.yaml`) — YAML flows driven against a real emulator, using semantic
    element matching (by visible text/content-description) rather than brittle coordinates or resource IDs.
-   Run with `maestro test .maestro/<flow>.yaml`. Existing flows: `golden-path.yaml` (sign-in → add expense → dashboard → full list →
-   edit → delete → filters) and `income-tracking.yaml` (income add → net balance → delete/undo).
+   Run with `maestro test .maestro/<flow>.yaml`. Existing flows: `golden-path.yaml` (add expense → dashboard → full list → edit →
+   delete → filters), `income-tracking.yaml` (income add → net balance → delete/undo), `settings.yaml`
+   (theme and currency switching), `date-field.yaml` (date picker) and `swipe-delete-check.yaml`
+   (swipe-to-delete and Undo). All of them start from an already signed-in session, since Google Sign-In
+   can't be scripted headlessly.
 
 ### CI
 
@@ -183,3 +285,6 @@ slow and flake-prone) and are run manually instead.
 ## License
 
 [MIT](LICENSE) © 2026 João Neves
+
+The bundled typeface is [Inter](https://github.com/rsms/inter) by Rasmus Andersson, licensed under the
+SIL Open Font License 1.1 (see [`third_party/inter/OFL.txt`](third_party/inter/OFL.txt)).

@@ -6,13 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.Session
+import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
+import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,32 +34,33 @@ class SettingsViewModel
     constructor(
         private val themeRepository: ThemeRepository,
         private val currencyRepository: CurrencyRepository,
-        private val authRepository: AuthRepository,
-        // Nullable with defaults so existing unit tests that construct this ViewModel directly
+        private val sessionRepository: SessionRepository,
+        // Nullable with a default so existing unit tests that construct this ViewModel directly
         // (bypassing Hilt) with only the original 3 positional args keep compiling; Hilt itself
-        // always supplies both in production. When languageRepository is null (test-only), the
-        // language always reads as AppLanguage.PORTUGUESE, matching SettingsUiState()'s own default.
-        // When context is null, the signOutError fallback below matches the exact literal those
-        // tests assert on.
+        // always supplies it in production. When null (test-only), the language always reads as
+        // AppLanguage.SYSTEM, matching SettingsUiState()'s own default.
         private val languageRepository: LanguageRepository? = null,
-        @param:ApplicationContext private val context: Context? = null,
     ) : ViewModel() {
-        private val signOutError = MutableStateFlow<String?>(null)
+        private val signOutError = MutableStateFlow<UiText?>(null)
+        private val signInError = MutableStateFlow<UiText?>(null)
+        private val errors = combine(signOutError, signInError) { signOut, signIn -> signOut to signIn }
 
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 themeRepository.observeThemePreference(),
                 currencyRepository.observeCurrency(),
-                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.PORTUGUESE),
-                authRepository.observeCurrentUser(),
-                signOutError,
-            ) { themePreference, currency, language, currentUser, error ->
+                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.SYSTEM),
+                sessionRepository.session,
+                errors,
+            ) { themePreference, currency, language, session, (signOut, signIn) ->
                 SettingsUiState(
                     themePreference = themePreference,
                     currency = currency,
                     language = language,
-                    currentUser = currentUser,
-                    signOutError = error,
+                    currentUser = (session as? Session.SignedIn)?.user,
+                    signOutError = signOut,
+                    isGuest = session is Session.Guest,
+                    signInError = signIn,
                 )
             }.stateIn(
                 scope = viewModelScope,
@@ -79,14 +82,38 @@ class SettingsViewModel
 
         fun signOut() {
             viewModelScope.launch {
-                authRepository.signOut().onFailure { e ->
-                    val fallback = context?.getString(R.string.error_sign_out_failed) ?: "Sign-out failed"
-                    signOutError.value = e.message ?: fallback
+                sessionRepository.signOut().onFailure {
+                    // Deliberately not e.message: raw SDK messages aren't user-facing.
+                    signOutError.value = UiText.StringResource(R.string.error_sign_out_failed)
                 }
             }
         }
 
         fun dismissSignOutError() {
             signOutError.value = null
+        }
+
+        /** Signs in from guest mode; needs an Activity [context] for the credential picker. */
+        fun signInToSync(context: Context) {
+            viewModelScope.launch {
+                sessionRepository.signIn(context).onFailure { e ->
+                    if (e !is SignInCancelledException) {
+                        // Deliberately not e.message: raw SDK messages aren't user-facing.
+                        signInError.value = UiText.StringResource(R.string.error_sign_in_failed)
+                    }
+                }
+            }
+        }
+
+        fun leaveGuestMode() {
+            viewModelScope.launch {
+                sessionRepository.leaveGuestMode().onFailure {
+                    signOutError.value = UiText.StringResource(R.string.error_sign_out_failed)
+                }
+            }
+        }
+
+        fun dismissSignInError() {
+            signInError.value = null
         }
     }

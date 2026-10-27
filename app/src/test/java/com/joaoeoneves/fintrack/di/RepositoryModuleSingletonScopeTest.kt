@@ -1,79 +1,93 @@
 package com.joaoeoneves.fintrack.di
 
-import com.joaoeoneves.fintrack.data.SharedPrefsCurrencyRepository
-import com.joaoeoneves.fintrack.data.SharedPrefsThemeRepository
+import android.content.Context
+import androidx.datastore.core.DataStore
+import com.joaoeoneves.fintrack.data.preferences.FirestorePreferencesSync
+import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository
+import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import javax.inject.Singleton
 
 /**
- * Regression guard for a real bug that shipped once: [SharedPrefsCurrencyRepository] and
- * [SharedPrefsThemeRepository] both cache their current value in an in-memory `StateFlow` seeded
- * once from `SharedPreferences` at construction time. If either class -- or its `@Binds` method in
- * [RepositoryModule] -- loses its `@Singleton` scope, Hilt silently starts handing out a *separate*
- * instance to each injection point (e.g. `MainActivity`'s `CurrencyViewModel`/`ThemeViewModel` vs.
- * `SettingsViewModel`). Each instance still persists writes to disk correctly, but a write made
- * through one instance's `setCurrency`/`setThemePreference` never reaches another instance's
- * `observeCurrency`/`observeThemePreference` collectors -- so switching currency/theme in Settings
- * would visibly do nothing on the live Dashboard until the process was killed and relaunched (a
- * fresh instance would then read the persisted value from disk). See the header comment in
- * `.maestro/settings.yaml` for the end-to-end symptom this caused.
+ * Regression guard for a bug that shipped once: a preference repository that loses its
+ * `@Singleton` scope makes Hilt hand each injection point (e.g. `MainActivity`'s
+ * `CurrencyViewModel`/`ThemeViewModel` vs. `SettingsViewModel`) a separate instance, so a write
+ * through one never reaches another's observers (the live Dashboard would ignore a Settings
+ * change until relaunch). See the header comment in `.maestro/settings.yaml`.
  *
- * This can't be caught by [com.joaoeoneves.fintrack.ui.settings.SettingsViewModelTest] or
- * [com.joaoeoneves.fintrack.data.SharedPrefsCurrencyRepositoryTest] since both construct a single
- * repository instance directly and never exercise Hilt's actual scoping graph. Rather than stand up
- * a full Hilt test component just to prove two injection points resolve to `===` the same instance,
- * this asserts the specific, cheap, structural precondition for that to hold: `@Singleton` present
- * on the implementation class and on its binding method.
+ * It is worse with DataStore: there must be exactly one DataStore instance per file, because a
+ * second instance over the same file throws ("There are multiple DataStores active for the same
+ * file"). So [DataStoreModule.providePreferencesDataStore], [UserPreferencesStore] and
+ * [UserPreferencesRepository] must all stay `@Singleton`, as must the binds in [PreferencesModule].
+ *
+ * Rather than stand up a Hilt test component, this asserts the cheap structural precondition:
+ * `@Singleton` on each class and binding/provider method.
  */
 class RepositoryModuleSingletonScopeTest {
     @Test
-    fun sharedPrefsCurrencyRepository_classIsAnnotatedSingleton() {
-        assertTrue(
-            "SharedPrefsCurrencyRepository must be @Singleton -- see class doc for why",
-            SharedPrefsCurrencyRepository::class.java.isAnnotationPresent(Singleton::class.java),
-        )
+    fun userPreferencesRepository_classIsAnnotatedSingleton() {
+        assertSingleton(UserPreferencesRepository::class.java.isSingleton(), "UserPreferencesRepository")
     }
 
     @Test
-    fun sharedPrefsThemeRepository_classIsAnnotatedSingleton() {
-        assertTrue(
-            "SharedPrefsThemeRepository must be @Singleton -- see class doc for why",
-            SharedPrefsThemeRepository::class.java.isAnnotationPresent(Singleton::class.java),
-        )
+    fun userPreferencesStore_classIsAnnotatedSingleton() {
+        assertSingleton(UserPreferencesStore::class.java.isSingleton(), "UserPreferencesStore")
     }
 
     @Test
-    fun bindCurrencyRepository_bindingMethodIsAnnotatedSingleton() {
+    fun firestorePreferencesSync_classIsAnnotatedSingleton() {
+        assertSingleton(FirestorePreferencesSync::class.java.isSingleton(), "FirestorePreferencesSync")
+    }
+
+    @Test
+    fun bindCurrencyRepository_takesUserPreferencesRepositoryAndIsSingleton() {
+        assertBindSingleton("bindCurrencyRepository")
+    }
+
+    @Test
+    fun bindThemeRepository_takesUserPreferencesRepositoryAndIsSingleton() {
+        assertBindSingleton("bindThemeRepository")
+    }
+
+    @Test
+    fun bindLanguageRepository_takesUserPreferencesRepositoryAndIsSingleton() {
+        assertBindSingleton("bindLanguageRepository")
+    }
+
+    @Test
+    fun bindPreferencesSync_takesFirestoreImplAndIsSingleton() {
         val method =
-            RepositoryModule::class.java.getDeclaredMethod(
-                "bindCurrencyRepository",
-                SharedPrefsCurrencyRepository::class.java,
+            PreferencesModule::class.java.getDeclaredMethod(
+                "bindPreferencesSync",
+                FirestorePreferencesSync::class.java,
             )
-
-        assertTrue(
-            "RepositoryModule.bindCurrencyRepository must be @Singleton -- a non-singleton " +
-                "@Binds here means MainActivity's CurrencyViewModel and SettingsViewModel each get " +
-                "their own repository instance, so a currency change in Settings silently stops " +
-                "reaching the live Dashboard",
-            method.isAnnotationPresent(Singleton::class.java),
-        )
+        assertSingleton(method.isAnnotationPresent(Singleton::class.java), "bindPreferencesSync")
     }
 
     @Test
-    fun bindThemeRepository_bindingMethodIsAnnotatedSingleton() {
+    fun providePreferencesDataStore_isSingleton() {
         val method =
-            RepositoryModule::class.java.getDeclaredMethod(
-                "bindThemeRepository",
-                SharedPrefsThemeRepository::class.java,
+            DataStoreModule::class.java.getDeclaredMethod(
+                "providePreferencesDataStore",
+                Context::class.java,
             )
+        assertTrue(DataStore::class.java.isAssignableFrom(method.returnType))
+        assertSingleton(method.isAnnotationPresent(Singleton::class.java), "providePreferencesDataStore")
+    }
 
-        assertTrue(
-            "RepositoryModule.bindThemeRepository must be @Singleton -- a non-singleton @Binds " +
-                "here means MainActivity's ThemeViewModel and SettingsViewModel each get their own " +
-                "repository instance, so a theme change in Settings silently stops repainting the " +
-                "live app",
-            method.isAnnotationPresent(Singleton::class.java),
-        )
+    private fun Class<*>.isSingleton() = isAnnotationPresent(Singleton::class.java)
+
+    private fun assertBindSingleton(name: String) {
+        val method =
+            PreferencesModule::class.java.getDeclaredMethod(name, UserPreferencesRepository::class.java)
+        assertSingleton(method.isAnnotationPresent(Singleton::class.java), "PreferencesModule.$name")
+    }
+
+    private fun assertSingleton(
+        present: Boolean,
+        what: String,
+    ) {
+        assertTrue("$what must be @Singleton -- see class doc for why", present)
     }
 }

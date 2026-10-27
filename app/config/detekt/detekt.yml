@@ -3,3 +3,8 @@ naming:
     # @Composable functions are conventionally PascalCase (they read like components, e.g.
     # ExpenseRow, PieChart) — that's correct Compose style, not a naming violation.
     ignoreAnnotated: ["Composable"]
+complexity:
+  TooManyFunctions:
+    # Test classes group many small @Test functions by subject; splitting them only to satisfy the
+    # function count adds churn without improving readability.
+    excludes: ["**/test/**", "**/androidTest/**"]

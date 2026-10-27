@@ -6,7 +6,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.TestDocumentSnapshots
 import com.joaoeoneves.fintrack.domain.model.Budget
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.testutil.FirebaseTestApp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -26,7 +27,7 @@ import org.robolectric.shadows.ShadowLog
  * reflection + real-`DocumentSnapshot` approach.
  *
  * Note: unlike expense/income, a budget's category comes from the *document id* (not a field), so
- * the "malformed category" case here is an id that doesn't match any [ExpenseCategory] name.
+ * any document id is kept (built-in or user category); only a missing `limitCents` drops a doc.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
@@ -59,35 +60,57 @@ class FirestoreBudgetRepositoryTest {
         val snapshot =
             TestDocumentSnapshots.found(
                 firestore,
-                id = ExpenseCategory.SHOPPING.name,
+                id = BuiltInCategories.SHOPPING.id.value,
                 fields = mapOf("limitCents" to TestDocumentSnapshots.longValue(10_000L)),
                 collection = "budgets",
             )
 
         val result = toBudgetOrNull(snapshot)
 
-        assertEquals(Budget(ExpenseCategory.SHOPPING, 10_000L), result)
+        assertEquals(Budget(BuiltInCategories.SHOPPING.id, 10_000L), result)
         assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
     }
 
     @Test
-    fun malformedDoc_idNotAValidCategory_isDroppedAsNull_andLogsWarning() {
+    fun foodDocId_parsesToFoodBudget() {
         val snapshot =
             TestDocumentSnapshots.found(
                 firestore,
-                id = "NOT_A_REAL_CATEGORY",
+                id = "FOOD",
+                fields = mapOf("limitCents" to TestDocumentSnapshots.longValue(25_000L)),
+                collection = "budgets",
+            )
+
+        assertEquals(Budget(BuiltInCategories.FOOD.id, 25_000L), toBudgetOrNull(snapshot))
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun unknownDocId_groceries_isKept_asBudgetForThatId_withoutWarning() {
+        val snapshot =
+            TestDocumentSnapshots.found(
+                firestore,
+                id = "GROCERIES",
+                fields = mapOf("limitCents" to TestDocumentSnapshots.longValue(25_000L)),
+                collection = "budgets",
+            )
+
+        assertEquals(Budget(CategoryId("GROCERIES"), 25_000L), toBudgetOrNull(snapshot))
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun generatedUserCategoryDocId_isKept() {
+        // A budget for a user-defined category: its doc id is the category's generated id.
+        val snapshot =
+            TestDocumentSnapshots.found(
+                firestore,
+                id = "aB3xYz09QwErTy",
                 fields = mapOf("limitCents" to TestDocumentSnapshots.longValue(10_000L)),
                 collection = "budgets",
             )
 
-        val result = toBudgetOrNull(snapshot)
-
-        assertNull(result)
-        val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue(
-            "expected a warning log for invalid 'category', got: $logs",
-            logs.any { it.msg.contains("'category'") },
-        )
+        assertEquals(Budget(CategoryId("aB3xYz09QwErTy"), 10_000L), toBudgetOrNull(snapshot))
     }
 
     @Test
@@ -95,7 +118,7 @@ class FirestoreBudgetRepositoryTest {
         val snapshot =
             TestDocumentSnapshots.found(
                 firestore,
-                id = ExpenseCategory.RECURRING.name,
+                id = BuiltInCategories.RECURRING.id.value,
                 fields = emptyMap(),
                 collection = "budgets",
             )

@@ -3,12 +3,15 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
-import com.joaoeoneves.fintrack.testutil.FakeStringContext
+import com.joaoeoneves.fintrack.testutil.genericErrorText
+import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -67,13 +70,13 @@ class AddEditExpenseViewModelTest {
 
     private fun addModeViewModel(repository: ExpenseRepository): AddEditExpenseViewModel {
         val savedStateHandle = SavedStateHandle()
-        return AddEditExpenseViewModel(repository, savedStateHandle)
+        return AddEditExpenseViewModel(repository, FakeCategoryRepository(), savedStateHandle)
     }
 
     private fun editModeViewModel(
         repository: ExpenseRepository,
         expenseId: String,
-    ) = AddEditExpenseViewModel(repository, SavedStateHandle(mapOf("expenseId" to expenseId)))
+    ) = AddEditExpenseViewModel(repository, FakeCategoryRepository(), SavedStateHandle(mapOf("expenseId" to expenseId)))
 
     // ---- add mode: initial state ----
 
@@ -89,7 +92,7 @@ class AddEditExpenseViewModelTest {
             assertFalse(state.form.isEditMode)
             assertEquals("", state.form.name)
             assertEquals("", state.form.amountText)
-            assertEquals(ExpenseCategory.SHOPPING, state.form.category)
+            assertEquals(BuiltInCategories.SHOPPING, state.form.category)
             assertEquals("", state.form.note)
             assertNull(state.form.nameError)
             assertNull(state.form.amountError)
@@ -155,7 +158,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("Name is required", state.form.nameError)
+            assertEquals(UiText.StringResource(R.string.error_name_required), state.form.nameError)
             assertFalse(addCalled)
         }
 
@@ -177,7 +180,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("Enter a valid amount", state.form.amountError)
+            assertEquals(UiText.StringResource(R.string.error_invalid_amount), state.form.amountError)
             assertFalse(addCalled)
         }
 
@@ -194,7 +197,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("Enter a valid amount", state.form.amountError)
+            assertEquals(UiText.StringResource(R.string.error_invalid_amount), state.form.amountError)
         }
 
     @Test
@@ -208,30 +211,8 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("Name is required", state.form.nameError)
-            assertEquals("Enter a valid amount", state.form.amountError)
-        }
-
-    @Test
-    fun onSave_blankNameAndInvalidAmount_andRealContext_usesContextGetString_notHardcodedFallback() =
-        runTest(testDispatcher) {
-            val repo = FakeExpenseRepository()
-            val context =
-                FakeStringContext(
-                    mapOf(
-                        R.string.error_name_required to "translated name required",
-                        R.string.error_invalid_amount to "translated invalid amount",
-                    ),
-                )
-            val viewModel = AddEditExpenseViewModel(repo, SavedStateHandle(), context)
-            advanceUntilIdle()
-
-            viewModel.onSave()
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("translated name required", state.form.nameError)
-            assertEquals("translated invalid amount", state.form.amountError)
+            assertEquals(UiText.StringResource(R.string.error_name_required), state.form.nameError)
+            assertEquals(UiText.StringResource(R.string.error_invalid_amount), state.form.amountError)
         }
 
     @Test
@@ -278,10 +259,10 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
 
-            viewModel.onCategorySelected(ExpenseCategory.RECURRING)
+            viewModel.onCategorySelected(BuiltInCategories.RECURRING)
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals(ExpenseCategory.RECURRING, state.form.category)
+            assertEquals(BuiltInCategories.RECURRING, state.form.category)
         }
 
     @Test
@@ -326,7 +307,7 @@ class AddEditExpenseViewModelTest {
 
             viewModel.onNameChanged("  Coffee  ")
             viewModel.onAmountChanged("4.995") // rounds HALF_UP to 500 cents
-            viewModel.onCategorySelected(ExpenseCategory.RECURRING)
+            viewModel.onCategorySelected(BuiltInCategories.RECURRING)
             viewModel.onDateSelected(date)
             viewModel.onNoteChanged("  with milk  ")
             viewModel.onSave()
@@ -345,7 +326,7 @@ class AddEditExpenseViewModelTest {
             assertNotNull(stored)
             assertEquals("Coffee", stored!!.name)
             assertEquals(500L, stored.amountCents)
-            assertEquals(ExpenseCategory.RECURRING, stored.category)
+            assertEquals(BuiltInCategories.RECURRING, stored.category)
             assertEquals(date, stored.date)
             assertEquals("with milk", stored.note)
 
@@ -380,7 +361,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2026-02-01T00:00:00Z"),
                     note = "Monthly subscription",
                 )
@@ -394,7 +375,7 @@ class AddEditExpenseViewModelTest {
             assertEquals("e1", state.form.expenseId)
             assertEquals("Netflix", state.form.name)
             assertEquals("15.99", state.form.amountText)
-            assertEquals(ExpenseCategory.RECURRING, state.form.category)
+            assertEquals(BuiltInCategories.RECURRING, state.form.category)
             assertEquals(existing.date, state.form.date)
             assertEquals("Monthly subscription", state.form.note)
         }
@@ -440,7 +421,7 @@ class AddEditExpenseViewModelTest {
             // from it would silently overwrite/upsert the real record.
             assertFalse(state is AddEditUiState.Ready)
 
-            assertEquals("Firestore unavailable", (state as AddEditUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditUiState.Error).message)
         }
 
     @Test
@@ -453,25 +434,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Error
-            assertEquals("Something went wrong", state.message)
-        }
-
-    @Test
-    fun editMode_getExpenseFails_andRealContext_usesContextGetString_notHardcodedFallback() =
-        runTest(testDispatcher) {
-            val repo = FakeExpenseRepository()
-            repo.nextGetExpenseError = IllegalStateException()
-            val context =
-                FakeStringContext(
-                    R.string.error_generic_fallback,
-                    "translated something went wrong",
-                )
-            val viewModel = AddEditExpenseViewModel(repo, SavedStateHandle(mapOf("expenseId" to "e1")), context)
-
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value as AddEditUiState.Error
-            assertEquals("translated something went wrong", state.message)
+            assertEquals(genericErrorText, state.message)
         }
 
     // ---- onRetry ----
@@ -484,7 +447,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2026-02-01T00:00:00Z"),
                     note = "Monthly subscription",
                 )
@@ -504,7 +467,7 @@ class AddEditExpenseViewModelTest {
             assertEquals("e1", state.form.expenseId)
             assertEquals("Netflix", state.form.name)
             assertEquals("15.99", state.form.amountText)
-            assertEquals(ExpenseCategory.RECURRING, state.form.category)
+            assertEquals(BuiltInCategories.RECURRING, state.form.category)
             assertEquals("Monthly subscription", state.form.note)
         }
 
@@ -523,7 +486,7 @@ class AddEditExpenseViewModelTest {
 
             val state = viewModel.uiState.value
             assertTrue(state is AddEditUiState.Error)
-            assertEquals("second failure", (state as AddEditUiState.Error).message)
+            assertEquals(genericErrorText, (state as AddEditUiState.Error).message)
         }
 
     // ---- edit mode: save ----
@@ -536,7 +499,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2026-02-01T00:00:00Z"),
                     note = "Monthly subscription",
                 )
@@ -575,7 +538,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.now(),
                     note = null,
                 )
@@ -618,7 +581,7 @@ class AddEditExpenseViewModelTest {
 
             assertTrue(events.isEmpty())
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("boom", state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_expense), state.form.saveError)
             assertNull(state.form.nameError)
             assertNull(state.form.amountError)
 
@@ -638,7 +601,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("Failed to save expense", state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_expense), state.form.saveError)
         }
 
     @Test
@@ -653,7 +616,7 @@ class AddEditExpenseViewModelTest {
                             id = "e1",
                             name = "Netflix",
                             amountCents = 1_599L,
-                            category = ExpenseCategory.RECURRING,
+                            category = BuiltInCategories.RECURRING,
                             date = Instant.now(),
                             note = null,
                         ),
@@ -665,7 +628,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals("Expense with id e1 not found", state.form.saveError)
+            assertEquals(UiText.StringResource(R.string.error_failed_save_expense), state.form.saveError)
         }
 
     @Test
@@ -714,7 +677,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
 
-            viewModel.onCategorySelected(ExpenseCategory.TRANSFER)
+            viewModel.onCategorySelected(BuiltInCategories.TRANSFER)
 
             assertNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
         }
@@ -783,5 +746,7 @@ class AddEditExpenseViewModelTest {
         override suspend fun getAllExpenses(): Result<List<Expense>> = unsupported()
 
         override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult = unsupported()
+
+        override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> = unsupported()
     }
 }

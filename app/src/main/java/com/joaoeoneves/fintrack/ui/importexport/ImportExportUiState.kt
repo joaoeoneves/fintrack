@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.importexport
 
 import com.joaoeoneves.fintrack.data.csv.CsvRowFailure
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.ui.common.UiText
 
 sealed interface ImportUiState {
     data object Idle : ImportUiState
@@ -21,11 +22,11 @@ sealed interface ImportUiState {
 
     data class PartialFailure(
         val succeededCount: Int,
-        val message: String,
+        val message: UiText,
     ) : ImportUiState
 
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : ImportUiState
 }
 
@@ -39,6 +40,6 @@ sealed interface ExportUiState {
     ) : ExportUiState
 
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : ExportUiState
 }

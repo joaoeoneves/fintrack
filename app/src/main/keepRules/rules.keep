@@ -11,9 +11,9 @@
 #   public *;
 #}
 
-# Navigation-Compose resolves @Serializable enum route args (TimeRange, used
-# by the ExpenseList/IncomeList routes in Routes.kt) by fully-qualified class
-# name at NavHost setup time for every destination in the graph, not lazily —
-# an unkept name here crashes the whole authenticated nav graph on launch.
--keepnames class com.joaoeoneves.fintrack.domain.model.TimeRange
--keepclassmembers class com.joaoeoneves.fintrack.domain.model.TimeRange { *; }
+# Navigation route args (Routes.kt) are primitives only: the selected Period is
+# passed as a String token (Period.encode()/decodePeriod()), so no app class
+# needs keeping here. If an enum or @Serializable class is ever added as a
+# route arg, add -keepnames/-keepclassmembers for its fully-qualified name:
+# Navigation-Compose resolves it by class name at NavHost setup time for every
+# destination in the graph, and R8 renaming it crashes the whole nav graph.

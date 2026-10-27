@@ -9,13 +9,18 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.csv.CsvImportOutcome
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvParser
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvWriter
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,6 +31,7 @@ class ImportExportViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
+        private val categoryRepository: CategoryRepository,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val _importState = MutableStateFlow<ImportUiState>(ImportUiState.Idle)
@@ -53,14 +59,15 @@ class ImportExportViewModel
                         null
                     }
                 if (text == null) {
-                    _importState.value = ImportUiState.Error(context.getString(R.string.error_import_read_file))
+                    _importState.value = ImportUiState.Error(UiText.StringResource(R.string.error_import_read_file))
                     return@launch
                 }
+                val categories = categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first()
                 _importState.value =
-                    when (val outcome = ExpenseCsvParser.parse(text)) {
+                    when (val outcome = ExpenseCsvParser.parse(text, categories = categories)) {
                         is CsvImportOutcome.Parsed ->
                             ImportUiState.Preview(outcome.result.validExpenses, outcome.result.failures)
-                        is CsvImportOutcome.Error -> ImportUiState.Error(outcome.message)
+                        is CsvImportOutcome.Error -> ImportUiState.Error(outcome.error.toUiText())
                     }
             }
         }
@@ -70,17 +77,16 @@ class ImportExportViewModel
             viewModelScope.launch {
                 _importState.value = ImportUiState.Importing
                 val result = expenseRepository.addExpenses(preview.validExpenses)
+                result.failure?.let { Log.w(TAG, "Import failed after ${result.succeededCount} rows", it) }
                 _importState.value =
                     when {
                         result.isCompleteSuccess -> ImportUiState.Done(result.succeededCount)
-                        result.succeededCount > 0 -> {
-                            val fallback = result.failure?.message ?: context.getString(R.string.error_import_failed)
-                            ImportUiState.PartialFailure(result.succeededCount, fallback)
-                        }
-                        else -> {
-                            val fallback = result.failure?.message ?: context.getString(R.string.error_import_failed)
-                            ImportUiState.Error(fallback)
-                        }
+                        result.succeededCount > 0 ->
+                            ImportUiState.PartialFailure(
+                                result.succeededCount,
+                                UiText.StringResource(R.string.error_import_failed),
+                            )
+                        else -> ImportUiState.Error(UiText.StringResource(R.string.error_import_failed))
                     }
             }
         }
@@ -112,11 +118,11 @@ class ImportExportViewModel
                             if (wrote) {
                                 ExportUiState.Done(expenses.size)
                             } else {
-                                ExportUiState.Error(context.getString(R.string.error_export_write_file))
+                                ExportUiState.Error(UiText.StringResource(R.string.error_export_write_file))
                             }
                     }.onFailure { e ->
-                        val fallback = e.message ?: context.getString(R.string.error_export_failed)
-                        _exportState.value = ExportUiState.Error(fallback)
+                        Log.w(TAG, "Export failed", e)
+                        _exportState.value = ExportUiState.Error(UiText.StringResource(R.string.error_export_failed))
                     }
             }
         }

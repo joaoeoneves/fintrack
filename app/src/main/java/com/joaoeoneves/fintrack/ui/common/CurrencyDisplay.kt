@@ -1,63 +1,43 @@
 package com.joaoeoneves.fintrack.ui.common
 
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import java.util.Currency
+import java.util.Locale
+
+/** Symbol of a [CurrencyOption] as written in [locale] ("$" in en-US, "US$" in pt-PT). */
+fun CurrencyOption.symbol(locale: Locale): String = Currency.getInstance(name).getSymbol(locale)
 
 /**
- * Symbol printed alongside formatted amounts for a [CurrencyOption], shared across the currency
- * picker and [formatAmountCents].
+ * Whether [locale] writes this currency's symbol before the number ("€1,234.56") rather than after
+ * it ("1.234,56 €"), derived from how [formatAmount] actually lays an amount out.
  */
-val CurrencyOption.symbol: String
+fun CurrencyOption.symbolLeads(locale: Locale): Boolean = formatAmount(1L, this, locale).startsWith(symbol(locale))
+
+/**
+ * String resource of the human-readable name of a [CurrencyOption]. Plain (non-composable) so it
+ * can be unit-tested and resolved outside composition.
+ */
+@get:StringRes
+val CurrencyOption.displayNameRes: Int
     get() =
         when (this) {
-            CurrencyOption.USD -> "$"
-            CurrencyOption.EUR -> "€"
-            CurrencyOption.GBP -> "£"
-            CurrencyOption.JPY -> "¥"
-            CurrencyOption.CAD -> "CA$"
-            CurrencyOption.AUD -> "A$"
+            CurrencyOption.USD -> R.string.currency_usd
+            CurrencyOption.EUR -> R.string.currency_eur
+            CurrencyOption.GBP -> R.string.currency_gbp
+            CurrencyOption.JPY -> R.string.currency_jpy
+            CurrencyOption.CAD -> R.string.currency_cad
+            CurrencyOption.AUD -> R.string.currency_aud
         }
 
 /**
- * Human-readable label for a [CurrencyOption], used in the Settings currency picker.
- *
- * Deliberately NOT localized via `stringResource()`: `CurrencyDisplayTest` asserts on this
- * property directly from plain (non-Composable) JUnit test methods, so it must stay a synchronous,
- * Context-free `String` getter. Currency *names* (unlike every other UI string in the app) are
- * therefore only in English regardless of the in-app language -- a deliberate, flagged compromise,
- * not an oversight. See the language-feature report for the full rationale.
+ * Localized human-readable label for a [CurrencyOption], used in the Settings currency picker.
+ * `@Composable` because it resolves [displayNameRes] through [stringResource]; every call site is
+ * inside a Composable already.
  */
 val CurrencyOption.displayName: String
-    get() =
-        when (this) {
-            CurrencyOption.USD -> "US Dollar"
-            CurrencyOption.EUR -> "Euro"
-            CurrencyOption.GBP -> "British Pound"
-            CurrencyOption.JPY -> "Japanese Yen"
-            CurrencyOption.CAD -> "Canadian Dollar"
-            CurrencyOption.AUD -> "Australian Dollar"
-        }
-
-/**
- * Where the currency symbol is placed relative to the formatted amount.
- */
-enum class SymbolPosition { PREFIX, SUFFIX }
-
-/**
- * Decimal separator character used when formatting a [CurrencyOption]'s amounts.
- */
-val CurrencyOption.decimalSeparator: Char
-    get() =
-        when (this) {
-            CurrencyOption.EUR -> ','
-            else -> '.'
-        }
-
-/**
- * Where the [symbol] is placed relative to the formatted amount for a [CurrencyOption].
- */
-val CurrencyOption.symbolPosition: SymbolPosition
-    get() =
-        when (this) {
-            CurrencyOption.EUR -> SymbolPosition.SUFFIX
-            else -> SymbolPosition.PREFIX
-        }
+    @Composable
+    get() = stringResource(displayNameRes)

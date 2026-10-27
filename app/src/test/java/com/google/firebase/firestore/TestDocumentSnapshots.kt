@@ -26,7 +26,7 @@ import com.google.firestore.v1.Value
  * which none of our repositories read) -- so callers can safely pass whatever already-constructed
  * `FirebaseFirestore` instance they used to build the repository under test.
  *
- * [stringValue]/[longValue]/[timestampValue] build [Value] instances via Firestore's own
+ * [stringValue]/[longValue]/[timestampValue]/[booleanValue] build [Value] instances via Firestore's own
  * package-private [UserDataReader] (the same scalar-conversion path used internally by
  * `DocumentReference.set(...)`) rather than via `Value.newBuilder()...build()` directly. That's
  * deliberate, not just style: `firebase-firestore`'s POM (since the Firebase BOM 34 upgrade that
@@ -79,4 +79,6 @@ object TestDocumentSnapshots {
     fun longValue(value: Long): Value = parseScalarValue(value)
 
     fun timestampValue(timestamp: Timestamp): Value = parseScalarValue(timestamp)
+
+    fun booleanValue(value: Boolean): Value = parseScalarValue(value)
 }
