@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
@@ -143,8 +143,8 @@ private fun DashboardTopBar(onOpenSettings: () -> Unit) {
 
 /** Bundles the budget write callbacks to keep [DashboardContent] under detekt's LongParameterList. */
 private data class BudgetActions(
-    val onSetBudget: (ExpenseCategory, Long) -> Unit,
-    val onClearBudget: (ExpenseCategory) -> Unit,
+    val onSetBudget: (Category, Long) -> Unit,
+    val onClearBudget: (Category) -> Unit,
 )
 
 @Composable

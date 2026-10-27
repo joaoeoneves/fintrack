@@ -11,7 +11,7 @@ fun savingsRate(
 
 /** The net outflow ([Expense]s minus refunds, possibly negative) of a single [category]. */
 data class CategoryTotal(
-    val category: ExpenseCategory,
+    val category: Category,
     val totalCents: Long,
 )
 
@@ -20,7 +20,8 @@ data class CategoryTotal(
  *
  * @property spendingCents net outflow of [CategoryKind.SPENDING] categories.
  * @property savedCents net outflow of [CategoryKind.SAVING] categories.
- * @property categoryTotals one entry per [ExpenseCategory], in enum order.
+ * @property categoryTotals one entry per active category plus any other category with expenses
+ *   (archived or unknown), in catalog order with unknown ones last.
  */
 data class CashFlowSummary(
     val incomeCents: Long,
@@ -38,20 +39,23 @@ data class CashFlowSummary(
     val savingsRate: Double? get() = savingsRate(savedCents = savedCents, incomeCents = incomeCents)
 }
 
-/** Summarizes [expenses] and [income]; categories without expenses get a zero total. */
+/**
+ * Summarizes [expenses] and [income] against the [categories] catalog, which decides each
+ * expense's [CategoryKind] (looked up by id, so a stale copy on the expense never wins). Active
+ * categories without expenses get a zero total.
+ */
 fun cashFlowSummaryOf(
     expenses: List<Expense>,
     income: List<Income>,
-): CashFlowSummary =
-    CashFlowSummary(
+    categories: List<Category>,
+): CashFlowSummary {
+    val byId = expenses.groupBy { it.category.id }
+    val rows = categories.rowsFor(byId.keys)
+    val totals = rows.map { category -> CategoryTotal(category, byId[category.id].orEmpty().netCents()) }
+    return CashFlowSummary(
         incomeCents = income.sumOf { it.amountCents },
-        spendingCents = expenses.filter { it.category.kind == CategoryKind.SPENDING }.netCents(),
-        savedCents = expenses.filter { it.category.kind == CategoryKind.SAVING }.netCents(),
-        categoryTotals =
-            ExpenseCategory.entries.map { category ->
-                CategoryTotal(
-                    category = category,
-                    totalCents = expenses.filter { it.category == category }.netCents(),
-                )
-            },
+        spendingCents = totals.filter { it.category.kind == CategoryKind.SPENDING }.sumOf { it.totalCents },
+        savedCents = totals.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.totalCents },
+        categoryTotals = totals,
     )
+}

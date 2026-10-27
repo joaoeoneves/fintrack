@@ -7,8 +7,37 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    function isValidCategory(category) {
-      return category in ['TRANSFER', 'INVESTMENTS', 'SHOPPING', 'FOOD', 'RECURRING'];
+    function builtInCategoryIds() {
+      return ['TRANSFER', 'INVESTMENTS', 'SHOPPING', 'FOOD', 'RECURRING'];
+    }
+
+    function isCategoryIdShape(id) {
+      return id is string && id.size() > 0 && id.size() <= 64 && id.matches('^[A-Za-z0-9_-]+$');
+    }
+
+    // A built-in category id, or the id of one of this user's category documents (as it will be
+    // after the current write/batch, so a batch may create a category and use it).
+    function isKnownCategory(userId, id) {
+      return isCategoryIdShape(id) && (id in builtInCategoryIds()
+        || existsAfter(/databases/$(database)/documents/users/$(userId)/categories/$(id)));
+    }
+
+    function isValidKey(k) {
+      return k is string && k.size() > 0 && k.size() <= 32 && k.matches('^[a-z0-9_]+$');
+    }
+
+    // Category documents are always written whole. A built-in's override document may leave the
+    // name null (= the built-in's localized default name); a user category must have one.
+    function isValidCategoryDoc(categoryId, data) {
+      let name = data.get('name', null);
+      return data.keys().hasOnly(['name', 'iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn'])
+        && (name == null || (name is string && name.size() > 0 && name.size() <= 50))
+        && isValidKey(data.iconKey) && isValidKey(data.colorKey)
+        && data.kind in ['SPENDING', 'SAVING']
+        && data.order is int && data.archived is bool && data.builtIn is bool
+        && data.builtIn == (categoryId in builtInCategoryIds())
+        && (data.builtIn || name != null);
     }
 
     function isValidAmountCents(amountCents) {
@@ -20,11 +49,11 @@ service cloud.firestore {
         (data.note is string && data.note.size() <= 2000);
     }
 
-    function isValidExpense(data) {
+    function isValidExpense(userId, data) {
       return data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
-        && isValidCategory(data.category)
+        && isKnownCategory(userId, data.category)
         && data.date is timestamp
         && isValidNote(data);
     }
@@ -44,19 +73,29 @@ service cloud.firestore {
 
     // Each user can only read/write their own expenses, and every write must
     // carry a well-typed name/amount/category/date (a modified client can no
-    // longer smuggle in a negative amount or an unknown category string).
+    // longer smuggle in a negative amount or an unknown category string). The category must be a
+    // built-in or one of the user's own category documents.
     match /users/{userId}/expenses/{expenseId} {
       allow read, delete: if isOwner(userId);
-      allow create, update: if isOwner(userId) && isValidExpense(request.resource.data);
+      allow create, update: if isOwner(userId) && isValidExpense(userId, request.resource.data);
+    }
+
+    // Each user can only read/write their own categories: overrides of the built-ins (same id,
+    // builtIn true) and user-defined ones (generated ids, builtIn false).
+    match /users/{userId}/categories/{categoryId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && isCategoryIdShape(categoryId)
+        && isValidCategoryDoc(categoryId, request.resource.data);
     }
 
     // Each user can only read/write their own per-category budget limits; the
-    // document id doubles as the category, so it must be one of the five
-    // known categories and the limit must be a positive integer.
+    // document id doubles as the category id, so it must be a built-in or one of the user's own
+    // categories, and the limit must be a positive integer.
     match /users/{userId}/budgets/{categoryId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId)
-        && isValidCategory(categoryId)
+        && isKnownCategory(userId, categoryId)
         && isValidBudget(request.resource.data);
     }
 

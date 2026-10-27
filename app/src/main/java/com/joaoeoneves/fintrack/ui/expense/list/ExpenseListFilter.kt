@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.amountMatchesQuery
 import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
@@ -13,24 +13,26 @@ import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
  */
 data class ExpenseListFilter(
     val query: String,
-    val category: ExpenseCategory?,
-    val categoryLabels: Map<ExpenseCategory, String>,
+    val category: CategoryId?,
+    val categoryLabels: Map<CategoryId, String>,
 )
 
 /**
  * Whether this expense matches a search [query]: case-insensitively against its name, note,
- * localized category label (from [labels]) or category enum name, or as an amount (see
+ * category name (the user's own, or the displayed label from [labels]), a built-in category's id
+ * (e.g. `SHOPPING`; generated ids of user categories are never matched), or as an amount (see
  * [amountMatchesQuery]).
  */
 fun Expense.matchesQuery(
     query: String,
-    labels: Map<ExpenseCategory, String>,
+    labels: Map<CategoryId, String>,
 ): Boolean {
     val q = query.trim()
     return name.containsIgnoreCase(q) ||
         note.containsIgnoreCase(q) ||
-        labels[category].containsIgnoreCase(q) ||
-        category.name.containsIgnoreCase(q) ||
+        category.customName.containsIgnoreCase(q) ||
+        labels[category.id].containsIgnoreCase(q) ||
+        (category.builtIn && category.id.value.containsIgnoreCase(q)) ||
         amountMatchesQuery(amountCents, q)
 }
 
@@ -45,7 +47,7 @@ fun List<Expense>.toListContent(
     filter: ExpenseListFilter,
     sort: SortOption,
 ): ExpenseListUiState.Content {
-    val byCategory = if (filter.category == null) this else filter { it.category == filter.category }
+    val byCategory = if (filter.category == null) this else filter { it.category.id == filter.category }
     val filtered =
         if (filter.query.isBlank()) {
             byCategory

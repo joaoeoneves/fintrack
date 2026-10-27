@@ -54,6 +54,7 @@
     <string name="category_shopping">Compras</string>
     <string name="category_food">Alimentação</string>
     <string name="category_recurring">Recorrente</string>
+    <string name="category_unknown">Categoria desconhecida</string>
 
     <!-- Moedas -->
     <string name="currency_usd">Dólar americano</string>
@@ -101,6 +102,7 @@
     <string name="expense_field_name">Nome</string>
     <string name="expense_field_category">Categoria</string>
     <string name="error_name_required">O nome é obrigatório</string>
+    <string name="error_category_required">Escolha uma categoria</string>
     <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
 
     <!-- Lista de despesas -->

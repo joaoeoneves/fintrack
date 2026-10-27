@@ -13,17 +13,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.ui.common.displayName
 
 /**
  * Horizontally scrollable, single-select category filter: an "All" chip (selected when [selected]
- * is null) followed by one chip per [ExpenseCategory].
+ * is null) followed by one chip per entry of [categories] (in order).
  */
 @Composable
 fun CategoryFilterRow(
-    selected: ExpenseCategory?,
-    onSelected: (ExpenseCategory?) -> Unit,
+    categories: List<Category>,
+    selected: CategoryId?,
+    onSelected: (CategoryId?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -39,10 +41,10 @@ fun CategoryFilterRow(
             onClick = { onSelected(null) },
             label = { Text(stringResource(R.string.filter_all)) },
         )
-        ExpenseCategory.entries.forEach { category ->
+        categories.forEach { category ->
             FilterChip(
-                selected = selected == category,
-                onClick = { onSelected(category) },
+                selected = selected == category.id,
+                onClick = { onSelected(category.id) },
                 label = { Text(category.displayName) },
             )
         }

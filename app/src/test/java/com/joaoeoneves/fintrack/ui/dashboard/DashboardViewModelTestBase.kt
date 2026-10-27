@@ -5,8 +5,9 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -84,7 +85,7 @@ open class DashboardViewModelTestBase {
     protected fun expense(
         id: String,
         amountCents: Long,
-        category: ExpenseCategory = ExpenseCategory.SHOPPING,
+        category: Category = BuiltInCategories.SHOPPING,
         date: Instant,
         note: String? = null,
     ) = Expense(id = id, name = id, amountCents = amountCents, category = category, date = date, note = note)

@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -20,6 +21,7 @@ class FakeExpenseRepository(
     var nextGetExpenseError: Throwable? = null,
     var nextAddExpensesFailure: Throwable? = null,
     var addExpensesFailureAfterCount: Int = Int.MAX_VALUE,
+    var nextHasExpenseWithCategoryError: Throwable? = null,
 ) : ExpenseRepository {
     private val expensesFlow = MutableStateFlow(initialExpenses)
 
@@ -77,5 +79,13 @@ class FakeExpenseRepository(
         val toStore = expenses.map { it.copy(id = UUID.randomUUID().toString()) }
         expensesFlow.value = expensesFlow.value + toStore
         return BulkAddResult(expenses.size, null)
+    }
+
+    override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> {
+        nextHasExpenseWithCategoryError?.let { error ->
+            nextHasExpenseWithCategoryError = null
+            return Result.failure(error)
+        }
+        return Result.success(expensesFlow.value.any { it.category.id == categoryId })
     }
 }

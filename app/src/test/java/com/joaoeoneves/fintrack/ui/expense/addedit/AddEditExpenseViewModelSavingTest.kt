@@ -2,9 +2,11 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
@@ -48,7 +50,7 @@ class AddEditExpenseViewModelSavingTest {
             id = "e1",
             name = "Groceries",
             amountCents = 1_250L,
-            category = ExpenseCategory.SHOPPING,
+            category = BuiltInCategories.SHOPPING,
             date = Instant.parse("2026-02-01T10:00:00Z"),
             note = null,
         )
@@ -76,6 +78,7 @@ class AddEditExpenseViewModelSavingTest {
         expenseId: String? = null,
     ) = AddEditExpenseViewModel(
         repository,
+        FakeCategoryRepository(),
         SavedStateHandle(if (expenseId != null) mapOf("expenseId" to expenseId) else emptyMap()),
     )
 

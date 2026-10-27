@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.data.csv
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -9,7 +9,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 /**
- * CSV import/export of the [ExpenseCategory.FOOD] category: the shared canonical name "Food" is
+ * CSV import/export of the [BuiltInCategories.FOOD] category: the shared canonical name "Food" is
  * what [ExpenseCsvWriter] writes and what [ExpenseCsvParser] accepts (case-insensitively, alongside
  * the enum name).
  */
@@ -21,7 +21,7 @@ class ExpenseCsvFoodCategoryTest {
             id = "",
             name = "Groceries",
             amountCents = 4_235L,
-            category = ExpenseCategory.FOOD,
+            category = BuiltInCategories.FOOD,
             date = Instant.parse("2026-10-05T18:30:00Z"),
             note = "weekly shop",
         )
@@ -34,12 +34,12 @@ class ExpenseCsvFoodCategoryTest {
 
     @Test
     fun canonicalName_ofFood_isFood() {
-        assertEquals("Food", ExpenseCategory.FOOD.canonicalName())
+        assertEquals("Food", BuiltInCategories.FOOD.canonicalName())
     }
 
     @Test
     fun canonicalNames_arePairwiseDistinctIgnoringCase() {
-        val names = ExpenseCategory.entries.map { it.canonicalName().lowercase() }
+        val names = BuiltInCategories.all.map { it.canonicalName().lowercase() }
 
         assertEquals(names.size, names.toSet().size)
     }
@@ -58,7 +58,7 @@ class ExpenseCsvFoodCategoryTest {
         val result = parse(csv)
 
         assertTrue(result.failures.isEmpty())
-        assertEquals(List(4) { ExpenseCategory.FOOD }, result.validExpenses.map { it.category })
+        assertEquals(List(4) { BuiltInCategories.FOOD }, result.validExpenses.map { it.category })
     }
 
     @Test

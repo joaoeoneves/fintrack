@@ -1,18 +1,20 @@
 package com.joaoeoneves.fintrack.ui.expense.addedit
 
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.Instant
 
 data class ExpenseFormState(
     val name: String = "",
     val amountText: String = "",
-    val category: ExpenseCategory = ExpenseCategory.SHOPPING,
+    val category: Category = BuiltInCategories.SHOPPING,
     val date: Instant = Instant.now(),
     val note: String = "",
     val isRefund: Boolean = false,
     val nameError: UiText? = null,
     val amountError: UiText? = null,
+    val categoryError: UiText? = null,
     val saveError: UiText? = null,
     val isSaving: Boolean = false,
     val isEditMode: Boolean = false,

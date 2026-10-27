@@ -4,7 +4,8 @@ import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.domain.model.Budget
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -30,7 +31,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
-    private fun DashboardViewModel.budgetFor(category: ExpenseCategory) =
+    private fun DashboardViewModel.budgetFor(category: Category) =
         (uiState.value as DashboardUiState.Content).budgets.single { it.category == category }
 
     /** Starts collecting uiState and budgetErrorEvent; returns the live list of emitted errors. */
@@ -50,19 +51,22 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val budgetRepo =
                 FakeBudgetRepository(
-                    listOf(Budget(ExpenseCategory.SHOPPING, 10_000L), Budget(ExpenseCategory.TRANSFER, 4_000L)),
+                    listOf(
+                        Budget(BuiltInCategories.SHOPPING.id, 10_000L),
+                        Budget(BuiltInCategories.TRANSFER.id, 4_000L),
+                    ),
                 )
             val viewModel = viewModel(budgetRepository = budgetRepo)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
-            assertEquals(10_000L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
+            assertEquals(10_000L, viewModel.budgetFor(BuiltInCategories.SHOPPING).limitCents)
 
-            viewModel.onClearBudget(ExpenseCategory.SHOPPING)
+            viewModel.onClearBudget(BuiltInCategories.SHOPPING)
             advanceUntilIdle()
 
-            assertNull(viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
-            assertEquals(4_000L, viewModel.budgetFor(ExpenseCategory.TRANSFER).limitCents)
-            assertEquals(listOf(Budget(ExpenseCategory.TRANSFER, 4_000L)), budgetRepo.observeBudgets().first())
+            assertNull(viewModel.budgetFor(BuiltInCategories.SHOPPING).limitCents)
+            assertEquals(4_000L, viewModel.budgetFor(BuiltInCategories.TRANSFER).limitCents)
+            assertEquals(listOf(Budget(BuiltInCategories.TRANSFER.id, 4_000L)), budgetRepo.observeBudgets().first())
             assertTrue("success must not emit an error event", errors.isEmpty())
         }
 
@@ -73,27 +77,27 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
-            viewModel.onClearBudget(ExpenseCategory.SHOPPING)
+            viewModel.onClearBudget(BuiltInCategories.SHOPPING)
             advanceUntilIdle()
 
-            assertNull(viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
+            assertNull(viewModel.budgetFor(BuiltInCategories.SHOPPING).limitCents)
             assertTrue(errors.isEmpty())
         }
 
     @Test
     fun onClearBudget_failure_emitsExactlyOneFallbackError_andKeepsLimit() =
         runTest(testDispatcher) {
-            val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val budgetRepo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
             budgetRepo.nextClearBudgetError = IllegalStateException("raw firestore detail")
             val viewModel = viewModel(budgetRepository = budgetRepo)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
-            viewModel.onClearBudget(ExpenseCategory.SHOPPING)
+            viewModel.onClearBudget(BuiltInCategories.SHOPPING)
             advanceUntilIdle()
 
             assertEquals(listOf(UiText.StringResource(R.string.error_budget_remove_failed)), errors)
-            assertEquals(10_000L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
+            assertEquals(10_000L, viewModel.budgetFor(BuiltInCategories.SHOPPING).limitCents)
         }
 
     // ---- onSetBudget: error event ----
@@ -105,27 +109,27 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 10_000L)
+            viewModel.onSetBudget(BuiltInCategories.SHOPPING, 10_000L)
             advanceUntilIdle()
 
-            assertEquals(10_000L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
+            assertEquals(10_000L, viewModel.budgetFor(BuiltInCategories.SHOPPING).limitCents)
             assertTrue(errors.isEmpty())
         }
 
     @Test
     fun onSetBudget_failure_emitsExactlyOneFallbackError_andLeavesLimitUnchanged() =
         runTest(testDispatcher) {
-            val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 5_000L)))
+            val budgetRepo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 5_000L)))
             budgetRepo.nextSetBudgetError = IllegalStateException("raw firestore detail")
             val viewModel = viewModel(budgetRepository = budgetRepo)
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 7_500L)
+            viewModel.onSetBudget(BuiltInCategories.SHOPPING, 7_500L)
             advanceUntilIdle()
 
             assertEquals(listOf(UiText.StringResource(R.string.error_budget_save_failed)), errors)
-            assertEquals(5_000L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
+            assertEquals(5_000L, viewModel.budgetFor(BuiltInCategories.SHOPPING).limitCents)
         }
 
     @Test
@@ -136,12 +140,12 @@ class DashboardViewModelBudgetEditTest : DashboardViewModelTestBase() {
             val errors = collectAll(viewModel)
             advanceUntilIdle()
 
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 7_500L)
+            viewModel.onSetBudget(BuiltInCategories.SHOPPING, 7_500L)
             advanceUntilIdle()
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 7_500L)
+            viewModel.onSetBudget(BuiltInCategories.SHOPPING, 7_500L)
             advanceUntilIdle()
 
             assertEquals(1, errors.size)
-            assertEquals(7_500L, viewModel.budgetFor(ExpenseCategory.SHOPPING).limitCents)
+            assertEquals(7_500L, viewModel.budgetFor(BuiltInCategories.SHOPPING).limitCents)
         }
 }

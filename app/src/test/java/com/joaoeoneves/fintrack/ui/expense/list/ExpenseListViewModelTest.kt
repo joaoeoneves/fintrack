@@ -3,9 +3,11 @@ package com.joaoeoneves.fintrack.ui.expense.list
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +69,7 @@ class ExpenseListViewModelTest {
         id: String,
         name: String = id,
         amountCents: Long,
-        category: ExpenseCategory = ExpenseCategory.SHOPPING,
+        category: Category = BuiltInCategories.SHOPPING,
         date: Instant,
         note: String? = null,
     ) = Expense(id = id, name = name, amountCents = amountCents, category = category, date = date, note = note)
@@ -75,7 +77,12 @@ class ExpenseListViewModelTest {
     private fun viewModel(
         repository: com.joaoeoneves.fintrack.domain.repository.ExpenseRepository,
         initialPeriod: String = "current",
-    ) = ExpenseListViewModel(repository, SavedStateHandle(mapOf("period" to initialPeriod)), clock)
+    ) = ExpenseListViewModel(
+        repository,
+        FakeCategoryRepository(),
+        SavedStateHandle(mapOf("period" to initialPeriod)),
+        clock,
+    )
 
     // ---- search / query ----
 
@@ -510,7 +517,7 @@ class ExpenseListViewModelTest {
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
             val savedStateHandle = SavedStateHandle(mapOf("period" to "current"))
-            val original = ExpenseListViewModel(repo, savedStateHandle, clock)
+            val original = ExpenseListViewModel(repo, FakeCategoryRepository(), savedStateHandle, clock)
 
             val originalJob = launch { original.uiState.collect {} }
             advanceUntilIdle()
@@ -522,7 +529,7 @@ class ExpenseListViewModelTest {
             // Simulate process death + recreation: construct a *new* ViewModel instance with the
             // *same* SavedStateHandle object, exactly as the real Android framework hands back a
             // restored SavedStateHandle after process death, instead of a fresh empty one.
-            val recreated = ExpenseListViewModel(repo, savedStateHandle, clock)
+            val recreated = ExpenseListViewModel(repo, FakeCategoryRepository(), savedStateHandle, clock)
             val recreatedJob = launch { recreated.uiState.collect {} }
             advanceUntilIdle()
 
@@ -542,7 +549,7 @@ class ExpenseListViewModelTest {
             // not crash or throw on the getStateFlow(key, default) lookup.
             val repo = FakeExpenseRepository()
             val savedStateHandle = SavedStateHandle(mapOf("period" to "current"))
-            val vm = ExpenseListViewModel(repo, savedStateHandle, clock)
+            val vm = ExpenseListViewModel(repo, FakeCategoryRepository(), savedStateHandle, clock)
 
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()

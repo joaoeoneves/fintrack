@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.ui.dashboard
 import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,7 +48,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
             assertEquals(0L, content.outflowCents)
             assertEquals(0L, content.spendingCents)
             assertEquals(0L, content.savedCents)
-            assertEquals(ExpenseCategory.entries, content.categoryTotals.map { it.category })
+            assertEquals(BuiltInCategories.all, content.categoryTotals.map { it.category })
             assertTrue(content.categoryTotals.all { it.totalCents == 0L })
         }
 
@@ -77,21 +77,26 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val expenses =
                 listOf(
-                    expense(id = "s1", amountCents = 1_000L, category = ExpenseCategory.SHOPPING, date = daysAgo(1)),
-                    expense(id = "s2", amountCents = 500L, category = ExpenseCategory.SHOPPING, date = daysAgo(2)),
-                    expense(id = "t1", amountCents = 2_000L, category = ExpenseCategory.TRANSFER, date = daysAgo(3)),
-                    expense(id = "i1", amountCents = 3_000L, category = ExpenseCategory.INVESTMENTS, date = daysAgo(4)),
-                    expense(id = "r1", amountCents = 4_000L, category = ExpenseCategory.RECURRING, date = daysAgo(5)),
+                    expense(id = "s1", amountCents = 1_000L, category = BuiltInCategories.SHOPPING, date = daysAgo(1)),
+                    expense(id = "s2", amountCents = 500L, category = BuiltInCategories.SHOPPING, date = daysAgo(2)),
+                    expense(id = "t1", amountCents = 2_000L, category = BuiltInCategories.TRANSFER, date = daysAgo(3)),
+                    expense(
+                        id = "i1",
+                        amountCents = 3_000L,
+                        category = BuiltInCategories.INVESTMENTS,
+                        date = daysAgo(4),
+                    ),
+                    expense(id = "r1", amountCents = 4_000L, category = BuiltInCategories.RECURRING, date = daysAgo(5)),
                 )
             val viewModel = viewModel(expenseRepository = FakeExpenseRepository(expenses))
             collect(viewModel)
 
             val content = viewModel.content()
             val totalsByCategory = content.categoryTotals.associate { it.category to it.totalCents }
-            assertEquals(1_500L, totalsByCategory.getValue(ExpenseCategory.SHOPPING))
-            assertEquals(2_000L, totalsByCategory.getValue(ExpenseCategory.TRANSFER))
-            assertEquals(3_000L, totalsByCategory.getValue(ExpenseCategory.INVESTMENTS))
-            assertEquals(4_000L, totalsByCategory.getValue(ExpenseCategory.RECURRING))
+            assertEquals(1_500L, totalsByCategory.getValue(BuiltInCategories.SHOPPING))
+            assertEquals(2_000L, totalsByCategory.getValue(BuiltInCategories.TRANSFER))
+            assertEquals(3_000L, totalsByCategory.getValue(BuiltInCategories.INVESTMENTS))
+            assertEquals(4_000L, totalsByCategory.getValue(BuiltInCategories.RECURRING))
             assertEquals(7_500L, content.spendingCents)
             assertEquals(3_000L, content.savedCents)
             assertEquals(10_500L, content.outflowCents)
@@ -101,7 +106,7 @@ class DashboardViewModelExpenseTest : DashboardViewModelTestBase() {
     fun onlyInvestments_countsAsSaved_noSpending() =
         runTest(testDispatcher) {
             val investment =
-                expense(id = "i1", amountCents = 9_999L, category = ExpenseCategory.INVESTMENTS, date = daysAgo(1))
+                expense(id = "i1", amountCents = 9_999L, category = BuiltInCategories.INVESTMENTS, date = daysAgo(1))
             val viewModel = viewModel(expenseRepository = FakeExpenseRepository(listOf(investment)))
             collect(viewModel)
 

@@ -1,7 +1,8 @@
 package com.joaoeoneves.fintrack.testutil
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Income
 import java.time.Instant
 
@@ -10,7 +11,7 @@ fun testExpense(
     id: String,
     amountCents: Long,
     date: Instant,
-    category: ExpenseCategory = ExpenseCategory.SHOPPING,
+    category: Category = BuiltInCategories.SHOPPING,
     isRefund: Boolean = false,
 ) = Expense(
     id = id,

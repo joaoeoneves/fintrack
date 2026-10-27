@@ -13,8 +13,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -63,7 +63,7 @@ class DashboardAddExpenseEntryPointTest {
         id = id,
         name = "Expense $id",
         amountCents = amountCents,
-        category = ExpenseCategory.SHOPPING,
+        category = BuiltInCategories.SHOPPING,
         date = date,
         note = null,
     )

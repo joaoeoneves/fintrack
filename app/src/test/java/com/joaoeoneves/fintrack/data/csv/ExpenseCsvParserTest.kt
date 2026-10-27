@@ -1,6 +1,6 @@
 package com.joaoeoneves.fintrack.data.csv
 
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -53,7 +53,7 @@ class ExpenseCsvParserTest {
         val coffee = result.validExpenses[0]
         assertEquals("Coffee", coffee.name)
         assertEquals(500L, coffee.amountCents)
-        assertEquals(ExpenseCategory.SHOPPING, coffee.category)
+        assertEquals(BuiltInCategories.SHOPPING, coffee.category)
         // Full offset-aware instant: unaffected by the zone argument.
         assertEquals(Instant.parse("2024-01-15T00:00:00Z"), coffee.date)
         assertEquals("with milk", coffee.note)
@@ -62,7 +62,7 @@ class ExpenseCsvParserTest {
         val rent = result.validExpenses[1]
         assertEquals("Rent", rent.name)
         assertEquals(150_000L, rent.amountCents)
-        assertEquals(ExpenseCategory.RECURRING, rent.category)
+        assertEquals(BuiltInCategories.RECURRING, rent.category)
         // Bare date: resolved against the passed-in zone, not hardcoded UTC.
         assertEquals(LocalDate.parse("2024-02-01").atStartOfDay(zone).toInstant(), rent.date)
         assertNull(rent.note)
@@ -84,7 +84,7 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.failures.isEmpty())
         assertEquals(
-            listOf(ExpenseCategory.SHOPPING, ExpenseCategory.SHOPPING, ExpenseCategory.SHOPPING),
+            listOf(BuiltInCategories.SHOPPING, BuiltInCategories.SHOPPING, BuiltInCategories.SHOPPING),
             result.validExpenses.map { it.category },
         )
     }
@@ -102,7 +102,7 @@ class ExpenseCsvParserTest {
 
         assertTrue(result.failures.isEmpty())
         assertEquals(
-            listOf(ExpenseCategory.TRANSFER, ExpenseCategory.TRANSFER),
+            listOf(BuiltInCategories.TRANSFER, BuiltInCategories.TRANSFER),
             result.validExpenses.map { it.category },
         )
     }
@@ -124,11 +124,11 @@ class ExpenseCsvParserTest {
         assertTrue(result.failures.isEmpty())
         assertEquals(
             listOf(
-                ExpenseCategory.TRANSFER,
-                ExpenseCategory.INVESTMENTS,
-                ExpenseCategory.SHOPPING,
-                ExpenseCategory.FOOD,
-                ExpenseCategory.RECURRING,
+                BuiltInCategories.TRANSFER,
+                BuiltInCategories.INVESTMENTS,
+                BuiltInCategories.SHOPPING,
+                BuiltInCategories.FOOD,
+                BuiltInCategories.RECURRING,
             ),
             result.validExpenses.map { it.category },
         )
@@ -287,7 +287,7 @@ class ExpenseCsvParserTest {
         val rent = result.validExpenses[1]
         assertEquals("Rent", rent.name)
         assertEquals(150_000L, rent.amountCents)
-        assertEquals(ExpenseCategory.RECURRING, rent.category)
+        assertEquals(BuiltInCategories.RECURRING, rent.category)
         assertEquals(LocalDate.parse("2024-02-01").atStartOfDay(zone).toInstant(), rent.date)
         assertNull(rent.note)
     }
@@ -364,13 +364,13 @@ class ExpenseCsvParserTest {
         val coffee = result.validExpenses.single()
         assertEquals("Coffee", coffee.name)
         assertEquals(500L, coffee.amountCents)
-        assertEquals(ExpenseCategory.SHOPPING, coffee.category)
+        assertEquals(BuiltInCategories.SHOPPING, coffee.category)
         assertEquals("with milk", coffee.note)
     }
 
     @Test
     fun bomPrefixedFile_withActuallyWrongHeader_stillProducesError() {
-        val bom = "﻿"
+        val bom = ""
         val csv = "$bom" + "foo,bar,baz,qux,quux\nA,100,Shopping,2024-01-01,\n"
 
         val outcome = ExpenseCsvParser.parse(csv)

@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.UiText
 
@@ -14,7 +14,7 @@ sealed interface ExpenseListUiState {
         val query: String,
         val sortOption: SortOption,
         val expenses: List<Expense>,
-        val categoryFilter: ExpenseCategory? = null,
+        val categoryFilter: CategoryId? = null,
     ) : ExpenseListUiState
 
     data class Error(

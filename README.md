@@ -110,7 +110,8 @@ different, nav-entry-scoped instance.
 users/{uid}/expenses/{expenseId}
   name: string
   amountCents: number       // integer minor units, always > 0 — avoids float rounding errors
-  category: string          // TRANSFER | INVESTMENTS | SHOPPING | FOOD | RECURRING
+  category: string          // category id: a built-in (TRANSFER | INVESTMENTS | SHOPPING | FOOD |
+                            // RECURRING) or a users/{uid}/categories document id
   isRefund: boolean         // optional, absent = false; a refund subtracts from its category
   date: timestamp
   note: string | null
@@ -123,9 +124,17 @@ users/{uid}/income/{incomeId}
   note: string | null
   createdAt / updatedAt: timestamp
 
-users/{uid}/budgets/{categoryName}
+users/{uid}/budgets/{categoryId}
   limitCents: number
   updatedAt: timestamp
+
+users/{uid}/categories/{categoryId}   // user categories (generated ids) and optional overrides
+  name: string | null       //   of the built-ins (same id; null name = localized default)
+  iconKey / colorKey: string
+  kind: string              // SPENDING | SAVING
+  order: number
+  archived / builtIn: boolean
+  createdAt / updatedAt: timestamp
 ```
 
 Security rules ([`firestore.rules`](firestore.rules)) restrict every collection to

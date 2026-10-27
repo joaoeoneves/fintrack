@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
@@ -99,19 +99,19 @@ class DashboardViewModel
         val budgetErrorEvent: Flow<UiText> = budgetErrors.receiveAsFlow()
 
         fun onSetBudget(
-            category: ExpenseCategory,
+            category: Category,
             limitCents: Long,
         ) {
             viewModelScope.launch {
-                budgetRepository.setBudget(category, limitCents).onFailure {
+                budgetRepository.setBudget(category.id, limitCents).onFailure {
                     budgetErrors.send(UiText.StringResource(R.string.error_budget_save_failed))
                 }
             }
         }
 
-        fun onClearBudget(category: ExpenseCategory) {
+        fun onClearBudget(category: Category) {
             viewModelScope.launch {
-                budgetRepository.clearBudget(category).onFailure {
+                budgetRepository.clearBudget(category.id).onFailure {
                     budgetErrors.send(UiText.StringResource(R.string.error_budget_remove_failed))
                 }
             }

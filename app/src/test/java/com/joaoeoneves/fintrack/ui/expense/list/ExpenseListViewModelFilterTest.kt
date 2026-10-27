@@ -2,10 +2,11 @@ package com.joaoeoneves.fintrack.ui.expense.list
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories.RECURRING
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory.RECURRING
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +62,7 @@ class ExpenseListViewModelFilterTest {
             id = "coffee",
             name = "Morning Coffee",
             amountCents = 450L,
-            category = ExpenseCategory.SHOPPING,
+            category = BuiltInCategories.SHOPPING,
             date = now.minus(1, ChronoUnit.DAYS),
             note = "oat milk",
         )
@@ -89,7 +90,7 @@ class ExpenseListViewModelFilterTest {
     private fun viewModel(
         repository: ExpenseRepository,
         savedStateHandle: SavedStateHandle = SavedStateHandle(mapOf("period" to "current")),
-    ) = ExpenseListViewModel(repository, savedStateHandle, clock)
+    ) = ExpenseListViewModel(repository, FakeCategoryRepository(), savedStateHandle, clock)
 
     private fun TestScope.collect(vm: ExpenseListViewModel) {
         backgroundScope.launch { vm.uiState.collect {} }
@@ -117,10 +118,10 @@ class ExpenseListViewModelFilterTest {
             val vm = viewModel(FakeExpenseRepository(listOf(coffee, shoes, rent)))
             collect(vm)
 
-            vm.onCategorySelected(ExpenseCategory.SHOPPING)
+            vm.onCategorySelected(BuiltInCategories.SHOPPING.id)
             advanceUntilIdle()
-            assertEquals(ExpenseCategory.SHOPPING, vm.categoryFilter.value)
-            assertEquals(ExpenseCategory.SHOPPING, vm.content().categoryFilter)
+            assertEquals(BuiltInCategories.SHOPPING.id, vm.categoryFilter.value)
+            assertEquals(BuiltInCategories.SHOPPING.id, vm.content().categoryFilter)
             assertEquals(setOf(coffee, shoes), vm.content().expenses.toSet())
 
             vm.onCategorySelected(null)
@@ -135,7 +136,7 @@ class ExpenseListViewModelFilterTest {
             val vm = viewModel(FakeExpenseRepository(listOf(coffee, rent)))
             collect(vm)
 
-            vm.onCategorySelected(ExpenseCategory.INVESTMENTS)
+            vm.onCategorySelected(BuiltInCategories.INVESTMENTS.id)
             advanceUntilIdle()
 
             assertTrue(vm.content().expenses.isEmpty())
@@ -147,13 +148,13 @@ class ExpenseListViewModelFilterTest {
             val repo = FakeExpenseRepository(listOf(coffee, rent))
             val handle = SavedStateHandle(mapOf("period" to "current"))
             val original = viewModel(repo, handle)
-            original.onCategorySelected(ExpenseCategory.RECURRING)
+            original.onCategorySelected(BuiltInCategories.RECURRING.id)
 
-            assertEquals(ExpenseCategory.RECURRING, handle.get<ExpenseCategory>("categoryFilter"))
+            assertEquals("RECURRING", handle.get<String>("categoryFilter"))
 
             val recreated = viewModel(repo, handle)
             collect(recreated)
-            assertEquals(ExpenseCategory.RECURRING, recreated.categoryFilter.value)
+            assertEquals(BuiltInCategories.RECURRING.id, recreated.categoryFilter.value)
             assertEquals(listOf(rent), recreated.content().expenses)
         }
 
@@ -163,7 +164,7 @@ class ExpenseListViewModelFilterTest {
             val vm = viewModel(FakeExpenseRepository(listOf(coffee, coffeeSub, rent)))
             collect(vm)
 
-            vm.onCategorySelected(ExpenseCategory.RECURRING)
+            vm.onCategorySelected(BuiltInCategories.RECURRING.id)
             vm.onQueryChanged("coffee")
             advanceUntilIdle()
 
@@ -190,7 +191,7 @@ class ExpenseListViewModelFilterTest {
             val vm = viewModel(FakeExpenseRepository(listOf(coffee, rent)))
             collect(vm)
 
-            vm.onCategoryLabelsChanged(mapOf(ExpenseCategory.RECURRING to "Recorrente"))
+            vm.onCategoryLabelsChanged(mapOf(BuiltInCategories.RECURRING.id to "Recorrente"))
             vm.onQueryChanged("orrent")
             advanceUntilIdle()
 
@@ -277,11 +278,11 @@ class ExpenseListViewModelFilterTest {
             advanceUntilIdle()
             vm.onQueryChanged("co")
             advanceUntilIdle()
-            vm.onCategorySelected(ExpenseCategory.SHOPPING)
+            vm.onCategorySelected(BuiltInCategories.SHOPPING.id)
             advanceUntilIdle()
             vm.onSortSelected(SortOption.AMOUNT_ASC)
             advanceUntilIdle()
-            vm.onCategoryLabelsChanged(mapOf(ExpenseCategory.SHOPPING to "Compras"))
+            vm.onCategoryLabelsChanged(mapOf(BuiltInCategories.SHOPPING.id to "Compras"))
             advanceUntilIdle()
 
             assertEquals(1, repo.observeCalls)

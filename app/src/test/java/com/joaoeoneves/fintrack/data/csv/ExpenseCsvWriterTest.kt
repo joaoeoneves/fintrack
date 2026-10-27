@@ -1,7 +1,8 @@
 package com.joaoeoneves.fintrack.data.csv
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -15,7 +16,7 @@ class ExpenseCsvWriterTest {
         id: String = "",
         name: String,
         amountCents: Long,
-        category: ExpenseCategory,
+        category: Category,
         date: Instant,
         note: String?,
     ) = Expense(id = id, name = name, amountCents = amountCents, category = category, date = date, note = note)
@@ -27,14 +28,14 @@ class ExpenseCsvWriterTest {
                 expense(
                     name = "Coffee",
                     amountCents = 500L,
-                    category = ExpenseCategory.SHOPPING,
+                    category = BuiltInCategories.SHOPPING,
                     date = Instant.parse("2024-01-15T00:00:00Z"),
                     note = "with milk",
                 ),
                 expense(
                     name = "Rent",
                     amountCents = 150_000L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2024-02-01T00:00:00Z"),
                     note = null,
                 ),
@@ -63,7 +64,7 @@ class ExpenseCsvWriterTest {
                 expense(
                     name = "Lunch, team",
                     amountCents = 1_234L,
-                    category = ExpenseCategory.SHOPPING,
+                    category = BuiltInCategories.SHOPPING,
                     date = Instant.parse("2024-01-01T00:00:00Z"),
                     note = "she said \"hi\"",
                 ),
@@ -85,35 +86,35 @@ class ExpenseCsvWriterTest {
                 expense(
                     name = "Coffee",
                     amountCents = 599L, // not a round number of dollars
-                    category = ExpenseCategory.SHOPPING,
+                    category = BuiltInCategories.SHOPPING,
                     date = Instant.parse("2024-01-15T08:30:00Z"),
                     note = null,
                 ),
                 expense(
                     name = "Team lunch, offsite",
                     amountCents = 12_345L,
-                    category = ExpenseCategory.TRANSFER,
+                    category = BuiltInCategories.TRANSFER,
                     date = Instant.parse("2024-03-01T00:00:00Z"),
                     note = "with \"the whole\" team",
                 ),
                 expense(
                     name = "401k contribution",
                     amountCents = 500_000L,
-                    category = ExpenseCategory.INVESTMENTS,
+                    category = BuiltInCategories.INVESTMENTS,
                     date = Instant.parse("2024-06-30T23:59:59Z"),
                     note = "",
                 ),
                 expense(
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2024-12-31T00:00:00Z"),
                     note = "monthly, auto-renews",
                 ),
                 expense(
                     name = "Multi-line note expense",
                     amountCents = 2_500L,
-                    category = ExpenseCategory.SHOPPING,
+                    category = BuiltInCategories.SHOPPING,
                     date = Instant.parse("2024-07-04T00:00:00Z"),
                     note = "line one\nline two\nline three",
                 ),
@@ -147,7 +148,7 @@ class ExpenseCsvWriterTest {
             expense(
                 name = "Team offsite",
                 amountCents = 45_000L,
-                category = ExpenseCategory.TRANSFER,
+                category = BuiltInCategories.TRANSFER,
                 date = Instant.parse("2024-09-01T00:00:00Z"),
                 note = "Paid for everyone.\nWill be reimbursed next month.",
             )
@@ -165,7 +166,7 @@ class ExpenseCsvWriterTest {
     @Test
     fun roundTrip_allCategories_matchAfterWriteAndParse() {
         val originals =
-            ExpenseCategory.entries.mapIndexed { index, category ->
+            BuiltInCategories.all.mapIndexed { index, category ->
                 expense(
                     name = "Expense $index",
                     amountCents = (index + 1) * 111L,

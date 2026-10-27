@@ -1,6 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,20 +10,20 @@ class PieChartClampTest {
     fun negativeTotals_areClampedToZero_positivesAndZerosUnchanged_orderPreserved() {
         val slices =
             listOf(
-                CategoryTotal(ExpenseCategory.TRANSFER, 1_000L),
-                CategoryTotal(ExpenseCategory.INVESTMENTS, 0L),
-                CategoryTotal(ExpenseCategory.SHOPPING, -2_500L),
-                CategoryTotal(ExpenseCategory.RECURRING, 300L),
+                CategoryTotal(BuiltInCategories.TRANSFER, 1_000L),
+                CategoryTotal(BuiltInCategories.INVESTMENTS, 0L),
+                CategoryTotal(BuiltInCategories.SHOPPING, -2_500L),
+                CategoryTotal(BuiltInCategories.RECURRING, 300L),
             )
 
         val clamped = slices.clampedForChart()
 
         assertEquals(
             listOf(
-                CategoryTotal(ExpenseCategory.TRANSFER, 1_000L),
-                CategoryTotal(ExpenseCategory.INVESTMENTS, 0L),
-                CategoryTotal(ExpenseCategory.SHOPPING, 0L),
-                CategoryTotal(ExpenseCategory.RECURRING, 300L),
+                CategoryTotal(BuiltInCategories.TRANSFER, 1_000L),
+                CategoryTotal(BuiltInCategories.INVESTMENTS, 0L),
+                CategoryTotal(BuiltInCategories.SHOPPING, 0L),
+                CategoryTotal(BuiltInCategories.RECURRING, 300L),
             ),
             clamped,
         )

@@ -12,7 +12,7 @@ class ExpenseRefundTest {
             id = "e1",
             name = "Shoes",
             amountCents = 5_000L,
-            category = ExpenseCategory.SHOPPING,
+            category = BuiltInCategories.SHOPPING,
             date = Instant.parse("2026-10-01T12:00:00Z"),
             note = null,
         )

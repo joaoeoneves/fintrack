@@ -32,8 +32,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.optionsIncluding
+import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
@@ -59,10 +62,11 @@ fun ExpenseListScreen(
     // after a round trip through the repository's live Firestore listener and is too slow to
     // drive a controlled text field without dropping/reordering fast-typed characters.
     val query by viewModel.query.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Localized category labels, so the search query also matches the displayed category names.
-    val labels = ExpenseCategory.entries.associateWith { it.displayName }
+    val labels = categories.associate { it.id to it.displayName }
     LaunchedEffect(labels) { viewModel.onCategoryLabelsChanged(labels) }
 
     // Re-subscribes on resume so "This month" re-resolves after the calendar rolls over.
@@ -98,15 +102,8 @@ fun ExpenseListScreen(
                 ExpenseListContent(
                     state = state,
                     query = query,
-                    actions =
-                        ExpenseListActions(
-                            periodActions = viewModel.periodActions(),
-                            onQueryChanged = viewModel::onQueryChanged,
-                            onCategorySelected = viewModel::onCategorySelected,
-                            onSortSelected = viewModel::onSortSelected,
-                            onOpenExpense = onOpenExpense,
-                            onDelete = viewModel::onDeleteExpense,
-                        ),
+                    categories = categories,
+                    actions = viewModel.listActions(onOpenExpense),
                     contentPadding = innerPadding,
                 )
             }
@@ -124,6 +121,16 @@ fun ExpenseListScreen(
         }
     }
 }
+
+private fun ExpenseListViewModel.listActions(onOpenExpense: (String) -> Unit): ExpenseListActions =
+    ExpenseListActions(
+        periodActions = periodActions(),
+        onQueryChanged = ::onQueryChanged,
+        onCategorySelected = ::onCategorySelected,
+        onSortSelected = ::onSortSelected,
+        onOpenExpense = onOpenExpense,
+        onDelete = ::onDeleteExpense,
+    )
 
 private fun ExpenseListViewModel.periodActions(): PeriodActions =
     PeriodActions(onPrevious = ::onPreviousMonth, onNext = ::onNextMonth, onSelect = ::onPeriodSelected)
@@ -145,7 +152,7 @@ private fun ExpenseListTopBar(onBack: () -> Unit) {
 private data class ExpenseListActions(
     val periodActions: PeriodActions,
     val onQueryChanged: (String) -> Unit,
-    val onCategorySelected: (ExpenseCategory?) -> Unit,
+    val onCategorySelected: (CategoryId?) -> Unit,
     val onSortSelected: (SortOption) -> Unit,
     val onOpenExpense: (String) -> Unit,
     val onDelete: (String) -> Unit,
@@ -155,6 +162,7 @@ private data class ExpenseListActions(
 private fun ExpenseListContent(
     state: ExpenseListUiState.Content,
     query: String,
+    categories: List<Category>,
     actions: ExpenseListActions,
     contentPadding: PaddingValues,
 ) {
@@ -178,6 +186,8 @@ private fun ExpenseListContent(
         )
 
         CategoryFilterRow(
+            // Archived categories are hidden unless one is the active filter.
+            categories = categories.optionsIncluding(state.categoryFilter?.let(categories::resolve)),
             selected = state.categoryFilter,
             onSelected = actions.onCategorySelected,
         )
@@ -204,7 +214,7 @@ private fun ExpenseListContent(
 private fun ExpenseListItems(
     expenses: List<Expense>,
     query: String,
-    categoryFilter: ExpenseCategory?,
+    categoryFilter: CategoryId?,
     onOpenExpense: (String) -> Unit,
     onDelete: (String) -> Unit,
 ) {

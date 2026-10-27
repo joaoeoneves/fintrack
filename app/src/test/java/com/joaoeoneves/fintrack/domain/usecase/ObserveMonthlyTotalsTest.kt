@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.MonthlyTotals
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
@@ -29,7 +30,11 @@ class ObserveMonthlyTotalsTest {
 
     private val expenses = CountingExpenseRepository()
     private val income = CountingIncomeRepository()
-    private val useCase = ObserveMonthlyTotals(CombinedTransactionRepository(expenses, income))
+    private val useCase =
+        ObserveMonthlyTotals(
+            CombinedTransactionRepository(expenses, income),
+            FakeCategoryRepository(),
+        )
 
     private fun noon(month: YearMonth) = month.atDay(10).atTime(12, 0).toInstant(ZoneOffset.UTC)
 

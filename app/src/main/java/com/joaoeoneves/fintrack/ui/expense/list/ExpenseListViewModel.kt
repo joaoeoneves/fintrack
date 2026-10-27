@@ -5,12 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.messageOr
@@ -23,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -56,6 +60,7 @@ class ExpenseListViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
+        categoryRepository: CategoryRepository,
         private val savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
@@ -79,11 +84,20 @@ class ExpenseListViewModel
         private val undoEvents = Channel<Expense>(Channel.BUFFERED)
         val undoEvent: Flow<Expense> = undoEvents.receiveAsFlow()
 
-        val categoryFilter: StateFlow<ExpenseCategory?> =
-            savedStateHandle.getStateFlow<ExpenseCategory?>(KEY_CATEGORY_FILTER, null)
+        /** The full category catalog (archived included), for the filter chips and labels. */
+        val categories: StateFlow<List<Category>> =
+            categoryRepository
+                .observeCategories()
+                .catch { emit(BuiltInCategories.all) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), BuiltInCategories.all)
+
+        // Persisted in the SavedStateHandle as the id's raw String (a value class isn't Bundle-able).
+        private val selectedCategory =
+            MutableStateFlow(savedStateHandle.get<String>(KEY_CATEGORY_FILTER)?.let(::CategoryId))
+        val categoryFilter: StateFlow<CategoryId?> = selectedCategory.asStateFlow()
 
         // Localized category labels the query is also matched against; pushed in by the screen.
-        private val categoryLabels = MutableStateFlow<Map<ExpenseCategory, String>>(emptyMap())
+        private val categoryLabels = MutableStateFlow<Map<CategoryId, String>>(emptyMap())
 
         // Only the period and the retry trigger drive the Firestore subscription; the query, filter
         // and sort are applied afterwards (below), so typing or changing them never re-subscribes.
@@ -136,11 +150,12 @@ class ExpenseListViewModel
             savedStateHandle[KEY_QUERY] = newQuery
         }
 
-        fun onCategorySelected(category: ExpenseCategory?) {
-            savedStateHandle[KEY_CATEGORY_FILTER] = category
+        fun onCategorySelected(id: CategoryId?) {
+            savedStateHandle[KEY_CATEGORY_FILTER] = id?.value
+            selectedCategory.value = id
         }
 
-        fun onCategoryLabelsChanged(labels: Map<ExpenseCategory, String>) {
+        fun onCategoryLabelsChanged(labels: Map<CategoryId, String>) {
             categoryLabels.value = labels
         }
 

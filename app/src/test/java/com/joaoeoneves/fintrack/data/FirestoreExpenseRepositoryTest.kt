@@ -5,6 +5,9 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.TestDocumentSnapshots
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.testutil.FirebaseTestApp
 import org.junit.Assert.assertEquals
@@ -79,7 +82,7 @@ class FirestoreExpenseRepositoryTest {
                 id = "good1",
                 name = "Coffee",
                 amountCents = 500L,
-                category = com.joaoeoneves.fintrack.domain.model.ExpenseCategory.SHOPPING,
+                category = BuiltInCategories.SHOPPING,
                 date = Instant.parse("2024-01-15T00:00:00Z"),
                 note = "with milk",
             ),
@@ -140,18 +143,35 @@ class FirestoreExpenseRepositoryTest {
     }
 
     @Test
-    fun malformedDoc_invalidCategoryEnumValue_isDroppedAsNull_andLogsWarning() {
+    fun unknownCategoryId_isKept_withUnknownPlaceholder_andNoWarning() {
         val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("NOT_A_REAL_CATEGORY"))
         val snapshot = TestDocumentSnapshots.found(firestore, id = "bad-category-enum", fields = fields)
 
         val result = toExpenseOrNull(snapshot)
 
-        assertNull(result)
-        val logs = ShadowLog.getLogsForTag(TAG)
-        assertTrue(
-            "expected a warning log for invalid 'category', got: $logs",
-            logs.any { it.msg.contains("'category'") },
-        )
+        assertEquals(Category.unknown(CategoryId("NOT_A_REAL_CATEGORY")), result?.category)
+        assertEquals("bad-category-enum", result?.id)
+        assertEquals(500L, result?.amountCents)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
+    }
+
+    @Test
+    fun blankCategory_isDroppedAsNull_andLogsWarning() {
+        val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("  "))
+        val snapshot = TestDocumentSnapshots.found(firestore, id = "blank-category", fields = fields)
+
+        assertNull(toExpenseOrNull(snapshot))
+        assertTrue(ShadowLog.getLogsForTag(TAG).any { it.msg.contains("'category'") })
+    }
+
+    @Test
+    fun builtInCategoryId_resolvesToTheBuiltIn() {
+        BuiltInCategories.all.forEach { builtIn ->
+            val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue(builtIn.id.value))
+            val snapshot = TestDocumentSnapshots.found(firestore, id = "e-${builtIn.id.value}", fields = fields)
+
+            assertEquals(builtIn, toExpenseOrNull(snapshot)?.category)
+        }
     }
 
     @Test
@@ -161,17 +181,20 @@ class FirestoreExpenseRepositoryTest {
 
         val result = toExpenseOrNull(snapshot)
 
-        assertEquals(com.joaoeoneves.fintrack.domain.model.ExpenseCategory.FOOD, result?.category)
+        assertEquals(BuiltInCategories.FOOD, result?.category)
         assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
     }
 
     @Test
-    fun unknownCategoryName_groceries_isStillDroppedAsNull() {
+    fun unknownCategoryName_groceries_isKept_asUnknownPlaceholder() {
         val fields = validFields() + ("category" to TestDocumentSnapshots.stringValue("GROCERIES"))
         val snapshot = TestDocumentSnapshots.found(firestore, id = "groceries", fields = fields)
 
-        assertNull(toExpenseOrNull(snapshot))
-        assertTrue(ShadowLog.getLogsForTag(TAG).any { it.msg.contains("'category'") })
+        val category = toExpenseOrNull(snapshot)?.category
+
+        assertEquals(CategoryId("GROCERIES"), category?.id)
+        assertTrue(category?.isUnknown == true)
+        assertTrue(ShadowLog.getLogsForTag(TAG).isEmpty())
     }
 
     @Test
@@ -245,7 +268,7 @@ class FirestoreExpenseRepositoryTest {
                 id = "e1",
                 name = "Coffee",
                 amountCents = 500L,
-                category = com.joaoeoneves.fintrack.domain.model.ExpenseCategory.SHOPPING,
+                category = BuiltInCategories.SHOPPING,
                 date = Instant.parse("2024-01-15T00:00:00Z"),
                 note = null,
             )

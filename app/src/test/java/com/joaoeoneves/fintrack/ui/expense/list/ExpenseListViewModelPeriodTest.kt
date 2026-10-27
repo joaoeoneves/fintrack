@@ -2,9 +2,10 @@ package com.joaoeoneves.fintrack.ui.expense.list
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.encode
@@ -67,7 +68,7 @@ class ExpenseListViewModelPeriodTest {
     private fun item(
         id: String,
         date: Instant,
-    ) = Expense(id = id, name = id, amountCents = 100L, category = ExpenseCategory.SHOPPING, date = date, note = null)
+    ) = Expense(id = id, name = id, amountCents = 100L, category = BuiltInCategories.SHOPPING, date = date, note = null)
 
     private val aug = item("aug", noonOn(2026, 8, 15))
     private val sep = item("sep", noonOn(2026, 9, 15))
@@ -79,7 +80,7 @@ class ExpenseListViewModelPeriodTest {
     private fun viewModel(
         handle: SavedStateHandle,
         clock: Clock = this.clock,
-    ) = ExpenseListViewModel(repo, handle, clock)
+    ) = ExpenseListViewModel(repo, FakeCategoryRepository(), handle, clock)
 
     private fun TestScope.content(vm: ExpenseListViewModel): ExpenseListUiState.Content {
         backgroundScope.launch { vm.uiState.collect {} }

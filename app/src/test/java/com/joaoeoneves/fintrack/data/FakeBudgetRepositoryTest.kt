@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import com.joaoeoneves.fintrack.domain.model.Budget
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -36,7 +36,11 @@ class FakeBudgetRepositoryTest {
     @Test
     fun observeBudgets_reflectsConstructorSeededBudgets() =
         runBlocking {
-            val seeded = listOf(Budget(ExpenseCategory.SHOPPING, 10_000L), Budget(ExpenseCategory.TRANSFER, 5_000L))
+            val seeded =
+                listOf(
+                    Budget(BuiltInCategories.SHOPPING.id, 10_000L),
+                    Budget(BuiltInCategories.TRANSFER.id, 5_000L),
+                )
             val repo = FakeBudgetRepository(seeded)
 
             val result = repo.observeBudgets().first()
@@ -55,14 +59,14 @@ class FakeBudgetRepositoryTest {
                     repo.observeBudgets().collect { snapshots.add(it) }
                 }
 
-            repo.setBudget(ExpenseCategory.SHOPPING, 12_345L)
+            repo.setBudget(BuiltInCategories.SHOPPING.id, 12_345L)
             yield() // let the collector's suspended continuation process the new emission
 
             job.cancel()
 
             assertEquals(2, snapshots.size)
             assertTrue("initial emission should be empty", snapshots[0].isEmpty())
-            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 12_345L)), snapshots[1])
+            assertEquals(listOf(Budget(BuiltInCategories.SHOPPING.id, 12_345L)), snapshots[1])
         }
 
     // ---- setBudget: upserts (replaces existing entry rather than duplicating) ----
@@ -72,24 +76,24 @@ class FakeBudgetRepositoryTest {
         runBlocking {
             val repo = FakeBudgetRepository()
 
-            val result = repo.setBudget(ExpenseCategory.SHOPPING, 10_000L)
+            val result = repo.setBudget(BuiltInCategories.SHOPPING.id, 10_000L)
 
             assertTrue(result.isSuccess)
             val stored = repo.observeBudgets().first()
-            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)), stored)
+            assertEquals(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)), stored)
         }
 
     @Test
     fun setBudget_existingCategory_replacesLimitRatherThanDuplicating() =
         runBlocking {
-            val repo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val repo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
 
-            val result = repo.setBudget(ExpenseCategory.SHOPPING, 20_000L)
+            val result = repo.setBudget(BuiltInCategories.SHOPPING.id, 20_000L)
 
             assertTrue(result.isSuccess)
             val stored = repo.observeBudgets().first()
             assertEquals(1, stored.size)
-            assertEquals(20_000L, stored.single { it.category == ExpenseCategory.SHOPPING }.limitCents)
+            assertEquals(20_000L, stored.single { it.categoryId == BuiltInCategories.SHOPPING.id }.limitCents)
         }
 
     @Test
@@ -97,14 +101,14 @@ class FakeBudgetRepositoryTest {
         runBlocking {
             val repo = FakeBudgetRepository()
 
-            repo.setBudget(ExpenseCategory.SHOPPING, 10_000L)
-            repo.setBudget(ExpenseCategory.TRANSFER, 5_000L)
-            repo.setBudget(ExpenseCategory.SHOPPING, 15_000L) // update, not a new entry
+            repo.setBudget(BuiltInCategories.SHOPPING.id, 10_000L)
+            repo.setBudget(BuiltInCategories.TRANSFER.id, 5_000L)
+            repo.setBudget(BuiltInCategories.SHOPPING.id, 15_000L) // update, not a new entry
 
-            val stored = repo.observeBudgets().first().associateBy { it.category }
+            val stored = repo.observeBudgets().first().associateBy { it.categoryId }
             assertEquals(2, stored.size)
-            assertEquals(15_000L, stored.getValue(ExpenseCategory.SHOPPING).limitCents)
-            assertEquals(5_000L, stored.getValue(ExpenseCategory.TRANSFER).limitCents)
+            assertEquals(15_000L, stored.getValue(BuiltInCategories.SHOPPING.id).limitCents)
+            assertEquals(5_000L, stored.getValue(BuiltInCategories.TRANSFER.id).limitCents)
         }
 
     @Test
@@ -115,14 +119,14 @@ class FakeBudgetRepositoryTest {
             // accidentally.
             val repo = FakeBudgetRepository()
 
-            val zeroResult = repo.setBudget(ExpenseCategory.SHOPPING, 0L)
-            val negativeResult = repo.setBudget(ExpenseCategory.TRANSFER, -500L)
+            val zeroResult = repo.setBudget(BuiltInCategories.SHOPPING.id, 0L)
+            val negativeResult = repo.setBudget(BuiltInCategories.TRANSFER.id, -500L)
 
             assertTrue(zeroResult.isSuccess)
             assertTrue(negativeResult.isSuccess)
-            val stored = repo.observeBudgets().first().associateBy { it.category }
-            assertEquals(0L, stored.getValue(ExpenseCategory.SHOPPING).limitCents)
-            assertEquals(-500L, stored.getValue(ExpenseCategory.TRANSFER).limitCents)
+            val stored = repo.observeBudgets().first().associateBy { it.categoryId }
+            assertEquals(0L, stored.getValue(BuiltInCategories.SHOPPING.id).limitCents)
+            assertEquals(-500L, stored.getValue(BuiltInCategories.TRANSFER.id).limitCents)
         }
 
     // ---- nextObserveBudgetsError ----
@@ -130,18 +134,18 @@ class FakeBudgetRepositoryTest {
     @Test
     fun observeBudgets_defaultNullError_behavesNormally() =
         runBlocking {
-            val repo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val repo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
 
             assertNull(repo.nextObserveBudgetsError)
             val result = repo.observeBudgets().first()
 
-            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)), result)
+            assertEquals(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)), result)
         }
 
     @Test
     fun observeBudgets_withErrorSet_flowThrowsThatExactThrowable() =
         runBlocking {
-            val repo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val repo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
             val boom = IllegalStateException("Firestore unavailable")
             repo.nextObserveBudgetsError = boom
 
@@ -157,7 +161,7 @@ class FakeBudgetRepositoryTest {
     @Test
     fun observeBudgets_withErrorSet_throwsOnEveryCollection_untilClearedAgain() =
         runBlocking {
-            val repo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val repo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
             val boom = RuntimeException("boom")
             repo.nextObserveBudgetsError = boom
 
@@ -182,7 +186,7 @@ class FakeBudgetRepositoryTest {
             val repo = FakeBudgetRepository()
             repo.nextObserveBudgetsError = RuntimeException("observe is broken")
 
-            val result = repo.setBudget(ExpenseCategory.SHOPPING, 10_000L)
+            val result = repo.setBudget(BuiltInCategories.SHOPPING.id, 10_000L)
 
             assertTrue(result.isSuccess)
 
@@ -207,22 +211,25 @@ class FakeBudgetRepositoryTest {
         runBlocking {
             val repo =
                 FakeBudgetRepository(
-                    listOf(Budget(ExpenseCategory.SHOPPING, 10_000L), Budget(ExpenseCategory.TRANSFER, 5_000L)),
+                    listOf(
+                        Budget(BuiltInCategories.SHOPPING.id, 10_000L),
+                        Budget(BuiltInCategories.TRANSFER.id, 5_000L),
+                    ),
                 )
 
-            val result = repo.clearBudget(ExpenseCategory.SHOPPING)
+            val result = repo.clearBudget(BuiltInCategories.SHOPPING.id)
 
             assertTrue(result.isSuccess)
-            assertEquals(listOf(Budget(ExpenseCategory.TRANSFER, 5_000L)), repo.observeBudgets().first())
+            assertEquals(listOf(Budget(BuiltInCategories.TRANSFER.id, 5_000L)), repo.observeBudgets().first())
         }
 
     @Test
     fun clearBudget_missingCategory_succeeds_andLeavesStateUnchanged() =
         runBlocking {
-            val seeded = listOf(Budget(ExpenseCategory.TRANSFER, 5_000L))
+            val seeded = listOf(Budget(BuiltInCategories.TRANSFER.id, 5_000L))
             val repo = FakeBudgetRepository(seeded)
 
-            val result = repo.clearBudget(ExpenseCategory.SHOPPING)
+            val result = repo.clearBudget(BuiltInCategories.SHOPPING.id)
 
             assertTrue(result.isSuccess)
             assertEquals(seeded, repo.observeBudgets().first())
@@ -231,12 +238,12 @@ class FakeBudgetRepositoryTest {
     @Test
     fun clearBudget_thenSetBudgetAgain_addsFreshEntry() =
         runBlocking {
-            val repo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val repo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
 
-            repo.clearBudget(ExpenseCategory.SHOPPING)
-            repo.setBudget(ExpenseCategory.SHOPPING, 2_000L)
+            repo.clearBudget(BuiltInCategories.SHOPPING.id)
+            repo.setBudget(BuiltInCategories.SHOPPING.id, 2_000L)
 
-            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 2_000L)), repo.observeBudgets().first())
+            assertEquals(listOf(Budget(BuiltInCategories.SHOPPING.id, 2_000L)), repo.observeBudgets().first())
         }
 
     // ---- one-shot failure knobs ----
@@ -244,35 +251,35 @@ class FakeBudgetRepositoryTest {
     @Test
     fun nextSetBudgetError_failsOnce_leavesStateUnchanged_thenSelfClears() =
         runBlocking {
-            val seeded = listOf(Budget(ExpenseCategory.SHOPPING, 10_000L))
+            val seeded = listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L))
             val boom = IllegalStateException("set failed")
             val repo = FakeBudgetRepository(seeded, nextSetBudgetError = boom)
 
-            val first = repo.setBudget(ExpenseCategory.SHOPPING, 1L)
+            val first = repo.setBudget(BuiltInCategories.SHOPPING.id, 1L)
 
             assertSame(boom, first.exceptionOrNull())
             assertEquals(seeded, repo.observeBudgets().first())
             assertNull(repo.nextSetBudgetError)
 
-            val second = repo.setBudget(ExpenseCategory.SHOPPING, 1L)
+            val second = repo.setBudget(BuiltInCategories.SHOPPING.id, 1L)
             assertTrue(second.isSuccess)
-            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 1L)), repo.observeBudgets().first())
+            assertEquals(listOf(Budget(BuiltInCategories.SHOPPING.id, 1L)), repo.observeBudgets().first())
         }
 
     @Test
     fun nextClearBudgetError_failsOnce_leavesStateUnchanged_thenSelfClears() =
         runBlocking {
-            val seeded = listOf(Budget(ExpenseCategory.SHOPPING, 10_000L))
+            val seeded = listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L))
             val boom = IllegalStateException("clear failed")
             val repo = FakeBudgetRepository(seeded, nextClearBudgetError = boom)
 
-            val first = repo.clearBudget(ExpenseCategory.SHOPPING)
+            val first = repo.clearBudget(BuiltInCategories.SHOPPING.id)
 
             assertSame(boom, first.exceptionOrNull())
             assertEquals(seeded, repo.observeBudgets().first())
             assertNull(repo.nextClearBudgetError)
 
-            val second = repo.clearBudget(ExpenseCategory.SHOPPING)
+            val second = repo.clearBudget(BuiltInCategories.SHOPPING.id)
             assertTrue(second.isSuccess)
             assertTrue(repo.observeBudgets().first().isEmpty())
         }
@@ -282,12 +289,12 @@ class FakeBudgetRepositoryTest {
         runBlocking {
             val repo = FakeBudgetRepository(nextClearBudgetError = IllegalStateException("clear failed"))
 
-            assertTrue(repo.setBudget(ExpenseCategory.SHOPPING, 10_000L).isSuccess)
-            assertTrue(repo.clearBudget(ExpenseCategory.SHOPPING).isFailure)
+            assertTrue(repo.setBudget(BuiltInCategories.SHOPPING.id, 10_000L).isSuccess)
+            assertTrue(repo.clearBudget(BuiltInCategories.SHOPPING.id).isFailure)
 
             repo.nextSetBudgetError = IllegalStateException("set failed")
-            assertTrue(repo.clearBudget(ExpenseCategory.SHOPPING).isSuccess)
-            assertTrue(repo.setBudget(ExpenseCategory.SHOPPING, 1L).isFailure)
+            assertTrue(repo.clearBudget(BuiltInCategories.SHOPPING.id).isSuccess)
+            assertTrue(repo.setBudget(BuiltInCategories.SHOPPING.id, 1L).isFailure)
             assertTrue(repo.observeBudgets().first().isEmpty())
         }
 }

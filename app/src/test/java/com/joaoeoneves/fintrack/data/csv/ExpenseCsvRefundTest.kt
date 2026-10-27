@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.data.csv
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,7 +20,7 @@ class ExpenseCsvRefundTest {
             id = "",
             name = "Shoes",
             amountCents = 5_000L,
-            category = ExpenseCategory.SHOPPING,
+            category = BuiltInCategories.SHOPPING,
             date = Instant.parse("2024-01-15T00:00:00Z"),
             note = null,
         )

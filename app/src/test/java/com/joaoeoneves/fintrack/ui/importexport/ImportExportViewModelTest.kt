@@ -3,9 +3,11 @@ package com.joaoeoneves.fintrack.ui.importexport
 import android.app.Application
 import android.net.Uri
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.testutil.CancellingContentProvider
 import com.joaoeoneves.fintrack.testutil.GenericFailureContentProvider
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -63,7 +65,7 @@ class ImportExportViewModelTest {
         id: String = "",
         name: String,
         amountCents: Long = 500L,
-        category: ExpenseCategory = ExpenseCategory.SHOPPING,
+        category: Category = BuiltInCategories.SHOPPING,
         date: Instant = Instant.parse("2024-01-15T00:00:00Z"),
         note: String? = null,
     ) = Expense(id = id, name = name, amountCents = amountCents, category = category, date = date, note = note)
@@ -81,7 +83,7 @@ class ImportExportViewModelTest {
                 """.trimIndent()
             val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
 
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
@@ -104,7 +106,7 @@ class ImportExportViewModelTest {
                 """.trimIndent()
             val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
 
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
@@ -119,7 +121,7 @@ class ImportExportViewModelTest {
         runTest(testDispatcher) {
             val file = tempFolder.newFile("empty.csv")
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
 
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
@@ -135,7 +137,7 @@ class ImportExportViewModelTest {
         runTest(testDispatcher) {
             val missing = File(tempFolder.root, "does-not-exist.csv")
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
 
             viewModel.onImportFileSelected(Uri.fromFile(missing))
             advanceUntilIdle()
@@ -156,7 +158,7 @@ class ImportExportViewModelTest {
                 """.trimIndent()
             val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
 
@@ -178,7 +180,7 @@ class ImportExportViewModelTest {
             val csv = "name,amountCents,category,date,note\nNew,100,Shopping,2024-01-01,\n"
             val file = tempFolder.newFile("import.csv").apply { writeText(csv) }
             val repo = FakeExpenseRepository(listOf(existing))
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
 
@@ -207,7 +209,7 @@ class ImportExportViewModelTest {
             val repo = FakeExpenseRepository()
             repo.nextAddExpensesFailure = IllegalStateException("Firestore batch commit failed")
             repo.addExpensesFailureAfterCount = 2
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
 
@@ -240,7 +242,7 @@ class ImportExportViewModelTest {
             val repo = FakeExpenseRepository()
             repo.nextAddExpensesFailure = IllegalStateException()
             repo.addExpensesFailureAfterCount = 1
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
 
@@ -265,7 +267,7 @@ class ImportExportViewModelTest {
             val repo = FakeExpenseRepository()
             repo.nextAddExpensesFailure = IllegalStateException("Not signed in")
             repo.addExpensesFailureAfterCount = 0
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
 
@@ -286,7 +288,7 @@ class ImportExportViewModelTest {
             val repo = FakeExpenseRepository()
             repo.nextAddExpensesFailure = IllegalStateException("boom")
             repo.addExpensesFailureAfterCount = 0
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
             viewModel.onConfirmImport()
@@ -311,7 +313,7 @@ class ImportExportViewModelTest {
                         ),
                     ),
                 )
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             val file = File(tempFolder.root, "roundtrip.csv")
 
             viewModel.onExportTargetSelected(Uri.fromFile(file))
@@ -340,7 +342,7 @@ class ImportExportViewModelTest {
         runTest(testDispatcher) {
             val file = tempFolder.newFile("empty.csv")
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             viewModel.onImportFileSelected(Uri.fromFile(file))
             advanceUntilIdle()
             assertTrue(viewModel.importState.value is ImportUiState.Error)
@@ -359,10 +361,15 @@ class ImportExportViewModelTest {
                 FakeExpenseRepository(
                     listOf(
                         expense(id = "e1", name = "Coffee"),
-                        expense(id = "e2", name = "Rent", amountCents = 150_000L, category = ExpenseCategory.RECURRING),
+                        expense(
+                            id = "e2",
+                            name = "Rent",
+                            amountCents = 150_000L,
+                            category = BuiltInCategories.RECURRING,
+                        ),
                     ),
                 )
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             val target = File(tempFolder.root, "export.csv")
 
             viewModel.onExportTargetSelected(Uri.fromFile(target))
@@ -379,7 +386,7 @@ class ImportExportViewModelTest {
     fun onExportTargetSelected_emptyRepository_writesHeaderOnly_countZero() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             val target = File(tempFolder.root, "export.csv")
 
             viewModel.onExportTargetSelected(Uri.fromFile(target))
@@ -397,10 +404,15 @@ class ImportExportViewModelTest {
                 FakeExpenseRepository(
                     listOf(
                         expense(id = "e1", name = "Coffee"),
-                        expense(id = "e2", name = "Rent", amountCents = 150_000L, category = ExpenseCategory.RECURRING),
+                        expense(
+                            id = "e2",
+                            name = "Rent",
+                            amountCents = 150_000L,
+                            category = BuiltInCategories.RECURRING,
+                        ),
                     ),
                 )
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             val file = File(tempFolder.root, "roundtrip.csv")
 
             viewModel.onExportTargetSelected(Uri.fromFile(file))
@@ -425,7 +437,7 @@ class ImportExportViewModelTest {
     fun onDismissExport_resetsStateToIdle() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
             val target = File(tempFolder.root, "export.csv")
             viewModel.onExportTargetSelected(Uri.fromFile(target))
             advanceUntilIdle()
@@ -450,7 +462,7 @@ class ImportExportViewModelTest {
         runTest(testDispatcher) {
             Robolectric.setupContentProvider(CancellingContentProvider::class.java, CancellingContentProvider.AUTHORITY)
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
 
             viewModel.onImportFileSelected(Uri.parse("content://${CancellingContentProvider.AUTHORITY}/file.csv"))
             advanceUntilIdle()
@@ -467,7 +479,7 @@ class ImportExportViewModelTest {
         runTest(testDispatcher) {
             Robolectric.setupContentProvider(CancellingContentProvider::class.java, CancellingContentProvider.AUTHORITY)
             val repo = FakeExpenseRepository(listOf(expense(id = "e1", name = "Coffee")))
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
 
             viewModel.onExportTargetSelected(Uri.parse("content://${CancellingContentProvider.AUTHORITY}/export.csv"))
             advanceUntilIdle()
@@ -490,7 +502,7 @@ class ImportExportViewModelTest {
                 GenericFailureContentProvider.AUTHORITY,
             )
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeCategoryRepository(), context())
 
             viewModel.onImportFileSelected(Uri.parse("content://${GenericFailureContentProvider.AUTHORITY}/file.csv"))
             advanceUntilIdle()

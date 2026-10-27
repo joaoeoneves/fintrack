@@ -8,25 +8,25 @@ class CategoryKindTest {
     fun everyCategory_mapsToExpectedKind() {
         val expected =
             mapOf(
-                ExpenseCategory.TRANSFER to CategoryKind.SPENDING,
-                ExpenseCategory.INVESTMENTS to CategoryKind.SAVING,
-                ExpenseCategory.SHOPPING to CategoryKind.SPENDING,
-                ExpenseCategory.FOOD to CategoryKind.SPENDING,
-                ExpenseCategory.RECURRING to CategoryKind.SPENDING,
+                BuiltInCategories.TRANSFER to CategoryKind.SPENDING,
+                BuiltInCategories.INVESTMENTS to CategoryKind.SAVING,
+                BuiltInCategories.SHOPPING to CategoryKind.SPENDING,
+                BuiltInCategories.FOOD to CategoryKind.SPENDING,
+                BuiltInCategories.RECURRING to CategoryKind.SPENDING,
             )
 
         // Exhaustive: a newly added category must be classified here deliberately.
-        assertEquals(ExpenseCategory.entries.toSet(), expected.keys)
-        for (category in ExpenseCategory.entries) {
-            assertEquals(category.name, expected.getValue(category), category.kind)
+        assertEquals(BuiltInCategories.all.toSet(), expected.keys)
+        for (category in BuiltInCategories.all) {
+            assertEquals(category.id.value, expected.getValue(category), category.kind)
         }
     }
 
     @Test
     fun onlyInvestmentsIsSaving() {
         assertEquals(
-            listOf(ExpenseCategory.INVESTMENTS),
-            ExpenseCategory.entries.filter { it.kind == CategoryKind.SAVING },
+            listOf(BuiltInCategories.INVESTMENTS),
+            BuiltInCategories.all.filter { it.kind == CategoryKind.SAVING },
         )
     }
 }

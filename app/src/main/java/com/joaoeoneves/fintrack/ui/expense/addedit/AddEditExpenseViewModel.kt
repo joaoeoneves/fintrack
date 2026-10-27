@@ -5,11 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.defaultCategory
 import com.joaoeoneves.fintrack.domain.model.limitInput
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.messageOr
@@ -18,19 +21,27 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Locale
 import javax.inject.Inject
+
+// How long (in ms) the category listener is kept alive after the last collector disappears.
+private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 @HiltViewModel
 class AddEditExpenseViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
+        private val categoryRepository: CategoryRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditExpense>()
@@ -39,6 +50,13 @@ class AddEditExpenseViewModel
 
         private val _uiState = MutableStateFlow<AddEditUiState>(AddEditUiState.Loading)
         val uiState: StateFlow<AddEditUiState> = _uiState.asStateFlow()
+
+        /** The full category catalog (archived included); the picker offers its active entries. */
+        val categoryOptions: StateFlow<List<Category>> =
+            categoryRepository
+                .observeCategories()
+                .catch { emit(BuiltInCategories.all) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), BuiltInCategories.all)
 
         private val savedEvents = Channel<Unit>(Channel.BUFFERED)
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
@@ -81,7 +99,11 @@ class AddEditExpenseViewModel
                             _uiState.value = AddEditUiState.Error(e.messageOr(R.string.error_generic_fallback))
                         }
                 } else {
-                    _uiState.value = AddEditUiState.Ready(ExpenseFormState(date = Instant.now()))
+                    val category =
+                        defaultCategory(
+                            categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first(),
+                        )
+                    _uiState.value = AddEditUiState.Ready(ExpenseFormState(category = category, date = Instant.now()))
                 }
             }
         }
@@ -97,8 +119,8 @@ class AddEditExpenseViewModel
             updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
         }
 
-        fun onCategorySelected(category: ExpenseCategory) {
-            updateForm { it.copy(category = category, saveError = null) }
+        fun onCategorySelected(category: Category) {
+            updateForm { it.copy(category = category, categoryError = null, saveError = null) }
         }
 
         fun onDateSelected(date: Instant) = updateForm { it.copy(date = date, saveError = null) }
@@ -117,9 +139,15 @@ class AddEditExpenseViewModel
             val nameError = if (form.name.isBlank()) UiText.StringResource(R.string.error_name_required) else null
             val amountResult = parseAmountCents(form.amountText)
             val amountError = if (amountResult.isFailure) UiText.StringResource(R.string.error_invalid_amount) else null
+            // An unknown category (e.g. deleted since the expense was saved) must be replaced first.
+            val categoryError =
+                if (form.category.isUnknown) UiText.StringResource(R.string.error_category_required) else null
 
-            if (nameError != null || amountError != null) {
-                _uiState.value = AddEditUiState.Ready(form.copy(nameError = nameError, amountError = amountError))
+            if (nameError != null || amountError != null || categoryError != null) {
+                _uiState.value =
+                    AddEditUiState.Ready(
+                        form.copy(nameError = nameError, amountError = amountError, categoryError = categoryError),
+                    )
                 return
             }
 

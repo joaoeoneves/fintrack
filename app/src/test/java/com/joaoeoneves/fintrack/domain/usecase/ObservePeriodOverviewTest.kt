@@ -1,7 +1,8 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
@@ -38,12 +39,14 @@ class ObservePeriodOverviewTest {
     private val expenses = CountingExpenseRepository()
     private val income = CountingIncomeRepository()
     private val budgets = CountingBudgetRepository()
+    private val categories = FakeCategoryRepository()
 
     private val useCase =
         ObservePeriodOverview(
             transactionRepository = CombinedTransactionRepository(expenses, income),
             budgetRepository = budgets,
-            observeBudgetProgress = ObserveBudgetProgress(expenses, budgets),
+            categoryRepository = categories,
+            observeBudgetProgress = ObserveBudgetProgress(expenses, budgets, categories),
         )
 
     private suspend fun overview(
@@ -108,14 +111,14 @@ class ObservePeriodOverviewTest {
     @Test
     fun sharedListener_budgetSpendOnlyCountsTheBudgetMonth() =
         runTest {
-            expenses.delegate.addExpense(testExpense("sep", 7_000L, noonOn(september, 20), ExpenseCategory.FOOD))
-            expenses.delegate.addExpense(testExpense("oct", 2_000L, noonOn(october, 5), ExpenseCategory.FOOD))
-            budgets.delegate.setBudget(ExpenseCategory.FOOD, 5_000L)
+            expenses.delegate.addExpense(testExpense("sep", 7_000L, noonOn(september, 20), BuiltInCategories.FOOD))
+            expenses.delegate.addExpense(testExpense("oct", 2_000L, noonOn(october, 5), BuiltInCategories.FOOD))
+            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 5_000L)
 
             val result = overview(Period.Custom(LocalDate.of(2026, 9, 15), LocalDate.of(2026, 10, 31)))
 
             assertEquals(1, expenses.listeners.observedRanges.size)
-            val food = result.budgets.single { it.category == ExpenseCategory.FOOD }
+            val food = result.budgets.single { it.category == BuiltInCategories.FOOD }
             assertEquals(2_000L, food.spentCents)
             assertEquals(5_000L, food.limitCents)
             assertEquals(9_000L, result.summary.spendingCents)
@@ -129,7 +132,7 @@ class ObservePeriodOverviewTest {
 
             val result = overview(Period.Rolling(TimeRange.THREE_MONTHS))
 
-            assertEquals(2_000L, result.budgets.single { it.category == ExpenseCategory.SHOPPING }.spentCents)
+            assertEquals(2_000L, result.budgets.single { it.category == BuiltInCategories.SHOPPING }.spentCents)
             assertEquals(9_000L, result.summary.spendingCents)
         }
 
@@ -149,12 +152,12 @@ class ObservePeriodOverviewTest {
     @Test
     fun budgetsListBudgetRepositoryLimits() =
         runTest {
-            budgets.delegate.setBudget(ExpenseCategory.RECURRING, 1_000L)
+            budgets.delegate.setBudget(BuiltInCategories.RECURRING.id, 1_000L)
 
             val result = overview(Period.Month(september))
 
-            assertEquals(ExpenseCategory.entries.toList(), result.budgets.map { it.category })
-            assertEquals(1_000L, result.budgets.single { it.category == ExpenseCategory.RECURRING }.limitCents)
+            assertEquals(BuiltInCategories.all.toList(), result.budgets.map { it.category })
+            assertEquals(1_000L, result.budgets.single { it.category == BuiltInCategories.RECURRING }.limitCents)
             assertEquals(september.toInstantRange(zone), result.transactions.range)
         }
 }

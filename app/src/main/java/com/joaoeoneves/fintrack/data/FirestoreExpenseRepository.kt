@@ -8,8 +8,11 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.Source
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import kotlinx.coroutines.CancellationException
@@ -23,6 +26,11 @@ import javax.inject.Inject
 
 private const val TAG = "FirestoreExpenseRepo"
 private const val BATCH_CHUNK_SIZE = 400
+
+// Each expense write whose category isn't built in makes firestore.rules look up that category
+// document; rules allow only a limited number of such lookups per request (batch), so a chunk may
+// reference at most this many distinct non-built-in categories.
+private const val MAX_CUSTOM_CATEGORIES_PER_BATCH = 15
 
 class FirestoreExpenseRepository
     @Inject
@@ -156,7 +164,7 @@ class FirestoreExpenseRepository
                     ?: return BulkAddResult(0, IllegalStateException("Not signed in"))
             var total = 0
             var failure: Throwable? = null
-            for (chunk in expenses.chunked(BATCH_CHUNK_SIZE)) {
+            for (chunk in expenses.importChunks()) {
                 try {
                     val batch = firestore.batch()
                     chunk.forEach { expense ->
@@ -175,14 +183,54 @@ class FirestoreExpenseRepository
             }
             return BulkAddResult(total, failure)
         }
+
+        override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            // Server-only on purpose: the local cache may hold only part of the collection, so a cache
+            // miss can't prove the category is unused. Fails while offline.
+            return runCatchingCancellable {
+                !expensesCollection(uid)
+                    .whereEqualTo("category", categoryId.value)
+                    .limit(1)
+                    .get(Source.SERVER)
+                    .await()
+                    .isEmpty
+            }
+        }
     }
+
+/**
+ * Splits these expenses into write batches of at most [BATCH_CHUNK_SIZE] expenses that reference
+ * at most [MAX_CUSTOM_CATEGORIES_PER_BATCH] distinct non-built-in categories.
+ */
+internal fun List<Expense>.importChunks(): List<List<Expense>> {
+    val chunks = mutableListOf<List<Expense>>()
+    var current = mutableListOf<Expense>()
+    val customIds = mutableSetOf<CategoryId>()
+    forEach { expense ->
+        val id = expense.category.id
+        val isCustom = !BuiltInCategories.isBuiltIn(id)
+        val exceedsCustomLimit = isCustom && id !in customIds && customIds.size >= MAX_CUSTOM_CATEGORIES_PER_BATCH
+        if (current.size >= BATCH_CHUNK_SIZE || exceedsCustomLimit) {
+            chunks += current
+            current = mutableListOf()
+            customIds.clear()
+        }
+        current += expense
+        if (isCustom) customIds += id
+    }
+    if (current.isNotEmpty()) chunks += current
+    return chunks
+}
 
 private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
     val map =
         mutableMapOf<String, Any?>(
             "name" to name,
             "amountCents" to amountCents,
-            "category" to category.name,
+            "category" to category.id.value,
             "date" to Timestamp(date.epochSecond, date.nano),
             "note" to note,
             // Always written (including false) so an update that turns a refund back into a regular
@@ -201,8 +249,12 @@ private fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { i
 private fun DocumentSnapshot.toExpenseOrNull(): Expense? {
     val name = getString("name")
     val amountCents = getLong("amountCents")
-    val categoryName = getString("category")
-    val category = ExpenseCategory.entries.find { it.name == categoryName }
+    // An id matching no built-in (a user category, resolved later against the catalog, or a deleted
+    // one) becomes a placeholder rather than dropping the expense; only a missing id is malformed.
+    val category =
+        getString("category")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { raw -> BuiltInCategories.byId(CategoryId(raw)) ?: Category.unknown(CategoryId(raw)) }
     val date = getTimestamp("date")
     val note = getString("note")
     val isRefund = get("isRefund") as? Boolean ?: false

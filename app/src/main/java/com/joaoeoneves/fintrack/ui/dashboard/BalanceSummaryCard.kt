@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -156,7 +156,7 @@ private fun BalanceStatsRow(
                     label = stringResource(R.string.dashboard_saved_label),
                     amountCents = state.savedCents,
                     icon = Icons.Default.Savings,
-                    tint = ExpenseCategory.INVESTMENTS.color,
+                    tint = BuiltInCategories.INVESTMENTS.color,
                     amountColor = MaterialTheme.colorScheme.onSurface,
                 ),
             modifier = Modifier.weight(1f),

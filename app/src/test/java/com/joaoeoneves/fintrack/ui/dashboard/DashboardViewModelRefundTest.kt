@@ -5,10 +5,11 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Budget
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories.INVESTMENTS
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories.RECURRING
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory.INVESTMENTS
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory.RECURRING
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -27,7 +28,7 @@ import java.time.Instant
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
-    private fun DashboardUiState.Content.total(category: ExpenseCategory): Long {
+    private fun DashboardUiState.Content.total(category: Category): Long {
         val slice = categoryTotals.single { it.category == category }
         return slice.totalCents
     }
@@ -35,7 +36,7 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
     private fun refund(
         id: String,
         amountCents: Long,
-        category: ExpenseCategory = ExpenseCategory.SHOPPING,
+        category: Category = BuiltInCategories.SHOPPING,
         date: Instant,
     ) = expense(id = id, amountCents = amountCents, category = category, date = date).copy(isRefund = true)
 
@@ -54,7 +55,7 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
         incomeRepository = if (withSalary) salaryRepo() else FakeIncomeRepository(),
     )
 
-    private fun DashboardUiState.Content.budget(category: ExpenseCategory) = budgets.single { it.category == category }
+    private fun DashboardUiState.Content.budget(category: Category) = budgets.single { it.category == category }
 
     @Test
     fun spendingRefund_lowersSpendingOutflowAndCategoryTotal_andRaisesNet() =
@@ -69,8 +70,8 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(6_000L, content.total(ExpenseCategory.SHOPPING))
-            assertEquals(50_000L, content.total(ExpenseCategory.RECURRING))
+            assertEquals(6_000L, content.total(BuiltInCategories.SHOPPING))
+            assertEquals(50_000L, content.total(BuiltInCategories.RECURRING))
             assertEquals(56_000L, content.spendingCents)
             assertEquals(0L, content.savedCents)
             assertEquals(56_000L, content.outflowCents)
@@ -112,13 +113,13 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(-2_500L, content.total(ExpenseCategory.SHOPPING))
+            assertEquals(-2_500L, content.total(BuiltInCategories.SHOPPING))
             assertEquals(17_500L, content.spendingCents)
             assertEquals(-17_500L, content.netCents)
 
             val chart = content.categoryTotals.clampedForChart()
-            assertEquals(0L, chart.single { it.category == ExpenseCategory.SHOPPING }.totalCents)
-            assertEquals(20_000L, chart.single { it.category == ExpenseCategory.RECURRING }.totalCents)
+            assertEquals(0L, chart.single { it.category == BuiltInCategories.SHOPPING }.totalCents)
+            assertEquals(20_000L, chart.single { it.category == BuiltInCategories.RECURRING }.totalCents)
             assertEquals(content.categoryTotals.map { it.category }, chart.map { it.category })
         }
 
@@ -131,10 +132,10 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
                     expense(id = "b", amountCents = 4_000L, date = daysAgo(2)),
                     refund(id = "ret", amountCents = 3_000L, date = daysAgo(1)),
                 )
-            val viewModel = viewModelWith(expenses, budgets = listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val viewModel = viewModelWith(expenses, budgets = listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
             collect(viewModel)
 
-            val budget = viewModel.content().budget(ExpenseCategory.SHOPPING)
+            val budget = viewModel.content().budget(BuiltInCategories.SHOPPING)
             // Gross 12,000 would be over the 10,000 limit; net 9,000 is not.
             assertEquals(9_000L, budget.spentCents)
             assertFalse(budget.isOverBudget)
@@ -148,10 +149,10 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
                     expense(id = "a", amountCents = 1_000L, date = daysAgo(3)),
                     refund(id = "ret", amountCents = 5_000L, date = daysAgo(1)),
                 )
-            val viewModel = viewModelWith(expenses, budgets = listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val viewModel = viewModelWith(expenses, budgets = listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
             collect(viewModel)
 
-            assertEquals(0L, viewModel.content().budget(ExpenseCategory.SHOPPING).spentCents)
+            assertEquals(0L, viewModel.content().budget(BuiltInCategories.SHOPPING).spentCents)
         }
 
     @Test
@@ -160,14 +161,14 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
             val expenses =
                 listOf(
                     expense(id = "a", amountCents = 6_000L, date = daysAgo(3)),
-                    refund(id = "ret", amountCents = 5_000L, category = ExpenseCategory.TRANSFER, date = daysAgo(1)),
+                    refund(id = "ret", amountCents = 5_000L, category = BuiltInCategories.TRANSFER, date = daysAgo(1)),
                 )
             val viewModel = viewModelWith(expenses)
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(6_000L, content.budget(ExpenseCategory.SHOPPING).spentCents)
-            assertEquals(0L, content.budget(ExpenseCategory.TRANSFER).spentCents)
-            assertEquals(-5_000L, content.total(ExpenseCategory.TRANSFER))
+            assertEquals(6_000L, content.budget(BuiltInCategories.SHOPPING).spentCents)
+            assertEquals(0L, content.budget(BuiltInCategories.TRANSFER).spentCents)
+            assertEquals(-5_000L, content.total(BuiltInCategories.TRANSFER))
         }
 }

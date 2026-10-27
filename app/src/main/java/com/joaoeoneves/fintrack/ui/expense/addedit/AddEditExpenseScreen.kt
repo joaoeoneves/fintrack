@@ -44,10 +44,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
@@ -65,6 +66,7 @@ fun AddEditExpenseScreen(
     viewModel: AddEditExpenseViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val categoryOptions by viewModel.categoryOptions.collectAsStateWithLifecycle()
     val readyForm = (uiState as? AddEditUiState.Ready)?.form
 
     LaunchedEffect(Unit) {
@@ -98,6 +100,7 @@ fun AddEditExpenseScreen(
             is AddEditUiState.Ready -> {
                 ExpenseForm(
                     form = state.form,
+                    categoryOptions = categoryOptions.optionsIncluding(state.form.category),
                     actions = viewModel.formActions(),
                     modifier =
                         Modifier
@@ -151,7 +154,7 @@ private fun AddEditExpenseTopBar(
 private data class ExpenseFormActions(
     val onNameChanged: (String) -> Unit,
     val onAmountChanged: (String) -> Unit,
-    val onCategorySelected: (ExpenseCategory) -> Unit,
+    val onCategorySelected: (Category) -> Unit,
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
     val onRefundChanged: (Boolean) -> Unit,
@@ -170,6 +173,7 @@ private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
 @Composable
 private fun ExpenseForm(
     form: ExpenseFormState,
+    categoryOptions: List<Category>,
     actions: ExpenseFormActions,
     modifier: Modifier = Modifier,
 ) {
@@ -190,6 +194,8 @@ private fun ExpenseForm(
 
         ExpenseCategoryField(
             category = form.category,
+            options = categoryOptions,
+            error = form.categoryError?.asString(),
             onCategorySelected = actions.onCategorySelected,
         )
 
@@ -292,8 +298,10 @@ private fun RefundToggleRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpenseCategoryField(
-    category: ExpenseCategory,
-    onCategorySelected: (ExpenseCategory) -> Unit,
+    category: Category,
+    options: List<Category>,
+    error: String?,
+    onCategorySelected: (Category) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var categoryMenuExpanded by remember { mutableStateOf(false) }
@@ -309,6 +317,8 @@ private fun ExpenseCategoryField(
             onValueChange = {},
             label = { Text(stringResource(R.string.expense_field_category)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
+            isError = error != null,
+            supportingText = error?.let { { Text(it) } },
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -318,7 +328,7 @@ private fun ExpenseCategoryField(
             expanded = categoryMenuExpanded,
             onDismissRequest = { categoryMenuExpanded = false },
         ) {
-            ExpenseCategory.entries.forEach { entry ->
+            options.forEach { entry ->
                 DropdownMenuItem(
                     text = { Text(entry.displayName) },
                     onClick = {

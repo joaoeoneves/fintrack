@@ -1,7 +1,8 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.Period
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -19,27 +20,39 @@ class ExpenseListFilterTest {
             id = "c",
             name = "Morning Coffee",
             amountCents = 450L,
-            category = ExpenseCategory.SHOPPING,
+            category = BuiltInCategories.SHOPPING,
             date = now,
             note = "oat milk",
         )
     private val rent =
-        coffee.copy(id = "r", name = "Rent", amountCents = 90_000L, category = ExpenseCategory.RECURRING, note = null)
+        coffee.copy(id = "r", name = "Rent", amountCents = 90_000L, category = BuiltInCategories.RECURRING, note = null)
     private val etf =
-        coffee.copy(id = "i", name = "ETF", amountCents = 20_000L, category = ExpenseCategory.INVESTMENTS, note = null)
+        coffee.copy(
+            id = "i",
+            name = "ETF",
+            amountCents = 20_000L,
+            category = BuiltInCategories.INVESTMENTS,
+            note = null,
+        )
     private val groceries =
-        coffee.copy(id = "f", name = "Supermarket", amountCents = 3_210L, category = ExpenseCategory.FOOD, note = null)
+        coffee.copy(
+            id = "f",
+            name = "Supermarket",
+            amountCents = 3_210L,
+            category = BuiltInCategories.FOOD,
+            note = null,
+        )
     private val ptLabels =
         mapOf(
-            ExpenseCategory.SHOPPING to "Compras",
-            ExpenseCategory.FOOD to "Alimentação",
-            ExpenseCategory.RECURRING to "Recorrente",
+            BuiltInCategories.SHOPPING.id to "Compras",
+            BuiltInCategories.FOOD.id to "Alimentação",
+            BuiltInCategories.RECURRING.id to "Recorrente",
         )
 
     private fun List<Expense>.content(
         query: String = "",
-        category: ExpenseCategory? = null,
-        labels: Map<ExpenseCategory, String> = emptyMap(),
+        category: CategoryId? = null,
+        labels: Map<CategoryId, String> = emptyMap(),
         sort: SortOption = SortOption.DATE_DESC,
     ) = toListContent(Period.CurrentMonth, false, ExpenseListFilter(query, category, labels), sort)
 
@@ -113,26 +126,26 @@ class ExpenseListFilterTest {
 
     @Test
     fun toListContent_categoryFilter_only() {
-        val content = listOf(coffee, rent, etf).content(category = ExpenseCategory.RECURRING)
+        val content = listOf(coffee, rent, etf).content(category = BuiltInCategories.RECURRING.id)
 
         assertEquals(listOf(rent), content.expenses)
-        assertEquals(ExpenseCategory.RECURRING, content.categoryFilter)
+        assertEquals(BuiltInCategories.RECURRING.id, content.categoryFilter)
     }
 
     @Test
     fun toListContent_foodCategoryFilter_showsOnlyFood() {
-        val lunch = coffee.copy(id = "l", name = "Lunch", category = ExpenseCategory.FOOD)
+        val lunch = coffee.copy(id = "l", name = "Lunch", category = BuiltInCategories.FOOD)
 
-        val content = listOf(coffee, groceries, rent, etf, lunch).content(category = ExpenseCategory.FOOD)
+        val content = listOf(coffee, groceries, rent, etf, lunch).content(category = BuiltInCategories.FOOD.id)
 
         assertEquals(setOf(groceries, lunch), content.expenses.toSet())
-        assertTrue(content.expenses.all { it.category == ExpenseCategory.FOOD })
-        assertEquals(ExpenseCategory.FOOD, content.categoryFilter)
+        assertTrue(content.expenses.all { it.category == BuiltInCategories.FOOD })
+        assertEquals(BuiltInCategories.FOOD.id, content.categoryFilter)
     }
 
     @Test
     fun toListContent_foodCategoryFilter_noFoodExpenses_isEmpty() {
-        assertTrue(listOf(coffee, rent, etf).content(category = ExpenseCategory.FOOD).expenses.isEmpty())
+        assertTrue(listOf(coffee, rent, etf).content(category = BuiltInCategories.FOOD.id).expenses.isEmpty())
     }
 
     @Test
@@ -144,9 +157,14 @@ class ExpenseListFilterTest {
 
     @Test
     fun toListContent_categoryAndQuery_areAnded() {
-        val coffeeBeans = coffee.copy(id = "b", name = "Coffee beans", category = ExpenseCategory.RECURRING)
+        val coffeeBeans = coffee.copy(id = "b", name = "Coffee beans", category = BuiltInCategories.RECURRING)
 
-        val content = listOf(coffee, coffeeBeans, rent).content(query = "coffee", category = ExpenseCategory.RECURRING)
+        val content =
+            listOf(
+                coffee,
+                coffeeBeans,
+                rent,
+            ).content(query = "coffee", category = BuiltInCategories.RECURRING.id)
 
         assertEquals(listOf(coffeeBeans), content.expenses)
     }
@@ -167,6 +185,13 @@ class ExpenseListFilterTest {
 
     @Test
     fun toListContent_emptyInput_isEmptyContent() {
-        assertTrue(emptyList<Expense>().content(query = "x", category = ExpenseCategory.SHOPPING).expenses.isEmpty())
+        assertTrue(
+            emptyList<Expense>()
+                .content(
+                    query = "x",
+                    category = BuiltInCategories.SHOPPING.id,
+                ).expenses
+                .isEmpty(),
+        )
     }
 }

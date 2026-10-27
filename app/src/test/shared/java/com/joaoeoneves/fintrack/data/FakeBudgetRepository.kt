@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import com.joaoeoneves.fintrack.domain.model.Budget
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +25,7 @@ class FakeBudgetRepository(
     }
 
     override suspend fun setBudget(
-        category: ExpenseCategory,
+        categoryId: CategoryId,
         limitCents: Long,
     ): Result<Unit> {
         nextSetBudgetError?.let { error ->
@@ -34,20 +34,20 @@ class FakeBudgetRepository(
         }
         val current = budgetsFlow.value
         budgetsFlow.value =
-            if (current.any { it.category == category }) {
-                current.map { if (it.category == category) it.copy(limitCents = limitCents) else it }
+            if (current.any { it.categoryId == categoryId }) {
+                current.map { if (it.categoryId == categoryId) it.copy(limitCents = limitCents) else it }
             } else {
-                current + Budget(category = category, limitCents = limitCents)
+                current + Budget(categoryId = categoryId, limitCents = limitCents)
             }
         return Result.success(Unit)
     }
 
-    override suspend fun clearBudget(category: ExpenseCategory): Result<Unit> {
+    override suspend fun clearBudget(categoryId: CategoryId): Result<Unit> {
         nextClearBudgetError?.let { error ->
             nextClearBudgetError = null
             return Result.failure(error)
         }
-        budgetsFlow.value = budgetsFlow.value.filterNot { it.category == category }
+        budgetsFlow.value = budgetsFlow.value.filterNot { it.categoryId == categoryId }
         return Result.success(Unit)
     }
 }

@@ -10,7 +10,7 @@ data class Expense(
     override val id: String,
     val name: String,
     override val amountCents: Long,
-    val category: ExpenseCategory,
+    val category: Category,
     override val date: Instant,
     override val note: String?,
     val isRefund: Boolean = false,

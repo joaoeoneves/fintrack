@@ -7,8 +7,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import org.junit.Rule
 import org.junit.Test
@@ -43,10 +43,10 @@ class PieChartAccessibilityTest {
 
     private val slices =
         listOf(
-            CategoryTotal(ExpenseCategory.SHOPPING, 4500),
-            CategoryTotal(ExpenseCategory.RECURRING, 3000),
-            CategoryTotal(ExpenseCategory.TRANSFER, 1500),
-            CategoryTotal(ExpenseCategory.INVESTMENTS, 1000),
+            CategoryTotal(BuiltInCategories.SHOPPING, 4500),
+            CategoryTotal(BuiltInCategories.RECURRING, 3000),
+            CategoryTotal(BuiltInCategories.TRANSFER, 1500),
+            CategoryTotal(BuiltInCategories.INVESTMENTS, 1000),
         )
 
     private fun setPieChartContent(slices: List<CategoryTotal>) {

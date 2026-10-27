@@ -8,7 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.joaoeoneves.fintrack.domain.model.Budget
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
@@ -48,7 +48,7 @@ class FirestoreBudgetRepository
         }
 
         override suspend fun setBudget(
-            category: ExpenseCategory,
+            categoryId: CategoryId,
             limitCents: Long,
         ): Result<Unit> {
             val uid =
@@ -60,7 +60,7 @@ class FirestoreBudgetRepository
                         "limitCents" to limitCents,
                         "updatedAt" to FieldValue.serverTimestamp(),
                     )
-                val docRef = budgetsCollection(uid).document(category.name)
+                val docRef = budgetsCollection(uid).document(categoryId.value)
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when
                 // the device is online. Awaiting would hang indefinitely while offline.
                 docRef
@@ -77,12 +77,12 @@ class FirestoreBudgetRepository
             }
         }
 
-        override suspend fun clearBudget(category: ExpenseCategory): Result<Unit> {
+        override suspend fun clearBudget(categoryId: CategoryId): Result<Unit> {
             val uid =
                 firebaseAuth.currentUser?.uid
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
-                val docRef = budgetsCollection(uid).document(category.name)
+                val docRef = budgetsCollection(uid).document(categoryId.value)
                 // Not awaited (see setBudget above); deleting a missing document is a no-op.
                 docRef.delete().addOnFailureListener { Log.w(TAG, "Clear budget write ${docRef.id} failed", it) }
                 Result.success(Unit)
@@ -96,19 +96,13 @@ class FirestoreBudgetRepository
 
         private fun QuerySnapshot.toBudgets(): List<Budget> = documents.mapNotNull { it.toBudgetOrNull() }
 
+        // The doc id is the category id. Any id is kept (even one matching no known category), so a
+        // budget left behind by a deleted category still shows up and can be cleared.
         private fun DocumentSnapshot.toBudgetOrNull(): Budget? {
-            val category = ExpenseCategory.entries.find { it.name == id }
             val limitCents = getLong("limitCents")
-            return when {
-                category == null -> {
-                    Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'category'")
-                    null
-                }
-                limitCents == null -> {
-                    Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'limitCents'")
-                    null
-                }
-                else -> Budget(category = category, limitCents = limitCents)
+            if (limitCents == null) {
+                Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'limitCents'")
             }
+            return limitCents?.let { Budget(categoryId = CategoryId(id), limitCents = it) }
         }
     }

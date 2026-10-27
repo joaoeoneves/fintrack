@@ -3,9 +3,11 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -67,13 +69,13 @@ class AddEditExpenseViewModelTest {
 
     private fun addModeViewModel(repository: ExpenseRepository): AddEditExpenseViewModel {
         val savedStateHandle = SavedStateHandle()
-        return AddEditExpenseViewModel(repository, savedStateHandle)
+        return AddEditExpenseViewModel(repository, FakeCategoryRepository(), savedStateHandle)
     }
 
     private fun editModeViewModel(
         repository: ExpenseRepository,
         expenseId: String,
-    ) = AddEditExpenseViewModel(repository, SavedStateHandle(mapOf("expenseId" to expenseId)))
+    ) = AddEditExpenseViewModel(repository, FakeCategoryRepository(), SavedStateHandle(mapOf("expenseId" to expenseId)))
 
     // ---- add mode: initial state ----
 
@@ -89,7 +91,7 @@ class AddEditExpenseViewModelTest {
             assertFalse(state.form.isEditMode)
             assertEquals("", state.form.name)
             assertEquals("", state.form.amountText)
-            assertEquals(ExpenseCategory.SHOPPING, state.form.category)
+            assertEquals(BuiltInCategories.SHOPPING, state.form.category)
             assertEquals("", state.form.note)
             assertNull(state.form.nameError)
             assertNull(state.form.amountError)
@@ -256,10 +258,10 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
 
-            viewModel.onCategorySelected(ExpenseCategory.RECURRING)
+            viewModel.onCategorySelected(BuiltInCategories.RECURRING)
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertEquals(ExpenseCategory.RECURRING, state.form.category)
+            assertEquals(BuiltInCategories.RECURRING, state.form.category)
         }
 
     @Test
@@ -304,7 +306,7 @@ class AddEditExpenseViewModelTest {
 
             viewModel.onNameChanged("  Coffee  ")
             viewModel.onAmountChanged("4.995") // rounds HALF_UP to 500 cents
-            viewModel.onCategorySelected(ExpenseCategory.RECURRING)
+            viewModel.onCategorySelected(BuiltInCategories.RECURRING)
             viewModel.onDateSelected(date)
             viewModel.onNoteChanged("  with milk  ")
             viewModel.onSave()
@@ -323,7 +325,7 @@ class AddEditExpenseViewModelTest {
             assertNotNull(stored)
             assertEquals("Coffee", stored!!.name)
             assertEquals(500L, stored.amountCents)
-            assertEquals(ExpenseCategory.RECURRING, stored.category)
+            assertEquals(BuiltInCategories.RECURRING, stored.category)
             assertEquals(date, stored.date)
             assertEquals("with milk", stored.note)
 
@@ -358,7 +360,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2026-02-01T00:00:00Z"),
                     note = "Monthly subscription",
                 )
@@ -372,7 +374,7 @@ class AddEditExpenseViewModelTest {
             assertEquals("e1", state.form.expenseId)
             assertEquals("Netflix", state.form.name)
             assertEquals("15.99", state.form.amountText)
-            assertEquals(ExpenseCategory.RECURRING, state.form.category)
+            assertEquals(BuiltInCategories.RECURRING, state.form.category)
             assertEquals(existing.date, state.form.date)
             assertEquals("Monthly subscription", state.form.note)
         }
@@ -444,7 +446,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2026-02-01T00:00:00Z"),
                     note = "Monthly subscription",
                 )
@@ -464,7 +466,7 @@ class AddEditExpenseViewModelTest {
             assertEquals("e1", state.form.expenseId)
             assertEquals("Netflix", state.form.name)
             assertEquals("15.99", state.form.amountText)
-            assertEquals(ExpenseCategory.RECURRING, state.form.category)
+            assertEquals(BuiltInCategories.RECURRING, state.form.category)
             assertEquals("Monthly subscription", state.form.note)
         }
 
@@ -496,7 +498,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.parse("2026-02-01T00:00:00Z"),
                     note = "Monthly subscription",
                 )
@@ -535,7 +537,7 @@ class AddEditExpenseViewModelTest {
                     id = "e1",
                     name = "Netflix",
                     amountCents = 1_599L,
-                    category = ExpenseCategory.RECURRING,
+                    category = BuiltInCategories.RECURRING,
                     date = Instant.now(),
                     note = null,
                 )
@@ -613,7 +615,7 @@ class AddEditExpenseViewModelTest {
                             id = "e1",
                             name = "Netflix",
                             amountCents = 1_599L,
-                            category = ExpenseCategory.RECURRING,
+                            category = BuiltInCategories.RECURRING,
                             date = Instant.now(),
                             note = null,
                         ),
@@ -674,7 +676,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
 
-            viewModel.onCategorySelected(ExpenseCategory.TRANSFER)
+            viewModel.onCategorySelected(BuiltInCategories.TRANSFER)
 
             assertNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
         }
@@ -743,5 +745,7 @@ class AddEditExpenseViewModelTest {
         override suspend fun getAllExpenses(): Result<List<Expense>> = unsupported()
 
         override suspend fun addExpenses(expenses: List<Expense>): BulkAddResult = unsupported()
+
+        override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> = unsupported()
     }
 }

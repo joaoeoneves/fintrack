@@ -9,6 +9,8 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.csv.CsvImportOutcome
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvParser
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvWriter
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.messageOr
@@ -18,6 +20,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,6 +32,7 @@ class ImportExportViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
+        private val categoryRepository: CategoryRepository,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val _importState = MutableStateFlow<ImportUiState>(ImportUiState.Idle)
@@ -58,8 +63,9 @@ class ImportExportViewModel
                     _importState.value = ImportUiState.Error(UiText.StringResource(R.string.error_import_read_file))
                     return@launch
                 }
+                val categories = categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first()
                 _importState.value =
-                    when (val outcome = ExpenseCsvParser.parse(text)) {
+                    when (val outcome = ExpenseCsvParser.parse(text, categories = categories)) {
                         is CsvImportOutcome.Parsed ->
                             ImportUiState.Preview(outcome.result.validExpenses, outcome.result.failures)
                         is CsvImportOutcome.Error -> ImportUiState.Error(UiText.Dynamic(outcome.message))

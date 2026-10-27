@@ -26,19 +26,26 @@ class MonthlyTotalsTest {
             monthlyTotalsOf(
                 expenses = listOf(testExpense("oct", 1_000L, noon(october)), testExpense("jul", 500L, noon(july))),
                 income = emptyList(),
-                from = july,
-                to = october,
+                months = july..october,
                 zone = utc,
+                categories = BuiltInCategories.all,
             )
 
         assertEquals(listOf(july, august, september, october), totals.map { it.month })
         assertEquals(listOf(500L, 0L, 0L, 1_000L), totals.map { it.summary.spendingCents })
-        assertEquals(cashFlowSummaryOf(emptyList(), emptyList()), totals[1].summary)
+        assertEquals(cashFlowSummaryOf(emptyList(), emptyList(), BuiltInCategories.all), totals[1].summary)
     }
 
     @Test
     fun singleMonth() {
-        val totals = monthlyTotalsOf(emptyList(), listOf(testIncome("i", 9_000L, noon(october))), october, october, utc)
+        val totals =
+            monthlyTotalsOf(
+                emptyList(),
+                listOf(testIncome("i", 9_000L, noon(october))),
+                october..october,
+                utc,
+                BuiltInCategories.all,
+            )
 
         assertEquals(1, totals.size)
         assertEquals(october, totals.single().month)
@@ -46,15 +53,29 @@ class MonthlyTotalsTest {
     }
 
     @Test
-    fun fromAfterTo_isEmpty() {
-        val totals = monthlyTotalsOf(listOf(testExpense("e", 1L, noon(october))), emptyList(), october, july, utc)
+    fun emptyRange_isEmpty() {
+        val totals =
+            monthlyTotalsOf(
+                listOf(testExpense("e", 1L, noon(october))),
+                emptyList(),
+                october..july,
+                utc,
+                BuiltInCategories.all,
+            )
 
         assertTrue(totals.isEmpty())
     }
 
     @Test
     fun transactionsOutsideTheMonths_areIgnored() {
-        val totals = monthlyTotalsOf(listOf(testExpense("e", 1_000L, noon(july))), emptyList(), august, september, utc)
+        val totals =
+            monthlyTotalsOf(
+                listOf(testExpense("e", 1_000L, noon(july))),
+                emptyList(),
+                august..september,
+                utc,
+                BuiltInCategories.all,
+            )
 
         assertEquals(listOf(0L, 0L), totals.map { it.summary.spendingCents })
     }
@@ -69,9 +90,9 @@ class MonthlyTotalsTest {
                         testExpense("last", 7L, Instant.parse("2026-09-30T23:59:59.999Z")),
                     ),
                 income = emptyList(),
-                from = september,
-                to = october,
+                months = september..october,
                 zone = utc,
+                categories = BuiltInCategories.all,
             )
 
         assertEquals(listOf(7L, 100L), totals.map { it.summary.spendingCents })
@@ -84,9 +105,9 @@ class MonthlyTotalsTest {
             monthlyTotalsOf(
                 expenses = listOf(testExpense("e", 100L, Instant.parse("2026-09-30T23:30:00Z"))),
                 income = emptyList(),
-                from = september,
-                to = october,
+                months = september..october,
                 zone = ZoneId.of("Europe/Lisbon"),
+                categories = BuiltInCategories.all,
             )
 
         assertEquals(listOf(0L, 100L), totals.map { it.summary.spendingCents })
@@ -102,9 +123,9 @@ class MonthlyTotalsTest {
                         testExpense("octRefund", 2_000L, noon(october), isRefund = true),
                     ),
                 income = emptyList(),
-                from = september,
-                to = october,
+                months = september..october,
                 zone = utc,
+                categories = BuiltInCategories.all,
             )
 
         assertEquals(listOf(5_000L, -2_000L), totals.map { it.summary.spendingCents })

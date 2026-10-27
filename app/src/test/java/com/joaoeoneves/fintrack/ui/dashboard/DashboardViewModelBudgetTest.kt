@@ -4,7 +4,8 @@ import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Budget
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +32,7 @@ import java.time.YearMonth
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
-    private fun DashboardUiState.Content.budget(category: ExpenseCategory) = budgets.single { it.category == category }
+    private fun DashboardUiState.Content.budget(category: Category) = budgets.single { it.category == category }
 
     /** One shopping expense in the previous month and one in the current month. */
     private fun twoMonthRepo() =
@@ -51,7 +52,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(ExpenseCategory.entries, content.budgets.map { it.category })
+            assertEquals(BuiltInCategories.all, content.budgets.map { it.category })
             assertTrue(content.budgets.all { it.limitCents == null && it.spentCents == 0L && !it.isOverBudget })
             assertEquals(currentMonth, content.budgetMonth)
             assertTrue(content.budgetMonthIsCurrent)
@@ -60,14 +61,15 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
     @Test
     fun budgets_reflectPreSeededLimits_forCategoriesWithNoSpendYet() =
         runTest(testDispatcher) {
-            val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val budgetRepo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
             val viewModel = viewModel(budgetRepository = budgetRepo)
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(10_000L, content.budget(ExpenseCategory.SHOPPING).limitCents)
-            assertEquals(0L, content.budget(ExpenseCategory.SHOPPING).spentCents)
-            assertTrue(content.budgets.filter { it.category != ExpenseCategory.SHOPPING }.all { it.limitCents == null })
+            assertEquals(10_000L, content.budget(BuiltInCategories.SHOPPING).limitCents)
+            assertEquals(0L, content.budget(BuiltInCategories.SHOPPING).spentCents)
+            val others = content.budgets.filter { it.category != BuiltInCategories.SHOPPING }
+            assertTrue(others.all { it.limitCents == null })
         }
 
     // ---- which month budgets are evaluated against ----
@@ -79,7 +81,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(1_500L, content.budget(ExpenseCategory.SHOPPING).spentCents)
+            assertEquals(1_500L, content.budget(BuiltInCategories.SHOPPING).spentCents)
             assertEquals(currentMonth, content.budgetMonth)
             assertTrue(content.budgetMonthIsCurrent)
         }
@@ -87,7 +89,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
     @Test
     fun selectedPastMonth_budgetsFollowThatMonth_andAreNotCurrent() =
         runTest(testDispatcher) {
-            val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 5_000L)))
+            val budgetRepo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 5_000L)))
             val viewModel = viewModel(expenseRepository = twoMonthRepo(), budgetRepository = budgetRepo)
             collect(viewModel)
 
@@ -98,7 +100,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             assertEquals(Period.Month(previousMonth), content.period)
             assertEquals(previousMonth, content.budgetMonth)
             assertFalse(content.budgetMonthIsCurrent)
-            val shopping = content.budget(ExpenseCategory.SHOPPING)
+            val shopping = content.budget(BuiltInCategories.SHOPPING)
             assertEquals(9_000L, shopping.spentCents)
             assertEquals(5_000L, shopping.limitCents)
             assertTrue(shopping.isOverBudget)
@@ -131,7 +133,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             assertEquals(10_500L, content.outflowCents)
             assertEquals(currentMonth, content.budgetMonth)
             assertTrue(content.budgetMonthIsCurrent)
-            assertEquals(1_500L, content.budget(ExpenseCategory.SHOPPING).spentCents)
+            assertEquals(1_500L, content.budget(BuiltInCategories.SHOPPING).spentCents)
         }
 
     @Test
@@ -147,7 +149,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             assertEquals(9_000L, content.outflowCents)
             assertEquals(currentMonth, content.budgetMonth)
             assertTrue(content.budgetMonthIsCurrent)
-            assertEquals(1_500L, content.budget(ExpenseCategory.SHOPPING).spentCents)
+            assertEquals(1_500L, content.budget(BuiltInCategories.SHOPPING).spentCents)
         }
 
     @Test
@@ -155,12 +157,19 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val repo =
                 FakeExpenseRepository(
-                    listOf(expense(id = "i", amountCents = 2_000L, category = ExpenseCategory.INVESTMENTS, date = now)),
+                    listOf(
+                        expense(
+                            id = "i",
+                            amountCents = 2_000L,
+                            category = BuiltInCategories.INVESTMENTS,
+                            date = now,
+                        ),
+                    ),
                 )
             val viewModel = viewModel(expenseRepository = repo)
             collect(viewModel)
 
-            assertEquals(2_000L, viewModel.content().budget(ExpenseCategory.INVESTMENTS).spentCents)
+            assertEquals(2_000L, viewModel.content().budget(BuiltInCategories.INVESTMENTS).spentCents)
         }
 
     // ---- isOverBudget ----
@@ -172,7 +181,7 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             val viewModel = viewModel(expenseRepository = repo)
             collect(viewModel)
 
-            val shopping = viewModel.content().budget(ExpenseCategory.SHOPPING)
+            val shopping = viewModel.content().budget(BuiltInCategories.SHOPPING)
             assertEquals(1_000_000L, shopping.spentCents)
             assertNull(shopping.limitCents)
             assertFalse(shopping.isOverBudget)
@@ -182,28 +191,43 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
     fun isOverBudget_falseAtExactLimit_trueOneCentOver() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository(listOf(expense(id = "at", amountCents = 10_000L, date = now)))
-            val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)))
+            val budgetRepo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
             val viewModel = viewModel(expenseRepository = repo, budgetRepository = budgetRepo)
             collect(viewModel)
-            assertFalse(viewModel.content().budget(ExpenseCategory.SHOPPING).isOverBudget)
+            assertFalse(viewModel.content().budget(BuiltInCategories.SHOPPING).isOverBudget)
 
             repo.addExpense(expense(id = "cent", amountCents = 1L, date = now))
             advanceUntilIdle()
 
-            assertTrue(viewModel.content().budget(ExpenseCategory.SHOPPING).isOverBudget)
+            assertTrue(viewModel.content().budget(BuiltInCategories.SHOPPING).isOverBudget)
         }
 
     @Test
     fun isOverBudget_zeroLimit_anyPositiveSpendIsOver_zeroSpendIsNot() =
         runTest(testDispatcher) {
-            val repo = FakeExpenseRepository(listOf(expense(id = "t", amountCents = 1L, ExpenseCategory.TRANSFER, now)))
+            val repo =
+                FakeExpenseRepository(
+                    listOf(
+                        expense(
+                            id = "t",
+                            amountCents = 1L,
+                            BuiltInCategories.TRANSFER,
+                            now,
+                        ),
+                    ),
+                )
             val budgetRepo =
-                FakeBudgetRepository(listOf(Budget(ExpenseCategory.TRANSFER, 0L), Budget(ExpenseCategory.SHOPPING, 0L)))
+                FakeBudgetRepository(
+                    listOf(
+                        Budget(BuiltInCategories.TRANSFER.id, 0L),
+                        Budget(BuiltInCategories.SHOPPING.id, 0L),
+                    ),
+                )
             val viewModel = viewModel(expenseRepository = repo, budgetRepository = budgetRepo)
             collect(viewModel)
 
-            assertTrue(viewModel.content().budget(ExpenseCategory.TRANSFER).isOverBudget)
-            assertFalse(viewModel.content().budget(ExpenseCategory.SHOPPING).isOverBudget)
+            assertTrue(viewModel.content().budget(BuiltInCategories.TRANSFER).isOverBudget)
+            assertFalse(viewModel.content().budget(BuiltInCategories.SHOPPING).isOverBudget)
         }
 
     // ---- onSetBudget ----
@@ -214,28 +238,28 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             val budgetRepo = FakeBudgetRepository()
             val viewModel = viewModel(budgetRepository = budgetRepo)
             collect(viewModel)
-            assertNull(viewModel.content().budget(ExpenseCategory.SHOPPING).limitCents)
+            assertNull(viewModel.content().budget(BuiltInCategories.SHOPPING).limitCents)
 
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 10_000L)
+            viewModel.onSetBudget(BuiltInCategories.SHOPPING, 10_000L)
             advanceUntilIdle()
 
-            assertEquals(10_000L, viewModel.content().budget(ExpenseCategory.SHOPPING).limitCents)
-            assertEquals(listOf(Budget(ExpenseCategory.SHOPPING, 10_000L)), budgetRepo.observeBudgets().first())
+            assertEquals(10_000L, viewModel.content().budget(BuiltInCategories.SHOPPING).limitCents)
+            assertEquals(listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)), budgetRepo.observeBudgets().first())
         }
 
     @Test
     fun onSetBudget_updatingExistingLimit_replacesRatherThanDuplicates() =
         runTest(testDispatcher) {
-            val budgetRepo = FakeBudgetRepository(listOf(Budget(ExpenseCategory.SHOPPING, 5_000L)))
+            val budgetRepo = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 5_000L)))
             val viewModel = viewModel(budgetRepository = budgetRepo)
             collect(viewModel)
 
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 7_500L)
+            viewModel.onSetBudget(BuiltInCategories.SHOPPING, 7_500L)
             advanceUntilIdle()
 
             val content = viewModel.content()
-            assertEquals(ExpenseCategory.entries.size, content.budgets.size)
-            assertEquals(7_500L, content.budget(ExpenseCategory.SHOPPING).limitCents)
+            assertEquals(BuiltInCategories.all.size, content.budgets.size)
+            assertEquals(7_500L, content.budget(BuiltInCategories.SHOPPING).limitCents)
         }
 
     @Test
@@ -246,10 +270,10 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             viewModel.onPreviousMonth()
             advanceUntilIdle()
 
-            viewModel.onSetBudget(ExpenseCategory.SHOPPING, 8_000L)
+            viewModel.onSetBudget(BuiltInCategories.SHOPPING, 8_000L)
             advanceUntilIdle()
 
-            val shopping = viewModel.content().budget(ExpenseCategory.SHOPPING)
+            val shopping = viewModel.content().budget(BuiltInCategories.SHOPPING)
             assertEquals(8_000L, shopping.limitCents)
             assertEquals(9_000L, shopping.spentCents)
             assertTrue(shopping.isOverBudget)
@@ -267,6 +291,6 @@ class DashboardViewModelBudgetTest : DashboardViewModelTestBase() {
             viewModel.onRetry()
             advanceUntilIdle()
 
-            assertEquals(2_500L, viewModel.content().budget(ExpenseCategory.SHOPPING).spentCents)
+            assertEquals(2_500L, viewModel.content().budget(BuiltInCategories.SHOPPING).spentCents)
         }
 }

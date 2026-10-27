@@ -1,7 +1,8 @@
 package com.joaoeoneves.fintrack.data
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -33,7 +34,7 @@ class FakeExpenseRepositoryTest {
         id: String = "",
         name: String = "expense",
         amountCents: Long = 1_000L,
-        category: ExpenseCategory = ExpenseCategory.SHOPPING,
+        category: Category = BuiltInCategories.SHOPPING,
         date: Instant = day1,
         note: String? = null,
     ) = Expense(id = id, name = name, amountCents = amountCents, category = category, date = date, note = note)
@@ -88,10 +89,10 @@ class FakeExpenseRepositoryTest {
     @Test
     fun observeExpenses_subRangeAcrossCategoriesAndDates_returnsOnlyMatchingSubset() =
         runBlocking {
-            val transfer = expense(id = "1", category = ExpenseCategory.TRANSFER, date = day0)
-            val investment = expense(id = "2", category = ExpenseCategory.INVESTMENTS, date = day1)
-            val shopping = expense(id = "3", category = ExpenseCategory.SHOPPING, date = day2)
-            val recurring = expense(id = "4", category = ExpenseCategory.RECURRING, date = day3)
+            val transfer = expense(id = "1", category = BuiltInCategories.TRANSFER, date = day0)
+            val investment = expense(id = "2", category = BuiltInCategories.INVESTMENTS, date = day1)
+            val shopping = expense(id = "3", category = BuiltInCategories.SHOPPING, date = day2)
+            val recurring = expense(id = "4", category = BuiltInCategories.RECURRING, date = day3)
             val repo = FakeExpenseRepository(listOf(transfer, investment, shopping, recurring))
 
             // Sub-range [day1, day3) should pick up "investment" (day1, inclusive) and "shopping"
@@ -314,7 +315,7 @@ class FakeExpenseRepositoryTest {
             val e2 = expense(id = "e2", name = "Second", date = day1)
             val repo = FakeExpenseRepository(listOf(e1, e2))
 
-            val updatedE1 = e1.copy(name = "First (renamed)", category = ExpenseCategory.RECURRING)
+            val updatedE1 = e1.copy(name = "First (renamed)", category = BuiltInCategories.RECURRING)
             val result = repo.updateExpense(updatedE1)
 
             assertTrue(result.isSuccess)

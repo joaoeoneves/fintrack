@@ -4,10 +4,11 @@ import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.MonthlyTotals
 import com.joaoeoneves.fintrack.domain.model.monthlyTotalsOf
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import java.time.YearMonth
 import java.time.ZoneId
 import javax.inject.Inject
@@ -20,6 +21,7 @@ class ObserveMonthlyTotals
     @Inject
     constructor(
         private val transactionRepository: TransactionRepository,
+        private val categoryRepository: CategoryRepository,
     ) {
         operator fun invoke(
             from: YearMonth,
@@ -32,8 +34,9 @@ class ObserveMonthlyTotals
                     startInclusive = from.toInstantRange(zone).startInclusive,
                     endExclusive = to.toInstantRange(zone).endExclusive,
                 )
-            return transactionRepository.observeTransactions(range).map { tx ->
-                monthlyTotalsOf(tx.expenses, tx.income, from, to, zone)
-            }
+            return combine(
+                transactionRepository.observeTransactions(range),
+                categoryRepository.observeCategories(),
+            ) { tx, categories -> monthlyTotalsOf(tx.expenses, tx.income, from..to, zone, categories) }
         }
     }

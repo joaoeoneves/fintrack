@@ -54,6 +54,7 @@
     <string name="category_shopping">Shopping</string>
     <string name="category_food">Food</string>
     <string name="category_recurring">Recurring</string>
+    <string name="category_unknown">Unknown category</string>
 
     <!-- Currencies -->
     <string name="currency_usd">US Dollar</string>
@@ -101,6 +102,7 @@
     <string name="expense_field_name">Name</string>
     <string name="expense_field_category">Category</string>
     <string name="error_name_required">Name is required</string>
+    <string name="error_category_required">Choose a category</string>
     <string name="error_failed_save_expense">Failed to save expense</string>
 
     <!-- Expense list -->

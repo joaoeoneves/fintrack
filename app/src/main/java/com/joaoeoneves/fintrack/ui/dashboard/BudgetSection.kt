@@ -35,7 +35,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -53,8 +53,8 @@ import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 fun BudgetSection(
     budgets: List<CategoryBudget>,
     title: String,
-    onSetBudget: (ExpenseCategory, Long) -> Unit,
-    onClearBudget: (ExpenseCategory) -> Unit,
+    onSetBudget: (Category, Long) -> Unit,
+    onClearBudget: (Category) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editingBudget by remember { mutableStateOf<CategoryBudget?>(null) }
@@ -138,7 +138,7 @@ private fun BudgetRow(
 }
 
 @Composable
-private fun BudgetCategoryLabel(category: ExpenseCategory) {
+private fun BudgetCategoryLabel(category: Category) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier =

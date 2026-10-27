@@ -4,7 +4,7 @@ import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +45,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
     fun emptyIncome_isZero_andSavingsRateIsNull() =
         runTest(testDispatcher) {
             val investment =
-                expense(id = "i", amountCents = 5_000L, category = ExpenseCategory.INVESTMENTS, date = daysAgo(1))
+                expense(id = "i", amountCents = 5_000L, category = BuiltInCategories.INVESTMENTS, date = daysAgo(1))
             val viewModel = viewModel(expenseRepository = FakeExpenseRepository(listOf(investment)))
             collect(viewModel)
 
@@ -61,9 +61,9 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
         runTest(testDispatcher) {
             val expenses =
                 listOf(
-                    expense("shop", 12_000L, ExpenseCategory.SHOPPING, daysAgo(2)),
-                    expense("rent", 80_000L, ExpenseCategory.RECURRING, daysAgo(3)),
-                    expense("etf", 75_000L, ExpenseCategory.INVESTMENTS, daysAgo(4)),
+                    expense("shop", 12_000L, BuiltInCategories.SHOPPING, daysAgo(2)),
+                    expense("rent", 80_000L, BuiltInCategories.RECURRING, daysAgo(3)),
+                    expense("etf", 75_000L, BuiltInCategories.INVESTMENTS, daysAgo(4)),
                 )
             val salary = income(id = "salary", amountCents = 300_000L, date = daysAgo(1))
             val viewModel =
@@ -85,7 +85,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
     @Test
     fun netCents_negativeWhenOutflowExceedsIncome_savingsRateAboveOneWhenSavedExceedsIncome() =
         runTest(testDispatcher) {
-            val etf = expense(id = "etf", amountCents = 50_000L, category = ExpenseCategory.INVESTMENTS, date = now)
+            val etf = expense(id = "etf", amountCents = 50_000L, category = BuiltInCategories.INVESTMENTS, date = now)
             val small = income(id = "i1", amountCents = 10_000L, date = now)
             val viewModel =
                 viewModel(

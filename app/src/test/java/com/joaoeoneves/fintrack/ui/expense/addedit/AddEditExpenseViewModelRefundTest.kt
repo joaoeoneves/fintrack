@@ -2,9 +2,10 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.ExpenseCategory
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -54,7 +55,7 @@ class AddEditExpenseViewModelRefundTest {
             id = "r1",
             name = "Shoes return",
             amountCents = 4_999L,
-            category = ExpenseCategory.SHOPPING,
+            category = BuiltInCategories.SHOPPING,
             date = Instant.parse("2026-02-01T10:00:00Z"),
             note = null,
             isRefund = true,
@@ -74,6 +75,7 @@ class AddEditExpenseViewModelRefundTest {
         expenseId: String? = null,
     ) = AddEditExpenseViewModel(
         repository,
+        FakeCategoryRepository(),
         SavedStateHandle(if (expenseId != null) mapOf("expenseId" to expenseId) else emptyMap()),
     )
 

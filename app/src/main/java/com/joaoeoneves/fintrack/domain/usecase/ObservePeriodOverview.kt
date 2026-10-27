@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
@@ -13,6 +14,7 @@ import com.joaoeoneves.fintrack.domain.model.encloses
 import com.joaoeoneves.fintrack.domain.model.recentActivity
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
+import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -32,6 +34,7 @@ class ObservePeriodOverview
     constructor(
         private val transactionRepository: TransactionRepository,
         private val budgetRepository: BudgetRepository,
+        private val categoryRepository: CategoryRepository,
         private val observeBudgetProgress: ObserveBudgetProgress,
     ) {
         operator fun invoke(
@@ -44,14 +47,15 @@ class ObservePeriodOverview
             val budgetMonth = period.anchorMonth(now, zone) ?: currentYearMonth(now, zone)
             val budgetRange = budgetMonth.toInstantRange(zone)
             val transactions = transactionRepository.observeTransactions(range)
+            val categories = categoryRepository.observeCategories()
             return if (range.encloses(budgetRange)) {
-                combine(transactions, budgetRepository.observeBudgets()) { tx, budgets ->
+                combine(transactions, budgetRepository.observeBudgets(), categories) { tx, budgets, catalog ->
                     val monthExpenses = tx.expenses.filter { it.date in budgetRange }
-                    overviewOf(budgetMonth, tx, budgetProgressOf(monthExpenses, budgets), recentLimit)
+                    overviewOf(budgetMonth, tx, budgetProgressOf(monthExpenses, budgets, catalog), catalog, recentLimit)
                 }
             } else {
-                combine(transactions, observeBudgetProgress(budgetMonth, zone)) { tx, budgets ->
-                    overviewOf(budgetMonth, tx, budgets, recentLimit)
+                combine(transactions, observeBudgetProgress(budgetMonth, zone), categories) { tx, budgets, catalog ->
+                    overviewOf(budgetMonth, tx, budgets, catalog, recentLimit)
                 }
             }
         }
@@ -60,12 +64,13 @@ class ObservePeriodOverview
             budgetMonth: YearMonth,
             transactions: TransactionsInRange,
             budgets: List<CategoryBudget>,
+            categories: List<Category>,
             recentLimit: Int,
         ): PeriodOverview =
             PeriodOverview(
                 budgetMonth = budgetMonth,
                 transactions = transactions,
-                summary = cashFlowSummaryOf(transactions.expenses, transactions.income),
+                summary = cashFlowSummaryOf(transactions.expenses, transactions.income, categories),
                 budgets = budgets,
                 recent = transactions.recentActivity(recentLimit),
             )

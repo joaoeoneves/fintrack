@@ -12,15 +12,20 @@ import java.time.Instant
 class BudgetProgressTest {
     private val date = Instant.parse("2026-10-10T12:00:00Z")
 
-    private fun List<CategoryBudget>.of(category: ExpenseCategory) = single { it.category == category }
+    private fun List<CategoryBudget>.of(category: Category) = single { it.category == category }
 
     @Test
     fun everyCategoryPresent_inEnumOrder_withNullLimitsWhenUnset() {
-        val progress = budgetProgressOf(emptyList(), listOf(Budget(ExpenseCategory.FOOD, 10_000L)))
+        val progress =
+            budgetProgressOf(
+                emptyList(),
+                listOf(Budget(BuiltInCategories.FOOD.id, 10_000L)),
+                BuiltInCategories.all,
+            )
 
-        assertEquals(ExpenseCategory.entries.toList(), progress.map { it.category })
-        assertEquals(10_000L, progress.of(ExpenseCategory.FOOD).limitCents)
-        ExpenseCategory.entries.filter { it != ExpenseCategory.FOOD }.forEach {
+        assertEquals(BuiltInCategories.all.toList(), progress.map { it.category })
+        assertEquals(10_000L, progress.of(BuiltInCategories.FOOD).limitCents)
+        BuiltInCategories.all.filter { it != BuiltInCategories.FOOD }.forEach {
             assertNull(progress.of(it).limitCents)
             assertFalse(progress.of(it).isOverBudget)
         }
@@ -32,14 +37,15 @@ class BudgetProgressTest {
         val progress =
             budgetProgressOf(
                 listOf(
-                    testExpense("e", 1_000L, date, ExpenseCategory.SHOPPING),
-                    testExpense("r", 3_000L, date, ExpenseCategory.SHOPPING, isRefund = true),
+                    testExpense("e", 1_000L, date, BuiltInCategories.SHOPPING),
+                    testExpense("r", 3_000L, date, BuiltInCategories.SHOPPING, isRefund = true),
                 ),
-                listOf(Budget(ExpenseCategory.SHOPPING, 500L)),
+                listOf(Budget(BuiltInCategories.SHOPPING.id, 500L)),
+                BuiltInCategories.all,
             )
 
-        assertEquals(0L, progress.of(ExpenseCategory.SHOPPING).spentCents)
-        assertFalse(progress.of(ExpenseCategory.SHOPPING).isOverBudget)
+        assertEquals(0L, progress.of(BuiltInCategories.SHOPPING).spentCents)
+        assertFalse(progress.of(BuiltInCategories.SHOPPING).isOverBudget)
     }
 
     @Test
@@ -47,35 +53,55 @@ class BudgetProgressTest {
         val progress =
             budgetProgressOf(
                 listOf(
-                    testExpense("food", 4_000L, date, ExpenseCategory.FOOD),
-                    testExpense("r", 3_000L, date, ExpenseCategory.SHOPPING, isRefund = true),
+                    testExpense("food", 4_000L, date, BuiltInCategories.FOOD),
+                    testExpense("r", 3_000L, date, BuiltInCategories.SHOPPING, isRefund = true),
                 ),
                 emptyList(),
+                BuiltInCategories.all,
             )
 
-        assertEquals(4_000L, progress.of(ExpenseCategory.FOOD).spentCents)
-        assertEquals(0L, progress.of(ExpenseCategory.SHOPPING).spentCents)
+        assertEquals(4_000L, progress.of(BuiltInCategories.FOOD).spentCents)
+        assertEquals(0L, progress.of(BuiltInCategories.SHOPPING).spentCents)
     }
 
     @Test
     fun spentExactlyAtLimit_isNotOver_oneCentAbove_isOver() {
-        val budgets = listOf(Budget(ExpenseCategory.FOOD, 10_000L))
+        val budgets = listOf(Budget(BuiltInCategories.FOOD.id, 10_000L))
 
-        val atLimit = budgetProgressOf(listOf(testExpense("a", 10_000L, date, ExpenseCategory.FOOD)), budgets)
-        val above = budgetProgressOf(listOf(testExpense("a", 10_001L, date, ExpenseCategory.FOOD)), budgets)
+        val atLimit =
+            budgetProgressOf(
+                listOf(testExpense("a", 10_000L, date, BuiltInCategories.FOOD)),
+                budgets,
+                BuiltInCategories.all,
+            )
+        val above =
+            budgetProgressOf(
+                listOf(testExpense("a", 10_001L, date, BuiltInCategories.FOOD)),
+                budgets,
+                BuiltInCategories.all,
+            )
 
-        assertFalse(atLimit.of(ExpenseCategory.FOOD).isOverBudget)
-        assertTrue(above.of(ExpenseCategory.FOOD).isOverBudget)
+        assertFalse(atLimit.of(BuiltInCategories.FOOD).isOverBudget)
+        assertTrue(above.of(BuiltInCategories.FOOD).isOverBudget)
     }
 
     @Test
     fun zeroLimit_overWithAnySpend_notOverWhenNothingSpent() {
-        val budgets = listOf(Budget(ExpenseCategory.RECURRING, 0L))
+        val budgets = listOf(Budget(BuiltInCategories.RECURRING.id, 0L))
 
-        assertFalse(budgetProgressOf(emptyList(), budgets).of(ExpenseCategory.RECURRING).isOverBudget)
+        assertFalse(
+            budgetProgressOf(
+                emptyList(),
+                budgets,
+                BuiltInCategories.all,
+            ).of(BuiltInCategories.RECURRING).isOverBudget,
+        )
         assertTrue(
-            budgetProgressOf(listOf(testExpense("a", 1L, date, ExpenseCategory.RECURRING)), budgets)
-                .of(ExpenseCategory.RECURRING)
+            budgetProgressOf(
+                listOf(testExpense("a", 1L, date, BuiltInCategories.RECURRING)),
+                budgets,
+                BuiltInCategories.all,
+            ).of(BuiltInCategories.RECURRING)
                 .isOverBudget,
         )
     }

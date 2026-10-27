@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
+import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.CashFlowSummary
@@ -30,7 +31,10 @@ class ObserveCashFlowSummaryTest {
             val income = FakeIncomeRepository(listOf(testIncome("i", 10_000L, inside)))
             val emissions = mutableListOf<CashFlowSummary>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                ObserveCashFlowSummary(CombinedTransactionRepository(expenses, income))(range).toList(emissions)
+                ObserveCashFlowSummary(
+                    CombinedTransactionRepository(expenses, income),
+                    FakeCategoryRepository(),
+                )(range).toList(emissions)
             }
 
             expenses.addExpense(testExpense("outside", 99L, Instant.parse("2026-11-01T00:00:00Z")))
@@ -51,6 +55,7 @@ class ObserveCashFlowSummaryTest {
                         FakeExpenseRepository(nextObserveExpensesError = error),
                         FakeIncomeRepository(),
                     ),
+                    FakeCategoryRepository(),
                 )
 
             assertFailsWithError(error) { useCase(range).first() }
