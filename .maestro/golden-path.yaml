@@ -201,7 +201,7 @@ appId: com.joaoeoneves.fintrack
 # period"), pick a rolling window, and check the label reflects it; then restore "This month".
 - tapOn: "Change period"
 - assertVisible: "This month"
-- assertVisible: "Choose month..."
+- assertVisible: "Choose month.*"
 # (Rolling windows such as "Last 3 months" now live only in the Insights tab's period picker.)
 - tapOn: "This month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
