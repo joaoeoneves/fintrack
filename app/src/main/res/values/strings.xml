@@ -260,4 +260,32 @@
         <item quantity="one">%d invalid record in the file will be skipped.</item>
         <item quantity="other">%d invalid records in the file will be skipped.</item>
     </plurals>
+
+    <!-- Migrate local data to the account -->
+    <string name="migration_offer_title">Copy this device\'s data to your account?</string>
+    <string name="migration_offer_message">You have data saved only on this device:\n\n%1$s\n\nCopy it to your account so it syncs everywhere? Nothing is removed from this device unless you choose to.</string>
+    <string name="migration_action_copy">Copy</string>
+    <string name="migration_action_not_now">Not now</string>
+    <string name="migration_running_title">Copying your data</string>
+    <string name="migration_preparing">Preparing…</string>
+    <string name="migration_progress">Copied %1$d of %2$d</string>
+    <plurals name="migration_partial_progress">
+        <item quantity="one">Copied %1$d of %2$d record.</item>
+        <item quantity="other">Copied %1$d of %2$d records.</item>
+    </plurals>
+    <string name="migration_error_title">Could not copy your data</string>
+    <string name="migration_error_offline">You appear to be offline. Connect to the internet and try again.</string>
+    <string name="migration_error_failed">Something went wrong while copying. Your data on this device is untouched.</string>
+    <string name="migration_error_remove_failed">Your data was copied, but it could not be removed from this device.</string>
+    <string name="migration_done_title">Data copied</string>
+    <plurals name="migration_done_message">
+        <item quantity="one">%1$d record was copied to your account. Remove the copy on this device?</item>
+        <item quantity="other">%1$d records were copied to your account. Remove the copy on this device?</item>
+    </plurals>
+    <string name="migration_action_remove_local">Remove from this device</string>
+    <string name="migration_action_keep">Keep</string>
+    <plurals name="migration_done_skipped">
+        <item quantity="one">%d record could not be copied and was skipped.</item>
+        <item quantity="other">%d records could not be copied and were skipped.</item>
+    </plurals>
 </resources>

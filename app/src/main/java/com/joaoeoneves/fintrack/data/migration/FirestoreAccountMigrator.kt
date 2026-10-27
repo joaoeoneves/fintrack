@@ -1,0 +1,115 @@
+package com.joaoeoneves.fintrack.data.migration
+
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.Source
+import com.joaoeoneves.fintrack.data.local.LocalDataDocument
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
+import com.joaoeoneves.fintrack.data.toCategoryOrNull
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
+
+private val SERVER_TIMEOUT = 30.seconds
+
+/**
+ * Moves guest data into `users/{uid}`: ids are preserved (`document(id)`), batches are committed
+ * one at a time and awaited, in the order categories, budgets, expenses, income so the rules'
+ * `existsAfter` category lookup finds every custom category a later batch references. Awaiting is
+ * deliberate here (unlike the normal repositories): the caller must know a batch reached the server
+ * before the local copy may be removed, so each wait is bounded by a timeout.
+ */
+class FirestoreAccountMigrator
+    @Inject
+    constructor(
+        private val firestore: FirebaseFirestore,
+        private val firebaseAuth: FirebaseAuth,
+    ) : AccountMigrator {
+        override suspend fun migrate(
+            local: LocalDataDocument,
+            onProgress: (written: Int, total: Int) -> Unit,
+        ): MigrationResult {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return MigrationResult(0, 0, 0, IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val plan = planMigration(local, fetchSnapshot(uid))
+                plan to plan.toBatches()
+            }.fold(
+                onSuccess = { (plan, batches) ->
+                    onProgress(0, plan.total)
+                    commit(uid, plan, batches, onProgress)
+                },
+                onFailure = { MigrationResult(0, 0, 0, it) },
+            )
+        }
+
+        private fun userDoc(uid: String) = firestore.collection("users").document(uid)
+
+        private suspend fun fetchSnapshot(uid: String): RemoteAccountSnapshot {
+            suspend fun ids(collection: String) = serverIds(uid, collection)
+            val categories =
+                serverGet { userDoc(uid).collection("categories").get(Source.SERVER).await() }
+                    .documents
+                    .mapNotNull { it.toCategoryOrNull() }
+            return RemoteAccountSnapshot(
+                expenseIds = ids("expenses"),
+                incomeIds = ids("income"),
+                budgetCategoryIds = ids("budgets"),
+                categories = categories,
+            )
+        }
+
+        private suspend fun serverIds(
+            uid: String,
+            collection: String,
+        ): Set<String> =
+            serverGet { userDoc(uid).collection(collection).get(Source.SERVER).await() }
+                .documents
+                .mapTo(mutableSetOf()) { it.id }
+
+        /** Runs [block] with a timeout; an unreachable server (or the timeout) becomes [MigrationOfflineException]. */
+        private suspend fun <T : Any> serverGet(block: suspend () -> T): T =
+            try {
+                withTimeoutOrNull(SERVER_TIMEOUT) { block() }
+                    ?: throw MigrationOfflineException("Timed out waiting for the account")
+            } catch (e: FirebaseFirestoreException) {
+                if (e.code == FirebaseFirestoreException.Code.UNAVAILABLE) {
+                    throw MigrationOfflineException("Account unreachable", e)
+                }
+                throw e
+            }
+
+        private suspend fun commit(
+            uid: String,
+            plan: MigrationPlan,
+            batches: List<List<PendingWrite>>,
+            onProgress: (written: Int, total: Int) -> Unit,
+        ): MigrationResult {
+            var written = 0
+            val user = userDoc(uid)
+            for (chunk in batches) {
+                // Earlier batches stay written on failure; a retry skips them.
+                val failure = runCatchingCancellable { commitBatch(user, chunk) }.exceptionOrNull()
+                if (failure != null) return MigrationResult(written, plan.total, plan.skipped, failure)
+                written += chunk.size
+                onProgress(written, plan.total)
+            }
+            return MigrationResult(written, plan.total, plan.skipped)
+        }
+
+        private suspend fun commitBatch(
+            user: DocumentReference,
+            writes: List<PendingWrite>,
+        ) {
+            val batch = firestore.batch()
+            writes.forEach { batch.set(user.collection(it.collection).document(it.id), it.data) }
+            serverGet {
+                batch.commit().await()
+                Unit
+            }
+        }
+    }

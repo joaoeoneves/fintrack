@@ -60,9 +60,9 @@ internal fun validateCategory(category: LocalCategory) {
     require(KEY_REGEX.matches(category.iconKey) && category.iconKey.length <= MAX_KEY_LENGTH) { "Invalid icon key" }
     require(KEY_REGEX.matches(category.colorKey) && category.colorKey.length <= MAX_KEY_LENGTH) { "Invalid color key" }
     require(CategoryKind.entries.any { it.name == category.kind }) { "Invalid category kind ${category.kind}" }
-    require(name != null || category.id in BuiltInCategories.all.map { it.id.value }) {
-        "A user category needs a name"
-    }
+    // Blank-after-trim counts as no name: the mappers treat it that way, so validation must agree.
+    val builtIn = category.id in BuiltInCategories.all.map { it.id.value }
+    require(builtIn || !name.isNullOrBlank()) { "A user category needs a name" }
 }
 
 private fun requireCategoryIdShape(id: String) {

@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
+import com.joaoeoneves.fintrack.data.migration.chunkedForRules
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
@@ -25,12 +26,6 @@ import java.time.Instant
 import javax.inject.Inject
 
 private const val TAG = "FirestoreExpenseRepo"
-private const val BATCH_CHUNK_SIZE = 400
-
-// Each expense write whose category isn't built in makes firestore.rules look up that category
-// document; rules allow only a limited number of such lookups per request (batch), so a chunk may
-// reference at most this many distinct non-built-in categories.
-private const val MAX_CUSTOM_CATEGORIES_PER_BATCH = 15
 
 class FirestoreExpenseRepository
     @Inject
@@ -202,30 +197,12 @@ class FirestoreExpenseRepository
     }
 
 /**
- * Splits these expenses into write batches of at most [BATCH_CHUNK_SIZE] expenses that reference
- * at most [MAX_CUSTOM_CATEGORIES_PER_BATCH] distinct non-built-in categories.
+ * Splits these expenses into write batches of at most 400 expenses that reference at most 15
+ * distinct non-built-in categories (see [chunkedForRules]).
  */
-internal fun List<Expense>.importChunks(): List<List<Expense>> {
-    val chunks = mutableListOf<List<Expense>>()
-    var current = mutableListOf<Expense>()
-    val customIds = mutableSetOf<CategoryId>()
-    forEach { expense ->
-        val id = expense.category.id
-        val isCustom = !BuiltInCategories.isBuiltIn(id)
-        val exceedsCustomLimit = isCustom && id !in customIds && customIds.size >= MAX_CUSTOM_CATEGORIES_PER_BATCH
-        if (current.size >= BATCH_CHUNK_SIZE || exceedsCustomLimit) {
-            chunks += current
-            current = mutableListOf()
-            customIds.clear()
-        }
-        current += expense
-        if (isCustom) customIds += id
-    }
-    if (current.isNotEmpty()) chunks += current
-    return chunks
-}
+internal fun List<Expense>.importChunks(): List<List<Expense>> = chunkedForRules { it.category.id }
 
-private fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
+internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
     val map =
         mutableMapOf<String, Any?>(
             "name" to name,

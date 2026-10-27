@@ -126,6 +126,8 @@ class RecordValidationTest {
     @Test
     fun category_userCategoryNeedsName_builtInDoesNot() {
         invalid { validateCategory(cat(id = "custom", name = null)) }
+        invalid { validateCategory(cat(id = "custom", name = "   ")) }
+        invalid { validateCategory(cat(id = "custom", name = " \t\n")) }
         validateCategory(cat(id = "SHOPPING", name = null))
     }
 

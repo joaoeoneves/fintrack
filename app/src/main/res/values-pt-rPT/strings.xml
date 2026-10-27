@@ -263,4 +263,35 @@
         <item quantity="many">%d de registos inválidos no ficheiro serão ignorados.</item>
         <item quantity="other">%d registos inválidos no ficheiro serão ignorados.</item>
     </plurals>
+
+    <!-- Migrar dados locais para a conta -->
+    <string name="migration_offer_title">Copiar os dados deste dispositivo para a sua conta?</string>
+    <string name="migration_offer_message">Tem dados guardados apenas neste dispositivo:\n\n%1$s\n\nCopiá-los para a sua conta para os sincronizar em todo o lado? Nada é removido deste dispositivo a menos que o escolha.</string>
+    <string name="migration_action_copy">Copiar</string>
+    <string name="migration_action_not_now">Agora não</string>
+    <string name="migration_running_title">A copiar os seus dados</string>
+    <string name="migration_preparing">A preparar…</string>
+    <string name="migration_progress">Copiados %1$d de %2$d</string>
+    <plurals name="migration_partial_progress">
+        <item quantity="one">Copiado %1$d de %2$d registo.</item>
+        <item quantity="many">Copiados %1$d de %2$d de registos.</item>
+        <item quantity="other">Copiados %1$d de %2$d registos.</item>
+    </plurals>
+    <string name="migration_error_title">Não foi possível copiar os dados</string>
+    <string name="migration_error_offline">Parece estar sem ligação. Ligue-se à internet e tente novamente.</string>
+    <string name="migration_error_failed">Algo correu mal ao copiar. Os dados neste dispositivo não foram alterados.</string>
+    <string name="migration_error_remove_failed">Os dados foram copiados, mas não foi possível removê-los deste dispositivo.</string>
+    <string name="migration_done_title">Dados copiados</string>
+    <plurals name="migration_done_message">
+        <item quantity="one">Foi copiado %1$d registo para a sua conta. Remover a cópia neste dispositivo?</item>
+        <item quantity="many">Foram copiados %1$d de registos para a sua conta. Remover a cópia neste dispositivo?</item>
+        <item quantity="other">Foram copiados %1$d registos para a sua conta. Remover a cópia neste dispositivo?</item>
+    </plurals>
+    <string name="migration_action_remove_local">Remover deste dispositivo</string>
+    <string name="migration_action_keep">Manter</string>
+    <plurals name="migration_done_skipped">
+        <item quantity="one">%d registo não pôde ser copiado e foi ignorado.</item>
+        <item quantity="many">%d de registos não puderam ser copiados e foram ignorados.</item>
+        <item quantity="other">%d registos não puderam ser copiados e foram ignorados.</item>
+    </plurals>
 </resources>

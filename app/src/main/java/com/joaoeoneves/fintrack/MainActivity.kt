@@ -27,6 +27,7 @@ import com.joaoeoneves.fintrack.ui.auth.AuthViewModel
 import com.joaoeoneves.fintrack.ui.auth.SignInScreen
 import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.applyAppLanguage
+import com.joaoeoneves.fintrack.ui.migration.LocalDataMigrationHost
 import com.joaoeoneves.fintrack.ui.navigation.FinTrackNavHost
 import com.joaoeoneves.fintrack.ui.theme.CurrencyViewModel
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -82,6 +83,8 @@ class MainActivity : AppCompatActivity() {
                             CompositionLocalProvider(LocalCurrency provides currency) {
                                 FinTrackNavHost(modifier = Modifier.fillMaxSize())
                             }
+                            // Only for accounts: guests have nothing to copy anywhere.
+                            if (state is AuthUiState.SignedIn) LocalDataMigrationHost()
                         } else {
                             SignInScreen(
                                 uiState = state,

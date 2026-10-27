@@ -54,6 +54,12 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 - **CSV import/export** — for expenses, from Settings (income CSV support is a deliberate fast-follow, not
   yet built).
 - **Google Sign-In** via Credential Manager (not the legacy `GoogleSignInClient` API) + Firebase Auth.
+- **Guest mode** — "Continue as guest" uses the full app with everything stored only on the device (one
+  JSON file, no Firebase). Signing in later offers to copy the guest data into the account (categories
+  with the same name are merged, nothing is duplicated, an interrupted copy can be retried), then to
+  remove it from the device.
+- **JSON backup** — export all data and preferences to a versioned `fintrack-backup` JSON file (signed in
+  or as a guest) and restore it as a guest, e.g. to move to another phone.
 - **Settings** — reached from the Dashboard's gear icon:
   - **Theme**: system default, light or dark, with a full, intentional Material 3 dark color scheme (not an
     auto-inverted afterthought).
@@ -63,9 +69,10 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
     formatting, with no exchange-rate conversion.
   - **Categories**: add your own (name, icon, color, spending or saving), rename/recolor the built-ins,
     reorder, archive (hidden from pickers, kept on existing data) or delete unused ones.
-  - CSV import/export and the signed-in account.
-- **Offline-friendly** — Firestore's built-in local cache is the only persistence layer; there's no local
-  Room database, so data survives offline use and syncs back once reconnected.
+  - CSV import/export, JSON backup, and the account (or guest) card.
+- **Offline-friendly** — for signed-in users Firestore's built-in local cache is the only persistence
+  layer (no Room), so data survives offline use and syncs back once reconnected; guest data is local by
+  design.
 
 ### Tech stack
 
@@ -78,7 +85,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 | DI | Hilt |
 | Navigation | Compose Navigation, type-safe routes |
 | Auth | Firebase Auth + Google Sign-In via `androidx.credentials` (Credential Manager) |
-| Persistence | Firebase Firestore (no Room/local database) + Preferences DataStore for theme/currency/language |
+| Persistence | Firebase Firestore when signed in; a kotlinx.serialization JSON file in guest mode (no Room either way) + Preferences DataStore for theme/currency/language and session state |
 | Lint/format | ktlint + detekt |
 | Unit tests | JUnit4 + Robolectric (where Android framework classes are needed, e.g. the legacy `SharedPreferences` migration) |
 | E2E tests | [Maestro](https://maestro.mobile.dev) |
@@ -93,7 +100,8 @@ Single module (`:app`), package `com.joaoeoneves.fintrack`, organized as:
 ```
 app/src/main/java/com/joaoeoneves/fintrack/
 ├── ui/            Compose screens and components (dashboard, expense/, income/, auth/, theme/, ...)
-├── data/          Repository implementations (Firestore + Fake), CSV import/export
+├── data/          Repository implementations: Firestore, local/ (guest JSON store), session/ (switches
+│                  between them), backup/, migration/, preferences/, CSV import/export
 ├── domain/        Domain models and repository interfaces
 ├── di/            Hilt modules
 app/src/test/          Unit tests (JVM, mirrors the app/src/main package structure)
@@ -101,8 +109,11 @@ app/src/androidTest/   Instrumented tests
 .maestro/              E2E flows (YAML), run against a real emulator/device
 ```
 
-Each repository has a real Firestore-backed implementation and a `Fake*` in-memory implementation (used in
-unit tests), bound via Hilt in `di/RepositoryModule.kt`. Cross-cutting state (auth, theme preference) is
+Each repository has a Firestore-backed implementation, a local JSON-backed implementation for guest mode
+(`data/local/`) and a `Fake*` in-memory implementation (unit tests only). Hilt binds the domain interfaces
+to `Session*Repository` delegates (`data/session/`) that route every call to the local or Firestore
+implementation for the current session, so ViewModels don't know which one they're using and a guest never
+instantiates Firestore. Cross-cutting state (auth, theme preference) is
 resolved once in `MainActivity` and threaded down through the nav graph as plain callback/value parameters
 — not re-resolved via `hiltViewModel()` inside individual nav destinations, which could otherwise pick up a
 different, nav-entry-scoped instance.
@@ -148,6 +159,16 @@ users/{uid}/settings/preferences       // theme, currency and language, synced a
 
 Security rules ([`firestore.rules`](firestore.rules)) restrict every collection to
 `request.auth.uid == userId` — a user can only ever read/write their own documents.
+
+### Local data file / backup format
+
+Guest data lives in `filesDir/guest-data.json` (`LocalDataDocument`: `schemaVersion`, `revision`, and lists
+of expenses, income, budgets and categories mirroring the Firestore documents, with ISO-8601 dates). Writes
+are atomic (temp file + rename); a corrupt or newer-schema file is moved aside to
+`guest-data.corrupt-<millis>.json` rather than deleted. After a successful "Remove from this device" following a migration to an account,
+the previous file is kept once as `guest-data.migrated.json` (a single safety copy, overwritten next time). The backup file uses the same record shapes inside
+a `{ "format": "fintrack-backup", "schemaVersion": 1, "exportedAt", "appVersion", "preferences", ... }`
+envelope; records that fail validation are skipped and reported on restore.
 
 ### Download
 

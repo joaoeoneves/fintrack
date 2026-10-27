@@ -176,7 +176,7 @@ class FirestoreIncomeRepository
         }
     }
 
-private fun Income.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
+internal fun Income.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?> {
     val map =
         mutableMapOf<String, Any?>(
             "source" to source,
