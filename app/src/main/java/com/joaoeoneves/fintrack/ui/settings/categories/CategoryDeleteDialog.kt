@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.ui.settings.categories
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -12,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 
 /** What a delete dialog's confirm button says and does; `null` confirm means no such button. */
 private data class ConfirmAction(
@@ -94,7 +94,7 @@ private fun DeleteAlert(
     dismissLabel: Int?,
     body: @Composable () -> Unit,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = body,

@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -219,5 +220,34 @@ class DashboardViewModelPeriodTest : DashboardViewModelTestBase() {
             advanceUntilIdle()
             assertEquals(Period.Month(currentMonth), viewModel.content().period)
             assertTrue(viewModel.content().canGoToNextMonth)
+        }
+
+    @Test
+    fun content_incomeAndRange_matchSelectedPeriod_includingAfterSwitching() =
+        runTest(testDispatcher) {
+            val octIncome = income(id = "oct-in", amountCents = 9_000L, date = noonOn(YearMonth.of(2026, 10), 12))
+            val incomeRepository = FakeIncomeRepository(listOf(sepIncome, octIncome))
+            val viewModel = viewModel(expenseRepository = expenses(), incomeRepository = incomeRepository)
+            collect(viewModel)
+
+            assertEquals(listOf(octIncome), viewModel.content().income)
+            assertEquals(Period.CurrentMonth.toInstantRange(now, zone), viewModel.content().range)
+
+            viewModel.onPreviousMonth()
+            advanceUntilIdle()
+            assertEquals(listOf(sepIncome), viewModel.content().income)
+            assertEquals(Period.Month(previousMonth).toInstantRange(now, zone), viewModel.content().range)
+
+            val rolling = Period.Rolling(TimeRange.THREE_MONTHS)
+            viewModel.onPeriodSelected(rolling)
+            advanceUntilIdle()
+            assertEquals(setOf(sepIncome, octIncome), viewModel.content().income.toSet())
+            assertEquals(rolling.toInstantRange(now, zone), viewModel.content().range)
+
+            val custom = Period.Custom(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30))
+            viewModel.onPeriodSelected(custom)
+            advanceUntilIdle()
+            assertEquals(listOf(sepIncome), viewModel.content().income)
+            assertEquals(custom.toInstantRange(now, zone), viewModel.content().range)
         }
 }

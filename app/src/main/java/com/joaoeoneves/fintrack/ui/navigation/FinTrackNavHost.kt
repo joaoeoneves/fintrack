@@ -19,13 +19,23 @@ import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
+import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
 
 @Composable
 fun FinTrackNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
-    NavHost(navController = navController, startDestination = Dashboard, modifier = modifier) {
+    val transitions = NavTransitions(reducedMotion = LocalReducedMotion.current)
+    NavHost(
+        navController = navController,
+        startDestination = Dashboard,
+        modifier = modifier,
+        enterTransition = { transitions.enter() },
+        exitTransition = { transitions.exit() },
+        popEnterTransition = { transitions.popEnter() },
+        popExitTransition = { transitions.popExit() },
+    ) {
         composable<Dashboard> {
             DashboardScreen(
                 callbacks =
@@ -42,30 +52,7 @@ fun FinTrackNavHost(
                     ),
             )
         }
-        composable<ExpenseList> {
-            ExpenseListScreen(
-                onBack = { navController.popBackStack() },
-                onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
-            )
-        }
-        composable<AddEditExpense> {
-            AddEditExpenseScreen(
-                onSaved = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() },
-            )
-        }
-        composable<IncomeList> {
-            IncomeListScreen(
-                onBack = { navController.popBackStack() },
-                onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
-            )
-        }
-        composable<AddEditIncome> {
-            AddEditIncomeScreen(
-                onSaved = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() },
-            )
-        }
+        transactionRoutes(navController, transitions)
         composable<Settings> {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
@@ -76,22 +63,64 @@ fun FinTrackNavHost(
         composable<MonthlyPlan> {
             MonthlyPlanScreen(onBack = { navController.popBackStack() })
         }
-        recurringRoutes(navController)
+        recurringRoutes(navController, transitions)
         composable<Categories> {
             CategoriesScreen(onBack = { navController.popBackStack() })
         }
     }
 }
 
-private fun NavGraphBuilder.recurringRoutes(navController: NavHostController) {
+private fun NavGraphBuilder.recurringRoutes(
+    navController: NavHostController,
+    transitions: NavTransitions,
+) {
     composable<RecurringList> {
         RecurringListScreen(
             onBack = { navController.popBackStack() },
             onOpenEditor = { id -> navController.navigate(AddEditRecurring(recurringId = id)) },
         )
     }
-    composable<AddEditRecurring> {
+    composable<AddEditRecurring>(
+        enterTransition = { transitions.enterFromBottom() },
+        popExitTransition = { transitions.popExitToBottom() },
+    ) {
         AddEditRecurringScreen(
+            onSaved = { navController.popBackStack() },
+            onCancel = { navController.popBackStack() },
+        )
+    }
+}
+
+private fun NavGraphBuilder.transactionRoutes(
+    navController: NavHostController,
+    transitions: NavTransitions,
+) {
+    composable<ExpenseList> {
+        ExpenseListScreen(
+            onBack = { navController.popBackStack() },
+            onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
+        )
+    }
+    composable<AddEditExpense>(
+        enterTransition = { transitions.enterFromBottom() },
+        popExitTransition = { transitions.popExitToBottom() },
+    ) {
+        AddEditExpenseScreen(
+            onSaved = { navController.popBackStack() },
+            onCancel = { navController.popBackStack() },
+        )
+    }
+    composable<IncomeList> {
+        IncomeListScreen(
+            onBack = { navController.popBackStack() },
+            onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
+        )
+    }
+    composable<AddEditIncome>(
+        enterTransition = { transitions.enterFromBottom() },
+        popExitTransition = { transitions.popExitToBottom() },
+    ) {
+        AddEditIncomeScreen(
             onSaved = { navController.popBackStack() },
             onCancel = { navController.popBackStack() },
         )

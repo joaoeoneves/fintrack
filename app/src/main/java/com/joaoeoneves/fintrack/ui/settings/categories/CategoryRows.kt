@@ -41,8 +41,11 @@ import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.icon
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 private const val ARCHIVED_ALPHA = 0.6f
+private val ColorDotSize = 8.dp
 
 /** Localized label of a [CategoryKind]. */
 internal val CategoryKind.label: String
@@ -66,7 +69,7 @@ internal fun ActiveCategoryRow(
             modifier
                 .fillMaxWidth()
                 .clickable { actions.onEdit(category.id) }
-                .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                .padding(vertical = Dimens.Space4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CategoryIdentity(category)
@@ -97,7 +100,12 @@ private fun CategoryOverflowMenu(
     IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = description }) {
         Icon(Icons.Filled.MoreVert, contentDescription = null)
     }
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+        shape = MaterialTheme.shapes.medium,
+        containerColor = FinTrackTheme.colors.surface2,
+    ) {
         DropdownMenuItem(
             text = { Text(stringResource(R.string.category_action_edit)) },
             onClick = {
@@ -131,7 +139,7 @@ internal fun ArchivedCategoryRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = Dimens.Space4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CategoryIdentity(category, modifier = Modifier.alpha(ARCHIVED_ALPHA))
@@ -146,23 +154,23 @@ internal fun ArchivedCategoryRow(
     }
 }
 
-/** Icon, color dot, name and kind of a category; fills the row's remaining width. */
+/** Monochrome icon, name and kind of a category plus its colour dot; fills the row's remaining width. */
 @Composable
 private fun RowScope.CategoryIdentity(
     category: Category,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-        Icon(category.icon, contentDescription = null, tint = category.color)
-        ColorDot(category)
-        Column(modifier = Modifier.padding(start = 12.dp)) {
+        Icon(category.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+        Column(modifier = Modifier.padding(start = Dimens.Space12).weight(1f)) {
             Text(text = category.displayName, style = MaterialTheme.typography.bodyLarge)
             Text(
                 text = category.kind.label,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = FinTrackTheme.colors.textSecondary,
             )
         }
+        ColorDot(category)
     }
 }
 
@@ -171,8 +179,8 @@ private fun ColorDot(category: Category) {
     Box(
         modifier =
             Modifier
-                .padding(start = 8.dp)
-                .size(10.dp)
+                .padding(horizontal = Dimens.Space8)
+                .size(ColorDotSize)
                 .clip(CircleShape)
                 .background(category.color),
     )

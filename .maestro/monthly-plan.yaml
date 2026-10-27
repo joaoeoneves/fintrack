@@ -24,7 +24,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 1: Open the plan from the Dashboard card (CTA when empty, "Edit plan" otherwise) ---
 - scrollUntilVisible:
@@ -77,7 +78,8 @@ appId: com.joaoeoneves.fintrack
 
 # --- 4: Back to the Dashboard: safe to spend = 2,200 - 300 = ~1,900 ---
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - scrollUntilVisible:
     element: "Safe to spend.*"
     direction: UP
@@ -88,7 +90,8 @@ appId: com.joaoeoneves.fintrack
     element: "Planned"
     direction: DOWN
 - tapOn: "Planned"
-- assertVisible: "Food"
+# Breakdown rows are merged nodes ("Food, 100 percent, 300,00 €"), so match with a wildcard.
+- assertVisible: ".*Food.*"
 
 # --- 6: Cleanup -- remove both income lines and clear the Food allocation ---
 - scrollUntilVisible:
@@ -118,4 +121,5 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Set budget for Food"
 
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"

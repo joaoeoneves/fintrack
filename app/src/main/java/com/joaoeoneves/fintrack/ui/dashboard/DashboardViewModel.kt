@@ -131,6 +131,8 @@ class DashboardViewModel
                 budgetMonth = budgetMonth,
                 budgetMonthIsCurrent = isCurrentMonth,
                 expenses = transactions.expenses,
+                income = transactions.income,
+                range = transactions.range,
                 categoryTotals = summary.categoryTotals,
                 outflowCents = summary.outflowCents,
                 spendingCents = summary.spendingCents,

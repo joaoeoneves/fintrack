@@ -32,9 +32,6 @@ appId: com.joaoeoneves.fintrack
 - back
 
 # --- 1: Open Add expense from the Dashboard's "Recent expenses" card plus icon ---
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 

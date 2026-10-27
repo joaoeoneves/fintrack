@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -44,11 +43,9 @@ import java.time.Instant
  * The plus buttons carry their "Add expense"/"Add income" content description on the clickable
  * IconButton node itself, so `onNodeWithContentDescription(...).performClick()` hits the button.
  *
- * NOTE: on a real device screen the Dashboard content (balance card, pie chart, budget rows) can
- * exceed the viewport, so "Recent expenses" / "Add income" may not be composed by the LazyColumn
- * yet without scrolling. Tests that need those nodes scroll the dashboard's own LazyColumn
- * (identified generically via [hasScrollAction]) to the target node first, rather than relying on
- * [androidx.compose.ui.test.junit4.ComposeTestRule.waitUntil], which never scrolls.
+ * NOTE: "Add expense"/"Add income" are content descriptions on the floating add pill in the
+ * Scaffold FAB slot, outside the LazyColumn, so they are clicked directly. The "Recent expenses"
+ * card and its rows are inside the LazyColumn and may need [scrollToNode] first.
  */
 @RunWith(AndroidJUnit4::class)
 class DashboardAddExpenseEntryPointTest {
@@ -123,7 +120,6 @@ class DashboardAddExpenseEntryPointTest {
             expenses = emptyList(),
             onAddExpense = { addExpenseClicked = true },
         )
-        scrollToNode(hasContentDescription("Add expense"))
 
         assertEquals(false, addExpenseClicked)
         composeTestRule.onNodeWithContentDescription("Add expense").performClick()
@@ -138,7 +134,6 @@ class DashboardAddExpenseEntryPointTest {
             expenses = listOf(expense(id = "e1")),
             onAddExpense = { addExpenseClicked = true },
         )
-        scrollToNode(hasContentDescription("Add expense"))
 
         assertEquals(false, addExpenseClicked)
         composeTestRule.onNodeWithContentDescription("Add expense").performClick()
@@ -191,7 +186,6 @@ class DashboardAddExpenseEntryPointTest {
     fun recentIncomeAddButton_isUnaffectedByThisChange_stillInvokesOnAddIncome() {
         var addIncomeClicked = false
         setDashboardContent(onAddIncome = { addIncomeClicked = true })
-        scrollToNode(hasContentDescription("Add income"))
 
         composeTestRule.onNodeWithContentDescription("Add income").performClick()
 

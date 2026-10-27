@@ -7,15 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,14 +22,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.ui.common.color
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
+import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import kotlin.math.roundToInt
+
+/** How much of the limit is used, as a 0..1 bar fill: 0 without a (positive) limit, capped at 1 when over. */
+fun CategoryBudget.progressFraction(): Float {
+    val limit = limitCents?.takeIf { it > 0L } ?: return 0f
+    return (spentCents.toDouble() / limit.toDouble()).toFloat().coerceIn(0f, 1f)
+}
+
+/** Whole-number percent of the limit spent, not capped (130 when 30% over); 0 without a (positive) limit. */
+fun CategoryBudget.percentUsed(): Int {
+    val limit = limitCents?.takeIf { it > 0L } ?: return 0
+    return (spentCents.toDouble() / limit.toDouble() * PERCENT_SCALE).roundToInt()
+}
+
+private const val PERCENT_SCALE = 100
 
 /**
  * Shows per-category budget progress for the dashboard's budget month (described by [title]), with
@@ -50,23 +64,10 @@ fun BudgetSection(
 ) {
     var editingBudget by remember { mutableStateOf<CategoryBudget?>(null) }
 
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            budgets.forEach { budget ->
-                BudgetRow(
-                    budget = budget,
-                    onClick = { editingBudget = budget },
-                )
-            }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        budgets.forEach { budget ->
+            BudgetRow(budget = budget, onClick = { editingBudget = budget })
         }
     }
 
@@ -91,90 +92,80 @@ private fun BudgetRow(
     budget: CategoryBudget,
     onClick: () -> Unit,
 ) {
-    val progress =
-        if (budget.limitCents != null && budget.limitCents > 0) {
-            (budget.spentCents.toFloat() / budget.limitCents.toFloat()).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
-    val progressColor = if (budget.isOverBudget) MaterialTheme.colorScheme.error else budget.category.color
-
-    Column(
+    val secondary = FinTrackTheme.colors.textSecondary
+    val statusColor = if (budget.isOverBudget) FinTrackTheme.colors.negative else secondary
+    val locale = currentLocale()
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(vertical = Dimens.Space12),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BudgetCategoryLabel(category = budget.category)
-            BudgetStatusText(budget = budget, modifier = Modifier.weight(1f))
-        }
-        LinearProgressIndicator(
-            progress = { progress },
-            color = progressColor,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-        )
-    }
-}
-
-@Composable
-private fun BudgetCategoryLabel(category: Category) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier =
-                Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(category.color.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = category.icon,
-                contentDescription = null,
-                tint = category.color,
-            )
-        }
-        Text(
-            text = category.displayName,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(start = 12.dp),
-        )
-    }
-}
-
-// Weighted so long, wrapped translations of this status text are confined to their own
-// right-hand column and never overlap the category name on the left (see bug report).
-@Composable
-private fun BudgetStatusText(
-    budget: CategoryBudget,
-    modifier: Modifier = Modifier,
-) {
-    val textColor = if (budget.isOverBudget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-    Text(
-        text =
-            if (budget.limitCents != null) {
-                stringResource(
-                    R.string.budget_spent_of_limit,
-                    formatAmountCents(budget.spentCents),
-                    formatAmountCents(budget.limitCents),
+        BudgetIcon(budget.category)
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = budget.category.displayName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
                 )
-            } else {
-                stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))
-            },
-        style = MaterialTheme.typography.bodySmall,
-        color = textColor,
-        textAlign = TextAlign.End,
-        modifier = modifier,
-    )
+                if (budget.limitCents != null) {
+                    Text(
+                        text = formatSavingsRate(budget.percentUsed() / PERCENT_SCALE.toDouble(), locale),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
+                        color = statusColor,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(start = Dimens.Space8),
+                    )
+                }
+            }
+            Text(
+                text = budgetStatus(budget),
+                style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
+                color = statusColor,
+            )
+            if (budget.limitCents != null) {
+                ThinProgressBar(
+                    progress = budget.progressFraction(),
+                    isOver = budget.isOverBudget,
+                    modifier = Modifier.padding(top = Dimens.Space8),
+                )
+            }
+        }
+    }
 }
+
+@Composable
+private fun BudgetIcon(category: Category) {
+    Box(
+        modifier =
+            Modifier
+                .size(Dimens.IconBubble)
+                .clip(CircleShape)
+                .background(FinTrackTheme.colors.surface2),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = category.icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+@Composable
+private fun budgetStatus(budget: CategoryBudget): String =
+    if (budget.limitCents != null) {
+        stringResource(
+            R.string.budget_spent_of_limit,
+            formatAmountCents(budget.spentCents),
+            formatAmountCents(budget.limitCents),
+        )
+    } else {
+        stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))
+    }

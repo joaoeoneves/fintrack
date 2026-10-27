@@ -2,19 +2,19 @@ package com.joaoeoneves.fintrack.ui.backup
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /** Dialogs for the backup export and restore flows; renders nothing while both are idle or busy. */
 @Composable
@@ -82,7 +82,7 @@ private fun RestoreConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.backup_restore_confirm_title)) },
         text = {
@@ -96,14 +96,14 @@ private fun RestoreConfirmDialog(
                                 state.skippedCount,
                                 state.skippedCount,
                             ),
-                        modifier = Modifier.padding(top = 8.dp),
+                        modifier = Modifier.padding(top = Dimens.Space8),
                     )
                 }
                 if (state.localHasData) {
                     Text(
                         text = stringResource(R.string.backup_restore_replace_warning),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(top = 8.dp),
+                        color = FinTrackTheme.colors.negative,
+                        modifier = Modifier.padding(top = Dimens.Space8),
                     )
                 }
             }

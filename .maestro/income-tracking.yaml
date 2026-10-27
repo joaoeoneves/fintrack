@@ -43,7 +43,8 @@ appId: com.joaoeoneves.fintrack
 # --- 1: Dashboard loads with the balance summary card (net balance + income / spending / saved &
 # invested columns). The outflow column was renamed "Expenses" -> "Spending", and investments now
 # count as saved ("Saved & invested") rather than as spending.
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - assertVisible: "Net Balance"
 - assertVisible: "Income"
 - assertVisible: "Spending"
@@ -55,9 +56,6 @@ appId: com.joaoeoneves.fintrack
 # in step 4b. Its amount ($50) is deliberately lower than the first entry's ($100) so that
 # switching to "Highest amount" sort (AMOUNT_DESC) visibly swaps their relative order versus the
 # default "Newest first" (DATE_DESC) order, giving an observable, assertable reordering.
-- scrollUntilVisible:
-    element: "Add income"
-    direction: DOWN
 - tapOn: "Add income"
 - assertVisible: "Add income"
 - tapOn: "Source"
@@ -72,9 +70,6 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Maestro E2E Test Salary"
 - assertVisible: "+$100.00"
 
-- scrollUntilVisible:
-    element: "Add income"
-    direction: DOWN
 - tapOn: "Add income"
 - assertVisible: "Add income"
 - tapOn: "Source"
@@ -175,7 +170,11 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - assertVisible: "Freelance Payment"
 - assertNotVisible: "Maestro E2E Test Salary"
-- tapOn: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertNotVisible: "+\\$50\\.00"
 - assertVisible: "Undo"
 - tapOn: "Freelance Payment"
@@ -183,7 +182,11 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Maestro E2E Test Salary"
 - hideKeyboard
 - assertNotVisible: "Freelance Payment"
-- tapOn: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertNotVisible: "+\\$100\\.00"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Test Salary"

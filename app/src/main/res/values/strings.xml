@@ -121,7 +121,6 @@
     <string name="field_length_counter">%1$d/%2$d</string>
 
     <!-- Sort options -->
-    <string name="sort_by_label">Sort by</string>
     <string name="sort_newest_first">Newest first</string>
     <string name="sort_oldest_first">Oldest first</string>
     <string name="sort_highest_amount">Highest amount</string>
@@ -173,6 +172,7 @@
     <string name="leave_guest_confirm_message">Your data stays on this device; choose Continue as guest to see it again.</string>
     <string name="label_sign_in_failed">Sign-in failed</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_font_license">Inter font licence (SIL OFL 1.1)</string>
     <string name="about_version_unknown">unknown</string>
 
     <!-- Theme -->
@@ -371,4 +371,22 @@
     <string name="error_recurring_day_invalid">Enter a day from 1 to 31</string>
     <string name="error_recurring_month_required">Choose a month</string>
     <string name="error_recurring_too_long">This text is too long</string>
+
+    <!-- Day headers in transaction lists -->
+    <string name="day_header_today">Today</string>
+    <string name="day_header_yesterday">Yesterday</string>
+
+    <!-- Dashboard redesign -->
+    <string name="action_see_all">See all</string>
+    <string name="dashboard_add_expense_short">Expense</string>
+    <string name="dashboard_add_income_short">Income</string>
+    <string name="cd_balance_chart">Balance over the period, from %1$s to %2$s</string>
+    <string name="period_tab_1m">1M</string>
+    <string name="period_tab_3m">3M</string>
+    <string name="period_tab_6m">6M</string>
+    <string name="period_tab_1y">1Y</string>
+    <string name="cd_period_tab_1m">1 month</string>
+    <string name="cd_period_tab_3m">3 months</string>
+    <string name="cd_period_tab_6m">6 months</string>
+    <string name="cd_period_tab_1y">12 months</string>
 </resources>

@@ -61,7 +61,8 @@ appId: com.joaoeoneves.fintrack
 # isn't composed yet at this scroll position. Wildcarding restores the original "pie legend is
 # visible" intent for all four regardless of scroll position, and keeps matching whichever of the
 # two (legend content-desc or Budgets-section literal text) happens to be on screen.
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - assertVisible: "Previous month"
 - assertVisible: "Next month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
@@ -77,7 +78,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: ".*Shopping.*"
 - assertVisible: ".*Recurring.*"
 # B6: capture the Dashboard so the outer-Scaffold-padding removal can be checked visually (no
-# doubled gap above the "FinTrack" top bar, last card not clipped above the nav bar).
+# doubled gap above the top bar, last card not clipped above the nav bar).
 - takeScreenshot: build/maestro/golden-path-dashboard
 - scroll
 - scroll
@@ -88,16 +89,12 @@ appId: com.joaoeoneves.fintrack
     element: "Net Balance"
     direction: UP
 
-# --- 2: Add a new expense via the Dashboard's "Recent expenses" card plus icon ---
-# That card is pushed below the fold by the restyled BalanceSummaryCard/pie-chart Card/
-# BudgetSection above it, so scroll down before tapping it. The plus icon has no visible label,
-# only the "Add expense" content description, which Maestro matches the same way as visible text.
-# The card (and its plus icon) is always visible/tappable, even with zero expenses in the selected
-# range -- the empty-state guard that used to hide this card entirely was removed, since it's now
-# the *only* path from Dashboard into the expense-adding flow and must never dead-end.
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
+# --- 2: Add a new expense via the Dashboard's floating add pill ---
+# The "Recent expenses" section (RecentExpensesSection) has a clickable header and a "See all"
+# link but no plus icon; adding goes only through the floating pill (content description
+# "Add expense", matched by Maestro the same way as visible text).
+# The pill ("Add expense"/"Add income") lives in the Scaffold FAB slot outside the LazyColumn and
+# hides while scrolling down, so tap it directly with no scrolling first.
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -136,7 +133,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Save"
 
 # Back on the Dashboard, the recent row shows the updated amount.
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
@@ -153,17 +151,20 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Maestro E2E Test Expense"
 
 # --- 4: Delete it and confirm it's gone ---
-# Deletion is now immediate (tap or swipe the row) — there is no confirmation dialog anymore.
-# Instead an undo snackbar ("Deleted "<name>"" / "Undo") appears. The row's trash-icon IconButton
-# has contentDescription "Delete" (no visible label) — matched by its accessibility text rather
-# than a raw coordinate.
-# Filter the list down to this flow's own row first so the "Delete" tap can never hit a
+# Deletion is immediate via an end->start swipe on the row (the trash IconButton is gone) -- there
+# is no confirmation dialog. An undo snackbar ("Deleted "<name>"" / "Undo") appears.
+# Filter the list down to this flow's own row first so the swipe can never hit a
 # pre-existing real expense (e.g. another expense dated today sorting above it).
 - tapOn: "Search"
 - inputText: "Maestro E2E Test Expense"
 - hideKeyboard
 - assertVisible: "-€56\\.78"
-- tapOn: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row (explicit
+# coordinates, not from-element swipes, which don't pass the dismiss threshold -- see swipe-delete-check.yaml).
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertNotVisible: "-€56\\.78"
 - assertVisible: "Undo"
 # Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.

@@ -7,42 +7,26 @@ package com.joaoeoneves.fintrack.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Fintech-style palette — dark scheme
-val DarkBg = Color(0xFF0B0E14)
-val CardBg = Color(0xFF161D2A)
-val TextPrimary = Color(0xFFFFFFFF)
-val TextSecondary = Color(0xFF8F9CAE)
-val AccentGreen = Color(0xFF10B981)
-val AccentRed = Color(0xFFEF4444)
-val AccentYellow = Color(0xFFF59E0B)
-val AccentBlue = Color(0xFF3B82F6)
-val PrimaryContainerDark = Color(0xFF0F3B2E)
-val OnPrimaryContainerDark = Color(0xFF6EE7B7)
-val SecondaryContainerDark = Color(0xFF12233D)
-val OnSecondaryContainerDark = Color(0xFFBFDBFE)
-val TertiaryContainerDark = Color(0xFF3A2A05)
-val OnTertiaryContainerDark = Color(0xFFFDE68A)
-val ErrorContainerDark = Color(0xFF3F1414)
-val OnErrorContainerDark = Color(0xFFFCA5A5)
-val SurfaceVariantDark = Color(0xFF1F2836)
-val OutlineDark = Color(0xFF2A3444)
+// Trade Republic-style monochrome palette -- dark scheme
+val DarkBg = Color(0xFF000000)
+val DarkSurface1 = Color(0xFF0E0E10)
+val DarkSurface2 = Color(0xFF1A1A1D)
+val DarkTextPrimary = Color(0xFFFFFFFF)
+val DarkTextSecondary = Color(0x8CFFFFFF) // white at 55%
+val DarkHairline = Color(0x14FFFFFF) // white at 8%
+val DarkPositive = Color(0xFF00C46A)
+val DarkNegative = Color(0xFFFF4D4D)
+val DarkAccent = Color(0xFFFFFFFF)
+val DarkOnAccent = Color(0xFF000000)
 
-// Fintech-style palette — light scheme
-val LightBg = Color(0xFFF4F6FA)
-val LightCardBg = Color(0xFFFFFFFF)
-val LightTextPrimary = Color(0xFF0F172A)
-val LightTextSecondary = Color(0xFF64748B)
-val LightAccentGreen = Color(0xFF059669)
-val LightAccentRed = Color(0xFFDC2626)
-val LightAccentYellow = Color(0xFFD97706)
-val LightAccentBlue = Color(0xFF2563EB)
-val PrimaryContainerLight = Color(0xFFD1FAE5)
-val OnPrimaryContainerLight = Color(0xFF065F46)
-val SecondaryContainerLight = Color(0xFFDBEAFE)
-val OnSecondaryContainerLight = Color(0xFF1E3A8A)
-val TertiaryContainerLight = Color(0xFFFEF3C7)
-val OnTertiaryContainerLight = Color(0xFF78350F)
-val ErrorContainerLight = Color(0xFFFEE2E2)
-val OnErrorContainerLight = Color(0xFF7F1D1D)
-val SurfaceVariantLight = Color(0xFFEFF2F6)
-val OutlineLight = Color(0xFFE2E8F0)
+// Monochrome palette -- light scheme
+val LightBg = Color(0xFFFFFFFF)
+val LightSurface1 = Color(0xFFF4F4F5)
+val LightSurface2 = Color(0xFFEBEBED)
+val LightTextPrimary = Color(0xFF0A0A0A)
+val LightTextSecondary = Color(0x8C0A0A0A) // text at 55%
+val LightHairline = Color(0x14000000) // black at 8%
+val LightPositive = Color(0xFF00A35A)
+val LightNegative = Color(0xFFE5383B)
+val LightAccent = Color(0xFF000000)
+val LightOnAccent = Color(0xFFFFFFFF)

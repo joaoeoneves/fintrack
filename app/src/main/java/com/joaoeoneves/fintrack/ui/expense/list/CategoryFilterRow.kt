@@ -6,16 +6,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+
+/** Test tag of the "All" chip; the per-category chips use `filter_chip_<category id>`. */
+const val FILTER_CHIP_ALL_TAG = "filter_chip_all"
 
 /**
  * Horizontally scrollable, single-select category filter: an "All" chip (selected when [selected]
@@ -33,19 +36,21 @@ fun CategoryFilterRow(
             modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
     ) {
-        FilterChip(
+        CategoryChip(
+            label = stringResource(R.string.filter_all),
             selected = selected == null,
             onClick = { onSelected(null) },
-            label = { Text(stringResource(R.string.filter_all)) },
+            modifier = Modifier.testTag(FILTER_CHIP_ALL_TAG),
         )
         categories.forEach { category ->
-            FilterChip(
+            CategoryChip(
+                label = category.displayName,
                 selected = selected == category.id,
                 onClick = { onSelected(category.id) },
-                label = { Text(category.displayName) },
+                modifier = Modifier.testTag("filter_chip_${category.id.value}"),
             )
         }
     }

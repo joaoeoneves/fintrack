@@ -10,34 +10,30 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.ui.common.LocalCurrency
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Locale
 
 /**
- * Instrumented Compose UI tests for the TalkBack accessibility support added to [PieChart] and its
- * legend rows ([PieChartLegendRow], private but exercised via [PieChart]).
+ * Instrumented Compose UI tests for the TalkBack accessibility support of [CategoryBreakdown]
+ * (the stateless breakdown that replaced the old pie chart).
  *
- * Both the ring `Box` and each legend row `Row` now use `Modifier.clearAndSetSemantics { ... }` to
- * collapse their children into a single, purpose-built `contentDescription` instead of leaving
- * TalkBack to read fragmented child nodes (a bare "Total outflow" label plus a separately-announced
- * amount; a category name with no announced percentage or amount). These tests confirm both that
- * the new merged description is reachable with the exact expected content *and* that the old
- * fragmented text nodes are genuinely gone (i.e. `clearAndSetSemantics` subsumed the children,
- * rather than merely decorating them, which would leave the fragmented nodes still independently
- * reachable and TalkBack double-announcing).
+ * The segmented bar is one `clearAndSetSemantics` node carrying only the total sentence
+ * (`cd_pie_chart_total`), and each ranked row is its own `clearAndSetSemantics` node
+ * ("name, N percent, amount"). These tests confirm the merged descriptions are reachable with the
+ * exact expected content *and* that the bare child text nodes (category names, amounts) are not
+ * independently reachable, so TalkBack does not double-announce.
  *
- * Uses [CurrencyOption.USD] with the en-US locale pinned through [LocalConfiguration] (money now
- * follows the app locale via NumberFormat), same pattern as
- * [com.joaoeoneves.fintrack.ui.common.CurrencyFormatTest], for deterministic, easily-hand-computed
- * formatted-amount assertions.
+ * Uses [CurrencyOption.USD] with the en-US locale pinned through [LocalConfiguration], same
+ * pattern as [com.joaoeoneves.fintrack.ui.common.CurrencyFormatTest].
  *
- * The ring summary splits the total outflow by category kind: SHOPPING + RECURRING + TRANSFER are
- * spending ($90.00), INVESTMENTS is saved/invested ($10.00).
+ * The bar splits the total by category kind: SHOPPING + RECURRING + TRANSFER are spending
+ * ($90.00), INVESTMENTS is saved/invested ($10.00).
  */
 @RunWith(AndroidJUnit4::class)
-class PieChartAccessibilityTest {
+class CategoryBreakdownAccessibilityTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -49,32 +45,31 @@ class PieChartAccessibilityTest {
             CategoryTotal(BuiltInCategories.INVESTMENTS, 1000),
         )
 
-    private fun setPieChartContent(slices: List<CategoryTotal>) {
+    private fun setBreakdownContent(slices: List<CategoryTotal>) {
         composeTestRule.setContent {
             val configuration = Configuration(LocalConfiguration.current).apply { setLocale(Locale.US) }
             CompositionLocalProvider(
                 LocalConfiguration provides configuration,
                 LocalCurrency provides CurrencyOption.USD,
             ) {
-                PieChart(slices = slices)
+                FinTrackTheme { CategoryBreakdown(slices = slices) }
             }
         }
     }
 
     @Test
-    fun ringNode_hasContentDescription_withFormattedTotalAndSpendingSavedSplit() {
-        setPieChartContent(slices)
+    fun barNode_hasContentDescription_withFormattedTotalAndSpendingSavedSplit() {
+        setBreakdownContent(slices)
 
         composeTestRule
             .onNodeWithContentDescription(
                 "Outflow breakdown. Total outflow: $100.00 (spending $90.00, saved or invested $10.00).",
-                substring = true,
             ).assertExists()
     }
 
     @Test
-    fun legendRows_areReachable_asSingleMergedNodesWithRoundedPercentageAndAmount() {
-        setPieChartContent(slices)
+    fun breakdownRows_areReachable_asSingleMergedNodesWithRoundedPercentageAndAmount() {
+        setBreakdownContent(slices)
 
         composeTestRule.onNodeWithContentDescription("Shopping, 45 percent, $45.00").assertExists()
         composeTestRule.onNodeWithContentDescription("Recurring, 30 percent, $30.00").assertExists()
@@ -84,13 +79,11 @@ class PieChartAccessibilityTest {
 
     @Test
     fun oldFragmentedTextNodes_areNoLongerIndependentlyReachable() {
-        // Before the fix, the center label ("Total outflow", formerly "Total Spent") and the bare
-        // category names/amounts were each their own semantics node. clearAndSetSemantics on the ring Box and each legend Row should have
+        // The bare category names/amounts are Text children of each row. clearAndSetSemantics on each row should have
         // subsumed all of that -- if any of these still resolve, the merge didn't actually replace
         // the children's semantics, just added a redundant description alongside them.
-        setPieChartContent(slices)
+        setBreakdownContent(slices)
 
-        composeTestRule.onNodeWithText("Total outflow").assertDoesNotExist()
         composeTestRule.onNodeWithText("Shopping").assertDoesNotExist()
         composeTestRule.onNodeWithText("Recurring").assertDoesNotExist()
         composeTestRule.onNodeWithText("Transfer").assertDoesNotExist()
@@ -99,11 +92,11 @@ class PieChartAccessibilityTest {
     }
 
     @Test
-    fun emptySlices_doesNotCrash_andRingStillHasSummaryDescriptionWithoutPerCategoryClause() {
-        setPieChartContent(emptyList())
+    fun emptySlices_doesNotCrash_andBarStillHasSummaryDescription() {
+        setBreakdownContent(emptyList())
 
         // Total is 0 for no slices -> "$0.00" everywhere, and no per-category clause is appended
-        // (perCategoryCd.isNotEmpty() guard), so the full description is exactly the total
+        // so the description is exactly the total
         // sentence with no trailing ". <category>, ..." fragment.
         composeTestRule
             .onNodeWithContentDescription(

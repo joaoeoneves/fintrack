@@ -1,62 +1,34 @@
 package com.joaoeoneves.fintrack.ui.plan
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
-
-@Composable
-private fun PlanCard(
-    title: String,
-    modifier: Modifier,
-    content: @Composable () -> Unit,
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            content()
-        }
-    }
-}
+import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
+import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.theme.Amount
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 @Composable
 private fun AmountRow(
@@ -66,12 +38,12 @@ private fun AmountRow(
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, color = valueColor)
+        Text(text = value, style = Amount, color = valueColor)
     }
 }
 
@@ -81,11 +53,14 @@ fun PlanSummaryCard(
     summary: MonthlyPlanSummary,
     modifier: Modifier = Modifier,
 ) {
-    val negative = MaterialTheme.colorScheme.error
-    PlanCard(title = stringResource(R.string.plan_title), modifier = modifier) {
+    val negative = FinTrackTheme.colors.negative
+    SettingsGroup(label = stringResource(R.string.plan_title), modifier = modifier) {
         AmountRow(stringResource(R.string.plan_expected_income), formatAmountCents(summary.expectedIncomeCents))
+        Hairline()
         AmountRow(stringResource(R.string.plan_planned_spending), formatAmountCents(summary.plannedSpendingCents))
+        Hairline()
         AmountRow(stringResource(R.string.plan_planned_saving), formatAmountCents(summary.plannedSavingCents))
+        Hairline()
         AmountRow(
             label = stringResource(R.string.plan_leftover),
             value = formatAmountCents(summary.plannedLeftoverCents),
@@ -103,19 +78,21 @@ fun ExpectedIncomeCard(
     onEdit: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    PlanCard(title = stringResource(R.string.plan_expected_income), modifier = modifier) {
+    SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
         lines.forEach { line ->
             AmountRow(
                 label = line.label,
                 value = formatAmountCents(line.amountCents),
                 modifier = Modifier.clickable { onEdit(line.id) },
             )
+            Hairline()
         }
         if (canAdd) {
-            TextButton(onClick = onAdd, modifier = Modifier.padding(horizontal = 8.dp)) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(R.string.plan_add_income_line), modifier = Modifier.padding(start = 8.dp))
-            }
+            GhostButton(
+                text = stringResource(R.string.plan_add_income_line),
+                onClick = onAdd,
+                modifier = Modifier.padding(top = Dimens.Space12),
+            )
         }
     }
 }
@@ -127,9 +104,10 @@ fun AllocationsCard(
     onEdit: (CategoryBudget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    PlanCard(title = stringResource(R.string.plan_allocations), modifier = modifier) {
+    SettingsGroup(label = stringResource(R.string.plan_allocations), modifier = modifier) {
         allocations.forEach { allocation ->
             AllocationRow(allocation = allocation, onClick = { onEdit(allocation) })
+            Hairline()
         }
     }
 }
@@ -144,17 +122,13 @@ private fun AllocationRow(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .heightIn(min = Dimens.SettingsRowMinHeight)
                 .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(vertical = Dimens.Space8),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier.size(36.dp).clip(CircleShape).background(category.color.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(imageVector = category.icon, contentDescription = null, tint = category.color)
-        }
+        Icon(imageVector = category.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         Column(modifier = Modifier.weight(1f)) {
             Text(text = category.displayName, style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -167,12 +141,12 @@ private fun AllocationRow(
                         },
                     ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = FinTrackTheme.colors.textSecondary,
             )
         }
         Text(
             text = allocation.limitCents?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),
-            style = MaterialTheme.typography.bodyMedium,
+            style = Amount,
         )
     }
 }

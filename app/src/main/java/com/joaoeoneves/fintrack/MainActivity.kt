@@ -5,10 +5,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
@@ -66,7 +63,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
             if (resolvedDarkTheme != null) {
-                FinTrackTheme(darkTheme = resolvedDarkTheme, dynamicColor = false) {
+                FinTrackTheme(darkTheme = resolvedDarkTheme) {
                     val viewModel: AuthViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     val context = LocalContext.current
@@ -95,7 +92,6 @@ class MainActivity : AppCompatActivity() {
                                 uiState = state,
                                 onSignInClick = { viewModel.signIn(context) },
                                 onContinueAsGuest = viewModel::continueAsGuest,
-                                modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                             )
                         }
                     }

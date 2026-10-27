@@ -1,18 +1,13 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,11 +24,20 @@ import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
+import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
-import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.common.symbol
+import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
+import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
+import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Month
@@ -46,12 +50,24 @@ private data class Choice<T>(
     val label: String,
 )
 
+/** Amount first, then the Type tabs and the name. */
 @Composable
 internal fun RecurringTypeAndNameFields(
     form: RecurringForm,
     errors: RecurringFormErrors?,
     onChange: (RecurringForm) -> Unit,
+    autoFocusAmount: Boolean = false,
 ) {
+    BorderlessAmountField(
+        value = form.amountText,
+        onValueChange = { onChange(form.copy(amountText = it)) },
+        currencySymbol = LocalCurrency.current.symbol,
+        label = stringResource(R.string.field_amount),
+        isError = errors?.amount != null,
+        autoFocus = autoFocusAmount,
+        modifier = Modifier.padding(vertical = Dimens.Space16),
+    )
+    errors?.amount?.let { Text(it.asString(), color = FinTrackTheme.colors.negative) }
     ChoiceRow(
         selected = form.type,
         choices =
@@ -61,10 +77,10 @@ internal fun RecurringTypeAndNameFields(
             ),
         onSelected = { onChange(form.copy(type = it)) },
     )
-    OutlinedTextField(
+    MinimalTextField(
         value = form.name,
         onValueChange = { onChange(form.copy(name = it)) },
-        label = { Text(stringResource(R.string.expense_field_name)) },
+        label = stringResource(R.string.expense_field_name),
         isError = errors?.name != null,
         supportingText = {
             FieldSupportingText(
@@ -73,17 +89,6 @@ internal fun RecurringTypeAndNameFields(
                 max = MAX_NAME_LENGTH,
             )
         },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    OutlinedTextField(
-        value = form.amountText,
-        onValueChange = { onChange(form.copy(amountText = it)) },
-        label = { Text(stringResource(R.string.field_amount)) },
-        isError = errors?.amount != null,
-        supportingText = { errors?.amount?.let { Text(it.asString()) } },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
 }
@@ -95,10 +100,9 @@ internal fun RecurringCategoryField(
     errors: RecurringFormErrors?,
     onChange: (RecurringForm) -> Unit,
 ) {
-    ChoiceDropdown(
-        label = stringResource(R.string.expense_field_category),
-        selectedLabel = form.category?.displayName.orEmpty(),
-        choices = options.map { Choice(it, it.displayName) },
+    CategoryChipFlow(
+        options = options,
+        selected = form.category,
         error = errors?.category?.asString(),
         onSelected = { onChange(form.copy(category = it)) },
     )
@@ -119,14 +123,13 @@ internal fun RecurringScheduleFields(
             ),
         onSelected = { onChange(form.copy(frequency = it)) },
     )
-    OutlinedTextField(
+    MinimalTextField(
         value = form.dayText,
         onValueChange = { onChange(form.copy(dayText = it.filter(Char::isDigit).take(DAY_MAX_DIGITS))) },
-        label = { Text(stringResource(R.string.recurring_day_of_month)) },
+        label = stringResource(R.string.recurring_day_of_month),
         isError = errors?.day != null,
         supportingText = { errors?.day?.let { Text(it.asString()) } },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
     if (form.frequency == RecurringFrequency.YEARLY) {
@@ -161,9 +164,10 @@ internal fun RecurringDateFields(
     )
     val endDate = form.endDate
     if (endDate == null) {
-        TextButton(onClick = { onChange(form.copy(endDate = form.startDate)) }) {
-            Text(stringResource(R.string.recurring_end_date_add))
-        }
+        GhostButton(
+            text = stringResource(R.string.recurring_end_date_add),
+            onClick = { onChange(form.copy(endDate = form.startDate)) },
+        )
     } else {
         ReadOnlyDateField(
             date = endDate.toNoonInstant(zone),
@@ -172,10 +176,11 @@ internal fun RecurringDateFields(
             zone = zone,
             labelRes = R.string.recurring_end_date,
         )
-        errors?.endDate?.let { Text(it.asString()) }
-        TextButton(onClick = { onChange(form.copy(endDate = null)) }) {
-            Text(stringResource(R.string.recurring_end_date_clear))
-        }
+        errors?.endDate?.let { Text(it.asString(), color = FinTrackTheme.colors.negative) }
+        GhostButton(
+            text = stringResource(R.string.recurring_end_date_clear),
+            onClick = { onChange(form.copy(endDate = null)) },
+        )
     }
 }
 
@@ -189,18 +194,14 @@ private fun <T> ChoiceRow(
     choices: List<Choice<T>>,
     onSelected: (T) -> Unit,
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        choices.forEachIndexed { index, choice ->
-            SegmentedButton(
-                selected = choice.value == selected,
-                onClick = { onSelected(choice.value) },
-                shape = SegmentedButtonDefaults.itemShape(index, choices.size),
-            ) { Text(choice.label) }
-        }
-    }
+    SegmentedTextTabs(
+        options = choices,
+        selected = choices.firstOrNull { it.value == selected },
+        label = { it.label },
+        onSelect = { onSelected(it.value) },
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> ChoiceDropdown(
     label: String,
@@ -210,18 +211,14 @@ private fun <T> ChoiceDropdown(
     onSelected: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            readOnly = true,
-            value = selectedLabel,
-            onValueChange = {},
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            isError = error != null,
-            supportingText = error?.let { { Text(it) } },
-            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        SettingsRow(title = label, value = selectedLabel, onClick = { expanded = true }, showChevron = true)
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = MaterialTheme.shapes.medium,
+            containerColor = FinTrackTheme.colors.surface2,
+        ) {
             choices.forEach { choice ->
                 DropdownMenuItem(
                     text = { Text(choice.label) },
@@ -233,4 +230,5 @@ private fun <T> ChoiceDropdown(
             }
         }
     }
+    error?.let { Text(it, color = FinTrackTheme.colors.negative) }
 }

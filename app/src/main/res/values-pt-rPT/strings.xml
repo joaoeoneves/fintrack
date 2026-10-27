@@ -121,7 +121,6 @@
     <string name="field_length_counter">%1$d/%2$d</string>
 
     <!-- Opções de ordenação -->
-    <string name="sort_by_label">Ordenar por</string>
     <string name="sort_newest_first">Mais recentes primeiro</string>
     <string name="sort_oldest_first">Mais antigas primeiro</string>
     <string name="sort_highest_amount">Montante mais alto</string>
@@ -173,6 +172,7 @@
     <string name="leave_guest_confirm_message">Os seus dados ficam neste dispositivo; escolha Continuar como convidado para os voltar a ver.</string>
     <string name="label_sign_in_failed">Falha ao iniciar sessão</string>
     <string name="about_version">Versão %1$s</string>
+    <string name="about_font_license">Licença da fonte Inter (SIL OFL 1.1)</string>
     <string name="about_version_unknown">desconhecida</string>
 
     <!-- Tema -->
@@ -379,4 +379,22 @@
     <string name="error_recurring_day_invalid">Introduza um dia entre 1 e 31</string>
     <string name="error_recurring_month_required">Escolha um mês</string>
     <string name="error_recurring_too_long">Este texto é demasiado longo</string>
+
+    <!-- Day headers in transaction lists -->
+    <string name="day_header_today">Hoje</string>
+    <string name="day_header_yesterday">Ontem</string>
+
+    <!-- Redesenho do painel -->
+    <string name="action_see_all">Ver tudo</string>
+    <string name="dashboard_add_expense_short">Despesa</string>
+    <string name="dashboard_add_income_short">Receita</string>
+    <string name="cd_balance_chart">Saldo ao longo do período, de %1$s a %2$s</string>
+    <string name="period_tab_1m">1M</string>
+    <string name="period_tab_3m">3M</string>
+    <string name="period_tab_6m">6M</string>
+    <string name="period_tab_1y">1A</string>
+    <string name="cd_period_tab_1m">1 mês</string>
+    <string name="cd_period_tab_3m">3 meses</string>
+    <string name="cd_period_tab_6m">6 meses</string>
+    <string name="cd_period_tab_1y">12 meses</string>
 </resources>

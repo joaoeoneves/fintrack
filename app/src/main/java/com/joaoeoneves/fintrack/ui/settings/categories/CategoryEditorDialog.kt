@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -16,15 +17,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +47,12 @@ import com.joaoeoneves.fintrack.ui.common.categoryColorKeys
 import com.joaoeoneves.fintrack.ui.common.categoryIconFor
 import com.joaoeoneves.fintrack.ui.common.categoryIconKeys
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
+import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 
 private val OptionSize = 44.dp
@@ -69,40 +70,36 @@ internal fun CategoryEditorDialog(
     var draft by remember(state.editingId, state.initial) { mutableStateOf(state.initial) }
     var submittedName by remember(state.editingId) { mutableStateOf<String?>(null) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            val title = if (state.editingId == null) R.string.category_new_title else R.string.category_edit_title
-            Text(stringResource(title))
-        },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(SectionSpacing),
-            ) {
-                NameField(
-                    draft = draft,
-                    placeholder = state.takeIf { it.isBuiltIn }?.let { builtInDisplayName(state) },
-                    error = state.nameError?.takeIf { draft.name == submittedName }?.asString(),
-                    onNameChange = { draft = draft.copy(name = limitInput(draft.name, it, MAX_CATEGORY_NAME_LENGTH)) },
-                )
-                IconPicker(draft.iconKey, onSelected = { draft = draft.copy(iconKey = it) })
-                ColorPicker(draft.colorKey, onSelected = { draft = draft.copy(colorKey = it) })
-                KindPicker(draft.kind, onSelected = { draft = draft.copy(kind = it) })
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    submittedName = draft.name
-                    onSave(draft)
-                },
-            ) { Text(stringResource(R.string.action_save)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        },
-    )
+    FinTrackBottomSheet(onDismissRequest = onDismiss) {
+        val title = if (state.editingId == null) R.string.category_new_title else R.string.category_edit_title
+        Text(
+            text = stringResource(title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = Dimens.Space12),
+        )
+        Column(
+            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(SectionSpacing),
+        ) {
+            NameField(
+                draft = draft,
+                placeholder = state.takeIf { it.isBuiltIn }?.let { builtInDisplayName(state) },
+                error = state.nameError?.takeIf { draft.name == submittedName }?.asString(),
+                onNameChange = { draft = draft.copy(name = limitInput(draft.name, it, MAX_CATEGORY_NAME_LENGTH)) },
+            )
+            IconPicker(draft.iconKey, onSelected = { draft = draft.copy(iconKey = it) })
+            ColorPicker(draft.colorKey, onSelected = { draft = draft.copy(colorKey = it) })
+            KindPicker(draft.kind, onSelected = { draft = draft.copy(kind = it) })
+        }
+        PrimaryPillButton(
+            text = stringResource(R.string.action_save),
+            onClick = {
+                submittedName = draft.name
+                onSave(draft)
+            },
+            modifier = Modifier.padding(top = Dimens.Space16),
+        )
+    }
 }
 
 /** The localized default name of the built-in being edited, shown as the name field's placeholder. */
@@ -119,12 +116,11 @@ private fun NameField(
     error: String?,
     onNameChange: (String) -> Unit,
 ) {
-    OutlinedTextField(
+    MinimalTextField(
         value = draft.name,
         onValueChange = onNameChange,
-        label = { Text(stringResource(R.string.category_field_name)) },
+        label = stringResource(R.string.category_field_name),
         placeholder = placeholder?.let { { Text(it) } },
-        singleLine = true,
         isError = error != null,
         supportingText = {
             FieldSupportingText(error = error, length = draft.name.codePointLength(), max = MAX_CATEGORY_NAME_LENGTH)
@@ -139,7 +135,7 @@ private fun PickerSection(
     content: @Composable () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(OptionSpacing)) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        Text(label, style = MaterialTheme.typography.labelLarge, color = FinTrackTheme.colors.textSecondary)
         content()
     }
 }
@@ -168,7 +164,7 @@ private fun IconPicker(
                             .semantics { contentDescription = description },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(categoryIconFor(key), contentDescription = null)
+                    Icon(categoryIconFor(key), contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
@@ -211,7 +207,7 @@ private fun ColorPicker(
 private fun selectionBorder(selected: Boolean): BorderStroke =
     BorderStroke(
         SelectedBorderWidth,
-        if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        if (selected) MaterialTheme.colorScheme.onSurface else FinTrackTheme.colors.hairline,
     )
 
 @Composable
@@ -220,14 +216,11 @@ private fun KindPicker(
     onSelected: (CategoryKind) -> Unit,
 ) {
     PickerSection(stringResource(R.string.category_field_kind)) {
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            CategoryKind.entries.forEachIndexed { index, kind ->
-                SegmentedButton(
-                    selected = kind == selected,
-                    onClick = { onSelected(kind) },
-                    shape = SegmentedButtonDefaults.itemShape(index, CategoryKind.entries.size),
-                ) { Text(kind.label) }
-            }
-        }
+        SegmentedTextTabs(
+            options = CategoryKind.entries,
+            selected = selected,
+            label = { it.label },
+            onSelect = onSelected,
+        )
     }
 }

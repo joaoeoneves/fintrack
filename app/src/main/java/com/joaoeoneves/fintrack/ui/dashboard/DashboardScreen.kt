@@ -1,50 +1,40 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
-import com.joaoeoneves.fintrack.ui.common.ExpenseRow
-import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
@@ -53,13 +43,19 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringCard
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringModel
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import java.time.LocalDate
+import java.time.ZoneId
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val SectionSpacing = Dimens.Space32
+
 @Composable
 fun DashboardScreen(
     callbacks: DashboardCallbacks,
@@ -84,67 +80,110 @@ fun DashboardScreen(
     UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
     val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, callbacks)
 
+    val pill = remember { PillVisibility() }
+    val content = uiState as? DashboardUiState.Content
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { DashboardTopBar(onOpenSettings = callbacks.onOpenSettings) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            DashboardTopBar(
+                state = content,
+                actions = actions.period,
+                onOpenSettings = callbacks.onOpenSettings,
+            )
+        },
+        snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (content != null) {
+                AddTransactionPill(
+                    visible = pill.visible,
+                    onAddExpense = callbacks.onAddExpense,
+                    onAddIncome = callbacks.onAddIncome,
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Center,
     ) { innerPadding ->
-        when (val state = uiState) {
-            is DashboardUiState.Loading -> {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+        DashboardBody(
+            uiState = uiState,
+            actions = actions,
+            callbacks = callbacks,
+            pill = pill,
+            contentPadding = innerPadding,
+        )
+    }
+}
 
-            is DashboardUiState.Content -> {
-                DashboardContent(
-                    state = state,
-                    actions = actions,
-                    callbacks = callbacks,
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                )
+@Composable
+private fun DashboardBody(
+    uiState: DashboardUiState,
+    actions: DashboardActions,
+    callbacks: DashboardCallbacks,
+    pill: PillVisibility,
+    contentPadding: PaddingValues,
+) {
+    when (uiState) {
+        is DashboardUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(contentPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground)
             }
+        }
 
-            is DashboardUiState.Error -> {
-                ErrorState(
-                    message = state.message.asString(),
-                    onRetry = viewModel::onRetry,
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                )
-            }
+        is DashboardUiState.Content -> {
+            DashboardContent(
+                state = uiState,
+                actions = actions,
+                callbacks = callbacks,
+                pill = pill,
+                contentPadding = contentPadding,
+            )
+        }
+
+        is DashboardUiState.Error -> {
+            ErrorState(
+                message = uiState.message.asString(),
+                onRetry = actions.onRetry,
+                modifier = Modifier.fillMaxSize().padding(contentPadding),
+            )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Period selector on the left (once content is loaded), settings on the right; no title. */
 @Composable
-private fun DashboardTopBar(onOpenSettings: () -> Unit) {
-    TopAppBar(
-        title = { Text(stringResource(R.string.app_name)) },
-        actions = {
-            IconButton(onClick = onOpenSettings, modifier = Modifier.testTag(TestTags.DASHBOARD_SETTINGS)) {
-                Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.cd_settings))
+private fun DashboardTopBar(
+    state: DashboardUiState.Content?,
+    actions: PeriodActions,
+    onOpenSettings: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = Dimens.Space8),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            if (state != null) {
+                PeriodSelector(
+                    period = state.period,
+                    canGoToNextMonth = state.canGoToNextMonth,
+                    actions = actions,
+                    alignment = Alignment.Start,
+                )
             }
-        },
-        colors =
-            TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background,
-                titleContentColor = MaterialTheme.colorScheme.onBackground,
-                actionIconContentColor = MaterialTheme.colorScheme.onBackground,
-            ),
-    )
+        }
+        LabeledIconButton(
+            icon = Icons.Default.Settings,
+            contentDescription = stringResource(R.string.cd_settings),
+            onClick = onOpenSettings,
+            modifier = Modifier.testTag(TestTags.DASHBOARD_SETTINGS),
+        )
+    }
 }
 
 /** Bundles the budget write callbacks to keep [DashboardContent] under detekt's LongParameterList. */
@@ -173,6 +212,7 @@ private fun dashboardActions(
             onSkip = upcomingViewModel::onSkip,
             onManage = callbacks.onOpenRecurring,
         ),
+    onRetry = viewModel::onRetry,
 )
 
 /** Everything the dashboard content can do besides navigation, bundled for detekt's LongParameterList. */
@@ -180,6 +220,15 @@ private data class DashboardActions(
     val period: PeriodActions,
     val budget: BudgetActions,
     val upcoming: UpcomingRecurringModel,
+    val onRetry: () -> Unit,
+)
+
+/** What the balance chart needs, plus the scrub position shared with the hero. */
+private data class ChartModel(
+    val series: List<Long>,
+    val startDate: LocalDate,
+    val scrubbedIndex: Int?,
+    val onScrub: (Int?) -> Unit,
 )
 
 @Composable
@@ -187,55 +236,145 @@ private fun DashboardContent(
     state: DashboardUiState.Content,
     actions: DashboardActions,
     callbacks: DashboardCallbacks,
-    modifier: Modifier = Modifier,
+    pill: PillVisibility,
+    contentPadding: PaddingValues,
 ) {
-    val cardModifier =
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+    val zone = remember { ZoneId.systemDefault() }
+    val series =
+        remember(state.expenses, state.income, state.range) {
+            dailyNetSeries(state.expenses, state.income, state.range, zone, LocalDate.now(zone))
+        }
+    var scrubbedIndex by remember(series) { mutableStateOf<Int?>(null) }
+    val chart =
+        ChartModel(
+            series = series,
+            startDate =
+                state.range.startInclusive
+                    .atZone(zone)
+                    .toLocalDate(),
+            scrubbedIndex = scrubbedIndex,
+            onScrub = { scrubbedIndex = it },
+        )
 
     LazyColumn(
-        modifier = modifier.testTag(TestTags.DASHBOARD_LIST),
-        contentPadding = PaddingValues(bottom = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(top = contentPadding.calculateTopPadding())
+                .nestedScroll(pill.connection)
+                .testTag(TestTags.DASHBOARD_LIST),
+        contentPadding =
+            PaddingValues(bottom = Dimens.FloatingBarBottomPadding + contentPadding.calculateBottomPadding()),
     ) {
-        item {
-            PeriodSelector(
-                period = state.period,
-                canGoToNextMonth = state.canGoToNextMonth,
-                actions = actions.period,
+        balanceItems(state = state, chart = chart, onSelectPeriod = actions.period.onSelect)
+        planItems(state = state, actions = actions, callbacks = callbacks)
+        activityItems(state = state, callbacks = callbacks)
+    }
+}
+
+/** A list item padded to the screen margin, with the standard reorder animation. */
+@Composable
+private fun LazyItemScope.ScreenItem(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .animateItem()
+                .padding(horizontal = Dimens.ScreenPadding)
+                .then(modifier),
+    ) { content() }
+}
+
+private fun LazyListScope.balanceItems(
+    state: DashboardUiState.Content,
+    chart: ChartModel,
+    onSelectPeriod: (Period) -> Unit,
+) {
+    item(key = "hero") {
+        ScreenItem(Modifier.padding(top = Dimens.Space8)) {
+            DashboardHero(
+                netCents = state.netCents,
+                savingsRate = state.savingsRate,
+                scrubbedCents = chart.scrubbedIndex?.let { chart.series.getOrNull(it) },
             )
         }
-
-        item { BalanceSummaryCard(state = state, modifier = cardModifier) }
-
-        item {
-            MonthlyPlanCard(
-                state = state,
-                onOpenMonthlyPlan = callbacks.onOpenMonthlyPlan,
-                modifier = cardModifier,
+    }
+    if (state.expenses.isNotEmpty() || state.income.isNotEmpty()) {
+        item(key = "chart") {
+            BalanceLineChart(
+                series = chart.series,
+                startDate = chart.startDate,
+                onScrub = chart.onScrub,
+                modifier = Modifier.animateItem().padding(top = Dimens.Space16),
             )
         }
+    }
+    item(key = "tabs") {
+        ScreenItem(Modifier.padding(top = Dimens.Space16)) {
+            SegmentedTextTabs(
+                options = PeriodTab.entries,
+                selected = state.period.toTab(),
+                label = { stringResource(it.labelRes) },
+                onSelect = { onSelectPeriod(it.toPeriod()) },
+                tabContentDescription = { stringResource(it.descriptionRes) },
+            )
+        }
+    }
+    item(key = "stats") {
+        ScreenItem(Modifier.padding(top = Dimens.Space24)) {
+            DashboardStatStrip(
+                incomeCents = state.incomeCents,
+                spendingCents = state.spendingCents,
+                savedCents = state.savedCents,
+            )
+        }
+    }
+}
 
-        item { UpcomingRecurringCard(model = actions.upcoming, modifier = cardModifier) }
-
-        item { SpendingBreakdownCard(state = state, modifier = cardModifier) }
-
-        item {
+private fun LazyListScope.planItems(
+    state: DashboardUiState.Content,
+    actions: DashboardActions,
+    callbacks: DashboardCallbacks,
+) {
+    item(key = "safe_to_spend") {
+        ScreenItem(Modifier.padding(top = SectionSpacing)) {
+            SafeToSpendSection(state = state, onOpenMonthlyPlan = callbacks.onOpenMonthlyPlan)
+        }
+    }
+    item(key = "upcoming") {
+        ScreenItem {
+            UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
+        }
+    }
+    item(key = "breakdown") {
+        ScreenItem(Modifier.padding(top = SectionSpacing)) { CategoryBreakdownSection(state = state) }
+    }
+    item(key = "budgets") {
+        ScreenItem(Modifier.padding(top = SectionSpacing)) {
             BudgetSection(
                 budgets = state.budgets,
                 title = budgetSectionTitle(state),
                 onSetBudget = actions.budget.onSetBudget,
                 onClearBudget = actions.budget.onClearBudget,
-                modifier = cardModifier,
             )
         }
+    }
+}
 
-        item {
-            RecentExpensesCard(state = state, callbacks = callbacks, modifier = cardModifier)
+private fun LazyListScope.activityItems(
+    state: DashboardUiState.Content,
+    callbacks: DashboardCallbacks,
+) {
+    item(key = "recent_expenses") {
+        ScreenItem(Modifier.padding(top = SectionSpacing)) {
+            RecentExpensesSection(expenses = state.recentExpenses, period = state.period, callbacks = callbacks)
         }
-
-        item {
-            RecentIncomeCard(state = state, callbacks = callbacks, modifier = cardModifier)
+    }
+    item(key = "recent_income") {
+        ScreenItem(Modifier.padding(top = SectionSpacing)) {
+            RecentIncomeSection(income = state.recentIncome, period = state.period, callbacks = callbacks)
         }
     }
 }
@@ -247,144 +386,3 @@ private fun budgetSectionTitle(state: DashboardUiState.Content): String =
     } else {
         stringResource(R.string.dashboard_budgets_title_month, formatMonthLabel(state.budgetMonth, currentLocale()))
     }
-
-@Composable
-private fun RecentIncomeCard(
-    state: DashboardUiState.Content,
-    callbacks: DashboardCallbacks,
-    modifier: Modifier = Modifier,
-) {
-    val onOpenIncomeList = callbacks.onOpenIncomeList
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenIncomeList(state.period) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.dashboard_recent_income),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                LabeledIconButton(
-                    icon = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.action_add_income),
-                    onClick = callbacks.onAddIncome,
-                )
-            }
-
-            if (state.recentIncome.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.dashboard_no_income),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            } else {
-                state.recentIncome.forEach { income ->
-                    IncomeRow(
-                        income = income,
-                        onClick = { callbacks.onOpenIncome(income.id) },
-                    )
-                    HorizontalDivider()
-                }
-
-                Text(
-                    text = stringResource(R.string.dashboard_see_all_income),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenIncomeList(state.period) }
-                            .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecentExpensesCard(
-    state: DashboardUiState.Content,
-    callbacks: DashboardCallbacks,
-    modifier: Modifier = Modifier,
-) {
-    val onOpenList = callbacks.onOpenList
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenList(state.period) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.dashboard_recent_expenses),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                LabeledIconButton(
-                    icon = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.action_add_expense),
-                    onClick = callbacks.onAddExpense,
-                    modifier = Modifier.testTag(TestTags.DASHBOARD_ADD_EXPENSE),
-                )
-            }
-
-            if (state.recentExpenses.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.dashboard_recent_expenses_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            } else {
-                state.recentExpenses.forEach { expense ->
-                    ExpenseRow(
-                        expense = expense,
-                        onClick = { callbacks.onOpenExpense(expense.id) },
-                    )
-                    HorizontalDivider()
-                }
-
-                SeeAllExpensesLink(onClick = { onOpenList(state.period) })
-            }
-        }
-    }
-}
-
-@Composable
-private fun SeeAllExpensesLink(onClick: () -> Unit) {
-    Text(
-        text = stringResource(R.string.dashboard_see_all_expenses),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.primary,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .testTag(TestTags.SEE_ALL_EXPENSES)
-                .clickable(onClick = onClick)
-                .padding(16.dp),
-        textAlign = TextAlign.Center,
-    )
-}

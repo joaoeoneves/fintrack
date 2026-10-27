@@ -24,14 +24,12 @@ onFlowComplete:
     text: "Settings|Definições"
 - tapOn: "English"
 - back
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 - setAirplaneMode: enabled
 
 # --- 1: Expense: add offline -> form closes, row on Dashboard ---
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -40,7 +38,8 @@ onFlowComplete:
 - inputText: "7,25"
 - hideKeyboard
 - tapOn: "Save"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - assertNotVisible: "Name"
 - scrollUntilVisible:
     element: "Maestro Offline Expense"
@@ -57,17 +56,17 @@ onFlowComplete:
 - inputText: "Maestro Offline"
 - hideKeyboard
 - assertVisible: "Maestro Offline Expense"
-- tapOn:
-    text: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
     index: 0
 - assertNotVisible: "Maestro Offline Expense"
 - assertVisible: "Undo"
 - tapOn: "Back"
 
 # --- 3: Income: add offline -> form closes, row on Dashboard ---
-- scrollUntilVisible:
-    element: "Add income"
-    direction: DOWN
 - tapOn: "Add income"
 - assertVisible: "Add income"
 - tapOn: "Source"
@@ -76,7 +75,8 @@ onFlowComplete:
 - inputText: "9,75"
 - hideKeyboard
 - tapOn: "Save"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - assertNotVisible: "Source"
 - scrollUntilVisible:
     element: "Maestro Offline Income"
@@ -94,10 +94,14 @@ onFlowComplete:
 - inputText: "Maestro Offline"
 - hideKeyboard
 - assertVisible: "Maestro Offline Income"
-- tapOn:
-    text: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
     index: 0
 - assertNotVisible: "Maestro Offline Income"
 - assertVisible: "Undo"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
