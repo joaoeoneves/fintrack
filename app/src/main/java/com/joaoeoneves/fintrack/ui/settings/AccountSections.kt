@@ -35,9 +35,10 @@ fun AccountSection(
                 text = currentUser?.displayName ?: currentUser?.email ?: signedInFallback,
                 style = MaterialTheme.typography.bodyLarge,
             )
-            if (currentUser?.email != null && currentUser.displayName != null) {
+            val email = currentUser?.email
+            if (email != null && currentUser.displayName != null) {
                 Text(
-                    text = currentUser.email,
+                    text = email,
                     style = MaterialTheme.typography.bodyMedium,
                     color = FinTrackTheme.colors.textSecondary,
                 )

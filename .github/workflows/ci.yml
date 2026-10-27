@@ -81,7 +81,7 @@ jobs:
         run: ./gradlew lintDebug
 
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDebugUnitTest :core:model:test
 
       - name: Assemble debug APK
         run: ./gradlew assembleDebug
@@ -100,8 +100,9 @@ jobs:
         with:
           name: reports
           path: |
-            app/build/reports/ktlint
-            app/build/reports/detekt
+            **/build/reports/ktlint
+            **/build/reports/detekt
             app/build/reports/tests
+            core/*/build/reports/tests
             app/build/reports/lint-results-debug.*
           retention-days: 7

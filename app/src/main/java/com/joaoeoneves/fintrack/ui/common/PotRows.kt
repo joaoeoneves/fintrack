@@ -22,13 +22,17 @@ import kotlin.math.abs
 
 /** The pot's display name: its group's or category's name, "Base" for the shared base. */
 @Composable
-fun Pot.potName(): String =
-    when {
+fun Pot.potName(): String {
+    // Local copies: smart casts on properties of the `:core:model` module are impossible.
+    val group = group
+    val category = category
+    return when {
         group != null -> group.name
         category != null -> category.displayName
         target == null -> stringResource(R.string.plan_pot_base)
         else -> stringResource(R.string.plan_pot)
     }
+}
 
 /**
  * One compact line of a pot, e.g. "Food · €55.12 left of €230.12"; in the negative color once it is
