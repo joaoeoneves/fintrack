@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 6
+internal const val LOCAL_SCHEMA_VERSION = 7
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -82,6 +82,9 @@ data class LocalPlannedIncome(
     /** ISO `yyyy-MM`, set for one-off lines. */
     val yearMonth: String? = null,
     val skipMonths: List<Int> = emptyList(),
+    /** An earmark type (`CATEGORY` or `GROUP`); set together with [earmarkId] or not at all (schema v7). */
+    val earmarkType: String? = null,
+    val earmarkId: String? = null,
 )
 
 /**

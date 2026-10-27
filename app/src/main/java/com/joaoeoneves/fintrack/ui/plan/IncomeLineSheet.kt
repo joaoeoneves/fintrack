@@ -59,7 +59,6 @@ fun IncomeLineSheet(
     var schedule by remember { mutableStateOf(editor.initialSchedule) }
     // The VM's label error is shown only while the text still equals the last submitted text.
     var submittedLabel by remember { mutableStateOf<String?>(null) }
-    val editingId = editor.editingId
     val labelModel =
         TextFieldModel(
             value = label,
@@ -77,7 +76,7 @@ fun IncomeLineSheet(
         )
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(
-            text = stringResource(incomeLineTitle(editingId)),
+            text = stringResource(incomeLineTitle(editor.editingId)),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = Dimens.Space12),
         )
@@ -95,6 +94,7 @@ fun IncomeLineSheet(
                 onChange = { schedule = it },
                 fallbackMonth = workingDays.month,
                 preview = incomePreview(schedule.basis, amountText, workingDays.days),
+                earmarkOptions = editor.earmarkOptions,
             )
         }
         PrimaryPillButton(
@@ -107,7 +107,7 @@ fun IncomeLineSheet(
             },
             modifier = Modifier.padding(top = Dimens.Space16),
         )
-        RemoveLineButton(editingId, onDelete)
+        RemoveLineButton(editor.editingId, onDelete)
     }
 }
 

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
@@ -123,6 +124,7 @@ class MonthlyPlanViewModel
                                     monthOfYear = line.monthOfYear,
                                     yearMonth = line.yearMonth,
                                     skipMonths = line.skipMonths,
+                                    earmark = line.earmark,
                                 ),
                         )
                 }
@@ -165,6 +167,7 @@ class MonthlyPlanViewModel
                         monthOfYear = cleaned.monthOfYear,
                         yearMonth = cleaned.yearMonth,
                         skipMonths = cleaned.skipMonths,
+                        earmark = cleaned.earmark,
                     )
                 repositories.plannedIncome
                     .savePlannedIncome(line)
@@ -255,8 +258,9 @@ private fun planFlow(
                 fixedThisMonthCents = overview.summary.fixedSpendingCents,
                 canAddIncomeLine = lines.size < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
-                editor = editorState,
+                editor = editorState?.copy(earmarkOptions = earmarkOptionsOf(overview, allocations)),
                 groups = overview.groups,
+                pots = overview.pots,
             )
         content
     }.catch { e ->
@@ -281,3 +285,13 @@ private fun workingDaysOf(
         overridden = override != null,
     )
 }
+
+/** The defined groups and the active, named categories (those of the plan rows) an income line can be earmarked for. */
+private fun earmarkOptionsOf(
+    overview: PeriodOverview,
+    rows: List<CategoryBudget>,
+): EarmarkOptions =
+    EarmarkOptions(
+        groups = overview.groups.mapNotNull { it.group },
+        categories = rows.map { it.category }.filterNot { it.archived || it.isUnknown },
+    )

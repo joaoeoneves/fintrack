@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
+import com.joaoeoneves.fintrack.domain.model.PlanMonth
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
@@ -18,6 +19,7 @@ import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encloses
 import com.joaoeoneves.fintrack.domain.model.groupProgressOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
+import com.joaoeoneves.fintrack.domain.model.potsOf
 import com.joaoeoneves.fintrack.domain.model.recentActivity
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
@@ -115,6 +117,14 @@ class ObservePeriodOverview
                 recent = transactions.recentActivity(recentLimit),
                 groups = groupProgressOf(rows, plan.categories, inputs.groups),
                 recurring = inputs.recurring,
+                pots =
+                    potsOf(
+                        buckets = rows,
+                        groups = inputs.groups,
+                        plannedIncome = plan.plannedIncome,
+                        monthIncome = monthTransactions.income,
+                        planMonth = PlanMonth(budgetMonth, workingDays),
+                    ),
             )
         }
     }

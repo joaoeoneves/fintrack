@@ -490,4 +490,15 @@
     <string name="category_field_group">Group</string>
     <string name="category_group_none">No group</string>
     <string name="plan_not_in">Not in</string>
+    <string name="plan_earmark_for">Earmark for</string>
+    <string name="plan_earmark_none">None</string>
+    <string name="plan_earmark_categories">Categories</string>
+    <string name="plan_pot">Pot</string>
+    <string name="plan_pots_title">Pots</string>
+    <string name="plan_pot_base">Base</string>
+    <string name="plan_pot_left">%1$s · %2$s left of %3$s</string>
+    <string name="plan_pot_over">%1$s · %2$s over (of %3$s)</string>
+    <string name="plan_pot_overflow">%1$s overflow</string>
+    <string name="plan_pot_overflow_row">−%1$s · %2$s</string>
+    <string name="cd_pot">Pot: %1$s</string>
 </resources>

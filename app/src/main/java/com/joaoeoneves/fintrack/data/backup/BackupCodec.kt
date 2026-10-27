@@ -79,7 +79,8 @@ object BackupCodec {
             }
         // Per-version migrations: 1 -> 2 added plannedIncome, 2 -> 3 recurring, 3 -> 4 monthSettings and the
         // income-line basis/frequency fields and 4 -> 5 categoryGroups, category groupId and budget skipMonths
-        // (absent = empty / defaults) and 5 -> 6 the monthSettings daysOff field (absent = 0).
+        // (absent = empty / defaults) and 5 -> 6 the monthSettings daysOff field (absent = 0) and
+        // 6 -> 7 the plannedIncome earmark fields (absent = none).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)

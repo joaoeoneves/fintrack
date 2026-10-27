@@ -32,10 +32,10 @@ class BackupCodecPlannedIncomeTest {
     }
 
     @Test
-    fun v6File_isUnsupported() {
-        val text = """{$header,"schemaVersion":7}"""
+    fun v8File_isUnsupported() {
+        val text = """{$header,"schemaVersion":8}"""
 
-        assertEquals(BackupDecodeResult.UnsupportedVersion(7), BackupCodec.decode(text))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(8), BackupCodec.decode(text))
     }
 
     @Test
@@ -73,5 +73,63 @@ class BackupCodecPlannedIncomeTest {
     fun countsTotal_includesPlannedIncome() {
         assertEquals(15, BackupCounts(1, 2, 3, 4, 5, 0).total)
         assertEquals(1, backupDoc().copy(plannedIncome = listOf(backupPlanned())).counts().total)
+    }
+
+    @Test
+    fun earmarkedLines_roundTrip() {
+        val lines =
+            listOf(
+                backupPlanned("p1").copy(earmarkType = "GROUP", earmarkId = "g1"),
+                backupPlanned("p2").copy(earmarkType = "CATEGORY", earmarkId = "FOOD"),
+                backupPlanned("p3"),
+            )
+        val doc = backupDoc().copy(plannedIncome = lines)
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(lines, result.document.plannedIncome)
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun v6File_decodesUpgradedToV7_withoutEarmarks() {
+        val planned = """[{"id":"p","label":"Pay","amountCents":50000,"order":0,"frequency":"MONTHLY"}]"""
+        val text = """{$header,"schemaVersion":6,"plannedIncome":$planned}"""
+
+        val result = BackupCodec.decode(text).success()
+
+        assertEquals(7, result.document.schemaVersion)
+        assertEquals(1, result.document.plannedIncome.size)
+        assertEquals(
+            null,
+            result.document.plannedIncome
+                .single()
+                .earmarkType,
+        )
+        assertEquals(
+            null,
+            result.document.plannedIncome
+                .single()
+                .earmarkId,
+        )
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun invalidEarmark_dropsTheLine() {
+        val doc =
+            backupDoc().copy(
+                plannedIncome =
+                    listOf(
+                        backupPlanned("ok").copy(earmarkType = "GROUP", earmarkId = "g1"),
+                        backupPlanned("half").copy(earmarkType = "GROUP"),
+                        backupPlanned("type").copy(earmarkType = "WALLET", earmarkId = "x"),
+                    ),
+            )
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(listOf("ok"), result.document.plannedIncome.map { it.id })
+        assertEquals(2, result.skippedCount)
     }
 }

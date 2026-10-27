@@ -505,4 +505,15 @@
     <string name="category_field_group">Grupo</string>
     <string name="category_group_none">Sem grupo</string>
     <string name="plan_not_in">Exceto em</string>
+    <string name="plan_earmark_for">Reservar para</string>
+    <string name="plan_earmark_none">Nenhum</string>
+    <string name="plan_earmark_categories">Categorias</string>
+    <string name="plan_pot">Pote</string>
+    <string name="plan_pots_title">Potes</string>
+    <string name="plan_pot_base">Base</string>
+    <string name="plan_pot_left">%1$s · restam %2$s de %3$s</string>
+    <string name="plan_pot_over">%1$s · %2$s acima (de %3$s)</string>
+    <string name="plan_pot_overflow">excesso de %1$s</string>
+    <string name="plan_pot_overflow_row">−%1$s · %2$s</string>
+    <string name="cd_pot">Pote: %1$s</string>
 </resources>

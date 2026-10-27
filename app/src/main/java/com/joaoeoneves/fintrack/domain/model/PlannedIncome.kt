@@ -15,13 +15,30 @@ enum class IncomeBasis {
 enum class IncomeFrequency { MONTHLY, YEARLY, ONCE }
 
 /**
+ * What a planned income line is set aside for: a single category or every category of a group. The id is a
+ * category id (built-in name or document id) or a category group document id.
+ */
+sealed interface Earmark {
+    val id: String
+
+    data class Category(
+        override val id: String,
+    ) : Earmark
+
+    data class Group(
+        override val id: String,
+    ) : Earmark
+}
+
+/**
  * One line of expected income in the plan (e.g. salary, meal allowance, holiday bonus). Planned income
  * is global like budgets: the same lines apply to every month they are active in. A blank [id] means
  * "not saved yet".
  *
  * [monthOfYear] is set exactly for [IncomeFrequency.YEARLY] lines, [yearMonth] exactly for
  * [IncomeFrequency.ONCE] lines, and [skipMonths] (month numbers 1..12 not paid) only for
- * [IncomeFrequency.MONTHLY] lines.
+ * [IncomeFrequency.MONTHLY] lines. A monthly line with an [earmark] feeds a pot (see [potsOf]) instead of the
+ * shared base.
  */
 data class PlannedIncome(
     val id: String,
@@ -33,4 +50,5 @@ data class PlannedIncome(
     val monthOfYear: Int? = null,
     val yearMonth: YearMonth? = null,
     val skipMonths: Set<Int> = emptySet(),
+    val earmark: Earmark? = null,
 )

@@ -1,12 +1,14 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
+import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.GroupProgress
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.PotsSummary
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.YearMonth
 
@@ -23,6 +25,7 @@ sealed interface MonthlyPlanUiState {
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
      * @property editor the income-line sheet, or `null` when it is closed.
      * @property groups planned vs actual per category group (and the implicit "Other") for [period]'s month.
+     * @property pots the month's money split into earmarked pots and the base; `null` when not computed.
      */
     data class Content(
         val incomeLines: List<PlannedIncome>,
@@ -36,6 +39,7 @@ sealed interface MonthlyPlanUiState {
         val workingDays: WorkingDaysState,
         val editor: IncomeLineEditorState?,
         val groups: List<GroupProgress> = emptyList(),
+        val pots: PotsSummary? = null,
     ) : MonthlyPlanUiState
 
     data class Error(
@@ -64,14 +68,24 @@ data class IncomeSchedule(
     val monthOfYear: Int? = null,
     val yearMonth: YearMonth? = null,
     val skipMonths: Set<Int> = emptySet(),
+    val earmark: Earmark? = null,
 ) {
-    /** Keeps only the fields that belong to [frequency]; a missing month falls back to [fallback]'s. */
+    /**
+     * Keeps only the fields that belong to [frequency] (only monthly lines can be earmarked); a missing month
+     * falls back to [fallback]'s.
+     */
     fun normalized(fallback: YearMonth): IncomeSchedule =
         when (frequency) {
             IncomeFrequency.MONTHLY -> copy(monthOfYear = null, yearMonth = null)
             IncomeFrequency.YEARLY ->
-                copy(monthOfYear = monthOfYear ?: fallback.monthValue, yearMonth = null, skipMonths = emptySet())
-            IncomeFrequency.ONCE -> copy(monthOfYear = null, yearMonth = yearMonth ?: fallback, skipMonths = emptySet())
+                copy(
+                    monthOfYear = monthOfYear ?: fallback.monthValue,
+                    yearMonth = null,
+                    skipMonths = emptySet(),
+                    earmark = null,
+                )
+            IncomeFrequency.ONCE ->
+                copy(monthOfYear = null, yearMonth = yearMonth ?: fallback, skipMonths = emptySet(), earmark = null)
         }
 }
 
@@ -85,4 +99,5 @@ data class IncomeLineEditorState(
     val initialAmountCents: Long?,
     val initialSchedule: IncomeSchedule = IncomeSchedule(),
     val labelError: UiText? = null,
+    val earmarkOptions: EarmarkOptions = EarmarkOptions(),
 )
