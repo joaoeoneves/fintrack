@@ -201,6 +201,12 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - takeScreenshot: maestro-out/screens/en-dark-add-expense
 - back
+- runFlow:
+    when:
+      notVisible:
+        id: "dashboard_list"
+    commands:
+      - back
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
@@ -234,6 +240,12 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - takeScreenshot: maestro-out/screens/en-light-add-expense
 - back
+- runFlow:
+    when:
+      notVisible:
+        id: "dashboard_list"
+    commands:
+      - back
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
@@ -289,6 +301,12 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - takeScreenshot: maestro-out/screens/pt-light-add-expense
 - back
+- runFlow:
+    when:
+      notVisible:
+        id: "dashboard_list"
+    commands:
+      - back
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
