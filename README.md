@@ -37,8 +37,8 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 
 ### Features
 
-- **Expense tracking** — add/edit/delete expenses with a name, amount, one of five fixed categories
-  (Transfer, Investments, Shopping, Food, Recurring), date, and an optional note.
+- **Expense tracking** — add/edit/delete expenses with a name, amount, category, date, and an optional
+  note. Five built-in categories (Transfer, Investments, Shopping, Food, Recurring) plus your own.
 - **Income tracking** — a separate, parallel entity (free-text source like "Salary" or "Freelance" instead
   of a fixed category), kept intentionally independent of expenses so it could be added later with zero
   risk to the existing expense code.
@@ -60,6 +60,8 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
   - **Language**: English or Portuguese (or the system language), switched in-app.
   - **Display currency**: USD, EUR, GBP, JPY, CAD or AUD. Purely cosmetic: it changes the symbol and
     formatting, with no exchange-rate conversion.
+  - **Categories**: add your own (name, icon, color, spending or saving), rename/recolor the built-ins,
+    reorder, archive (hidden from pickers, kept on existing data) or delete unused ones.
   - CSV import/export and the signed-in account.
 - **Offline-friendly** — Firestore's built-in local cache is the only persistence layer; there's no local
   Room database, so data survives offline use and syncs back once reconnected.

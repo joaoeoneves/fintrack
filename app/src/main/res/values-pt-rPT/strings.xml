@@ -191,4 +191,37 @@
         <item quantity="many">%1$d de despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
         <item quantity="other">%1$d despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
     </plurals>
+
+    <string name="settings_section_categories">Categorias</string>
+    <string name="settings_manage_categories">Gerir categorias</string>
+    <string name="categories_title">Categorias</string>
+    <string name="categories_add">Adicionar categoria</string>
+    <string name="categories_archived_header">Arquivadas</string>
+    <string name="category_edit_title">Editar categoria</string>
+    <string name="category_new_title">Nova categoria</string>
+    <string name="category_field_name">Nome</string>
+    <string name="category_field_icon">Ícone</string>
+    <string name="category_field_color">Cor</string>
+    <string name="category_field_kind">Tipo</string>
+    <string name="category_kind_spending">Despesa</string>
+    <string name="category_kind_saving">Poupança</string>
+    <string name="category_action_edit">Editar</string>
+    <string name="category_action_archive">Arquivar</string>
+    <string name="category_action_unarchive">Restaurar</string>
+    <string name="category_action_delete">Eliminar</string>
+    <string name="category_move_up">Mover para cima</string>
+    <string name="category_move_down">Mover para baixo</string>
+    <string name="cd_category_more_actions">Mais ações para %1$s</string>
+    <string name="cd_category_icon_option">Ícone %1$d</string>
+    <string name="cd_category_color_option">Cor %1$d</string>
+    <string name="category_delete_confirm">Eliminar \"%1$s\"?</string>
+    <string name="category_in_use_message">\"%1$s\" é usada por despesas ou num orçamento. Arquivar em vez disso?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas ou num orçamento e não pode ser eliminada.</string>
+    <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação. Arquivar em vez disso?</string>
+    <string name="category_cannot_verify_archived_message">Não é possível verificar a utilização sem ligação. Tente novamente quando estiver online.</string>
+    <string name="error_category_name_required">Introduza um nome</string>
+    <string name="error_category_name_too_long">Máximo de 50 caracteres</string>
+    <string name="error_category_name_duplicate">Já existe uma categoria com este nome</string>
+    <string name="error_category_last_active">Pelo menos uma categoria tem de ficar ativa</string>
+    <string name="error_category_save_failed">Não foi possível guardar a categoria</string>
 </resources>

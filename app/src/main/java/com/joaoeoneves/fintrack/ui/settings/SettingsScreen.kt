@@ -39,6 +39,7 @@ import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenCategories: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
     importExportViewModel: ImportExportViewModel = hiltViewModel(),
@@ -69,6 +70,7 @@ fun SettingsScreen(
                 },
                 onExportClick = { exportLauncher.launch("fintrack-expenses.csv") },
                 onSignOut = viewModel::signOut,
+                onOpenCategories = onOpenCategories,
             ),
         modifier = modifier,
     )
@@ -98,6 +100,7 @@ private data class SettingsActions(
     val onImportClick: () -> Unit,
     val onExportClick: () -> Unit,
     val onSignOut: () -> Unit,
+    val onOpenCategories: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,6 +148,7 @@ private fun SettingsScaffold(
                 onSelected = actions.onCurrencySelected,
                 modifier = sectionModifier,
             )
+            CategoriesSection(onOpen = actions.onOpenCategories, modifier = sectionModifier)
             DataSection(
                 onImportClick = actions.onImportClick,
                 onExportClick = actions.onExportClick,

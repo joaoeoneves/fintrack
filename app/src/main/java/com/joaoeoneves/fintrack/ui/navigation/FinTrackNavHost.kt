@@ -14,6 +14,7 @@ import com.joaoeoneves.fintrack.ui.expense.list.ExpenseListScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.income.list.IncomeListScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
+import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
 
 @Composable
 fun FinTrackNavHost(
@@ -62,7 +63,11 @@ fun FinTrackNavHost(
         composable<Settings> {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
+                onOpenCategories = { navController.navigate(Categories) },
             )
+        }
+        composable<Categories> {
+            CategoriesScreen(onBack = { navController.popBackStack() })
         }
     }
 }

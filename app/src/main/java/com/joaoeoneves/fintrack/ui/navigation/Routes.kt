@@ -32,3 +32,6 @@ data class AddEditIncome(
 
 @Serializable
 object Settings
+
+@Serializable
+object Categories

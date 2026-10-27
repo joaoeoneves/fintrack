@@ -189,4 +189,37 @@
         <item quantity="one">%1$d expense was imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
         <item quantity="other">%1$d expenses were imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
     </plurals>
+
+    <string name="settings_section_categories">Categories</string>
+    <string name="settings_manage_categories">Manage categories</string>
+    <string name="categories_title">Categories</string>
+    <string name="categories_add">Add category</string>
+    <string name="categories_archived_header">Archived</string>
+    <string name="category_edit_title">Edit category</string>
+    <string name="category_new_title">New category</string>
+    <string name="category_field_name">Name</string>
+    <string name="category_field_icon">Icon</string>
+    <string name="category_field_color">Color</string>
+    <string name="category_field_kind">Type</string>
+    <string name="category_kind_spending">Spending</string>
+    <string name="category_kind_saving">Saving</string>
+    <string name="category_action_edit">Edit</string>
+    <string name="category_action_archive">Archive</string>
+    <string name="category_action_unarchive">Restore</string>
+    <string name="category_action_delete">Delete</string>
+    <string name="category_move_up">Move up</string>
+    <string name="category_move_down">Move down</string>
+    <string name="cd_category_more_actions">More actions for %1$s</string>
+    <string name="cd_category_icon_option">Icon %1$d</string>
+    <string name="cd_category_color_option">Color %1$d</string>
+    <string name="category_delete_confirm">Delete \"%1$s\"?</string>
+    <string name="category_in_use_message">\"%1$s\" is used by expenses or a budget. Archive it instead?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" is used by expenses or a budget and can\'t be deleted.</string>
+    <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
+    <string name="category_cannot_verify_archived_message">Can\'t check usage while offline. Try again when you\'re online.</string>
+    <string name="error_category_name_required">Enter a name</string>
+    <string name="error_category_name_too_long">At most 50 characters</string>
+    <string name="error_category_name_duplicate">A category with this name already exists</string>
+    <string name="error_category_last_active">At least one category must stay active</string>
+    <string name="error_category_save_failed">Couldn\'t save the category</string>
 </resources>

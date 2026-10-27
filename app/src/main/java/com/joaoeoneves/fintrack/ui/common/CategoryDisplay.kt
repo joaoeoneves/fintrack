@@ -93,12 +93,18 @@ val categoryColorKeys: List<String> = categoryPalette.keys.toList()
  * theme is active. Unknown color keys fall back to slate.
  */
 fun categoryColorFor(
-    category: Category,
+    colorKey: String,
     isDarkTheme: Boolean,
 ): Color {
-    val color = categoryPalette[category.colorKey] ?: categoryPalette.getValue(FALLBACK_COLOR_KEY)
+    val color = categoryPalette[colorKey] ?: categoryPalette.getValue(FALLBACK_COLOR_KEY)
     return if (isDarkTheme) color.dark else color.light
 }
+
+/** [categoryColorFor] a [category]'s own color key. */
+fun categoryColorFor(
+    category: Category,
+    isDarkTheme: Boolean,
+): Color = categoryColorFor(category.colorKey, isDarkTheme)
 
 /**
  * Theme-aware color per [Category], used by the pie chart and its legend.
@@ -141,4 +147,7 @@ val categoryIconKeys: List<String> = categoryIcons.keys.toList()
  * Unknown icon keys (including the unknown-category placeholder's) show a question mark.
  */
 val Category.icon: ImageVector
-    get() = categoryIcons[iconKey] ?: Icons.AutoMirrored.Filled.HelpOutline
+    get() = categoryIconFor(iconKey)
+
+/** Icon for an icon key; unknown keys show a question mark. */
+fun categoryIconFor(iconKey: String): ImageVector = categoryIcons[iconKey] ?: Icons.AutoMirrored.Filled.HelpOutline
