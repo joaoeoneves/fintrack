@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -32,6 +33,7 @@ import java.time.ZoneOffset
 open class MonthlyPlanViewModelTestBase {
     protected val testDispatcher = StandardTestDispatcher()
     protected val incomeRepo = FakePlannedIncomeRepository()
+    protected val monthSettingsRepo = FakeMonthSettingsRepository()
     protected val budgetRepo = FakeBudgetRepository()
     protected val categoryRepo = FakeCategoryRepository()
     protected val expenseRepo = FakeExpenseRepository()
@@ -53,11 +55,16 @@ open class MonthlyPlanViewModelTestBase {
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         expenses: ExpenseRepository = expenseRepo,
     ) = MonthlyPlanViewModel(
-        incomeRepo,
-        budgetRepo,
-        categoryRepo,
+        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo),
         observePeriodOverviewOf(
-            DashboardRepositories(expenses, budgetRepo, actualIncomeRepo, categoryRepo, incomeRepo),
+            DashboardRepositories(
+                expenses,
+                budgetRepo,
+                actualIncomeRepo,
+                categoryRepo,
+                incomeRepo,
+                monthSettingsRepo,
+            ),
         ),
         savedStateHandle,
         clock,

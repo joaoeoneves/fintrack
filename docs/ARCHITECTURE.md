@@ -78,7 +78,8 @@ All data lives under `users/{uid}/`. Money is stored as integer minor units (`am
 | `expenses/{id}` | `name`, `amountCents` (> 0), `category` (category id), `isRefund?`, `date`, `note?`, `createdAt`, `updatedAt` |
 | `income/{id}` | `source` (free text), `amountCents`, `date`, `note?`, timestamps |
 | `budgets/{categoryId}` | `limitCents` (the document id is the category id) |
-| `plannedIncome/{lineId}` | `label` (1..50), `amountCents`, `order`; at most 10 lines (enforced client-side, rules cannot count documents) |
+| `plannedIncome/{lineId}` | `label` (1..50), `amountCents` (the rate for per-working-day lines), `order`, `basis?` (`FIXED`/`PER_WORKING_DAY`), `frequency?` (`MONTHLY`/`YEARLY`/`ONCE`), `monthOfYear?` (yearly only), `yearMonth?` (`yyyy-MM`, one-off only), `skipMonths?` (list of months 1..12 a monthly line is not paid in); absent fields mean fixed/monthly; at most 20 lines (enforced client-side, rules cannot count documents) |
+| `monthSettings/{yyyy-MM}` | `workingDays` 0..23 (manual working-days count replacing the Portuguese-holiday calendar count for that month), `updatedAt` |
 | `recurring/{itemId}` | `type` (`EXPENSE`/`INCOME`), `name`, `amountCents`, `category?`, `note?`, `frequency` (`MONTHLY`/`YEARLY`), `dayOfMonth` 1..31, `monthOfYear?`, `startDate`, `endDate?`, `handledThrough?`, `active`, `updatedAt` (dates as `yyyy-MM-dd`) |
 | `categories/{id}` | `name?`, `iconKey`, `colorKey`, `kind` (`SPENDING`/`SAVING`), `order`, `archived`, `builtIn`, timestamps. User categories have generated ids; a built-in's override document reuses the built-in id with `name` null meaning the localized default |
 | `settings/preferences` | `theme` (`SYSTEM`/`LIGHT`/`DARK`), `currency` (`USD`/`EUR`/`GBP`/`JPY`/`CAD`/`AUD`), `language` (`SYSTEM`/`ENGLISH`/`PORTUGUESE`), `updatedAt` |
@@ -118,18 +119,18 @@ expenses, income, budgets, planned income, categories and recurring items; ISO-8
 - Loaded lazily, kept in memory, rewritten on every change.
 - **Atomic writes**: temp file, fsync, rename. New state is published to observers only after the write
   succeeded, so no one sees data that is not on disk. A mutex serialises writers.
-- **Versioning**: `schemaVersion` is currently 3. A corrupt file, or one with a newer schema, is moved to
+- **Versioning**: `schemaVersion` is currently 4. A corrupt file, or one with a newer schema, is moved to
   `guest-data.corrupt-<millis>.json` (never deleted) and the store starts empty.
 - After a migration to an account and a confirmed "Remove from this device", one safety copy remains as
   `guest-data.migrated.json`, overwritten next time.
 
 ## Backup format
 
-A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 3, "exportedAt",
+A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 4, "exportedAt",
 "appVersion", "preferences", ...records }` using the same record shapes as the guest store. Decoding:
 
 - a missing or invalid version is rejected; a version newer than the app supports is refused;
-- older versions (1, 2) are upgraded in memory to the current one;
+- older versions (1, 2, 3) are upgraded in memory to the current one;
 - records that fail validation are skipped and reported to the user on restore.
 
 Backups can be exported signed in or as a guest and restored as a guest.

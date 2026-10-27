@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateExpense
 import com.joaoeoneves.fintrack.data.local.validateIncome
+import com.joaoeoneves.fintrack.data.local.validateMonthSettings
 import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
 import com.joaoeoneves.fintrack.data.local.validateRecurring
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
@@ -75,9 +76,10 @@ object BackupCodec {
             } catch (e: IllegalArgumentException) {
                 return BackupDecodeResult.Invalid(e.message ?: "Malformed backup")
             }
-        // Per-version migrations: 1 -> 2 added plannedIncome and 2 -> 3 added recurring (absent = empty).
+        // Per-version migrations: 1 -> 2 added plannedIncome, 2 -> 3 recurring and 3 -> 4 monthSettings and
+        // the income-line basis/frequency fields (absent = empty / defaults).
         return when (document.schemaVersion) {
-            1, 2 -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
+            in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
         }
@@ -93,10 +95,12 @@ object BackupCodec {
         val income = keepValid(document.income, { it.id }) { validateIncome(it) }
         val plannedIncome = keepValid(document.plannedIncome, { it.id }) { validatePlannedIncome(it) }
         val recurring = keepValid(document.recurring, { it.id }) { validateRecurring(it, known) }
+        val monthSettings = keepValid(document.monthSettings, { it.month }) { validateMonthSettings(it) }
         val skipped =
             (document.categories.size - categories.size) + (document.budgets.size - budgets.size) +
                 (document.expenses.size - expenses.size) + (document.income.size - income.size) +
-                (document.plannedIncome.size - plannedIncome.size) + (document.recurring.size - recurring.size)
+                (document.plannedIncome.size - plannedIncome.size) + (document.recurring.size - recurring.size) +
+                (document.monthSettings.size - monthSettings.size)
         return BackupDecodeResult.Success(
             document.copy(
                 categories = categories,
@@ -105,6 +109,7 @@ object BackupCodec {
                 income = income,
                 plannedIncome = plannedIncome,
                 recurring = recurring,
+                monthSettings = monthSettings,
             ),
             skipped,
         )

@@ -83,11 +83,27 @@ service cloud.firestore {
     }
 
     function isValidPlannedIncome(data) {
-      return data.keys().hasOnly(['label', 'amountCents', 'order', 'updatedAt'])
+      return data.keys().hasOnly(['label', 'amountCents', 'order', 'basis', 'frequency', 'monthOfYear',
+          'yearMonth', 'skipMonths', 'updatedAt'])
         && data.keys().hasAll(['label', 'amountCents', 'order'])
         && data.label is string && data.label.size() > 0 && data.label.size() <= 50
         && isValidAmountCents(data.amountCents)
-        && data.order is int;
+        && data.order is int
+        && (!('basis' in data) || data.basis in ['FIXED', 'PER_WORKING_DAY'])
+        && isValidIncomeFrequency(data)
+        && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
+    }
+
+    // Absent frequency means MONTHLY. MONTHLY has neither month field, YEARLY a month 1..12, ONCE a
+    // yyyy-MM year-month.
+    function isValidIncomeFrequency(data) {
+      return (data.get('frequency', 'MONTHLY') == 'MONTHLY'
+          && data.get('monthOfYear', null) == null && data.get('yearMonth', null) == null)
+        || (data.get('frequency', null) == 'YEARLY' && data.get('monthOfYear', null) is int
+          && data.monthOfYear >= 1 && data.monthOfYear <= 12 && data.get('yearMonth', null) == null)
+        || (data.get('frequency', null) == 'ONCE' && data.get('monthOfYear', null) == null
+          && data.get('yearMonth', null) is string
+          && data.yearMonth.matches('^[0-9]{4}-(0[1-9]|1[0-2])$'));
     }
 
     function isDateString(d) {
@@ -152,10 +168,26 @@ service cloud.firestore {
     }
 
     // Each user can only read/write their own expected-income lines of the monthly plan (e.g.
-    // salary, meal allowance). The 10-line cap is client-side only (rules can't count documents).
+    // salary, meal allowance). The 20-line cap is client-side only (rules can't count documents).
     match /users/{userId}/plannedIncome/{lineId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidPlannedIncome(request.resource.data);
+    }
+
+    // Each user can only read/write their own per-month plan settings: the document id is the month
+    // (yyyy-MM) and holds a manual working-days count replacing the calendar one.
+    match /users/{userId}/monthSettings/{monthId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && monthId.matches('^[0-9]{4}-[0-9]{2}$')
+        && isValidMonthSettings(request.resource.data);
+    }
+
+    function isValidMonthSettings(data) {
+      return data.keys().hasOnly(['workingDays', 'updatedAt'])
+        && data.keys().hasAll(['workingDays'])
+        && data.workingDays is int && data.workingDays >= 0 && data.workingDays <= 23
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
     // Each user can only read/write their own recurring templates (rent, subscriptions, salary).

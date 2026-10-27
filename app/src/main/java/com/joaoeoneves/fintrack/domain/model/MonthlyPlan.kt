@@ -7,7 +7,9 @@ import java.time.YearMonth
  * The monthly plan evaluated for one month. Planned money counts as used even before it is spent;
  * overspending uses more; unbudgeted spending counts in full.
  *
- * @property expectedIncomeCents sum of the planned income lines.
+ * @property expectedIncomeCents sum of the regular (monthly) planned income lines active in the month.
+ * @property extrasExpectedCents sum of the yearly and one-off lines landing in the month; kept out of
+ * [incomeBasisCents] and so out of safe-to-spend.
  * @property actualIncomeCents sum of the income dated in the month.
  * @property plannedSpendingCents sum of the limits of spending buckets.
  * @property plannedSavingCents sum of the limits of saving buckets.
@@ -23,6 +25,7 @@ data class MonthlyPlanSummary(
     val committedCents: Long,
     val remainingInBucketsCents: Long,
     val isConfigured: Boolean,
+    val extrasExpectedCents: Long = 0L,
 ) {
     val plannedAllocationsCents: Long get() = plannedSpendingCents + plannedSavingCents
     val plannedLeftoverCents: Long get() = expectedIncomeCents - plannedAllocationsCents
@@ -32,16 +35,23 @@ data class MonthlyPlanSummary(
     val safeToSpendCents: Long get() = incomeBasisCents - committedCents
 }
 
-/** Evaluates the plan: [buckets] are the month's budget rows, [monthIncome] only that month's income. */
+/**
+ * Evaluates the plan for [month]: [buckets] are the month's budget rows, [monthIncome] only that month's
+ * income and [workingDays] the working days of the month (per-working-day lines multiply by it).
+ */
 fun monthlyPlanOf(
     buckets: List<CategoryBudget>,
     plannedIncome: List<PlannedIncome>,
     monthIncome: List<Income>,
+    month: YearMonth,
+    workingDays: Int,
 ): MonthlyPlanSummary {
+    val (extras, regular) = plannedIncome.partition { it.isExtra }
     val limited = buckets.filter { it.limitCents != null }
     val spendingLimited = limited.filter { it.category.kind == CategoryKind.SPENDING }
     return MonthlyPlanSummary(
-        expectedIncomeCents = plannedIncome.sumOf { it.amountCents },
+        expectedIncomeCents = regular.sumOf { it.amountIn(month, workingDays) },
+        extrasExpectedCents = extras.sumOf { it.amountIn(month, workingDays) },
         actualIncomeCents = monthIncome.sumOf { it.amountCents },
         plannedSpendingCents = spendingLimited.sumOf { it.limitCents ?: 0L },
         plannedSavingCents = limited.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.limitCents ?: 0L },

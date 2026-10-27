@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -14,12 +15,15 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.YearMonth
 
 /** The income-line editor flow (open, save, validate, delete) of [MonthlyPlanViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
+    private val month = YearMonth.of(2026, 10)
+
     @Test
     fun addIncomeLine_opensEmptyEditor() =
         runTest(testDispatcher) {
@@ -33,9 +37,9 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
         }
 
     @Test
-    fun addIncomeLine_atTenLines_isNoOp() =
+    fun addIncomeLine_atTwentyLines_isNoOp() =
         runTest(testDispatcher) {
-            repeat(10) { incomeRepo.savePlannedIncome(line("l$it", order = it)) }
+            repeat(MAX_PLANNED_INCOME_LINES) { incomeRepo.savePlannedIncome(line("l$it", order = it)) }
             val vm = viewModel()
             collect(vm)
 
@@ -81,7 +85,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            vm.onSaveIncomeLine("Salary", 100L)
+            vm.onSaveIncomeLine("Salary", 100L, IncomeSchedule(), month)
             advanceUntilIdle()
 
             assertEquals(emptyList<Any>(), incomeRepo.lines)
@@ -95,7 +99,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
 
             vm.onAddIncomeLine()
             advanceUntilIdle()
-            vm.onSaveIncomeLine("  Salary  ", 150_000L)
+            vm.onSaveIncomeLine("  Salary  ", 150_000L, IncomeSchedule(), month)
             advanceUntilIdle()
             assertEquals(0, incomeRepo.lines.single().order)
             assertEquals("Salary", incomeRepo.lines.single().label)
@@ -103,7 +107,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
 
             vm.onAddIncomeLine()
             advanceUntilIdle()
-            vm.onSaveIncomeLine("Meal", 20_000L)
+            vm.onSaveIncomeLine("Meal", 20_000L, IncomeSchedule(), month)
             advanceUntilIdle()
             assertEquals(listOf(0, 1), incomeRepo.lines.map { it.order })
             assertEquals(listOf("Salary", "Meal"), vm.content().incomeLines.map { it.label })
@@ -118,7 +122,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
             vm.onEditIncomeLine("a")
             advanceUntilIdle()
 
-            vm.onSaveIncomeLine("Renamed", 42L)
+            vm.onSaveIncomeLine("Renamed", 42L, IncomeSchedule(), month)
             advanceUntilIdle()
 
             val saved = incomeRepo.lines.single()
@@ -136,7 +140,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
             vm.onAddIncomeLine()
             advanceUntilIdle()
 
-            vm.onSaveIncomeLine("   ", 100L)
+            vm.onSaveIncomeLine("   ", 100L, IncomeSchedule(), month)
             advanceUntilIdle()
 
             val editor = vm.content().editor
@@ -152,7 +156,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
             vm.onAddIncomeLine()
             advanceUntilIdle()
 
-            vm.onSaveIncomeLine("a".repeat(51), 100L)
+            vm.onSaveIncomeLine("a".repeat(51), 100L, IncomeSchedule(), month)
             advanceUntilIdle()
 
             assertEquals(UiText.StringResource(R.string.error_plan_label_too_long), vm.content().editor?.labelError)
@@ -168,7 +172,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
             advanceUntilIdle()
             incomeRepo.nextSaveError = IllegalStateException("nope")
 
-            vm.onSaveIncomeLine("Salary", 100L)
+            vm.onSaveIncomeLine("Salary", 100L, IncomeSchedule(), month)
             advanceUntilIdle()
 
             assertNotNull(vm.content().editor)

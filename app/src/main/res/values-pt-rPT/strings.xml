@@ -441,4 +441,30 @@
     <string name="home_recent_title">Movimentos recentes</string>
     <string name="home_recent_empty">Ainda sem movimentos</string>
     <string name="dashboard_see_all_activity">Ver todos os movimentos</string>
+    <string name="plan_basis_fixed">Fixo</string>
+    <string name="plan_basis_per_day">Pago por dia útil</string>
+    <string name="plan_frequency_monthly">Mensal</string>
+    <string name="plan_frequency_yearly">Anual</string>
+    <string name="plan_frequency_once">Pontual</string>
+    <string name="plan_field_amount_per_day">Valor por dia útil</string>
+    <plurals name="plan_income_preview">
+        <item quantity="one">× %1$d dia útil = %2$s este mês</item>
+        <item quantity="many">× %1$d dias úteis = %2$s este mês</item>
+        <item quantity="other">× %1$d dias úteis = %2$s este mês</item>
+    </plurals>
+    <string name="plan_not_paid_in">Não pago em</string>
+    <string name="plan_pay_month">Pago em</string>
+    <string name="plan_not_this_month">Não este mês</string>
+    <string name="plan_working_days_title">Dias úteis em %1$s</string>
+    <plurals name="plan_working_days_value">
+        <item quantity="one">%1$d (%2$d feriado)</item>
+        <item quantity="many">%1$d (%2$d feriados)</item>
+        <item quantity="other">%1$d (%2$d feriados)</item>
+    </plurals>
+    <string name="plan_working_days_edited">%1$d (alterado)</string>
+    <string name="plan_working_days_reset">Repor automático</string>
+    <string name="plan_working_days_hint">Substitui a contagem do calendário apenas neste mês.</string>
+    <string name="plan_extras_this_month">Extras este mês</string>
+    <string name="cd_fewer_working_days">Menos dias úteis</string>
+    <string name="cd_more_working_days">Mais dias úteis</string>
 </resources>

@@ -19,7 +19,16 @@ internal fun remoteSnapshot(
     plannedIncomeIds: Set<String> = emptySet(),
     recurringIds: Set<String> = emptySet(),
     categories: List<Category> = emptyList(),
-) = RemoteAccountSnapshot(expenseIds, incomeIds, budgetCategoryIds, plannedIncomeIds, recurringIds, categories)
+    monthSettingsIds: Set<String> = emptySet(),
+) = RemoteAccountSnapshot(
+    expenseIds,
+    incomeIds,
+    budgetCategoryIds,
+    plannedIncomeIds,
+    recurringIds,
+    categories,
+    monthSettingsIds,
+)
 
 @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
 internal fun localDoc(
@@ -73,6 +82,7 @@ internal fun RemoteAccountSnapshot.after(plan: MigrationPlan) =
         budgetCategoryIds = budgetCategoryIds + plan.budgets.map { it.categoryId },
         plannedIncomeIds = plannedIncomeIds + plan.plannedIncome.map { it.id },
         recurringIds = recurringIds + plan.recurring.map { it.id },
+        monthSettingsIds = monthSettingsIds + plan.monthSettings.map { it.month },
         categories = categories + plan.categories.mapNotNull { it.toDomainOrNull() },
     )
 

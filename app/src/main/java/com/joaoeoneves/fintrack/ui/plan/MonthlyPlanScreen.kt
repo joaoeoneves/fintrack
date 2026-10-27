@@ -74,6 +74,7 @@ private fun MonthlyPlanContent(
     modifier: Modifier = Modifier,
 ) {
     var editingAllocation by remember { mutableStateOf<CategoryBudget?>(null) }
+    var editingWorkingDays by remember { mutableStateOf(false) }
     val cardModifier = Modifier.fillMaxWidth()
 
     LazyColumn(
@@ -96,15 +97,7 @@ private fun MonthlyPlanContent(
                 fixedThisMonthCents = state.fixedThisMonthCents,
             )
         }
-        item {
-            ExpectedIncomeCard(
-                lines = state.incomeLines,
-                canAdd = state.canAddIncomeLine,
-                onAdd = viewModel::onAddIncomeLine,
-                onEdit = viewModel::onEditIncomeLine,
-                modifier = cardModifier,
-            )
-        }
+        expectedIncomeItem(state, viewModel, onEditWorkingDays = { editingWorkingDays = true }, modifier = cardModifier)
         item {
             AllocationsCard(
                 allocations = state.allocations,
@@ -116,8 +109,15 @@ private fun MonthlyPlanContent(
         item { RecurringSection(onOpen = onOpenRecurring, modifier = cardModifier) }
     }
 
+    if (editingWorkingDays) {
+        WorkingDaysDialog(
+            state = state.workingDays,
+            onSave = viewModel::onSetWorkingDays,
+            onDismiss = { editingWorkingDays = false },
+        )
+    }
     PlanDialogs(
-        editor = state.editor,
+        state = state,
         editingAllocation = editingAllocation,
         onCloseAllocation = { editingAllocation = null },
         viewModel = viewModel,
@@ -126,15 +126,18 @@ private fun MonthlyPlanContent(
 
 @Composable
 private fun PlanDialogs(
-    editor: IncomeLineEditorState?,
+    state: MonthlyPlanUiState.Content,
     editingAllocation: CategoryBudget?,
     onCloseAllocation: () -> Unit,
     viewModel: MonthlyPlanViewModel,
 ) {
-    editor?.let {
-        IncomeLineDialog(
+    state.editor?.let {
+        IncomeLineSheet(
             editor = it,
-            onSave = viewModel::onSaveIncomeLine,
+            workingDays = state.workingDays,
+            onSave = { label, cents, schedule ->
+                viewModel.onSaveIncomeLine(label, cents, schedule, state.workingDays.month)
+            },
             onDelete = viewModel::onDeleteIncomeLine,
             onDismiss = viewModel::onDismissEditor,
         )
@@ -151,6 +154,28 @@ private fun PlanDialogs(
                 onCloseAllocation()
             },
             onDismiss = onCloseAllocation,
+        )
+    }
+}
+
+private fun LazyListScope.expectedIncomeItem(
+    state: MonthlyPlanUiState.Content,
+    viewModel: MonthlyPlanViewModel,
+    onEditWorkingDays: () -> Unit,
+    modifier: Modifier,
+) {
+    item {
+        ExpectedIncomeCard(
+            lines = state.incomeLines,
+            canAdd = state.canAddIncomeLine,
+            workingDays = state.workingDays,
+            actions =
+                ExpectedIncomeActions(
+                    onAdd = viewModel::onAddIncomeLine,
+                    onEdit = viewModel::onEditIncomeLine,
+                    onEditWorkingDays = onEditWorkingDays,
+                ),
+            modifier = modifier,
         )
     }
 }

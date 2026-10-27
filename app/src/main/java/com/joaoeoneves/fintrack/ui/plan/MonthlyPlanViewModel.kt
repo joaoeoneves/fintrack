@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
+import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -14,10 +15,9 @@ import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
-import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
+import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "MonthlyPlanViewModel"
@@ -50,9 +51,7 @@ private const val KEY_SELECTED_MONTH = "selectedMonth"
 class MonthlyPlanViewModel
     @Inject
     constructor(
-        private val plannedIncomeRepository: PlannedIncomeRepository,
-        private val budgetRepository: BudgetRepository,
-        private val categoryRepository: CategoryRepository,
+        private val repositories: PlanRepositories,
         private val observePeriodOverview: ObservePeriodOverview,
         savedStateHandle: SavedStateHandle,
         private val clock: Clock,
@@ -78,7 +77,7 @@ class MonthlyPlanViewModel
                     val period = decodePeriod(token, now, clock.zone)
                     val overview = observePeriodOverview(period, now, clock.zone, recentLimit = 0)
                     planFlow(
-                        repositories = PlanRepositories(plannedIncomeRepository, budgetRepository, categoryRepository),
+                        repositories = repositories,
                         selected = SelectedMonth(period, period.canGoToNextMonth(now, clock.zone), overview),
                         editor = editor,
                     )
@@ -102,7 +101,7 @@ class MonthlyPlanViewModel
 
         fun onAddIncomeLine() {
             viewModelScope.launch {
-                if (currentLines().size < MAX_PLANNED_INCOME_LINES) {
+                if (repositories.currentLines().size < MAX_PLANNED_INCOME_LINES) {
                     editor.value = IncomeLineEditorState(editingId = null, initialLabel = "", initialAmountCents = null)
                 }
             }
@@ -110,12 +109,20 @@ class MonthlyPlanViewModel
 
         fun onEditIncomeLine(id: String) {
             viewModelScope.launch {
-                currentLines().firstOrNull { it.id == id }?.let { line ->
+                repositories.currentLines().firstOrNull { it.id == id }?.let { line ->
                     editor.value =
                         IncomeLineEditorState(
                             editingId = line.id,
                             initialLabel = line.label,
                             initialAmountCents = line.amountCents,
+                            initialSchedule =
+                                IncomeSchedule(
+                                    basis = line.basis,
+                                    frequency = line.frequency,
+                                    monthOfYear = line.monthOfYear,
+                                    yearMonth = line.yearMonth,
+                                    skipMonths = line.skipMonths,
+                                ),
                         )
                 }
             }
@@ -125,10 +132,15 @@ class MonthlyPlanViewModel
             editor.value = null
         }
 
-        /** Saves the open editor's line with the trimmed [label]; a rejected label keeps the editor open. */
+        /**
+         * Saves the open editor's line with the trimmed [label]; a rejected label keeps the editor open.
+         * [schedule] is cleaned to the fields its frequency uses; [month] fills a missing month.
+         */
         fun onSaveIncomeLine(
             label: String,
             amountCents: Long,
+            schedule: IncomeSchedule,
+            month: YearMonth,
         ) {
             val current = editor.value ?: return
             val trimmed = label.trim()
@@ -138,16 +150,22 @@ class MonthlyPlanViewModel
                 return
             }
             viewModelScope.launch {
-                val lines = currentLines()
+                val lines = repositories.currentLines()
                 val existing = lines.firstOrNull { it.id == current.editingId }
+                val cleaned = schedule.normalized(month)
                 val line =
                     PlannedIncome(
                         id = existing?.id.orEmpty(),
                         label = trimmed,
                         amountCents = amountCents,
                         order = existing?.order ?: ((lines.maxOfOrNull { it.order } ?: -1) + 1),
+                        basis = cleaned.basis,
+                        frequency = cleaned.frequency,
+                        monthOfYear = cleaned.monthOfYear,
+                        yearMonth = cleaned.yearMonth,
+                        skipMonths = cleaned.skipMonths,
                     )
-                plannedIncomeRepository
+                repositories.plannedIncome
                     .savePlannedIncome(line)
                     .onSuccess { editor.value = null }
                     .onFailure { reportFailure(it) }
@@ -156,10 +174,20 @@ class MonthlyPlanViewModel
 
         fun onDeleteIncomeLine(id: String) {
             viewModelScope.launch {
-                plannedIncomeRepository
+                repositories.plannedIncome
                     .deletePlannedIncome(id)
                     .onSuccess { editor.value = null }
                     .onFailure { reportFailure(it) }
+            }
+        }
+
+        /** Overrides [month]'s working days with [days], or restores the calendar count when `null`. */
+        fun onSetWorkingDays(
+            month: YearMonth,
+            days: Int?,
+        ) {
+            viewModelScope.launch {
+                repositories.monthSettings.setWorkingDaysOverride(month, days).onFailure { reportFailure(it) }
             }
         }
 
@@ -168,17 +196,15 @@ class MonthlyPlanViewModel
             limitCents: Long,
         ) {
             viewModelScope.launch {
-                budgetRepository.setBudget(category.id, limitCents).onFailure { reportFailure(it) }
+                repositories.budgets.setBudget(category.id, limitCents).onFailure { reportFailure(it) }
             }
         }
 
         fun onClearAllocation(category: Category) {
             viewModelScope.launch {
-                budgetRepository.clearBudget(category.id).onFailure { reportFailure(it) }
+                repositories.budgets.clearBudget(category.id).onFailure { reportFailure(it) }
             }
         }
-
-        private suspend fun currentLines(): List<PlannedIncome> = plannedIncomeRepository.observePlannedIncome().first()
 
         private suspend fun reportFailure(error: Throwable) {
             Log.w(TAG, "Failed to save the monthly plan", error)
@@ -186,12 +212,7 @@ class MonthlyPlanViewModel
         }
     }
 
-/** The repositories the plan is assembled from, bundled for detekt's LongParameterList. */
-private class PlanRepositories(
-    val plannedIncome: PlannedIncomeRepository,
-    val budgets: BudgetRepository,
-    val categories: CategoryRepository,
-)
+private suspend fun PlanRepositories.currentLines(): List<PlannedIncome> = plannedIncome.observePlannedIncome().first()
 
 /** The month the plan is currently evaluated against, with its [overview] flow. */
 private class SelectedMonth(
@@ -210,19 +231,23 @@ private fun planFlow(
         repositories.budgets.observeBudgets(),
         repositories.categories.observeCategories(),
         selected.overview,
-        editor,
-    ) { lines, budgets, categories, overview, editorState ->
+        combine(repositories.monthSettings.observeMonthSettings(), editor) { settings, editorState ->
+            settings to editorState
+        },
+    ) { lines, budgets, categories, overview, (settings, editorState) ->
         val allocations = budgetProgressOf(emptyList(), budgets, categories)
+        val workingDays = workingDaysOf(overview.budgetMonth, settings)
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
                 incomeLines = lines,
                 allocations = allocations,
-                summary = monthlyPlanOf(allocations, lines, emptyList()),
+                summary = monthlyPlanOf(allocations, lines, emptyList(), overview.budgetMonth, workingDays.days),
                 period = selected.period,
                 canGoToNextMonth = selected.canGoToNextMonth,
                 progress = overview.budgets,
                 fixedThisMonthCents = overview.summary.fixedSpendingCents,
                 canAddIncomeLine = lines.size < MAX_PLANNED_INCOME_LINES,
+                workingDays = workingDays,
                 editor = editorState,
             )
         content
@@ -230,3 +255,18 @@ private fun planFlow(
         Log.w(TAG, "Failed to observe the monthly plan", e)
         emit(MonthlyPlanUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
     }
+
+private fun workingDaysOf(
+    month: YearMonth,
+    settings: List<MonthSettings>,
+): WorkingDaysState {
+    val override = settings.firstOrNull { it.month == month }?.workingDaysOverride
+    val calendar = workingDaysIn(month)
+    return WorkingDaysState(
+        month = month,
+        days = override ?: calendar,
+        calendarDays = calendar,
+        holidays = holidayWeekdaysIn(month),
+        overridden = override != null,
+    )
+}

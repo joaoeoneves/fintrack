@@ -20,6 +20,8 @@ import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.amountIn
+import com.joaoeoneves.fintrack.domain.model.isActiveIn
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
@@ -57,6 +59,10 @@ fun PlanSummaryCard(
     val negative = FinTrackTheme.colors.negative
     SettingsGroup(label = stringResource(R.string.plan_title), modifier = modifier) {
         AmountRow(stringResource(R.string.plan_expected_income), formatAmountCents(summary.expectedIncomeCents))
+        if (summary.extrasExpectedCents > 0L) {
+            Hairline()
+            AmountRow(stringResource(R.string.plan_extras_this_month), formatAmountCents(summary.extrasExpectedCents))
+        }
         Hairline()
         AmountRow(stringResource(R.string.plan_planned_spending), formatAmountCents(summary.plannedSpendingCents))
         Hairline()
@@ -74,28 +80,46 @@ fun PlanSummaryCard(
     }
 }
 
-/** The expected-income lines; tap one to edit it. The add button is hidden at the line cap. */
+/** What the expected-income card can trigger, bundled for detekt's LongParameterList. */
+data class ExpectedIncomeActions(
+    val onAdd: () -> Unit,
+    val onEdit: (String) -> Unit,
+    val onEditWorkingDays: () -> Unit,
+)
+
+/**
+ * The working-days row and the expected-income lines with what each pays in the selected month; tap a
+ * line to edit it. The add button is hidden at the line cap.
+ */
 @Composable
 fun ExpectedIncomeCard(
     lines: List<PlannedIncome>,
     canAdd: Boolean,
-    onAdd: () -> Unit,
-    onEdit: (String) -> Unit,
+    workingDays: WorkingDaysState,
+    actions: ExpectedIncomeActions,
     modifier: Modifier = Modifier,
 ) {
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
+        WorkingDaysRow(state = workingDays, onClick = actions.onEditWorkingDays)
+        Hairline()
         lines.forEach { line ->
+            val inMonth = line.isActiveIn(workingDays.month)
             AmountRow(
                 label = line.label,
-                value = formatAmountCents(line.amountCents),
-                modifier = Modifier.clickable { onEdit(line.id) },
+                value =
+                    if (inMonth) {
+                        formatAmountCents(line.amountIn(workingDays.month, workingDays.days))
+                    } else {
+                        stringResource(R.string.plan_not_this_month)
+                    },
+                modifier = Modifier.clickable { actions.onEdit(line.id) },
             )
             Hairline()
         }
         if (canAdd) {
             GhostButton(
                 text = stringResource(R.string.plan_add_income_line),
-                onClick = onAdd,
+                onClick = actions.onAdd,
                 modifier = Modifier.padding(top = Dimens.Space12),
             )
         }

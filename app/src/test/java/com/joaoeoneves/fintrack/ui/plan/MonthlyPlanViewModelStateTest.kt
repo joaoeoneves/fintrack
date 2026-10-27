@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.testutil.genericErrorText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -101,14 +102,14 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
         }
 
     @Test
-    fun canAddIncomeLine_falseAtTenLines() =
+    fun canAddIncomeLine_falseAtTwentyLines() =
         runTest(testDispatcher) {
-            repeat(9) { incomeRepo.savePlannedIncome(line("l$it", order = it)) }
+            repeat(MAX_PLANNED_INCOME_LINES - 1) { incomeRepo.savePlannedIncome(line("l$it", order = it)) }
             val vm = viewModel()
             collect(vm)
             assertTrue(vm.content().canAddIncomeLine)
 
-            incomeRepo.savePlannedIncome(line("l9", order = 9))
+            incomeRepo.savePlannedIncome(line("last", order = MAX_PLANNED_INCOME_LINES))
             advanceUntilIdle()
 
             assertFalse(vm.content().canAddIncomeLine)
