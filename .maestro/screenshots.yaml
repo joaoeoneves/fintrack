@@ -4,8 +4,6 @@ appId: com.joaoeoneves.fintrack
 # screenshots; it asserts very little and is NOT a regression gate. Run it via the e2e.yml workflow
 # with `flows: screenshots.yaml` and download the maestro-out/screens/*.png files from the artifact.
 #
-# STATUS: written but NOT RUN yet -- expect selector tweaks on the first CI run.
-#
 # Self-contained: starts from clearState, uses guest mode (no Google account), and leaves the app
 # in guest mode with the demo data below (it does not clean up; the CI emulator is throw-away).
 #
