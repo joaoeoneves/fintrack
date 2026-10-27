@@ -37,6 +37,7 @@ class GuestBackupRestorer
                             monthSettings = document.monthSettings,
                             categoryGroups = document.categoryGroups,
                             salaryProfile = document.salaryProfile,
+                            goals = document.goals,
                         ),
                     ).getOrThrow()
                 document.preferences?.let { backup ->

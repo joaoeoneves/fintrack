@@ -273,6 +273,34 @@ service cloud.firestore {
       allow create, update: if isOwner(userId) && isValidRecurring(userId, request.resource.data);
     }
 
+    // Each user can only read/write their own savings goals. Money counts towards a goal through the recurring
+    // items it links (ids, at most 20) and an optional category; both are shape-checked only, a dangling id
+    // simply contributes nothing.
+    match /users/{userId}/goals/{goalId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && isCategoryIdShape(goalId)
+        && isValidGoal(request.resource.data);
+    }
+
+    function isValidGoal(data) {
+      return data.keys().hasOnly(['name', 'targetCents', 'targetType', 'startDate', 'targetDate', 'initialCents',
+          'linkedRecurringIds', 'linkedCategoryId', 'archived', 'order', 'updatedAt'])
+        && data.keys().hasAll(['name', 'targetCents', 'targetType', 'startDate', 'archived', 'order'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 50
+        && isValidAmountCents(data.targetCents)
+        && data.targetType in ['ANNUAL', 'TOTAL']
+        && isDateString(data.startDate) && isOptionalDate(data, 'targetDate')
+        && (data.get('targetDate', null) == null || data.targetDate >= data.startDate)
+        && isOptionalInt(data, 'initialCents', 0, 100000000000)
+        && (!('linkedRecurringIds' in data)
+          || (data.linkedRecurringIds is list && data.linkedRecurringIds.size() <= 20))
+        && (data.get('linkedCategoryId', null) == null || isCategoryIdShape(data.linkedCategoryId))
+        && data.archived is bool
+        && data.order is int
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
     function isValidPreferences(data) {
       return data.keys().hasOnly(['theme', 'currency', 'language', 'updatedAt'])
         && (!('theme' in data) || data.theme in ['SYSTEM', 'LIGHT', 'DARK'])

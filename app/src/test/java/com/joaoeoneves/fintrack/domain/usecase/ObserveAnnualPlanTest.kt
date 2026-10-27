@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
@@ -12,10 +13,14 @@ import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
+import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -25,6 +30,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 
@@ -57,6 +63,8 @@ class ObserveAnnualPlanTest {
     private fun useCase(
         transactions: TransactionRepository,
         lines: List<PlannedIncome> = emptyList(),
+        goalRepository: FakeGoalRepository = FakeGoalRepository(),
+        recurring: List<RecurringItem> = emptyList(),
     ) = ObserveAnnualPlan(
         transactions,
         PlanDataSources(
@@ -65,9 +73,42 @@ class ObserveAnnualPlanTest {
             FakeMonthSettingsRepository(),
             FakeCategoryRepository(listOf(dinners)),
             FakeCategoryGroupRepository(listOf(food)),
-            FakeRecurringRepository(),
+            FakeRecurringRepository(recurring),
         ),
+        goalRepository,
     )
+
+    @Test
+    fun goals_areCombinedIn_archivedExcluded_plannedFromLinkedRecurring() =
+        runTest {
+            val item = recurringItem("m", amountCents = 1_000, categoryId = dinners.id)
+            val start = LocalDate.of(2026, 1, 1)
+            val goals =
+                FakeGoalRepository(
+                    listOf(
+                        SavingsGoal("a", "A", 5_000, GoalTargetType.ANNUAL, start, linkedRecurringIds = setOf("m")),
+                        SavingsGoal("b", "B", 5_000, GoalTargetType.ANNUAL, start, archived = true),
+                    ),
+                )
+
+            val observe = useCase(RecordingTransactions(), goalRepository = goals, recurring = listOf(item))
+            val plan = observe(2026, ZoneOffset.UTC).first()
+
+            assertEquals(listOf("a"), plan.goals.map { it.goal.id })
+            assertEquals(12_000L, plan.goals.single().plannedCents)
+        }
+
+    @Test
+    fun goalsFailure_propagates() =
+        runTest {
+            val goals = FakeGoalRepository(nextObserveError = IllegalStateException("boom"))
+
+            val observe = useCase(RecordingTransactions(), goalRepository = goals)
+
+            val result = runCatching { observe(2026, ZoneOffset.UTC).first() }
+
+            assertEquals("boom", result.exceptionOrNull()?.message)
+        }
 
     @Test
     fun requestsExactlyTheCalendarYear_halfOpen() =

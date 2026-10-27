@@ -9,13 +9,14 @@ import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
+import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
 import kotlinx.serialization.Serializable
 
 /** Marker written into every backup file's `format` field. */
 const val BACKUP_FORMAT = "fintrack-backup"
 
 /** Version written into [BackupDocument.schemaVersion]; a file with a higher one is refused. */
-const val BACKUP_SCHEMA_VERSION = 8
+const val BACKUP_SCHEMA_VERSION = 9
 
 /**
  * A portable JSON backup of one data set (works from both guest and signed-in mode). The record
@@ -44,6 +45,8 @@ data class BackupDocument(
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),
     /** Added in schema version 8; absent (none) in older files. */
     val salaryProfile: LocalSalaryProfile? = null,
+    /** Added in schema version 9; absent (empty) in older files. */
+    val goals: List<LocalSavingsGoal> = emptyList(),
 )
 
 /** App preferences as enum names; an unrecognized name leaves the current value alone on restore. */
@@ -65,10 +68,11 @@ data class BackupCounts(
     val monthSettings: Int = 0,
     val categoryGroups: Int = 0,
     val salaryProfile: Int = 0,
+    val goals: Int = 0,
 ) {
     val total: Int get() =
         expenses + income + budgets + categories + plannedIncome + recurring + monthSettings + categoryGroups +
-            salaryProfile
+            salaryProfile + goals
 }
 
 fun BackupDocument.counts(): BackupCounts =
@@ -82,4 +86,5 @@ fun BackupDocument.counts(): BackupCounts =
         monthSettings = monthSettings.size,
         categoryGroups = categoryGroups.size,
         salaryProfile = if (salaryProfile != null) 1 else 0,
+        goals = goals.size,
     )

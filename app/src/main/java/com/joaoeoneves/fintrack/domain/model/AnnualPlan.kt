@@ -13,6 +13,7 @@ data class AnnualPlanInputs(
     val groups: List<CategoryGroup>,
     val monthSettings: List<MonthSettings>,
     val yearExpenses: List<Expense> = emptyList(),
+    val goals: List<SavingsGoal> = emptyList(),
 )
 
 /** A yearly or one-off income line paying [cents] in [month] (1..12) of the plan's year. */
@@ -57,6 +58,15 @@ data class AnnualSubscription(
     val month: Int,
 )
 
+/** A goal's year: the [plannedCents] its linked recurring items contribute in the plan's year against its target. */
+data class AnnualGoal(
+    val goal: SavingsGoal,
+    val plannedCents: Long,
+) {
+    /** Whether the planned contributions reach the goal's target (an ANNUAL one; a TOTAL one needs several years). */
+    val coversTarget: Boolean get() = plannedCents >= goal.targetCents
+}
+
 /**
  * The plan of one [year]. [plannedCents] is the sum over [groups] (and so over every planned category) and
  * [leftoverCents] what the year's total income leaves after it.
@@ -67,6 +77,7 @@ data class AnnualPlan(
     val groups: List<AnnualGroup>,
     val subscriptions: List<AnnualSubscription>,
     val pots: List<AnnualPot>,
+    val goals: List<AnnualGoal> = emptyList(),
 ) {
     val plannedCents: Long get() = groups.sumOf { it.plannedCents }
     val leftoverCents: Long get() = income.totalCents - plannedCents
@@ -93,8 +104,28 @@ fun annualPlanOf(
         groups = annualGroupsOf(plannedByCategory, inputs),
         subscriptions = subscriptionsOf(year, inputs.recurring),
         pots = annualPotsOf(inputs, workingDays, plannedByCategory),
+        goals = annualGoalsOf(months, inputs),
     )
 }
+
+/**
+ * The active goals with what their linked EXPENSE recurring items plan over [months] (occurrences within the
+ * year, start and end dates respected). Informational: those expenses already sit in their category's group.
+ */
+private fun annualGoalsOf(
+    months: List<YearMonth>,
+    inputs: AnnualPlanInputs,
+): List<AnnualGoal> =
+    inputs.goals
+        .filterNot { it.archived }
+        .sortedWith(compareBy({ it.order }, { it.id }))
+        .map { goal ->
+            val linked =
+                inputs.recurring.filter {
+                    it.type == RecurringType.EXPENSE && it.active && it.id in goal.linkedRecurringIds
+                }
+            AnnualGoal(goal, linked.sumOf { item -> item.amountCents * months.count { item.occursIn(it) } })
+        }
 
 private fun effectiveWorkingDaysOf(
     month: YearMonth,

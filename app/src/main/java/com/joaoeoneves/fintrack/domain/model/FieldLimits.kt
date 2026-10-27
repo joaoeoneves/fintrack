@@ -18,6 +18,12 @@ const val MAX_NOTE_LENGTH = 2000
 /** Maximum length, in code points, of a planned-income line label. */
 const val MAX_PLAN_LABEL_LENGTH = 50
 
+/** Maximum length, in code points, of a savings goal name. */
+const val MAX_GOAL_NAME_LENGTH = 50
+
+/** Most recurring items one savings goal can link to; mirrors the bound in `firestore.rules`. */
+const val MAX_GOAL_LINKED_RECURRING = 20
+
 /** Largest money amount accepted, in cents (1 billion); mirrors the upper bound in `firestore.rules`. */
 const val MAX_AMOUNT_CENTS = 100_000_000_000L
 

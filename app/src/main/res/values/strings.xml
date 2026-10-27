@@ -579,4 +579,28 @@
     <string name="annual_leftover_caption">Income minus planned spending, %1$s</string>
     <string name="annual_empty_title">Nothing planned for %1$s</string>
     <string name="annual_empty_message">Add income and allocations in the Month view to see the year.</string>
+
+    <string name="plan_goals_title">Goals</string>
+    <string name="plan_goals_add">Add a goal</string>
+    <string name="plan_goals_from_investments">Create from investments</string>
+    <string name="goal_new">New goal</string>
+    <string name="goal_edit">Edit goal</string>
+    <string name="goal_field_name">Name</string>
+    <string name="goal_field_target">Target</string>
+    <string name="goal_field_target_date">Target date</string>
+    <string name="goal_field_initial">Already saved (optional)</string>
+    <string name="goal_target_date_add">Add a target date</string>
+    <string name="goal_target_date_clear">Remove target date</string>
+    <string name="goal_error_dates">The target date is before the start date</string>
+    <string name="goal_type_annual">Annual</string>
+    <string name="goal_type_total">Total</string>
+    <string name="goal_status_on_track">On track</string>
+    <string name="goal_status_behind">Behind</string>
+    <string name="goal_status_done">Done</string>
+    <string name="goal_link_recurring">Link to recurring items</string>
+    <string name="goal_link_category">Link to a category</string>
+    <string name="goal_link_category_none">None</string>
+    <string name="error_goal_save_failed">Couldn\'t save the goal</string>
+    <string name="annual_goals_title">Goals</string>
+    <string name="annual_goal_planned_of_target">%1$s planned of %2$s</string>
 </resources>

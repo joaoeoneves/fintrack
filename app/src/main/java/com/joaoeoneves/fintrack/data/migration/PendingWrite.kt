@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import com.google.firebase.firestore.FieldValue
+import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
 import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.data.toFirestoreMap
@@ -16,7 +17,7 @@ internal class PendingWrite(
 /**
  * The planned writes grouped into batches, in commit order: category groups, categories, budgets, expenses, income,
  * planned income,
- * recurring items, month settings, salary profile.
+ * recurring items, month settings, salary profile, goals.
  * Every batch holds at most 400 writes; budget, expense and recurring batches also respect the rules' cap on
  * distinct custom categories. A planned record that cannot be mapped is a bug (the planner validates
  * everything) and throws instead of being silently dropped.
@@ -72,7 +73,16 @@ internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
         }
     return groupWrites.chunked(BATCH_CHUNK_SIZE) + categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches +
         expenseBatches + incomeBatches + plannedIncomeBatches + recurringBatches + monthSettingsBatches +
-        salaryProfileBatches
+        salaryProfileBatches + goalBatches()
+}
+
+// Goals reference categories and recurring items by id only (shape-checked in the rules), so they go last.
+private fun MigrationPlan.goalBatches(): List<List<PendingWrite>> =
+    goals.chunked(BATCH_CHUNK_SIZE).map { chunk -> chunk.map { it.toPendingWrite() } }
+
+private fun LocalSavingsGoal.toPendingWrite(): PendingWrite {
+    val domain = checkNotNull(toDomainOrNull()) { "Planned goal $id is unmappable" }
+    return PendingWrite("goals", id, domain.toFirestoreMap())
 }
 
 private fun MigrationPlan.budgetBatches(): List<List<PendingWrite>> =

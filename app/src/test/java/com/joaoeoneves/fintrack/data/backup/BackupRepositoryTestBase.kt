@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
@@ -22,6 +23,7 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -61,6 +63,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         monthSettings: List<MonthSettings> = emptyList(),
         groups: List<CategoryGroup> = emptyList(),
         salaryProfile: SalaryProfile? = null,
+        goals: List<SavingsGoal> = emptyList(),
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
@@ -70,7 +73,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
             FakeRecurringRepository(recurring),
             FakeMonthSettingsRepository(monthSettings),
             FakeCategoryGroupRepository(groups),
-            FakeSalaryProfileRepository(salaryProfile),
+            PlanSingletonSources(FakeSalaryProfileRepository(salaryProfile), FakeGoalRepository(goals)),
         ),
         FakeCategoryRepository(categoryDocs),
         prefsStore,
