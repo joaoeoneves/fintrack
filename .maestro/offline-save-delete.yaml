@@ -48,9 +48,11 @@ onFlowComplete:
 
 # --- 2: Expense: delete offline -> row gone, Undo shown immediately ---
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_activity"
 - assertVisible: "All expenses"
 - tapOn: "Search"
 - inputText: "Maestro Offline"
@@ -64,7 +66,8 @@ onFlowComplete:
     index: 0
 - assertNotVisible: "Maestro Offline Expense"
 - assertVisible: "Undo"
-- tapOn: "Back"
+# The Activity tab has no back arrow; system back returns to Home.
+- back
 
 # --- 3: Income: add offline -> form closes, row on Dashboard ---
 - tapOn: "Add income"
@@ -85,10 +88,14 @@ onFlowComplete:
 
 # --- 4: Income: delete offline -> row gone, Undo shown immediately ---
 - scrollUntilVisible:
-    element: "See all income"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all income"
+- tapOn:
+    id: "see_all_activity"
+# "See all" opens the Activity tab on Expenses; switch to the Income segment.
+- tapOn: "Income"
 - assertVisible: "All income"
 - tapOn: "Search"
 - inputText: "Maestro Offline"
@@ -102,6 +109,7 @@ onFlowComplete:
     index: 0
 - assertNotVisible: "Maestro Offline Income"
 - assertVisible: "Undo"
-- tapOn: "Back"
+# The Activity tab has no back arrow; system back returns to Home.
+- back
 - assertVisible:
     id: "dashboard_list"

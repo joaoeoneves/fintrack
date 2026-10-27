@@ -1,7 +1,8 @@
 appId: com.joaoeoneves.fintrack
 ---
-# Period-navigation E2E flow for FinTrack: the month-based PeriodSelector that replaced the old
-# 1W/1M/3M/6M/1Y chips on the Dashboard and the expense/income lists.
+# Period-navigation E2E flow for FinTrack: the month-based PeriodSelector on Home, the Activity
+# tab's lists, the Plan tab and the Insights tab. Home and Plan are month-only (menu: "This month" /
+# "Choose month..."); the rolling windows and custom range live on the Insights tab and the lists.
 #
 # Assumes the app is already signed in and lands on the Dashboard -- same assumption as
 # golden-path.yaml (real Google Sign-In cannot be scripted headlessly).
@@ -34,8 +35,8 @@ appId: com.joaoeoneves.fintrack
 # enabled/disabled state. So the arrow checks below match `text: "<label>"` together with
 # `enabled: true/false` directly on that one node.
 #
-# --- 1: Default is the current month: month label, both arrows, Next disabled, budgets title
-# "Budgets (this month)".
+# --- 1: Default is the current month: month label, both arrows, Next disabled. Home's period menu
+# is month-only: no rolling windows.
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
 - assertVisible:
     text: "Previous month"
@@ -43,15 +44,14 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     text: "Next month"
     enabled: false
-- scrollUntilVisible:
-    element: "Budgets \\(this month\\)"
-    direction: DOWN
-- scrollUntilVisible:
-    element: "Previous month"
-    direction: UP
+- tapOn: "Change period"
+- assertVisible: "This month"
+- assertVisible: "Choose month.*"
+- assertNotVisible: "Last 3 months"
+- assertNotVisible: "Custom range.*"
+- tapOn: "This month"
 
-# --- 2: Previous month -- the label changes, Next becomes enabled, and the budgets title names the
-# selected month.
+# --- 2: Previous month -- the label changes and Next becomes enabled.
 - copyTextFrom:
     text: "[A-Z][a-z]+ [0-9]{4}"
 - evalScript: ${output.currentMonthLabel = maestro.copiedText}
@@ -66,21 +66,17 @@ appId: com.joaoeoneves.fintrack
     text: "[A-Z][a-z]+ [0-9]{4}"
 - evalScript: ${output.previousMonthLabel = maestro.copiedText}
 - takeScreenshot: build/maestro/period-navigation-previous-month
-- scrollUntilVisible:
-    element: "Budgets \\(${output.previousMonthLabel}\\)"
-    direction: DOWN
-- assertNotVisible: "Budgets \\(this month\\)"
 
-# --- 3: The Dashboard's period is carried into the expense list. Opened via the "Recent expenses"
-# card header (the whole header row is clickable and calls onOpenList(period)) rather than the
-# "See all expenses" link, which is only rendered when the period has expenses -- the previous
-# month may well be empty on the test account. The extra plain scroll brings the header fully
-# inside the LazyColumn's clip bounds (see income-tracking.yaml step 4).
+# --- 3: Home's period is carried into the Activity tab. Opened via the "Recent activity" title
+# (clickable, calls onOpenActivity(period)) rather than the "See all" link, which is only rendered
+# when the period has activity -- the previous month may well be empty on the test account. The
+# extra plain scroll brings the title fully inside the LazyColumn's clip bounds (see
+# income-tracking.yaml step 4).
 - scrollUntilVisible:
-    element: "Recent expenses"
+    element: "Recent activity"
     direction: DOWN
 - scroll
-- tapOn: "Recent expenses"
+- tapOn: "Recent activity"
 - assertVisible: "All expenses"
 - assertVisible: ${output.previousMonthLabel}
 - assertVisible: "Next month"
@@ -89,7 +85,8 @@ appId: com.joaoeoneves.fintrack
     enabled: true
 - back
 
-# --- 4: Next month returns to the current month: "Budgets (this month)" and Next disabled again.
+# --- 4: Next month returns to the current month and Next is disabled again (system back from the
+# Activity tab root returns to Home).
 - scrollUntilVisible:
     element: "Next month"
     direction: UP
@@ -99,9 +96,6 @@ appId: com.joaoeoneves.fintrack
     text: "Next month"
     enabled: false
 - scrollUntilVisible:
-    element: "Budgets \\(this month\\)"
-    direction: DOWN
-- scrollUntilVisible:
     element: "Change period"
     direction: UP
 
@@ -110,10 +104,6 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Change period"
 - assertVisible: "This month"
 - assertVisible: "Choose month.*"
-- assertVisible: "Last 3 months"
-- assertVisible: "Last 6 months"
-- assertVisible: "Last 12 months"
-- assertVisible: "Custom range.*"
 - tapOn: "Choose month.*"
 # The picker opens on the current year: "Next year" is disabled (no future years), "Previous year"
 # is enabled.
@@ -144,6 +134,21 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Previous year"
 - assertVisible: "January [0-9]{4}"
 
+# --- 5b: Restore "This month" on Home, then move to the Insights tab, which has the full period menu.
+- tapOn: "Change period"
+- tapOn: "This month"
+- assertVisible: ${output.currentMonthLabel}
+- tapOn:
+    id: "nav_insights"
+- tapOn: "Change period"
+- assertVisible: "This month"
+- assertVisible: "Choose month.*"
+- assertVisible: "Last 3 months"
+- assertVisible: "Last 6 months"
+- assertVisible: "Last 12 months"
+- assertVisible: "Custom range.*"
+- tapOn: "This month"
+
 # --- 6: "Custom range…" opens the DateRangePicker; Cancel closes it without changing the period.
 # Day cells are deliberately not tapped (their accessibility labels are date-dependent).
 - tapOn: "Change period"
@@ -152,7 +157,7 @@ appId: com.joaoeoneves.fintrack
 - takeScreenshot: build/maestro/period-navigation-custom-range
 - tapOn: "Cancel"
 - assertNotVisible: "Select dates"
-- assertVisible: "January [0-9]{4}"
+- assertVisible: ${output.currentMonthLabel}
 
 # --- 7: "Last 6 months" -- the label shows the rolling window and the month arrows disappear.
 - tapOn: "Change period"
@@ -161,7 +166,7 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Previous month"
 - assertNotVisible: "Next month"
 
-# --- 8: Restore "This month", leaving the Dashboard as found.
+# --- 8: Restore "This month", leaving the Insights and Home periods as found.
 - tapOn: "Change period"
 - tapOn: "This month"
 - assertVisible: ${output.currentMonthLabel}

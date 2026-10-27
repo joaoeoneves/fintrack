@@ -2,9 +2,9 @@ appId: com.joaoeoneves.fintrack
 ---
 # Dashboard recent-row E2E flow for FinTrack.
 #
-# Tapping a row on the Dashboard's "Recent expenses" / "Recent income" cards opens that item's edit
-# screen ("Edit expense" / "Edit income") with its values prefilled. The card header row and the
-# "See all ..." links still open the full lists.
+# Tapping a row in Home's merged "Recent activity" list opens that item's edit
+# screen ("Edit expense" / "Edit income") with its values prefilled. The section title and the
+# "See all" link (tag see_all_activity) open the Activity tab.
 #
 # Assumes the app is already signed in and lands on the Dashboard, same as golden-path.yaml.
 # Creates "Maestro E2E Recent Expense" and "Maestro E2E Recent Income" and deletes each at the end
@@ -76,12 +76,12 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Edit income"
 - assertVisible: "Maestro E2E Recent Income"
 
-# --- 3: The "Recent expenses" header row still opens the full list; delete the expense there while
-# the list is search-filtered to its name.
+# --- 3: The "Recent activity" title still opens the Activity tab (Expenses segment); delete the
+# expense there while the list is search-filtered to its name.
 - scrollUntilVisible:
-    element: "Recent expenses"
+    element: "Recent activity"
     direction: UP
-- tapOn: "Recent expenses"
+- tapOn: "Recent activity"
 - assertVisible: "All expenses"
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Expense"
@@ -101,12 +101,16 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     id: "dashboard_list"
 
-# --- 4: Open the income list via "See all income" and delete the income the same way.
+# --- 4: Open the Activity tab via "See all", switch to Income and delete the income the same way.
 - scrollUntilVisible:
-    element: "See all income"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all income"
+- tapOn:
+    id: "see_all_activity"
+# "See all" opens the Activity tab on Expenses; switch to the Income segment.
+- tapOn: "Income"
 - assertVisible: "All income"
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Income"

@@ -47,7 +47,7 @@ import java.time.ZoneId
 
 @Composable
 fun ExpenseListScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onOpenExpense: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ExpenseListViewModel = hiltViewModel(),

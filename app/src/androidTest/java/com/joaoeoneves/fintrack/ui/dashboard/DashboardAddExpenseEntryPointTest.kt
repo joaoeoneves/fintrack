@@ -1,9 +1,11 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -15,6 +17,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.TestTags
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -24,28 +27,14 @@ import java.time.Clock
 import java.time.Instant
 
 /**
- * Instrumented Compose UI tests covering the Dashboard's "Add expense" entry point, which now
- * lives on the "Recent expenses" card header (a `Row` with the section title on
- * `Modifier.weight(1f)` plus an `IconButton(Icons.Default.Add)`), mirroring the existing "Recent
- * Income" card exactly. [ExpenseListScreen] no longer has any add control at all.
+ * Instrumented Compose UI tests for Home's (the [DashboardScreen]) entry points: the floating
+ * "Add expense"/"Add income" pill, the merged "Recent activity" section with its "See all" link
+ * (opens the Activity tab on the current period), and tapping a recent row to open that entry.
  *
- * These exercise the real [DashboardScreen] composable with a [DashboardViewModel] constructed
- * directly against in-memory fakes (bypassing Hilt entirely, same pattern as the JVM
- * `DashboardViewModelExpenseTest`/`DashboardViewModelBudgetTest`/`DashboardViewModelIncomeTest`
- * use) -- no navigation graph or running app is required to prove:
- *  1. Tapping the plus icon (content description "Add expense") on the "Recent expenses" card
- *     header invokes `onAddExpense`, both when `state.recentExpenses` is empty and non-empty.
- *  2. The "Recent expenses" card always renders -- including its empty-state text -- and stays
- *     tappable through to the full expense list even with zero expenses in range.
- *  3. The unrelated "Recent income" plus button is untouched by this change (regression check).
- *  4. Tapping a recent-expense row opens that expense (`onOpenExpense(id)`), not the full list.
- *
- * The plus buttons carry their "Add expense"/"Add income" content description on the clickable
- * IconButton node itself, so `onNodeWithContentDescription(...).performClick()` hits the button.
- *
- * NOTE: "Add expense"/"Add income" are content descriptions on the floating add pill in the
- * Scaffold FAB slot, outside the LazyColumn, so they are clicked directly. The "Recent expenses"
- * card and its rows are inside the LazyColumn and may need [scrollToNode] first.
+ * Exercises the real [DashboardScreen] with a [DashboardViewModel] built directly against in-memory
+ * fakes (no Hilt, no navigation graph), same pattern as the JVM dashboard ViewModel tests. The
+ * add pill sits in the Scaffold FAB slot outside the LazyColumn and is clicked directly; the
+ * "Recent activity" section is inside the LazyColumn and may need [scrollToNode] first.
  */
 @RunWith(AndroidJUnit4::class)
 class DashboardAddExpenseEntryPointTest {
@@ -67,9 +56,8 @@ class DashboardAddExpenseEntryPointTest {
 
     private fun setDashboardContent(
         expenses: List<Expense> = emptyList(),
-        onOpenList: (Period) -> Unit = {},
+        onOpenActivity: (Period) -> Unit = {},
         onAddExpense: () -> Unit = {},
-        onOpenIncomeList: (Period) -> Unit = {},
         onAddIncome: () -> Unit = {},
         onOpenExpense: (String) -> Unit = {},
     ) {
@@ -85,14 +73,13 @@ class DashboardAddExpenseEntryPointTest {
             DashboardScreen(
                 callbacks =
                     DashboardCallbacks(
-                        onOpenList = onOpenList,
                         onAddExpense = onAddExpense,
-                        onOpenIncomeList = onOpenIncomeList,
                         onAddIncome = onAddIncome,
                         onOpenSettings = {},
                         onOpenExpense = onOpenExpense,
                         onOpenIncome = {},
-                        onOpenMonthlyPlan = {},
+                        onOpenActivity = onOpenActivity,
+                        onOpenPlan = {},
                         onOpenRecurring = {},
                     ),
                 viewModel = viewModel,
@@ -114,7 +101,7 @@ class DashboardAddExpenseEntryPointTest {
     }
 
     @Test
-    fun addExpenseButton_onRecentExpensesCard_invokesOnAddExpense_whenNoExpensesInRange() {
+    fun addExpenseButton_invokesOnAddExpense_whenNoExpensesInRange() {
         var addExpenseClicked = false
         setDashboardContent(
             expenses = emptyList(),
@@ -128,62 +115,20 @@ class DashboardAddExpenseEntryPointTest {
     }
 
     @Test
-    fun addExpenseButton_onRecentExpensesCard_invokesOnAddExpense_whenExpensesArePresent() {
+    fun addExpenseButton_invokesOnAddExpense_whenExpensesArePresent() {
         var addExpenseClicked = false
         setDashboardContent(
             expenses = listOf(expense(id = "e1")),
             onAddExpense = { addExpenseClicked = true },
         )
 
-        assertEquals(false, addExpenseClicked)
         composeTestRule.onNodeWithContentDescription("Add expense").performClick()
 
         assertEquals(true, addExpenseClicked)
     }
 
     @Test
-    fun recentExpensesCard_rendersEmptyStateText_whenNoExpensesInRange() {
-        setDashboardContent(expenses = emptyList())
-        scrollToNode(hasText("Recent expenses"))
-
-        // The Recent Expenses card now has its own distinct empty-state string
-        // (R.string.dashboard_recent_expenses_empty, "No expenses yet"), separate from
-        // DashboardSummary's placeholder (R.string.dashboard_no_expenses, "No expenses in this
-        // period yet."). There is exactly one node with this text -- no more ambiguity.
-        composeTestRule.onNodeWithText("No expenses yet").assertExists()
-    }
-
-    @Test
-    fun recentExpensesCard_remainsTappable_whenNoExpensesInRange_andNavigatesToFullList() {
-        var openedListWith: Period? = null
-        setDashboardContent(
-            expenses = emptyList(),
-            onOpenList = { period -> openedListWith = period },
-        )
-        scrollToNode(hasText("Recent expenses"))
-
-        assertNull(openedListWith)
-        composeTestRule.onNodeWithText("Recent expenses").performClick()
-
-        assertEquals(Period.CurrentMonth, openedListWith)
-    }
-
-    @Test
-    fun recentExpensesCard_stillTappable_whenExpensesArePresent() {
-        var openedListWith: Period? = null
-        setDashboardContent(
-            expenses = listOf(expense(id = "e1")),
-            onOpenList = { period -> openedListWith = period },
-        )
-        scrollToNode(hasText("Recent expenses"))
-
-        composeTestRule.onNodeWithText("Recent expenses").performClick()
-
-        assertEquals(Period.CurrentMonth, openedListWith)
-    }
-
-    @Test
-    fun recentIncomeAddButton_isUnaffectedByThisChange_stillInvokesOnAddIncome() {
+    fun addIncomeButton_invokesOnAddIncome() {
         var addIncomeClicked = false
         setDashboardContent(onAddIncome = { addIncomeClicked = true })
 
@@ -193,19 +138,57 @@ class DashboardAddExpenseEntryPointTest {
     }
 
     @Test
-    fun recentExpenseRow_tap_invokesOnOpenExpense_withThatExpensesId_notOnOpenList() {
+    fun recentActivity_rendersEmptyStateText_andNoSeeAll_whenNothingInRange() {
+        setDashboardContent(expenses = emptyList())
+        scrollToNode(hasText("Recent activity"))
+
+        composeTestRule.onNodeWithText("No activity yet").assertExists()
+        composeTestRule.onNodeWithTag(TestTags.SEE_ALL_ACTIVITY).assertDoesNotExist()
+    }
+
+    @Test
+    fun recentActivityTitle_tap_opensActivityOnCurrentMonth() {
+        var openedWith: Period? = null
+        setDashboardContent(
+            expenses = listOf(expense(id = "e1")),
+            onOpenActivity = { period -> openedWith = period },
+        )
+        scrollToNode(hasText("Recent activity"))
+
+        assertNull(openedWith)
+        composeTestRule.onNodeWithText("Recent activity").performClick()
+
+        assertEquals(Period.CurrentMonth, openedWith)
+    }
+
+    @Test
+    fun seeAll_tap_opensActivityOnCurrentMonth() {
+        var openedWith: Period? = null
+        setDashboardContent(
+            expenses = listOf(expense(id = "e1")),
+            onOpenActivity = { period -> openedWith = period },
+        )
+        scrollToNode(hasTestTag(TestTags.SEE_ALL_ACTIVITY))
+
+        composeTestRule.onNodeWithTag(TestTags.SEE_ALL_ACTIVITY).performClick()
+
+        assertEquals(Period.CurrentMonth, openedWith)
+    }
+
+    @Test
+    fun recentExpenseRow_tap_invokesOnOpenExpense_withThatExpensesId_notOnOpenActivity() {
         var openedExpenseId: String? = null
-        var openedListWith: Period? = null
+        var openedActivityWith: Period? = null
         setDashboardContent(
             expenses = listOf(expense(id = "e1")),
             onOpenExpense = { id -> openedExpenseId = id },
-            onOpenList = { period -> openedListWith = period },
+            onOpenActivity = { period -> openedActivityWith = period },
         )
         scrollToNode(hasText("Expense e1"))
 
         composeTestRule.onNodeWithText("Expense e1").performClick()
 
         assertEquals("e1", openedExpenseId)
-        assertNull(openedListWith)
+        assertNull(openedActivityWith)
     }
 }

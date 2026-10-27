@@ -41,14 +41,13 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Euro (€)"
 - tapOn: "Back"
 
-# --- 1: Dashboard loads with the period selector, balance summary card, pie legend ---
+# --- 1: Home (the former dashboard) loads with the month selector, balance summary card and bottom bar ---
 # The period selector replaced the old 1W/1M/3M/6M/1Y chips: previous/next month arrows (content
 # descriptions "Previous month"/"Next month") around a tappable month label ("October 2026"). The
 # default period is the current calendar month, matched by a generic "<Month> <yyyy>" regex so the
 # flow doesn't go stale when the calendar rolls over.
-# The "Add expense" entry point lives on the Dashboard's "Recent expenses" card header (a plus
-# IconButton next to the section title, mirroring the "Recent income" card exactly) -- see step 2
-# below. ExpenseListScreen itself has no add control of its own, just back navigation.
+# The "Add expense" entry point is the floating add pill on Home -- see step 2 below. The Activity
+# tab's lists have no add control of their own.
 #
 # The four category assertions below use a ".*<name>.*" wildcard, not a bare category name.
 # PieChart.kt's legend rows (fix(dashboard): add TalkBack accessibility to pie chart, 2026-07-21)
@@ -73,10 +72,26 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Expenses"
 - assertVisible: "Saved & invested"
 - assertVisible: "Savings rate.*"
+# The bottom navigation bar shows its four tabs on Home.
+- assertVisible:
+    id: "nav_home"
+- assertVisible:
+    id: "nav_activity"
+- assertVisible:
+    id: "nav_plan"
+- assertVisible:
+    id: "nav_insights"
+# The category breakdown moved to the Insights tab: check it there, then return to Home.
+- tapOn:
+    id: "nav_insights"
 - assertVisible: ".*Transfer.*"
 - assertVisible: ".*Investments.*"
 - assertVisible: ".*Shopping.*"
-# "Recurring" is archived by default, so it is no longer asserted in the pie legend.
+# "Recurring" is archived by default, so it is no longer asserted in the breakdown.
+- tapOn:
+    id: "nav_home"
+- assertVisible:
+    id: "dashboard_list"
 # B6: capture the Dashboard so the outer-Scaffold-padding removal can be checked visually (no
 # doubled gap above the top bar, last card not clipped above the nav bar).
 - takeScreenshot: build/maestro/golden-path-dashboard
@@ -90,9 +105,9 @@ appId: com.joaoeoneves.fintrack
     direction: UP
 
 # --- 2: Add a new expense via the Dashboard's floating add pill ---
-# The "Recent expenses" section (RecentExpensesSection) has a clickable header and a "See all"
-# link but no plus icon; adding goes only through the floating pill (content description
-# "Add expense", matched by Maestro the same way as visible text).
+# Home's merged "Recent activity" section has a clickable title and a "See all" link but no plus
+# icon; adding goes only through the floating pill (content description "Add expense", matched by
+# Maestro the same way as visible text).
 # The pill ("Add expense"/"Add income") lives in the Scaffold FAB slot outside the LazyColumn and
 # hides while scrolling down, so tap it directly with no scrolling first.
 - tapOn: "Add expense"
@@ -105,7 +120,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Save"
 
 # Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
-# up immediately in the "Recent expenses" card (it sorts by date descending, and this row is the
+# up immediately in the "Recent activity" list (it sorts by date descending, and this row is the
 # most recent). Money formatting now follows the app locale via NumberFormat, so English + EUR
 # renders as "[-−]€12.34" (prefixed symbol, period decimal).
 - scrollUntilVisible:
@@ -115,7 +130,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "[-−]€12\\.34"
 
 # --- 3: Edit it (change the amount) and confirm the change persists ---
-# Tapping a row on the Dashboard's "Recent expenses" card opens that expense's edit screen directly,
+# Tapping a row in Home's "Recent activity" list opens that expense's edit screen directly,
 # and Save pops back to the Dashboard. The extra plain scroll brings the row fully inside the
 # LazyColumn's clip bounds before tapping (see income-tracking.yaml step 4).
 - scroll
@@ -141,13 +156,17 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "[-−]€56\\.78"
 - assertNotVisible: "[-−]€12\\.34"
 
-# Open the full list via "See all expenses" for the delete step below.
+# Open the Activity tab (Expenses segment) via "See all" for the delete step below.
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_activity"
 - assertVisible: "All expenses"
+- assertVisible:
+    id: "activity_list"
 - assertVisible: "Maestro E2E Test Expense"
 
 # --- 4: Delete it and confirm it's gone ---
@@ -182,7 +201,8 @@ appId: com.joaoeoneves.fintrack
 # Rolling windows have no month arrows.
 - assertNotVisible: "Previous month"
 
-# Restore the default current-month period and return to the dashboard, leaving app state as found.
+# Restore the default current-month period and return to Home (system back from the Activity tab
+# root), leaving app state as found.
 - tapOn: "Change period"
 - tapOn: "This month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"

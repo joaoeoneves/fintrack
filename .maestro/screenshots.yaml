@@ -13,6 +13,9 @@ appId: com.joaoeoneves.fintrack
 # CI), so files land in maestro-out/screens/ -- the folder the workflow already uploads. Maestro
 # appends ".png" and creates missing parent directories.
 #
+# New navigation: the Plan/Insights/Activity tabs are captured in en-dark and pt-light (names
+# {en-dark,pt-light}-{plan,insights,activity}); the Plan tab is also captured as *-monthly-plan.
+#
 # Order: sign-in (system theme, before anything is pinned) -> guest -> pin English + EUR + Dark ->
 # seed demo data -> dark shots -> Light shots -> Portuguese shots (stays on Light).
 # Android `back` (not the localized "Back" label) is used for navigation so the same steps work in
@@ -141,7 +144,7 @@ appId: com.joaoeoneves.fintrack
       id: "dashboard_list"
     timeout: 10000
 
-# Monthly plan: one expected-income line + a Food allocation of 300 (this is also the Food budget).
+# Monthly plan (Plan tab; system back returns to Home): one expected-income line + a Food allocation of 300 (this is also the Food budget).
 - scrollUntilVisible:
     element: "Plan your month|Edit plan"
     direction: DOWN
@@ -182,16 +185,35 @@ appId: com.joaoeoneves.fintrack
 - takeScreenshot: maestro-out/screens/en-dark-dashboard-scrolled
 - scrollUntilVisible:
     element:
-      id: "see_all_expenses"
+      id: "see_all_activity"
     direction: DOWN
 - tapOn:
-    id: "see_all_expenses"
+    id: "see_all_activity"
 - extendedWaitUntil:
     visible:
       id: "expense_list"
     timeout: 10000
 - takeScreenshot: maestro-out/screens/en-dark-expense-list
-- back
+# Bottom-bar tabs: Plan, Insights, then back to Activity, and finally Home.
+- tapOn:
+    id: "nav_plan"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: maestro-out/screens/en-dark-plan
+- tapOn:
+    id: "nav_insights"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: maestro-out/screens/en-dark-insights
+- tapOn:
+    id: "nav_activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity_list"
+    timeout: 10000
+- takeScreenshot: maestro-out/screens/en-dark-activity
+- tapOn:
+    id: "nav_home"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
@@ -270,16 +292,35 @@ appId: com.joaoeoneves.fintrack
 - takeScreenshot: maestro-out/screens/pt-light-dashboard-scrolled
 - scrollUntilVisible:
     element:
-      id: "see_all_expenses"
+      id: "see_all_activity"
     direction: DOWN
 - tapOn:
-    id: "see_all_expenses"
+    id: "see_all_activity"
 - extendedWaitUntil:
     visible:
       id: "expense_list"
     timeout: 10000
 - takeScreenshot: maestro-out/screens/pt-light-expense-list
-- back
+# Bottom-bar tabs: Plan, Insights, then back to Activity, and finally Home.
+- tapOn:
+    id: "nav_plan"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: maestro-out/screens/pt-light-plan
+- tapOn:
+    id: "nav_insights"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: maestro-out/screens/pt-light-insights
+- tapOn:
+    id: "nav_activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity_list"
+    timeout: 10000
+- takeScreenshot: maestro-out/screens/pt-light-activity
+- tapOn:
+    id: "nav_home"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
@@ -300,6 +341,9 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - tapOn: "Planeie o seu mês|Editar plano"
 - extendedWaitUntil:
-    visible: "Plano mensal"
+    visible:
+      id: "nav_plan"
     timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 3000
 - takeScreenshot: maestro-out/screens/pt-light-monthly-plan

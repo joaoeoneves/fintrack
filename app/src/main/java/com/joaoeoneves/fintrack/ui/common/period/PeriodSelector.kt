@@ -50,6 +50,9 @@ private enum class PeriodMenuOption {
     CUSTOM_RANGE,
 }
 
+/** The menu entries of a month-only selector (Home): no rolling or custom ranges. */
+private val MONTH_ONLY_OPTIONS = listOf(PeriodMenuOption.THIS_MONTH, PeriodMenuOption.CHOOSE_MONTH)
+
 /** Which picker dialog, if any, the selector is showing. */
 private enum class PeriodDialog { NONE, MONTH, DATE_RANGE }
 
@@ -79,8 +82,10 @@ private fun PeriodMenuOption.label(): String =
 
 /**
  * Period picker shared by the dashboard and the expense/income lists: previous/next month arrows
- * (month periods only) around a tappable label that opens a menu of every period kind.
+ * (month periods only) around a tappable label that opens a menu of every period kind (only the two
+ * month entries when [monthOnly]).
  */
+@Suppress("LongParameterList") // shared picker API; every option is independent and defaulted
 @Composable
 fun PeriodSelector(
     period: Period,
@@ -88,6 +93,7 @@ fun PeriodSelector(
     actions: PeriodActions,
     modifier: Modifier = Modifier,
     alignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    monthOnly: Boolean = false,
 ) {
     var dialog by rememberSaveable { mutableStateOf(PeriodDialog.NONE) }
     val isMonthPeriod = period is Period.CurrentMonth || period is Period.Month
@@ -109,6 +115,7 @@ fun PeriodSelector(
         }
         PeriodMenuButton(
             period = period,
+            options = if (monthOnly) MONTH_ONLY_OPTIONS else PeriodMenuOption.entries,
             onOptionSelected = { option ->
                 when (option) {
                     PeriodMenuOption.THIS_MONTH -> actions.onSelect(Period.CurrentMonth)
@@ -149,6 +156,7 @@ private fun Alignment.Horizontal.toArrangement(): Arrangement.Horizontal =
 @Composable
 private fun PeriodMenuButton(
     period: Period,
+    options: List<PeriodMenuOption>,
     onOptionSelected: (PeriodMenuOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -179,7 +187,7 @@ private fun PeriodMenuButton(
             shape = MaterialTheme.shapes.medium,
             containerColor = FinTrackTheme.colors.surface2,
         ) {
-            PeriodMenuOption.entries.forEach { option ->
+            options.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(option.label()) },
                     onClick = {

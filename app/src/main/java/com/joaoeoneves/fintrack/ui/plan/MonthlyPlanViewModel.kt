@@ -1,22 +1,28 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
+import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
-import com.joaoeoneves.fintrack.domain.model.currentYearMonth
-import com.joaoeoneves.fintrack.domain.model.fixedSpendingCentsOf
+import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
+import com.joaoeoneves.fintrack.domain.model.decodePeriod
+import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
-import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
-import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
+import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
+import com.joaoeoneves.fintrack.ui.common.period.asMonthPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -36,6 +42,7 @@ import javax.inject.Inject
 
 private const val TAG = "MonthlyPlanViewModel"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+private const val KEY_SELECTED_MONTH = "selectedMonth"
 
 /** Edits the global monthly plan: expected-income lines and the per-category planned allocations. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -46,9 +53,14 @@ class MonthlyPlanViewModel
         private val plannedIncomeRepository: PlannedIncomeRepository,
         private val budgetRepository: BudgetRepository,
         private val categoryRepository: CategoryRepository,
-        private val transactionRepository: TransactionRepository,
+        private val observePeriodOverview: ObservePeriodOverview,
+        savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
+        // The selected month, month periods only; the plan itself is global, the month only decides
+        // which actuals the "planned vs actual" progress and the fixed-spending line are measured on.
+        private val selection =
+            PeriodSelection(savedStateHandle, KEY_SELECTED_MONTH, Period.CurrentMonth.encode(), clock)
         private val editor = MutableStateFlow<IncomeLineEditorState?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
 
@@ -58,10 +70,18 @@ class MonthlyPlanViewModel
         private val retryTrigger = MutableStateFlow(0)
 
         val uiState: StateFlow<MonthlyPlanUiState> =
-            retryTrigger
-                .flatMapLatest {
-                    val fixed = fixedThisMonthFlow(transactionRepository, categoryRepository, clock)
-                    planFlow(plannedIncomeRepository, budgetRepository, categoryRepository, fixed, editor)
+            combine(selection.token, retryTrigger) { token, _ -> token }
+                // "Now" is read on every (re)subscription so a retry after the calendar rolls over
+                // re-resolves CurrentMonth and canGoToNextMonth.
+                .flatMapLatest { token ->
+                    val now = clock.instant()
+                    val period = decodePeriod(token, now, clock.zone)
+                    val overview = observePeriodOverview(period, now, clock.zone, recentLimit = 0)
+                    planFlow(
+                        repositories = PlanRepositories(plannedIncomeRepository, budgetRepository, categoryRepository),
+                        selected = SelectedMonth(period, period.canGoToNextMonth(now, clock.zone), overview),
+                        editor = editor,
+                    )
                 }.stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -71,6 +91,14 @@ class MonthlyPlanViewModel
         fun onRetry() {
             retryTrigger.value++
         }
+
+        /** The month picker's callbacks; month periods only, anything else falls back to the current month. */
+        val periodActions: PeriodActions =
+            PeriodActions(
+                onPrevious = selection::previous,
+                onNext = selection::next,
+                onSelect = { period -> selection.select(period.asMonthPeriod()) },
+            )
 
         fun onAddIncomeLine() {
             viewModelScope.launch {
@@ -158,27 +186,42 @@ class MonthlyPlanViewModel
         }
     }
 
+/** The repositories the plan is assembled from, bundled for detekt's LongParameterList. */
+private class PlanRepositories(
+    val plannedIncome: PlannedIncomeRepository,
+    val budgets: BudgetRepository,
+    val categories: CategoryRepository,
+)
+
+/** The month the plan is currently evaluated against, with its [overview] flow. */
+private class SelectedMonth(
+    val period: Period,
+    val canGoToNextMonth: Boolean,
+    val overview: Flow<PeriodOverview>,
+)
+
 private fun planFlow(
-    plannedIncomeRepository: PlannedIncomeRepository,
-    budgetRepository: BudgetRepository,
-    categoryRepository: CategoryRepository,
-    fixedThisMonth: Flow<Long>,
+    repositories: PlanRepositories,
+    selected: SelectedMonth,
     editor: Flow<IncomeLineEditorState?>,
 ): Flow<MonthlyPlanUiState> =
     combine(
-        plannedIncomeRepository.observePlannedIncome(),
-        budgetRepository.observeBudgets(),
-        categoryRepository.observeCategories(),
-        fixedThisMonth,
+        repositories.plannedIncome.observePlannedIncome(),
+        repositories.budgets.observeBudgets(),
+        repositories.categories.observeCategories(),
+        selected.overview,
         editor,
-    ) { lines, budgets, categories, fixedCents, editorState ->
+    ) { lines, budgets, categories, overview, editorState ->
         val allocations = budgetProgressOf(emptyList(), budgets, categories)
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
                 incomeLines = lines,
                 allocations = allocations,
                 summary = monthlyPlanOf(allocations, lines, emptyList()),
-                fixedThisMonthCents = fixedCents,
+                period = selected.period,
+                canGoToNextMonth = selected.canGoToNextMonth,
+                progress = overview.budgets,
+                fixedThisMonthCents = overview.summary.fixedSpendingCents,
                 canAddIncomeLine = lines.size < MAX_PLANNED_INCOME_LINES,
                 editor = editorState,
             )
@@ -187,18 +230,3 @@ private fun planFlow(
         Log.w(TAG, "Failed to observe the monthly plan", e)
         emit(MonthlyPlanUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
     }
-
-/** Fixed (recurring) spending of the current calendar month, in cents. */
-private fun fixedThisMonthFlow(
-    transactionRepository: TransactionRepository,
-    categoryRepository: CategoryRepository,
-    clock: Clock,
-): Flow<Long> {
-    val zone = clock.zone
-    val range = currentYearMonth(clock.instant(), zone).toInstantRange(zone)
-    return combine(
-        transactionRepository.observeTransactions(range),
-        categoryRepository.observeCategories(),
-    ) { transactions, categories -> fixedSpendingCentsOf(transactions.expenses, categories) }
-        .catch { emit(0L) }
-}

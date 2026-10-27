@@ -52,7 +52,7 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - back
 
-# --- 1: Open Settings via the gear icon on the Dashboard ---
+# --- 1: Open Settings via the gear icon on Home ---
 - assertVisible:
     id: "dashboard_list"
 - tapOn: "Settings"
@@ -154,5 +154,23 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Export CSV \\(expenses\\)"
 - back
 
-# Return to the dashboard, leaving app state as found.
+# Return to Home, leaving app state as found.
 - tapOn: "Back"
+
+# --- 5: Settings opens from the top-right icon (tag dashboard_settings) on every tab root, hides the
+# bottom bar, and Back returns to the tab it was opened from.
+- tapOn:
+    id: "nav_plan"
+- tapOn:
+    id: "dashboard_settings"
+- assertVisible: "Appearance"
+- assertNotVisible:
+    id: "nav_home"
+- tapOn: "Back"
+- assertVisible:
+    id: "nav_plan"
+- assertVisible: "Add income line"
+- tapOn:
+    id: "nav_home"
+- assertVisible:
+    id: "dashboard_list"

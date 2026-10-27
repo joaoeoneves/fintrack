@@ -2,8 +2,9 @@ appId: com.joaoeoneves.fintrack
 ---
 # Recurring bills & income E2E flow: Settings -> "Manage recurring bills & income" -> recurring list
 # -> add a monthly expense "Maestro Rent" (500, day = today, which the form defaults to) -> back on
-# the Dashboard the "Upcoming bills & income" card lists it with Confirm -> Confirm -> the expense
-# shows up in "Recent expenses" -> cleanup (delete the created expense, then the recurring item).
+# the Dashboard the "Upcoming bills & income" card lists it with Confirm -> its "Manage" link opens the
+# Plan tab and pushes the recurring list (back returns to Plan, then Home) -> Confirm -> the expense
+# shows up in "Recent activity" -> cleanup (delete the created expense, then the recurring item).
 #
 # STATUS: written but NOT RUN yet on a device/emulator -- selectors come from strings.xml and the
 # recurring composables (TestTags RECURRING_ADD / RECURRING_CONFIRM, exposed as resource ids), so
@@ -67,27 +68,52 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     id: "recurring_confirm"
 
-# --- 4: Confirm -> expense is created and appears in Recent expenses ---
+# --- 3b: The card's "Manage" link switches to the Plan tab and pushes the recurring list on top.
+# The bottom bar is hidden on the pushed list; back reveals the Plan root, back again returns Home.
+- tapOn: "Manage"
+- assertVisible: "Recurring"
+- assertVisible: "Maestro Rent"
+- assertNotVisible:
+    id: "nav_home"
+- back
+- assertVisible:
+    id: "nav_plan"
+- assertVisible: "Allocations|Planned allocations"
+- back
+- assertVisible:
+    id: "dashboard_list"
+- scrollUntilVisible:
+    element:
+      id: "recurring_card"
+    direction: DOWN
+
+# --- 4: Confirm -> expense is created and appears in Recent activity ---
 - tapOn:
     id: "recurring_confirm"
 - assertNotVisible:
     id: "recurring_confirm"
 - scrollUntilVisible:
-    element: "Recent expenses"
+    element: "Recent activity"
     direction: DOWN
 - assertVisible: "Maestro Rent"
 - assertVisible: ".*500\\.00.*"
 
 # --- 5: Cleanup: delete the created expense via the full list ---
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_activity"
 - assertVisible: "All expenses"
 - tapOn: "Search"
 - inputText: "Maestro Rent"
 - hideKeyboard
-- tapOn: "Delete"
+# Delete is swipe-only (right-to-left) on the row.
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertVisible: "Undo"
 - tapOn: "Maestro Rent"
 - eraseText: 30

@@ -13,7 +13,6 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -28,11 +27,6 @@ import java.time.Instant
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
-    private fun DashboardUiState.Content.total(category: Category): Long {
-        val slice = categoryTotals.single { it.category == category }
-        return slice.totalCents
-    }
-
     private fun refund(
         id: String,
         amountCents: Long,
@@ -55,10 +49,8 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
         incomeRepository = if (withSalary) salaryRepo() else FakeIncomeRepository(),
     )
 
-    private fun DashboardUiState.Content.budget(category: Category) = budgets.single { it.category == category }
-
     @Test
-    fun spendingRefund_lowersSpendingOutflowAndCategoryTotal_andRaisesNet() =
+    fun spendingRefund_lowersSpendingAndOutflow_andRaisesNet() =
         runTest(testDispatcher) {
             val expenses =
                 listOf(
@@ -70,8 +62,6 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(6_000L, content.total(BuiltInCategories.SHOPPING))
-            assertEquals(50_000L, content.total(BuiltInCategories.RECURRING))
             assertEquals(56_000L, content.spendingCents)
             assertEquals(0L, content.savedCents)
             assertEquals(56_000L, content.outflowCents)
@@ -98,77 +88,5 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
             assertEquals(20_500L, content.outflowCents)
             assertEquals(79_500L, content.netCents)
             assertEquals(0.2, content.savingsRate!!, 1e-9)
-        }
-
-    @Test
-    fun netNegativeCategory_keepsExactNegativeTotal_andChartClampsItToZero() =
-        runTest(testDispatcher) {
-            val expenses =
-                listOf(
-                    expense(id = "small", amountCents = 1_000L, date = daysAgo(3)),
-                    refund(id = "bigReturn", amountCents = 3_500L, date = daysAgo(1)),
-                    expense(id = "rent", amountCents = 20_000L, category = RECURRING, date = daysAgo(2)),
-                )
-            val viewModel = viewModelWith(expenses)
-            collect(viewModel)
-
-            val content = viewModel.content()
-            assertEquals(-2_500L, content.total(BuiltInCategories.SHOPPING))
-            assertEquals(17_500L, content.spendingCents)
-            assertEquals(-17_500L, content.netCents)
-
-            val chart = content.categoryTotals.clampedForChart()
-            assertEquals(0L, chart.single { it.category == BuiltInCategories.SHOPPING }.totalCents)
-            assertEquals(20_000L, chart.single { it.category == BuiltInCategories.RECURRING }.totalCents)
-            assertEquals(content.categoryTotals.map { it.category }, chart.map { it.category })
-        }
-
-    @Test
-    fun budgetSpent_isReducedByRefunds() =
-        runTest(testDispatcher) {
-            val expenses =
-                listOf(
-                    expense(id = "a", amountCents = 8_000L, date = daysAgo(3)),
-                    expense(id = "b", amountCents = 4_000L, date = daysAgo(2)),
-                    refund(id = "ret", amountCents = 3_000L, date = daysAgo(1)),
-                )
-            val viewModel = viewModelWith(expenses, budgets = listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
-            collect(viewModel)
-
-            val budget = viewModel.content().budget(BuiltInCategories.SHOPPING)
-            // Gross 12,000 would be over the 10,000 limit; net 9,000 is not.
-            assertEquals(9_000L, budget.spentCents)
-            assertFalse(budget.isOverBudget)
-        }
-
-    @Test
-    fun budgetSpent_netNegative_isFlooredAtZero() =
-        runTest(testDispatcher) {
-            val expenses =
-                listOf(
-                    expense(id = "a", amountCents = 1_000L, date = daysAgo(3)),
-                    refund(id = "ret", amountCents = 5_000L, date = daysAgo(1)),
-                )
-            val viewModel = viewModelWith(expenses, budgets = listOf(Budget(BuiltInCategories.SHOPPING.id, 10_000L)))
-            collect(viewModel)
-
-            assertEquals(0L, viewModel.content().budget(BuiltInCategories.SHOPPING).spentCents)
-        }
-
-    @Test
-    fun budgetSpent_refundInOtherCategory_doesNotAffectThisCategory() =
-        runTest(testDispatcher) {
-            val expenses =
-                listOf(
-                    expense(id = "a", amountCents = 6_000L, date = daysAgo(3)),
-                    refund(id = "ret", amountCents = 5_000L, category = BuiltInCategories.TRANSFER, date = daysAgo(1)),
-                )
-            val viewModel = viewModelWith(expenses)
-            collect(viewModel)
-
-            val content = viewModel.content()
-            assertEquals(6_000L, content.budget(BuiltInCategories.SHOPPING).spentCents)
-            assertEquals(0L, content.budget(BuiltInCategories.TRANSFER).spentCents)
-            assertEquals(-5_000L, content.total(BuiltInCategories.TRANSFER))
         }
 }

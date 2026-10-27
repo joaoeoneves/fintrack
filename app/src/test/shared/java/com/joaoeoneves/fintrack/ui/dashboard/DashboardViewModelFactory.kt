@@ -43,21 +43,19 @@ fun dashboardViewModel(
     repositories: DashboardRepositories,
     savedStateHandle: SavedStateHandle,
     clock: Clock,
-): DashboardViewModel {
-    val expenseRepository = repositories.expenseRepository
-    val budgetRepository = repositories.budgetRepository
-    val incomeRepository = repositories.incomeRepository
-    val categoryRepository = repositories.categoryRepository
-    return DashboardViewModel(
-        observePeriodOverview =
-            ObservePeriodOverview(
-                transactionRepository = CombinedTransactionRepository(expenseRepository, incomeRepository),
-                budgetRepository = budgetRepository,
-                plannedIncomeRepository = repositories.plannedIncomeRepository,
-                categoryRepository = categoryRepository,
-            ),
-        budgetRepository = budgetRepository,
+): DashboardViewModel =
+    DashboardViewModel(
+        observePeriodOverview = observePeriodOverviewOf(repositories),
         savedStateHandle = savedStateHandle,
         clock = clock,
     )
-}
+
+/** The real [ObservePeriodOverview] use case on top of [repositories], as the Hilt graph wires it. */
+fun observePeriodOverviewOf(repositories: DashboardRepositories): ObservePeriodOverview =
+    ObservePeriodOverview(
+        transactionRepository =
+            CombinedTransactionRepository(repositories.expenseRepository, repositories.incomeRepository),
+        budgetRepository = repositories.budgetRepository,
+        plannedIncomeRepository = repositories.plannedIncomeRepository,
+        categoryRepository = repositories.categoryRepository,
+    )

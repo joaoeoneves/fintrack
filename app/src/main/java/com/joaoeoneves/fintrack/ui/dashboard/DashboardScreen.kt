@@ -33,25 +33,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
-import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
-import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
-import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringCard
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringModel
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
@@ -81,10 +75,6 @@ fun DashboardScreen(
     )
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
-    LaunchedEffect(Unit) {
-        viewModel.budgetErrorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
-    }
     UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
     val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, callbacks)
 
@@ -190,6 +180,7 @@ private fun DashboardTopBar(
                         canGoToNextMonth = state.canGoToNextMonth,
                         actions = actions,
                         alignment = Alignment.Start,
+                        monthOnly = true,
                     )
                 }
             }
@@ -218,12 +209,6 @@ private data class DashboardScroll(
     val listState: LazyListState,
 )
 
-/** Bundles the budget write callbacks to keep [DashboardContent] under detekt's LongParameterList. */
-private data class BudgetActions(
-    val onSetBudget: (Category, Long) -> Unit,
-    val onClearBudget: (Category) -> Unit,
-)
-
 private fun dashboardActions(
     viewModel: DashboardViewModel,
     upcomingViewModel: UpcomingRecurringViewModel,
@@ -236,7 +221,6 @@ private fun dashboardActions(
             onNext = viewModel::onNextMonth,
             onSelect = viewModel::onPeriodSelected,
         ),
-    budget = BudgetActions(onSetBudget = viewModel::onSetBudget, onClearBudget = viewModel::onClearBudget),
     upcoming =
         UpcomingRecurringModel(
             state = upcomingState,
@@ -247,10 +231,9 @@ private fun dashboardActions(
     onRetry = viewModel::onRetry,
 )
 
-/** Everything the dashboard content can do besides navigation, bundled for detekt's LongParameterList. */
+/** Everything Home's content can do besides navigation, bundled for detekt's LongParameterList. */
 private data class DashboardActions(
     val period: PeriodActions,
-    val budget: BudgetActions,
     val upcoming: UpcomingRecurringModel,
     val onRetry: () -> Unit,
 )
@@ -306,7 +289,7 @@ private fun DashboardContent(
         contentPadding =
             PaddingValues(bottom = Dimens.FloatingBarBottomPadding + contentPadding.calculateBottomPadding()),
     ) {
-        balanceItems(state = state, chart = chart, onSelectPeriod = actions.period.onSelect)
+        balanceItems(state = state, chart = chart)
         planItems(state = state, actions = actions, callbacks = callbacks)
         activityItems(state = state, callbacks = callbacks)
     }
@@ -330,7 +313,6 @@ private fun LazyItemScope.ScreenItem(
 private fun LazyListScope.balanceItems(
     state: DashboardUiState.Content,
     chart: ChartModel,
-    onSelectPeriod: (Period) -> Unit,
 ) {
     item(key = "hero") {
         ScreenItem(Modifier.padding(top = Dimens.Space8)) {
@@ -348,17 +330,6 @@ private fun LazyListScope.balanceItems(
                 startDate = chart.startDate,
                 onScrub = chart.onScrub,
                 modifier = Modifier.animateItem().padding(top = Dimens.Space8),
-            )
-        }
-    }
-    item(key = "tabs") {
-        ScreenItem(Modifier.padding(top = Dimens.Space8)) {
-            SegmentedTextTabs(
-                options = PeriodTab.entries,
-                selected = state.period.toTab(),
-                label = { stringResource(it.labelRes) },
-                onSelect = { onSelectPeriod(it.toPeriod()) },
-                tabContentDescription = { stringResource(it.descriptionRes) },
             )
         }
     }
@@ -381,25 +352,12 @@ private fun LazyListScope.planItems(
 ) {
     item(key = "safe_to_spend") {
         ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            SafeToSpendSection(state = state, onOpenMonthlyPlan = callbacks.onOpenMonthlyPlan)
+            SafeToSpendSection(state = state, onOpenMonthlyPlan = callbacks.onOpenPlan)
         }
     }
     item(key = "upcoming") {
         ScreenItem {
             UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
-        }
-    }
-    item(key = "breakdown") {
-        ScreenItem(Modifier.padding(top = SectionSpacing)) { CategoryBreakdownSection(state = state) }
-    }
-    item(key = "budgets") {
-        ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            BudgetSection(
-                budgets = state.budgets,
-                title = budgetSectionTitle(state),
-                onSetBudget = actions.budget.onSetBudget,
-                onClearBudget = actions.budget.onClearBudget,
-            )
         }
     }
 }
@@ -408,23 +366,9 @@ private fun LazyListScope.activityItems(
     state: DashboardUiState.Content,
     callbacks: DashboardCallbacks,
 ) {
-    item(key = "recent_expenses") {
+    item(key = "recent_activity") {
         ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            RecentExpensesSection(expenses = state.recentExpenses, period = state.period, callbacks = callbacks)
-        }
-    }
-    item(key = "recent_income") {
-        ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            RecentIncomeSection(income = state.recentIncome, period = state.period, callbacks = callbacks)
+            RecentActivitySection(items = state.recent, period = state.period, callbacks = callbacks)
         }
     }
 }
-
-@Composable
-private fun budgetSectionTitle(state: DashboardUiState.Content): String =
-    if (state.budgetMonthIsCurrent) {
-        stringResource(R.string.dashboard_budgets_title)
-    } else {
-        val month = formatMonthLabel(state.budgetMonth, currentLocale(), titlecase = false)
-        stringResource(R.string.dashboard_budgets_title_month, month)
-    }
