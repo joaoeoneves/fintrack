@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.codePointLength
@@ -21,5 +22,5 @@ internal fun validatePlannedIncome(line: LocalPlannedIncome) {
     require(line.label.isNotBlank() && line.label.codePointLength() <= MAX_PLAN_LABEL_LENGTH) {
         "Planned income label must be 1..$MAX_PLAN_LABEL_LENGTH characters"
     }
-    require(line.amountCents > 0) { "Planned income amount must be positive" }
+    require(line.amountCents in 1..MAX_AMOUNT_CENTS) { "Planned income amount must be 1..$MAX_AMOUNT_CENTS cents" }
 }

@@ -12,7 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -52,8 +52,8 @@ private const val SCROLL_THRESHOLD_PX = 6f
 private const val ENTER_MS = 240
 private const val EXIT_MS = 180
 private val PillShadow = 8.dp
-private val PillInnerHeight = 44.dp
-private val CapsulePadding = 6.dp
+private val PillInnerMinHeight = 48.dp
+private val CapsulePadding = 4.dp
 private val PlusIconSize = 18.dp
 
 /**
@@ -150,7 +150,7 @@ private fun PillAction(
         modifier =
             modifier
                 .pressScale(interactionSource)
-                .height(PillInnerHeight)
+                .heightIn(min = PillInnerMinHeight)
                 .clip(CircleShape)
                 .background(if (filled) MaterialTheme.colorScheme.primary else Color.Transparent)
                 .clickable(

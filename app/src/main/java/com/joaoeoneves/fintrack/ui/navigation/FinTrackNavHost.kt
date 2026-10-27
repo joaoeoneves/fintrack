@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
@@ -63,17 +64,17 @@ fun FinTrackNavHost(
         transactionRoutes(navController, transitions)
         composable<Settings> {
             SettingsScreen(
-                onBack = { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popBackStack() },
                 onOpenCategories = { navController.navigate(Categories) },
                 onOpenRecurring = { navController.navigate(RecurringList) },
             )
         }
         composable<MonthlyPlan> {
-            MonthlyPlanScreen(onBack = { navController.popBackStack() })
+            MonthlyPlanScreen(onBack = dropUnlessResumed { navController.popBackStack() })
         }
         recurringRoutes(navController, transitions)
         composable<Categories> {
-            CategoriesScreen(onBack = { navController.popBackStack() })
+            CategoriesScreen(onBack = dropUnlessResumed { navController.popBackStack() })
         }
     }
 }
@@ -90,7 +91,7 @@ private fun NavGraphBuilder.recurringRoutes(
 ) {
     composable<RecurringList> {
         RecurringListScreen(
-            onBack = { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenEditor = { id -> navController.navigate(AddEditRecurring(recurringId = id)) },
         )
     }
@@ -99,8 +100,8 @@ private fun NavGraphBuilder.recurringRoutes(
         popExitTransition = { transitions.popExitToBottom() },
     ) {
         AddEditRecurringScreen(
-            onSaved = { navController.popBackStack() },
-            onCancel = { navController.popBackStack() },
+            onSaved = dropUnlessResumed { navController.popBackStack() },
+            onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }
 }
@@ -111,7 +112,7 @@ private fun NavGraphBuilder.transactionRoutes(
 ) {
     composable<ExpenseList> {
         ExpenseListScreen(
-            onBack = { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
         )
     }
@@ -120,13 +121,13 @@ private fun NavGraphBuilder.transactionRoutes(
         popExitTransition = { transitions.popExitToBottom() },
     ) {
         AddEditExpenseScreen(
-            onSaved = { navController.popBackStack() },
-            onCancel = { navController.popBackStack() },
+            onSaved = dropUnlessResumed { navController.popBackStack() },
+            onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }
     composable<IncomeList> {
         IncomeListScreen(
-            onBack = { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
         )
     }
@@ -135,8 +136,8 @@ private fun NavGraphBuilder.transactionRoutes(
         popExitTransition = { transitions.popExitToBottom() },
     ) {
         AddEditIncomeScreen(
-            onSaved = { navController.popBackStack() },
-            onCancel = { navController.popBackStack() },
+            onSaved = dropUnlessResumed { navController.popBackStack() },
+            onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }
 }
