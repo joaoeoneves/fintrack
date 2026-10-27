@@ -66,6 +66,14 @@ jobs:
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             mkdir -p maestro-out/screens && for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; test ! -f maestro-out/FAILED
 
+      - name: Collect screenshots
+        if: always()
+        run: |
+          # takeScreenshot paths may resolve relative to the flow file, so gather any PNGs from both places.
+          mkdir -p maestro-out/screens
+          find .maestro -name '*.png' -exec cp {} maestro-out/screens/ \; 2>/dev/null || true
+          ls -la maestro-out/screens || true
+
       - name: Upload Maestro results
         if: always()
         uses: actions/upload-artifact@v4
