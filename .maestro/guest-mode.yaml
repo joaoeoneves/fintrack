@@ -16,23 +16,36 @@ appId: com.joaoeoneves.fintrack
 - launchApp
 
 # --- 1: Sign-in screen -> Continue as guest -> Dashboard ---
-- assertVisible: "Continue as guest|Continuar como convidado"
-- tapOn: "Continue as guest|Continuar como convidado"
-- assertVisible:
-    id: "dashboard_list"
+- extendedWaitUntil:
+    visible:
+      id: "continue_as_guest"
+    timeout: 20000
+- tapOn:
+    id: "continue_as_guest"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 15000
 - assertVisible: "Net Balance|Saldo líquido.*"
 
-# Pin English + EUR so the assertions below are deterministic (same pattern as golden-path.yaml).
+# Pin English + EUR so the assertions below are deterministic. The Settings button is a top-bar
+# icon (tag dashboard_settings, always on screen). Language rows are plain choice rows ("English");
+# the currency row is "Display currency" and opens a dropdown whose items read "Euro (€)".
 - tapOn:
-    text: "Settings|Definições"
+    id: "dashboard_settings"
 - tapOn: "English"
+# Language change recreates the activity; wait for the English label before continuing.
+- extendedWaitUntil:
+    visible: "Display currency"
+    timeout: 10000
 - tapOn: "Display currency"
-- tapOn: "Euro (€)"
+- tapOn: "Euro \\(€\\)"
 - tapOn: "Back"
 - assertVisible: "Net Balance"
 
-# --- 2: Add an expense via the Dashboard "Recent expenses" plus icon ---
-- tapOn: "Add expense"
+# --- 2: Add an expense via the floating add pill (tag dashboard_add_expense) ---
+- tapOn:
+    id: "dashboard_add_expense"
 - tapOn: "Name"
 - inputText: "Maestro Guest Expense"
 - tapOn: "Amount"
@@ -48,19 +61,20 @@ appId: com.joaoeoneves.fintrack
 # --- 3: Restart the app (no clearState) -- guest session and data persist ---
 - stopApp
 - launchApp
-- assertVisible:
-    id: "dashboard_list"
-- assertNotVisible: "Continue as guest"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 15000
+- assertNotVisible:
+    id: "continue_as_guest"
 - scrollUntilVisible:
     element: "Maestro Guest Expense"
     direction: DOWN
 - assertVisible: "[-−]€7\\.77"
 
 # --- 4: Settings -> Leave guest mode -> confirm -> back on the sign-in screen ---
-- scrollUntilVisible:
-    element: "Net Balance"
-    direction: UP
-- tapOn: "Settings"
+- tapOn:
+    id: "dashboard_settings"
 - scrollUntilVisible:
     element: "Guest.*data is stored only on this device"
     direction: DOWN
@@ -72,33 +86,52 @@ appId: com.joaoeoneves.fintrack
 - tapOn:
     text: "Leave guest mode"
     below: "Leave guest mode\\?"
-- assertVisible: "Continue as guest"
+- extendedWaitUntil:
+    visible:
+      id: "continue_as_guest"
+    timeout: 10000
 - assertVisible: "Sign in with Google"
 
 # --- 5: Continue as guest again -- the expense is still there ---
-- tapOn: "Continue as guest"
-- assertVisible:
-    id: "dashboard_list"
+- tapOn:
+    id: "continue_as_guest"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 15000
 - scrollUntilVisible:
     element: "Maestro Guest Expense"
     direction: DOWN
 - assertVisible: "[-−]€7\\.77"
 
-# --- 6: Clean up -- delete the expense via the full list (filter first so only this row is hit) ---
+# --- 6: Clean up -- delete the expense via the full list (delete is swipe-only, right-to-left) ---
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_expenses"
     direction: DOWN
-- scroll
-- tapOn: "See all expenses"
+- tapOn:
+    id: "see_all_expenses"
 - assertVisible: "All expenses"
+# Filter first so only this row exists in the list.
 - tapOn: "Search"
 - inputText: "Maestro Guest Expense"
 - hideKeyboard
 - assertVisible: "[-−]€7\\.77"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
+# Element-based swipe from the row itself. NOTE: swipe-delete-check.yaml documents that
+# from-element swipes sometimes don't travel past the dismiss threshold on this component, so a
+# coordinate swipe runs as a fallback only if the row is still there.
 - swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
+    from: "Maestro Guest Expense"
+    direction: LEFT
     duration: 800
+- runFlow:
+    when:
+      visible: "Maestro Guest Expense"
+    commands:
+      # TODO calibrate on first CI run: y% of the single search-filtered row (unverified)
+      - swipe:
+          start: "90%, 40%"
+          end: "10%, 40%"
+          duration: 800
 - assertNotVisible: "[-−]€7\\.77"
 - back
