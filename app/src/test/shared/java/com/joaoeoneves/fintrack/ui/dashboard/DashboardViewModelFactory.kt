@@ -3,11 +3,12 @@ package com.joaoeoneves.fintrack.ui.dashboard
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
-import com.joaoeoneves.fintrack.domain.usecase.ObserveBudgetProgress
+import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import java.time.Clock
 
@@ -34,6 +35,7 @@ data class DashboardRepositories(
     val budgetRepository: BudgetRepository,
     val incomeRepository: IncomeRepository,
     val categoryRepository: CategoryRepository,
+    val plannedIncomeRepository: PlannedIncomeRepository = FakePlannedIncomeRepository(),
 )
 
 /** Like the five-parameter overload, but with an explicit [DashboardRepositories.categoryRepository]. */
@@ -51,8 +53,8 @@ fun dashboardViewModel(
             ObservePeriodOverview(
                 transactionRepository = CombinedTransactionRepository(expenseRepository, incomeRepository),
                 budgetRepository = budgetRepository,
+                plannedIncomeRepository = repositories.plannedIncomeRepository,
                 categoryRepository = categoryRepository,
-                observeBudgetProgress = ObserveBudgetProgress(expenseRepository, budgetRepository, categoryRepository),
             ),
         budgetRepository = budgetRepository,
         savedStateHandle = savedStateHandle,

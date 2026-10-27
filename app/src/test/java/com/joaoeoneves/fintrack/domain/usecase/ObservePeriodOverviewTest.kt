@@ -1,59 +1,22 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
-import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
-import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
-import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
-import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.ZoneId
-import java.time.ZoneOffset
 
 /**
  * [ObservePeriodOverview]: which listeners are opened per [Period] type (via counting wrappers
  * around the fakes), which month budgets are evaluated against, and the recent-activity preview.
  */
-class ObservePeriodOverviewTest {
-    private val zone: ZoneId = ZoneOffset.UTC
-    private val now: Instant = Instant.parse("2026-10-20T12:00:00Z")
-    private val october = YearMonth.of(2026, 10)
-    private val september = YearMonth.of(2026, 9)
-
-    private fun noonOn(
-        month: YearMonth,
-        day: Int,
-    ) = month.atDay(day).atTime(12, 0).toInstant(ZoneOffset.UTC)
-
-    private val expenses = CountingExpenseRepository()
-    private val income = CountingIncomeRepository()
-    private val budgets = CountingBudgetRepository()
-    private val categories = FakeCategoryRepository()
-
-    private val useCase =
-        ObservePeriodOverview(
-            transactionRepository = CombinedTransactionRepository(expenses, income),
-            budgetRepository = budgets,
-            categoryRepository = categories,
-            observeBudgetProgress = ObserveBudgetProgress(expenses, budgets, categories),
-        )
-
-    private suspend fun overview(
-        period: Period,
-        recentLimit: Int = 5,
-    ) = useCase(period, now, zone, recentLimit).first()
-
+class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
     @Test
     fun currentMonth_opensOneExpenseOneIncomeOneBudgetListener() =
         runTest {
@@ -76,7 +39,7 @@ class ObservePeriodOverviewTest {
         }
 
     @Test
-    fun rolling_opensASecondExpenseListener_forTheCurrentMonth() =
+    fun rolling_opensASecondExpenseAndIncomeListener_forTheCurrentMonth() =
         runTest {
             val result = overview(Period.Rolling(TimeRange.THREE_MONTHS))
 
@@ -84,7 +47,10 @@ class ObservePeriodOverviewTest {
                 listOf(TimeRange.THREE_MONTHS.toInstantRange(now, zone), october.toInstantRange(zone)),
                 expenses.listeners.observedRanges,
             )
-            assertEquals(1, income.listeners.observedRanges.size)
+            assertEquals(
+                listOf(TimeRange.THREE_MONTHS.toInstantRange(now, zone), october.toInstantRange(zone)),
+                income.listeners.observedRanges,
+            )
             assertEquals(1, budgets.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
@@ -105,6 +71,7 @@ class ObservePeriodOverviewTest {
 
             assertEquals(2, expenses.listeners.observedRanges.size)
             assertEquals(october.toInstantRange(zone), expenses.listeners.observedRanges[1])
+            assertEquals(2, income.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
 

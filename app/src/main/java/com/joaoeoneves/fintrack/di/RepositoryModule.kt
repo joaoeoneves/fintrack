@@ -8,11 +8,13 @@ import com.joaoeoneves.fintrack.data.session.SessionBudgetRepository
 import com.joaoeoneves.fintrack.data.session.SessionCategoryRepository
 import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
 import com.joaoeoneves.fintrack.data.session.SessionIncomeRepository
+import com.joaoeoneves.fintrack.data.session.SessionPlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import dagger.Binds
@@ -42,6 +44,9 @@ interface RepositoryModule {
 
     @Binds
     fun bindIncomeRepository(impl: SessionIncomeRepository): IncomeRepository
+
+    @Binds
+    fun bindPlannedIncomeRepository(impl: SessionPlannedIncomeRepository): PlannedIncomeRepository
 
     @Binds
     @Singleton

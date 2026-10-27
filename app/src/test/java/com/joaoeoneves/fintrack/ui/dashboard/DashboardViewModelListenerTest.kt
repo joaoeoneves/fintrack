@@ -33,7 +33,7 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
 
     private fun assertActive(
         expenseListeners: Int,
-        incomeListeners: Int = 1,
+        incomeListeners: Int = expenseListeners, // the month's income shares the expense listener layout
         budgetListeners: Int = 1,
     ) {
         assertEquals("active expense listeners", expenseListeners, expenses.listeners.active)

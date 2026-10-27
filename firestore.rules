@@ -71,6 +71,14 @@ service cloud.firestore {
         && data.limitCents is int && data.limitCents > 0;
     }
 
+    function isValidPlannedIncome(data) {
+      return data.keys().hasOnly(['label', 'amountCents', 'order', 'updatedAt'])
+        && data.keys().hasAll(['label', 'amountCents', 'order'])
+        && data.label is string && data.label.size() > 0 && data.label.size() <= 50
+        && isValidAmountCents(data.amountCents)
+        && data.order is int;
+    }
+
     // Each user can only read/write their own expenses, and every write must
     // carry a well-typed name/amount/category/date (a modified client can no
     // longer smuggle in a negative amount or an unknown category string). The category must be a
@@ -104,6 +112,13 @@ service cloud.firestore {
     match /users/{userId}/income/{incomeId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidIncome(request.resource.data);
+    }
+
+    // Each user can only read/write their own expected-income lines of the monthly plan (e.g.
+    // salary, meal allowance). The 10-line cap is client-side only (rules can't count documents).
+    match /users/{userId}/plannedIncome/{lineId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidPlannedIncome(request.resource.data);
     }
 
     function isValidPreferences(data) {

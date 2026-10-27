@@ -4,7 +4,7 @@ import java.time.YearMonth
 
 /**
  * Everything the dashboard shows for a selected [Period]: its [transactions] and their [summary],
- * the [budgets] progress for [budgetMonth] (the anchor month for month periods, otherwise the
+ * the [budgets] progress and monthly [plan] for [budgetMonth] (the anchor month for month periods, otherwise the
  * current month), and the [recent] activity preview.
  */
 data class PeriodOverview(
@@ -12,5 +12,6 @@ data class PeriodOverview(
     val transactions: TransactionsInRange,
     val summary: CashFlowSummary,
     val budgets: List<CategoryBudget>,
+    val plan: MonthlyPlanSummary,
     val recent: RecentActivity,
 )

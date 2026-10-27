@@ -22,7 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 
-/** The concrete session repositories as a guest: local only, the Firestore Lazy must never be resolved. */
+/** The concrete session repositories as a guest: local only; the Firestore Lazy must never be resolved. */
 class SessionRepositoriesGuestTest : LocalStoreTestBase() {
     private val sessions = FakeSessionRepository(initialSession = Session.Guest)
     private val store by lazy { newStore() }
