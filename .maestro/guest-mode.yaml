@@ -34,10 +34,14 @@ appId: com.joaoeoneves.fintrack
 - tapOn:
     id: "dashboard_settings"
 - tapOn: "English"
-# Language change recreates the activity; wait for the English label before continuing.
+# Language change recreates the activity; wait for an English-only label at the top of Settings,
+# then scroll: the Currency group sits below the Appearance + Language lists, below the fold.
 - extendedWaitUntil:
-    visible: "Display currency"
+    visible: "Appearance"
     timeout: 10000
+- scrollUntilVisible:
+    element: "Display currency"
+    direction: DOWN
 - tapOn: "Display currency"
 - tapOn: "Euro \\(€\\)"
 - tapOn: "Back"
@@ -77,6 +81,9 @@ appId: com.joaoeoneves.fintrack
     id: "dashboard_settings"
 - scrollUntilVisible:
     element: "Guest.*data is stored only on this device"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Leave guest mode"
     direction: DOWN
 - assertVisible: "Sign in to sync"
 - tapOn: "Leave guest mode"
