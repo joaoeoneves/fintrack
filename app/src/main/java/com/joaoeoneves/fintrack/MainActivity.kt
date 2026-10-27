@@ -15,6 +15,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,7 +74,10 @@ class MainActivity : AppCompatActivity() {
                     // A plain Surface rather than a Scaffold: every signed-in screen has its own
                     // Scaffold that already consumes the system-bar insets, so an outer Scaffold here
                     // would apply them twice (double top/bottom padding).
-                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true },
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
                         val state = uiState
                         if (state is AuthUiState.Starting) {
                             // Session still resolving: render nothing rather than flash the sign-in screen.

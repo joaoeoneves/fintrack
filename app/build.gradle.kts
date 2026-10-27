@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -64,6 +65,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
+    // The baseline profile plugin clones `release` into nonMinifiedRelease/benchmarkRelease, which
+    // would be unsigned (release has no signingConfig). Sign only those generated types with the
+    // debug key so the generator can install them; `release` itself is untouched.
+    buildTypes.matching { it.name in setOf("nonMinifiedRelease", "benchmarkRelease") }.configureEach {
+        signingConfig = signingConfigs.getByName("debug")
+    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -100,6 +107,15 @@ kotlin {
 
 ktlint {
     android.set(true)
+}
+
+// Profile generation is manual (`:app:generateBaselineProfile` with a connected device); normal
+// builds never trigger it. Output is committed under src/main/generated/baselineProfiles.
+baselineProfile {
+    mergeIntoMain = true
+    saveInSrc = true
+    automaticGenerationDuringBuild = false
+    dexLayoutOptimization = true
 }
 
 detekt {
@@ -148,4 +164,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
 }

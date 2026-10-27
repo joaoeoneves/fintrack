@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
+import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
@@ -128,7 +130,7 @@ private fun DashboardTopBar(onOpenSettings: () -> Unit) {
     TopAppBar(
         title = { Text(stringResource(R.string.app_name)) },
         actions = {
-            IconButton(onClick = onOpenSettings) {
+            IconButton(onClick = onOpenSettings, modifier = Modifier.testTag(TestTags.DASHBOARD_SETTINGS)) {
                 Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.cd_settings))
             }
         },
@@ -161,7 +163,7 @@ private fun DashboardContent(
             .padding(horizontal = 16.dp, vertical = 8.dp)
 
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.testTag(TestTags.DASHBOARD_LIST),
         contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item {
@@ -301,6 +303,7 @@ private fun RecentExpensesCard(
                     icon = Icons.Default.Add,
                     contentDescription = stringResource(R.string.action_add_expense),
                     onClick = callbacks.onAddExpense,
+                    modifier = Modifier.testTag(TestTags.DASHBOARD_ADD_EXPENSE),
                 )
             }
 
@@ -322,20 +325,26 @@ private fun RecentExpensesCard(
                     HorizontalDivider()
                 }
 
-                Text(
-                    text = stringResource(R.string.dashboard_see_all_expenses),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenList(state.period) }
-                            .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                )
+                SeeAllExpensesLink(onClick = { onOpenList(state.period) })
             }
         }
     }
+}
+
+@Composable
+private fun SeeAllExpensesLink(onClick: () -> Unit) {
+    Text(
+        text = stringResource(R.string.dashboard_see_all_expenses),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag(TestTags.SEE_ALL_EXPENSES)
+                .clickable(onClick = onClick)
+                .padding(16.dp),
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable

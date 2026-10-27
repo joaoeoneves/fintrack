@@ -77,6 +77,10 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug
 
+      # Compile-only: generating the profile needs a device, so CI never runs it.
+      - name: Compile baseline profile generator
+        run: ./gradlew :baselineprofile:assemble
+
       - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@v4

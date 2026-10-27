@@ -19,10 +19,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
@@ -98,7 +100,7 @@ private fun GuestEntry(
     TextButton(
         onClick = onContinueAsGuest,
         enabled = enabled,
-        modifier = Modifier.padding(top = 8.dp),
+        modifier = Modifier.padding(top = 8.dp).testTag(TestTags.CONTINUE_AS_GUEST),
     ) {
         Text(stringResource(R.string.auth_continue_as_guest))
     }

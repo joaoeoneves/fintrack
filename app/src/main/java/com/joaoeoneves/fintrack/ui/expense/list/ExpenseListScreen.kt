@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -43,6 +44,7 @@ import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.SearchField
 import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
+import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -237,7 +239,7 @@ private fun ExpenseListItems(
             )
         }
     } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize().testTag(TestTags.EXPENSE_LIST)) {
             items(expenses, key = { it.id }) { expense ->
                 SwipeToDeleteRow(onDelete = { onDelete(expense.id) }) {
                     ExpenseRow(
