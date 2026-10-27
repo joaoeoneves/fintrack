@@ -81,6 +81,17 @@ android {
     }
 }
 
+// Strong skipping (default since Kotlin 2.0.20) already lets composables with unstable params skip
+// via instance equality; the stability config additionally lets equal-but-new instances of our
+// known-immutable types skip via equals(). Reports/metrics are opt-in: -PcomposeReports=true.
+composeCompiler {
+    if (providers.gradleProperty("composeReports").orNull == "true") {
+        reportsDestination = layout.buildDirectory.dir("compose_compiler")
+        metricsDestination = layout.buildDirectory.dir("compose_compiler")
+    }
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability.conf"))
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
