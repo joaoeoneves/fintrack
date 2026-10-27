@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.designsystem
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +34,10 @@ fun interpolateCents(
 /**
  * Money text that counts from its previous value to [cents] whenever [cents] changes. The text is
  * re-formatted every frame (so grouping and currency stay correct); semantics expose only the final
- * value. Snaps instead of animating under reduced motion.
+ * value. [autoSize] shrinks the text to fit one line for very large values or font scales. Snaps
+ * instead of animating under reduced motion.
  */
+@Suppress("LongParameterList") // generic display component; optional styling knobs keep call sites terse
 @Composable
 fun AnimatedAmountText(
     cents: Long,
@@ -42,6 +45,7 @@ fun AnimatedAmountText(
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     textAlign: TextAlign? = null,
+    autoSize: TextAutoSize? = null,
 ) {
     val reducedMotion = LocalReducedMotion.current
     val progress = remember { Animatable(0f) }
@@ -69,6 +73,7 @@ fun AnimatedAmountText(
         color = color,
         textAlign = textAlign,
         maxLines = 1,
+        autoSize = autoSize,
         modifier = modifier.clearAndSetSemantics { text = AnnotatedString(finalText) },
     )
 }

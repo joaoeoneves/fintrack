@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.domain.model
 
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
+import com.joaoeoneves.fintrack.testutil.userCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -26,7 +27,8 @@ class CashFlowSummaryTest {
         assertEquals(0L, summary.outflowCents)
         assertEquals(0L, summary.netCents)
         assertNull(summary.savingsRate)
-        assertEquals(BuiltInCategories.all.map { CategoryTotal(it, 0L) }, summary.categoryTotals)
+        val active = BuiltInCategories.all.filterNot { it.archived }
+        assertEquals(active.map { CategoryTotal(it, 0L) }, summary.categoryTotals)
     }
 
     @Test
@@ -126,12 +128,63 @@ class CashFlowSummaryTest {
     fun categoryTotals_areInEnumOrder_regardlessOfInputOrder() {
         val summary =
             cashFlowSummaryOf(
-                BuiltInCategories.all.reversed().map { testExpense(it.id.value, 100L, date, it) },
+                BuiltInCategories.all
+                    .filterNot { it.archived }
+                    .reversed()
+                    .map { testExpense(it.id.value, 100L, date, it) },
                 emptyList(),
                 BuiltInCategories.all,
             )
 
-        assertEquals(BuiltInCategories.all.toList(), summary.categoryTotals.map { it.category })
+        assertEquals(BuiltInCategories.all.filterNot { it.archived }, summary.categoryTotals.map { it.category })
         summary.categoryTotals.forEach { assertEquals(100L, it.totalCents) }
+    }
+
+    // ---- fixed spending ----
+
+    private val rec = "rec_r1_20261001"
+
+    @Test
+    fun fixedSpending_countsOnlyRecurringOccurrences_ofSpendingKind() {
+        val expenses =
+            listOf(
+                testExpense(rec, 50_000L, date, BuiltInCategories.SHOPPING),
+                testExpense("manual", 7_000L, date, BuiltInCategories.SHOPPING),
+                testExpense("rec_r2_20261001", 30_000L, date, BuiltInCategories.INVESTMENTS),
+            )
+
+        assertEquals(50_000L, fixedSpendingCentsOf(expenses, BuiltInCategories.all))
+        val summary = cashFlowSummaryOf(expenses, emptyList(), BuiltInCategories.all)
+        assertEquals(50_000L, summary.fixedSpendingCents)
+        assertEquals(57_000L, summary.spendingCents)
+        assertEquals(7_000L, summary.variableSpendingCents)
+        assertEquals(30_000L, summary.savedCents)
+    }
+
+    @Test
+    fun fixedSpending_netsRefundsOfRecurringOccurrences() {
+        val expenses =
+            listOf(
+                testExpense(rec, 50_000L, date, BuiltInCategories.SHOPPING),
+                testExpense("rec_r1_20261101", 10_000L, date, BuiltInCategories.SHOPPING, isRefund = true),
+            )
+
+        assertEquals(40_000L, fixedSpendingCentsOf(expenses, BuiltInCategories.all))
+    }
+
+    @Test
+    fun fixedSpending_emptyOrNoRecurring_isZero_andUnknownCategoryCountsAsSpending() {
+        assertEquals(0L, fixedSpendingCentsOf(emptyList(), BuiltInCategories.all))
+        assertEquals(0L, fixedSpendingCentsOf(listOf(testExpense("a", 100L, date)), BuiltInCategories.all))
+        val ghost = userCategory("ghost")
+        assertEquals(100L, fixedSpendingCentsOf(listOf(testExpense(rec, 100L, date, ghost)), BuiltInCategories.all))
+    }
+
+    @Test
+    fun fixedSpending_kindComesFromCatalog_notFromTheExpensesCategoryCopy() {
+        val savingNow = BuiltInCategories.SHOPPING.copy(kind = CategoryKind.SAVING)
+        val expenses = listOf(testExpense(rec, 100L, date, BuiltInCategories.SHOPPING))
+
+        assertEquals(0L, fixedSpendingCentsOf(expenses, listOf(savingNow)))
     }
 }

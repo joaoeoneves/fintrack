@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.domain.repository
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,15 @@ interface RecurringRepository {
         id: String,
         date: LocalDate?,
     ): Result<Unit>
+
+    /**
+     * Points every recurring item of [source] at [target]; returns how many were changed. Awaited when
+     * signed in.
+     */
+    suspend fun moveRecurringCategory(
+        source: CategoryId,
+        target: CategoryId,
+    ): Result<Int>
 
     /**
      * Atomically stores [transaction] (the expense/income generated for [occurrence]) and moves the

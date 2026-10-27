@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FirestoreRecurringRepository
 import com.joaoeoneves.fintrack.data.local.LocalRecurringRepository
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -28,6 +29,11 @@ class SessionRecurringRepository
         override suspend fun saveRecurring(item: RecurringItem): Result<String> = switch.call { it.saveRecurring(item) }
 
         override suspend fun deleteRecurring(id: String): Result<Unit> = switch.call { it.deleteRecurring(id) }
+
+        override suspend fun moveRecurringCategory(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Int> = switch.call { it.moveRecurringCategory(source, target) }
 
         override suspend fun setHandledThrough(
             id: String,

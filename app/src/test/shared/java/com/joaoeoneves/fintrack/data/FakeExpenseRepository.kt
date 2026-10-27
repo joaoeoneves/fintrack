@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
@@ -24,6 +26,14 @@ class FakeExpenseRepository(
     var nextHasExpenseWithCategoryError: Throwable? = null,
 ) : ExpenseRepository {
     private val expensesFlow = MutableStateFlow(initialExpenses)
+
+    var nextCountExpensesError: Throwable? = null
+    var nextMoveExpensesError: Throwable? = null
+
+    /** Resolves the [Category] an expense gets when moved to an id; defaults to built-ins, else unknown. */
+    var categoryLookup: (CategoryId) -> Category = { id ->
+        BuiltInCategories.all.find { it.id == id } ?: Category.unknown(id)
+    }
 
     override fun observeExpenses(
         startInclusive: Instant,
@@ -87,5 +97,28 @@ class FakeExpenseRepository(
             return Result.failure(error)
         }
         return Result.success(expensesFlow.value.any { it.category.id == categoryId })
+    }
+
+    override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> {
+        nextCountExpensesError?.let { error ->
+            nextCountExpensesError = null
+            return Result.failure(error)
+        }
+        return Result.success(expensesFlow.value.count { it.category.id == categoryId })
+    }
+
+    override suspend fun moveExpensesToCategory(
+        source: CategoryId,
+        target: CategoryId,
+    ): Result<Int> {
+        nextMoveExpensesError?.let { error ->
+            nextMoveExpensesError = null
+            return Result.failure(error)
+        }
+        val targetCategory = categoryLookup(target)
+        val moving = expensesFlow.value.count { it.category.id == source }
+        expensesFlow.value =
+            expensesFlow.value.map { if (it.category.id == source) it.copy(category = targetCategory) else it }
+        return Result.success(moving)
     }
 }

@@ -20,6 +20,10 @@ import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.PlannedSource
+import com.joaoeoneves.fintrack.domain.model.amountIn
+import com.joaoeoneves.fintrack.domain.model.isActiveIn
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
@@ -36,13 +40,23 @@ private fun AmountRow(
     value: String,
     modifier: Modifier = Modifier,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    badge: String? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, style = MaterialTheme.typography.bodyLarge)
+            if (badge != null) {
+                Text(
+                    text = badge,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+        }
         Text(text = value, style = Amount, color = valueColor)
     }
 }
@@ -52,10 +66,15 @@ private fun AmountRow(
 fun PlanSummaryCard(
     summary: MonthlyPlanSummary,
     modifier: Modifier = Modifier,
+    fixedThisMonthCents: Long = 0L,
 ) {
     val negative = FinTrackTheme.colors.negative
     SettingsGroup(label = stringResource(R.string.plan_title), modifier = modifier) {
         AmountRow(stringResource(R.string.plan_expected_income), formatAmountCents(summary.expectedIncomeCents))
+        if (summary.extrasExpectedCents > 0L) {
+            Hairline()
+            AmountRow(stringResource(R.string.plan_extras_this_month), formatAmountCents(summary.extrasExpectedCents))
+        }
         Hairline()
         AmountRow(stringResource(R.string.plan_planned_spending), formatAmountCents(summary.plannedSpendingCents))
         Hairline()
@@ -66,31 +85,54 @@ fun PlanSummaryCard(
             value = formatAmountCents(summary.plannedLeftoverCents),
             valueColor = if (summary.plannedLeftoverCents < 0) negative else MaterialTheme.colorScheme.onSurface,
         )
+        if (fixedThisMonthCents > 0L) {
+            Hairline()
+            AmountRow(stringResource(R.string.plan_fixed_this_month), formatAmountCents(fixedThisMonthCents))
+        }
     }
 }
 
-/** The expected-income lines; tap one to edit it. The add button is hidden at the line cap. */
+/** What the expected-income card can trigger, bundled for detekt's LongParameterList. */
+data class ExpectedIncomeActions(
+    val onAdd: () -> Unit,
+    val onEdit: (String) -> Unit,
+    val onEditWorkingDays: () -> Unit,
+)
+
+/**
+ * The working-days row and the expected-income lines with what each pays in the selected month; tap a
+ * line to edit it. The add button is hidden at the line cap.
+ */
 @Composable
 fun ExpectedIncomeCard(
     lines: List<PlannedIncome>,
     canAdd: Boolean,
-    onAdd: () -> Unit,
-    onEdit: (String) -> Unit,
+    workingDays: WorkingDaysState,
+    actions: ExpectedIncomeActions,
     modifier: Modifier = Modifier,
 ) {
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
+        WorkingDaysRow(state = workingDays, onClick = actions.onEditWorkingDays)
+        Hairline()
         lines.forEach { line ->
+            val inMonth = line.isActiveIn(workingDays.month)
             AmountRow(
                 label = line.label,
-                value = formatAmountCents(line.amountCents),
-                modifier = Modifier.clickable { onEdit(line.id) },
+                value =
+                    if (inMonth) {
+                        formatAmountCents(line.amountIn(workingDays.month, workingDays.days))
+                    } else {
+                        stringResource(R.string.plan_not_this_month)
+                    },
+                modifier = Modifier.clickable { actions.onEdit(line.id) },
+                badge = if (line.isManaged) stringResource(R.string.plan_from_salary_profile) else null,
             )
             Hairline()
         }
         if (canAdd) {
             GhostButton(
                 text = stringResource(R.string.plan_add_income_line),
-                onClick = onAdd,
+                onClick = actions.onAdd,
                 modifier = Modifier.padding(top = Dimens.Space12),
             )
         }
@@ -143,9 +185,23 @@ private fun AllocationRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
             )
+            if (allocation.plannedSource == PlannedSource.RECURRING) {
+                Text(
+                    text = stringResource(R.string.plan_from_recurring),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+            if (category.archived && allocation.planned != null) {
+                Text(
+                    text = stringResource(R.string.plan_archived_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
         }
         Text(
-            text = allocation.limitCents?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),
+            text = allocation.planned?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),
             style = Amount,
         )
     }

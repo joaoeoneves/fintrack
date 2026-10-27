@@ -2,11 +2,14 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.BuildConfig
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
+import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.Budget
@@ -148,6 +151,9 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
                         FakeBudgetRepository(nextObserveBudgetsError = IllegalStateException("boom")),
                         FakePlannedIncomeRepository(),
                         FakeRecurringRepository(),
+                        FakeMonthSettingsRepository(),
+                        FakeCategoryGroupRepository(),
+                        FakeSalaryProfileRepository(),
                     ),
                     FakeCategoryRepository(),
                     prefsStore,

@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
@@ -33,6 +34,18 @@ class LocalRecurringRepository
 
         override suspend fun deleteRecurring(id: String): Result<Unit> =
             store.update { doc -> doc.copy(recurring = doc.recurring.filterNot { it.id == id }) to Unit }
+
+        override suspend fun moveRecurringCategory(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Int> =
+            store.update { doc ->
+                require(target.value in knownCategoryIds(doc)) { "Unknown category ${target.value}" }
+                val moved = doc.recurring.count { it.categoryId == source.value }
+                val items =
+                    doc.recurring.map { if (it.categoryId == source.value) it.copy(categoryId = target.value) else it }
+                doc.copy(recurring = items) to moved
+            }
 
         override suspend fun setHandledThrough(
             id: String,

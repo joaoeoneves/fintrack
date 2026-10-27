@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -24,6 +25,8 @@ class FakeRecurringRepository(
     var nextConfirmError: Throwable? = null,
 ) : RecurringRepository {
     private val itemsFlow = MutableStateFlow(initialItems)
+
+    var nextMoveCategoryError: Throwable? = null
     private val confirmed = mutableListOf<Transaction>()
     private var nextId = 1
 
@@ -66,6 +69,19 @@ class FakeRecurringRepository(
         }
         itemsFlow.value = itemsFlow.value.filterNot { it.id == id }
         return Result.success(Unit)
+    }
+
+    override suspend fun moveRecurringCategory(
+        source: CategoryId,
+        target: CategoryId,
+    ): Result<Int> {
+        nextMoveCategoryError?.let { error ->
+            nextMoveCategoryError = null
+            return Result.failure(error)
+        }
+        val current = itemsFlow.value
+        itemsFlow.value = current.map { if (it.categoryId == source) it.copy(categoryId = target) else it }
+        return Result.success(current.count { it.categoryId == source })
     }
 
     override suspend fun setHandledThrough(

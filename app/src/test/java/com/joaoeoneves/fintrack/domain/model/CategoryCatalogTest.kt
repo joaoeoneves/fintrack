@@ -31,7 +31,7 @@ class CategoryCatalogTest {
         )
         BuiltInCategories.all.forEach {
             assertTrue(it.builtIn)
-            assertFalse(it.archived)
+            assertEquals(it == BuiltInCategories.RECURRING, it.archived)
             assertNull(it.customName)
             assertFalse(it.isUnknown)
         }
@@ -134,6 +134,32 @@ class CategoryCatalogTest {
         assertEquals(BuiltInCategories.SHOPPING, defaultCategory(emptyList()))
     }
 
+    @Test
+    fun recurring_isArchivedByDefault_andOtherBuiltInsAreNot() {
+        assertTrue(BuiltInCategories.RECURRING.archived)
+        assertEquals(
+            listOf(BuiltInCategories.RECURRING),
+            BuiltInCategories.all.filter { it.archived },
+        )
+        assertFalse(BuiltInCategories.RECURRING in mergeCategories(emptyList()).active())
+    }
+
+    @Test
+    fun defaultCategory_neverRecurring_evenWhenUnarchived() {
+        val unarchived = BuiltInCategories.RECURRING.copy(archived = false, order = -1)
+        val catalog = mergeCategories(listOf(unarchived))
+        assertEquals(BuiltInCategories.RECURRING.id, catalog.active().first().id)
+        assertEquals(BuiltInCategories.SHOPPING, defaultCategory(catalog))
+
+        val onlyRecurringActive =
+            BuiltInCategories.all.map { it.copy(archived = it.id != BuiltInCategories.RECURRING.id) }
+        assertEquals(BuiltInCategories.SHOPPING, defaultCategory(onlyRecurringActive))
+
+        val shoppingArchived =
+            catalog.map { if (it.id == BuiltInCategories.SHOPPING.id) it.copy(archived = true) else it }
+        assertEquals(BuiltInCategories.TRANSFER, defaultCategory(shoppingArchived))
+    }
+
     // ---- resolvedWith ----
 
     @Test
@@ -164,7 +190,7 @@ class CategoryCatalogTest {
         val rows = catalog.rowsFor(setOf(archivedWithData.id, CategoryId("zzz"), CategoryId("aaa")))
 
         assertEquals(
-            listOf("TRANSFER", "old", "INVESTMENTS", "SHOPPING", "FOOD", "RECURRING", "gym", "aaa", "zzz"),
+            listOf("TRANSFER", "old", "INVESTMENTS", "SHOPPING", "FOOD", "gym", "aaa", "zzz"),
             rows.map { it.id.value },
         )
         assertTrue(rows.takeLast(2).all { it.isUnknown })
@@ -174,6 +200,6 @@ class CategoryCatalogTest {
     fun rowsFor_emptyPresent_isActiveOnly() {
         val catalog = mergeCategories(listOf(userCategory("old", archived = true)))
 
-        assertEquals(BuiltInCategories.all, catalog.rowsFor(emptySet()))
+        assertEquals(BuiltInCategories.all.filterNot { it.archived }, catalog.rowsFor(emptySet()))
     }
 }

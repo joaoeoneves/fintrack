@@ -35,6 +35,10 @@ class BaselineProfileGenerator {
             flingDashboard()
             openAndBack(GeneratorTags.DASHBOARD_ADD_EXPENSE)
             openAndBack(GeneratorTags.DASHBOARD_SETTINGS)
-            openAndBack(GeneratorTags.SEE_ALL_EXPENSES, GeneratorTags.EXPENSE_LIST)
+            openAndBack(GeneratorTags.SEE_ALL_ACTIVITY, GeneratorTags.ACTIVITY_LIST)
+            openTab(GeneratorTags.NAV_ACTIVITY)
+            openTab(GeneratorTags.NAV_PLAN)
+            openTab(GeneratorTags.NAV_INSIGHTS)
+            openTab(GeneratorTags.NAV_HOME)
         }
 }

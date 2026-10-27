@@ -16,7 +16,14 @@ object BuiltInCategories {
     val INVESTMENTS: Category = builtIn("INVESTMENTS", ORDER_INVESTMENTS, CategoryKind.SAVING, "trending_up", "emerald")
     val SHOPPING: Category = builtIn("SHOPPING", ORDER_SHOPPING, CategoryKind.SPENDING, "shopping_cart", "amber")
     val FOOD: Category = builtIn("FOOD", ORDER_FOOD, CategoryKind.SPENDING, "restaurant", "violet")
-    val RECURRING: Category = builtIn("RECURRING", ORDER_RECURRING, CategoryKind.SPENDING, "autorenew", "red")
+
+    /**
+     * Retired: recurrence is a property of a transaction (see [isRecurringOccurrenceId]), not a
+     * category. Kept resolvable (existing data still references it) but archived by default, so it
+     * is hidden from pickers; a user override document may still unarchive it.
+     */
+    val RECURRING: Category =
+        builtIn("RECURRING", ORDER_RECURRING, CategoryKind.SPENDING, "autorenew", "red").copy(archived = true)
 
     /** Every built-in, in their default display order. */
     val all: List<Category> = listOf(TRANSFER, INVESTMENTS, SHOPPING, FOOD, RECURRING)

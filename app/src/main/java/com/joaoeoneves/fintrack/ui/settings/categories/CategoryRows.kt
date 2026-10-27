@@ -153,6 +153,34 @@ internal fun ArchivedCategoryRow(
                 onClick = { actions.onDelete(category.id) },
             )
         }
+        ArchivedOverflowMenu(category, actions)
+    }
+}
+
+/** Overflow menu of an archived row: moving everything that still uses the category elsewhere. */
+@Composable
+private fun ArchivedOverflowMenu(
+    category: Category,
+    actions: CategoryRowActions,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val description = stringResource(R.string.cd_category_more_actions, category.displayName)
+    IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = description }) {
+        Icon(Icons.Filled.MoreVert, contentDescription = null)
+    }
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+        shape = MaterialTheme.shapes.medium,
+        containerColor = FinTrackTheme.colors.surface2,
+    ) {
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.category_action_move_items)) },
+            onClick = {
+                expanded = false
+                actions.onMoveItems(category.id)
+            },
+        )
     }
 }
 

@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.local
 
 import android.util.Log
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_DAY_OF_MONTH
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
@@ -111,7 +112,7 @@ internal fun validateRecurring(
 ) {
     require(item.id.isNotBlank()) { "Recurring id is blank" }
     requireText(item.name, MAX_NAME_LENGTH, "Recurring name")
-    require(item.amountCents > 0) { "Recurring amount must be positive" }
+    require(item.amountCents in 1..MAX_AMOUNT_CENTS) { "Recurring amount must be 1..$MAX_AMOUNT_CENTS cents" }
     validateRecurringCategory(item, knownCategoryIds)
     requireValidNote(item.note)
     val frequency = RecurringFrequency.entries.find { it.name == item.frequency }

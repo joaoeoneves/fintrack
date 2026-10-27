@@ -2,6 +2,8 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
+import com.joaoeoneves.fintrack.domain.model.IncomeBasis
+import com.joaoeoneves.fintrack.domain.model.MAX_DAYS_OFF
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -159,5 +161,62 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
 
             assertEquals(listOf(false, true, false), emissions.map { it.plan.isConfigured })
             assertEquals(200_000L, emissions[1].plan.expectedIncomeCents)
+        }
+
+    private val perDay =
+        PlannedIncome("meal", "Meal", 1046L, 0, basis = IncomeBasis.PER_WORKING_DAY)
+
+    @Test
+    fun perWorkingDayIncome_usesCalendarDays_withoutSettings() =
+        runTest {
+            plannedIncome.savePlannedIncome(perDay)
+
+            assertEquals(1046L * 21, overview(Period.CurrentMonth).plan.expectedIncomeCents)
+        }
+
+    @Test
+    fun daysOff_reduceThePerWorkingDayIncome() =
+        runTest {
+            plannedIncome.savePlannedIncome(perDay)
+            monthSettings.setDaysOff(october, 3)
+
+            assertEquals(1046L * (21 - 3), overview(Period.CurrentMonth).plan.expectedIncomeCents)
+        }
+
+    @Test
+    fun daysOff_beyondTheCalendarCount_clampIncomeAtZero() =
+        runTest {
+            plannedIncome.savePlannedIncome(perDay)
+            monthSettings.setDaysOff(october, MAX_DAYS_OFF)
+
+            assertEquals(0L, overview(Period.CurrentMonth).plan.expectedIncomeCents)
+        }
+
+    @Test
+    fun override_winsOverDaysOff() =
+        runTest {
+            plannedIncome.savePlannedIncome(perDay)
+            monthSettings.setWorkingDaysOverride(october, 10)
+            monthSettings.setDaysOff(october, 3)
+
+            assertEquals(1046L * 10, overview(Period.CurrentMonth).plan.expectedIncomeCents)
+        }
+
+    @Test
+    fun daysOffInAnotherMonth_doNotAffectTheBudgetMonth() =
+        runTest {
+            plannedIncome.savePlannedIncome(perDay)
+            monthSettings.setDaysOff(september, 5)
+
+            assertEquals(1046L * 21, overview(Period.CurrentMonth).plan.expectedIncomeCents)
+        }
+
+    @Test
+    fun daysOff_doNotChangeFixedIncome() =
+        runTest {
+            plannedIncome.savePlannedIncome(salary)
+            monthSettings.setDaysOff(october, 3)
+
+            assertEquals(200_000L, overview(Period.CurrentMonth).plan.expectedIncomeCents)
         }
 }

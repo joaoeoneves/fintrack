@@ -35,7 +35,20 @@ class PendingWritePlannedIncomeTest {
 
         assertEquals("plannedIncome", write.collection)
         assertEquals("p1", write.id)
-        assertEquals(setOf("label", "amountCents", "order", "updatedAt"), write.data.keys)
+        assertEquals(
+            setOf(
+                "label",
+                "amountCents",
+                "order",
+                "basis",
+                "frequency",
+                "monthOfYear",
+                "yearMonth",
+                "skipMonths",
+                "updatedAt",
+            ),
+            write.data.keys,
+        )
         assertEquals("Pay", write.data["label"])
         assertEquals(1234L, write.data["amountCents"])
         assertEquals(2, write.data["order"])

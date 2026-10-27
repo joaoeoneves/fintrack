@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,7 +34,7 @@ import com.joaoeoneves.fintrack.ui.auth.SignInScreen
 import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.applyAppLanguage
 import com.joaoeoneves.fintrack.ui.migration.LocalDataMigrationHost
-import com.joaoeoneves.fintrack.ui.navigation.FinTrackNavHost
+import com.joaoeoneves.fintrack.ui.navigation.FinTrackAppShell
 import com.joaoeoneves.fintrack.ui.theme.CurrencyViewModel
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.NightModeSync
@@ -78,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                     null -> null
                 }
 
-            themePreference?.let { NightModeSync.apply(applicationContext, it) }
+            LaunchedEffect(themePreference) { themePreference?.let { NightModeSync.apply(applicationContext, it) } }
             if (resolvedDarkTheme != null) {
                 // Status/navigation bar icons follow the resolved app theme, not the system one.
                 DisposableEffect(resolvedDarkTheme) {
@@ -93,7 +94,8 @@ class MainActivity : AppCompatActivity() {
 
                     // A plain Surface rather than a Scaffold: every signed-in screen has its own
                     // Scaffold that already consumes the system-bar insets, so an outer Scaffold here
-                    // would apply them twice (double top/bottom padding).
+                    // would apply them twice. The app shell's Scaffold is the one exception: it uses
+                    // zero content insets and only lays out the bottom bar.
                     Surface(
                         modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true },
                         color = MaterialTheme.colorScheme.background,
@@ -106,7 +108,7 @@ class MainActivity : AppCompatActivity() {
                             val currencyViewModel: CurrencyViewModel = hiltViewModel()
                             val currency by currencyViewModel.currency.collectAsStateWithLifecycle()
                             CompositionLocalProvider(LocalCurrency provides currency) {
-                                FinTrackNavHost(modifier = Modifier.fillMaxSize())
+                                FinTrackAppShell(modifier = Modifier.fillMaxSize())
                             }
                             // Only for accounts: guests have nothing to copy anywhere.
                             if (state is AuthUiState.SignedIn) LocalDataMigrationHost()

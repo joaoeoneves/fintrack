@@ -14,7 +14,12 @@ private val ID_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE
 fun occurrenceTransactionId(
     itemId: String,
     date: LocalDate,
-): String = "rec_${itemId}_${ID_DATE_FORMAT.format(date)}"
+): String = "$OCCURRENCE_ID_PREFIX${itemId}_${ID_DATE_FORMAT.format(date)}"
+
+private const val OCCURRENCE_ID_PREFIX = "rec_"
+
+/** Whether [id] is the id of a transaction generated from a recurring item (see [occurrenceTransactionId]). */
+fun isRecurringOccurrenceId(id: String): Boolean = id.startsWith(OCCURRENCE_ID_PREFIX)
 
 /**
  * The ordinary transaction for [occurrence] of this item, dated at noon in [zone] so the local day

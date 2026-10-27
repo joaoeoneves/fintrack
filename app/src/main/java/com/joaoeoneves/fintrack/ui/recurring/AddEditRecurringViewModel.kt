@@ -11,8 +11,6 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
-import com.joaoeoneves.fintrack.domain.model.active
-import com.joaoeoneves.fintrack.domain.model.defaultCategory
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
@@ -84,9 +82,8 @@ class AddEditRecurringViewModel
                 val id = route.recurringId
                 _uiState.value =
                     if (id == null) {
-                        val preferred = BuiltInCategories.RECURRING.takeIf { it in catalog.active() }
-                        val category = preferred ?: defaultCategory(catalog)
-                        AddEditRecurringUiState.Ready(newRecurringForm(LocalDate.now(clock), category))
+                        // No preselected category: recurrence isn't a category, so the user must choose one.
+                        AddEditRecurringUiState.Ready(newRecurringForm(LocalDate.now(clock)))
                     } else {
                         loadExisting(id, catalog)
                     }

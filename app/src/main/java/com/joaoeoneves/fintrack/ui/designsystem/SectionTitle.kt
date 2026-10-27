@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
-private val SectionTitleMinHeight = 40.dp
+private val SectionTitleMinHeight = 48.dp
 
 /**
  * The one section heading style of the app: titleMedium, SemiBold, onSurface, with an optional

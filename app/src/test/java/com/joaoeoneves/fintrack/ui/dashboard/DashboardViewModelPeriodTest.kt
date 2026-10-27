@@ -117,7 +117,7 @@ class DashboardViewModelPeriodTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun onPeriodSelected_rolling_spansSeveralMonths_andDisablesMonthArrows() =
+    fun onPeriodSelected_rolling_isCoercedToCurrentMonth_andMonthArrowsStayOnMonths() =
         runTest(testDispatcher) {
             val viewModel = viewModel(expenseRepository = expenses())
             collect(viewModel)
@@ -128,24 +128,23 @@ class DashboardViewModelPeriodTest : DashboardViewModelTestBase() {
             advanceUntilIdle()
 
             val content = viewModel.content()
-            assertEquals(Period.Rolling(TimeRange.THREE_MONTHS), content.period)
-            assertFalse(content.canGoToNextMonth)
-            assertEquals(setOf(augExpense, sepExpense, octExpense), content.expenses.toSet())
+            assertEquals(Period.Month(previousMonth), content.period)
+            assertTrue(content.canGoToNextMonth)
+            assertEquals(setOf(sepExpense), content.expenses.toSet())
         }
 
     @Test
-    fun onPeriodSelected_custom_endDateIsInclusive() =
+    fun onPeriodSelected_custom_isCoercedToCurrentMonth() =
         runTest(testDispatcher) {
-            val endOfDay = expense(id = "eod", amountCents = 1L, date = Instant.parse("2026-09-10T23:59:59Z"))
-            val nextDay = expense(id = "next", amountCents = 2L, date = Instant.parse("2026-09-11T00:00:00Z"))
-            val viewModel = viewModel(expenseRepository = FakeExpenseRepository(listOf(sepExpense, endOfDay, nextDay)))
+            val viewModel = viewModel(expenseRepository = FakeExpenseRepository(listOf(sepExpense, octExpense)))
             collect(viewModel)
 
             viewModel.onPeriodSelected(Period.Custom(LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 10)))
             advanceUntilIdle()
 
             val content = viewModel.content()
-            assertEquals(setOf(sepExpense, endOfDay), content.expenses.toSet())
+            assertEquals(Period.CurrentMonth, content.period)
+            assertEquals(setOf(octExpense), content.expenses.toSet())
             assertFalse(content.canGoToNextMonth)
         }
 
@@ -238,16 +237,16 @@ class DashboardViewModelPeriodTest : DashboardViewModelTestBase() {
             assertEquals(listOf(sepIncome), viewModel.content().income)
             assertEquals(Period.Month(previousMonth).toInstantRange(now, zone), viewModel.content().range)
 
-            val rolling = Period.Rolling(TimeRange.THREE_MONTHS)
-            viewModel.onPeriodSelected(rolling)
+            // Rolling and custom selections coerce to the current month on Home.
+            viewModel.onPeriodSelected(Period.Rolling(TimeRange.THREE_MONTHS))
             advanceUntilIdle()
-            assertEquals(setOf(sepIncome, octIncome), viewModel.content().income.toSet())
-            assertEquals(rolling.toInstantRange(now, zone), viewModel.content().range)
+            assertEquals(Period.CurrentMonth, viewModel.content().period)
+            assertEquals(listOf(octIncome), viewModel.content().income)
+            assertEquals(Period.CurrentMonth.toInstantRange(now, zone), viewModel.content().range)
 
-            val custom = Period.Custom(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30))
-            viewModel.onPeriodSelected(custom)
+            viewModel.onPeriodSelected(Period.Custom(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30)))
             advanceUntilIdle()
-            assertEquals(listOf(sepIncome), viewModel.content().income)
-            assertEquals(custom.toInstantRange(now, zone), viewModel.content().range)
+            assertEquals(Period.CurrentMonth, viewModel.content().period)
+            assertEquals(listOf(octIncome), viewModel.content().income)
         }
 }

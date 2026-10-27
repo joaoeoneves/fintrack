@@ -97,7 +97,18 @@ class PendingWriteTest {
         assertEquals("categories", write.collection)
         assertEquals("c1", write.id)
         assertEquals(
-            setOf("name", "iconKey", "colorKey", "kind", "order", "archived", "builtIn", "updatedAt", "createdAt"),
+            setOf(
+                "name",
+                "iconKey",
+                "colorKey",
+                "kind",
+                "order",
+                "archived",
+                "builtIn",
+                "groupId",
+                "updatedAt",
+                "createdAt",
+            ),
             write.data.keys,
         )
         assertEquals("Gym", write.data["name"])
@@ -111,7 +122,7 @@ class PendingWriteTest {
         val write = plan(budgets = listOf(LocalBudget("FOOD", 1234))).toBatches().single().single()
 
         assertEquals("FOOD", write.id)
-        assertEquals(setOf("limitCents", "updatedAt"), write.data.keys)
+        assertEquals(setOf("limitCents", "skipMonths", "updatedAt"), write.data.keys)
         assertEquals(1234L, write.data["limitCents"])
     }
 

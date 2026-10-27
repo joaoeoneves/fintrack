@@ -14,6 +14,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.common.DaySectionHeader
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
@@ -27,106 +28,61 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** The latest expenses of the period, grouped by day, under a title that opens the full list. */
+/**
+ * The latest expenses and income of the period merged into one date-sorted list, grouped by day,
+ * under a title and a "See all" link that open the Activity tab on [period].
+ */
 @Composable
-fun RecentExpensesSection(
-    expenses: List<Expense>,
+fun RecentActivitySection(
+    items: List<Transaction>,
     period: Period,
     callbacks: DashboardCallbacks,
     modifier: Modifier = Modifier,
 ) {
     val zone = remember { ZoneId.systemDefault() }
-    val today = remember(expenses) { LocalDate.now(zone) }
+    val today = remember(items) { LocalDate.now(zone) }
+    val onSeeAll = { callbacks.onOpenActivity(period) }
     Column(modifier = modifier.fillMaxWidth()) {
-        RecentHeader(
-            title = stringResource(R.string.dashboard_recent_expenses),
-            onOpenList = { callbacks.onOpenList(period) },
-            seeAll =
-                SeeAllLink(
-                    description = stringResource(R.string.dashboard_see_all_expenses),
-                    modifier = Modifier.testTag(TestTags.SEE_ALL_EXPENSES),
-                ).takeIf { expenses.isNotEmpty() },
+        SectionTitle(
+            title = stringResource(R.string.home_recent_title),
+            onTitleClick = onSeeAll,
+            trailing =
+                if (items.isEmpty()) {
+                    null
+                } else {
+                    {
+                        SectionAction(
+                            text = stringResource(R.string.action_see_all),
+                            onClick = onSeeAll,
+                            contentDescription = stringResource(R.string.dashboard_see_all_activity),
+                            modifier = Modifier.testTag(TestTags.SEE_ALL_ACTIVITY),
+                        )
+                    }
+                },
         )
-        if (expenses.isEmpty()) {
-            EmptyLine(stringResource(R.string.dashboard_recent_expenses_empty))
+        if (items.isEmpty()) {
+            Text(
+                text = stringResource(R.string.home_recent_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = FinTrackTheme.colors.textSecondary,
+                modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space8),
+            )
         } else {
-            remember(expenses) { groupByDay(expenses, zone) }.forEach { section ->
+            remember(items) { groupByDay(items, zone) }.forEach { section ->
                 DaySectionHeader(dayHeaderOf(section.date, today))
-                section.items.forEach { expense ->
-                    ExpenseRow(expense = expense, showDate = false, onClick = { callbacks.onOpenExpense(expense.id) })
-                }
+                section.items.forEach { item -> RecentRow(item, callbacks) }
             }
         }
     }
 }
 
-/** The latest income of the period, grouped by day, under a title that opens the full list. */
 @Composable
-fun RecentIncomeSection(
-    income: List<Income>,
-    period: Period,
+private fun RecentRow(
+    item: Transaction,
     callbacks: DashboardCallbacks,
-    modifier: Modifier = Modifier,
 ) {
-    val zone = remember { ZoneId.systemDefault() }
-    val today = remember(income) { LocalDate.now(zone) }
-    Column(modifier = modifier.fillMaxWidth()) {
-        RecentHeader(
-            title = stringResource(R.string.dashboard_recent_income),
-            onOpenList = { callbacks.onOpenIncomeList(period) },
-            seeAll =
-                SeeAllLink(stringResource(R.string.dashboard_see_all_income)).takeIf { income.isNotEmpty() },
-        )
-        if (income.isEmpty()) {
-            EmptyLine(stringResource(R.string.dashboard_no_income))
-        } else {
-            remember(income) { groupByDay(income, zone) }.forEach { section ->
-                DaySectionHeader(dayHeaderOf(section.date, today))
-                section.items.forEach { entry ->
-                    IncomeRow(income = entry, showDate = false, onClick = { callbacks.onOpenIncome(entry.id) })
-                }
-            }
-        }
+    when (item) {
+        is Expense -> ExpenseRow(expense = item, showDate = false, onClick = { callbacks.onOpenExpense(item.id) })
+        is Income -> IncomeRow(income = item, showDate = false, onClick = { callbacks.onOpenIncome(item.id) })
     }
-}
-
-/** The trailing "See all" link: spoken as [description], with an optional [modifier] such as a test tag. */
-private class SeeAllLink(
-    val description: String,
-    val modifier: Modifier = Modifier,
-)
-
-@Composable
-private fun RecentHeader(
-    title: String,
-    onOpenList: () -> Unit,
-    seeAll: SeeAllLink?,
-    modifier: Modifier = Modifier,
-) {
-    SectionTitle(
-        title = title,
-        onTitleClick = onOpenList,
-        modifier = modifier,
-        trailing =
-            seeAll?.let {
-                {
-                    SectionAction(
-                        text = stringResource(R.string.action_see_all),
-                        onClick = onOpenList,
-                        contentDescription = it.description,
-                        modifier = it.modifier,
-                    )
-                }
-            },
-    )
-}
-
-@Composable
-private fun EmptyLine(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = FinTrackTheme.colors.textSecondary,
-        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space8),
-    )
 }

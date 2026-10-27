@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirestoreBudgetRepository
@@ -50,6 +52,7 @@ class FirestoreBudgetRepository
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
+            skipMonths: Set<Int>,
         ): Result<Unit> {
             val uid =
                 firebaseAuth.currentUser?.uid
@@ -58,6 +61,7 @@ class FirestoreBudgetRepository
                 val data =
                     mapOf(
                         "limitCents" to limitCents,
+                        "skipMonths" to skipMonths.sorted(),
                         "updatedAt" to FieldValue.serverTimestamp(),
                     )
                 val docRef = budgetsCollection(uid).document(categoryId.value)
@@ -94,6 +98,40 @@ class FirestoreBudgetRepository
             }
         }
 
+        override suspend fun moveBudget(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Boolean> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val sourceRef = budgetsCollection(uid).document(source.value)
+                val targetRef = budgetsCollection(uid).document(target.value)
+                val sourceDoc = sourceRef.get(Source.SERVER).await()
+                if (sourceDoc.exists()) {
+                    val batch = firestore.batch()
+                    // Merge rule: an existing target budget wins; the source's is dropped.
+                    if (!targetRef.get(Source.SERVER).await().exists()) {
+                        val limit = sourceDoc.getLong("limitCents")
+                        requireNotNull(limit) { "Budget ${source.value} has no limit" }
+                        val skip = sourceDoc.skipMonths().sorted()
+                        batch.set(
+                            targetRef,
+                            mapOf(
+                                "limitCents" to limit,
+                                "skipMonths" to skip,
+                                "updatedAt" to FieldValue.serverTimestamp(),
+                            ),
+                        )
+                    }
+                    batch.delete(sourceRef)
+                    batch.commit().await()
+                }
+                sourceDoc.exists()
+            }
+        }
+
         private fun QuerySnapshot.toBudgets(): List<Budget> = documents.mapNotNull { it.toBudgetOrNull() }
 
         // The doc id is the category id. Any id is kept (even one matching no known category), so a
@@ -105,6 +143,10 @@ class FirestoreBudgetRepository
             if (limitCents == null) {
                 Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'limitCents'")
             }
-            return limitCents?.let { Budget(categoryId = CategoryId(id), limitCents = it) }
+            return limitCents?.let { Budget(categoryId = CategoryId(id), limitCents = it, skipMonths = skipMonths()) }
         }
+
+        // Optional list of month numbers; anything that isn't a number is ignored.
+        private fun DocumentSnapshot.skipMonths(): Set<Int> =
+            (get("skipMonths") as? List<*>).orEmpty().mapNotNull { (it as? Number)?.toInt() }.toSet()
     }

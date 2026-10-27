@@ -77,22 +77,15 @@
     <string name="period_select_dates">Selecionar datas</string>
 
     <!-- Painel principal -->
-    <string name="dashboard_budgets_title">Orçamentos (este mês)</string>
-    <string name="dashboard_recent_expenses">Despesas recentes</string>
-    <string name="dashboard_see_all_expenses">Ver todas as despesas</string>
-    <string name="dashboard_recent_income">Rendimentos recentes</string>
     <string name="dashboard_no_income">Ainda não há rendimentos neste período.</string>
-    <string name="dashboard_see_all_income">Ver todos os rendimentos</string>
     <string name="dashboard_net_balance">Saldo líquido</string>
     <string name="dashboard_income_label">Rendimentos</string>
     <string name="dashboard_expenses_label">Despesas</string>
     <string name="dashboard_no_expenses">Ainda não há despesas neste período.</string>
-    <string name="dashboard_recent_expenses_empty">Ainda sem despesas</string>
     <string name="dashboard_total_outflow">Total de saídas</string>
     <string name="dashboard_saved_label">Poupado e investido</string>
     <string name="dashboard_savings_rate">Taxa de poupança: %1$s</string>
     <string name="dashboard_savings_rate_unavailable">—</string>
-    <string name="dashboard_budgets_title_month">Orçamentos (%1$s)</string>
 
     <!-- Orçamentos -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
@@ -108,17 +101,22 @@
     <string name="error_category_required">Escolha uma categoria</string>
     <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
 
-    <!-- Lista de despesas -->
-    <string name="expense_list_title">Todas as despesas</string>
-    <string name="expense_list_deleted_snackbar">Eliminado \"%1$s\"</string>
-    <string name="expense_list_search_label">Pesquisar</string>
-    <string name="expense_list_no_match">Nenhuma despesa corresponde a \"%1$s\".</string>
-    <string name="expense_list_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
     <string name="expense_field_refund">Reembolso</string>
     <string name="expense_field_refund_hint">Dinheiro devolvido; reduz os gastos desta categoria</string>
     <string name="expense_refund_badge">Reembolso</string>
     <string name="filter_all">Todas</string>
     <string name="field_length_counter">%1$d/%2$d</string>
+
+    <!-- Movimentos -->
+    <string name="activity_title">Movimentos</string>
+    <string name="activity_type_all">Tudo</string>
+    <string name="activity_search_label">Pesquisar</string>
+    <string name="activity_deleted_snackbar">Eliminado \"%1$s\"</string>
+    <string name="activity_no_match">Nada corresponde a \"%1$s\".</string>
+    <string name="activity_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
+    <string name="activity_empty">Ainda não há movimentos neste período.</string>
+    <string name="activity_total_in">Entradas</string>
+    <string name="activity_total_out">Saídas</string>
 
     <!-- Opções de ordenação -->
     <string name="sort_newest_first">Mais recentes primeiro</string>
@@ -160,11 +158,6 @@
     <string name="error_source_required">A origem é obrigatória</string>
     <string name="error_failed_save_income">Não foi possível guardar o rendimento</string>
 
-    <!-- Lista de rendimentos -->
-    <string name="income_list_title">Todos os rendimentos</string>
-    <string name="income_list_deleted_snackbar">Eliminado \"%1$s\"</string>
-    <string name="income_list_search_label">Pesquisar</string>
-    <string name="income_list_no_match">Nenhum rendimento corresponde a \"%1$s\".</string>
 
     <!-- Definições -->
     <string name="settings_title">Definições</string>
@@ -248,6 +241,32 @@
     <string name="error_category_name_duplicate">Já existe uma categoria com este nome</string>
     <string name="error_category_last_active">Pelo menos uma categoria tem de ficar ativa</string>
     <string name="error_category_save_failed">Não foi possível guardar a categoria</string>
+    <string name="category_action_move_items">Mover tudo para…</string>
+    <string name="category_move_checking_title">A verificar \"%1$s\"…</string>
+    <string name="category_move_nothing">Nada usa \"%1$s\", por isso não há nada para mover.</string>
+    <string name="category_move_cannot_verify">Não é possível verificar o que usa \"%1$s\" sem ligação à internet. Tente novamente quando estiver ligado.</string>
+    <string name="category_move_pick_title">Mover tudo de \"%1$s\" para</string>
+    <string name="category_move_confirm_title">Mover para \"%1$s\"?</string>
+    <string name="category_move_confirm_intro">De \"%1$s\":</string>
+    <plurals name="category_move_expenses">
+        <item quantity="one">%1$d despesa</item>
+        <item quantity="many">%1$d despesas</item>
+        <item quantity="other">%1$d despesas</item>
+    </plurals>
+    <plurals name="category_move_recurring">
+        <item quantity="one">%1$d item recorrente</item>
+        <item quantity="many">%1$d itens recorrentes</item>
+        <item quantity="other">%1$d itens recorrentes</item>
+    </plurals>
+    <string name="category_move_budget">O respetivo orçamento</string>
+    <string name="category_move_budget_merge">O respetivo orçamento (\"%1$s\" já tem um, que se mantém; este é descartado)</string>
+    <string name="category_action_move">Mover</string>
+    <string name="category_move_moving">A mover…</string>
+    <string name="category_move_done">Itens movidos</string>
+    <string name="error_category_move_failed">Não foi possível mover todos os itens. Verifique a ligação e tente novamente.</string>
+    <string name="dashboard_fixed_variable">Fixas %1$s\nVariáveis %2$s</string>
+    <string name="plan_fixed_this_month">Despesas fixas (recorrentes) este mês</string>
+    <string name="plan_archived_hint">Categoria arquivada. Mova os respetivos itens em Definições, Categorias.</string>
 
     <!-- Cópia de segurança -->
     <string name="settings_section_backup">Cópia de segurança</string>
@@ -412,4 +431,161 @@
     <string name="cd_period_tab_3m">3 meses</string>
     <string name="cd_period_tab_6m">6 meses</string>
     <string name="cd_period_tab_1y">12 meses</string>
+    <string name="nav_home">Início</string>
+    <string name="nav_activity">Movimentos</string>
+    <string name="nav_plan">Plano</string>
+    <string name="nav_insights">Análise</string>
+    <string name="insights_title">Análise</string>
+    <string name="insights_empty">Ainda não há despesas para analisar neste período.</string>
+    <string name="plan_planned_vs_actual">Planeado vs real</string>
+    <string name="home_recent_title">Movimentos recentes</string>
+    <string name="home_recent_empty">Ainda sem movimentos</string>
+    <string name="dashboard_see_all_activity">Ver todos os movimentos</string>
+    <string name="plan_basis_fixed">Fixo</string>
+    <string name="plan_basis_per_day">Pago por dia útil</string>
+    <string name="plan_frequency_monthly">Mensal</string>
+    <string name="plan_frequency_yearly">Anual</string>
+    <string name="plan_frequency_once">Pontual</string>
+    <string name="plan_field_amount_per_day">Valor por dia útil</string>
+    <plurals name="plan_income_preview">
+        <item quantity="one">× %1$d dia útil = %2$s este mês</item>
+        <item quantity="many">× %1$d dias úteis = %2$s este mês</item>
+        <item quantity="other">× %1$d dias úteis = %2$s este mês</item>
+    </plurals>
+    <string name="plan_not_paid_in">Não pago em</string>
+    <string name="plan_pay_month">Pago em</string>
+    <string name="plan_not_this_month">Não este mês</string>
+    <string name="plan_working_days_title">Dias úteis em %1$s</string>
+    <plurals name="plan_working_days_value">
+        <item quantity="one">%1$d (%2$d feriado)</item>
+        <item quantity="many">%1$d (%2$d feriados)</item>
+        <item quantity="other">%1$d (%2$d feriados)</item>
+    </plurals>
+    <string name="plan_working_days_value_off">%1$d (%2$s, %3$s)</string>
+    <plurals name="plan_holidays_count">
+        <item quantity="one">%1$d feriado</item>
+        <item quantity="many">%1$d feriados</item>
+        <item quantity="other">%1$d feriados</item>
+    </plurals>
+    <plurals name="plan_days_off_count">
+        <item quantity="one">%1$d dia de folga</item>
+        <item quantity="many">%1$d dias de folga</item>
+        <item quantity="other">%1$d dias de folga</item>
+    </plurals>
+    <string name="plan_days_off_title">Dias de férias/folga neste mês</string>
+    <string name="plan_carnival_chip">Carnaval, %1$s</string>
+    <string name="cd_fewer_days_off">Menos dias de folga</string>
+    <string name="cd_more_days_off">Mais dias de folga</string>
+    <string name="plan_working_days_edited">%1$d (alterado)</string>
+    <string name="plan_working_days_reset">Repor automático</string>
+    <string name="plan_working_days_hint">Substitui a contagem do calendário apenas neste mês.</string>
+    <string name="plan_extras_this_month">Extras este mês</string>
+    <string name="cd_fewer_working_days">Menos dias úteis</string>
+    <string name="cd_more_working_days">Mais dias úteis</string>
+
+    <string name="plan_groups_title">Grupos</string>
+    <string name="plan_groups_empty">Agrupe as suas categorias (alimentação, investimentos, …) para ver o plano de cada grupo num relance.</string>
+    <string name="plan_groups_suggest">Criar grupos sugeridos</string>
+    <string name="plan_groups_manage">Gerir grupos</string>
+    <string name="plan_group_other">Outros</string>
+    <string name="plan_from_recurring">a partir de recorrentes</string>
+    <string name="cd_group_toggle">Mostrar as categorias de %1$s</string>
+    <string name="group_suggested_recurring">Recorrentes</string>
+    <string name="group_suggested_investments">Investimentos</string>
+    <string name="group_suggested_food">Alimentação</string>
+    <string name="group_suggested_other">Outros</string>
+    <string name="groups_manage_title">Gerir grupos</string>
+    <string name="groups_none_yet">Ainda não há grupos</string>
+    <string name="groups_field_name">Nome do grupo</string>
+    <string name="groups_add">Adicionar grupo</string>
+    <string name="groups_rename">Mudar o nome</string>
+    <string name="groups_delete_title">Eliminar \"%1$s\"?</string>
+    <string name="groups_delete_message">As categorias mantêm-se, sem grupo.</string>
+    <string name="error_group_save_failed">Não foi possível guardar o grupo</string>
+    <string name="category_field_group">Grupo</string>
+    <string name="category_group_none">Sem grupo</string>
+    <string name="plan_not_in">Exceto em</string>
+    <string name="plan_earmark_for">Reservar para</string>
+    <string name="plan_earmark_none">Nenhum</string>
+    <string name="plan_earmark_categories">Categorias</string>
+    <string name="plan_pot">Pote</string>
+    <string name="plan_pots_title">Potes</string>
+    <string name="plan_pot_base">Base</string>
+    <string name="plan_pot_left">%1$s · restam %2$s de %3$s</string>
+    <string name="plan_pot_over">%1$s · %2$s acima (de %3$s)</string>
+    <string name="plan_pot_overflow">excesso de %1$s</string>
+    <string name="plan_pot_overflow_row">−%1$s · %2$s</string>
+    <string name="cd_pot">Pote: %1$s</string>
+
+    <string name="plan_salary_section">Salário</string>
+    <string name="plan_salary_profile_row">Perfil salarial</string>
+    <string name="plan_from_salary_profile">Do perfil salarial</string>
+    <string name="plan_managed_line_hint">Gerada a partir do perfil salarial. Altere o valor e o calendário aí.</string>
+    <string name="salary_profile_title">Perfil salarial</string>
+    <string name="salary_mode_gross">Bruto + taxas</string>
+    <string name="salary_mode_net">Valores líquidos</string>
+    <string name="salary_group_salary">Salário</string>
+    <string name="salary_field_base">Salário base bruto (mensal)</string>
+    <string name="salary_group_duo">Duodécimos</string>
+    <string name="salary_duo_hint">Parte dos subsídios de férias e de Natal paga todos os meses</string>
+    <string name="salary_spread_none">Sem</string>
+    <string name="salary_spread_half" formatted="false">50%</string>
+    <string name="salary_spread_full" formatted="false">100%</string>
+    <string name="salary_group_taxes">Impostos</string>
+    <string name="salary_field_irs_base" formatted="false">Taxa de retenção de IRS (%)</string>
+    <string name="salary_field_irs_subsidies" formatted="false">Taxa de IRS nos subsídios (%)</string>
+    <string name="salary_irs_subsidies_hint">Igual à taxa base se vazio</string>
+    <string name="salary_field_irs_jovem" formatted="false">IRS Jovem (% isento)</string>
+    <string name="salary_field_ss" formatted="false">Segurança Social (%)</string>
+    <string name="salary_ss_hint">11 se vazio</string>
+    <string name="salary_group_net">Valores líquidos</string>
+    <string name="salary_field_net_monthly">Salário líquido mensal</string>
+    <string name="salary_net_monthly_hint">Tal como recebe, com duodécimos</string>
+    <string name="salary_field_net_holiday">Subsídio de férias (líquido)</string>
+    <string name="salary_field_net_christmas">Subsídio de Natal (líquido)</string>
+    <string name="salary_group_subsidy_months">Meses dos subsídios</string>
+    <string name="salary_holiday_month">Subsídio de férias pago em</string>
+    <string name="salary_christmas_month">Subsídio de Natal pago em</string>
+    <string name="salary_group_meal">Subsídio de refeição</string>
+    <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
+    <string name="salary_group_flex">Benefícios flexíveis</string>
+    <string name="salary_field_flex_percent" formatted="false">Percentagem do bruto anual (%)</string>
+    <string name="salary_field_flex_annual">Valor anual</string>
+    <string name="salary_flex_first_month">Primeiro pagamento, depois de 3 em 3 meses</string>
+    <string name="salary_field_flex_fee" formatted="false">Taxa de resgate (%)</string>
+    <string name="salary_group_extras">Extras</string>
+    <string name="salary_field_profit_share">Distribuição de lucros (× salário base)</string>
+    <string name="salary_profit_month">Distribuição de lucros paga em</string>
+    <string name="salary_field_bonus">Prémio</string>
+    <string name="salary_bonus_month">Prémio pago em</string>
+    <string name="salary_error_invalid">Introduza um valor válido</string>
+    <string name="salary_breakdown_title">Detalhe</string>
+    <string name="salary_breakdown_gross">Bruto mensal</string>
+    <string name="salary_breakdown_ss">Segurança Social</string>
+    <string name="salary_breakdown_irs">IRS</string>
+    <string name="salary_breakdown_net">Líquido mensal</string>
+    <string name="salary_breakdown_meal">Subsídio de refeição em %1$s</string>
+    <string name="salary_breakdown_flex">Benefícios flexíveis por pagamento</string>
+    <string name="salary_breakdown_profit_share">Distribuição de lucros</string>
+    <string name="salary_delete">Eliminar perfil salarial</string>
+    <string name="salary_delete_title">Eliminar o perfil salarial?</string>
+    <string name="salary_delete_message">As linhas de rendimento geradas por ele também são removidas. As suas linhas ficam.</string>
+    <string name="salary_line_net">Salário líquido</string>
+    <string name="salary_line_holiday">Subsídio de férias</string>
+    <string name="salary_line_christmas">Subsídio de Natal</string>
+    <string name="plan_tab_month">Mês</string>
+    <string name="plan_tab_year">Ano</string>
+    <string name="annual_income_title">Rendimento do ano</string>
+    <string name="annual_income_regular">Rendimento regular</string>
+    <string name="annual_income_extras">Extras</string>
+    <string name="annual_income_total">Rendimento total</string>
+    <string name="annual_extra_in_month">%1$s · %2$s</string>
+    <string name="annual_actual_of_planned">%1$s de %2$s</string>
+    <string name="annual_pots_title">Potes no ano</string>
+    <string name="annual_subscriptions_title">Subscrições anuais</string>
+    <string name="annual_subscription_row">%1$s · %2$s</string>
+    <string name="annual_leftover_title">Sobra deste ano</string>
+    <string name="annual_leftover_caption">Rendimento menos despesa planeada, %1$s</string>
+    <string name="annual_empty_title">Nada planeado para %1$s</string>
+    <string name="annual_empty_message">Adicione rendimento e dotações na vista Mês para ver o ano.</string>
 </resources>

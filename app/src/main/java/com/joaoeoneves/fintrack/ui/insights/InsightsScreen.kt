@@ -1,0 +1,108 @@
+package com.joaoeoneves.fintrack.ui.insights
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.ErrorState
+import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
+import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
+import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.dashboard.CategoryBreakdownSection
+import com.joaoeoneves.fintrack.ui.dashboard.PeriodTab
+import com.joaoeoneves.fintrack.ui.dashboard.toPeriod
+import com.joaoeoneves.fintrack.ui.dashboard.toTab
+import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
+import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+
+/** The Insights tab: the period picker (month, rolling ranges, custom) over the category breakdown. */
+@Composable
+fun InsightsScreen(
+    onOpenSettings: () -> Unit,
+    viewModel: InsightsViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    OnResumeEffect(onResume = viewModel::onRetry)
+
+    LargeTitleScaffold(
+        title = stringResource(R.string.insights_title),
+        actions = { SettingsIconButton(onClick = onOpenSettings) },
+    ) { innerPadding ->
+        val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
+        when (val state = uiState) {
+            InsightsUiState.Loading ->
+                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+
+            is InsightsUiState.Error ->
+                ErrorState(message = state.message.asString(), onRetry = viewModel::onRetry, modifier = contentModifier)
+
+            is InsightsUiState.Content ->
+                InsightsContent(
+                    state = state,
+                    actions =
+                        PeriodActions(
+                            onPrevious = viewModel::onPreviousMonth,
+                            onNext = viewModel::onNextMonth,
+                            onSelect = viewModel::onPeriodSelected,
+                        ),
+                    modifier = contentModifier,
+                )
+        }
+    }
+}
+
+@Composable
+private fun InsightsContent(
+    state: InsightsUiState.Content,
+    actions: PeriodActions,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
+    ) {
+        item(key = "tabs") {
+            SegmentedTextTabs(
+                options = PeriodTab.entries,
+                selected = state.period.toTab(),
+                label = { stringResource(it.labelRes) },
+                onSelect = { actions.onSelect(it.toPeriod()) },
+                tabContentDescription = { stringResource(it.descriptionRes) },
+            )
+        }
+        item(key = "period") {
+            PeriodSelector(
+                period = state.period,
+                canGoToNextMonth = state.canGoToNextMonth,
+                actions = actions,
+            )
+        }
+        item(key = "breakdown") {
+            if (state.isEmpty) {
+                EmptyState(
+                    title = stringResource(R.string.insights_empty),
+                    modifier = Modifier.padding(top = Dimens.Space32),
+                )
+            } else {
+                CategoryBreakdownSection(
+                    breakdown = state.breakdown,
+                    modifier = Modifier.padding(top = Dimens.Space16),
+                )
+            }
+        }
+    }
+}

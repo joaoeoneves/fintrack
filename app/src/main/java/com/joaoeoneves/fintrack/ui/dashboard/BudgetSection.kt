@@ -39,13 +39,13 @@ import kotlin.math.roundToInt
 
 /** How much of the limit is used, as a 0..1 bar fill: 0 without a (positive) limit, capped at 1 when over. */
 fun CategoryBudget.progressFraction(): Float {
-    val limit = limitCents?.takeIf { it > 0L } ?: return 0f
+    val limit = planned?.takeIf { it > 0L } ?: return 0f
     return (spentCents.toDouble() / limit.toDouble()).toFloat().coerceIn(0f, 1f)
 }
 
 /** Whole-number percent of the limit spent, not capped (130 when 30% over); 0 without a (positive) limit. */
 fun CategoryBudget.percentUsed(): Int {
-    val limit = limitCents?.takeIf { it > 0L } ?: return 0
+    val limit = planned?.takeIf { it > 0L } ?: return 0
     return (spentCents.toDouble() / limit.toDouble() * PERCENT_SCALE).roundToInt()
 }
 
@@ -59,7 +59,7 @@ private const val PERCENT_SCALE = 100
 fun BudgetSection(
     budgets: List<CategoryBudget>,
     title: String,
-    onSetBudget: (Category, Long) -> Unit,
+    onSetBudget: (Category, Long, Set<Int>) -> Unit,
     onClearBudget: (Category) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -75,8 +75,8 @@ fun BudgetSection(
     editingBudget?.let { budget ->
         EditBudgetDialog(
             budget = budget,
-            onSave = { limitCents ->
-                onSetBudget(budget.category, limitCents)
+            onSave = { limitCents, skipMonths ->
+                onSetBudget(budget.category, limitCents, skipMonths)
                 editingBudget = null
             },
             onRemove = {
@@ -115,7 +115,7 @@ private fun BudgetRow(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                if (budget.limitCents != null) {
+                if (budget.planned != null) {
                     Text(
                         text = formatSavingsRate(budget.percentUsed() / PERCENT_SCALE.toDouble(), locale),
                         style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
@@ -130,7 +130,7 @@ private fun BudgetRow(
                 style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
                 color = statusColor,
             )
-            if (budget.limitCents != null) {
+            if (budget.planned != null) {
                 ThinProgressBar(
                     progress = budget.progressFraction(),
                     isOver = budget.isOverBudget,
@@ -161,11 +161,11 @@ private fun BudgetIcon(category: Category) {
 
 @Composable
 private fun budgetStatus(budget: CategoryBudget): String =
-    if (budget.limitCents != null) {
+    if (budget.planned != null) {
         stringResource(
             R.string.budget_spent_of_limit,
             formatAmountCents(budget.spentCents),
-            formatAmountCents(budget.limitCents),
+            formatAmountCents(budget.planned),
         )
     } else {
         stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))

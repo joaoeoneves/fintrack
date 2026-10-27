@@ -1,8 +1,10 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.usecase.CategoryMovePreview
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
 import com.joaoeoneves.fintrack.ui.common.UiText
 
@@ -14,6 +16,9 @@ sealed interface CategoriesUiState {
         val archived: List<Category>,
         val editor: CategoryEditorState?,
         val deleteDialog: DeleteDialogState?,
+        val moveDialog: MoveDialogState? = null,
+        /** The category groups the editor's group picker offers. */
+        val groups: List<CategoryGroup> = emptyList(),
     ) : CategoriesUiState
 }
 
@@ -23,6 +28,8 @@ data class CategoryDraft(
     val iconKey: String,
     val colorKey: String,
     val kind: CategoryKind,
+    /** Id of the group the category is filed under, `null` for none. */
+    val groupId: String? = null,
 )
 
 /** [editingId] is `null` when creating a new category. */
@@ -52,6 +59,39 @@ sealed interface DeleteDialogState {
     data class CannotVerify(
         override val category: Category,
     ) : DeleteDialogState
+}
+
+/** The "move everything to another category" flow of an archived [source] category. */
+sealed interface MoveDialogState {
+    val source: Category
+
+    data class Checking(
+        override val source: Category,
+    ) : MoveDialogState
+
+    data class NothingToMove(
+        override val source: Category,
+    ) : MoveDialogState
+
+    data class CannotVerify(
+        override val source: Category,
+    ) : MoveDialogState
+
+    data class PickTarget(
+        override val source: Category,
+        val targets: List<Category>,
+    ) : MoveDialogState
+
+    data class Confirm(
+        override val source: Category,
+        val target: Category,
+        val preview: CategoryMovePreview,
+    ) : MoveDialogState
+
+    data class Moving(
+        override val source: Category,
+        val target: Category,
+    ) : MoveDialogState
 }
 
 enum class MoveDirection { UP, DOWN }

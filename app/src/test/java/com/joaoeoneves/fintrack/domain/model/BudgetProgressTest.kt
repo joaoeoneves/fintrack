@@ -23,9 +23,9 @@ class BudgetProgressTest {
                 BuiltInCategories.all,
             )
 
-        assertEquals(BuiltInCategories.all.toList(), progress.map { it.category })
+        assertEquals(BuiltInCategories.all.filterNot { it.archived }, progress.map { it.category })
         assertEquals(10_000L, progress.of(BuiltInCategories.FOOD).limitCents)
-        BuiltInCategories.all.filter { it != BuiltInCategories.FOOD }.forEach {
+        BuiltInCategories.all.filterNot { it.archived }.filter { it != BuiltInCategories.FOOD }.forEach {
             assertNull(progress.of(it).limitCents)
             assertFalse(progress.of(it).isOverBudget)
         }

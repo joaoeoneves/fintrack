@@ -11,6 +11,8 @@ value class CategoryId(
  * user-defined one. [customName] is the user's own name (`null` for a built-in shown under its
  * localized default name); [iconKey]/[colorKey] are presentation keys resolved by the UI layer.
  * [archived] categories are hidden from pickers but still shown wherever they have data.
+ * [groupId] is the id of the [CategoryGroup] the category is filed under, `null` when ungrouped (a
+ * dangling id is treated the same way).
  */
 data class Category(
     val id: CategoryId,
@@ -21,6 +23,7 @@ data class Category(
     val order: Int,
     val archived: Boolean,
     val builtIn: Boolean,
+    val groupId: String? = null,
 ) {
     /** Whether this is a placeholder for an id that matches no known category (see [unknown]). */
     val isUnknown: Boolean get() = !builtIn && customName == null

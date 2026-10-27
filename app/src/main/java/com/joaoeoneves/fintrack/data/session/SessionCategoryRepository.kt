@@ -34,7 +34,8 @@ class SessionCategoryRepository
             iconKey: String,
             colorKey: String,
             kind: CategoryKind,
-        ): Result<CategoryId> = switch.call { it.addCategory(name, iconKey, colorKey, kind) }
+            groupId: String?,
+        ): Result<CategoryId> = switch.call { it.addCategory(name, iconKey, colorKey, kind, groupId) }
 
         override suspend fun updateCategory(category: Category): Result<Unit> =
             switch.call {
@@ -45,6 +46,11 @@ class SessionCategoryRepository
             id: CategoryId,
             archived: Boolean,
         ): Result<Unit> = switch.call { it.setArchived(id, archived) }
+
+        override suspend fun setGroup(
+            id: CategoryId,
+            groupId: String?,
+        ): Result<Unit> = switch.call { it.setGroup(id, groupId) }
 
         override suspend fun reorder(orderedIds: List<CategoryId>): Result<Unit> =
             switch.call {

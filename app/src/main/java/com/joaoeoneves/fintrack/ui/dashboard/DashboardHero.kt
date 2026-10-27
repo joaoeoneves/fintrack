@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.dashboard
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -10,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -20,6 +22,8 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.HeroAmount
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
 import java.util.Locale
+
+private const val HERO_MIN_SP = 24
 
 /**
  * Formats a [savingsRate][com.joaoeoneves.fintrack.domain.model.savingsRate] fraction as a
@@ -64,10 +68,19 @@ private fun HeroBalance(
     modifier: Modifier = Modifier,
 ) {
     val color = if (cents < 0) FinTrackTheme.colors.negative else MaterialTheme.colorScheme.onBackground
+    // Shrinks (down to HERO_MIN_SP) rather than clipping for very large values or big font scales.
+    val autoSize = TextAutoSize.StepBased(minFontSize = HERO_MIN_SP.sp, maxFontSize = HeroAmount.fontSize)
     if (scrubbing) {
-        Text(text = formatAmountCents(cents), style = HeroAmount, color = color, maxLines = 1, modifier = modifier)
+        Text(
+            text = formatAmountCents(cents),
+            style = HeroAmount,
+            color = color,
+            maxLines = 1,
+            autoSize = autoSize,
+            modifier = modifier,
+        )
     } else {
-        AnimatedAmountText(cents = cents, style = HeroAmount, color = color, modifier = modifier)
+        AnimatedAmountText(cents = cents, style = HeroAmount, color = color, autoSize = autoSize, modifier = modifier)
     }
 }
 

@@ -1,0 +1,183 @@
+package com.joaoeoneves.fintrack.ui.activity
+
+import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.domain.model.encode
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.time.LocalDate
+import java.time.YearMonth
+
+/** Month-only period behavior and the period totals of [ActivityViewModel]. */
+@OptIn(ExperimentalCoroutinesApi::class)
+class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
+    private val aug = expense("aug", 100L, noonOn(2026, 8, 15))
+    private val sep = expense("sep", 200L, noonOn(2026, 9, 15))
+    private val oct = expense("oct", 300L, noonOn(2026, 10, 15))
+    private val sepIncome = income("sepIncome", 5_000L, noonOn(2026, 9, 1))
+    private val octIncome = income("octIncome", 7_000L, noonOn(2026, 10, 1))
+    private val expenses = listOf(aug, sep, oct)
+    private val incomes = listOf(sepIncome, octIncome)
+
+    private fun fixture(vararg p: Pair<String, Any?>) = Fixture(expenses, incomes, args(*p))
+
+    private fun ActivityUiState.Content.ids() = items.map { it.id }.toSet()
+
+    @Test
+    fun missingPeriod_defaultsToCurrentMonth() =
+        runTest(testDispatcher) {
+            val content = content(fixture().vm)
+
+            assertEquals(Period.CurrentMonth, content.period)
+            assertEquals(setOf("oct", "octIncome"), content.ids())
+            assertFalse(content.canGoToNextMonth)
+        }
+
+    @Test
+    fun routePeriod_month_seedsThatMonth() =
+        runTest(testDispatcher) {
+            val content = content(fixture("period" to Period.Month(YearMonth.of(2026, 9)).encode()).vm)
+
+            assertEquals(Period.Month(YearMonth.of(2026, 9)), content.period)
+            assertEquals(setOf("sep", "sepIncome"), content.ids())
+            assertTrue(content.canGoToNextMonth)
+        }
+
+    @Test
+    fun routePeriod_rollingAndCustom_areCoercedToCurrentMonth() =
+        runTest(testDispatcher) {
+            val tokens =
+                listOf(
+                    Period.Rolling(TimeRange.THREE_MONTHS).encode(),
+                    Period.Custom(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 9, 1)).encode(),
+                    "nonsense",
+                )
+            for (token in tokens) {
+                val content = content(fixture("period" to token).vm)
+                assertEquals(token, Period.CurrentMonth, content.period)
+                assertEquals(token, setOf("oct", "octIncome"), content.ids())
+            }
+        }
+
+    @Test
+    fun onPeriodSelected_rolling_snapsToCurrentMonth() =
+        runTest(testDispatcher) {
+            val vm = fixture().vm
+            content(vm)
+
+            vm.periodActions.onSelect(Period.Rolling(TimeRange.ONE_YEAR))
+            advanceUntilIdle()
+
+            assertEquals(Period.CurrentMonth, current(vm).period)
+            assertEquals(setOf("oct", "octIncome"), current(vm).ids())
+        }
+
+    @Test
+    fun onPeriodSelected_month_switchesMonth() =
+        runTest(testDispatcher) {
+            val vm = fixture().vm
+            content(vm)
+
+            vm.periodActions.onSelect(Period.Month(YearMonth.of(2026, 8)))
+            advanceUntilIdle()
+
+            assertEquals(setOf("aug"), current(vm).ids())
+        }
+
+    @Test
+    fun previousAndNext_navigateMonths_andReQuery() =
+        runTest(testDispatcher) {
+            val vm = fixture().vm
+            content(vm)
+
+            vm.periodActions.onPrevious()
+            advanceUntilIdle()
+            assertEquals(Period.Month(YearMonth.of(2026, 9)), current(vm).period)
+            assertEquals(setOf("sep", "sepIncome"), current(vm).ids())
+            assertTrue(current(vm).canGoToNextMonth)
+
+            vm.periodActions.onNext()
+            advanceUntilIdle()
+            assertEquals(Period.CurrentMonth, current(vm).period)
+            assertEquals(setOf("oct", "octIncome"), current(vm).ids())
+            assertFalse(current(vm).canGoToNextMonth)
+        }
+
+    @Test
+    fun userSelection_isStoredSeparately_andSurvivesRecreation() =
+        runTest(testDispatcher) {
+            val fixture = fixture("period" to "current")
+            content(fixture.vm)
+            fixture.vm.periodActions.onPrevious()
+            advanceUntilIdle()
+
+            assertEquals("current", fixture.handle.get<String>("period"))
+            assertEquals("month:2026-09", fixture.handle.get<String>("selectedPeriod"))
+            assertEquals(Period.Month(YearMonth.of(2026, 9)), content(fixture.recreate()).period)
+        }
+
+    @Test
+    fun periodChange_keepsFilters() =
+        runTest(testDispatcher) {
+            val vm = fixture().vm
+            content(vm)
+            vm.onTypeSelected(ActivityType.INCOME)
+
+            vm.periodActions.onPrevious()
+            advanceUntilIdle()
+
+            assertEquals(setOf("sepIncome"), current(vm).ids())
+        }
+
+    @Test
+    fun totals_sumWholePeriod_beforeFilters() =
+        runTest(testDispatcher) {
+            val fixture =
+                Fixture(
+                    listOf(expense("a", 1_000L), expense("b", 500L)),
+                    listOf(income("i", 4_000L), income("j", 100L)),
+                )
+            val vm = fixture.vm
+            content(vm)
+            vm.onQueryChanged("a")
+            vm.onTypeSelected(ActivityType.EXPENSE)
+            advanceUntilIdle()
+
+            assertEquals(ActivityTotals(inCents = 4_100L, outCents = 1_500L), current(vm).totals)
+            assertEquals(listOf("a"), current(vm).items.map { it.id })
+        }
+
+    @Test
+    fun totals_outIsNetOfRefunds_andMayBeNegative() =
+        runTest(testDispatcher) {
+            val net = Fixture(listOf(expense("a", 1_000L), expense("r", 400L, isRefund = true)))
+            assertEquals(600L, content(net.vm).totals.outCents)
+
+            val negative = Fixture(listOf(expense("r", 400L, isRefund = true)))
+            assertEquals(-400L, content(negative.vm).totals.outCents)
+        }
+
+    @Test
+    fun totals_emptyPeriod_areZero_andItemsEmpty() =
+        runTest(testDispatcher) {
+            val content = content(Fixture().vm)
+
+            assertEquals(ActivityTotals(0L, 0L), content.totals)
+            assertTrue(content.items.isEmpty())
+            assertTrue(content.days.isEmpty())
+        }
+
+    @Test
+    fun totals_zeroAmountEntries_countAsZero() =
+        runTest(testDispatcher) {
+            val content = content(Fixture(listOf(expense("z", 0L)), listOf(income("zi", 0L))).vm)
+
+            assertEquals(ActivityTotals(0L, 0L), content.totals)
+            assertEquals(2, content.items.size)
+        }
+}

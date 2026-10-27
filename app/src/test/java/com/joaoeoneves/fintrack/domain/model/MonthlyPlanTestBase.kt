@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.domain.model
 
 import com.joaoeoneves.fintrack.testutil.testIncome
 import java.time.Instant
+import java.time.YearMonth
 
 /** Fixtures for the [monthlyPlanOf] / [dailyAllowanceOf] tests. */
 abstract class MonthlyPlanTestBase {
@@ -24,5 +25,7 @@ abstract class MonthlyPlanTestBase {
         buckets: List<CategoryBudget> = emptyList(),
         lines: List<PlannedIncome> = listOf(line(200_000L)),
         income: List<Long> = emptyList(),
-    ) = monthlyPlanOf(buckets, lines, received(*income.toLongArray()))
+        month: YearMonth = YearMonth.of(2026, 10),
+        workingDays: Int = 22,
+    ) = monthlyPlanOf(buckets, lines, received(*income.toLongArray()), month, workingDays)
 }

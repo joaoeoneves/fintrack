@@ -9,6 +9,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import com.joaoeoneves.fintrack.ui.theme.REDUCED_MOTION_FADE_MS
 import com.joaoeoneves.fintrack.ui.theme.SCREEN_TRANSITION_MS
 
@@ -72,4 +74,22 @@ internal class NavTransitions(
 
     /** The screen beneath an add/edit form coming back: fades in while the form slides down. */
     fun popEnterUnderForm(): EnterTransition = fadeIn(tween(duration))
+
+    /** Switching between tabs cross-fades: tabs are peers, so there is no direction to slide in. */
+    fun fadeEnter(): EnterTransition = fadeIn(tween(duration))
+
+    /** The tab being left while another tab cross-fades in. */
+    fun fadeExit(): ExitTransition = fadeOut(tween(duration))
 }
+
+/** Add/edit forms enter from the bottom; the screen beneath them fades instead of sliding sideways. */
+internal fun NavDestination.isForm(): Boolean {
+    val forms = listOf(hasRoute<AddEditExpense>(), hasRoute<AddEditIncome>(), hasRoute<AddEditRecurring>())
+    return forms.any { it }
+}
+
+/** Whether a transition between [from] and [to] is a switch between two tab roots. */
+internal fun isTabSwitch(
+    from: NavDestination,
+    to: NavDestination,
+): Boolean = from.isTopLevel() && to.isTopLevel()

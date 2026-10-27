@@ -58,28 +58,28 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun switchingPeriods_keepsOnlyTheLatestPeriodsListenersActive() =
+    fun switchingMonths_keepsOnlyTheLatestPeriodsListenersActive_andRollingIsCoerced() =
         runTest(testDispatcher) {
             val viewModel = countingViewModel()
             collect(viewModel)
 
+            // Home is month-only: rolling/custom selections coerce to the already-selected current month.
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.SIX_MONTHS))
             advanceUntilIdle()
-            assertActive(expenseListeners = 2)
+            assertActive(expenseListeners = 1)
+            assertEquals(1, expenses.listeners.observedRanges.size)
 
-            viewModel.onPreviousMonth() // no-op for rolling periods
-            viewModel.onPeriodSelected(Period.Month(previousMonth))
+            viewModel.onPreviousMonth()
             advanceUntilIdle()
             assertActive(expenseListeners = 1)
+            assertEquals(2, expenses.listeners.observedRanges.size)
 
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.ONE_YEAR))
             advanceUntilIdle()
-            viewModel.onPeriodSelected(Period.CurrentMonth)
-            advanceUntilIdle()
             assertActive(expenseListeners = 1)
             assertEquals(currentMonth, viewModel.content().budgetMonth)
-            // CurrentMonth + Rolling(6M) x2 + Month + Rolling(1Y) x2 + CurrentMonth.
-            assertEquals(7, expenses.listeners.observedRanges.size)
+            // CurrentMonth, then Month(previous), then CurrentMonth again.
+            assertEquals(3, expenses.listeners.observedRanges.size)
         }
 
     @Test

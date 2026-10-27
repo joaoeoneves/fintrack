@@ -29,7 +29,9 @@ import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.indicatorDpSpring
 
-private val TabHeight = 40.dp
+/** Touch target height of each tab; the visible indicator pill stays [IndicatorHeight] tall. */
+private val TabHeight = 48.dp
+private val IndicatorHeight = 40.dp
 
 /**
  * Equal-width text tabs with a pill indicator that slides to the selected tab. [selected] may be
@@ -62,9 +64,10 @@ fun <T> SegmentedTextTabs(
         Box(
             modifier =
                 Modifier
+                    .align(Alignment.CenterStart)
                     .offset { IntOffset(x = indicatorOffset.roundToPx(), y = 0) }
                     .width(tabWidth)
-                    .height(TabHeight)
+                    .height(IndicatorHeight)
                     .graphicsLayer { alpha = indicatorAlpha }
                     .clip(CircleShape)
                     .background(FinTrackTheme.colors.surface2),

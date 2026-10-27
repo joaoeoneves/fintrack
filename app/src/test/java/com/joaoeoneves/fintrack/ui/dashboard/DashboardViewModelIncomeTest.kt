@@ -4,6 +4,7 @@ import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.testutil.genericErrorText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,7 +38,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
 
             val content = viewModel.content()
             assertEquals(250_000L, content.incomeCents)
-            assertEquals(listOf(inside), content.recentIncome)
+            assertEquals(listOf(inside), content.recent)
         }
 
     @Test
@@ -50,7 +51,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
 
             val content = viewModel.content()
             assertEquals(0L, content.incomeCents)
-            assertTrue(content.recentIncome.isEmpty())
+            assertTrue(content.recent.none { it is Income })
             assertNull(content.savingsRate)
             assertEquals(-5_000L, content.netCents)
         }
@@ -124,7 +125,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun recentIncome_returnsTop5ByDateDescending_whenMoreThan5InRange() =
+    fun recent_returnsTop5ByDateDescending_whenMoreThan5InRange() =
         runTest(testDispatcher) {
             val all = (1..7).map { income(id = "i$it", amountCents = 100L, date = daysAgo(it.toLong())) }
             val scrambled = listOf(all[3], all[0], all[6], all[1], all[5], all[2], all[4])
@@ -132,7 +133,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(all.take(5), content.recentIncome)
+            assertEquals(all.take(5), content.recent)
             assertEquals(700L, content.incomeCents)
         }
 
@@ -157,7 +158,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             assertEquals(400_000L, content.incomeCents)
             assertEquals(5_000L, content.outflowCents)
             assertEquals(395_000L, content.netCents)
-            assertEquals(listOf(sepIncome), content.recentIncome)
+            assertEquals(listOf(sepIncome), content.recent.filterIsInstance<Income>())
         }
 
     // ---- observeIncome failure -> Error state ----

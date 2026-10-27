@@ -20,15 +20,33 @@ class LocalBudgetRepository
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
+            skipMonths: Set<Int>,
         ): Result<Unit> =
             store.update { doc ->
-                validateBudget(categoryId.value, limitCents, knownCategoryIds(doc))
-                val record = LocalBudget(categoryId.value, limitCents)
+                validateBudget(categoryId.value, limitCents, knownCategoryIds(doc), skipMonths)
+                val record = LocalBudget(categoryId.value, limitCents, skipMonths.sorted())
                 doc.copy(budgets = doc.budgets.upserted(record) { it.categoryId == record.categoryId }) to Unit
             }
 
         override suspend fun clearBudget(categoryId: CategoryId): Result<Unit> =
             store.update { doc ->
                 doc.copy(budgets = doc.budgets.filterNot { it.categoryId == categoryId.value }) to Unit
+            }
+
+        override suspend fun moveBudget(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Boolean> =
+            store.update { doc ->
+                require(target.value in knownCategoryIds(doc)) { "Unknown category ${target.value}" }
+                val sourceBudget = doc.budgets.find { it.categoryId == source.value }
+                val withoutSource = doc.budgets.filterNot { it.categoryId == source.value }
+                val budgets =
+                    if (sourceBudget == null || withoutSource.any { it.categoryId == target.value }) {
+                        withoutSource
+                    } else {
+                        withoutSource + sourceBudget.copy(categoryId = target.value)
+                    }
+                doc.copy(budgets = budgets) to (sourceBudget != null)
             }
     }

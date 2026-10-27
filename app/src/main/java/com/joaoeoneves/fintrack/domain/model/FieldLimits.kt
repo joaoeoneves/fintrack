@@ -9,14 +9,26 @@ const val MAX_NAME_LENGTH = 200
 /** Maximum length, in code points, of a user-defined category name. */
 const val MAX_CATEGORY_NAME_LENGTH = 50
 
+/** Maximum length, in code points, of a category group name. */
+const val MAX_GROUP_NAME_LENGTH = 50
+
 /** Maximum length, in code points, of an expense or income note. */
 const val MAX_NOTE_LENGTH = 2000
 
 /** Maximum length, in code points, of a planned-income line label. */
 const val MAX_PLAN_LABEL_LENGTH = 50
 
+/** Largest money amount accepted, in cents (1 billion); mirrors the upper bound in `firestore.rules`. */
+const val MAX_AMOUNT_CENTS = 100_000_000_000L
+
 /** Maximum number of planned-income lines (enforced client-side only; rules can't count documents). */
-const val MAX_PLANNED_INCOME_LINES = 10
+const val MAX_PLANNED_INCOME_LINES = 20
+
+/** Most working days a month can be set to (the longest possible Monday to Friday count). */
+const val MAX_WORKING_DAYS = 23
+
+/** Most days off a single month can hold; mirrors the bound in `firestore.rules`. */
+const val MAX_DAYS_OFF = 23
 
 // The length counter appears once a field is more than 4/5 (80%) of the way to its limit.
 private const val COUNTER_THRESHOLD_NUMERATOR = 4

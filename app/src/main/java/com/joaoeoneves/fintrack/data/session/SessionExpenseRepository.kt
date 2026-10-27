@@ -46,4 +46,12 @@ class SessionExpenseRepository
 
         override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> =
             switch.call { it.hasExpenseWithCategory(categoryId) }
+
+        override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> =
+            switch.call { it.countExpensesWithCategory(categoryId) }
+
+        override suspend fun moveExpensesToCategory(
+            source: CategoryId,
+            target: CategoryId,
+        ): Result<Int> = switch.call { it.moveExpensesToCategory(source, target) }
     }

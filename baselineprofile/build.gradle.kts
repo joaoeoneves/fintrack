@@ -10,7 +10,7 @@ android {
     namespace = "com.joaoeoneves.fintrack.baselineprofile"
     compileSdk {
         version =
-            release(36) {
+            release(37) {
                 minorApiLevel = 1
             }
     }

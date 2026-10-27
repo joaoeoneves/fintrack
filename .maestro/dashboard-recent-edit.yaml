@@ -2,9 +2,9 @@ appId: com.joaoeoneves.fintrack
 ---
 # Dashboard recent-row E2E flow for FinTrack.
 #
-# Tapping a row on the Dashboard's "Recent expenses" / "Recent income" cards opens that item's edit
-# screen ("Edit expense" / "Edit income") with its values prefilled. The card header row and the
-# "See all ..." links still open the full lists.
+# Tapping a row in Home's merged "Recent activity" list opens that item's edit
+# screen ("Edit expense" / "Edit income") with its values prefilled. The section title and the
+# "See all" link (tag see_all_activity) open the Activity tab.
 #
 # Assumes the app is already signed in and lands on the Dashboard, same as golden-path.yaml.
 # Creates "Maestro E2E Recent Expense" and "Maestro E2E Recent Income" and deletes each at the end
@@ -76,22 +76,20 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Edit income"
 - assertVisible: "Maestro E2E Recent Income"
 
-# --- 3: The "Recent expenses" header row still opens the full list; delete the expense there while
-# the list is search-filtered to its name.
+# --- 3: The "Recent activity" title still opens the Activity tab (unified list); delete the
+# expense there while the list is search-filtered to its name.
 - scrollUntilVisible:
-    element: "Recent expenses"
+    element: "Recent activity"
     direction: UP
-- tapOn: "Recent expenses"
-- assertVisible: "All expenses"
+- tapOn: "Recent activity"
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Expense"
 - hideKeyboard
 - assertVisible: "[-−]€23\\.45"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Recent Expense"
 - assertNotVisible: "[-−]€23\\.45"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Recent Expense"
@@ -101,22 +99,23 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     id: "dashboard_list"
 
-# --- 4: Open the income list via "See all income" and delete the income the same way.
+# --- 4: Open the Activity tab via "See all", switch to Income and delete the income the same way.
 - scrollUntilVisible:
-    element: "See all income"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all income"
-- assertVisible: "All income"
+- tapOn:
+    id: "see_all_activity"
+# "See all" opens the unified Activity list (type chip All): income rows show without switching.
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Income"
 - hideKeyboard
 - assertVisible: "\\+€34\\.56"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Recent Income"
 - assertNotVisible: "\\+€34\\.56"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Recent Income"

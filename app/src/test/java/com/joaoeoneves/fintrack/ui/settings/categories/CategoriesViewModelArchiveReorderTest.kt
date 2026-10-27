@@ -28,12 +28,12 @@ class CategoriesViewModelArchiveReorderTest : CategoriesViewModelTestBase() {
 
             viewModel.onToggleArchived(gym.id)
             advanceUntilIdle()
-            assertEquals(listOf(gym.id), viewModel.content().archived.map { it.id })
+            assertEquals(listOf(BuiltInCategories.RECURRING.id, gym.id), viewModel.content().archived.map { it.id })
             assertTrue(viewModel.content().active.none { it.id == gym.id })
 
             viewModel.onToggleArchived(gym.id)
             advanceUntilIdle()
-            assertTrue(viewModel.content().archived.isEmpty())
+            assertEquals(listOf(BuiltInCategories.RECURRING.id), viewModel.content().archived.map { it.id })
             assertTrue(viewModel.content().active.any { it.id == gym.id })
         }
 
@@ -71,7 +71,7 @@ class CategoriesViewModelArchiveReorderTest : CategoriesViewModelTestBase() {
             viewModel.onToggleArchived(gym.id)
             advanceUntilIdle()
             assertEquals(listOf<UiText>(saveFailed), errors)
-            assertTrue(viewModel.content().archived.isEmpty())
+            assertEquals(listOf(BuiltInCategories.RECURRING.id), viewModel.content().archived.map { it.id })
         }
 
     @Test
@@ -102,13 +102,13 @@ class CategoriesViewModelArchiveReorderTest : CategoriesViewModelTestBase() {
                     BuiltInCategories.TRANSFER.id,
                     BuiltInCategories.SHOPPING.id,
                     BuiltInCategories.FOOD.id,
-                    BuiltInCategories.RECURRING.id,
                     gym.id,
+                    BuiltInCategories.RECURRING.id,
                     old.id,
                 )
             assertEquals(expected, mergeCategories(repo.docs).map { it.id })
             assertEquals(expected.indices.toList(), mergeCategories(repo.docs).map { it.order })
-            assertEquals(listOf(old.id), viewModel.content().archived.map { it.id })
+            assertEquals(listOf(BuiltInCategories.RECURRING.id, old.id), viewModel.content().archived.map { it.id })
         }
 
     @Test
@@ -117,7 +117,7 @@ class CategoriesViewModelArchiveReorderTest : CategoriesViewModelTestBase() {
             val repo = FakeCategoryRepository()
             val viewModel = start(repo)
             viewModel.onMove(BuiltInCategories.TRANSFER.id, MoveDirection.UP)
-            viewModel.onMove(BuiltInCategories.RECURRING.id, MoveDirection.DOWN)
+            viewModel.onMove(BuiltInCategories.FOOD.id, MoveDirection.DOWN)
             viewModel.onMove(CategoryId("nope"), MoveDirection.UP)
             advanceUntilIdle()
             assertTrue(repo.docs.isEmpty())

@@ -9,7 +9,6 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.domain.model.CategoryTotal
 import com.joaoeoneves.fintrack.domain.model.DailyAllowance
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,7 +22,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Monthly-plan tests for [DashboardViewModel]: the plan summary, planned chart slices and the daily
+ * Monthly-plan tests for [DashboardViewModel]: the plan summary and the daily
  * allowance. "Now" is 2026-10-20, so the current month has 12 days left (the 20th included).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,7 +48,7 @@ class DashboardViewModelPlanTest : DashboardViewModelTestBase() {
     )
 
     @Test
-    fun plan_filledFromPlannedIncomeAndBudgets_andPlannedSlicesListLimitedCategories() =
+    fun plan_filledFromPlannedIncomeAndBudgets() =
         runTest(testDispatcher) {
             val budgets =
                 listOf(
@@ -64,24 +63,16 @@ class DashboardViewModelPlanTest : DashboardViewModelTestBase() {
             assertEquals(24_000L, content.plan.plannedSpendingCents)
             assertEquals(10_000L, content.plan.plannedSavingCents)
             assertEquals(86_000L, content.plan.safeToSpendCents)
-            assertEquals(
-                listOf(
-                    CategoryTotal(BuiltInCategories.INVESTMENTS, 10_000L),
-                    CategoryTotal(BuiltInCategories.SHOPPING, 24_000L),
-                ),
-                content.plannedSlices,
-            )
         }
 
     @Test
-    fun plan_nothingConfigured_isUnconfiguredWithNoSlicesAndNoAllowance() =
+    fun plan_nothingConfigured_isUnconfiguredWithNoAllowance() =
         runTest(testDispatcher) {
             val viewModel = planViewModel(FakePlannedIncomeRepository())
             collect(viewModel)
 
             val content = viewModel.content()
             assertEquals(false, content.plan.isConfigured)
-            assertEquals(emptyList<CategoryTotal>(), content.plannedSlices)
             assertNull(content.dailyAllowance)
         }
 

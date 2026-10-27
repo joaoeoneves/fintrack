@@ -14,13 +14,15 @@ internal class PendingWrite(
 )
 
 /**
- * The planned writes grouped into batches, in commit order: categories, budgets, expenses, income, planned income,
- * recurring items.
+ * The planned writes grouped into batches, in commit order: category groups, categories, budgets, expenses, income,
+ * planned income,
+ * recurring items, month settings, salary profile.
  * Every batch holds at most 400 writes; budget, expense and recurring batches also respect the rules' cap on
  * distinct custom categories. A planned record that cannot be mapped is a bug (the planner validates
  * everything) and throws instead of being silently dropped.
  */
 internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
+    val groupWrites = categoryGroups.map { PendingWrite("categoryGroups", it.id, it.toDomain().toFirestoreMap()) }
     val categoryWrites =
         categories.map { category ->
             val domain = checkNotNull(category.toDomainOrNull()) { "Planned category ${category.id} is unmappable" }
@@ -30,16 +32,7 @@ internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
                 domain.toFirestoreMap() + ("createdAt" to FieldValue.serverTimestamp()),
             )
         }
-    val budgetBatches =
-        budgets.chunkedForRules { CategoryId(it.categoryId) }.map { chunk ->
-            chunk.map {
-                PendingWrite(
-                    "budgets",
-                    it.categoryId,
-                    mapOf("limitCents" to it.limitCents, "updatedAt" to FieldValue.serverTimestamp()),
-                )
-            }
-        }
+    val budgetBatches = budgetBatches()
     val expenseBatches =
         expenses.chunkedForRules { CategoryId(it.categoryId) }.map { chunk ->
             chunk.map { local ->
@@ -65,6 +58,34 @@ internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
                 PendingWrite("recurring", local.id, domain.toFirestoreMap())
             }
         }
-    return categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches + expenseBatches + incomeBatches +
-        plannedIncomeBatches + recurringBatches
+    val monthSettingsBatches =
+        monthSettings.chunked(BATCH_CHUNK_SIZE).map { chunk ->
+            chunk.map { local ->
+                val domain = checkNotNull(local.toDomainOrNull()) { "Planned month settings ${local.month} unmappable" }
+                PendingWrite("monthSettings", local.month, domain.toFirestoreMap())
+            }
+        }
+    // The salary profile is a single document in the `plan` collection, committed after the lines it produced.
+    val salaryProfileBatches =
+        listOfNotNull(salaryProfile).map {
+            listOf(PendingWrite("plan", "salaryProfile", it.toDomain().toFirestoreMap()))
+        }
+    return groupWrites.chunked(BATCH_CHUNK_SIZE) + categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches +
+        expenseBatches + incomeBatches + plannedIncomeBatches + recurringBatches + monthSettingsBatches +
+        salaryProfileBatches
 }
+
+private fun MigrationPlan.budgetBatches(): List<List<PendingWrite>> =
+    budgets.chunkedForRules { CategoryId(it.categoryId) }.map { chunk ->
+        chunk.map {
+            PendingWrite(
+                "budgets",
+                it.categoryId,
+                mapOf(
+                    "limitCents" to it.limitCents,
+                    "skipMonths" to it.skipMonths.sorted(),
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                ),
+            )
+        }
+    }

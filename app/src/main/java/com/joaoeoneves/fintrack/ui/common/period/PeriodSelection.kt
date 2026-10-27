@@ -40,3 +40,9 @@ class PeriodSelection(
 
     private fun current(): Period = decodePeriod(token.value, clock.instant(), clock.zone)
 }
+
+/** This period if it is a month, otherwise the current month: for screens that only know months. */
+fun Period.asMonthPeriod(): Period {
+    val isMonth = this is Period.CurrentMonth || this is Period.Month
+    return if (isMonth) this else Period.CurrentMonth
+}

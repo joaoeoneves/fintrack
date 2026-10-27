@@ -20,6 +20,8 @@ data class CategoryTotal(
  *
  * @property spendingCents net outflow of [CategoryKind.SPENDING] categories.
  * @property savedCents net outflow of [CategoryKind.SAVING] categories.
+ * @property fixedSpendingCents the part of [spendingCents] that came from recurring items (expenses whose
+ *   id is a [isRecurringOccurrenceId]), net of refunds; the rest is [variableSpendingCents].
  * @property categoryTotals one entry per active category plus any other category with expenses
  *   (archived or unknown), in catalog order with unknown ones last.
  */
@@ -28,7 +30,11 @@ data class CashFlowSummary(
     val spendingCents: Long,
     val savedCents: Long,
     val categoryTotals: List<CategoryTotal>,
+    val fixedSpendingCents: Long = 0L,
 ) {
+    /** Spending that did not come from a recurring item. */
+    val variableSpendingCents: Long get() = spendingCents - fixedSpendingCents
+
     /** Everything that left, i.e. [spendingCents] + [savedCents]. */
     val outflowCents: Long get() = spendingCents + savedCents
 
@@ -57,5 +63,18 @@ fun cashFlowSummaryOf(
         spendingCents = totals.filter { it.category.kind == CategoryKind.SPENDING }.sumOf { it.totalCents },
         savedCents = totals.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.totalCents },
         categoryTotals = totals,
+        fixedSpendingCents = fixedSpendingCentsOf(expenses, categories),
     )
 }
+
+/**
+ * Net spending-kind outflow of the [expenses] generated from recurring items ("fixed" spending). Kinds
+ * come from the [categories] catalog, like in [cashFlowSummaryOf].
+ */
+fun fixedSpendingCentsOf(
+    expenses: List<Expense>,
+    categories: List<Category>,
+): Long =
+    expenses
+        .filter { isRecurringOccurrenceId(it.id) && categories.resolve(it.category.id).kind == CategoryKind.SPENDING }
+        .netCents()

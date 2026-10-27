@@ -48,23 +48,23 @@ onFlowComplete:
 
 # --- 2: Expense: delete offline -> row gone, Undo shown immediately ---
 - scrollUntilVisible:
-    element: "See all expenses"
+    element:
+      id: "see_all_activity"
     direction: DOWN
-- tapOn: "See all expenses"
-- assertVisible: "All expenses"
+- tapOn:
+    id: "see_all_activity"
 - tapOn: "Search"
 - inputText: "Maestro Offline"
 - hideKeyboard
 - assertVisible: "Maestro Offline Expense"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
-    index: 0
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro Offline Expense"
 - assertNotVisible: "Maestro Offline Expense"
 - assertVisible: "Undo"
-- tapOn: "Back"
+# The Activity tab has no back arrow; system back returns to Home.
+- back
 
 # --- 3: Income: add offline -> form closes, row on Dashboard ---
 - tapOn: "Add income"
@@ -85,23 +85,24 @@ onFlowComplete:
 
 # --- 4: Income: delete offline -> row gone, Undo shown immediately ---
 - scrollUntilVisible:
-    element: "See all income"
+    element:
+      id: "see_all_activity"
     direction: DOWN
 - scroll
-- tapOn: "See all income"
-- assertVisible: "All income"
+- tapOn:
+    id: "see_all_activity"
+# "See all" opens the unified Activity list (type chip All): income rows show without switching.
 - tapOn: "Search"
 - inputText: "Maestro Offline"
 - hideKeyboard
 - assertVisible: "Maestro Offline Income"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
-    index: 0
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro Offline Income"
 - assertNotVisible: "Maestro Offline Income"
 - assertVisible: "Undo"
-- tapOn: "Back"
+# The Activity tab has no back arrow; system back returns to Home.
+- back
 - assertVisible:
     id: "dashboard_list"
