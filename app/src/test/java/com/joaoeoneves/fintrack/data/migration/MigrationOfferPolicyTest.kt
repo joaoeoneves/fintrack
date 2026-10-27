@@ -37,6 +37,14 @@ class MigrationOfferPolicyTest {
     }
 
     @Test
+    fun onlyRecurring_offers() {
+        val onlyRecurring = localDoc(revision = 3, recurring = listOf(localRecurring("r1")))
+
+        assertFalse(onlyRecurring.isEmpty)
+        assertTrue(shouldOfferMigration(signedIn, onlyRecurring, null))
+    }
+
+    @Test
     fun sameRevisionHandled_doesNotOffer() {
         assertFalse(shouldOfferMigration(signedIn, data, 3L))
     }

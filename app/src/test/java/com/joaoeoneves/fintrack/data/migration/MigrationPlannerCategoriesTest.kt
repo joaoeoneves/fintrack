@@ -11,7 +11,7 @@ class MigrationPlannerCategoriesTest {
     fun emptyLocal_givesEmptyPlan() {
         val plan = planMigration(localDoc(), remoteSnapshot())
 
-        assertEquals(MigrationPlan(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), 0), plan)
+        assertEquals(emptyPlan(skipped = 0), plan)
         assertEquals(0, plan.total)
     }
 
@@ -157,6 +157,9 @@ class MigrationPlannerCategoriesTest {
 
         val plan = planMigration(local, remoteSnapshot())
 
-        assertEquals(MigrationPlan(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), 3), plan)
+        assertEquals(emptyPlan(skipped = 3), plan)
     }
+
+    private fun emptyPlan(skipped: Int) =
+        MigrationPlan(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), skipped)
 }

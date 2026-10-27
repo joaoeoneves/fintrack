@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
@@ -14,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,16 +44,22 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         scope.cancel()
     }
 
+    @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
     protected fun repository(
         expenses: List<Expense> = emptyList(),
         income: List<Income> = emptyList(),
         budgets: List<Budget> = emptyList(),
         categoryDocs: List<Category> = emptyList(),
         plannedIncome: List<PlannedIncome> = emptyList(),
+        recurring: List<RecurringItem> = emptyList(),
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
-        PlanBackupSource(FakeBudgetRepository(budgets), FakePlannedIncomeRepository(plannedIncome)),
+        PlanBackupSource(
+            FakeBudgetRepository(budgets),
+            FakePlannedIncomeRepository(plannedIncome),
+            FakeRecurringRepository(recurring),
+        ),
         FakeCategoryRepository(categoryDocs),
         prefsStore,
         restorer,

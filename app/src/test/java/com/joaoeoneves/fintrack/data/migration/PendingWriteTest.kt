@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
+import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -17,13 +18,15 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class PendingWriteTest {
+    @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
     private fun plan(
         categories: List<LocalCategory> = emptyList(),
         budgets: List<LocalBudget> = emptyList(),
         expenses: List<LocalExpense> = emptyList(),
         income: List<LocalIncome> = emptyList(),
         plannedIncome: List<LocalPlannedIncome> = emptyList(),
-    ) = MigrationPlan(categories, budgets, expenses, income, plannedIncome, 0)
+        recurring: List<LocalRecurringItem> = emptyList(),
+    ) = MigrationPlan(categories, budgets, expenses, income, plannedIncome, recurring, 0)
 
     private fun List<List<PendingWrite>>.distinctCustomPerBatch() =
         map { batch ->

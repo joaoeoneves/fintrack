@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.backup.BackupCodec
 import com.joaoeoneves.fintrack.data.backup.BackupDocument
 import com.joaoeoneves.fintrack.data.backup.BackupRepository
@@ -68,6 +69,7 @@ abstract class BackupViewModelTestBase : BackupRepositoryTestBase() {
             PlanBackupSource(
                 FakeBudgetRepository(nextObserveBudgetsError = IllegalStateException("boom")),
                 FakePlannedIncomeRepository(),
+                FakeRecurringRepository(),
             ),
             FakeCategoryRepository(),
             prefsStore,

@@ -17,8 +17,8 @@ private val SERVER_TIMEOUT = 30.seconds
 
 /**
  * Moves guest data into `users/{uid}`: ids are preserved (`document(id)`), batches are committed
- * one at a time and awaited, in the order categories, budgets, expenses, income so the rules'
- * `existsAfter` category lookup finds every custom category a later batch references. Awaiting is
+ * one at a time and awaited, in the order categories, budgets, expenses, income, planned income, recurring so
+ * the rules' `existsAfter` category lookup finds every custom category a later batch references. Awaiting is
  * deliberate here (unlike the normal repositories): the caller must know a batch reached the server
  * before the local copy may be removed, so each wait is bounded by a timeout.
  */
@@ -60,6 +60,7 @@ class FirestoreAccountMigrator
                 incomeIds = ids("income"),
                 budgetCategoryIds = ids("budgets"),
                 plannedIncomeIds = ids("plannedIncome"),
+                recurringIds = ids("recurring"),
                 categories = categories,
             )
         }

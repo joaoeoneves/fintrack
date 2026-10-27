@@ -241,7 +241,7 @@
     <string name="settings_backup_guest_hint">Exporte uma cópia de segurança para mover os seus dados para outro dispositivo</string>
     <string name="settings_backup_signed_in_hint">Guarde uma cópia dos seus dados num ficheiro JSON</string>
     <string name="action_restore">Restaurar</string>
-    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nOrçamentos: %3$d\nCategorias: %4$d\nRendimentos previstos: %5$d</string>
+    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nOrçamentos: %3$d\nCategorias: %4$d\nRendimentos previstos: %5$d\nItens recorrentes: %6$d</string>
     <string name="backup_export_done_title">Cópia de segurança exportada</string>
     <string name="backup_export_done_message">A cópia de segurança foi guardada.\n\n%1$s</string>
     <string name="backup_export_failed_title">Falha na exportação</string>

@@ -111,13 +111,15 @@ abstract class LocalDataMigrationViewModelTestBase : LocalStoreTestBase() {
         error: Throwable,
     ) = MigrationResult(written, total, 0, error)
 
+    @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
     protected fun counts(
         expenses: Int,
         income: Int = 0,
         budgets: Int = 0,
         categories: Int = 0,
         plannedIncome: Int = 0,
-    ) = BackupCounts(expenses, income, budgets, categories, plannedIncome)
+        recurring: Int = 0,
+    ) = BackupCounts(expenses, income, budgets, categories, plannedIncome, recurring)
 
     protected fun assertText(
         expectedRes: Int,

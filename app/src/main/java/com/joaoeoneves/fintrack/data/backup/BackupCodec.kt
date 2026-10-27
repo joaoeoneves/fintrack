@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateExpense
 import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
+import com.joaoeoneves.fintrack.data.local.validateRecurring
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -74,9 +75,9 @@ object BackupCodec {
             } catch (e: IllegalArgumentException) {
                 return BackupDecodeResult.Invalid(e.message ?: "Malformed backup")
             }
-        // Per-version migrations: 1 -> 2 only added plannedIncome (absent = empty).
+        // Per-version migrations: 1 -> 2 added plannedIncome and 2 -> 3 added recurring (absent = empty).
         return when (document.schemaVersion) {
-            1 -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
+            1, 2 -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
         }
@@ -91,10 +92,11 @@ object BackupCodec {
         val expenses = keepValid(document.expenses, { it.id }) { validateExpense(it, known) }
         val income = keepValid(document.income, { it.id }) { validateIncome(it) }
         val plannedIncome = keepValid(document.plannedIncome, { it.id }) { validatePlannedIncome(it) }
+        val recurring = keepValid(document.recurring, { it.id }) { validateRecurring(it, known) }
         val skipped =
             (document.categories.size - categories.size) + (document.budgets.size - budgets.size) +
                 (document.expenses.size - expenses.size) + (document.income.size - income.size) +
-                (document.plannedIncome.size - plannedIncome.size)
+                (document.plannedIncome.size - plannedIncome.size) + (document.recurring.size - recurring.size)
         return BackupDecodeResult.Success(
             document.copy(
                 categories = categories,
@@ -102,6 +104,7 @@ object BackupCodec {
                 expenses = expenses,
                 income = income,
                 plannedIncome = plannedIncome,
+                recurring = recurring,
             ),
             skipped,
         )

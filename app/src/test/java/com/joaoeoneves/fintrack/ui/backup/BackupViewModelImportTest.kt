@@ -36,7 +36,7 @@ class BackupViewModelImportTest : BackupViewModelTestBase() {
             settle()
 
             assertEquals(
-                BackupImportState.Confirm(BackupCounts(1, 1, 1, 1, 0), skippedCount = 1, localHasData = false),
+                BackupImportState.Confirm(BackupCounts(1, 1, 1, 1, 0, 0), skippedCount = 1, localHasData = false),
                 vm.importState.value,
             )
         }
@@ -64,7 +64,7 @@ class BackupViewModelImportTest : BackupViewModelTestBase() {
             vm.onConfirmImport()
             settle()
 
-            assertEquals(BackupImportState.Done(BackupCounts(1, 1, 1, 1, 0)), vm.importState.value)
+            assertEquals(BackupImportState.Done(BackupCounts(1, 1, 1, 1, 0, 0)), vm.importState.value)
             val stored = localStore.data.first()
             assertEquals(listOf("e1"), stored.expenses.map { it.id })
             assertEquals(listOf("gym"), stored.categories.map { it.id })

@@ -182,6 +182,7 @@ private fun LocalDataDocument.counts() =
         budgets = budgets.size,
         categories = categories.size,
         plannedIncome = plannedIncome.size,
+        recurring = recurring.size,
     )
 
 private suspend fun MigrationOfferStore.markHandledLogged(revision: Long) {

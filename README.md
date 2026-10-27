@@ -53,6 +53,10 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
   month (income minus, per category, the larger of planned and actual), expected vs received income,
   what's left in spending budgets and a daily allowance; the spending donut toggles between actual and
   planned. Edited on its own "Monthly plan" screen.
+- **Recurring transactions** — rent, subscriptions, salary: monthly or yearly templates with an explicit
+  billing day (clamped to short months), start/end dates and pause/resume. An Upcoming card on the
+  Dashboard lists due and soon-due occurrences with one-tap Confirm (creates the expense/income with a
+  deterministic id, so it's never duplicated) or Skip, and shows the annualized cost of recurring expenses.
 - **Full expense/income lists** — the same time-range filters, text search, and sorting (newest/oldest
   first, highest/lowest amount); swipe-to-dismiss delete with an Undo snackbar, plus a trash-icon button
   for discoverability.
@@ -153,6 +157,21 @@ users/{uid}/plannedIncome/{lineId}    // expected-income lines of the monthly pl
   order: number
   updatedAt: timestamp
 
+users/{uid}/recurring/{itemId}        // recurring expense/income templates
+  type: string              // EXPENSE | INCOME
+  name: string              // 1..200 chars (expense name / income source)
+  amountCents: number
+  category: string | null   // EXPENSE only
+  note: string | null
+  frequency: string         // MONTHLY | YEARLY
+  dayOfMonth: number        // 1..31, clamped to the month's length
+  monthOfYear: number|null  // 1..12, YEARLY only
+  startDate / endDate: string        // yyyy-MM-dd; endDate optional, inclusive
+  handledThrough: string | null      // last confirmed/skipped occurrence (cursor)
+  active: boolean
+  updatedAt: timestamp
+// Confirming an occurrence writes expenses|income/rec_<itemId>_<yyyyMMdd> and advances the cursor in one batch.
+
 users/{uid}/categories/{categoryId}   // user categories (generated ids) and optional overrides
   name: string | null       //   of the built-ins (same id; null name = localized default)
   iconKey / colorKey: string
@@ -178,7 +197,7 @@ of expenses, income, budgets and categories mirroring the Firestore documents, w
 are atomic (temp file + rename); a corrupt or newer-schema file is moved aside to
 `guest-data.corrupt-<millis>.json` rather than deleted. After a successful "Remove from this device" following a migration to an account,
 the previous file is kept once as `guest-data.migrated.json` (a single safety copy, overwritten next time). The backup file uses the same record shapes inside
-a `{ "format": "fintrack-backup", "schemaVersion": 2, "exportedAt", "appVersion", "preferences", ... }`
+a `{ "format": "fintrack-backup", "schemaVersion": 3, "exportedAt", "appVersion", "preferences", ... }`
 envelope; records that fail validation are skipped and reported on restore.
 
 ### Download

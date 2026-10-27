@@ -7,11 +7,13 @@ import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
+import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateExpense
 import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
+import com.joaoeoneves.fintrack.data.local.validateRecurring
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
@@ -24,6 +26,7 @@ data class RemoteAccountSnapshot(
     val incomeIds: Set<String>,
     val budgetCategoryIds: Set<String>,
     val plannedIncomeIds: Set<String>,
+    val recurringIds: Set<String>,
     /** Stored category documents only (built-in overrides plus user categories). */
     val categories: List<Category>,
 )
@@ -39,9 +42,11 @@ data class MigrationPlan(
     val expenses: List<LocalExpense>,
     val income: List<LocalIncome>,
     val plannedIncome: List<LocalPlannedIncome>,
+    val recurring: List<LocalRecurringItem>,
     val skipped: Int,
 ) {
-    val total: Int get() = categories.size + budgets.size + expenses.size + income.size + plannedIncome.size
+    val total: Int get() =
+        categories.size + budgets.size + expenses.size + income.size + plannedIncome.size + recurring.size
 }
 
 private fun String.nameKey(): String = trim().lowercase()
@@ -64,6 +69,8 @@ private class CategoryResolution(
  * - built-in overrides and budgets: what the account already has wins;
  * - planned income: if the account has any line, the account wins and none is copied; else every valid
  *   line is copied under its own id;
+ * - recurring items keep their ids; ids already in the account are skipped, an expense template's
+ *   category is remapped like an expense's, and unresolvable or invalid ones count as skipped;
  * - expenses and income keep their ids; ids already in the account are skipped, so re-planning
  *   after a partial run only returns what is left.
  */
@@ -73,7 +80,7 @@ fun planMigration(
 ): MigrationPlan {
     val localMaxOrder = local.categories.maxOfOrNull { it.order } ?: -1
     val categories =
-        withPlaceholderCategories(local.categories, local.expenses, local.budgets, localMaxOrder)
+        withPlaceholderCategories(local.categories, local.expenses, local.budgets, localMaxOrder, local.recurring)
     val resolution = resolveCategories(categories, remote)
     val known = BuiltInCategories.all.mapTo(mutableSetOf()) { it.id.value } + resolution.idMap.values
 
@@ -99,8 +106,29 @@ fun planMigration(
     }
     val plannedIncome = plannedIncomeToCopy(local.plannedIncome, remote)
     if (remote.plannedIncomeIds.isEmpty()) skipped += local.plannedIncome.size - plannedIncome.size
-    return MigrationPlan(resolution.toWrite, budgets, expenses, income, plannedIncome, skipped)
+    val recurring = recurringToCopy(local.recurring, remote, resolution, known)
+    skipped += local.recurring.count { it.id !in remote.recurringIds } - recurring.size
+    return MigrationPlan(resolution.toWrite, budgets, expenses, income, plannedIncome, recurring, skipped)
 }
+
+/** Valid recurring items not yet in the account, with expense categories remapped to the account's ids. */
+private fun recurringToCopy(
+    local: List<LocalRecurringItem>,
+    remote: RemoteAccountSnapshot,
+    resolution: CategoryResolution,
+    known: Set<String>,
+): List<LocalRecurringItem> =
+    local
+        .filter { it.id !in remote.recurringIds }
+        .mapNotNull { item ->
+            val mapped =
+                if (item.categoryId == null) {
+                    item
+                } else {
+                    resolution.targetOf(item.categoryId)?.let { item.copy(categoryId = it) }
+                }
+            mapped?.takeIf { isValid { validateRecurring(it, known) } }
+        }
 
 /** Valid local lines to copy; none when the account already has any line (the account wins). */
 private fun plannedIncomeToCopy(

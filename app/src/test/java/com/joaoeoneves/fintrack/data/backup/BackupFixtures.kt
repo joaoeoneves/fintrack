@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
+import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
 
 internal const val EXPORTED_AT = "2026-10-27T10:00:00Z"
 
@@ -28,6 +29,27 @@ internal fun backupPlanned(
     amountCents: Long = 200_000,
     order: Int = 0,
 ) = LocalPlannedIncome(id, label, amountCents, order)
+
+@Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
+internal fun backupRecurring(
+    id: String = "r1",
+    type: String = "EXPENSE",
+    categoryId: String? = if (type == "EXPENSE") "FOOD" else null,
+    amountCents: Long = 5000,
+    endDate: String? = null,
+    handledThrough: String? = null,
+) = LocalRecurringItem(
+    id = id,
+    type = type,
+    name = "Rent",
+    amountCents = amountCents,
+    categoryId = categoryId,
+    frequency = "MONTHLY",
+    dayOfMonth = 15,
+    startDate = "2026-01-01",
+    endDate = endDate,
+    handledThrough = handledThrough,
+)
 
 internal fun backupCategory(
     id: String = "gym",

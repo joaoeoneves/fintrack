@@ -37,6 +37,7 @@ class BackupRepository
                 val prefs = preferencesStore.data.first()
                 val localExpenses = expenses.map { it.toLocal() }
                 val localBudgets = budgets.map { it.toLocal() }
+                val localRecurring = plan.recurring.map { it.toLocal() }
                 val maxOrder = categories.map { it.order }.filter { it != Int.MAX_VALUE }.maxOrNull() ?: 0
                 BackupDocument(
                     exportedAt = exportedAt.toString(),
@@ -51,11 +52,13 @@ class BackupRepository
                     income = income.map { it.toLocal() },
                     budgets = localBudgets,
                     plannedIncome = plan.plannedIncome.map { it.toLocal() },
+                    recurring = localRecurring,
                     categories =
                         withPlaceholderCategories(
                             categories = categories.filter { it.needsStoring() }.map { it.toLocal() },
                             expenses = localExpenses,
                             budgets = localBudgets,
+                            recurring = localRecurring,
                             maxOrder = maxOrder,
                         ),
                 )

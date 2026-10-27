@@ -32,10 +32,10 @@ class BackupCodecPlannedIncomeTest {
     }
 
     @Test
-    fun v3File_isUnsupported() {
-        val text = """{$header,"schemaVersion":3}"""
+    fun v4File_isUnsupported() {
+        val text = """{$header,"schemaVersion":4}"""
 
-        assertEquals(BackupDecodeResult.UnsupportedVersion(3), BackupCodec.decode(text))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(4), BackupCodec.decode(text))
     }
 
     @Test
@@ -71,7 +71,7 @@ class BackupCodecPlannedIncomeTest {
 
     @Test
     fun countsTotal_includesPlannedIncome() {
-        assertEquals(15, BackupCounts(1, 2, 3, 4, 5).total)
+        assertEquals(15, BackupCounts(1, 2, 3, 4, 5, 0).total)
         assertEquals(1, backupDoc().copy(plannedIncome = listOf(backupPlanned())).counts().total)
     }
 }

@@ -73,6 +73,7 @@ private fun countsText(counts: BackupCounts): String =
         counts.budgets,
         counts.categories,
         counts.plannedIncome,
+        counts.recurring,
     )
 
 @Composable

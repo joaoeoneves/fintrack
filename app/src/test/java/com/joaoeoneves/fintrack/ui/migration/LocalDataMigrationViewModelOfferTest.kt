@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.migration
 
+import com.joaoeoneves.fintrack.data.backup.backupRecurring
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.domain.model.Session
@@ -28,6 +29,16 @@ class LocalDataMigrationViewModelOfferTest : LocalDataMigrationViewModelTestBase
             settle()
 
             assertEquals(MigrationUiState.Offer(counts(expenses = 0, plannedIncome = 1)), vm.uiState.value)
+        }
+
+    @Test
+    fun onlyRecurring_showsOfferWithRecurringCount() =
+        runStoreTest {
+            store.update { it.copy(recurring = listOf(backupRecurring("r1"), backupRecurring("r2"))) to Unit }
+            val vm = viewModel()
+            settle()
+
+            assertEquals(MigrationUiState.Offer(counts(expenses = 0, recurring = 2)), vm.uiState.value)
         }
 
     @Test
