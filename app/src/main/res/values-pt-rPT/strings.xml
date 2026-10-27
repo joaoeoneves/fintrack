@@ -335,7 +335,7 @@
     <string name="plan_over_by">Acima do plano em %1$s</string>
     <string name="plan_expected_income">Rendimento previsto</string>
     <string name="plan_received">recebido %1$s</string>
-    <string name="plan_planned_allocations">Afetações planeadas</string>
+    <string name="plan_planned_allocations">Planeado</string>
     <string name="plan_planned_spending">Gastos planeados</string>
     <string name="plan_planned_saving">Poupança planeada</string>
     <string name="plan_leftover">Restante</string>
@@ -349,7 +349,7 @@
     <string name="plan_edit">Editar plano</string>
     <string name="plan_setup_title">Planeie o seu mês</string>
     <string name="plan_setup_message">Adicione o rendimento previsto para ver quanto pode gastar.</string>
-    <string name="plan_allocations">Afetações</string>
+    <string name="plan_allocations">Limites</string>
     <string name="plan_not_planned">Sem plano</string>
     <string name="plan_add_income_line">Adicionar rendimento</string>
     <string name="plan_income_line_new">Novo rendimento</string>
@@ -592,7 +592,7 @@
     <string name="annual_leftover_title">Sobra deste ano</string>
     <string name="annual_leftover_caption">Rendimento menos despesa planeada, %1$s</string>
     <string name="annual_empty_title">Nada planeado para %1$s</string>
-    <string name="annual_empty_message">Adicione rendimento e dotações na vista Mês para ver o ano.</string>
+    <string name="annual_empty_message">Adicione rendimentos e limites na vista Mês para ver o ano.</string>
 
     <string name="plan_goals_title">Objetivos</string>
     <string name="plan_goals_add">Adicionar um objetivo</string>
