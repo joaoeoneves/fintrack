@@ -1,5 +1,8 @@
 package com.joaoeoneves.fintrack.parity
 
+import com.joaoeoneves.fintrack.domain.model.AnnualPlan
+import com.joaoeoneves.fintrack.domain.model.AnnualPlanInputs
+import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryGroup
@@ -8,12 +11,17 @@ import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.FLEX_PAYMENTS
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
+import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.PlanMonth
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
+import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.amountIn
+import com.joaoeoneves.fintrack.domain.model.annualPlanOf
 import com.joaoeoneves.fintrack.domain.model.potsOf
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import kotlinx.serialization.json.Json
@@ -25,6 +33,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 import java.time.YearMonth
 
 /**
@@ -184,12 +193,99 @@ class SpreadsheetParityTest {
         assertEquals(result.holidayLumpNetCents, result.christmasLumpNetCents)
     }
 
-    // TODO(annual-plan): once the annual plan lands, assert expected.annualRecurringCents, annualInvestmentsCents,
-    //  annualFoodCents, annualFoodLeftoverCents (honouring food.snacksSkipMonth) and the annual
-    //  IRS figures (annualIrsCorrectCents, annualIrsSheetCents) against the sheet.
+    private fun recurringItem(
+        id: String,
+        category: Category,
+        cents: Long,
+        yearly: Boolean = false,
+    ) = RecurringItem(
+        id = id,
+        type = RecurringType.EXPENSE,
+        name = id,
+        amountCents = cents,
+        categoryId = category.id,
+        note = null,
+        frequency = if (yearly) RecurringFrequency.YEARLY else RecurringFrequency.MONTHLY,
+        dayOfMonth = 1,
+        monthOfYear = if (yearly) YEARLY_ITEM_MONTH else null,
+        startDate = LocalDate.of(YEAR, 1, 1),
+        endDate = null,
+        handledThrough = null,
+        active = true,
+    )
+
+    /** The year the way the sheet builds it; see the assertions for which figures it must reproduce. */
+    private fun annualPlan(): AnnualPlan {
+        val food = section("food")
+        val skipMonth = int(food, "snacksSkipMonth")
+        val groups =
+            listOf(
+                CategoryGroup("g-recurring", "Recurring", 0),
+                CategoryGroup("g-invest", "Investments", 1),
+                CategoryGroup("g-food", "Food", 2),
+            )
+        val recurring = spendingCategory("recurring", "g-recurring")
+        val investments = spendingCategory("investments", "g-invest")
+        val dinners = spendingCategory("dinners", "g-food")
+        val snacks = spendingCategory("snacks", "g-food")
+        val items =
+            longs("recurringMonthlyCents").mapIndexed { i, c -> recurringItem("m$i", recurring, c) } +
+                longs("recurringYearlyCents").mapIndexed { i, c -> recurringItem("y$i", recurring, c, yearly = true) } +
+                section("investmentsMonthlyCents").entries.map { (k, v) ->
+                    recurringItem(k, investments, v.jsonPrimitive.content.toLong())
+                }
+        val meal =
+            mealLine(earmark = Earmark.Group("g-food")).copy(skipMonths = setOf(skipMonth))
+        val overrides = (1..MONTHS).map { MonthSettings(YearMonth.of(YEAR, it), long("mealDaysPerMonth").toInt()) }
+        return annualPlanOf(
+            YEAR,
+            AnnualPlanInputs(
+                lines = listOf(meal),
+                budgets =
+                    listOf(
+                        Budget(dinners.id, long(food, "dinnersMonthlyCents")),
+                        Budget(snacks.id, long(food, "snacksMonthlyCents"), setOf(skipMonth)),
+                    ),
+                recurring = items,
+                categories = listOf(recurring, investments, dinners, snacks),
+                groups = groups,
+                monthSettings = overrides,
+            ),
+        )
+    }
+
+    private fun AnnualPlan.planned(groupId: String) = groups.first { it.group?.id == groupId }.plannedCents
+
+    @Test
+    fun annual_recurringGroup_matchesSpreadsheet() {
+        assertEquals(long(section("expected"), "annualRecurringCents"), annualPlan().planned("g-recurring"))
+    }
+
+    @Test
+    fun annual_investmentsGroup_matchesSpreadsheet() {
+        assertEquals(long(section("expected"), "annualInvestmentsCents"), annualPlan().planned("g-invest"))
+    }
+
+    @Test
+    fun annual_foodGroup_matchesSpreadsheet() {
+        assertEquals(long(section("expected"), "annualFoodCents"), annualPlan().planned("g-food"))
+    }
+
+    @Test
+    fun annual_foodPotLeftover_matchesSpreadsheet() {
+        val pot = annualPlan().pots.single()
+
+        assertEquals(Earmark.Group("g-food"), pot.target)
+        assertEquals(long(section("expected"), "annualFoodLeftoverCents"), pot.leftoverCents)
+    }
+
+    // TODO(annual-plan): assert the annual IRS figures (expected.annualIrsCorrectCents, annualIrsSheetCents).
 
     private companion object {
         const val RESOURCE = "private/spreadsheet.json"
         const val FLEX_PPM = 70_000
+        const val YEAR = 2026
+        const val MONTHS = 12
+        const val YEARLY_ITEM_MONTH = 3
     }
 }

@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,11 @@ import com.joaoeoneves.fintrack.ui.dashboard.BudgetSection
 import com.joaoeoneves.fintrack.ui.dashboard.EditBudgetDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanActions
+import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
+import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
+import com.joaoeoneves.fintrack.ui.plan.annual.PlanTab
 import com.joaoeoneves.fintrack.ui.settings.RecurringSection
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -60,23 +66,65 @@ fun PlanScreen(
         actions = { SettingsIconButton(onClick = onOpenSettings) },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
-        when (val state = uiState) {
-            MonthlyPlanUiState.Loading ->
-                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-
-            is MonthlyPlanUiState.Error ->
-                ErrorState(message = state.message.asString(), onRetry = viewModel::onRetry, modifier = contentModifier)
-
-            is MonthlyPlanUiState.Content ->
-                MonthlyPlanContent(
-                    state = state,
+        val annualViewModel: AnnualPlanViewModel = hiltViewModel()
+        val tab by annualViewModel.selectedTab.collectAsStateWithLifecycle()
+        Column(Modifier.fillMaxSize().padding(innerPadding)) {
+            SegmentedTextTabs(
+                options = PlanTab.entries,
+                selected = tab,
+                label = { stringResource(it.labelRes) },
+                onSelect = annualViewModel::onSelectTab,
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+            )
+            val contentModifier = Modifier.fillMaxSize()
+            if (tab == PlanTab.YEAR) {
+                val annualState by annualViewModel.uiState.collectAsStateWithLifecycle()
+                AnnualPlanView(
+                    state = annualState,
+                    actions =
+                        AnnualPlanActions(
+                            onPreviousYear = annualViewModel::onPreviousYear,
+                            onNextYear = annualViewModel::onNextYear,
+                            onRetry = annualViewModel::onRetry,
+                        ),
+                    modifier = contentModifier,
+                )
+            } else {
+                MonthPlanBody(
+                    state = uiState,
                     viewModel = viewModel,
                     groupsViewModel = groupsViewModel,
                     navigation = PlanNavigation(onOpenRecurring, onOpenSalaryProfile),
                     modifier = contentModifier,
                 )
+            }
         }
+    }
+}
+
+@Composable
+private fun MonthPlanBody(
+    state: MonthlyPlanUiState,
+    viewModel: MonthlyPlanViewModel,
+    groupsViewModel: CategoryGroupsViewModel,
+    navigation: PlanNavigation,
+    modifier: Modifier,
+) {
+    when (state) {
+        MonthlyPlanUiState.Loading ->
+            Box(modifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+
+        is MonthlyPlanUiState.Error ->
+            ErrorState(message = state.message.asString(), onRetry = viewModel::onRetry, modifier = modifier)
+
+        is MonthlyPlanUiState.Content ->
+            MonthlyPlanContent(
+                state = state,
+                viewModel = viewModel,
+                groupsViewModel = groupsViewModel,
+                navigation = navigation,
+                modifier = modifier,
+            )
     }
 }
 
