@@ -1,28 +1,27 @@
 appId: com.joaoeoneves.fintrack
 ---
-# Helper (not a standalone flow): deletes the Activity-list row whose text matches ${ROW} with an
-# end->start swipe. The Activity header (title, month, totals, chips, search) scrolls with the list,
-# so a fixed-coordinate swipe no longer lands on a row. Element-based swipe first; if the row is
-# still there (from-element swipes sometimes stop short of the dismiss threshold, see
-# swipe-delete-check.yaml) fall back to coordinate swipes at heights where the first row sits once
-# the list is search-filtered.
-- swipe:
-    from: "${ROW}"
-    direction: LEFT
-    duration: 800
+# Helper (not a standalone flow): swipes the Activity row whose text matches ${ROW} from end to start.
+# When the list is filtered by searching for the row's name, the search field matches too (it sits
+# above the row), so the row is then the second match.
 - runFlow:
     when:
-      visible: "${ROW}"
+      visible:
+        text: "${ROW}"
+        index: 1
     commands:
       - swipe:
-          start: "90%, 70%"
-          end: "10%, 70%"
-          duration: 800
+          from:
+            text: "${ROW}"
+            index: 1
+          direction: LEFT
+          duration: 600
 - runFlow:
     when:
-      visible: "${ROW}"
+      notVisible:
+        text: "${ROW}"
+        index: 1
     commands:
       - swipe:
-          start: "90%, 80%"
-          end: "10%, 80%"
-          duration: 800
+          from: "${ROW}"
+          direction: LEFT
+          duration: 600
