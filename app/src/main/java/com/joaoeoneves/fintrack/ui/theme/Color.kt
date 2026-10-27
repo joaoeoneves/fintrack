@@ -7,7 +7,7 @@ package com.joaoeoneves.fintrack.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Trade Republic-style monochrome palette -- dark scheme
+// Monochrome palette -- dark scheme
 val DarkBg = Color(0xFF000000)
 val DarkSurface1 = Color(0xFF0E0E10)
 val DarkSurface2 = Color(0xFF1A1A1D)
