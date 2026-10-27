@@ -22,16 +22,14 @@ internal fun SalaryProfile.toForm(decimalSeparator: Char): SalaryForm {
         netHoliday = cents(netHolidayLumpCents),
         netChristmas = cents(netChristmasLumpCents),
         meal = cents(mealRatePerDayCents),
-        mealSkip = mealSkipMonths,
-        holidayMonth = holidaySubsidyMonth,
-        christmasMonth = christmasSubsidyMonth,
+        subsidyMonths = listOf(holidaySubsidyMonth, christmasSubsidyMonth).distinct().sorted(),
         flexPercent = percent(flexPpm),
         flexAnnual = cents(flexAnnualCents),
         flexFirstMonth = flexFirstMonth,
         flexFee = percent(flexWithdrawalFeePpm),
         profitMultiplier =
             profitShareMultiplierPpm?.let { formatScaled(it, MULTIPLIER_SCALE, decimalSeparator) }.orEmpty(),
-        profitMonth = profitShareMonth ?: SalaryForm().profitMonth,
+        profitMonths = effectiveProfitShareMonths,
         bonus = cents(bonusCents),
         bonusMonth = bonusMonth ?: SalaryForm().bonusMonth,
     )

@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.DEFAULT_MEAL_SKIP_MONTH
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
@@ -165,7 +164,7 @@ data class LocalSalaryProfile(
     val netHolidayLumpCents: Long? = null,
     val netChristmasLumpCents: Long? = null,
     val mealRatePerDayCents: Long? = null,
-    val mealSkipMonths: List<Int> = listOf(DEFAULT_MEAL_SKIP_MONTH),
+    val mealSkipMonths: List<Int> = emptyList(),
     val holidaySubsidyMonth: Int = 6,
     val christmasSubsidyMonth: Int = 12,
     val flexPpm: Int? = null,
@@ -174,6 +173,7 @@ data class LocalSalaryProfile(
     val flexWithdrawalFeePpm: Int = 0,
     val profitShareMultiplierPpm: Int? = null,
     val profitShareMonth: Int? = null,
+    val profitShareMonths: List<Int> = emptyList(),
     val bonusCents: Long? = null,
     val bonusMonth: Int? = null,
 )

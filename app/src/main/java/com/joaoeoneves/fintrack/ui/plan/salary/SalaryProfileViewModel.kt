@@ -3,9 +3,13 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
+import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,6 +37,7 @@ class SalaryProfileViewModel
     constructor(
         private val profiles: SalaryProfileRepository,
         private val manageProfile: ManageSalaryProfile,
+        private val plannedIncome: PlannedIncomeRepository,
         private val clock: Clock,
     ) : ViewModel() {
         // `null` until the stored profile has been read into the form.
@@ -40,6 +45,11 @@ class SalaryProfileViewModel
         private val hasSavedProfile = MutableStateFlow(false)
         private val saving = MutableStateFlow(false)
         private val events = Channel<SalaryProfileEvent>(Channel.BUFFERED)
+
+        private val duplicateCandidates = MutableStateFlow<List<PlannedIncome>>(emptyList())
+
+        /** The user's own monthly lines (no earmark) found after a save, to offer removing; empty = no dialog. */
+        val duplicates: StateFlow<List<PlannedIncome>> = duplicateCandidates
 
         val eventFlow: Flow<SalaryProfileEvent> = events.receiveAsFlow()
 
@@ -75,10 +85,39 @@ class SalaryProfileViewModel
                 saving.value = true
                 manageProfile
                     .save(result.profile, labels)
-                    .onSuccess { events.send(SalaryProfileEvent.Done) }
+                    .onSuccess { finishSave() }
                     .onFailure { reportFailure(it) }
                 saving.value = false
             }
+        }
+
+        // Leaves the screen, unless manual monthly lines may now be counted twice: then asks about them first.
+        private suspend fun finishSave() {
+            val others =
+                plannedIncome
+                    .observePlannedIncome()
+                    .first()
+                    .filter { !it.isManaged && it.frequency == IncomeFrequency.MONTHLY && it.earmark == null }
+            if (others.isEmpty()) {
+                events.send(SalaryProfileEvent.Done)
+            } else {
+                duplicateCandidates.value = others
+            }
+        }
+
+        /** Deletes the lines with [ids] (the ones the user ticked) and leaves the screen. */
+        fun onRemoveDuplicates(ids: Set<String>) {
+            viewModelScope.launch {
+                val failed = ids.map { plannedIncome.deletePlannedIncome(it) }.any { it.isFailure }
+                duplicateCandidates.value = emptyList()
+                events.send(if (failed) SalaryProfileEvent.Failed else SalaryProfileEvent.Done)
+            }
+        }
+
+        /** Keeps every manual line and leaves the screen. */
+        fun onKeepDuplicates() {
+            duplicateCandidates.value = emptyList()
+            viewModelScope.launch { events.send(SalaryProfileEvent.Done) }
         }
 
         /** Deletes the profile and its managed lines. */

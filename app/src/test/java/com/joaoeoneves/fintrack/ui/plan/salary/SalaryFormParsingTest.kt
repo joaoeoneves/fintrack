@@ -100,7 +100,7 @@ class SalaryFormParsingTest {
                 flexPercent = "7",
                 flexFee = "0.5",
                 profitMultiplier = "0.5",
-                profitMonth = 4,
+                profitMonths = listOf(4),
                 bonus = "100",
                 bonusMonth = 5,
                 // NET-only fields must not leak into a GROSS profile.
@@ -124,7 +124,7 @@ class SalaryFormParsingTest {
                 flexPpm = 70_000,
                 flexWithdrawalFeePpm = 5_000,
                 profitShareMultiplierPpm = 500_000,
-                profitShareMonth = 4,
+                profitShareMonths = setOf(4),
                 bonusCents = 10_000,
                 bonusMonth = 5,
             ),
@@ -185,10 +185,10 @@ class SalaryFormParsingTest {
 
     @Test
     fun bonusMonthAndProfitMonth_onlyKeptWhenTheValueIsSet() {
-        val profile = SalaryForm(base = "10", bonusMonth = 7, profitMonth = 8).toResult().profile
+        val profile = SalaryForm(base = "10", bonusMonth = 7, profitMonths = listOf(8)).toResult().profile
 
         assertNull(profile.bonusMonth)
-        assertNull(profile.profitShareMonth)
+        assertTrue(profile.profitShareMonths.isEmpty())
     }
 
     @Test
@@ -239,13 +239,12 @@ class SalaryFormParsingTest {
                 ssPpm = 125_000,
                 irsJovemExemptPpm = 250_000,
                 mealRatePerDayCents = 905,
-                mealSkipMonths = setOf(1, 8),
                 holidaySubsidyMonth = 7,
                 flexPpm = 70_000,
                 flexFirstMonth = 3,
                 flexWithdrawalFeePpm = 5_000,
                 profitShareMultiplierPpm = 1_500_000,
-                profitShareMonth = 4,
+                profitShareMonths = setOf(4, 9),
                 bonusCents = 10_000,
                 bonusMonth = 9,
             )
@@ -268,5 +267,84 @@ class SalaryFormParsingTest {
             )
 
         assertEquals(profile, profile.toForm(',').toResult().profile)
+    }
+
+    @Test
+    fun subsidyMonthPair_ordersTheTwoMonths() {
+        assertEquals(Pair(3, 9), SalaryForm(subsidyMonths = listOf(9, 3)).subsidyMonthPair())
+        assertEquals(Pair(3, 9), SalaryForm(subsidyMonths = listOf(3, 9)).subsidyMonthPair())
+    }
+
+    @Test
+    fun subsidyMonthPair_singleMonthIsUsedTwice_noneGivesDefaults() {
+        assertEquals(Pair(5, 5), SalaryForm(subsidyMonths = listOf(5)).subsidyMonthPair())
+        assertEquals(Pair(6, 12), SalaryForm(subsidyMonths = emptyList()).subsidyMonthPair())
+        assertEquals(listOf(6, 12), SalaryForm().subsidyMonths)
+    }
+
+    @Test
+    fun subsidyMonths_reachTheProfileOrdered_grossAndNet() {
+        val gross = SalaryForm(base = "1000", subsidyMonths = listOf(11, 2)).toResult().profile
+        val netForm = SalaryForm(mode = SalaryInputMode.NET, netMonthly = "1000", subsidyMonths = listOf(4))
+        val net = netForm.toResult().profile
+
+        assertEquals(2, gross.holidaySubsidyMonth)
+        assertEquals(11, gross.christmasSubsidyMonth)
+        assertEquals(4, net.holidaySubsidyMonth)
+        assertEquals(4, net.christmasSubsidyMonth)
+    }
+
+    @Test
+    fun toForm_subsidyMonths_sortedAndCollapsedWhenEqual() {
+        val swapped = SalaryProfile(holidaySubsidyMonth = 11, christmasSubsidyMonth = 2)
+        val same = SalaryProfile(holidaySubsidyMonth = 4, christmasSubsidyMonth = 4)
+
+        assertEquals(listOf(2, 11), swapped.toForm('.').subsidyMonths)
+        assertEquals(listOf(4), same.toForm('.').subsidyMonths)
+    }
+
+    @Test
+    fun toForm_profitMonths_fallBackToLegacyThenDefault() {
+        assertEquals(listOf(2, 7), SalaryProfile(profitShareMonths = setOf(7, 2)).toForm('.').profitMonths)
+        assertEquals(listOf(5), SalaryProfile(profitShareMonth = 5).toForm('.').profitMonths)
+        assertEquals(listOf(3), SalaryProfile().toForm('.').profitMonths)
+    }
+
+    @Test
+    fun toResult_ignoresMealSkipMonths() {
+        assertTrue(
+            SalaryForm(base = "10")
+                .toResult()
+                .profile.mealSkipMonths
+                .isEmpty(),
+        )
+    }
+
+    @Test
+    fun toggleMonth_withMax_replacesTheOldest() {
+        assertEquals(listOf(2, 3), toggleMonth(listOf(1, 2), 3, 2))
+        assertEquals(listOf(2), toggleMonth(listOf(1), 2, 1))
+        assertEquals(listOf(1, 2), toggleMonth(listOf(1), 2, 2))
+    }
+
+    @Test
+    fun toggleMonth_deselects_butNeverTheLastOne() {
+        assertEquals(listOf(2), toggleMonth(listOf(1, 2), 1, 2))
+        assertEquals(listOf(5), toggleMonth(listOf(5), 5, 2))
+        assertEquals(listOf(5), toggleMonth(listOf(5), 5, null))
+    }
+
+    @Test
+    fun toggleMonth_withoutMax_accumulates() {
+        assertEquals(listOf(1, 2, 3, 4), toggleMonth(listOf(1, 2, 3), 4, null))
+        assertEquals(listOf(1, 3), toggleMonth(listOf(1, 2, 3), 2, null))
+    }
+
+    @Test
+    fun profitMonths_reachTheProfile_onlyWithAMultiplier() {
+        val with = SalaryForm(base = "10", profitMultiplier = "1", profitMonths = listOf(6, 3)).toResult().profile
+
+        assertEquals(setOf(3, 6), with.profitShareMonths)
+        assertNull(with.profitShareMonth)
     }
 }
