@@ -23,6 +23,11 @@ jobs:
           fi
           major="${BASH_REMATCH[1]}"
           minor="${BASH_REMATCH[2]}"
+          # versionCode = major*100 + minor, so minor must stay below 100 to keep codes unique.
+          if (( 10#$minor > 99 )); then
+            echo "::error::Minor version must be 0..99 (got $minor)"
+            exit 1
+          fi
           {
             echo "VERSION_NAME=${major}.${minor}"
             echo "VERSION_CODE=$((10#$major * 100 + 10#$minor))"
@@ -75,9 +80,12 @@ jobs:
 
       - name: Verify APK signature
         run: |
+          set -o pipefail
           apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n 1)apksigner"
-          "$apksigner" verify --print-certs "$apk" | grep -i "SHA-256 digest" | head -n 1
+          # Verify on its own so a rejected/unsigned APK fails the step before anything is published.
+          "$apksigner" verify "$apk"
+          "$apksigner" verify --print-certs "$apk" | grep -i -m 1 "SHA-256 digest"
           cp "$apk" "FinTrack-${TAG}.apk"
 
       - name: Create GitHub release
