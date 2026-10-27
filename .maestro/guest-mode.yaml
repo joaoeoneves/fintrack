@@ -9,7 +9,7 @@ appId: com.joaoeoneves.fintrack
 # Run on its own (it leaves the app in guest mode, i.e. NOT in the signed-in state the other flows
 # assume).
 #
-# A fresh install defaults to Portuguese, so the sign-in screen text is matched with EN|PT regex
+# A fresh install follows the system locale (English on the CI emulator, but PT on a PT device), so the sign-in screen text is matched with EN|PT regex
 # alternation until English is pinned from Settings below.
 
 - clearState
@@ -26,7 +26,7 @@ appId: com.joaoeoneves.fintrack
     visible:
       id: "dashboard_list"
     timeout: 15000
-- assertVisible: "Net Balance|Saldo líquido.*"
+- assertVisible: "Net balance|Saldo líquido.*"
 
 # Pin English + EUR so the assertions below are deterministic. The Settings button is a top-bar
 # icon (tag dashboard_settings, always on screen). Language rows are plain choice rows ("English");
@@ -41,7 +41,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro \\(€\\)"
 - tapOn: "Back"
-- assertVisible: "Net Balance"
+- assertVisible: "Net balance"
 
 # --- 2: Add an expense via the floating add pill (tag dashboard_add_expense) ---
 - tapOn:

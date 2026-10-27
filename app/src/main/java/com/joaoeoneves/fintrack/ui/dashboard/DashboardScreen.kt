@@ -424,5 +424,6 @@ private fun budgetSectionTitle(state: DashboardUiState.Content): String =
     if (state.budgetMonthIsCurrent) {
         stringResource(R.string.dashboard_budgets_title)
     } else {
-        stringResource(R.string.dashboard_budgets_title_month, formatMonthLabel(state.budgetMonth, currentLocale()))
+        val month = formatMonthLabel(state.budgetMonth, currentLocale(), titlecase = false)
+        stringResource(R.string.dashboard_budgets_title_month, month)
     }

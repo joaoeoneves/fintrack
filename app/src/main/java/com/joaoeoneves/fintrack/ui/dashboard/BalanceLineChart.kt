@@ -8,7 +8,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -95,7 +94,7 @@ fun BalanceLineChart(
     val labels = rememberScrubLabelFormatter()
     val amountText = if (scrub.index in series.indices) formatAmountCents(series[scrub.index]) else ""
     val measurer = rememberTextMeasurer()
-    val colors = ChartColors(secondary = FinTrackTheme.colors.textSecondary, line = MaterialTheme.colorScheme.onSurface)
+    val colors = ChartColors(secondary = FinTrackTheme.colors.textSecondary, line = FinTrackTheme.colors.accentText)
 
     Canvas(
         modifier =

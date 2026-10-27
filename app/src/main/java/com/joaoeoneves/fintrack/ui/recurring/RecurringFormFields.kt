@@ -31,6 +31,7 @@ import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.symbol
+import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
@@ -61,7 +62,8 @@ internal fun RecurringTypeAndNameFields(
     BorderlessAmountField(
         value = form.amountText,
         onValueChange = { onChange(form.copy(amountText = it)) },
-        currencySymbol = LocalCurrency.current.symbol,
+        currencySymbol = LocalCurrency.current.symbol(currentLocale()),
+        symbolLeads = LocalCurrency.current.symbolLeads(currentLocale()),
         label = stringResource(R.string.field_amount),
         isError = errors?.amount != null,
         autoFocus = autoFocusAmount,

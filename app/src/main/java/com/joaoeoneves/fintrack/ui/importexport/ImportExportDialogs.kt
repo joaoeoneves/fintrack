@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
@@ -26,8 +27,9 @@ fun ImportPreviewDialog(
         text = {
             Column {
                 Text(
-                    stringResource(
-                        R.string.import_preview_summary,
+                    pluralStringResource(
+                        R.plurals.import_preview_summary,
+                        state.validExpenses.size,
                         state.validExpenses.size,
                         state.failures.size,
                     ),

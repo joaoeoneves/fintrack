@@ -84,7 +84,7 @@ class BackupRestoreTest : BackupRepositoryTestBase() {
             val prefs = prefsStore.data.first()
             assertEquals(ThemePreference.SYSTEM, prefs.theme)
             assertEquals(CurrencyOption.GBP, prefs.currency)
-            assertEquals(AppLanguage.PORTUGUESE, prefs.language)
+            assertEquals(AppLanguage.SYSTEM, prefs.language)
         }
 
     @Test

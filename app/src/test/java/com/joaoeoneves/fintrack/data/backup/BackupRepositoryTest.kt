@@ -63,7 +63,7 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
 
             val prefs = repository().build().preferences
 
-            assertEquals(BackupPreferences("LIGHT", "GBP", AppLanguage.PORTUGUESE.name), prefs)
+            assertEquals(BackupPreferences("LIGHT", "GBP", AppLanguage.SYSTEM.name), prefs)
         }
 
     @Test

@@ -72,6 +72,8 @@ fun SettingsRow(
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         if (value != null) {
@@ -114,7 +116,7 @@ fun SettingsChoiceRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = FinTrackTheme.colors.accentText,
             )
         }
     }

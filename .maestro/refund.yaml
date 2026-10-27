@@ -3,7 +3,7 @@ appId: com.joaoeoneves.fintrack
 # Refund E2E flow for FinTrack.
 #
 # A refund is an expense with the "Refund" switch on. It shows as "+€12.34" with a "Refund" badge
-# and lowers the Dashboard's Spending total (and raises Net) instead of increasing it.
+# and lowers the Dashboard's Expenses total (and raises Net) instead of increasing it.
 #
 # Assumes the app is already signed in and lands on the Dashboard, same as golden-path.yaml.
 # Creates exactly one row, "Maestro E2E Refund", and deletes it at the end while the expense list is
@@ -24,15 +24,15 @@ appId: com.joaoeoneves.fintrack
 - assertVisible:
     id: "dashboard_list"
 
-# --- 1: Capture the Dashboard's Spending amount. The balance card renders each column as a label
-# TextView ("Income" / "Spending" / "Saved & invested") with its amount TextView directly below, so
-# the Spending amount is the money text below "Spending", right of "Income" and left of
+# --- 1: Capture the Dashboard's Expenses amount. The balance card renders each column as a label
+# TextView ("Income" / "Expenses" / "Saved & invested") with its amount TextView directly below, so
+# the Expenses amount is the money text below "Expenses", right of "Income" and left of
 # "Saved & invested". The value is stored as signed integer cents: strip every non-digit, and
 # negate if the text starts with a minus sign (ASCII "-" or U+2212).
-- assertVisible: "Spending"
+- assertVisible: "Expenses"
 - copyTextFrom:
     text: "[-−]?€[0-9.,]+"
-    below: "Spending"
+    below: "Expenses"
     rightOf: "Income"
     leftOf: "Saved & invested"
 - evalScript: '${output.spendingBefore = (/^\s*[-−]/.test(maestro.copiedText) ? -1 : 1) * parseInt(maestro.copiedText.replace(/[^0-9]/g, ""), 10)}'
@@ -60,13 +60,13 @@ appId: com.joaoeoneves.fintrack
     text: "Refund"
     below: "Maestro E2E Refund"
 
-# --- 4: Spending dropped by exactly 12.34 (1234 cents).
+# --- 4: Expenses dropped by exactly 12.34 (1234 cents).
 - scrollUntilVisible:
-    element: "Spending"
+    element: "Expenses"
     direction: UP
 - copyTextFrom:
     text: "[-−]?€[0-9.,]+"
-    below: "Spending"
+    below: "Expenses"
     rightOf: "Income"
     leftOf: "Saved & invested"
 - evalScript: '${output.spendingAfter = (/^\s*[-−]/.test(maestro.copiedText) ? -1 : 1) * parseInt(maestro.copiedText.replace(/[^0-9]/g, ""), 10)}'

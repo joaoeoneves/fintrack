@@ -27,14 +27,14 @@ class UiTextTest {
 
     @Test
     fun stringResource_asString_resolvesEnglish() {
-        assertEquals("Sign-out failed", UiText.StringResource(R.string.error_sign_out_failed).asString(resources()))
+        assertEquals("Couldn't sign out", UiText.StringResource(R.string.error_sign_out_failed).asString(resources()))
     }
 
     @Test
     @Config(qualifiers = "pt-rPT")
     fun stringResource_asString_resolvesPortuguese() {
         assertEquals(
-            "Falha ao terminar sessão",
+            "Não foi possível terminar sessão",
             UiText.StringResource(R.string.error_sign_out_failed).asString(resources()),
         )
     }

@@ -23,7 +23,7 @@ class UserPreferencesRepositoryTest : PreferencesStoreTestBase() {
         runTest {
             assertEquals(ThemePreference.DARK, repo.observeThemePreference().first())
             assertEquals(CurrencyOption.EUR, repo.observeCurrency().first())
-            assertEquals(AppLanguage.PORTUGUESE, repo.observeLanguage().first())
+            assertEquals(AppLanguage.SYSTEM, repo.observeLanguage().first())
             assertEquals(emptyList<Any>(), sync.pushes)
         }
 
@@ -64,7 +64,7 @@ class UserPreferencesRepositoryTest : PreferencesStoreTestBase() {
             repo.setCurrency(CurrencyOption.USD)
 
             assertEquals(ThemePreference.DARK, repo.observeThemePreference().first())
-            assertEquals(AppLanguage.PORTUGUESE, repo.observeLanguage().first())
+            assertEquals(AppLanguage.SYSTEM, repo.observeLanguage().first())
         }
 
     @Test

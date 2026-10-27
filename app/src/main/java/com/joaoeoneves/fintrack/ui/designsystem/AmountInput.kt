@@ -43,9 +43,10 @@ private val AmountTextStyle =
 private val AmountMinWidth = 40.dp
 
 /**
- * The large borderless amount entry of the add/edit screens: a centred currency symbol followed
- * by the raw text the user typed. [label] is exposed as the field's content description so tests
- * and screen readers can find it, since no visible label is shown.
+ * The large borderless amount entry of the add/edit screens: a centred currency symbol (before or
+ * after the text, per [symbolLeads]) around the raw text the user typed. [label] is exposed as the
+ * field's content description so tests and screen readers can find it, since no visible label is
+ * shown.
  */
 @Suppress("LongParameterList") // mirrors the text-field parameters it wraps
 @Composable
@@ -53,6 +54,7 @@ fun BorderlessAmountField(
     value: String,
     onValueChange: (String) -> Unit,
     currencySymbol: String,
+    symbolLeads: Boolean,
     label: String,
     isError: Boolean,
     modifier: Modifier = Modifier,
@@ -69,18 +71,13 @@ fun BorderlessAmountField(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = currencySymbol,
-            style = AmountTextStyle,
-            color = FinTrackTheme.colors.textSecondary,
-            modifier = Modifier.padding(end = 8.dp),
-        )
+        if (symbolLeads) CurrencySymbolText(currencySymbol, Modifier.padding(end = 8.dp))
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
             textStyle = AmountTextStyle.copy(color = contentColor),
-            cursorBrush = SolidColor(contentColor),
+            cursorBrush = SolidColor(if (isError) contentColor else FinTrackTheme.colors.accentText),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             decorationBox = { innerTextField ->
                 Box {
@@ -97,5 +94,14 @@ fun BorderlessAmountField(
                     .focusRequester(focusRequester)
                     .semantics { contentDescription = label },
         )
+        if (!symbolLeads) CurrencySymbolText(currencySymbol, Modifier.padding(start = 8.dp))
     }
+}
+
+@Composable
+private fun CurrencySymbolText(
+    symbol: String,
+    modifier: Modifier,
+) {
+    Text(text = symbol, style = AmountTextStyle, color = FinTrackTheme.colors.textSecondary, modifier = modifier)
 }

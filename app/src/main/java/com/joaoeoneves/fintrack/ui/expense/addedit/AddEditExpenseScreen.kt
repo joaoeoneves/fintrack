@@ -31,7 +31,9 @@ import com.joaoeoneves.fintrack.ui.common.FormScaffold
 import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.symbol
+import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
@@ -140,7 +142,8 @@ private fun ExpenseForm(
         BorderlessAmountField(
             value = form.amountText,
             onValueChange = actions.onAmountChanged,
-            currencySymbol = LocalCurrency.current.symbol,
+            currencySymbol = LocalCurrency.current.symbol(currentLocale()),
+            symbolLeads = LocalCurrency.current.symbolLeads(currentLocale()),
             label = stringResource(R.string.field_amount),
             isError = form.amountError != null,
             autoFocus = !isEditMode,

@@ -11,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 
 /** What a delete dialog's confirm button says and does; `null` confirm means no such button. */
 private data class ConfirmAction(
     val label: Int,
     val onClick: () -> Unit,
+    val destructive: Boolean = false,
 )
 
 /**
@@ -42,7 +44,7 @@ internal fun CategoryDeleteDialog(
         is DeleteDialogState.ConfirmDelete -> {
             DeleteAlert(
                 title = stringResource(R.string.category_delete_confirm, name),
-                confirm = ConfirmAction(R.string.category_action_delete, onDelete),
+                confirm = ConfirmAction(R.string.category_action_delete, onDelete, destructive = true),
                 onDismiss = onDismiss,
                 dismissLabel = R.string.action_cancel,
             ) {}
@@ -99,7 +101,13 @@ private fun DeleteAlert(
         title = { Text(title) },
         text = body,
         confirmButton = {
-            confirm?.let { TextButton(onClick = it.onClick) { Text(stringResource(it.label)) } }
+            confirm?.let {
+                if (it.destructive) {
+                    DestructiveTextButton(text = stringResource(it.label), onClick = it.onClick)
+                } else {
+                    TextButton(onClick = it.onClick) { Text(stringResource(it.label)) }
+                }
+            }
         },
         dismissButton = {
             dismissLabel?.let { TextButton(onClick = onDismiss) { Text(stringResource(it)) } }

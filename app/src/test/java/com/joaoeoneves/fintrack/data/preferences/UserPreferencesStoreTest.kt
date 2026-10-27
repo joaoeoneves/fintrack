@@ -22,7 +22,7 @@ class UserPreferencesStoreTest : PreferencesStoreTestBase() {
     fun data_onFreshFile_emitsDefaults() =
         runTest {
             assertEquals(
-                UserPreferences(ThemePreference.DARK, CurrencyOption.EUR, AppLanguage.PORTUGUESE),
+                UserPreferences(ThemePreference.DARK, CurrencyOption.EUR, AppLanguage.SYSTEM),
                 store.data.first(),
             )
         }
@@ -46,7 +46,7 @@ class UserPreferencesStoreTest : PreferencesStoreTestBase() {
             store.update { it.copy(currency = CurrencyOption.GBP) }
 
             assertEquals(
-                UserPreferences(ThemePreference.DARK, CurrencyOption.GBP, AppLanguage.PORTUGUESE),
+                UserPreferences(ThemePreference.DARK, CurrencyOption.GBP, AppLanguage.SYSTEM),
                 store.data.first(),
             )
         }

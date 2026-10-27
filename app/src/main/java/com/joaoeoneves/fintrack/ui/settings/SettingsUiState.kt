@@ -9,7 +9,7 @@ import com.joaoeoneves.fintrack.ui.common.UiText
 data class SettingsUiState(
     val themePreference: ThemePreference = ThemePreference.DARK,
     val currency: CurrencyOption = CurrencyOption.EUR,
-    val language: AppLanguage = AppLanguage.PORTUGUESE,
+    val language: AppLanguage = AppLanguage.SYSTEM,
     val currentUser: AuthUser? = null,
     val signOutError: UiText? = null,
     val isGuest: Boolean = false,

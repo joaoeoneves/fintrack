@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.joaoeoneves.fintrack"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         // Overridable for releases: -PversionName=1.1 -PversionCode=101 (CI derives them from the tag).
         versionCode = providers.gradleProperty("versionCode").map { it.toInt() }.getOrElse(1)
@@ -85,10 +85,12 @@ android {
             }
         }
     }
+    androidResources {
+        generateLocaleConfig = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-        isCoreLibraryDesugaringEnabled = true
     }
     // The baseline profile plugin clones `release` into nonMinifiedRelease/benchmarkRelease, which
     // would be unsigned (release has no signingConfig). Sign only those generated types with the
@@ -160,6 +162,7 @@ detekt {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
@@ -192,7 +195,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(libs.androidx.profileinstaller)
     baselineProfile(project(":baselineprofile"))
 }

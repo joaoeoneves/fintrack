@@ -109,7 +109,7 @@ private fun SegmentedTab(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = if (selected) MaterialTheme.colorScheme.onSurface else FinTrackTheme.colors.textSecondary,
+            color = if (selected) FinTrackTheme.colors.accentText else FinTrackTheme.colors.textSecondary,
             maxLines = 1,
         )
     }

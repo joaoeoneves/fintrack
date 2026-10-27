@@ -104,7 +104,7 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - tapOn: "English"
 - back
-- assertVisible: "Net Balance"
+- assertVisible: "Net balance"
 - assertVisible:
     text: ".*€[0-9.,]+.*"
 
@@ -120,7 +120,11 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Settings"
 - tapOn: "Light"
 - assertVisible: "Light"
-- tapOn: "System default"
+# "System default" is also a Language row now (below the Appearance rows): target the theme row,
+# i.e. the one above the "Language" section title.
+- tapOn:
+    text: "System default"
+    above: "Language"
 - assertVisible: "System default"
 - tapOn: "Dark"
 - assertVisible: "Dark"
