@@ -70,6 +70,9 @@ class PillVisibility {
         visible = true
     }
 
+    /** Set by the screen: whether the list can still scroll down. At the end the pill never hides. */
+    var canScrollForward: () -> Boolean = { true }
+
     val connection =
         object : NestedScrollConnection {
             override fun onPreScroll(
@@ -77,7 +80,7 @@ class PillVisibility {
                 source: NestedScrollSource,
             ): Offset {
                 when {
-                    available.y < -SCROLL_THRESHOLD_PX -> visible = false
+                    available.y < -SCROLL_THRESHOLD_PX -> visible = !canScrollForward()
                     available.y > SCROLL_THRESHOLD_PX -> visible = true
                 }
                 return Offset.Zero

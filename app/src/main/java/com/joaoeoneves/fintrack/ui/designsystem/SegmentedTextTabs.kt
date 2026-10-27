@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.indicatorDpSpring
@@ -61,7 +62,7 @@ fun <T> SegmentedTextTabs(
         Box(
             modifier =
                 Modifier
-                    .offset(x = indicatorOffset)
+                    .offset { IntOffset(x = indicatorOffset.roundToPx(), y = 0) }
                     .width(tabWidth)
                     .height(TabHeight)
                     .graphicsLayer { alpha = indicatorAlpha }

@@ -74,13 +74,15 @@ fun TransactionRow(
                     Box(modifier = Modifier.padding(start = Dimens.Space8)) { badge() }
                 }
             }
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (subtitle.isNotBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         Text(text = amountText, style = Amount, color = amountColor, maxLines = 1)
     }

@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
@@ -101,10 +102,10 @@ fun AboutSection(modifier: Modifier = Modifier) {
 
 @Composable
 private fun FontLicenseSheet(onDismiss: () -> Unit) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val licenseText =
-        remember {
-            context.resources.openRawResource(R.raw.inter_ofl).use { stream ->
+        remember(resources) {
+            resources.openRawResource(R.raw.inter_ofl).use { stream ->
                 stream.readBytes().decodeToString()
             }
         }

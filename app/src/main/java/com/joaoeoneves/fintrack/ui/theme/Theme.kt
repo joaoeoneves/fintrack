@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.theme
 
 import android.app.Activity
-import android.graphics.drawable.ColorDrawable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +13,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 
 /**
@@ -135,7 +135,7 @@ fun FinTrackTheme(
                 isAppearanceLightStatusBars = !darkTheme
                 isAppearanceLightNavigationBars = !darkTheme
             }
-            window.setBackgroundDrawable(ColorDrawable(colorScheme.background.toArgb()))
+            window.setBackgroundDrawable(colorScheme.background.toArgb().toDrawable())
         }
     }
 

@@ -289,8 +289,10 @@ private fun DashboardContent(
         )
 
     val (pill, listState) = scroll
-    LaunchedEffect(listState) {
-        snapshotFlow { !listState.canScrollForward }.collect { atEnd -> if (atEnd) pill.show() }
+    LaunchedEffect(listState, pill) {
+        pill.canScrollForward = { listState.canScrollForward }
+        // Keyed on "at end while hidden" so it re-fires if a late scroll delta hides the pill again.
+        snapshotFlow { !listState.canScrollForward && !pill.visible }.collect { stuck -> if (stuck) pill.show() }
     }
 
     LazyColumn(
