@@ -78,7 +78,8 @@ All data lives under `users/{uid}/`. Money is stored as integer minor units (`am
 | `expenses/{id}` | `name`, `amountCents` (> 0), `category` (category id), `isRefund?`, `date`, `note?`, `createdAt`, `updatedAt` |
 | `income/{id}` | `source` (free text), `amountCents`, `date`, `note?`, timestamps |
 | `budgets/{categoryId}` | `limitCents` (the document id is the category id), `skipMonths?` (months 1..12 the limit does not apply to) |
-| `plannedIncome/{lineId}` | `label` (1..50), `amountCents` (the rate for per-working-day lines), `order`, `basis?` (`FIXED`/`PER_WORKING_DAY`), `frequency?` (`MONTHLY`/`YEARLY`/`ONCE`), `monthOfYear?` (yearly only), `yearMonth?` (`yyyy-MM`, one-off only), `skipMonths?` (list of months 1..12 a monthly line is not paid in), `earmarkType?` (`CATEGORY`/`GROUP`) + `earmarkId?` (both or neither: sets the line aside for that category/group as a pot); absent fields mean fixed/monthly; at most 20 lines (enforced client-side, rules cannot count documents) |
+| `plannedIncome/{lineId}` | `label` (1..50), `amountCents` (the rate for per-working-day lines), `order`, `basis?` (`FIXED`/`PER_WORKING_DAY`), `frequency?` (`MONTHLY`/`YEARLY`/`ONCE`), `monthOfYear?` (yearly only), `yearMonth?` (`yyyy-MM`, one-off only), `skipMonths?` (list of months 1..12 a monthly line is not paid in), `earmarkType?` (`CATEGORY`/`GROUP`) + `earmarkId?` (both or neither: sets the line aside for that category/group as a pot), `managedKey?` (one of the `profile_*` keys: the line is generated from the salary profile, read-only except label/earmark); absent fields mean fixed/monthly; at most 20 lines (enforced client-side, rules cannot count documents) |
+| `plan/salaryProfile` | singleton: `inputMode` (`GROSS`/`NET`), rates as integer ppm (`subsidySpreadPpm` 0/500000/1000000, `irsBasePpm`, `irsSubsidiesPpm?`, `ssPpm`, `irsJovemExemptPpm`, `flexPpm?`, `flexWithdrawalFeePpm`, `profitShareMultiplierPpm?`), amounts in cents (`baseGrossCents?`, `netMonthlyCents?`, `netHolidayLumpCents?`, `netChristmasLumpCents?`, `mealRatePerDayCents?`, `flexAnnualCents?`, `bonusCents?`), months 1..12 (`holidaySubsidyMonth`, `christmasSubsidyMonth`, `flexFirstMonth`, `profitShareMonth?`, `bonusMonth?`), `mealSkipMonths`, `updatedAt`; saving it upserts the managed `plannedIncome` lines, deleting it removes them |
 | `categoryGroups/{id}` | `name` (1..50), `order`, `updatedAt`; categories point at one with the optional `groupId` (shape-checked only, a dangling id means ungrouped); deleting a group clears `groupId` on its categories |
 | `monthSettings/{yyyy-MM}` | `workingDays?` 0..23 (manual working-days count replacing the Portuguese-holiday calendar count for that month), `daysOff?` 0..23 (vacation/days off taken; effective working days = override, else calendar count minus days off); the document is deleted when neither is set; `updatedAt` |
 | `recurring/{itemId}` | `type` (`EXPENSE`/`INCOME`), `name`, `amountCents`, `category?`, `note?`, `frequency` (`MONTHLY`/`YEARLY`), `dayOfMonth` 1..31, `monthOfYear?`, `startDate`, `endDate?`, `handledThrough?`, `active`, `updatedAt` (dates as `yyyy-MM-dd`) |
@@ -114,20 +115,20 @@ acknowledgement while offline. Reads are snapshot listeners wrapped in `callback
 ## Guest mode: the local JSON store
 
 `LocalDataStore` holds the guest data set (`LocalDataDocument`: `schemaVersion`, `revision`, and lists of
-expenses, income, budgets, planned income, categories, recurring items, month settings, category groups; ISO-8601 dates) in
+expenses, income, budgets, planned income, categories, recurring items, month settings, category groups, salary profile; ISO-8601 dates) in
 `guest-data.json` under `filesDir`.
 
 - Loaded lazily, kept in memory, rewritten on every change.
 - **Atomic writes**: temp file, fsync, rename. New state is published to observers only after the write
   succeeded, so no one sees data that is not on disk. A mutex serialises writers.
-- **Versioning**: `schemaVersion` is currently 7. A corrupt file, or one with a newer schema, is moved to
+- **Versioning**: `schemaVersion` is currently 8. A corrupt file, or one with a newer schema, is moved to
   `guest-data.corrupt-<millis>.json` (never deleted) and the store starts empty.
 - After a migration to an account and a confirmed "Remove from this device", one safety copy remains as
   `guest-data.migrated.json`, overwritten next time.
 
 ## Backup format
 
-A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 7, "exportedAt",
+A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 8, "exportedAt",
 "appVersion", "preferences", ...records }` using the same record shapes as the guest store. Decoding:
 
 - a missing or invalid version is rejected; a version newer than the app supports is refused;

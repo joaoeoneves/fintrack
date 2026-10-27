@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
+import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.limitInput
@@ -33,10 +34,13 @@ import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.time.YearMonth
 
 /**
  * Bottom sheet to add or edit one expected-income line: label, amount, basis (fixed or per working day),
@@ -74,6 +78,7 @@ fun IncomeLineSheet(
                 amountError = false
             },
         )
+    val preview = incomePreview(schedule.basis, amountText, workingDays.days)
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(
             text = stringResource(incomeLineTitle(editor.editingId)),
@@ -84,30 +89,29 @@ fun IncomeLineSheet(
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
         ) {
-            IncomeLineFields(
-                perDay = schedule.basis == IncomeBasis.PER_WORKING_DAY,
-                label = labelModel,
-                amount = amountModel,
-            )
-            IncomeScheduleFields(
+            SheetFields(
+                editor = editor,
                 schedule = schedule,
-                onChange = { schedule = it },
+                onScheduleChange = { schedule = it },
+                models = FieldModels(labelModel, amountModel, preview),
                 fallbackMonth = workingDays.month,
-                preview = incomePreview(schedule.basis, amountText, workingDays.days),
-                earmarkOptions = editor.earmarkOptions,
             )
         }
         PrimaryPillButton(
             text = stringResource(R.string.action_save),
             onClick = {
                 submittedLabel = label.trim()
-                parseAmountCents(amountText)
-                    .onSuccess { cents -> onSave(label, cents, schedule) }
-                    .onFailure { amountError = true }
+                if (editor.managed) {
+                    onSave(label, editor.initialAmountCents ?: 0L, schedule)
+                } else {
+                    parseAmountCents(amountText)
+                        .onSuccess { cents -> onSave(label, cents, schedule) }
+                        .onFailure { amountError = true }
+                }
             },
             modifier = Modifier.padding(top = Dimens.Space16),
         )
-        RemoveLineButton(editor.editingId, onDelete)
+        if (!editor.managed) RemoveLineButton(editor.editingId, onDelete)
     }
 }
 
@@ -134,6 +138,79 @@ private data class TextFieldModel(
     val error: String?,
     val onChange: (String) -> Unit,
 )
+
+private class FieldModels(
+    val label: TextFieldModel,
+    val amount: TextFieldModel,
+    val preview: String?,
+)
+
+@Composable
+private fun SheetFields(
+    editor: IncomeLineEditorState,
+    schedule: IncomeSchedule,
+    onScheduleChange: (IncomeSchedule) -> Unit,
+    models: FieldModels,
+    fallbackMonth: YearMonth,
+) {
+    if (editor.managed) {
+        ManagedLineFields(
+            label = models.label,
+            amountCents = editor.initialAmountCents ?: 0L,
+            schedule = schedule,
+            onChange = onScheduleChange,
+            earmarkOptions = editor.earmarkOptions,
+        )
+    } else {
+        IncomeLineFields(
+            perDay = schedule.basis == IncomeBasis.PER_WORKING_DAY,
+            label = models.label,
+            amount = models.amount,
+        )
+        IncomeScheduleFields(
+            schedule = schedule,
+            onChange = onScheduleChange,
+            fallbackMonth = fallbackMonth,
+            preview = models.preview,
+            earmarkOptions = editor.earmarkOptions,
+        )
+    }
+}
+
+/**
+ * The fields of a line generated from the salary profile: the label, the read-only amount and a hint to change
+ * it in the profile, and (monthly lines only) the earmark.
+ */
+@Composable
+private fun ManagedLineFields(
+    label: TextFieldModel,
+    amountCents: Long,
+    schedule: IncomeSchedule,
+    onChange: (IncomeSchedule) -> Unit,
+    earmarkOptions: EarmarkOptions,
+) {
+    MinimalTextField(
+        value = label.value,
+        onValueChange = label.onChange,
+        label = stringResource(R.string.plan_field_label),
+        isError = label.error != null,
+        supportingText = { label.error?.let { Text(it) } },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    SettingsRow(title = stringResource(R.string.plan_field_amount), value = formatAmountCents(amountCents))
+    Text(
+        text = stringResource(R.string.plan_managed_line_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = FinTrackTheme.colors.textSecondary,
+    )
+    if (schedule.frequency == IncomeFrequency.MONTHLY) {
+        EarmarkPicker(
+            options = earmarkOptions,
+            selected = schedule.earmark,
+            onSelect = { onChange(schedule.copy(earmark = it)) },
+        )
+    }
+}
 
 /** The "x N working days = amount" line for per-working-day lines; `null` for fixed ones. */
 @Composable

@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
+import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
@@ -18,6 +19,7 @@ import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validateMonthSettings
 import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
 import com.joaoeoneves.fintrack.data.local.validateRecurring
+import com.joaoeoneves.fintrack.data.local.validateSalaryProfile
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryGroup
@@ -38,6 +40,8 @@ data class RemoteAccountSnapshot(
     val monthSettingsIds: Set<String> = emptySet(),
     /** The account's category groups. */
     val categoryGroups: List<CategoryGroup> = emptyList(),
+    /** Whether the account already has a salary profile (a singleton: the account wins). */
+    val hasSalaryProfile: Boolean = false,
 )
 
 /**
@@ -55,10 +59,12 @@ data class MigrationPlan(
     val skipped: Int,
     val monthSettings: List<LocalMonthSettings> = emptyList(),
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),
+    /** The guest's salary profile, only when the account has none. */
+    val salaryProfile: LocalSalaryProfile? = null,
 ) {
     val total: Int get() =
         categories.size + budgets.size + expenses.size + income.size + plannedIncome.size + recurring.size +
-            monthSettings.size + categoryGroups.size
+            monthSettings.size + categoryGroups.size + (if (salaryProfile != null) 1 else 0)
 }
 
 private fun String.nameKey(): String = trim().lowercase()
@@ -84,6 +90,8 @@ private class CategoryResolution(
  * - built-in overrides and budgets: what the account already has wins;
  * - planned income: if the account has any line, the account wins and none is copied; else every valid
  *   line is copied under its own id;
+ * - the salary profile is a singleton: if the account has one the guest's is not copied (and the guest's managed
+ *   income lines lose their managed key); else it is copied when valid;
  * - month settings keep their month id; a month the account already has wins and is skipped silently;
  * - recurring items keep their ids; ids already in the account are skipped, an expense template's
  *   category is remapped like an expense's, and unresolvable or invalid ones count as skipped;
@@ -121,7 +129,9 @@ fun planMigration(
     for (item in local.income.filter { it.id !in remote.incomeIds }) {
         if (isValid { validateIncome(item) }) income += item else skipped++
     }
-    val plannedIncome = plannedIncomeToCopy(local.plannedIncome, remote, resolution, groups.idMap)
+    val salaryProfile = profileToCopy(local, remote)
+    val plannedIncome =
+        plannedIncomeToCopy(local.plannedIncome, remote, resolution, groups.idMap, keepManaged = salaryProfile != null)
     if (remote.plannedIncomeIds.isEmpty()) skipped += local.plannedIncome.size - plannedIncome.size
     val recurring = recurringToCopy(local.recurring, remote, resolution, known)
     skipped += local.recurring.count { it.id !in remote.recurringIds } - recurring.size
@@ -138,6 +148,7 @@ fun planMigration(
         skipped,
         validMonthSettings,
         groups.toWrite,
+        salaryProfile,
     )
 }
 
@@ -166,9 +177,23 @@ private fun plannedIncomeToCopy(
     remote: RemoteAccountSnapshot,
     resolution: CategoryResolution,
     groupIdMap: Map<String, String>,
+    keepManaged: Boolean,
 ): List<LocalPlannedIncome> {
     if (remote.plannedIncomeIds.isNotEmpty()) return emptyList()
-    return local.map { it.withEarmarkRemapped(resolution, groupIdMap) }.filter { isValid { validatePlannedIncome(it) } }
+    return local
+        .map { it.withEarmarkRemapped(resolution, groupIdMap) }
+        // Managed lines without a profile to follow would be read-only forever: they become plain lines.
+        .map { if (keepManaged) it else it.copy(managedKey = null) }
+        .filter { isValid { validatePlannedIncome(it) } }
+}
+
+/** The guest's salary profile when it is valid and the account has none (a singleton: the account wins). */
+private fun profileToCopy(
+    local: LocalDataDocument,
+    remote: RemoteAccountSnapshot,
+): LocalSalaryProfile? {
+    val profile = local.salaryProfile ?: return null
+    return profile.takeIf { !remote.hasSalaryProfile && isValid { validateSalaryProfile(it) } }
 }
 
 // An earmark follows its category / group to the account's id; one that cannot be resolved is dropped, the line stays.

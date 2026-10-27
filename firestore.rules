@@ -87,7 +87,7 @@ service cloud.firestore {
 
     function isValidPlannedIncome(data) {
       return data.keys().hasOnly(['label', 'amountCents', 'order', 'basis', 'frequency', 'monthOfYear',
-          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'updatedAt'])
+          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'managedKey', 'updatedAt'])
         && data.keys().hasAll(['label', 'amountCents', 'order'])
         && data.label is string && data.label.size() > 0 && data.label.size() <= 50
         && isValidAmountCents(data.amountCents)
@@ -95,7 +95,15 @@ service cloud.firestore {
         && (!('basis' in data) || data.basis in ['FIXED', 'PER_WORKING_DAY'])
         && isValidIncomeFrequency(data)
         && isValidEarmark(data)
+        && (!('managedKey' in data) || data.managedKey in managedKeys())
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
+    }
+
+    // The keys of the income lines generated from the salary profile (absent on the user's own lines).
+    function managedKeys() {
+      return ['profile_net_salary', 'profile_meal', 'profile_holiday', 'profile_christmas',
+        'profile_flex_q1', 'profile_flex_q2', 'profile_flex_q3', 'profile_flex_q4',
+        'profile_profit_share', 'profile_bonus'];
     }
 
     // An earmark sets the line aside for a category or group: both fields or neither, the id shape-checked
@@ -184,6 +192,45 @@ service cloud.firestore {
     match /users/{userId}/plannedIncome/{lineId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidPlannedIncome(request.resource.data);
+    }
+
+    // The salary profile is a single document the plan's managed income lines are generated from. Rates are
+    // integers in parts per million, amounts in cents, every field but the input mode and the defaulted ones
+    // optional.
+    match /users/{userId}/plan/salaryProfile {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidSalaryProfile(request.resource.data);
+    }
+
+    function isOptionalInt(data, key, min, max) {
+      return !(key in data) || (data[key] is int && data[key] >= min && data[key] <= max);
+    }
+
+    function isValidSalaryProfile(data) {
+      return data.keys().hasOnly(['inputMode', 'baseGrossCents', 'subsidySpreadPpm', 'irsBasePpm', 'irsSubsidiesPpm',
+          'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
+          'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth', 'flexPpm',
+          'flexAnnualCents', 'flexFirstMonth', 'flexWithdrawalFeePpm', 'profitShareMultiplierPpm',
+          'profitShareMonth', 'bonusCents', 'bonusMonth', 'updatedAt'])
+        && data.keys().hasAll(['inputMode'])
+        && data.inputMode in ['GROSS', 'NET']
+        && (!('subsidySpreadPpm' in data) || data.subsidySpreadPpm in [0, 500000, 1000000])
+        && isOptionalInt(data, 'irsBasePpm', 0, 1000000) && isOptionalInt(data, 'irsSubsidiesPpm', 0, 1000000)
+        && isOptionalInt(data, 'ssPpm', 0, 1000000) && isOptionalInt(data, 'irsJovemExemptPpm', 0, 1000000)
+        && isOptionalInt(data, 'flexPpm', 0, 1000000) && isOptionalInt(data, 'flexWithdrawalFeePpm', 0, 1000000)
+        && isOptionalInt(data, 'profitShareMultiplierPpm', 0, 10000000)
+        && isOptionalInt(data, 'baseGrossCents', 1, 100000000000)
+        && isOptionalInt(data, 'netMonthlyCents', 1, 100000000000)
+        && isOptionalInt(data, 'netHolidayLumpCents', 1, 100000000000)
+        && isOptionalInt(data, 'netChristmasLumpCents', 1, 100000000000)
+        && isOptionalInt(data, 'mealRatePerDayCents', 1, 100000000000)
+        && isOptionalInt(data, 'flexAnnualCents', 1, 100000000000)
+        && isOptionalInt(data, 'bonusCents', 1, 100000000000)
+        && isOptionalInt(data, 'holidaySubsidyMonth', 1, 12) && isOptionalInt(data, 'christmasSubsidyMonth', 1, 12)
+        && isOptionalInt(data, 'flexFirstMonth', 1, 12) && isOptionalInt(data, 'profitShareMonth', 1, 12)
+        && isOptionalInt(data, 'bonusMonth', 1, 12)
+        && (!('mealSkipMonths' in data) || (data.mealSkipMonths is list && data.mealSkipMonths.size() <= 12))
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
     // Each user can only read/write their own per-month plan settings: the document id is the month

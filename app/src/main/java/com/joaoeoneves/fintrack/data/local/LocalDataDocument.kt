@@ -1,9 +1,10 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.domain.model.DEFAULT_MEAL_SKIP_MONTH
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 7
+internal const val LOCAL_SCHEMA_VERSION = 8
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -26,6 +27,8 @@ data class LocalDataDocument(
     val monthSettings: List<LocalMonthSettings> = emptyList(),
     /** Category groups (absent in schema v1 to v4 files). */
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),
+    /** The salary profile singleton (absent in schema v1 to v7 files). */
+    val salaryProfile: LocalSalaryProfile? = null,
 ) {
     /** Whether there is no user data at all. */
     val isEmpty: Boolean get() =
@@ -36,7 +39,8 @@ data class LocalDataDocument(
             plannedIncome.isEmpty() &&
             recurring.isEmpty() &&
             monthSettings.isEmpty() &&
-            categoryGroups.isEmpty()
+            categoryGroups.isEmpty() &&
+            salaryProfile == null
 }
 
 @Serializable
@@ -85,6 +89,8 @@ data class LocalPlannedIncome(
     /** An earmark type (`CATEGORY` or `GROUP`); set together with [earmarkId] or not at all (schema v7). */
     val earmarkType: String? = null,
     val earmarkId: String? = null,
+    /** Set on lines generated from the salary profile (schema v8). */
+    val managedKey: String? = null,
 )
 
 /**
@@ -118,4 +124,34 @@ data class LocalCategoryGroup(
     val id: String,
     val name: String,
     val order: Int,
+)
+
+/**
+ * The salary profile (schema v8): rates in ppm, amounts in cents, the input mode as a
+ * [com.joaoeoneves.fintrack.domain.model.SalaryInputMode] name. Absent fields take the domain defaults.
+ */
+@Serializable
+data class LocalSalaryProfile(
+    val inputMode: String = "GROSS",
+    val baseGrossCents: Long? = null,
+    val subsidySpreadPpm: Int = 500_000,
+    val irsBasePpm: Int = 0,
+    val irsSubsidiesPpm: Int? = null,
+    val ssPpm: Int = 110_000,
+    val irsJovemExemptPpm: Int = 0,
+    val netMonthlyCents: Long? = null,
+    val netHolidayLumpCents: Long? = null,
+    val netChristmasLumpCents: Long? = null,
+    val mealRatePerDayCents: Long? = null,
+    val mealSkipMonths: List<Int> = listOf(DEFAULT_MEAL_SKIP_MONTH),
+    val holidaySubsidyMonth: Int = 6,
+    val christmasSubsidyMonth: Int = 12,
+    val flexPpm: Int? = null,
+    val flexAnnualCents: Long? = null,
+    val flexFirstMonth: Int = 1,
+    val flexWithdrawalFeePpm: Int = 0,
+    val profitShareMultiplierPpm: Int? = null,
+    val profitShareMonth: Int? = null,
+    val bonusCents: Long? = null,
+    val bonusMonth: Int? = null,
 )

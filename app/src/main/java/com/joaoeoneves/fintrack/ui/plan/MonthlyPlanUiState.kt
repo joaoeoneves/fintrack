@@ -100,4 +100,6 @@ data class IncomeLineEditorState(
     val initialSchedule: IncomeSchedule = IncomeSchedule(),
     val labelError: UiText? = null,
     val earmarkOptions: EarmarkOptions = EarmarkOptions(),
+    /** A line generated from the salary profile: only its label and earmark can be changed here. */
+    val managed: Boolean = false,
 )

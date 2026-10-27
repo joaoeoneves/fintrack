@@ -63,6 +63,10 @@ object Categories
 @Serializable
 object RecurringList
 
+/** The salary profile editor, pushed from the Plan tab; it takes no arguments. */
+@Serializable
+object EditSalaryProfile
+
 @Serializable
 data class AddEditRecurring(
     val recurringId: String? = null,

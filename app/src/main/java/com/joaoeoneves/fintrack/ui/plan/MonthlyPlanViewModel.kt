@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
+import com.joaoeoneves.fintrack.domain.model.Earmark
+import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
@@ -18,6 +20,7 @@ import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
@@ -117,6 +120,7 @@ class MonthlyPlanViewModel
                             editingId = line.id,
                             initialLabel = line.label,
                             initialAmountCents = line.amountCents,
+                            managed = line.isManaged,
                             initialSchedule =
                                 IncomeSchedule(
                                     basis = line.basis,
@@ -155,20 +159,7 @@ class MonthlyPlanViewModel
             viewModelScope.launch {
                 val lines = repositories.currentLines()
                 val existing = lines.firstOrNull { it.id == current.editingId }
-                val cleaned = schedule.normalized(month)
-                val line =
-                    PlannedIncome(
-                        id = existing?.id.orEmpty(),
-                        label = trimmed,
-                        amountCents = amountCents,
-                        order = existing?.order ?: ((lines.maxOfOrNull { it.order } ?: -1) + 1),
-                        basis = cleaned.basis,
-                        frequency = cleaned.frequency,
-                        monthOfYear = cleaned.monthOfYear,
-                        yearMonth = cleaned.yearMonth,
-                        skipMonths = cleaned.skipMonths,
-                        earmark = cleaned.earmark,
-                    )
+                val line = incomeLineOf(existing, lines, trimmed, amountCents, schedule.normalized(month))
                 repositories.plannedIncome
                     .savePlannedIncome(line)
                     .onSuccess { editor.value = null }
@@ -178,6 +169,8 @@ class MonthlyPlanViewModel
 
         fun onDeleteIncomeLine(id: String) {
             viewModelScope.launch {
+                // A managed line goes away with its salary profile, not by hand.
+                if (repositories.currentLines().firstOrNull { it.id == id }?.isManaged == true) return@launch
                 repositories.plannedIncome
                     .deletePlannedIncome(id)
                     .onSuccess { editor.value = null }
@@ -221,6 +214,37 @@ class MonthlyPlanViewModel
             errors.send(UiText.StringResource(R.string.error_plan_save_failed))
         }
     }
+
+/** The line to save: a managed one keeps the profile's amount and schedule, any other takes the editor's. */
+private fun incomeLineOf(
+    existing: PlannedIncome?,
+    lines: List<PlannedIncome>,
+    label: String,
+    amountCents: Long,
+    schedule: IncomeSchedule,
+): PlannedIncome =
+    if (existing != null && existing.isManaged) {
+        existing.withUserEdits(label, schedule.earmark)
+    } else {
+        PlannedIncome(
+            id = existing?.id.orEmpty(),
+            label = label,
+            amountCents = amountCents,
+            order = existing?.order ?: ((lines.maxOfOrNull { it.order } ?: -1) + 1),
+            basis = schedule.basis,
+            frequency = schedule.frequency,
+            monthOfYear = schedule.monthOfYear,
+            yearMonth = schedule.yearMonth,
+            skipMonths = schedule.skipMonths,
+            earmark = schedule.earmark,
+        )
+    }
+
+/** A managed line keeps the profile's amount and schedule; only the label and (monthly lines') earmark change. */
+private fun PlannedIncome.withUserEdits(
+    label: String,
+    earmark: Earmark?,
+): PlannedIncome = copy(label = label, earmark = if (frequency == IncomeFrequency.MONTHLY) earmark else this.earmark)
 
 private suspend fun PlanRepositories.currentLines(): List<PlannedIncome> = plannedIncome.observePlannedIncome().first()
 

@@ -55,6 +55,7 @@ class BackupRepository
                     recurring = localRecurring,
                     monthSettings = plan.monthSettings.filterNot { it.isBlank }.map { it.toLocal() },
                     categoryGroups = plan.categoryGroups.map { it.toLocal() },
+                    salaryProfile = plan.salaryProfile?.toLocal(),
                     categories =
                         withPlaceholderCategories(
                             categories = categories.filter { it.needsStoring() }.map { it.toLocal() },

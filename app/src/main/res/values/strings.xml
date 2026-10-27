@@ -501,4 +501,61 @@
     <string name="plan_pot_overflow">%1$s overflow</string>
     <string name="plan_pot_overflow_row">−%1$s · %2$s</string>
     <string name="cd_pot">Pot: %1$s</string>
+
+    <string name="plan_salary_section">Salary</string>
+    <string name="plan_salary_profile_row">Salary profile</string>
+    <string name="plan_from_salary_profile">From salary profile</string>
+    <string name="plan_managed_line_hint">Generated from your salary profile. Change the amount and schedule there.</string>
+    <string name="salary_profile_title">Salary profile</string>
+    <string name="salary_mode_gross">Gross + rates</string>
+    <string name="salary_mode_net">Net amounts</string>
+    <string name="salary_group_salary">Salary</string>
+    <string name="salary_field_base">Gross base salary (monthly)</string>
+    <string name="salary_group_duo">Duodécimos</string>
+    <string name="salary_duo_hint">Share of the holiday and Christmas subsidies paid every month</string>
+    <string name="salary_spread_none">None</string>
+    <string name="salary_spread_half" formatted="false">50%</string>
+    <string name="salary_spread_full" formatted="false">100%</string>
+    <string name="salary_group_taxes">Taxes</string>
+    <string name="salary_field_irs_base" formatted="false">IRS withholding rate (%)</string>
+    <string name="salary_field_irs_subsidies" formatted="false">IRS rate on subsidies (%)</string>
+    <string name="salary_irs_subsidies_hint">Same as the base rate when empty</string>
+    <string name="salary_field_irs_jovem" formatted="false">IRS Jovem (% exempt)</string>
+    <string name="salary_field_ss" formatted="false">Social security (%)</string>
+    <string name="salary_ss_hint">11 when empty</string>
+    <string name="salary_group_net">Net amounts</string>
+    <string name="salary_field_net_monthly">Net monthly salary</string>
+    <string name="salary_net_monthly_hint">As received, duodécimos included</string>
+    <string name="salary_field_net_holiday">Holiday subsidy (net)</string>
+    <string name="salary_field_net_christmas">Christmas subsidy (net)</string>
+    <string name="salary_group_subsidy_months">Subsidy months</string>
+    <string name="salary_holiday_month">Holiday subsidy paid in</string>
+    <string name="salary_christmas_month">Christmas subsidy paid in</string>
+    <string name="salary_group_meal">Meal allowance</string>
+    <string name="salary_field_meal">Meal allowance per working day</string>
+    <string name="salary_group_flex">Flexible benefits</string>
+    <string name="salary_field_flex_percent" formatted="false">Share of annual gross (%)</string>
+    <string name="salary_field_flex_annual">Yearly amount</string>
+    <string name="salary_flex_first_month">First payment, then every 3 months</string>
+    <string name="salary_field_flex_fee" formatted="false">Withdrawal fee (%)</string>
+    <string name="salary_group_extras">Extras</string>
+    <string name="salary_field_profit_share">Profit share (× base salary)</string>
+    <string name="salary_profit_month">Profit share paid in</string>
+    <string name="salary_field_bonus">Bonus</string>
+    <string name="salary_bonus_month">Bonus paid in</string>
+    <string name="salary_error_invalid">Enter a valid value</string>
+    <string name="salary_breakdown_title">Breakdown</string>
+    <string name="salary_breakdown_gross">Gross monthly</string>
+    <string name="salary_breakdown_ss">Social security</string>
+    <string name="salary_breakdown_irs">IRS</string>
+    <string name="salary_breakdown_net">Net monthly</string>
+    <string name="salary_breakdown_meal">Meal allowance in %1$s</string>
+    <string name="salary_breakdown_flex">Flexible benefits per payment</string>
+    <string name="salary_breakdown_profit_share">Profit share</string>
+    <string name="salary_delete">Delete salary profile</string>
+    <string name="salary_delete_title">Delete the salary profile?</string>
+    <string name="salary_delete_message">The income lines generated from it are removed too. Your own lines stay.</string>
+    <string name="salary_line_net">Net salary</string>
+    <string name="salary_line_holiday">Holiday subsidy</string>
+    <string name="salary_line_christmas">Christmas subsidy</string>
 </resources>

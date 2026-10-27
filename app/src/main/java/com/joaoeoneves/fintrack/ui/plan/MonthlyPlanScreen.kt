@@ -41,6 +41,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 fun PlanScreen(
     onOpenSettings: () -> Unit,
     onOpenRecurring: () -> Unit,
+    onOpenSalaryProfile: () -> Unit,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
     groupsViewModel: CategoryGroupsViewModel = hiltViewModel(),
 ) {
@@ -68,17 +69,29 @@ fun PlanScreen(
                 ErrorState(message = state.message.asString(), onRetry = viewModel::onRetry, modifier = contentModifier)
 
             is MonthlyPlanUiState.Content ->
-                MonthlyPlanContent(state, viewModel, groupsViewModel, onOpenRecurring, contentModifier)
+                MonthlyPlanContent(
+                    state = state,
+                    viewModel = viewModel,
+                    groupsViewModel = groupsViewModel,
+                    navigation = PlanNavigation(onOpenRecurring, onOpenSalaryProfile),
+                    modifier = contentModifier,
+                )
         }
     }
 }
+
+/** Where the Plan tab can navigate to, bundled for detekt's LongParameterList. */
+private class PlanNavigation(
+    val onOpenRecurring: () -> Unit,
+    val onOpenSalaryProfile: () -> Unit,
+)
 
 @Composable
 private fun MonthlyPlanContent(
     state: MonthlyPlanUiState.Content,
     viewModel: MonthlyPlanViewModel,
     groupsViewModel: CategoryGroupsViewModel,
-    onOpenRecurring: () -> Unit,
+    navigation: PlanNavigation,
     modifier: Modifier = Modifier,
 ) {
     var editingAllocation by remember { mutableStateOf<CategoryBudget?>(null) }
@@ -99,6 +112,7 @@ private fun MonthlyPlanContent(
                 monthOnly = true,
             )
         }
+        item { SalaryProfileSection(onOpen = navigation.onOpenSalaryProfile, modifier = cardModifier) }
         potsItem(state.pots, cardModifier)
         item {
             PlanSummaryCard(
@@ -117,7 +131,7 @@ private fun MonthlyPlanContent(
         }
         groupsItem(state, groupsViewModel, onManage = { managingGroups = true }, modifier = cardModifier)
         plannedVsActualItem(state.progress, viewModel, cardModifier)
-        item { RecurringSection(onOpen = onOpenRecurring, modifier = cardModifier) }
+        item { RecurringSection(onOpen = navigation.onOpenRecurring, modifier = cardModifier) }
     }
 
     if (editingWorkingDays) {

@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
+import com.joaoeoneves.fintrack.data.salaryProfileDoc
 import com.joaoeoneves.fintrack.data.toCategoryGroupOrNull
 import com.joaoeoneves.fintrack.data.toCategoryOrNull
 import kotlinx.coroutines.tasks.await
@@ -20,7 +21,7 @@ private val SERVER_TIMEOUT = 30.seconds
  * Moves guest data into `users/{uid}`: ids are preserved (`document(id)`), batches are committed
  * one at a time and awaited, in the order category groups, categories, budgets, expenses, income, planned income,
  * recurring, month
- * settings so the rules' `existsAfter` category lookup finds every custom category a later batch
+ * settings, salary profile so the rules' `existsAfter` category lookup finds every custom category a later batch
  * references. Awaiting is deliberate here (unlike the normal repositories): the caller must know a batch
  * reached the server before the local copy may be removed, so each wait is bounded by a timeout.
  */
@@ -70,8 +71,12 @@ class FirestoreAccountMigrator
                 monthSettingsIds = ids("monthSettings"),
                 categories = categories,
                 categoryGroups = groups,
+                hasSalaryProfile = hasSalaryProfile(uid),
             )
         }
+
+        private suspend fun hasSalaryProfile(uid: String): Boolean =
+            serverGet { salaryProfileDoc(firestore, uid).get(Source.SERVER).await() }.exists()
 
         private suspend fun serverIds(
             uid: String,
