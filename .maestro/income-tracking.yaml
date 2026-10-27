@@ -41,7 +41,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Back"
 
 # --- 1: Dashboard loads with the balance summary card (net balance + income / spending / saved &
-# invested columns). The outflow column was outflow label is "Expenses", and investments now
+# invested columns). The outflow column is labelled "Expenses", and investments now
 # count as saved ("Saved & invested") rather than as spending.
 - assertVisible:
     id: "dashboard_list"

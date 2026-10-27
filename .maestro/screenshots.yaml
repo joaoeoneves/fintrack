@@ -38,11 +38,19 @@ appId: com.joaoeoneves.fintrack
 - tapOn:
     id: "dashboard_settings"
 - tapOn: "English"
+# Language change recreates the activity; wait for an English-only section title, then scroll to
+# each row (the redesigned Settings screen is long).
 - extendedWaitUntil:
-    visible: "Display currency"
+    visible: "Appearance"
     timeout: 10000
+- scrollUntilVisible:
+    element: "Display currency"
+    direction: DOWN
 - tapOn: "Display currency"
 - tapOn: "Euro \\(€\\)"
+- scrollUntilVisible:
+    element: "Dark"
+    direction: UP
 - tapOn: "Dark"
 - back
 - extendedWaitUntil:
@@ -200,11 +208,14 @@ appId: com.joaoeoneves.fintrack
 - tapOn:
     id: "dashboard_settings"
 - extendedWaitUntil:
-    visible: "Display currency"
+    visible: "Appearance"
     timeout: 10000
 - takeScreenshot: maestro-out/screens/en-dark-settings
 
 # --- 4: Light theme: settings, dashboard, add-expense ---
+- scrollUntilVisible:
+    element: "Light"
+    direction: UP
 - tapOn: "Light"
 - takeScreenshot: maestro-out/screens/en-light-settings
 - back
@@ -237,10 +248,10 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Português"
 # Language change recreates the activity (stays on Settings); wait for the PT label.
 - extendedWaitUntil:
-    visible: "Moeda de apresentação"
+    visible: "Aparência"
     timeout: 10000
 - scrollUntilVisible:
-    element: "Moeda de apresentação"
+    element: "Aparência"
     direction: UP
 - takeScreenshot: maestro-out/screens/pt-light-settings
 - back

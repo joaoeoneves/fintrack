@@ -37,11 +37,19 @@ appId: com.joaoeoneves.fintrack
 ---
 - launchApp
 
-# --- 0: Pin English first (fresh installs default to Português; the Settings entry point's label is
-# itself locale-dependent, so match either), mirroring golden-path.yaml's step 0.
+# --- 0: Pin English first (the app follows the system language, English on the CI emulator but
+# possibly Português elsewhere, so the Settings entry label is matched in either language).
+# Language rows are plain choice rows; after the tap the activity recreates, so wait for an
+# English-only section title ("Appearance") and scroll the row into view first if needed.
 - tapOn:
     text: "Settings|Definições"
+- scrollUntilVisible:
+    element: "English"
+    direction: DOWN
 - tapOn: "English"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 10000
 - back
 
 # --- 1: Open Settings via the gear icon on the Dashboard ---
