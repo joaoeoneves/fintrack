@@ -109,6 +109,10 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            all {
+                // JVM/Robolectric tests are independent: fork one JVM per half of the cores.
+                it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+            }
         }
     }
 }
