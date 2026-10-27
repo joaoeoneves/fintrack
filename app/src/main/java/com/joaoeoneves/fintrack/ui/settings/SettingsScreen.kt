@@ -29,11 +29,13 @@ import com.joaoeoneves.fintrack.ui.importexport.ImportUiState
 import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
+@Suppress("LongParameterList") // one callback per navigation target plus the injected ViewModel
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenCategories: () -> Unit,
     onOpenRecurring: () -> Unit,
+    onDataDeleted: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -68,6 +70,7 @@ fun SettingsScreen(
                 onLeaveGuestMode = viewModel::leaveGuestMode,
                 onOpenCategories = onOpenCategories,
                 onOpenRecurring = onOpenRecurring,
+                onDataDeleted = onDataDeleted,
             ),
         modifier = modifier,
     )
@@ -109,6 +112,7 @@ private data class SettingsActions(
     val onLeaveGuestMode: () -> Unit,
     val onOpenCategories: () -> Unit,
     val onOpenRecurring: () -> Unit,
+    val onDataDeleted: () -> Unit,
 )
 
 @Composable
@@ -139,7 +143,18 @@ private fun SettingsScaffold(
             RecurringSection(onOpen = actions.onOpenRecurring)
             DataSection(onImportClick = actions.onImportClick, onExportClick = actions.onExportClick)
             BackupFlow { onExport, onRestore ->
-                BackupSection(isGuest = uiState.isGuest, onExportClick = onExport, onRestoreClick = onRestore)
+                DeleteAllDataFlow(
+                    isGuest = uiState.isGuest,
+                    onExportBackup = onExport,
+                    onDeleted = actions.onDataDeleted,
+                ) { onDeleteAll ->
+                    BackupSection(
+                        isGuest = uiState.isGuest,
+                        onExportClick = onExport,
+                        onRestoreClick = onRestore,
+                        onDeleteAllClick = onDeleteAll,
+                    )
+                }
             }
             AccountCard(uiState = uiState, actions = actions)
             AboutSection()

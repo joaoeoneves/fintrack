@@ -603,4 +603,14 @@
     <string name="error_goal_save_failed">Couldn\'t save the goal</string>
     <string name="annual_goals_title">Goals</string>
     <string name="annual_goal_planned_of_target">%1$s planned of %2$s</string>
+    <string name="settings_delete_all_data">Delete all data</string>
+    <string name="delete_all_data_title">Delete all data?</string>
+    <string name="delete_all_data_message_account">This permanently deletes all your expenses, income, plan, categories, recurring items and goals from your account. Export a backup first if you might need it.</string>
+    <string name="delete_all_data_message_device">This permanently deletes all your expenses, income, plan, categories, recurring items and goals on this device. Export a backup first if you might need it.</string>
+    <string name="delete_all_data_export_backup">Export backup</string>
+    <string name="delete_all_data_confirm">Delete everything</string>
+    <string name="delete_all_data_progress">Deleting your data…</string>
+    <string name="delete_all_data_done">All data deleted</string>
+    <string name="delete_all_data_error_title">Delete failed</string>
+    <string name="delete_all_data_error">Couldn\'t delete all your data. Some of it may already be gone. Check your connection and try again.</string>
 </resources>

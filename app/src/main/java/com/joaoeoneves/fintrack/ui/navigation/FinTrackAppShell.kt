@@ -6,14 +6,21 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackNavigationBar
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
 import com.joaoeoneves.fintrack.ui.designsystem.NavigationBarEntry
+import kotlinx.coroutines.launch
 
 /**
  * Hosts the nav graph under a bottom [FinTrackNavigationBar] that is shown on the four tab roots
@@ -23,21 +30,28 @@ import com.joaoeoneves.fintrack.ui.designsystem.NavigationBarEntry
 fun FinTrackAppShell(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val destination = navController.currentBackStackEntryAsState().value?.destination
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val showMessage: (String) -> Unit =
+        remember { { message -> scope.launch { snackbarHostState.showSnackbar(message) } } }
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         // Each screen inside applies its own system-bar insets; the bar below applies the bottom one.
         contentWindowInsets = WindowInsets(0),
+        snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
         bottomBar = {
             AnimatedVisibility(visible = destination.isTopLevel()) {
                 TabBar(selected = destination.currentTab(), onSelect = navController::navigateToTab)
             }
         },
     ) { inner ->
-        FinTrackNavHost(
-            navController = navController,
-            modifier = Modifier.padding(inner).consumeWindowInsets(inner),
-        )
+        CompositionLocalProvider(LocalAppSnackbar provides showMessage) {
+            FinTrackNavHost(
+                navController = navController,
+                modifier = Modifier.padding(inner).consumeWindowInsets(inner),
+            )
+        }
     }
 }
 

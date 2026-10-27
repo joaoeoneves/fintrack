@@ -13,12 +13,13 @@ import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
-/** JSON backup group: export in both modes, restore only for guests (which have local data to replace). */
+/** JSON backup group: export in both modes, restore only for guests (local data to replace), and the wipe. */
 @Composable
 fun BackupSection(
     isGuest: Boolean,
     onExportClick: () -> Unit,
     onRestoreClick: () -> Unit,
+    onDeleteAllClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SettingsGroup(label = stringResource(R.string.settings_section_backup), modifier = modifier) {
@@ -36,5 +37,11 @@ fun BackupSection(
             Hairline()
             SettingsRow(title = stringResource(R.string.settings_restore_backup), onClick = onRestoreClick)
         }
+        Hairline()
+        SettingsRow(
+            title = stringResource(R.string.settings_delete_all_data),
+            onClick = onDeleteAllClick,
+            titleColor = FinTrackTheme.colors.negative,
+        )
     }
 }

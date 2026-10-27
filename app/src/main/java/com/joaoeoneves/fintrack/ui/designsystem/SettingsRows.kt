@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -52,6 +53,7 @@ fun SettingsGroup(
 }
 
 /** A tappable (when [onClick] is set) row: [title] on the left, optional [value] and chevron on the right. */
+@Suppress("LongParameterList") // title/value/click/chevron/colour are independent row options
 @Composable
 fun SettingsRow(
     title: String,
@@ -59,6 +61,7 @@ fun SettingsRow(
     value: String? = null,
     onClick: (() -> Unit)? = null,
     showChevron: Boolean = false,
+    titleColor: Color = Color.Unspecified,
 ) {
     Row(
         modifier =
@@ -72,6 +75,7 @@ fun SettingsRow(
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
+            color = titleColor,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
