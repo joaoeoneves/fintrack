@@ -3,15 +3,12 @@ package com.joaoeoneves.fintrack.ui.common
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -29,12 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
-private val SortChipMinHeight = 40.dp
-private val SortIconSize = 18.dp
+private val SortButtonSize = 56.dp
 
 /**
  * Search text field shared between the expense and income list screens: a rounded filled field
@@ -51,7 +49,7 @@ fun SearchField(
     TextField(
         value = query,
         onValueChange = onQueryChanged,
-        placeholder = { Text(label) },
+        placeholder = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         singleLine = true,
         shape = MaterialTheme.shapes.medium,
@@ -72,9 +70,9 @@ fun SearchField(
 }
 
 /**
- * Sort control shared between the expense and income list screens: a compact chip showing the
- * selected option's label that opens a dropdown of all [options]. Generic over the sort option
- * type [T] so each screen's own enum (`SortOption`) can reuse it.
+ * Sort control: a round icon button that opens a dropdown of all [options], with the selected one
+ * ticked. Icon-only so the search field next to it keeps its width; the current order is the
+ * button's content description.
  */
 @Composable
 fun <T> SortDropdown(
@@ -87,28 +85,22 @@ fun <T> SortDropdown(
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
-        Row(
+        val current = optionLabel(selected)
+        Box(
             modifier =
                 Modifier
-                    .heightIn(min = SortChipMinHeight)
+                    .size(SortButtonSize)
                     .clip(CircleShape)
                     .background(FinTrackTheme.colors.surface2)
                     .clickable { expanded = true }
-                    .padding(start = Dimens.Space12, end = Dimens.Space4),
-            verticalAlignment = Alignment.CenterVertically,
+                    .semantics { contentDescription = current },
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Sort,
                 contentDescription = null,
                 tint = FinTrackTheme.colors.textSecondary,
-                modifier = Modifier.padding(end = Dimens.Space8).size(SortIconSize),
             )
-            Text(
-                text = optionLabel(selected),
-                style = MaterialTheme.typography.labelLarge,
-                maxLines = 1,
-            )
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
         }
         DropdownMenu(
             expanded = expanded,
@@ -119,6 +111,9 @@ fun <T> SortDropdown(
             options.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(optionLabel(option)) },
+                    trailingIcon = {
+                        if (option == selected) Icon(Icons.Default.Check, contentDescription = null)
+                    },
                     onClick = {
                         onSelected(option)
                         expanded = false
