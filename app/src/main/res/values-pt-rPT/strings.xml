@@ -233,4 +233,34 @@
     <string name="error_category_name_duplicate">Já existe uma categoria com este nome</string>
     <string name="error_category_last_active">Pelo menos uma categoria tem de ficar ativa</string>
     <string name="error_category_save_failed">Não foi possível guardar a categoria</string>
+
+    <!-- Backup -->
+    <string name="settings_section_backup">Cópia de segurança</string>
+    <string name="settings_export_backup">Exportar cópia de segurança (JSON)</string>
+    <string name="settings_restore_backup">Restaurar cópia de segurança (JSON)</string>
+    <string name="settings_backup_guest_hint">Exporte uma cópia de segurança para mover os seus dados para outro dispositivo</string>
+    <string name="settings_backup_signed_in_hint">Guarde uma cópia dos seus dados num ficheiro JSON</string>
+    <string name="action_restore">Restaurar</string>
+    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nOrçamentos: %3$d\nCategorias: %4$d</string>
+    <string name="backup_export_done_title">Cópia de segurança exportada</string>
+    <string name="backup_export_done_message">A cópia de segurança foi guardada.\n\n%1$s</string>
+    <string name="backup_export_failed_title">Falha na exportação</string>
+    <string name="backup_restore_confirm_title">Restaurar esta cópia de segurança?</string>
+    <string name="backup_restore_confirm_message">O ficheiro contém:\n\n%1$s</string>
+    <string name="backup_restore_replace_warning">Os dados atualmente neste dispositivo serão substituídos. Exporte primeiro uma cópia de segurança se os quiser manter.</string>
+    <string name="backup_restore_done_title">Cópia de segurança restaurada</string>
+    <string name="backup_restore_done_message">Restaurado:\n\n%1$s</string>
+    <string name="backup_restore_failed_title">Falha ao restaurar</string>
+    <string name="backup_error_invalid">Este ficheiro não é uma cópia de segurança válida do FinTrack</string>
+    <string name="backup_error_unsupported_version">Esta cópia de segurança foi criada por uma versão mais recente do FinTrack. Atualize a aplicação para a restaurar.</string>
+    <string name="backup_error_too_large">Este ficheiro é demasiado grande para ser uma cópia de segurança do FinTrack</string>
+    <string name="backup_error_read">Não foi possível ler o ficheiro selecionado</string>
+    <string name="backup_error_write">Não foi possível escrever o ficheiro da cópia de segurança</string>
+    <string name="backup_error_export_failed">Não foi possível criar a cópia de segurança</string>
+    <string name="backup_error_restore_failed">Não foi possível restaurar a cópia de segurança. Os seus dados atuais não foram alterados.</string>
+    <plurals name="backup_restore_skipped">
+        <item quantity="one">%d registo inválido no ficheiro será ignorado.</item>
+        <item quantity="many">%d de registos inválidos no ficheiro serão ignorados.</item>
+        <item quantity="other">%d registos inválidos no ficheiro serão ignorados.</item>
+    </plurals>
 </resources>

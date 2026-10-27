@@ -29,6 +29,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
+import com.joaoeoneves.fintrack.ui.backup.BackupFlow
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.importexport.ExportUiState
 import com.joaoeoneves.fintrack.ui.importexport.ImportExportViewModel
@@ -58,7 +59,6 @@ fun SettingsScreen(
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
             uri?.let(importExportViewModel::onExportTargetSelected)
         }
-
     SettingsScaffold(
         onBack = onBack,
         uiState = uiState,
@@ -168,6 +168,14 @@ private fun SettingsScaffold(
                 onExportClick = actions.onExportClick,
                 modifier = sectionModifier,
             )
+            BackupFlow { onExport, onRestore ->
+                BackupSection(
+                    isGuest = uiState.isGuest,
+                    onExportClick = onExport,
+                    onRestoreClick = onRestore,
+                    modifier = sectionModifier,
+                )
+            }
             AccountCard(uiState = uiState, actions = actions, modifier = sectionModifier)
             AboutSection(modifier = sectionModifier)
         }

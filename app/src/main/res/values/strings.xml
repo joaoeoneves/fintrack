@@ -231,4 +231,33 @@
     <string name="error_category_name_duplicate">A category with this name already exists</string>
     <string name="error_category_last_active">At least one category must stay active</string>
     <string name="error_category_save_failed">Couldn\'t save the category</string>
+
+    <!-- Backup -->
+    <string name="settings_section_backup">Backup</string>
+    <string name="settings_export_backup">Export backup (JSON)</string>
+    <string name="settings_restore_backup">Restore backup (JSON)</string>
+    <string name="settings_backup_guest_hint">Export a backup to move your data to another device</string>
+    <string name="settings_backup_signed_in_hint">Save a copy of your data as a JSON file</string>
+    <string name="action_restore">Restore</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nBudgets: %3$d\nCategories: %4$d</string>
+    <string name="backup_export_done_title">Backup exported</string>
+    <string name="backup_export_done_message">Your backup was saved.\n\n%1$s</string>
+    <string name="backup_export_failed_title">Export failed</string>
+    <string name="backup_restore_confirm_title">Restore this backup?</string>
+    <string name="backup_restore_confirm_message">The backup file contains:\n\n%1$s</string>
+    <string name="backup_restore_replace_warning">The data currently on this device will be replaced. Export a backup first if you want to keep it.</string>
+    <string name="backup_restore_done_title">Backup restored</string>
+    <string name="backup_restore_done_message">Restored:\n\n%1$s</string>
+    <string name="backup_restore_failed_title">Restore failed</string>
+    <string name="backup_error_invalid">This file is not a valid FinTrack backup</string>
+    <string name="backup_error_unsupported_version">This backup was made by a newer version of FinTrack. Update the app to restore it.</string>
+    <string name="backup_error_too_large">This file is too large to be a FinTrack backup</string>
+    <string name="backup_error_read">Could not read the selected file</string>
+    <string name="backup_error_write">Could not write the backup file</string>
+    <string name="backup_error_export_failed">Could not create the backup</string>
+    <string name="backup_error_restore_failed">Could not restore the backup. Your current data was not changed.</string>
+    <plurals name="backup_restore_skipped">
+        <item quantity="one">%d invalid record in the file will be skipped.</item>
+        <item quantity="other">%d invalid records in the file will be skipped.</item>
+    </plurals>
 </resources>
