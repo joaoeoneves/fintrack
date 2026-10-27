@@ -209,6 +209,19 @@ envelope; records that fail validation are skipped and reported on restore.
 A debug-signed APK of the latest version is attached to the
 [latest release](https://github.com/joaoeoneves/fintrack/releases/latest) (Android 7.0+).
 
+#### Releases
+
+Pushing a tag `vX.Y` (e.g. `v1.1`) runs `.github/workflows/release.yml`, which builds a release-signed APK
+(`versionName` = `X.Y`, `versionCode` = `X*100 + Y`) and attaches it to a GitHub Release. Required repository
+secrets: `GOOGLE_SERVICES_JSON_BASE64`, `FINTRACK_KEYSTORE_BASE64`, `FINTRACK_KEYSTORE_PASSWORD`,
+`FINTRACK_KEY_ALIAS`, `FINTRACK_KEY_PASSWORD`. Locally, the same `FINTRACK_*` values can go in
+`~/.gradle/gradle.properties` (`FINTRACK_KEYSTORE_FILE` is the keystore path); without them `assembleRelease`
+produces an unsigned APK.
+
+To install and update, add `https://github.com/joaoeoneves/fintrack` as a source in
+[Obtainium](https://obtainium.imranr.dev/). v1.0 was debug-signed, so moving to the signed builds requires
+uninstalling the app once (this clears local data; Firestore data is unaffected).
+
 ### Getting started
 
 1. **Firebase project**: create one, register an Android app with package `com.joaoeoneves.fintrack`,

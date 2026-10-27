@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive version from tag
+        run: |
+          if ! [[ "$TAG" =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::Tag '$TAG' must match vX.Y (e.g. v1.1)"
+            exit 1
+          fi
+          major="${BASH_REMATCH[1]}"
+          minor="${BASH_REMATCH[2]}"
+          {
+            echo "VERSION_NAME=${major}.${minor}"
+            echo "VERSION_CODE=$((10#$major * 100 + 10#$minor))"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::error::Secret GOOGLE_SERVICES_JSON_BASE64 is missing; a release needs the real Firebase config"
+            exit 1
+          fi
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/google-services.json
+
+      - name: Decode keystore
+        env:
+          FINTRACK_KEYSTORE_BASE64: ${{ secrets.FINTRACK_KEYSTORE_BASE64 }}
+          KS_PASSWORD: ${{ secrets.FINTRACK_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.FINTRACK_KEY_ALIAS }}
+          KS_KEY_PASSWORD: ${{ secrets.FINTRACK_KEY_PASSWORD }}
+        run: |
+          for v in FINTRACK_KEYSTORE_BASE64 KS_PASSWORD KS_ALIAS KS_KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then
+              echo "::error::A required signing secret is missing (FINTRACK_KEYSTORE_BASE64, FINTRACK_KEYSTORE_PASSWORD, FINTRACK_KEY_ALIAS, FINTRACK_KEY_PASSWORD)"
+              exit 1
+            fi
+          done
+          echo "$FINTRACK_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          {
+            echo "FINTRACK_KEYSTORE_FILE=$RUNNER_TEMP/release.jks"
+            echo "FINTRACK_KEYSTORE_PASSWORD=$KS_PASSWORD"
+            echo "FINTRACK_KEY_ALIAS=$KS_ALIAS"
+            echo "FINTRACK_KEY_PASSWORD=$KS_KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: Test, lint and build signed release
+        run: >
+          ./gradlew testDebugUnitTest lintDebug assembleRelease
+          -PversionName="$VERSION_NAME" -PversionCode="$VERSION_CODE"
+
+      - name: Verify APK signature
+        run: |
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n 1)apksigner"
+          "$apksigner" verify --print-certs "$apk" | grep -i "SHA-256 digest" | head -n 1
+          cp "$apk" "FinTrack-${TAG}.apk"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "FinTrack-${TAG}.apk" --clobber
+          else
+            gh release create "$TAG" "FinTrack-${TAG}.apk" --title "FinTrack ${TAG}" --generate-notes
+          fi
+
+      - name: Remove keystore and credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks" app/google-services.json

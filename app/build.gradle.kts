@@ -24,8 +24,9 @@ android {
         applicationId = "com.joaoeoneves.fintrack"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        // Overridable for releases: -PversionName=1.1 -PversionCode=101 (CI derives them from the tag).
+        versionCode = providers.gradleProperty("versionCode").map { it.toInt() }.getOrElse(1)
+        versionName = providers.gradleProperty("versionName").getOrElse("1.0")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -53,10 +54,34 @@ android {
         buildConfigField("String", "TEST_FIREBASE_API_KEY", "\"${apiKey?.get("current_key") ?: ""}\"")
     }
 
+    // Release signing: only configured when all four values are present (Gradle properties, e.g. in
+    // ~/.gradle/gradle.properties, or environment variables). Otherwise `release` stays unsigned.
+    fun signingValue(name: String) = providers.gradleProperty(name).orElse(providers.environmentVariable(name)).orNull
+    val releaseKeystoreFile = signingValue("FINTRACK_KEYSTORE_FILE")
+    val releaseKeystorePassword = signingValue("FINTRACK_KEYSTORE_PASSWORD")
+    val releaseKeyAlias = signingValue("FINTRACK_KEY_ALIAS")
+    val releaseKeyPassword = signingValue("FINTRACK_KEY_PASSWORD")
+    val hasReleaseSigning =
+        listOf(releaseKeystoreFile, releaseKeystorePassword, releaseKeyAlias, releaseKeyPassword)
+            .all { !it.isNullOrBlank() }
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseKeystoreFile!!)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             optimization {
                 enable = true
+            }
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }
