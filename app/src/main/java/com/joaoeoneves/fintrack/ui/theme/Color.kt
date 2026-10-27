@@ -19,7 +19,6 @@ val DarkNegative = Color(0xFFFF4D4D)
 val DarkAccent = Color(0xFFFFB020) // gold
 val DarkOnAccent = Color(0xFF000000)
 val DarkAccentText = Color(0xFFFFB020)
-val DarkAccentSoft = Color(0x24FFB020) // accent at ~14%
 
 // Monochrome palette -- light scheme
 val LightBg = Color(0xFFFFFFFF)
@@ -33,4 +32,3 @@ val LightNegative = Color(0xFFD32F2F)
 val LightAccent = Color(0xFF8A5A00) // dark gold
 val LightOnAccent = Color(0xFFFFFFFF)
 val LightAccentText = Color(0xFF8A5A00)
-val LightAccentSoft = Color(0x248A5A00) // accent at ~14%

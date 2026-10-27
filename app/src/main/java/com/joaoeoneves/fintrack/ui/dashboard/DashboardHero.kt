@@ -13,12 +13,12 @@ import androidx.compose.ui.text.style.TextAlign
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.designsystem.AnimatedAmountText
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.HeroAmount
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
-import java.text.NumberFormat
 import java.util.Locale
 
 /**
@@ -28,13 +28,7 @@ import java.util.Locale
 fun formatSavingsRate(
     rate: Double,
     locale: Locale,
-): String = percentFormatter(locale).format(rate)
-
-private fun percentFormatter(locale: Locale): NumberFormat =
-    NumberFormat.getPercentInstance(locale).apply {
-        minimumFractionDigits = 0
-        maximumFractionDigits = 0
-    }
+): String = formatPercent(rate, locale)
 
 /**
  * The dashboard's headline: the "Net Balance" label, the balance in the big hero figure and the

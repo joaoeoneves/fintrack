@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -38,6 +39,7 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.NightModeSync
 import com.joaoeoneves.fintrack.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -60,9 +62,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Hold the splash until the stored theme and the session have resolved, so the first frame
         // is the real UI rather than a blank one.
-        splash.setKeepOnScreenCondition {
-            themeViewModel.themePreference.value == null || authViewModel.uiState.value is AuthUiState.Starting
-        }
+        keepSplashUntilResolved(splash)
         observeAppLanguage()
         enableEdgeToEdge()
         setContent {
@@ -124,6 +124,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Holds the splash until the stored theme and the session have resolved, capped at
+     * [SPLASH_MAX_MS] so a stuck Firestore/auth resolution can never trap the user on it.
+     */
+    private fun keepSplashUntilResolved(splash: SplashScreen) {
+        var timedOut = false
+        lifecycleScope.launch {
+            delay(SPLASH_MAX_MS)
+            timedOut = true
+        }
+        splash.setKeepOnScreenCondition {
+            !timedOut &&
+                (themeViewModel.themePreference.value == null || authViewModel.uiState.value is AuthUiState.Starting)
+        }
+    }
+
+    /**
      * AppCompat restores its own persisted locale before the first frame; this keeps it in line
      * with the DataStore value (e.g. after a cloud restore) and is a no-op when they already match.
      */
@@ -135,3 +151,5 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
+private const val SPLASH_MAX_MS = 1_500L

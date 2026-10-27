@@ -20,8 +20,8 @@ data class FinTrackColors(
     val surface2: Color,
     val textSecondary: Color,
     val accent: Color,
+    /** Accent as text/icon colour (vs. [accent], a fill); separate so each can be tuned for contrast. */
     val accentText: Color,
-    val accentSoft: Color,
 )
 
 val LocalFinTrackColors =

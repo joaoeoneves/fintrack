@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import android.text.format.DateFormat
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -194,7 +195,8 @@ private fun Modifier.scrubGestures(scrub: ScrubState): Modifier {
 @Composable
 private fun rememberScrubLabelFormatter(): (LocalDate) -> String {
     val locale = currentLocale()
-    val formatter = remember(locale) { DateTimeFormatter.ofPattern("d MMM", locale) }
+    val formatter =
+        remember(locale) { DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "dMMM"), locale) }
     return { date -> formatter.format(date) }
 }
 

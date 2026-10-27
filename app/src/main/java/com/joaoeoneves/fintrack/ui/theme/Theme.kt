@@ -33,7 +33,6 @@ private val DarkFinTrackColors =
         textSecondary = DarkTextSecondary,
         accent = DarkAccent,
         accentText = DarkAccentText,
-        accentSoft = DarkAccentSoft,
     )
 
 private val LightFinTrackColors =
@@ -46,7 +45,6 @@ private val LightFinTrackColors =
         textSecondary = LightTextSecondary,
         accent = LightAccent,
         accentText = LightAccentText,
-        accentSoft = LightAccentSoft,
     )
 
 private val DarkColorScheme =
