@@ -18,7 +18,6 @@ object GeneratorTags {
     const val DASHBOARD_SETTINGS = "dashboard_settings"
     const val SEE_ALL_ACTIVITY = "see_all_activity"
     const val ACTIVITY_LIST = "activity_list"
-    const val EXPENSE_LIST = "expense_list"
     const val NAV_HOME = "nav_home"
     const val NAV_ACTIVITY = "nav_activity"
     const val NAV_PLAN = "nav_plan"

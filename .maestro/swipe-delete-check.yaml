@@ -14,8 +14,8 @@ appId: com.joaoeoneves.fintrack
 # be a limitation of Maestro's from-element swipe distance calculation for this component, not an
 # app bug: explicit start/end coordinates (or a real on-device swipe) delete the row correctly and
 # immediately every time. On the 1080x2400 emulator used for this flow, the first data row sits at
-# ~44% of screen height on both "All expenses" and "All income" -- both screens now have identical
-# Search + Sort-by controls above the list (verified 2026-07-21; "All income" previously had
+
+
 # neither and its row sat at ~28%, but that's stale now that it has its own Search/Sort like
 # expenses) -- adjust these y values if run on a different resolution or if either screen's layout
 # above the list changes again.
@@ -63,16 +63,13 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 - assertVisible: "Swipe Test Expense A"
-# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
-- swipe:
-    start: "83%, 44%"
-    end: "9%, 44%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Swipe Test Expense A"
 - assertNotVisible: "Swipe Test Expense A"
 # Confirm no crash / list still usable, no ghost row / duplicate delete side effects.
-- assertVisible: "All expenses"
 - assertVisible: "Ginasio"
 - back
 
@@ -93,23 +90,19 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 - assertVisible: "Swipe Test Expense B"
 # StartToEnd is disabled (enableDismissFromStartToEnd = false): the row must survive this swipe.
-# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
 - swipe:
-    start: "9%, 44%"
-    end: "83%, 44%"
+    from: "Swipe Test Expense B"
+    direction: RIGHT
     duration: 800
 - assertVisible: "Swipe Test Expense B"
 # Clean up with the real EndToStart swipe so no test data is left behind.
-# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
-- swipe:
-    start: "83%, 44%"
-    end: "9%, 44%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Swipe Test Expense B"
 - assertNotVisible: "Swipe Test Expense B"
-- assertVisible: "All expenses"
 - assertVisible: "Ginasio"
 - back
 
@@ -135,9 +128,7 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn:
     id: "see_all_activity"
-# "See all" opens the Activity tab on Expenses; switch to the Income segment.
-- tapOn: "Income"
-- assertVisible: "All income"
+# "See all" opens the unified Activity list (type chip All): income rows show without switching.
 # extendedWaitUntil (not assertVisible) on purpose: verified 2026-07-21 that a plain assertVisible
 # here is a genuine flake, not element-matching noise. Navigating straight from Save into "See all
 # income" with no intervening scroll-up/scroll-down (unlike income-tracking.yaml, which happens to
@@ -149,13 +140,11 @@ appId: com.joaoeoneves.fintrack
 - extendedWaitUntil:
     visible: "Swipe Test Income A"
     timeout: 10000
-# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
-- swipe:
-    start: "83%, 44%"
-    end: "9%, 44%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Swipe Test Income A"
 - assertNotVisible: "Swipe Test Income A"
-- assertVisible: "All income"
 - back
 
 # --- Income row: StartToEnd must NOT delete; EndToStart then does ---
@@ -176,28 +165,23 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn:
     id: "see_all_activity"
-# "See all" opens the Activity tab on Expenses; switch to the Income segment.
-- tapOn: "Income"
-- assertVisible: "All income"
+# "See all" opens the unified Activity list (type chip All): income rows show without switching.
 # Same extendedWaitUntil-over-assertVisible rationale as the "Swipe Test Income A" block above.
 - extendedWaitUntil:
     visible: "Swipe Test Income B"
     timeout: 10000
 # StartToEnd is disabled (enableDismissFromStartToEnd = false): the row must survive this swipe.
-# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
 - swipe:
-    start: "9%, 44%"
-    end: "83%, 44%"
+    from: "Swipe Test Income B"
+    direction: RIGHT
     duration: 800
 - assertVisible: "Swipe Test Income B"
 # Clean up with the real EndToStart swipe so no test data is left behind.
-# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
-- swipe:
-    start: "83%, 44%"
-    end: "9%, 44%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Swipe Test Income B"
 - assertNotVisible: "Swipe Test Income B"
-- assertVisible: "All income"
 - back
 - scrollUntilVisible:
     element: "Net balance"

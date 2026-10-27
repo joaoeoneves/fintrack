@@ -101,17 +101,22 @@
     <string name="error_category_required">Escolha uma categoria</string>
     <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
 
-    <!-- Lista de despesas -->
-    <string name="expense_list_title">Todas as despesas</string>
-    <string name="expense_list_deleted_snackbar">Eliminado \"%1$s\"</string>
-    <string name="expense_list_search_label">Pesquisar</string>
-    <string name="expense_list_no_match">Nenhuma despesa corresponde a \"%1$s\".</string>
-    <string name="expense_list_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
     <string name="expense_field_refund">Reembolso</string>
     <string name="expense_field_refund_hint">Dinheiro devolvido; reduz os gastos desta categoria</string>
     <string name="expense_refund_badge">Reembolso</string>
     <string name="filter_all">Todas</string>
     <string name="field_length_counter">%1$d/%2$d</string>
+
+    <!-- Movimentos -->
+    <string name="activity_title">Movimentos</string>
+    <string name="activity_type_all">Tudo</string>
+    <string name="activity_search_label">Pesquisar</string>
+    <string name="activity_deleted_snackbar">Eliminado \"%1$s\"</string>
+    <string name="activity_no_match">Nada corresponde a \"%1$s\".</string>
+    <string name="activity_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
+    <string name="activity_empty">Ainda não há movimentos neste período.</string>
+    <string name="activity_total_in">Entradas</string>
+    <string name="activity_total_out">Saídas</string>
 
     <!-- Opções de ordenação -->
     <string name="sort_newest_first">Mais recentes primeiro</string>
@@ -153,11 +158,6 @@
     <string name="error_source_required">A origem é obrigatória</string>
     <string name="error_failed_save_income">Não foi possível guardar o rendimento</string>
 
-    <!-- Lista de rendimentos -->
-    <string name="income_list_title">Todos os rendimentos</string>
-    <string name="income_list_deleted_snackbar">Eliminado \"%1$s\"</string>
-    <string name="income_list_search_label">Pesquisar</string>
-    <string name="income_list_no_match">Nenhum rendimento corresponde a \"%1$s\".</string>
 
     <!-- Definições -->
     <string name="settings_title">Definições</string>

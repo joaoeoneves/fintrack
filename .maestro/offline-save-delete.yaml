@@ -53,17 +53,14 @@ onFlowComplete:
     direction: DOWN
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 - tapOn: "Search"
 - inputText: "Maestro Offline"
 - hideKeyboard
 - assertVisible: "Maestro Offline Expense"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
-    index: 0
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro Offline Expense"
 - assertNotVisible: "Maestro Offline Expense"
 - assertVisible: "Undo"
 # The Activity tab has no back arrow; system back returns to Home.
@@ -94,19 +91,15 @@ onFlowComplete:
 - scroll
 - tapOn:
     id: "see_all_activity"
-# "See all" opens the Activity tab on Expenses; switch to the Income segment.
-- tapOn: "Income"
-- assertVisible: "All income"
+# "See all" opens the unified Activity list (type chip All): income rows show without switching.
 - tapOn: "Search"
 - inputText: "Maestro Offline"
 - hideKeyboard
 - assertVisible: "Maestro Offline Income"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
-    index: 0
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro Offline Income"
 - assertNotVisible: "Maestro Offline Income"
 - assertVisible: "Undo"
 # The Activity tab has no back arrow; system back returns to Home.

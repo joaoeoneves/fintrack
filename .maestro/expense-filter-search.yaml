@@ -63,7 +63,6 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 - assertVisible:
     id: "filter_chip_all"
 - tapOn: "Search"
@@ -91,17 +90,15 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Maestro E2E Filter B"
 
 # --- 4: Delete both while the list only contains this flow's two rows.
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Filter A"
 - assertVisible: "Undo"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Filter B"
 - assertNotVisible: "Maestro E2E Filter A"
 - assertNotVisible: "Maestro E2E Filter B"
 

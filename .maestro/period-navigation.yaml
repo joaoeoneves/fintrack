@@ -77,7 +77,10 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - scroll
 - tapOn: "Recent activity"
-- assertVisible: "All expenses"
+- extendedWaitUntil:
+    visible:
+      id: "activity_list"
+    timeout: 10000
 - assertVisible: ${output.previousMonthLabel}
 - assertVisible: "Next month"
 - assertVisible:

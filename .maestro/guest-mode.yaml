@@ -118,27 +118,14 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 # Filter first so only this row exists in the list.
 - tapOn: "Search"
 - inputText: "Maestro Guest Expense"
 - hideKeyboard
 - assertVisible: "[-−]€7\\.77"
-# Element-based swipe from the row itself. NOTE: swipe-delete-check.yaml documents that
-# from-element swipes sometimes don't travel past the dismiss threshold on this component, so a
-# coordinate swipe runs as a fallback only if the row is still there.
-- swipe:
-    from: "Maestro Guest Expense"
-    direction: LEFT
-    duration: 800
 - runFlow:
-    when:
-      visible: "Maestro Guest Expense"
-    commands:
-      # TODO calibrate on first CI run: y% of the single search-filtered row (unverified)
-      - swipe:
-          start: "90%, 40%"
-          end: "10%, 40%"
-          duration: 800
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro Guest Expense"
 - assertNotVisible: "[-−]€7\\.77"
 - back

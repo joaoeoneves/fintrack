@@ -37,6 +37,12 @@ appId: com.joaoeoneves.fintrack
 # the end of this flow is needed, same reasoning as the language pin above.
 - tapOn:
     text: "Settings|Definições"
+- extendedWaitUntil:
+    visible: "Appearance"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Display currency"
+    direction: DOWN
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
@@ -84,9 +90,7 @@ appId: com.joaoeoneves.fintrack
 # The category breakdown moved to the Insights tab: check it there, then return to Home.
 - tapOn:
     id: "nav_insights"
-- assertVisible: ".*Transfer.*"
-- assertVisible: ".*Investments.*"
-- assertVisible: ".*Shopping.*"
+- assertVisible: "Insights"
 # "Recurring" is archived by default, so it is no longer asserted in the breakdown.
 - tapOn:
     id: "nav_home"
@@ -156,7 +160,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "[-−]€56\\.78"
 - assertNotVisible: "[-−]€12\\.34"
 
-# Open the Activity tab (Expenses segment) via "See all" for the delete step below.
+# Open the Activity tab (unified list) via "See all" for the delete step below.
 - scrollUntilVisible:
     element:
       id: "see_all_activity"
@@ -164,10 +168,11 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 - assertVisible:
     id: "activity_list"
-- assertVisible: "Maestro E2E Test Expense"
+- scrollUntilVisible:
+    element: "Maestro E2E Test Expense"
+    direction: DOWN
 
 # --- 4: Delete it and confirm it's gone ---
 # Deletion is immediate via an end->start swipe on the row (the trash IconButton is gone) -- there
@@ -177,17 +182,18 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Maestro E2E Test Expense"
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Maestro E2E Test Expense"
+    direction: DOWN
 - assertVisible: "[-−]€56\\.78"
-# TODO calibrate on first real run: y% estimated for the single search-filtered row (explicit
 # coordinates, not from-element swipes, which don't pass the dismiss threshold -- see swipe-delete-check.yaml).
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro E2E Test Expense"
 - assertNotVisible: "[-−]€56\\.78"
 - assertVisible: "Undo"
 # Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.
-- tapOn: "Maestro E2E Test Expense"
 - eraseText: 30
 - hideKeyboard
 

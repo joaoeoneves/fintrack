@@ -23,12 +23,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -45,7 +43,10 @@ import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
+import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringCard
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringModel
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
@@ -272,11 +273,7 @@ private fun DashboardContent(
         )
 
     val (pill, listState) = scroll
-    LaunchedEffect(listState, pill) {
-        pill.canScrollForward = { listState.canScrollForward }
-        // Keyed on "at end while hidden" so it re-fires if a late scroll delta hides the pill again.
-        snapshotFlow { !listState.canScrollForward && !pill.visible }.collect { stuck -> if (stuck) pill.show() }
-    }
+    pill.BindTo(listState)
 
     LazyColumn(
         state = listState,

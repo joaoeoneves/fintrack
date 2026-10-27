@@ -105,15 +105,14 @@ appId: com.joaoeoneves.fintrack
     direction: DOWN
 - tapOn:
     id: "see_all_activity"
-- assertVisible: "All expenses"
 - tapOn: "Search"
 - inputText: "Maestro Rent"
 - hideKeyboard
 # Delete is swipe-only (right-to-left) on the row.
-- swipe:
-    start: "90%, 40%"
-    end: "10%, 40%"
-    duration: 800
+- runFlow:
+    file: _swipe-delete-row.yaml
+    env:
+      ROW: "Maestro Rent"
 - assertVisible: "Undo"
 - tapOn: "Maestro Rent"
 - eraseText: 30

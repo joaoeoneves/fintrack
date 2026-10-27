@@ -101,17 +101,22 @@
     <string name="error_category_required">Choose a category</string>
     <string name="error_failed_save_expense">Couldn\'t save the expense</string>
 
-    <!-- Expense list -->
-    <string name="expense_list_title">All expenses</string>
-    <string name="expense_list_deleted_snackbar">Deleted \"%1$s\"</string>
-    <string name="expense_list_search_label">Search</string>
-    <string name="expense_list_no_match">No expenses match \"%1$s\".</string>
-    <string name="expense_list_no_match_filter">No expenses match the selected filter.</string>
     <string name="expense_field_refund">Refund</string>
     <string name="expense_field_refund_hint">Money returned to you; reduces this category\'s spending</string>
     <string name="expense_refund_badge">Refund</string>
     <string name="filter_all">All</string>
     <string name="field_length_counter">%1$d/%2$d</string>
+
+    <!-- Activity -->
+    <string name="activity_title">Activity</string>
+    <string name="activity_type_all">All</string>
+    <string name="activity_search_label">Search</string>
+    <string name="activity_deleted_snackbar">Deleted \"%1$s\"</string>
+    <string name="activity_no_match">Nothing matches \"%1$s\".</string>
+    <string name="activity_no_match_filter">No expenses match the selected filter.</string>
+    <string name="activity_empty">No activity in this period yet.</string>
+    <string name="activity_total_in">In</string>
+    <string name="activity_total_out">Out</string>
 
     <!-- Sort options -->
     <string name="sort_newest_first">Newest first</string>
@@ -152,11 +157,6 @@
     <string name="error_source_required">Source is required</string>
     <string name="error_failed_save_income">Couldn\'t save the income</string>
 
-    <!-- Income list -->
-    <string name="income_list_title">All income</string>
-    <string name="income_list_deleted_snackbar">Deleted \"%1$s\"</string>
-    <string name="income_list_search_label">Search</string>
-    <string name="income_list_no_match">No income matches \"%1$s\".</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
