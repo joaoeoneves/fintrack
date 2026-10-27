@@ -73,6 +73,9 @@ jobs:
           mkdir -p maestro-out/screens
           find .maestro -name '*.png' -exec cp {} maestro-out/screens/ \; 2>/dev/null || true
           ls -la maestro-out/screens || true
+          echo "--- locating pngs"; find / -name '*.png' -mmin -30 -not -path '*/proc/*' -not -path '*/sdk/*' -not -path '*/.gradle/*' -not -path '*/node_modules/*' 2>/dev/null | head -50
+          mkdir -p maestro-out/home-tests; cp -r "$HOME/.maestro/tests/." maestro-out/home-tests/ 2>/dev/null || true
+          ls -R "$HOME/.maestro/tests" 2>/dev/null | head -40 || true
 
       - name: Upload Maestro results
         if: always()
