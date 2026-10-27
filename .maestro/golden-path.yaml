@@ -201,14 +201,8 @@ appId: com.joaoeoneves.fintrack
 # period"), pick a rolling window, and check the label reflects it; then restore "This month".
 - tapOn: "Change period"
 - assertVisible: "This month"
-- tapOn: "Last 3 months"
-- assertVisible: "Last 3 months"
-# Rolling windows have no month arrows.
-- assertNotVisible: "Previous month"
-
-# Restore the default current-month period and return to Home (system back from the Activity tab
-# root), leaving app state as found.
-- tapOn: "Change period"
+- assertVisible: "Choose month..."
+# (Rolling windows such as "Last 3 months" now live only in the Insights tab's period picker.)
 - tapOn: "This month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
 - assertVisible: "Previous month"

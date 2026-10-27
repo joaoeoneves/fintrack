@@ -153,7 +153,7 @@ appId: com.joaoeoneves.fintrack
 - extendedWaitUntil:
     visible: "Undo"
     timeout: 10000
-- tapOn: "Search"
+# The search field is still focused with the income text in it.
 - eraseText: 30
 - inputText: "Act Test Expense"
 - hideKeyboard
