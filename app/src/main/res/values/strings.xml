@@ -535,8 +535,8 @@
     <string name="salary_field_net_holiday">Holiday subsidy (net)</string>
     <string name="salary_field_net_christmas">Christmas subsidy (net)</string>
     <string name="salary_group_subsidy_months">Subsidy months</string>
-    <string name="salary_holiday_month">Holiday subsidy paid in</string>
-    <string name="salary_christmas_month">Christmas subsidy paid in</string>
+    <string name="salary_subsidy_months">Subsidies paid in</string>
+    <string name="salary_meal_hint">Paid for each working day; mark vacation days in the Plan\'s working-days.</string>
     <string name="salary_group_meal">Meal allowance</string>
     <string name="salary_field_meal">Meal allowance per working day</string>
     <string name="salary_group_flex">Flexible benefits</string>
@@ -562,8 +562,7 @@
     <string name="salary_delete_title">Delete the salary profile?</string>
     <string name="salary_delete_message">The income lines generated from it are removed too. Your own lines stay.</string>
     <string name="salary_line_net">Net salary</string>
-    <string name="salary_line_holiday">Holiday subsidy</string>
-    <string name="salary_line_christmas">Christmas subsidy</string>
+    <string name="salary_line_subsidy">Subsidy</string>
     <string name="plan_tab_month">Month</string>
     <string name="plan_tab_year">Year</string>
     <string name="annual_income_title">Income for the year</string>
@@ -613,4 +612,8 @@
     <string name="delete_all_data_done">All data deleted</string>
     <string name="delete_all_data_error_title">Delete failed</string>
     <string name="delete_all_data_error">Couldn\'t delete all your data. Some of it may already be gone. Check your connection and try again.</string>
+    <string name="plan_other_income">Other income</string>
+    <string name="salary_duplicates_message">You have other monthly income lines. The salary profile now covers salary and meal allowance — remove these to avoid counting them twice?</string>
+    <string name="salary_duplicates_remove">Remove selected</string>
+    <string name="salary_duplicates_keep">Keep</string>
 </resources>

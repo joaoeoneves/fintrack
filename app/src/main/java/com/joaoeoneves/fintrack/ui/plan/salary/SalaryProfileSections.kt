@@ -15,10 +15,10 @@ import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SPREAD_HALF_PPM
 import com.joaoeoneves.fintrack.domain.model.SPREAD_NONE_PPM
 import com.joaoeoneves.fintrack.domain.model.SUBSIDY_SPREADS_PPM
+import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
-import com.joaoeoneves.fintrack.ui.plan.MonthChips
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
@@ -161,22 +161,21 @@ internal fun NetSection(
     }
 }
 
-/** The months the holiday and Christmas subsidies are paid in (single choice each). */
+/** The two months the subsidies are paid in (one grid, the third pick replaces the oldest); none with 100% spread. */
 @Composable
 internal fun SubsidyMonthsSection(
     form: SalaryForm,
     onChange: (SalaryForm) -> Unit,
 ) {
+    if (form.mode == SalaryInputMode.GROSS && form.spreadPpm == SPREAD_FULL_PPM) return
     SalaryGroup(stringResource(R.string.salary_group_subsidy_months)) {
-        MonthChips(
-            title = stringResource(R.string.salary_holiday_month),
-            selected = setOf(form.holidayMonth),
-            onToggle = { onChange(form.copy(holidayMonth = it)) },
-        )
-        MonthChips(
-            title = stringResource(R.string.salary_christmas_month),
-            selected = setOf(form.christmasMonth),
-            onToggle = { onChange(form.copy(christmasMonth = it)) },
+        SalaryMonthPicker(
+            title = stringResource(R.string.salary_subsidy_months),
+            selected = form.subsidyMonths,
+            onChange = { onChange(form.copy(subsidyMonths = it)) },
+            max = SUBSIDY_COUNT,
         )
     }
 }
+
+private const val SUBSIDY_COUNT = 2

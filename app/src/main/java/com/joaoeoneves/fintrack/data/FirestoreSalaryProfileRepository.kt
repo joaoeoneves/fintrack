@@ -86,6 +86,7 @@ internal fun SalaryProfile.toFirestoreMap(): Map<String, Any?> =
         put("ssPpm", ssPpm)
         put("irsJovemExemptPpm", irsJovemExemptPpm)
         put("mealSkipMonths", mealSkipMonths.sorted())
+        if (profitShareMonths.isNotEmpty()) put("profitShareMonths", profitShareMonths.sorted())
         put("holidaySubsidyMonth", holidaySubsidyMonth)
         put("christmasSubsidyMonth", christmasSubsidyMonth)
         put("flexFirstMonth", flexFirstMonth)
@@ -146,6 +147,8 @@ private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
         flexWithdrawalFeePpm = int("flexWithdrawalFeePpm") ?: defaults.flexWithdrawalFeePpm,
         profitShareMultiplierPpm = int("profitShareMultiplierPpm"),
         profitShareMonth = int("profitShareMonth"),
+        profitShareMonths =
+            (get("profitShareMonths") as? List<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toSet().orEmpty(),
         bonusCents = getLong("bonusCents"),
         bonusMonth = int("bonusMonth"),
     )

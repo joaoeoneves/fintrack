@@ -14,7 +14,7 @@ class SalaryProfileLinesTest {
             mealRatePerDayCents = 900,
             flexPpm = 70_000,
             profitShareMultiplierPpm = 500_000,
-            profitShareMonth = 4,
+            profitShareMonths = setOf(4),
             bonusCents = 10_000,
             bonusMonth = 5,
         )
@@ -27,18 +27,23 @@ class SalaryProfileLinesTest {
     private fun List<PlannedIncome>.byKey(key: String) = single { it.managedKey == key }
 
     @Test
-    fun managedKeys_listsTheTen() {
-        assertEquals(10, MANAGED_KEYS.size)
+    fun managedKeys_listsEveryKey() {
+        assertEquals(22, MANAGED_KEYS.size)
         assertEquals(MANAGED_KEYS.size, MANAGED_KEYS.toSet().size)
         assertEquals("profile_flex_q1", managedFlexKey(0))
         assertEquals("profile_flex_q4", managedFlexKey(3))
+        assertEquals("profile_profit_share_4", managedProfitShareKey(4))
+        assertTrue(MANAGED_PROFIT_SHARE in MANAGED_KEYS)
     }
 
     @Test
     fun fullProfile_producesEveryLine_withIdEqualToKey() {
         val result = lines()
 
-        assertEquals(MANAGED_KEYS.toSet(), result.map { it.managedKey }.toSet())
+        val expected =
+            MANAGED_KEYS.toSet() - MANAGED_PROFIT_SHARE - (1..12).map(::managedProfitShareKey).toSet() +
+                managedProfitShareKey(4)
+        assertEquals(expected, result.map { it.managedKey }.toSet())
         assertTrue(result.all { it.id == it.managedKey })
     }
 
@@ -53,20 +58,20 @@ class SalaryProfileLinesTest {
     }
 
     @Test
-    fun mealLine_isPerWorkingDay_withDefaultAugustSkip() {
+    fun mealLine_isPerWorkingDay_withNoSkipMonths() {
         val meal = lines().byKey(MANAGED_MEAL)
 
         assertEquals(900, meal.amountCents)
         assertEquals(IncomeBasis.PER_WORKING_DAY, meal.basis)
         assertEquals(IncomeFrequency.MONTHLY, meal.frequency)
-        assertEquals(setOf(8), meal.skipMonths)
+        assertTrue(meal.skipMonths.isEmpty())
     }
 
     @Test
-    fun mealLine_usesTheProfilesSkipMonths() {
+    fun mealLine_ignoresStoredSkipMonths() {
         val meal = lines(full.copy(mealSkipMonths = setOf(1, 8))).byKey(MANAGED_MEAL)
 
-        assertEquals(setOf(1, 8), meal.skipMonths)
+        assertTrue(meal.skipMonths.isEmpty())
     }
 
     @Test
@@ -82,13 +87,16 @@ class SalaryProfileLinesTest {
     @Test
     fun profitShareAndBonus_useTheirMonths_orTheDefault() {
         val result = lines()
-        val defaulted = lines(full.copy(profitShareMonth = null, bonusMonth = null))
+        val defaulted = lines(full.copy(profitShareMonths = emptySet(), bonusMonth = null))
 
-        assertEquals(50_000, result.byKey(MANAGED_PROFIT_SHARE).amountCents)
-        assertEquals(4, result.byKey(MANAGED_PROFIT_SHARE).monthOfYear)
+        assertEquals(50_000, result.byKey(managedProfitShareKey(4)).amountCents)
+        assertEquals(4, result.byKey(managedProfitShareKey(4)).monthOfYear)
         assertEquals(10_000, result.byKey(MANAGED_BONUS).amountCents)
         assertEquals(5, result.byKey(MANAGED_BONUS).monthOfYear)
-        assertEquals(DEFAULT_EXTRA_PAY_MONTH, defaulted.byKey(MANAGED_PROFIT_SHARE).monthOfYear)
+        assertEquals(
+            DEFAULT_EXTRA_PAY_MONTH,
+            defaulted.byKey(managedProfitShareKey(DEFAULT_EXTRA_PAY_MONTH)).monthOfYear,
+        )
         assertEquals(DEFAULT_EXTRA_PAY_MONTH, defaulted.byKey(MANAGED_BONUS).monthOfYear)
     }
 
@@ -207,6 +215,88 @@ class SalaryProfileLinesTest {
     fun stale_noProfile_listsAllManagedLines() {
         val existing = lines() + PlannedIncome("own", "Own", 1, 99)
 
-        assertEquals(MANAGED_KEYS.toSet(), staleManagedIds(null, existing).toSet())
+        val managedIds = existing.filter { it.isManaged }.map { it.id }.toSet()
+
+        assertEquals(managedIds, staleManagedIds(null, existing).toSet())
+    }
+
+    @Test
+    fun subsidyLines_orderedEarlierFirst_sharedLabel() {
+        val result = lines(full.copy(holidaySubsidyMonth = 11, christmasSubsidyMonth = 2))
+
+        assertEquals(2, result.byKey(MANAGED_HOLIDAY).monthOfYear)
+        assertEquals(11, result.byKey(MANAGED_CHRISTMAS).monthOfYear)
+        assertEquals("Subsidy", result.byKey(MANAGED_HOLIDAY).label)
+        assertEquals("Subsidy", result.byKey(MANAGED_CHRISTMAS).label)
+    }
+
+    @Test
+    fun subsidyLines_singleMonth_bothInTheSameMonth() {
+        val result = lines(full.copy(holidaySubsidyMonth = 7, christmasSubsidyMonth = 7))
+
+        assertEquals(7, result.byKey(MANAGED_HOLIDAY).monthOfYear)
+        assertEquals(7, result.byKey(MANAGED_CHRISTMAS).monthOfYear)
+    }
+
+    private fun profitLines(profile: SalaryProfile) = lines(profile).filter { it.id.startsWith(MANAGED_PROFIT_SHARE) }
+
+    @Test
+    fun profitShare_oneMonth_getsTheWholeAmount() {
+        val result = profitLines(full.copy(profitShareMonths = setOf(6)))
+
+        assertEquals(listOf("profile_profit_share_6"), result.map { it.managedKey })
+        assertEquals(listOf(50_000L), result.map { it.amountCents })
+    }
+
+    @Test
+    fun profitShare_twoMonths_splitEvenly() {
+        val result = profitLines(full.copy(profitShareMonths = setOf(9, 3)))
+
+        assertEquals(listOf(3, 9), result.map { it.monthOfYear })
+        assertEquals(listOf(25_000L, 25_000L), result.map { it.amountCents })
+    }
+
+    @Test
+    fun profitShare_threeMonths_remainderOnTheLast() {
+        val total = lines(full).byKey(managedProfitShareKey(4)).amountCents
+        val result = profitLines(full.copy(profitShareMonths = setOf(3, 6, 9)))
+
+        assertEquals(listOf(3, 6, 9), result.map { it.monthOfYear })
+        assertEquals(listOf(16_666L, 16_666L, 16_668L), result.map { it.amountCents })
+        assertEquals(total, result.sumOf { it.amountCents })
+    }
+
+    @Test
+    fun profitShare_legacySingleMonth_isUsedWhenNoMonthsAreSet() {
+        val legacy = full.copy(profitShareMonths = emptySet(), profitShareMonth = 8)
+
+        assertEquals(listOf(8), legacy.effectiveProfitShareMonths)
+        assertEquals(listOf("profile_profit_share_8"), profitLines(legacy).map { it.managedKey })
+    }
+
+    @Test
+    fun profitShare_monthsWinOverLegacy_andDefaultIsMarch() {
+        val both = SalaryProfile(profitShareMonths = setOf(5, 2), profitShareMonth = 8)
+
+        assertEquals(listOf(2, 5), both.effectiveProfitShareMonths)
+        assertEquals(listOf(DEFAULT_EXTRA_PAY_MONTH), SalaryProfile().effectiveProfitShareMonths)
+        assertEquals(3, DEFAULT_EXTRA_PAY_MONTH)
+    }
+
+    @Test
+    fun stale_legacyProfitShareKey_isRemoved() {
+        val legacy =
+            PlannedIncome(MANAGED_PROFIT_SHARE, "Profit share", 1, 0, managedKey = MANAGED_PROFIT_SHARE)
+
+        assertEquals(listOf(MANAGED_PROFIT_SHARE), staleManagedIds(full, listOf(legacy) + lines()))
+    }
+
+    @Test
+    fun stale_profitShareMonthsDropped_areRemoved() {
+        val existing = lines(full.copy(profitShareMonths = setOf(3, 6)))
+
+        val stale = staleManagedIds(full.copy(profitShareMonths = setOf(3)), existing)
+
+        assertEquals(listOf(managedProfitShareKey(6)), stale)
     }
 }

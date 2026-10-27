@@ -550,8 +550,8 @@
     <string name="salary_field_net_holiday">Subsídio de férias (líquido)</string>
     <string name="salary_field_net_christmas">Subsídio de Natal (líquido)</string>
     <string name="salary_group_subsidy_months">Meses dos subsídios</string>
-    <string name="salary_holiday_month">Subsídio de férias pago em</string>
-    <string name="salary_christmas_month">Subsídio de Natal pago em</string>
+    <string name="salary_subsidy_months">Subsídios pagos em</string>
+    <string name="salary_meal_hint">Pago por cada dia útil; marque as férias nos dias úteis do Plano.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
     <string name="salary_group_flex">Benefícios flexíveis</string>
@@ -577,8 +577,7 @@
     <string name="salary_delete_title">Eliminar o perfil salarial?</string>
     <string name="salary_delete_message">As linhas de rendimento geradas por ele também são removidas. As suas linhas ficam.</string>
     <string name="salary_line_net">Salário líquido</string>
-    <string name="salary_line_holiday">Subsídio de férias</string>
-    <string name="salary_line_christmas">Subsídio de Natal</string>
+    <string name="salary_line_subsidy">Subsídio</string>
     <string name="plan_tab_month">Mês</string>
     <string name="plan_tab_year">Ano</string>
     <string name="annual_income_title">Rendimento do ano</string>
@@ -620,12 +619,16 @@
     <string name="annual_goal_planned_of_target">%1$s planeados de %2$s</string>
     <string name="settings_delete_all_data">Apagar todos os dados</string>
     <string name="delete_all_data_title">Apagar todos os dados?</string>
-    <string name="delete_all_data_message_account">Isto apaga permanentemente todas as suas despesas, receitas, plano, categorias, itens recorrentes e objetivos da sua conta. Exporte primeiro uma cópia de segurança se puder vir a precisar deles.</string>
-    <string name="delete_all_data_message_device">Isto apaga permanentemente todas as suas despesas, receitas, plano, categorias, itens recorrentes e objetivos neste dispositivo. Exporte primeiro uma cópia de segurança se puder vir a precisar deles.</string>
+    <string name="delete_all_data_message_account">Isto apaga permanentemente todas as suas despesas, rendimentos, plano, categorias, itens recorrentes e objetivos da sua conta. Exporte primeiro uma cópia de segurança se puder vir a precisar deles.</string>
+    <string name="delete_all_data_message_device">Isto apaga permanentemente todas as suas despesas, rendimentos, plano, categorias, itens recorrentes e objetivos neste dispositivo. Exporte primeiro uma cópia de segurança se puder vir a precisar deles.</string>
     <string name="delete_all_data_export_backup">Exportar cópia de segurança</string>
     <string name="delete_all_data_confirm">Apagar tudo</string>
     <string name="delete_all_data_progress">A apagar os seus dados…</string>
     <string name="delete_all_data_done">Todos os dados foram apagados</string>
     <string name="delete_all_data_error_title">Falha ao apagar</string>
     <string name="delete_all_data_error">Não foi possível apagar todos os seus dados. Alguns podem já ter sido apagados. Verifique a ligação e tente novamente.</string>
+    <string name="plan_other_income">Outro rendimento</string>
+    <string name="salary_duplicates_message">Tem outras linhas de rendimento mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-las para não contar a dobrar?</string>
+    <string name="salary_duplicates_remove">Remover selecionadas</string>
+    <string name="salary_duplicates_keep">Manter</string>
 </resources>

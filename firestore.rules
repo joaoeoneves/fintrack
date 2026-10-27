@@ -95,15 +95,13 @@ service cloud.firestore {
         && (!('basis' in data) || data.basis in ['FIXED', 'PER_WORKING_DAY'])
         && isValidIncomeFrequency(data)
         && isValidEarmark(data)
-        && (!('managedKey' in data) || data.managedKey in managedKeys())
+        && (!('managedKey' in data) || data.managedKey.matches(managedKeyPattern()))
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
     }
 
     // The keys of the income lines generated from the salary profile (absent on the user's own lines).
-    function managedKeys() {
-      return ['profile_net_salary', 'profile_meal', 'profile_holiday', 'profile_christmas',
-        'profile_flex_q1', 'profile_flex_q2', 'profile_flex_q3', 'profile_flex_q4',
-        'profile_profit_share', 'profile_bonus'];
+    function managedKeyPattern() {
+      return '^profile_(net_salary|meal|holiday|christmas|bonus|flex_q[1-4]|profit_share(_([1-9]|1[0-2]))?)$';
     }
 
     // An earmark sets the line aside for a category or group: both fields or neither, the id shape-checked
@@ -211,7 +209,7 @@ service cloud.firestore {
           'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
           'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth', 'flexPpm',
           'flexAnnualCents', 'flexFirstMonth', 'flexWithdrawalFeePpm', 'profitShareMultiplierPpm',
-          'profitShareMonth', 'bonusCents', 'bonusMonth', 'updatedAt'])
+          'profitShareMonth', 'profitShareMonths', 'bonusCents', 'bonusMonth', 'updatedAt'])
         && data.keys().hasAll(['inputMode'])
         && data.inputMode in ['GROSS', 'NET']
         && (!('subsidySpreadPpm' in data) || data.subsidySpreadPpm in [0, 500000, 1000000])
@@ -229,6 +227,8 @@ service cloud.firestore {
         && isOptionalInt(data, 'holidaySubsidyMonth', 1, 12) && isOptionalInt(data, 'christmasSubsidyMonth', 1, 12)
         && isOptionalInt(data, 'flexFirstMonth', 1, 12) && isOptionalInt(data, 'profitShareMonth', 1, 12)
         && isOptionalInt(data, 'bonusMonth', 1, 12)
+        && (!('profitShareMonths' in data) || (data.profitShareMonths is list && data.profitShareMonths.size() <= 12
+            && data.profitShareMonths.hasOnly([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])))
         && (!('mealSkipMonths' in data) || (data.mealSkipMonths is list && data.mealSkipMonths.size() <= 12))
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
