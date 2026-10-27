@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -11,12 +12,14 @@ import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
 import com.joaoeoneves.fintrack.domain.model.cashFlowSummaryOf
 import com.joaoeoneves.fintrack.domain.model.contains
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
+import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encloses
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.recentActivity
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +42,7 @@ class ObservePeriodOverview
         private val budgetRepository: BudgetRepository,
         private val plannedIncomeRepository: PlannedIncomeRepository,
         private val categoryRepository: CategoryRepository,
+        private val monthSettingsRepository: MonthSettingsRepository,
     ) {
         operator fun invoke(
             period: Period,
@@ -50,49 +54,61 @@ class ObservePeriodOverview
             val budgetMonth = period.anchorMonth(now, zone) ?: currentYearMonth(now, zone)
             val budgetRange = budgetMonth.toInstantRange(zone)
             val transactions = transactionRepository.observeTransactions(range)
-            val budgets = budgetRepository.observeBudgets()
-            val plannedIncome = plannedIncomeRepository.observePlannedIncome()
-            val categories = categoryRepository.observeCategories()
+            val inputs =
+                combine(
+                    budgetRepository.observeBudgets(),
+                    plannedIncomeRepository.observePlannedIncome(),
+                    monthSettingsRepository.observeMonthSettings(),
+                    categoryRepository.observeCategories(),
+                ) { budgets, lines, settings, catalog -> PlanInputs(budgets, lines, settings, catalog) }
             return if (range.encloses(budgetRange)) {
-                combine(transactions, budgets, plannedIncome, categories) { tx, budgetList, lines, catalog ->
+                combine(transactions, inputs) { tx, plan ->
                     val month =
                         tx.copy(
                             expenses = tx.expenses.filter { it.date in budgetRange },
                             income = tx.income.filter { it.date in budgetRange },
                         )
-                    overviewOf(budgetMonth, tx, month, budgetList, lines, catalog, recentLimit)
+                    overviewOf(budgetMonth, tx, month, plan, recentLimit)
                 }
             } else {
-                combine(
-                    transactions,
-                    transactionRepository.observeTransactions(budgetRange),
-                    budgets,
-                    plannedIncome,
-                    categories,
-                ) { tx, month, budgetList, lines, catalog ->
-                    overviewOf(budgetMonth, tx, month, budgetList, lines, catalog, recentLimit)
+                val monthTransactions = transactionRepository.observeTransactions(budgetRange)
+                combine(transactions, monthTransactions, inputs) { tx, month, plan ->
+                    overviewOf(budgetMonth, tx, month, plan, recentLimit)
                 }
             }
         }
 
-        @Suppress("LongParameterList") // private assembler of one value; a holder type would add nothing
         private fun overviewOf(
             budgetMonth: YearMonth,
             transactions: TransactionsInRange,
             monthTransactions: TransactionsInRange,
-            budgets: List<Budget>,
-            plannedIncome: List<PlannedIncome>,
-            categories: List<Category>,
+            plan: PlanInputs,
             recentLimit: Int,
         ): PeriodOverview {
-            val rows = budgetProgressOf(monthTransactions.expenses, budgets, categories)
+            val rows = budgetProgressOf(monthTransactions.expenses, plan.budgets, plan.categories)
+            val override = plan.monthSettings.firstOrNull { it.month == budgetMonth }?.workingDaysOverride
             return PeriodOverview(
                 budgetMonth = budgetMonth,
                 transactions = transactions,
-                summary = cashFlowSummaryOf(transactions.expenses, transactions.income, categories),
+                summary = cashFlowSummaryOf(transactions.expenses, transactions.income, plan.categories),
                 budgets = rows,
-                plan = monthlyPlanOf(rows, plannedIncome, monthTransactions.income),
+                plan =
+                    monthlyPlanOf(
+                        buckets = rows,
+                        plannedIncome = plan.plannedIncome,
+                        monthIncome = monthTransactions.income,
+                        month = budgetMonth,
+                        workingDays = effectiveWorkingDays(budgetMonth, override),
+                    ),
                 recent = transactions.recentActivity(recentLimit),
             )
         }
     }
+
+/** The plan-side flows of an overview, combined once so the main combine stays within five flows. */
+private class PlanInputs(
+    val budgets: List<Budget>,
+    val plannedIncome: List<PlannedIncome>,
+    val monthSettings: List<MonthSettings>,
+    val categories: List<Category>,
+)

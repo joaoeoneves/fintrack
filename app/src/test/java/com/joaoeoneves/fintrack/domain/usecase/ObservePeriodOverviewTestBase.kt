@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
@@ -37,6 +38,7 @@ abstract class ObservePeriodOverviewTestBase {
             budgetRepository = budgets,
             plannedIncomeRepository = plannedIncome,
             categoryRepository = categories,
+            monthSettingsRepository = FakeMonthSettingsRepository(),
         )
 
     protected suspend fun overview(

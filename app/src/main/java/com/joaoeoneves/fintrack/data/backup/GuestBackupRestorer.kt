@@ -34,6 +34,7 @@ class GuestBackupRestorer
                             categories = document.categories,
                             plannedIncome = document.plannedIncome,
                             recurring = document.recurring,
+                            monthSettings = document.monthSettings,
                         ),
                     ).getOrThrow()
                 document.preferences?.let { backup ->

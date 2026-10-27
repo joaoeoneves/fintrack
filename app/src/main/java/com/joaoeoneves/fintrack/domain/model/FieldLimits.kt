@@ -19,7 +19,10 @@ const val MAX_PLAN_LABEL_LENGTH = 50
 const val MAX_AMOUNT_CENTS = 100_000_000_000L
 
 /** Maximum number of planned-income lines (enforced client-side only; rules can't count documents). */
-const val MAX_PLANNED_INCOME_LINES = 10
+const val MAX_PLANNED_INCOME_LINES = 20
+
+/** Most working days a month can be set to (the longest possible Monday to Friday count). */
+const val MAX_WORKING_DAYS = 23
 
 // The length counter appears once a field is more than 4/5 (80%) of the way to its limit.
 private const val COUNTER_THRESHOLD_NUMERATOR = 4

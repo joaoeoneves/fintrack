@@ -430,4 +430,28 @@
     <string name="home_recent_title">Recent activity</string>
     <string name="home_recent_empty">No activity yet</string>
     <string name="dashboard_see_all_activity">See all activity</string>
+    <string name="plan_basis_fixed">Fixed</string>
+    <string name="plan_basis_per_day">Per working day</string>
+    <string name="plan_frequency_monthly">Monthly</string>
+    <string name="plan_frequency_yearly">Yearly</string>
+    <string name="plan_frequency_once">One-off</string>
+    <string name="plan_field_amount_per_day">Amount per working day</string>
+    <plurals name="plan_income_preview">
+        <item quantity="one">× %1$d working day = %2$s this month</item>
+        <item quantity="other">× %1$d working days = %2$s this month</item>
+    </plurals>
+    <string name="plan_not_paid_in">Not paid in</string>
+    <string name="plan_pay_month">Paid in</string>
+    <string name="plan_not_this_month">Not this month</string>
+    <string name="plan_working_days_title">Working days in %1$s</string>
+    <plurals name="plan_working_days_value">
+        <item quantity="one">%1$d (%2$d holiday)</item>
+        <item quantity="other">%1$d (%2$d holidays)</item>
+    </plurals>
+    <string name="plan_working_days_edited">%1$d (edited)</string>
+    <string name="plan_working_days_reset">Reset to automatic</string>
+    <string name="plan_working_days_hint">Replaces the calendar count for this month only.</string>
+    <string name="plan_extras_this_month">Extras this month</string>
+    <string name="cd_fewer_working_days">Fewer working days</string>
+    <string name="cd_more_working_days">More working days</string>
 </resources>

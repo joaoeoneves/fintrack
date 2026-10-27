@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
@@ -14,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Session
@@ -52,6 +54,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         categoryDocs: List<Category> = emptyList(),
         plannedIncome: List<PlannedIncome> = emptyList(),
         recurring: List<RecurringItem> = emptyList(),
+        monthSettings: List<MonthSettings> = emptyList(),
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
@@ -59,6 +62,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
             FakeBudgetRepository(budgets),
             FakePlannedIncomeRepository(plannedIncome),
             FakeRecurringRepository(recurring),
+            FakeMonthSettingsRepository(monthSettings),
         ),
         FakeCategoryRepository(categoryDocs),
         prefsStore,

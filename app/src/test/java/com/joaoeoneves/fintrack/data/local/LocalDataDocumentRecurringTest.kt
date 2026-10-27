@@ -32,7 +32,7 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun v2File_isRewrittenAsV3_withRecurring_onNextWrite() =
+    fun v2File_isRewrittenAsV4_withRecurring_onNextWrite() =
         runStoreTest {
             dataFile.writeText(v2File)
             val item = recurringItem(id = "k").toLocal()
@@ -40,7 +40,7 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
             newStore().update { it.copy(recurring = listOf(item)) to Unit }
 
             val onDisk = diskDoc()
-            assertEquals(3, onDisk.schemaVersion)
+            assertEquals(4, onDisk.schemaVersion)
             assertEquals(listOf(item), onDisk.recurring)
             assertEquals(1, onDisk.plannedIncome.size)
         }

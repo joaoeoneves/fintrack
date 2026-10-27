@@ -1,20 +1,49 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.domain.model.IncomeBasis
+import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
+import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import java.time.DateTimeException
+import java.time.YearMonth
 
+/** Lenient mapping: an unknown basis/frequency or unparsable month falls back to the default shape. */
 internal fun LocalPlannedIncome.toDomain(): PlannedIncome =
     PlannedIncome(
         id = id,
         label = label,
         amountCents = amountCents,
         order = order,
+        basis = IncomeBasis.entries.find { it.name == basis } ?: IncomeBasis.FIXED,
+        frequency = IncomeFrequency.entries.find { it.name == frequency } ?: IncomeFrequency.MONTHLY,
+        monthOfYear = monthOfYear,
+        yearMonth = yearMonth?.let(::parseYearMonthOrNull),
+        skipMonths = skipMonths.toSet(),
     )
 
 internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
-    LocalPlannedIncome(id = id, label = label, amountCents = amountCents, order = order)
+    LocalPlannedIncome(
+        id = id,
+        label = label,
+        amountCents = amountCents,
+        order = order,
+        basis = basis.name,
+        frequency = frequency.name,
+        monthOfYear = monthOfYear,
+        yearMonth = yearMonth?.toString(),
+        skipMonths = skipMonths.sorted(),
+    )
+
+internal fun parseYearMonthOrNull(raw: String): YearMonth? =
+    try {
+        YearMonth.parse(raw)
+    } catch (_: DateTimeException) {
+        null
+    }
 
 /** Mirror of the firestore.rules check; throws [IllegalArgumentException] for a violation. */
 internal fun validatePlannedIncome(line: LocalPlannedIncome) {
@@ -23,4 +52,23 @@ internal fun validatePlannedIncome(line: LocalPlannedIncome) {
         "Planned income label must be 1..$MAX_PLAN_LABEL_LENGTH characters"
     }
     require(line.amountCents in 1..MAX_AMOUNT_CENTS) { "Planned income amount must be 1..$MAX_AMOUNT_CENTS cents" }
+    require(IncomeBasis.entries.any { it.name == line.basis }) { "Invalid income basis ${line.basis}" }
+    val frequency = IncomeFrequency.entries.find { it.name == line.frequency }
+    requireNotNull(frequency) { "Invalid income frequency ${line.frequency}" }
+    val months = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
+    require(line.skipMonths.size <= MAX_MONTH_OF_YEAR && line.skipMonths.all { it in months }) {
+        "Skipped months must be at most 12 values of 1..12"
+    }
+    when (frequency) {
+        IncomeFrequency.MONTHLY ->
+            require(line.monthOfYear == null && line.yearMonth == null) {
+                "A monthly line has no month of year or year-month"
+            }
+        IncomeFrequency.YEARLY ->
+            require(line.monthOfYear in months && line.yearMonth == null) { "A yearly line needs a month 1..12" }
+        IncomeFrequency.ONCE ->
+            require(line.monthOfYear == null && line.yearMonth?.let(::parseYearMonthOrNull) != null) {
+                "A one-off line needs a valid year-month"
+            }
+    }
 }

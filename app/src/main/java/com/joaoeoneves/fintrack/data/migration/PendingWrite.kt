@@ -15,7 +15,7 @@ internal class PendingWrite(
 
 /**
  * The planned writes grouped into batches, in commit order: categories, budgets, expenses, income, planned income,
- * recurring items.
+ * recurring items, month settings.
  * Every batch holds at most 400 writes; budget, expense and recurring batches also respect the rules' cap on
  * distinct custom categories. A planned record that cannot be mapped is a bug (the planner validates
  * everything) and throws instead of being silently dropped.
@@ -65,6 +65,13 @@ internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
                 PendingWrite("recurring", local.id, domain.toFirestoreMap())
             }
         }
+    val monthSettingsBatches =
+        monthSettings.chunked(BATCH_CHUNK_SIZE).map { chunk ->
+            chunk.map { local ->
+                val domain = checkNotNull(local.toDomainOrNull()) { "Planned month settings ${local.month} unmappable" }
+                PendingWrite("monthSettings", local.month, domain.toFirestoreMap())
+            }
+        }
     return categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches + expenseBatches + incomeBatches +
-        plannedIncomeBatches + recurringBatches
+        plannedIncomeBatches + recurringBatches + monthSettingsBatches
 }

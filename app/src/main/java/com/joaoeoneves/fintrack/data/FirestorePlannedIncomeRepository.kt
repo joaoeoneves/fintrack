@@ -6,12 +6,16 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
+import com.joaoeoneves.fintrack.data.local.parseYearMonthOrNull
+import com.joaoeoneves.fintrack.domain.model.IncomeBasis
+import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
+import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "FirestorePlannedIncomeRepo"
@@ -75,6 +79,11 @@ internal fun PlannedIncome.toFirestoreMap(): Map<String, Any?> =
         "label" to label,
         "amountCents" to amountCents,
         "order" to order,
+        "basis" to basis.name,
+        "frequency" to frequency.name,
+        "monthOfYear" to monthOfYear,
+        "yearMonth" to yearMonth?.toString(),
+        "skipMonths" to skipMonths.sorted(),
         "updatedAt" to FieldValue.serverTimestamp(),
     )
 
@@ -87,20 +96,64 @@ private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
     val label = getString("label")
     val amountCents = getLong("amountCents")
     val order = getLong("order")
+    val schedule = parseSchedule()
 
     return when {
         label == null -> dropped("label")
         amountCents == null -> dropped("amountCents")
         order == null -> dropped("order")
+        schedule == null -> dropped("basis/frequency/monthOfYear/yearMonth")
         else ->
             PlannedIncome(
                 id = id,
                 label = label,
                 amountCents = amountCents,
                 order = order.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt(),
+                basis = schedule.basis,
+                frequency = schedule.frequency,
+                monthOfYear = schedule.monthOfYear,
+                yearMonth = schedule.yearMonth,
+                skipMonths = schedule.skipMonths,
             )
     }
 }
+
+/** The optional v2 fields of a planned income document; absent fields take their defaults. */
+private class ParsedSchedule(
+    val basis: IncomeBasis,
+    val frequency: IncomeFrequency,
+    val monthOfYear: Int?,
+    val yearMonth: YearMonth?,
+    val skipMonths: Set<Int>,
+)
+
+/** `null` when a present field is unknown or the fields do not fit the frequency. */
+private fun DocumentSnapshot.parseSchedule(): ParsedSchedule? {
+    val basis = enumField("basis", IncomeBasis.FIXED)
+    val frequency = enumField("frequency", IncomeFrequency.MONTHLY)
+    val monthOfYear = getLong("monthOfYear")?.toInt()
+    val yearMonth = getString("yearMonth")?.let(::parseYearMonthOrNull)
+    val consistent =
+        when (frequency) {
+            IncomeFrequency.YEARLY -> monthOfYear != null
+            IncomeFrequency.ONCE -> yearMonth != null
+            else -> true
+        }
+    val skipMonths = (get("skipMonths") as? List<*>).orEmpty().mapNotNull { (it as? Number)?.toInt() }.toSet()
+    return if (basis == null || frequency == null || !consistent) {
+        null
+    } else {
+        ParsedSchedule(basis, frequency, monthOfYear, yearMonth, skipMonths)
+    }
+}
+
+/** The enum constant named by [field], [default] when the field is absent, `null` when the name is unknown. */
+private inline fun <reified E : Enum<E>> DocumentSnapshot.enumField(
+    field: String,
+    default: E,
+): E? =
+    getString(field)?.let { name -> enumValues<E>().find { it.name == name } }
+        ?: default.takeUnless { contains(field) }
 
 private fun DocumentSnapshot.dropped(field: String): PlannedIncome? {
     Log.w(TAG, "Dropping malformed planned income doc $id: missing or invalid '$field'")
