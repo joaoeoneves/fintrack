@@ -10,7 +10,7 @@
 # step), so this flow ending on USD is belt-and-suspenders at this point, not a hard dependency.
 #
 # Deliberately does NOT assert what the *current* display-currency label is before switching:
-# the app's default fallback (fresh install / cleared SharedPreferences, no explicit selection
+# the app's default fallback (fresh install / cleared app data / empty DataStore, no explicit selection
 # made yet) is CurrencyOption.EUR ("Euro (€)"), but this device may already have an explicit
 # USD selection persisted from a prior run of this very flow (an explicit selection is never
 # retroactively changed by what the fallback default is). Asserting a fixed starting label would
@@ -26,13 +26,13 @@
 #
 # Step 2/3 assert that switching currency/theme in Settings takes effect immediately on the
 # already-running Dashboard, in the same app process, with no restart required. This depends on
-# CurrencyRepository/ThemeRepository (SharedPrefsCurrencyRepository/SharedPrefsThemeRepository)
-# being bound as singletons in RepositoryModule.kt -- both classes cache their current value in an
-# in-memory StateFlow, so if a non-singleton binding ever regresses back in, MainActivity's
-# CurrencyViewModel/ThemeViewModel and SettingsViewModel would each get their own separate
-# repository instance, and a write through one would silently stop reaching the other's
-# collectors (only visible after a full process restart). See SharedPrefsCurrencyRepositoryTest /
-# RepositoryModuleSingletonScopeTest for the corresponding unit-level regression coverage.
+# CurrencyRepository/ThemeRepository (DataStore-backed, user_preferences file) sharing one
+# underlying preferences store: the repositories are bound as singletons in RepositoryModule.kt and
+# read the same DataStore<Preferences> (also synced to Firestore users/{uid}/settings/preferences),
+# so MainActivity's CurrencyViewModel/ThemeViewModel and SettingsViewModel all observe the same
+# value stream. If a binding regresses to separate stores/instances, a write through one would
+# silently stop reaching the other's collectors. See RepositoryModuleSingletonScopeTest and the
+# preferences repository unit tests for the corresponding unit-level regression coverage.
 appId: com.joaoeoneves.fintrack
 ---
 - launchApp

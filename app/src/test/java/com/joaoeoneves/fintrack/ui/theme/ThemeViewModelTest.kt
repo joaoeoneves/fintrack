@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -38,15 +39,15 @@ class ThemeViewModelTest {
     }
 
     @Test
-    fun themePreference_initialValue_isDark() =
+    fun themePreference_initialValue_isNull() =
         runTest(testDispatcher) {
             val repo = FakeThemeRepository(ThemePreference.LIGHT)
             val viewModel = ThemeViewModel(repo)
 
             // Before advanceUntilIdle/collection, the StateFlow built via stateIn(WhileSubscribed)
             // has not yet started collecting upstream, so it should still report its initialValue
-            // regardless of what the repository is actually seeded with.
-            assertEquals(ThemePreference.DARK, viewModel.themePreference.value)
+            // regardless of what the repository is actually seeded with (null = not yet loaded).
+            assertNull(viewModel.themePreference.value)
         }
 
     @Test

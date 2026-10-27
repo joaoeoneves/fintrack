@@ -21,11 +21,11 @@ class ThemeViewModel
     constructor(
         private val themeRepository: ThemeRepository,
     ) : ViewModel() {
-        val themePreference: StateFlow<ThemePreference> =
+        val themePreference: StateFlow<ThemePreference?> =
             themeRepository.observeThemePreference().stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
-                initialValue = ThemePreference.DARK,
+                initialValue = null,
             )
 
         /**

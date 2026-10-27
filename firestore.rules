@@ -105,5 +105,20 @@ service cloud.firestore {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidIncome(request.resource.data);
     }
+
+    function isValidPreferences(data) {
+      return data.keys().hasOnly(['theme', 'currency', 'language', 'updatedAt'])
+        && (!('theme' in data) || data.theme in ['SYSTEM', 'LIGHT', 'DARK'])
+        && (!('currency' in data) || data.currency in ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD'])
+        && (!('language' in data) || data.language in ['SYSTEM', 'ENGLISH', 'PORTUGUESE'])
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    // Each user can only read/write their own synced app preferences (single doc). Values must be
+    // known enum names; adding an enum constant in the app requires a rules deploy first.
+    match /users/{userId}/settings/preferences {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidPreferences(request.resource.data);
+    }
   }
 }

@@ -57,7 +57,8 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 - **Settings** — reached from the Dashboard's gear icon:
   - **Theme**: system default, light or dark, with a full, intentional Material 3 dark color scheme (not an
     auto-inverted afterthought).
-  - **Language**: English or Portuguese (or the system language), switched in-app.
+  - **Language**: English or Portuguese (or the system language), switched in-app. Theme, language and
+    currency are stored locally (DataStore) and synced across your devices through Firestore.
   - **Display currency**: USD, EUR, GBP, JPY, CAD or AUD. Purely cosmetic: it changes the symbol and
     formatting, with no exchange-rate conversion.
   - **Categories**: add your own (name, icon, color, spending or saving), rename/recolor the built-ins,
@@ -77,9 +78,9 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 | DI | Hilt |
 | Navigation | Compose Navigation, type-safe routes |
 | Auth | Firebase Auth + Google Sign-In via `androidx.credentials` (Credential Manager) |
-| Persistence | Firebase Firestore only — no Room/local database |
+| Persistence | Firebase Firestore (no Room/local database) + Preferences DataStore for theme/currency/language |
 | Lint/format | ktlint + detekt |
-| Unit tests | JUnit4 + Robolectric (where Android framework classes are needed, e.g. `SharedPreferences`) |
+| Unit tests | JUnit4 + Robolectric (where Android framework classes are needed, e.g. the legacy `SharedPreferences` migration) |
 | E2E tests | [Maestro](https://maestro.mobile.dev) |
 | CI | GitHub Actions |
 
@@ -137,6 +138,12 @@ users/{uid}/categories/{categoryId}   // user categories (generated ids) and opt
   order: number
   archived / builtIn: boolean
   createdAt / updatedAt: timestamp
+
+users/{uid}/settings/preferences       // theme, currency and language, synced across devices
+  theme: string             // SYSTEM | LIGHT | DARK
+  currency: string          // USD | EUR | GBP | JPY | CAD | AUD
+  language: string          // SYSTEM | ENGLISH | PORTUGUESE
+  updatedAt: timestamp
 ```
 
 Security rules ([`firestore.rules`](firestore.rules)) restrict every collection to
@@ -184,7 +191,7 @@ Run from the repository root via the Gradle wrapper:
 Three layers, deliberately kept separate:
 
 1. **Unit tests** (`app/src/test`) — JVM, run against `Fake*Repository` implementations, no device needed.
-   Robolectric is used where a real Android framework class is unavoidable (e.g. `SharedPreferences`).
+   Robolectric is used where a real Android framework class is unavoidable (e.g. the legacy `SharedPreferences` migration).
 2. **Instrumented tests** (`app/src/androidTest`) — on-device/emulator, currently minimal; most real
    on-device verification happens through Maestro instead (see below).
 3. **Maestro E2E flows** (`.maestro/*.yaml`) — YAML flows driven against a real emulator, using semantic
