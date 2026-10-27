@@ -41,7 +41,12 @@ service cloud.firestore {
     }
 
     function isValidAmountCents(amountCents) {
-      return amountCents is int && amountCents > 0;
+      return amountCents is int && amountCents > 0 && amountCents <= 100000000000;
+    }
+
+    function isValidAuditTimestamps(data) {
+      return (!('createdAt' in data) || data.createdAt is timestamp)
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
     function isValidNote(data) {
@@ -56,6 +61,8 @@ service cloud.firestore {
         && isValidAmountCents(data.amountCents)
         && isKnownCategory(userId, data.category)
         && data.date is timestamp
+        && (!('isRefund' in data) || data.isRefund is bool)
+        && isValidAuditTimestamps(data)
         && isValidNote(data);
     }
 
@@ -65,13 +72,14 @@ service cloud.firestore {
         && data.source is string && data.source.size() > 0 && data.source.size() <= 200
         && isValidAmountCents(data.amountCents)
         && data.date is timestamp
+        && isValidAuditTimestamps(data)
         && isValidNote(data);
     }
 
     function isValidBudget(data) {
       return data.keys().hasOnly(['limitCents', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['limitCents'])
-        && data.limitCents is int && data.limitCents > 0;
+        && data.limitCents is int && data.limitCents > 0 && data.limitCents <= 100000000000;
     }
 
     function isValidPlannedIncome(data) {

@@ -37,6 +37,7 @@ import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.expense.list.SortOption
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import java.time.LocalDate
 import java.time.ZoneId
@@ -122,7 +123,7 @@ private fun IncomeListViewModel.periodActions(): PeriodActions =
 private data class IncomeListActions(
     val periodActions: PeriodActions,
     val onQueryChanged: (String) -> Unit,
-    val onSortSelected: (IncomeSortOption) -> Unit,
+    val onSortSelected: (SortOption) -> Unit,
     val onOpenIncome: (String) -> Unit,
     val onDelete: (String) -> Unit,
 )
@@ -158,7 +159,7 @@ private fun IncomeListContent(
                 modifier = Modifier.weight(1f),
             )
             SortDropdown(
-                options = IncomeSortOption.entries,
+                options = SortOption.entries,
                 selected = state.sortOption,
                 onSelected = actions.onSortSelected,
                 optionLabel = { it.label },
@@ -178,7 +179,7 @@ private fun IncomeListContent(
 @Composable
 private fun IncomeListItems(
     income: List<Income>,
-    sortOption: IncomeSortOption,
+    sortOption: SortOption,
     query: String,
     onOpenIncome: (String) -> Unit,
     onDelete: (String) -> Unit,
@@ -242,17 +243,17 @@ private fun IncomeListRow(
 }
 
 /** Date sorts group the list under day headers; amount sorts interleave days, so they stay flat. */
-fun shouldGroupByDay(sort: IncomeSortOption): Boolean {
-    val dateSorts = setOf(IncomeSortOption.DATE_DESC, IncomeSortOption.DATE_ASC)
+fun shouldGroupByDay(sort: SortOption): Boolean {
+    val dateSorts = setOf(SortOption.DATE_DESC, SortOption.DATE_ASC)
     return sort in dateSorts
 }
 
-private val IncomeSortOption.label: String
+private val SortOption.label: String
     @Composable
     get() =
         when (this) {
-            IncomeSortOption.DATE_DESC -> stringResource(R.string.sort_newest_first)
-            IncomeSortOption.DATE_ASC -> stringResource(R.string.sort_oldest_first)
-            IncomeSortOption.AMOUNT_DESC -> stringResource(R.string.sort_highest_amount)
-            IncomeSortOption.AMOUNT_ASC -> stringResource(R.string.sort_lowest_amount)
+            SortOption.DATE_DESC -> stringResource(R.string.sort_newest_first)
+            SortOption.DATE_ASC -> stringResource(R.string.sort_oldest_first)
+            SortOption.AMOUNT_DESC -> stringResource(R.string.sort_highest_amount)
+            SortOption.AMOUNT_ASC -> stringResource(R.string.sort_lowest_amount)
         }

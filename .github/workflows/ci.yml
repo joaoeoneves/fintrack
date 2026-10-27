@@ -85,6 +85,10 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug
 
+      # Unsigned release build: catches R8/minification-only failures on PRs.
+      - name: Assemble release APK (unsigned)
+        run: ./gradlew assembleRelease
+
       # Compile-only: generating the profile needs a device, so CI never runs it.
       - name: Compile baseline profile generator
         run: ./gradlew :baselineprofile:assemble

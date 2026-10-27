@@ -14,6 +14,7 @@ import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
+import com.joaoeoneves.fintrack.ui.expense.list.SortOption
 import com.joaoeoneves.fintrack.ui.navigation.IncomeList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -74,7 +75,7 @@ class IncomeListViewModel
         // instead of to Content.query (which only updates after the derived uiState recomputes).
         // A controlled text field bound to the derived value can drop/reorder fast-typed characters.
         val query: StateFlow<String> = savedStateHandle.getStateFlow(KEY_QUERY, "")
-        private val sortOption = savedStateHandle.getStateFlow(KEY_SORT_OPTION, IncomeSortOption.DATE_DESC)
+        private val sortOption = savedStateHandle.getStateFlow(KEY_SORT_OPTION, SortOption.DATE_DESC)
         private val retryTrigger = MutableStateFlow(0)
 
         private val undoEvents = Channel<Income>(Channel.BUFFERED)
@@ -122,7 +123,7 @@ class IncomeListViewModel
             savedStateHandle[KEY_QUERY] = newQuery
         }
 
-        fun onSortSelected(sort: IncomeSortOption) {
+        fun onSortSelected(sort: SortOption) {
             savedStateHandle[KEY_SORT_OPTION] = sort
         }
 

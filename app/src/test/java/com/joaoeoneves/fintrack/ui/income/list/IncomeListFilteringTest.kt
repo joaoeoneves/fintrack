@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.income.list
 
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.expense.list.SortOption
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -37,7 +38,7 @@ class IncomeListFilteringTest {
 
     @Test
     fun toListContent_filtersByQuery_thenSorts() {
-        val content = listOf(gift, salary).toListContent(Period.CurrentMonth, false, "0", IncomeSortOption.AMOUNT_ASC)
+        val content = listOf(gift, salary).toListContent(Period.CurrentMonth, false, "0", SortOption.AMOUNT_ASC)
 
         assertEquals(listOf(gift, salary), content.income)
         assertEquals("0", content.query)
@@ -45,7 +46,7 @@ class IncomeListFilteringTest {
 
     @Test
     fun toListContent_blankQuery_keepsAll_inDateDescOrder() {
-        val content = listOf(gift, salary).toListContent(Period.CurrentMonth, true, " ", IncomeSortOption.DATE_DESC)
+        val content = listOf(gift, salary).toListContent(Period.CurrentMonth, true, " ", SortOption.DATE_DESC)
 
         assertEquals(listOf(salary, gift), content.income)
         assertTrue(content.canGoToNextMonth)
@@ -53,7 +54,7 @@ class IncomeListFilteringTest {
 
     @Test
     fun toListContent_noMatch_isEmpty() {
-        val content = listOf(gift, salary).toListContent(Period.CurrentMonth, false, "zzz", IncomeSortOption.DATE_ASC)
+        val content = listOf(gift, salary).toListContent(Period.CurrentMonth, false, "zzz", SortOption.DATE_ASC)
 
         assertTrue(content.income.isEmpty())
     }
