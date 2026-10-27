@@ -38,7 +38,8 @@ sealed interface Earmark {
  * [monthOfYear] is set exactly for [IncomeFrequency.YEARLY] lines, [yearMonth] exactly for
  * [IncomeFrequency.ONCE] lines, and [skipMonths] (month numbers 1..12 not paid) only for
  * [IncomeFrequency.MONTHLY] lines. A monthly line with an [earmark] feeds a pot (see [potsOf]) instead of the
- * shared base.
+ * shared base. A non-null [managedKey] marks a line generated from the salary profile: its amount, basis and
+ * schedule follow the profile, only the label and earmark are the user's.
  */
 data class PlannedIncome(
     val id: String,
@@ -51,4 +52,5 @@ data class PlannedIncome(
     val yearMonth: YearMonth? = null,
     val skipMonths: Set<Int> = emptySet(),
     val earmark: Earmark? = null,
+    val managedKey: String? = null,
 )

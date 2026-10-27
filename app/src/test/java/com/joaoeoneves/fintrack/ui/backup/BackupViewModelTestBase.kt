@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.data.backup.BackupCodec
 import com.joaoeoneves.fintrack.data.backup.BackupDocument
 import com.joaoeoneves.fintrack.data.backup.BackupRepository
@@ -74,6 +75,7 @@ abstract class BackupViewModelTestBase : BackupRepositoryTestBase() {
                 FakeRecurringRepository(),
                 FakeMonthSettingsRepository(),
                 FakeCategoryGroupRepository(),
+                FakeSalaryProfileRepository(),
             ),
             FakeCategoryRepository(),
             prefsStore,

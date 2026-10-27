@@ -6,11 +6,16 @@ import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Earmark
+import com.joaoeoneves.fintrack.domain.model.FLEX_PAYMENTS
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
+import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.PlanMonth
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
+import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.potsOf
+import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -126,14 +131,65 @@ class SpreadsheetParityTest {
         assertEquals(long(expected, "baseFreeCents"), summary.base.freeCents)
     }
 
-    // TODO(salary-profile): once the salary profile lands, derive salary2026/2025/2024 `expectedNetMonthlyCents`
-    //  from baseCents, irsBasePpm, irsSubsidiesPpm, ssPpm, irsPaidFractionPpm and spreadPpm and assert equality.
+    private fun int(
+        obj: JsonObject,
+        key: String,
+    ) = long(obj, key).toInt()
+
+    /** The GROSS profile of a salary section; the sheet stores the IRS fraction paid, the profile the exempt share. */
+    private fun salaryProfile(
+        key: String,
+        flexPpm: Int? = null,
+    ): SalaryProfile {
+        val salary = section(key)
+        return SalaryProfile(
+            inputMode = SalaryInputMode.GROSS,
+            baseGrossCents = long(salary, "baseCents"),
+            subsidySpreadPpm = int(salary, "spreadPpm"),
+            irsBasePpm = int(salary, "irsBasePpm"),
+            irsSubsidiesPpm = int(salary, "irsSubsidiesPpm"),
+            ssPpm = int(salary, "ssPpm"),
+            irsJovemExemptPpm = PPM_SCALE - int(salary, "irsPaidFractionPpm"),
+            flexPpm = flexPpm,
+        )
+    }
+
+    private fun breakdown(profile: SalaryProfile) = requireNotNull(salaryBreakdownOf(profile))
+
+    @Test
+    fun salary_netMonthly_matchesSpreadsheetExactly_forEveryYear() {
+        listOf("salary2024", "salary2025", "salary2026").forEach { key ->
+            assertEquals(
+                key,
+                long(section(key), "expectedNetMonthlyCents"),
+                breakdown(salaryProfile(key)).netMonthlyCents,
+            )
+        }
+    }
+
+    @Test
+    fun salary_flex_annualAndQuarters_matchSpreadsheet() {
+        val expected = section("expected")
+        val result = breakdown(salaryProfile("salary2026", flexPpm = FLEX_PPM))
+
+        assertEquals(long(expected, "flexAnnualCents"), result.flexAnnualCents)
+        assertEquals(List(FLEX_PAYMENTS) { long(expected, "flexQuarterCents") }, result.flexQuarterlyCents)
+    }
+
+    @Test
+    fun salary_holidayLumpNet_matchesSpreadsheet() {
+        val result = breakdown(salaryProfile("salary2026"))
+
+        assertEquals(long(section("expected"), "lumpSumNetCents"), result.holidayLumpNetCents)
+        assertEquals(result.holidayLumpNetCents, result.christmasLumpNetCents)
+    }
 
     // TODO(annual-plan): once the annual plan lands, assert expected.annualRecurringCents, annualInvestmentsCents,
-    //  annualFoodCents, annualFoodLeftoverCents (honouring food.snacksSkipMonth), flexAnnualCents, flexQuarterCents,
-    //  lumpSumNetCents and the annual IRS figures (annualIrsCorrectCents, annualIrsSheetCents) against the sheet.
+    //  annualFoodCents, annualFoodLeftoverCents (honouring food.snacksSkipMonth) and the annual
+    //  IRS figures (annualIrsCorrectCents, annualIrsSheetCents) against the sheet.
 
     private companion object {
         const val RESOURCE = "private/spreadsheet.json"
+        const val FLEX_PPM = 70_000
     }
 }

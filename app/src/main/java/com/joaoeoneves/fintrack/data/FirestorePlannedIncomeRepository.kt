@@ -87,11 +87,17 @@ internal fun PlannedIncome.toFirestoreMap(): Map<String, Any?> =
         "yearMonth" to yearMonth?.toString(),
         "skipMonths" to skipMonths.sorted(),
         "updatedAt" to FieldValue.serverTimestamp(),
-    ) + earmarkFields()
+    ) + earmarkFields() + managedKeyFields()
 
 // Both fields or neither; absent for an unearmarked line (the rules reject a null value).
 private fun PlannedIncome.earmarkFields(): Map<String, Any?> =
     earmark?.let { mapOf("earmarkType" to it.typeName, "earmarkId" to it.id) }.orEmpty()
+
+// Absent for a user's own line (the rules reject a null value).
+private fun PlannedIncome.managedKeyFields(): Map<String, Any?> {
+    val key = managedKey ?: return emptyMap()
+    return mapOf("managedKey" to key)
+}
 
 private fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
     documents.mapNotNull { it.toPlannedIncomeOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
@@ -121,6 +127,7 @@ private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
                 yearMonth = schedule.yearMonth,
                 skipMonths = schedule.skipMonths,
                 earmark = earmarkOrNull(getString("earmarkType"), getString("earmarkId")),
+                managedKey = getString("managedKey"),
             )
     }
 }

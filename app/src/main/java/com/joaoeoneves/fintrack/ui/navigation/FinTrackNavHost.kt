@@ -19,6 +19,7 @@ import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.insights.InsightsScreen
 import com.joaoeoneves.fintrack.ui.plan.PlanScreen
+import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
@@ -120,6 +121,7 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
             PlanScreen(
                 onOpenSettings = { navController.navigate(Settings) },
                 onOpenRecurring = { navController.navigate(RecurringList) },
+                onOpenSalaryProfile = { navController.navigate(EditSalaryProfile) },
             )
         }
     }
@@ -153,6 +155,9 @@ private fun NavGraphBuilder.sharedRoutes(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenEditor = { id -> navController.navigate(AddEditRecurring(recurringId = id)) },
         )
+    }
+    composable<EditSalaryProfile> {
+        SalaryProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
     composable<AddEditRecurring>(
         enterTransition = { transitions.enterFromBottom() },

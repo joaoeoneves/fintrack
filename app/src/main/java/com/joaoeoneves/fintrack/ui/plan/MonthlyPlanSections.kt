@@ -23,6 +23,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.PlannedSource
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
@@ -39,13 +40,23 @@ private fun AmountRow(
     value: String,
     modifier: Modifier = Modifier,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    badge: String? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, style = MaterialTheme.typography.bodyLarge)
+            if (badge != null) {
+                Text(
+                    text = badge,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+        }
         Text(text = value, style = Amount, color = valueColor)
     }
 }
@@ -114,6 +125,7 @@ fun ExpectedIncomeCard(
                         stringResource(R.string.plan_not_this_month)
                     },
                 modifier = Modifier.clickable { actions.onEdit(line.id) },
+                badge = if (line.isManaged) stringResource(R.string.plan_from_salary_profile) else null,
             )
             Hairline()
         }
