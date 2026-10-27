@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The salary-profile record: validation mirroring `firestore.rules`, mapping, and the managed-key check. */
@@ -23,6 +24,15 @@ class SalaryProfileRecordsTest {
     fun valid_passes() {
         validateSalaryProfile(valid)
         validateSalaryProfile(LocalSalaryProfile())
+    }
+
+    @Test
+    fun oldDocument_withoutProfitShareMonths_decodesToEmpty() {
+        val decoded = Json.decodeFromString<LocalSalaryProfile>("""{"profitShareMonth":4}""")
+
+        assertTrue(decoded.profitShareMonths.isEmpty())
+        assertEquals(listOf(4), decoded.toDomain().effectiveProfitShareMonths)
+        assertTrue(LocalSalaryProfile().mealSkipMonths.isEmpty())
     }
 
     @Test
@@ -73,6 +83,10 @@ class SalaryProfileRecordsTest {
         invalid(valid.copy(christmasSubsidyMonth = 13))
         invalid(valid.copy(flexFirstMonth = 0))
         invalid(valid.copy(profitShareMonth = 13))
+        invalid(valid.copy(profitShareMonths = listOf(0)))
+        invalid(valid.copy(profitShareMonths = listOf(13)))
+        invalid(valid.copy(profitShareMonths = (1..13).toList()))
+        validateSalaryProfile(valid.copy(profitShareMonths = (1..12).toList()))
         invalid(valid.copy(bonusMonth = 0))
     }
 
@@ -109,12 +123,14 @@ class SalaryProfileRecordsTest {
                 flexWithdrawalFeePpm = 12,
                 profitShareMultiplierPpm = 13,
                 profitShareMonth = 5,
+                profitShareMonths = setOf(7, 2),
                 bonusCents = 14,
                 bonusMonth = 6,
             )
 
         assertEquals(profile, profile.toLocal().toDomain())
         assertEquals(listOf(1, 3), profile.toLocal().mealSkipMonths)
+        assertEquals(listOf(2, 7), profile.toLocal().profitShareMonths)
     }
 
     @Test

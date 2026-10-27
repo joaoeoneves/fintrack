@@ -32,7 +32,7 @@ private fun BreakdownRows(
         rows += stringResource(R.string.salary_breakdown_irs) to -breakdown.irsCents
     }
     rows += stringResource(R.string.salary_breakdown_net) to breakdown.netMonthlyCents
-    if (breakdown.mealRatePerDayCents > 0 && state.month.monthValue !in state.form.mealSkip) {
+    if (breakdown.mealRatePerDayCents > 0) {
         val monthName = formatShortMonthName(state.month, currentLocale())
         rows += stringResource(R.string.salary_breakdown_meal, monthName) to
             breakdown.mealRatePerDayCents * state.workingDays

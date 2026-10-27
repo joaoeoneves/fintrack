@@ -4,7 +4,6 @@ import com.joaoeoneves.fintrack.domain.model.DEFAULT_CHRISTMAS_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_EXTRA_PAY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_FLEX_FIRST_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_HOLIDAY_SUBSIDY_MONTH
-import com.joaoeoneves.fintrack.domain.model.DEFAULT_MEAL_SKIP_MONTH
 import com.joaoeoneves.fintrack.domain.model.SPREAD_HALF_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryBreakdown
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -44,15 +43,14 @@ data class SalaryForm(
     val netHoliday: String = "",
     val netChristmas: String = "",
     val meal: String = "",
-    val mealSkip: Set<Int> = setOf(DEFAULT_MEAL_SKIP_MONTH),
-    val holidayMonth: Int = DEFAULT_HOLIDAY_SUBSIDY_MONTH,
-    val christmasMonth: Int = DEFAULT_CHRISTMAS_SUBSIDY_MONTH,
+    /** The (up to two) months the subsidies are paid in, oldest selection first. */
+    val subsidyMonths: List<Int> = listOf(DEFAULT_HOLIDAY_SUBSIDY_MONTH, DEFAULT_CHRISTMAS_SUBSIDY_MONTH),
     val flexPercent: String = "",
     val flexAnnual: String = "",
     val flexFirstMonth: Int = DEFAULT_FLEX_FIRST_MONTH,
     val flexFee: String = "",
     val profitMultiplier: String = "",
-    val profitMonth: Int = DEFAULT_EXTRA_PAY_MONTH,
+    val profitMonths: List<Int> = listOf(DEFAULT_EXTRA_PAY_MONTH),
     val bonus: String = "",
     val bonusMonth: Int = DEFAULT_EXTRA_PAY_MONTH,
 )
