@@ -21,6 +21,7 @@ import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -47,16 +48,28 @@ fun GoalsCard(
             )
         }
     }
-    if (state.goals.isEmpty()) {
-        Column(modifier = modifier.padding(top = Dimens.Space24)) { entryPoints() }
-        return
-    }
     SettingsGroup(label = stringResource(R.string.plan_goals_title), modifier = modifier) {
         state.goals.forEach { progress ->
             GoalRow(progress = progress, onClick = { actions.onEdit(progress.goal.id) })
             Hairline()
         }
-        Column(modifier = Modifier.padding(top = Dimens.Space12)) { entryPoints() }
+        if (state.goals.isEmpty()) {
+            SettingsRow(
+                title = stringResource(R.string.plan_goals_add),
+                onClick = actions.onAdd,
+                showChevron = true,
+            )
+            if (state.investmentCandidates.isNotEmpty()) {
+                Hairline()
+                SettingsRow(
+                    title = stringResource(R.string.plan_goals_from_investments),
+                    onClick = actions.onCreateFromInvestments,
+                    showChevron = true,
+                )
+            }
+        } else {
+            Column(modifier = Modifier.padding(top = Dimens.Space12)) { entryPoints() }
+        }
     }
 }
 

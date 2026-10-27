@@ -32,6 +32,7 @@ import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -57,14 +58,30 @@ fun GroupsCard(
                 GroupProgressRow(progress)
                 Hairline()
             }
+            GhostButton(
+                text = stringResource(R.string.plan_groups_manage),
+                onClick = actions.onManage,
+                modifier = Modifier.padding(top = Dimens.Space12),
+            )
         } else {
-            GhostButton(text = stringResource(R.string.plan_groups_suggest), onClick = actions.onCreateSuggested)
+            Text(
+                text = stringResource(R.string.plan_groups_empty),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+                modifier = Modifier.padding(bottom = Dimens.Space8),
+            )
+            SettingsRow(
+                title = stringResource(R.string.plan_groups_suggest),
+                onClick = actions.onCreateSuggested,
+                showChevron = true,
+            )
+            Hairline()
+            SettingsRow(
+                title = stringResource(R.string.plan_groups_create),
+                onClick = actions.onManage,
+                showChevron = true,
+            )
         }
-        GhostButton(
-            text = stringResource(R.string.plan_groups_manage),
-            onClick = actions.onManage,
-            modifier = Modifier.padding(top = Dimens.Space12),
-        )
     }
 }
 

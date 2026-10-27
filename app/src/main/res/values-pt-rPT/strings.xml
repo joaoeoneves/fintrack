@@ -490,8 +490,9 @@
     <string name="cd_more_working_days">Mais dias úteis</string>
 
     <string name="plan_groups_title">Grupos</string>
-    <string name="plan_groups_empty">Agrupe as suas categorias (alimentação, investimentos, …) para ver o plano de cada grupo num relance.</string>
+    <string name="plan_groups_empty">Agrupe categorias para ver o plano por grupo</string>
     <string name="plan_groups_suggest">Criar grupos sugeridos</string>
+    <string name="plan_groups_create">Criar grupo</string>
     <string name="plan_groups_manage">Gerir grupos</string>
     <string name="plan_group_other">Outros</string>
     <string name="plan_from_recurring">a partir de recorrentes</string>
