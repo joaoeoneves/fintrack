@@ -1,8 +1,18 @@
 # Architecture
 
-FinTrack is a single-module Android app (`:app`, package `com.joaoeoneves.fintrack`) plus a
-`:baselineprofile` module that generates the baseline profile. It is MVVM on Jetpack Compose, with Hilt
+FinTrack is an Android app (`:app`, package `com.joaoeoneves.fintrack`) with a pure-Kotlin `:core:model`
+module (see Modules below) plus a `:baselineprofile` module that generates the baseline profile. It is MVVM on Jetpack Compose, with Hilt
 for dependency injection and Coroutines/`Flow` for async work.
+
+## Modules
+
+| Module | Contents |
+|---|---|
+| `:core:model` | Pure Kotlin/JVM (no Android): `domain/model`, `domain/repository` (except `AuthRepository`/`SessionRepository`, which take an Android `Context` for sign-in and stay in `:app`), `domain/usecase` and the `@IoDispatcher` qualifier. Depends only on coroutines and `javax.inject`; packages are unchanged. Its unit tests run on the plain JVM (`:core:model:test`). |
+| `:app` | Everything else: UI, data, DI, the Hilt application. Depends on `:core:model`. |
+| `:baselineprofile` | Baseline profile generator, targets `:app`. |
+
+ktlint and detekt run per module and share `app/config/detekt/detekt.yml`; the root `ktlintCheck`/`detekt` tasks aggregate them.
 
 ## Layers and packages
 

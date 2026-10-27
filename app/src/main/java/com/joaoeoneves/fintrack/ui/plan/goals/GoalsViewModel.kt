@@ -135,12 +135,14 @@ class GoalsViewModel
         }
     }
 
-private fun isValid(goal: SavingsGoal): Boolean =
-    goal.name.isNotEmpty() &&
+private fun isValid(goal: SavingsGoal): Boolean {
+    val targetDate = goal.targetDate
+    return goal.name.isNotEmpty() &&
         goal.name.codePointLength() <= MAX_GOAL_NAME_LENGTH &&
         goal.targetCents > 0 &&
         goal.initialCents >= 0 &&
-        (goal.targetDate == null || goal.targetDate >= goal.startDate)
+        (targetDate == null || targetDate >= goal.startDate)
+}
 
 private const val FAR_YEARS = 100
 
