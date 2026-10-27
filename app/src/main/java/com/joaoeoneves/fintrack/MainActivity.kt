@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -78,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                     null -> null
                 }
 
-            themePreference?.let { NightModeSync.apply(applicationContext, it) }
+            LaunchedEffect(themePreference) { themePreference?.let { NightModeSync.apply(applicationContext, it) } }
             if (resolvedDarkTheme != null) {
                 // Status/navigation bar icons follow the resolved app theme, not the system one.
                 DisposableEffect(resolvedDarkTheme) {

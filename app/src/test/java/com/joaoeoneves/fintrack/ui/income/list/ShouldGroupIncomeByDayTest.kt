@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.income.list
 
+import com.joaoeoneves.fintrack.ui.expense.list.SortOption
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -8,12 +9,12 @@ class ShouldGroupIncomeByDayTest {
     fun onlyDateSorts_groupByDay() {
         val expected =
             mapOf(
-                IncomeSortOption.DATE_DESC to true,
-                IncomeSortOption.DATE_ASC to true,
-                IncomeSortOption.AMOUNT_DESC to false,
-                IncomeSortOption.AMOUNT_ASC to false,
+                SortOption.DATE_DESC to true,
+                SortOption.DATE_ASC to true,
+                SortOption.AMOUNT_DESC to false,
+                SortOption.AMOUNT_ASC to false,
             )
-        assertEquals(IncomeSortOption.entries.toSet(), expected.keys)
-        IncomeSortOption.entries.forEach { assertEquals("$it", expected.getValue(it), shouldGroupByDay(it)) }
+        assertEquals(SortOption.entries.toSet(), expected.keys)
+        SortOption.entries.forEach { assertEquals("$it", expected.getValue(it), shouldGroupByDay(it)) }
     }
 }

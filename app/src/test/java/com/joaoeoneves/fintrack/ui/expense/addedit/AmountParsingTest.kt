@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.expense.addedit
 
+import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -301,5 +302,22 @@ class AmountParsingTest {
                 assertEquals("round trip of $cents via '$text'", cents, parseAmountCents(text).getOrThrow())
             }
         }
+    }
+
+    @Test
+    fun parse_maxAmount_accepted() {
+        assertEquals(MAX_AMOUNT_CENTS, parseAmountCents("1000000000.00").getOrThrow())
+        assertEquals(MAX_AMOUNT_CENTS, parseAmountCents("1000000000,00").getOrThrow())
+    }
+
+    @Test
+    fun parse_oneCentAboveMax_rejected() {
+        assertTrue(parseAmountCents("1000000000.01").isFailure)
+        assertTrue(parseAmountCents("99999999999999").isFailure)
+    }
+
+    @Test
+    fun parse_justBelowMax_accepted() {
+        assertEquals(MAX_AMOUNT_CENTS - 1, parseAmountCents("999999999.99").getOrThrow())
     }
 }

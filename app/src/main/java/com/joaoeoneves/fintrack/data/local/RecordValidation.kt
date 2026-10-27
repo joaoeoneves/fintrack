@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.local
 
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_CATEGORY_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
@@ -27,7 +28,7 @@ internal fun validateExpense(
 ) {
     require(expense.id.isNotBlank()) { "Expense id is blank" }
     requireText(expense.name, MAX_NAME_LENGTH, "Expense name")
-    require(expense.amountCents > 0) { "Expense amount must be positive" }
+    require(expense.amountCents in 1..MAX_AMOUNT_CENTS) { "Expense amount must be 1..$MAX_AMOUNT_CENTS cents" }
     requireKnownCategory(expense.categoryId, knownCategoryIds)
     requireValidDate(expense.date)
     requireValidNote(expense.note)
@@ -36,7 +37,7 @@ internal fun validateExpense(
 internal fun validateIncome(income: LocalIncome) {
     require(income.id.isNotBlank()) { "Income id is blank" }
     requireText(income.source, MAX_NAME_LENGTH, "Income source")
-    require(income.amountCents > 0) { "Income amount must be positive" }
+    require(income.amountCents in 1..MAX_AMOUNT_CENTS) { "Income amount must be 1..$MAX_AMOUNT_CENTS cents" }
     requireValidDate(income.date)
     requireValidNote(income.note)
 }
@@ -47,7 +48,7 @@ internal fun validateBudget(
     knownCategoryIds: Set<String>,
 ) {
     requireKnownCategory(categoryId, knownCategoryIds)
-    require(limitCents > 0) { "Budget limit must be positive" }
+    require(limitCents in 1..MAX_AMOUNT_CENTS) { "Budget limit must be 1..$MAX_AMOUNT_CENTS cents" }
 }
 
 /** A category is written whole; a built-in's override may leave the name null, a user one may not. */

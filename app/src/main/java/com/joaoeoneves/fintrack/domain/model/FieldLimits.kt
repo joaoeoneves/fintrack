@@ -15,6 +15,9 @@ const val MAX_NOTE_LENGTH = 2000
 /** Maximum length, in code points, of a planned-income line label. */
 const val MAX_PLAN_LABEL_LENGTH = 50
 
+/** Largest money amount accepted, in cents (1 billion); mirrors the upper bound in `firestore.rules`. */
+const val MAX_AMOUNT_CENTS = 100_000_000_000L
+
 /** Maximum number of planned-income lines (enforced client-side only; rules can't count documents). */
 const val MAX_PLANNED_INCOME_LINES = 10
 

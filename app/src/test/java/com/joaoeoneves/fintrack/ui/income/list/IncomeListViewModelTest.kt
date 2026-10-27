@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.testutil.genericErrorText
+import com.joaoeoneves.fintrack.ui.expense.list.SortOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -169,7 +170,7 @@ class IncomeListViewModelTest {
             advanceUntilIdle()
 
             val content = vm.uiState.value as IncomeListUiState.Content
-            assertEquals(IncomeSortOption.DATE_DESC, content.sortOption)
+            assertEquals(SortOption.DATE_DESC, content.sortOption)
             assertEquals(listOf(newer, older), content.income)
 
             job.cancel()
@@ -186,11 +187,11 @@ class IncomeListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            vm.onSortSelected(IncomeSortOption.DATE_ASC)
+            vm.onSortSelected(SortOption.DATE_ASC)
             advanceUntilIdle()
 
             val content = vm.uiState.value as IncomeListUiState.Content
-            assertEquals(IncomeSortOption.DATE_ASC, content.sortOption)
+            assertEquals(SortOption.DATE_ASC, content.sortOption)
             assertEquals(listOf(older, newer), content.income)
 
             job.cancel()
@@ -207,11 +208,11 @@ class IncomeListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            vm.onSortSelected(IncomeSortOption.AMOUNT_DESC)
+            vm.onSortSelected(SortOption.AMOUNT_DESC)
             advanceUntilIdle()
 
             val content = vm.uiState.value as IncomeListUiState.Content
-            assertEquals(IncomeSortOption.AMOUNT_DESC, content.sortOption)
+            assertEquals(SortOption.AMOUNT_DESC, content.sortOption)
             assertEquals(listOf(large, small), content.income)
 
             job.cancel()
@@ -228,11 +229,11 @@ class IncomeListViewModelTest {
             val job = launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            vm.onSortSelected(IncomeSortOption.AMOUNT_ASC)
+            vm.onSortSelected(SortOption.AMOUNT_ASC)
             advanceUntilIdle()
 
             val content = vm.uiState.value as IncomeListUiState.Content
-            assertEquals(IncomeSortOption.AMOUNT_ASC, content.sortOption)
+            assertEquals(SortOption.AMOUNT_ASC, content.sortOption)
             assertEquals(listOf(small, large), content.income)
 
             job.cancel()
@@ -251,7 +252,7 @@ class IncomeListViewModelTest {
             advanceUntilIdle()
 
             vm.onQueryChanged("salary")
-            vm.onSortSelected(IncomeSortOption.AMOUNT_DESC)
+            vm.onSortSelected(SortOption.AMOUNT_DESC)
             advanceUntilIdle()
 
             val content = vm.uiState.value as IncomeListUiState.Content
@@ -473,13 +474,13 @@ class IncomeListViewModelTest {
             advanceUntilIdle()
 
             vm.onQueryChanged("salary")
-            vm.onSortSelected(IncomeSortOption.AMOUNT_ASC)
+            vm.onSortSelected(SortOption.AMOUNT_ASC)
             vm.onPeriodSelected(Period.CurrentMonth)
             advanceUntilIdle()
 
             val beforeRetry = vm.uiState.value as IncomeListUiState.Content
             assertEquals("salary", beforeRetry.query)
-            assertEquals(IncomeSortOption.AMOUNT_ASC, beforeRetry.sortOption)
+            assertEquals(SortOption.AMOUNT_ASC, beforeRetry.sortOption)
             assertEquals(Period.CurrentMonth, beforeRetry.period)
             // within the current month: only "salary" (2 days ago) matches the query; salaryOld
             // (20 days ago, i.e. September) and bonus (doesn't match query) are excluded.
@@ -490,7 +491,7 @@ class IncomeListViewModelTest {
 
             val afterRetry = vm.uiState.value as IncomeListUiState.Content
             assertEquals("salary", afterRetry.query)
-            assertEquals(IncomeSortOption.AMOUNT_ASC, afterRetry.sortOption)
+            assertEquals(SortOption.AMOUNT_ASC, afterRetry.sortOption)
             assertEquals(Period.CurrentMonth, afterRetry.period)
             assertEquals(listOf(salary), afterRetry.income)
 
@@ -509,7 +510,7 @@ class IncomeListViewModelTest {
             val originalJob = launch { original.uiState.collect {} }
             advanceUntilIdle()
             original.onQueryChanged("foo")
-            original.onSortSelected(IncomeSortOption.AMOUNT_ASC)
+            original.onSortSelected(SortOption.AMOUNT_ASC)
             advanceUntilIdle()
             originalJob.cancel()
 
@@ -522,7 +523,7 @@ class IncomeListViewModelTest {
 
             val content = recreated.uiState.value as IncomeListUiState.Content
             assertEquals("foo", content.query)
-            assertEquals(IncomeSortOption.AMOUNT_ASC, content.sortOption)
+            assertEquals(SortOption.AMOUNT_ASC, content.sortOption)
             assertEquals(Period.CurrentMonth, content.period)
 
             recreatedJob.cancel()
@@ -543,7 +544,7 @@ class IncomeListViewModelTest {
 
             val content = vm.uiState.value as IncomeListUiState.Content
             assertEquals("", content.query)
-            assertEquals(IncomeSortOption.DATE_DESC, content.sortOption)
+            assertEquals(SortOption.DATE_DESC, content.sortOption)
 
             job.cancel()
         }

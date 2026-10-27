@@ -74,7 +74,7 @@ fun SearchField(
 /**
  * Sort control shared between the expense and income list screens: a compact chip showing the
  * selected option's label that opens a dropdown of all [options]. Generic over the sort option
- * type [T] so each screen's own enum (`SortOption`/`IncomeSortOption`) can reuse it.
+ * type [T] so each screen's own enum (`SortOption`) can reuse it.
  */
 @Composable
 fun <T> SortDropdown(

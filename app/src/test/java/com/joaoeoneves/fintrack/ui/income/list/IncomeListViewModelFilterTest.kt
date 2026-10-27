@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.ui.expense.list.SortOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -116,7 +117,7 @@ class IncomeListViewModelFilterTest {
             advanceUntilIdle()
             vm.onQueryChanged("gi")
             advanceUntilIdle()
-            vm.onSortSelected(IncomeSortOption.AMOUNT_ASC)
+            vm.onSortSelected(SortOption.AMOUNT_ASC)
             advanceUntilIdle()
 
             assertEquals(1, repo.observeCalls)
