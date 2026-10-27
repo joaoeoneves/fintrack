@@ -313,7 +313,7 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - scrollUntilVisible:
     element: "Planeie o seu mês|Editar plano"
-    direction: DOWN
+    direction: UP
 - tapOn: "Planeie o seu mês|Editar plano"
 - extendedWaitUntil:
     visible: "Plano mensal"
