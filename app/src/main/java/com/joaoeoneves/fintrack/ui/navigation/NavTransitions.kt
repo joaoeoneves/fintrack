@@ -66,4 +66,10 @@ internal class NavTransitions(
         } else {
             slideOutVertically(tween(duration)) { it / VERTICAL_DIVISOR } + fadeOut(tween(duration))
         }
+
+    /** The screen beneath an add/edit form: holds still and fades while the form slides up over it. */
+    fun exitUnderForm(): ExitTransition = fadeOut(tween(duration))
+
+    /** The screen beneath an add/edit form coming back: fades in while the form slides down. */
+    fun popEnterUnderForm(): EnterTransition = fadeIn(tween(duration))
 }

@@ -83,16 +83,93 @@ class ChartSeriesTest {
     }
 
     @Test
-    fun transactionsOutsideWindow_areIgnored() {
+    fun transactionsOutsideRange_areIgnored() {
         val series =
             dailyNetSeries(
-                expenses = listOf(expense(28, 9_999L, month = 9), expense(10, 7_777L)),
+                expenses = listOf(expense(28, 9_999L, month = 9)),
                 income = listOf(income(1, 1_000L, month = 11)),
                 range = month(10),
                 zone = zone,
                 today = LocalDate.of(2026, 10, 5),
             )
         assertEquals(listOf(0L, 0L, 0L, 0L, 0L), series)
+    }
+
+    @Test
+    fun futureExpenseInRange_extendsSeriesAndIsInLastPoint() {
+        val series =
+            dailyNetSeries(
+                listOf(expense(3, 100L), expense(10, 7_777L)),
+                emptyList(),
+                month(10),
+                zone,
+                LocalDate.of(2026, 10, 5),
+            )
+        assertEquals(10, series.size)
+        assertEquals(-100L, series[4])
+        assertEquals(-100L, series[8])
+        assertEquals(-7_877L, series.last())
+    }
+
+    @Test
+    fun futureIncomeInRange_extendsSeriesAndIsInLastPoint() {
+        val series =
+            dailyNetSeries(emptyList(), listOf(income(8, 500L)), month(10), zone, LocalDate.of(2026, 10, 5))
+        assertEquals(8, series.size)
+        assertEquals(0L, series[6])
+        assertEquals(500L, series.last())
+    }
+
+    @Test
+    fun futureEntryBeyondRangeEnd_isIgnored() {
+        val series =
+            dailyNetSeries(
+                listOf(expense(2, 100L, month = 11)),
+                listOf(income(1, 900L, month = 11)),
+                month(10),
+                zone,
+                LocalDate.of(2026, 10, 5),
+            )
+        assertEquals(List(5) { 0L }, series)
+    }
+
+    @Test
+    fun futureEntryOnLastDayOfRange_capsAtRangeEnd() {
+        val series =
+            dailyNetSeries(emptyList(), listOf(income(31, 200L)), month(10), zone, LocalDate.of(2026, 10, 5))
+        assertEquals(31, series.size)
+        assertEquals(200L, series.last())
+    }
+
+    @Test
+    fun pastMonth_unaffectedByTodayOrLaterEntries() {
+        val series =
+            dailyNetSeries(
+                listOf(expense(30, 100L, month = 9), expense(5, 50L, month = 10)),
+                emptyList(),
+                month(9),
+                zone,
+                LocalDate.of(2026, 10, 20),
+            )
+        assertEquals(30, series.size)
+        assertEquals(-100L, series.last())
+    }
+
+    @Test
+    fun lastPoint_equalsNetOfMixedInRangeCashFlow() {
+        val expenses =
+            listOf(
+                expense(2, 1_000L),
+                expense(4, 300L, refund = true),
+                expense(15, 450L),
+                expense(20, 999L, month = 9),
+                expense(5, 11L, month = 11),
+            )
+        val incomes = listOf(income(1, 2_500L), income(12, 75L), income(1, 8L, month = 11))
+        val series = dailyNetSeries(expenses, incomes, month(10), zone, LocalDate.of(2026, 10, 6))
+        val expected = -1_000L + 300L - 450L + 2_500L + 75L
+        assertEquals(15, series.size)
+        assertEquals(expected, series.last())
     }
 
     @Test

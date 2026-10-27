@@ -11,8 +11,11 @@ import kotlin.math.roundToInt
 
 /**
  * Cumulative net balance (income minus outflow, refunds counting as money back) at the end of each
- * day of [range], from its first day up to the earlier of its last day and [today]; days after
- * today are not plotted. Always has at least two points so a line can be drawn: a single day is
+ * day of [range], from its first day up to the earlier of its last day and [today]. Transactions
+ * dated after [today] but still inside [range] extend the series to the day of the latest such
+ * transaction (carrying the balance forward), so the last point always equals the net of every
+ * transaction in the range, matching the hero balance. Without future-dated entries the series
+ * stops at today. Always has at least two points so a line can be drawn: a single day is
  * returned as a flat segment.
  */
 fun dailyNetSeries(
@@ -28,13 +31,20 @@ fun dailyNetSeries(
             .atZone(zone)
             .toLocalDate()
             .minusDays(1)
-    val last = minOf(lastOfRange, today).let { if (it < first) first else it }
+
+    fun dateOf(transaction: Transaction) = transaction.date.atZone(zone).toLocalDate()
+    val latestInRange =
+        (expenses.map(::dateOf) + income.map(::dateOf))
+            .filter { it in first..lastOfRange }
+            .maxOrNull()
+    val end = minOf(lastOfRange, maxOf(today, latestInRange ?: today))
+    val last = if (end < first) first else end
     val days = ChronoUnit.DAYS.between(first, last).toInt() + 1
 
     val flowPerDay = LongArray(days)
 
     fun add(transaction: Transaction) {
-        val offset = ChronoUnit.DAYS.between(first, transaction.date.atZone(zone).toLocalDate())
+        val offset = ChronoUnit.DAYS.between(first, dateOf(transaction))
         if (offset in 0 until days) flowPerDay[offset.toInt()] += transaction.cashFlowCents
     }
     expenses.forEach(::add)

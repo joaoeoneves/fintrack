@@ -206,9 +206,9 @@ fun CategoryBreakdown(
     val barDescription =
         stringResource(
             totalDescriptionRes,
-            formatAmountCents(total),
-            formatAmountCents(totalOf(CategoryKind.SPENDING)),
-            formatAmountCents(totalOf(CategoryKind.SAVING)),
+            formatAmountCents(total, typographic = false),
+            formatAmountCents(totalOf(CategoryKind.SPENDING), typographic = false),
+            formatAmountCents(totalOf(CategoryKind.SAVING), typographic = false),
         )
     Column(modifier = modifier.fillMaxWidth()) {
         BreakdownBar(
@@ -278,7 +278,8 @@ private fun BarSegment(
 private fun BreakdownRow(entry: BreakdownEntry) {
     val name = entry.category.displayName
     val amount = formatAmountCents(entry.cents)
-    val description = stringResource(R.string.cd_pie_chart_category_item, name, entry.percent, amount)
+    val spokenAmount = formatAmountCents(entry.cents, typographic = false)
+    val description = stringResource(R.string.cd_pie_chart_category_item, name, entry.percent, spokenAmount)
     Row(
         modifier =
             Modifier

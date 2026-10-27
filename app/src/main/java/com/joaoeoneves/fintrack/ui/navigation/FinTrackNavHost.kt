@@ -1,7 +1,10 @@
 package com.joaoeoneves.fintrack.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -26,14 +29,19 @@ fun FinTrackNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
-    val transitions = NavTransitions(reducedMotion = LocalReducedMotion.current)
+    val reducedMotion = LocalReducedMotion.current
+    val transitions = remember(reducedMotion) { NavTransitions(reducedMotion) }
     NavHost(
         navController = navController,
         startDestination = Dashboard,
         modifier = modifier,
         enterTransition = { transitions.enter() },
-        exitTransition = { transitions.exit() },
-        popEnterTransition = { transitions.popEnter() },
+        exitTransition = {
+            if (targetState.destination.isForm()) transitions.exitUnderForm() else transitions.exit()
+        },
+        popEnterTransition = {
+            if (initialState.destination.isForm()) transitions.popEnterUnderForm() else transitions.popEnter()
+        },
         popExitTransition = { transitions.popExit() },
     ) {
         composable<Dashboard> {
@@ -68,6 +76,12 @@ fun FinTrackNavHost(
             CategoriesScreen(onBack = { navController.popBackStack() })
         }
     }
+}
+
+/** Add/edit forms enter from the bottom; the screen beneath them fades instead of sliding sideways. */
+private fun NavDestination.isForm(): Boolean {
+    val forms = listOf(hasRoute<AddEditExpense>(), hasRoute<AddEditIncome>(), hasRoute<AddEditRecurring>())
+    return forms.any { it }
 }
 
 private fun NavGraphBuilder.recurringRoutes(

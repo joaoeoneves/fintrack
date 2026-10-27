@@ -89,8 +89,8 @@ fun BalanceLineChart(
     val description =
         stringResource(
             R.string.cd_balance_chart,
-            formatAmountCents(series.first()),
-            formatAmountCents(series.last()),
+            formatAmountCents(series.first(), typographic = false),
+            formatAmountCents(series.last(), typographic = false),
         )
     val labels = rememberScrubLabelFormatter()
     val amountText = if (scrub.index in series.indices) formatAmountCents(series[scrub.index]) else ""
@@ -200,26 +200,39 @@ private fun rememberScrubLabelFormatter(): (LocalDate) -> String {
 }
 
 /**
- * Blends from the previously shown samples to the current target. After a retarget the old picture
- * is held ([pending]) until the animation has been restarted, so there is never a one-frame jump.
+ * Blends from the previously shown samples to the current target. The retarget runs in an effect
+ * (never during composition): the old picture is frozen as [from] and the new samples become [to]
+ * only once the animation has been reset to 0, in the same effect step, so there is no jump.
  */
 private class MorphState(
     initial: FloatArray,
 ) {
     val progress = Animatable(1f)
-    var from: FloatArray = initial
-    var to: FloatArray = initial
-    var pending by mutableStateOf(false)
+    var from by mutableStateOf(initial)
+    var to by mutableStateOf(initial)
 
     fun values(): FloatArray {
-        val fraction = if (pending) 0f else progress.value
-        return FloatArray(SAMPLE_COUNT) { i -> from[i] + (to[i] - from[i]) * fraction }
+        val fraction = progress.value
+        val start = from
+        val end = to
+        return FloatArray(SAMPLE_COUNT) { i -> start[i] + (end[i] - start[i]) * fraction }
     }
 
-    fun retarget(target: FloatArray) {
-        from = values()
+    suspend fun retarget(
+        target: FloatArray,
+        animate: Boolean,
+    ) {
+        if (to === target) return
+        val shown = values()
+        // Freeze the picture currently on screen as the new origin, then restart from 0.
+        from = shown
         to = target
-        pending = true
+        progress.snapTo(0f)
+        if (animate) {
+            progress.animateTo(1f, tween(MORPH_MS, easing = FastOutSlowInEasing))
+        } else {
+            progress.snapTo(1f)
+        }
     }
 }
 
@@ -229,16 +242,7 @@ private fun rememberMorph(
     reducedMotion: Boolean,
 ): MorphState {
     val state = remember { MorphState(target) }
-    if (state.to !== target) state.retarget(target)
-    LaunchedEffect(target) {
-        state.progress.snapTo(0f)
-        state.pending = false
-        if (reducedMotion) {
-            state.progress.snapTo(1f)
-        } else {
-            state.progress.animateTo(1f, tween(MORPH_MS, easing = FastOutSlowInEasing))
-        }
-    }
+    LaunchedEffect(target) { state.retarget(target, animate = !reducedMotion) }
     return state
 }
 

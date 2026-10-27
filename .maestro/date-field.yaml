@@ -35,6 +35,13 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 
+# NOTE: ReadOnlyDateField is now ONE merged clickable node (contentDescription "Change date",
+# stateDescription "<label>, <date>"); the trailing icon is decorative. So "body tap" and "icon
+# tap" are the same node -- steps 3 and 4 both tap "Change date" (the one reliable selector).
+# TODO verify on first real run: whether Maestro still exposes the merged node's visible date
+# text (the regex assertions in step 2 / the copyText round-trip) alongside the content-desc.
+# If not, drop the regex assertions and keep only the "Change date" + "OK" checks.
+
 # --- 2: The date field defaults to today, formatted "MMM d, yyyy" (e.g. "Jul 21, 2026") by
 # rememberLocaleAwareDateFormatter() -- match it with a regex since the exact day is dynamic.
 - assertVisible: "[A-Za-z]{3} [0-9]{1,2}, [0-9]{4}"
@@ -43,7 +50,7 @@ appId: com.joaoeoneves.fintrack
 
 # --- 3: Tap the field's text body (NOT the trailing icon) -- this used to be a no-op before the
 # MutableInteractionSource + PressInteraction.Release fix in ReadOnlyDateField.
-- tapOn: "[A-Za-z]{3} [0-9]{1,2}, [0-9]{4}"
+- tapOn: "Change date"
 - assertVisible: "OK"
 # Confirm with OK rather than Cancel: the dialog's initial selection is the field's current
 # (today's) date, so confirming re-applies the same date -- a no-op functionally, and it avoids
@@ -54,8 +61,7 @@ appId: com.joaoeoneves.fintrack
 # shift by a day in zones where the local and UTC calendar day differ).
 - assertVisible: ${maestro.copiedText}
 
-# --- 4: Tap the trailing icon (content description "Change date") -- confirms its own onClick
-# still independently opens the dialog too, unaffected by the body-tap fix.
+# --- 4: Re-open the picker via the same merged node a second time (re-openable after OK).
 - tapOn: "Change date"
 - assertVisible: "OK"
 - tapOn: "OK"

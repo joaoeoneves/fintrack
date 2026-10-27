@@ -121,4 +121,37 @@ class CurrencyFormatTest {
             }
         }
     }
+
+    @Test
+    fun typographicMinus_replacesLeadingHyphen() {
+        assertEquals("\u2212€12.34", "-€12.34".withTypographicMinus())
+        assertEquals("\u221212,34 €", "-12,34 €".withTypographicMinus())
+    }
+
+    @Test
+    fun typographicMinus_leavesPositiveUnchanged() {
+        assertEquals("€12.34", "€12.34".withTypographicMinus())
+        assertEquals("", "".withTypographicMinus())
+    }
+
+    @Test
+    fun typographicMinus_onlyFirstHyphenChanges() {
+        assertEquals("\u2212€1-2", "-€1-2".withTypographicMinus())
+    }
+
+    @Test
+    fun typographicMinus_appliedToFormattedNegative() {
+        val plain = formatAmount(-1_234L, CurrencyOption.EUR, enUs)
+        assertEquals("\u2212€12.34", plain.withTypographicMinus())
+        assertEquals("\u2212", MINUS_SIGN)
+    }
+
+    @Test
+    fun formatAmount_staysPlainAsciiMinus() {
+        for (locale in listOf(enUs, ptPt)) {
+            val formatted = formatAmount(-1_234L, CurrencyOption.EUR, locale)
+            assertEquals(true, formatted.contains('-'))
+            assertEquals(false, formatted.contains(MINUS_SIGN))
+        }
+    }
 }

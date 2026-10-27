@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.DatePicker
@@ -14,7 +15,6 @@ import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,6 +28,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -50,25 +53,36 @@ fun ReadOnlyDateField(
     var showDatePicker by remember { mutableStateOf(false) }
     val displayDateFormatter = rememberLocaleAwareDateFormatter().withZone(zone)
 
+    val label = stringResource(labelRes)
+    val formattedDate = displayDateFormatter.format(date)
+    val changeDateCd = stringResource(R.string.cd_change_date)
+
+    // One merged, clickable node: the whole row opens the picker. The trailing icon is purely
+    // decorative; TalkBack reads "Change date" plus the "<label>, <date>" state.
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .heightIn(min = Dimens.SettingsRowMinHeight)
-                .clickable(role = Role.Button) { showDatePicker = true },
+                .clickable(role = Role.Button) { showDatePicker = true }
+                .semantics(mergeDescendants = true) {
+                    contentDescription = changeDateCd
+                    stateDescription = "$label, $formattedDate"
+                },
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = stringResource(labelRes),
+            text = label,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )
-        Text(text = displayDateFormatter.format(date), style = MaterialTheme.typography.bodyLarge)
-        IconButton(onClick = { showDatePicker = true }) {
-            val changeDateCd = stringResource(R.string.cd_change_date)
-            Icon(Icons.Default.DateRange, contentDescription = changeDateCd)
-        }
+        Text(text = formattedDate, style = MaterialTheme.typography.bodyLarge)
+        Icon(
+            Icons.Default.DateRange,
+            contentDescription = null,
+            modifier = Modifier.padding(Dimens.Space12),
+        )
     }
 
     if (showDatePicker) {

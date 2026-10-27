@@ -21,12 +21,11 @@ import java.util.Locale
  * Instrumented Compose UI tests for [ReadOnlyDateField], the shared read-only date field used by
  * both `ExpenseForm` (in `AddEditExpenseScreen.kt`) and `IncomeForm` (in `AddEditIncomeScreen.kt`).
  *
- * Regression coverage for a bug where the field's [androidx.compose.material3.DatePickerDialog]
- * only opened when the user tapped the small trailing icon -- tapping the rest of the field body
- * (an [androidx.compose.material3.OutlinedTextField], which looks fully tappable) did nothing.
- * The fix wires a `MutableInteractionSource` + `PressInteraction.Release` listener on the field so
- * a tap anywhere in its bounds opens the picker, while the trailing icon's own `onClick` still
- * independently opens it too (no double-trigger, field stays read-only/non-dimmed).
+ * Regression coverage for a bug where the picker only opened when the user tapped the small
+ * trailing icon. [ReadOnlyDateField] is now a single merged clickable Row (role Button) with
+ * content description "Change date" and state description "<label>, <date>"; the trailing calendar
+ * icon is decorative. The date text and the "Change date" description therefore resolve to the same
+ * merged node, and tapping either (or anywhere on the row) opens the picker.
  *
  * Exercises [ReadOnlyDateField] directly rather than through the full `AddEditExpenseScreen`/
  * `AddEditIncomeScreen` (which need Hilt-backed ViewModels) -- this is the precise level to catch
@@ -68,8 +67,8 @@ class DateFieldTest {
         setDateFieldContent()
         composeTestRule.onNodeWithText(okButtonText).assertDoesNotExist()
 
-        // Tap the displayed date value itself, not the trailing icon -- this is exactly the tap
-        // that used to be a no-op before the MutableInteractionSource fix.
+        // Tap the displayed date value itself, not the trailing icon -- it is part of the same
+        // merged clickable node, so this must open the picker.
         composeTestRule.onNodeWithText(formattedDate).performClick()
 
         composeTestRule.onNodeWithText(okButtonText).assertExists()
@@ -77,7 +76,7 @@ class DateFieldTest {
 
     @Test
     fun tappingTrailingIcon_stillOpensDatePickerDialog() {
-        // Regression guard: confirm the icon's own onClick wasn't broken by the fix.
+        // Regression guard: the "Change date" description resolves to the merged clickable node.
         setDateFieldContent()
         composeTestRule.onNodeWithText(okButtonText).assertDoesNotExist()
 

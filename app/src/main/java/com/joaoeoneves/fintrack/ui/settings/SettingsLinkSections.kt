@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -24,6 +25,8 @@ import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** The navigation/action groups (categories, recurring, data, about) shown on [SettingsScreen]. */
 @Composable
@@ -103,12 +106,13 @@ fun AboutSection(modifier: Modifier = Modifier) {
 @Composable
 private fun FontLicenseSheet(onDismiss: () -> Unit) {
     val resources = LocalResources.current
-    val licenseText =
-        remember(resources) {
-            resources.openRawResource(R.raw.inter_ofl).use { stream ->
-                stream.readBytes().decodeToString()
+    // Read off the main thread; only runs while the sheet is shown. Empty until loaded.
+    val licenseText by produceState(initialValue = "", resources) {
+        value =
+            withContext(Dispatchers.IO) {
+                resources.openRawResource(R.raw.inter_ofl).use { it.readBytes().decodeToString() }
             }
-        }
+    }
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(
             text = stringResource(R.string.about_font_license),
