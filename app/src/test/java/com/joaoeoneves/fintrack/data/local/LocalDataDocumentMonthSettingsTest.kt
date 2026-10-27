@@ -32,14 +32,14 @@ class LocalDataDocumentMonthSettingsTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun v3File_isRewrittenAsV5_onNextWrite_keepingMonthSettings() =
+    fun v3File_isRewrittenAsV6_onNextWrite_keepingMonthSettings() =
         runStoreTest {
             dataFile.writeText(v3File)
 
             newStore().update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", 15))) to Unit }
 
             val onDisk = diskDoc()
-            assertEquals(5, onDisk.schemaVersion)
+            assertEquals(6, onDisk.schemaVersion)
             assertEquals(listOf(LocalMonthSettings("2026-10", 15)), onDisk.monthSettings)
             assertEquals(1, onDisk.plannedIncome.size)
         }
@@ -49,4 +49,17 @@ class LocalDataDocumentMonthSettingsTest : LocalStoreTestBase() {
         assertTrue(LocalDataDocument().isEmpty)
         assertFalse(LocalDataDocument(monthSettings = listOf(LocalMonthSettings("2026-10", 15))).isEmpty)
     }
+
+    @Test
+    fun v5File_loadsMonthSettingsWithDaysOffZero() =
+        runStoreTest {
+            dataFile.writeText(
+                """{"schemaVersion":5,"revision":2,"monthSettings":[{"month":"2026-10","workingDays":15}]}""",
+            )
+
+            val doc = newStore().data.first()
+
+            assertEquals(listOf(LocalMonthSettings("2026-10", 15, 0)), doc.monthSettings)
+            assertTrue(filesInDir().none { it.contains("corrupt") })
+        }
 }

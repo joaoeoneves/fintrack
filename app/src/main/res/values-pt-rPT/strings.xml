@@ -461,6 +461,21 @@
         <item quantity="many">%1$d (%2$d feriados)</item>
         <item quantity="other">%1$d (%2$d feriados)</item>
     </plurals>
+    <string name="plan_working_days_value_off">%1$d (%2$s, %3$s)</string>
+    <plurals name="plan_holidays_count">
+        <item quantity="one">%1$d feriado</item>
+        <item quantity="many">%1$d feriados</item>
+        <item quantity="other">%1$d feriados</item>
+    </plurals>
+    <plurals name="plan_days_off_count">
+        <item quantity="one">%1$d dia de folga</item>
+        <item quantity="many">%1$d dias de folga</item>
+        <item quantity="other">%1$d dias de folga</item>
+    </plurals>
+    <string name="plan_days_off_title">Dias de férias/folga neste mês</string>
+    <string name="plan_carnival_chip">Carnaval, %1$s</string>
+    <string name="cd_fewer_days_off">Menos dias de folga</string>
+    <string name="cd_more_days_off">Mais dias de folga</string>
     <string name="plan_working_days_edited">%1$d (alterado)</string>
     <string name="plan_working_days_reset">Repor automático</string>
     <string name="plan_working_days_hint">Substitui a contagem do calendário apenas neste mês.</string>

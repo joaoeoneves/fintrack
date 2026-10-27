@@ -5,17 +5,17 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Backup schema v4: month settings and the income-line basis/frequency fields. */
+/** Backup schema v4/v6: month settings and the income-line basis/frequency fields. */
 class BackupCodecMonthSettingsTest {
     private val header = """"format":"fintrack-backup","exportedAt":"$EXPORTED_AT""""
     private val oldLine = """{"id":"p","label":"Pay","amountCents":5,"order":0}"""
 
     @Test
-    fun v3File_decodesToV5_withEmptyMonthSettings_andDefaultedLines() {
+    fun v3File_decodesToV6_withEmptyMonthSettings_andDefaultedLines() {
         val result = BackupCodec.decode("""{$header,"schemaVersion":3,"plannedIncome":[$oldLine]}""").success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(5, result.document.schemaVersion)
+        assertEquals(6, result.document.schemaVersion)
         assertTrue(result.document.monthSettings.isEmpty())
         val line = result.document.plannedIncome.single()
         assertEquals("FIXED", line.basis)
@@ -27,7 +27,7 @@ class BackupCodecMonthSettingsTest {
     fun v1AndV2Files_stillDecode() {
         listOf(1, 2).forEach { v ->
             val result = BackupCodec.decode("""{$header,"schemaVersion":$v}""").success()
-            assertEquals(5, result.document.schemaVersion)
+            assertEquals(6, result.document.schemaVersion)
         }
     }
 
@@ -88,5 +88,53 @@ class BackupCodecMonthSettingsTest {
 
         assertEquals(listOf("ok"), result.document.plannedIncome.map { it.id })
         assertEquals(1, result.skippedCount)
+    }
+
+    @Test
+    fun v5File_decodesToV6_withDaysOffDefaultedToZero() {
+        val v5 =
+            """{$header,"schemaVersion":5,"monthSettings":[{"month":"2026-10","workingDays":15}]}"""
+
+        val result = BackupCodec.decode(v5).success()
+
+        assertEquals(6, result.document.schemaVersion)
+        assertEquals(listOf(LocalMonthSettings("2026-10", 15, 0)), result.document.monthSettings)
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun v6RoundTrip_preservesDaysOff_includingDaysOffOnlyRecords() {
+        val doc =
+            backupDoc().copy(
+                monthSettings =
+                    listOf(
+                        LocalMonthSettings("2026-10", 15, 2),
+                        LocalMonthSettings("2026-11", null, 3),
+                    ),
+            )
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(doc.monthSettings, result.document.monthSettings)
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun invalidDaysOff_andEmptyRecords_areDroppedAndCounted() {
+        val doc =
+            backupDoc().copy(
+                monthSettings =
+                    listOf(
+                        LocalMonthSettings("2026-10", 15, 2),
+                        LocalMonthSettings("2026-11", null, 24),
+                        LocalMonthSettings("2026-12", 5, -1),
+                        LocalMonthSettings("2027-01", null, 0),
+                    ),
+            )
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(listOf(LocalMonthSettings("2026-10", 15, 2)), result.document.monthSettings)
+        assertEquals(3, result.skippedCount)
     }
 }

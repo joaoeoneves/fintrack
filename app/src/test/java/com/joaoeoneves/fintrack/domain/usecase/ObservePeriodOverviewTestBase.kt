@@ -35,6 +35,7 @@ abstract class ObservePeriodOverviewTestBase {
     protected val categories = FakeCategoryRepository()
     protected val groups = FakeCategoryGroupRepository()
     protected val recurring = FakeRecurringRepository()
+    protected val monthSettings = FakeMonthSettingsRepository()
 
     protected val useCase =
         ObservePeriodOverview(
@@ -43,7 +44,7 @@ abstract class ObservePeriodOverviewTestBase {
                 PlanDataSources(
                     budgets = budgets,
                     plannedIncome = plannedIncome,
-                    monthSettings = FakeMonthSettingsRepository(),
+                    monthSettings = monthSettings,
                     categories = categories,
                     groups = groups,
                     recurring = recurring,

@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.BuildConfig
-import com.joaoeoneves.fintrack.data.local.localMonthSettingsOf
 import com.joaoeoneves.fintrack.data.local.toLocal
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
@@ -54,10 +53,7 @@ class BackupRepository
                     budgets = localBudgets,
                     plannedIncome = plan.plannedIncome.map { it.toLocal() },
                     recurring = localRecurring,
-                    monthSettings =
-                        plan.monthSettings.mapNotNull { settings ->
-                            settings.workingDaysOverride?.let { localMonthSettingsOf(settings.month, it) }
-                        },
+                    monthSettings = plan.monthSettings.filterNot { it.isBlank }.map { it.toLocal() },
                     categoryGroups = plan.categoryGroups.map { it.toLocal() },
                     categories =
                         withPlaceholderCategories(

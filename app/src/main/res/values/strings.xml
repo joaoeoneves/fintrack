@@ -448,6 +448,19 @@
         <item quantity="one">%1$d (%2$d holiday)</item>
         <item quantity="other">%1$d (%2$d holidays)</item>
     </plurals>
+    <string name="plan_working_days_value_off">%1$d (%2$s, %3$s)</string>
+    <plurals name="plan_holidays_count">
+        <item quantity="one">%1$d holiday</item>
+        <item quantity="other">%1$d holidays</item>
+    </plurals>
+    <plurals name="plan_days_off_count">
+        <item quantity="one">%1$d day off</item>
+        <item quantity="other">%1$d days off</item>
+    </plurals>
+    <string name="plan_days_off_title">Days off this month</string>
+    <string name="plan_carnival_chip">Carnival, %1$s</string>
+    <string name="cd_fewer_days_off">Fewer days off</string>
+    <string name="cd_more_days_off">More days off</string>
     <string name="plan_working_days_edited">%1$d (edited)</string>
     <string name="plan_working_days_reset">Reset to automatic</string>
     <string name="plan_working_days_hint">Replaces the calendar count for this month only.</string>

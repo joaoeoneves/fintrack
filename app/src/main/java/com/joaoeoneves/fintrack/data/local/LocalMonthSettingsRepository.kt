@@ -21,14 +21,25 @@ class LocalMonthSettingsRepository
         override suspend fun setWorkingDaysOverride(
             month: YearMonth,
             days: Int?,
+        ): Result<Unit> = change(month) { it.copy(workingDays = days) }
+
+        override suspend fun setDaysOff(
+            month: YearMonth,
+            days: Int,
+        ): Result<Unit> = change(month) { it.copy(daysOff = days) }
+
+        /** Applies [edit] to [month]'s record (a blank one if absent); a record left with nothing set is removed. */
+        private suspend fun change(
+            month: YearMonth,
+            edit: (LocalMonthSettings) -> LocalMonthSettings,
         ): Result<Unit> =
             store.update { doc ->
                 val key = month.toString()
-                val others = doc.monthSettings.filterNot { it.month == key }
-                if (days == null) {
-                    doc.copy(monthSettings = others) to Unit
+                val current = doc.monthSettings.firstOrNull { it.month == key } ?: LocalMonthSettings(month = key)
+                val record = edit(current)
+                if (record.workingDays == null && record.daysOff == 0) {
+                    doc.copy(monthSettings = doc.monthSettings.filterNot { it.month == key }) to Unit
                 } else {
-                    val record = localMonthSettingsOf(month, days)
                     validateMonthSettings(record)
                     doc.copy(monthSettings = doc.monthSettings.upserted(record) { it.month == key }) to Unit
                 }

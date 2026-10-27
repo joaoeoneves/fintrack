@@ -178,7 +178,7 @@ service cloud.firestore {
     }
 
     // Each user can only read/write their own per-month plan settings: the document id is the month
-    // (yyyy-MM) and holds a manual working-days count replacing the calendar one.
+    // (yyyy-MM) and holds a manual working-days count replacing the calendar one and/or the days off taken.
     match /users/{userId}/monthSettings/{monthId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId)
@@ -187,9 +187,9 @@ service cloud.firestore {
     }
 
     function isValidMonthSettings(data) {
-      return data.keys().hasOnly(['workingDays', 'updatedAt'])
-        && data.keys().hasAll(['workingDays'])
-        && data.workingDays is int && data.workingDays >= 0 && data.workingDays <= 23
+      return data.keys().hasOnly(['workingDays', 'daysOff', 'updatedAt'])
+        && (!('workingDays' in data) || (data.workingDays is int && data.workingDays >= 0 && data.workingDays <= 23))
+        && (!('daysOff' in data) || (data.daysOff is int && data.daysOff >= 0 && data.daysOff <= 23))
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 

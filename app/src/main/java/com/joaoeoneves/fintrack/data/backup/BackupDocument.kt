@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 const val BACKUP_FORMAT = "fintrack-backup"
 
 /** Version written into [BackupDocument.schemaVersion]; a file with a higher one is refused. */
-const val BACKUP_SCHEMA_VERSION = 5
+const val BACKUP_SCHEMA_VERSION = 6
 
 /**
  * A portable JSON backup of one data set (works from both guest and signed-in mode). The record
@@ -37,7 +37,7 @@ data class BackupDocument(
     val plannedIncome: List<LocalPlannedIncome> = emptyList(),
     /** Added in schema version 3; absent (empty) in older files. */
     val recurring: List<LocalRecurringItem> = emptyList(),
-    /** Added in schema version 4; absent (empty) in older files. */
+    /** Added in schema version 4 (`daysOff` in 6); absent (empty) in older files. */
     val monthSettings: List<LocalMonthSettings> = emptyList(),
     /** Added in schema version 5; absent (empty) in older files. */
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),

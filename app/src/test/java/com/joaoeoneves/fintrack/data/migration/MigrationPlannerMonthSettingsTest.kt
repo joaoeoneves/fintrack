@@ -73,4 +73,41 @@ class MigrationPlannerMonthSettingsTest {
         assertEquals(setOf("workingDays", "updatedAt"), write.data.keys)
         assertEquals(15, write.data["workingDays"])
     }
+
+    @Test
+    fun daysOffAndDaysOffOnlyRecords_areCarriedUnchanged() {
+        val both = LocalMonthSettings("2026-10", 15, 2)
+        val daysOffOnly = LocalMonthSettings("2026-11", null, 3)
+
+        val plan = planMigration(local(both, daysOffOnly), remoteSnapshot())
+
+        assertEquals(listOf(both, daysOffOnly), plan.monthSettings)
+        assertEquals(0, plan.skipped)
+    }
+
+    @Test
+    fun pendingWrites_includeDaysOff_andOmitAbsentWorkingDays() {
+        val plan =
+            planMigration(
+                local(LocalMonthSettings("2026-10", 15, 2), LocalMonthSettings("2026-11", null, 3)),
+                remoteSnapshot(),
+            )
+
+        val writes = plan.toBatches().flatten()
+
+        assertEquals(setOf("workingDays", "daysOff", "updatedAt"), writes[0].data.keys)
+        assertEquals(2, writes[0].data["daysOff"])
+        assertEquals(setOf("daysOff", "updatedAt"), writes[1].data.keys)
+        assertEquals(3, writes[1].data["daysOff"])
+    }
+
+    @Test
+    fun invalidDaysOff_andEmptyRecords_areSkipped() {
+        val bad = listOf(LocalMonthSettings("2026-12", null, 24), LocalMonthSettings("2027-01", null, 0))
+
+        val plan = planMigration(local(oct, *bad.toTypedArray()), remoteSnapshot())
+
+        assertEquals(listOf(oct), plan.monthSettings)
+        assertEquals(2, plan.skipped)
+    }
 }

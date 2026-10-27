@@ -96,7 +96,9 @@ class ObservePeriodOverview
                     inputs.recurring,
                     budgetMonth,
                 )
-            val override = plan.monthSettings.firstOrNull { it.month == budgetMonth }?.workingDaysOverride
+            val monthSettings = plan.monthSettings.firstOrNull { it.month == budgetMonth }
+            val workingDays =
+                effectiveWorkingDays(budgetMonth, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
             return PeriodOverview(
                 budgetMonth = budgetMonth,
                 transactions = transactions,
@@ -108,7 +110,7 @@ class ObservePeriodOverview
                         plannedIncome = plan.plannedIncome,
                         monthIncome = monthTransactions.income,
                         month = budgetMonth,
-                        workingDays = effectiveWorkingDays(budgetMonth, override),
+                        workingDays = workingDays,
                     ),
                 recent = transactions.recentActivity(recentLimit),
                 groups = groupProgressOf(rows, plan.categories, inputs.groups),

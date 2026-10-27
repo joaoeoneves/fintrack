@@ -14,6 +14,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
+import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
@@ -181,13 +182,18 @@ class MonthlyPlanViewModel
             }
         }
 
-        /** Overrides [month]'s working days with [days], or restores the calendar count when `null`. */
+        /**
+         * Overrides [month]'s working days with [days], or restores the calendar count when `null`; [daysOff],
+         * when given, also sets the days off taken that month.
+         */
         fun onSetWorkingDays(
             month: YearMonth,
             days: Int?,
+            daysOff: Int? = null,
         ) {
             viewModelScope.launch {
                 repositories.monthSettings.setWorkingDaysOverride(month, days).onFailure { reportFailure(it) }
+                daysOff?.let { repositories.monthSettings.setDaysOff(month, it).onFailure { e -> reportFailure(e) } }
             }
         }
 
@@ -262,11 +268,14 @@ private fun workingDaysOf(
     month: YearMonth,
     settings: List<MonthSettings>,
 ): WorkingDaysState {
-    val override = settings.firstOrNull { it.month == month }?.workingDaysOverride
+    val monthSettings = settings.firstOrNull { it.month == month }
+    val override = monthSettings?.workingDaysOverride
+    val daysOff = monthSettings?.daysOff ?: 0
     val calendar = workingDaysIn(month)
     return WorkingDaysState(
         month = month,
-        days = override ?: calendar,
+        days = effectiveWorkingDays(month, override, daysOff),
+        daysOff = daysOff,
         calendarDays = calendar,
         holidays = holidayWeekdaysIn(month),
         overridden = override != null,

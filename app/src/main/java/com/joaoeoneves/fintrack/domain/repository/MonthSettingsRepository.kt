@@ -13,4 +13,10 @@ interface MonthSettingsRepository {
         month: YearMonth,
         days: Int?,
     ): Result<Unit>
+
+    /** Sets the days off taken in [month] to [days] (0 clears them). The two settings are stored independently. */
+    suspend fun setDaysOff(
+        month: YearMonth,
+        days: Int,
+    ): Result<Unit>
 }

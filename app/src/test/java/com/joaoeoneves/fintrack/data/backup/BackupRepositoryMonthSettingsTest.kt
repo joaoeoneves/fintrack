@@ -60,4 +60,35 @@ class BackupRepositoryMonthSettingsTest : BackupRepositoryTestBase() {
                     .isEmpty(),
             )
         }
+
+    @Test
+    fun export_includesDaysOffOnlyAndBothRecords_andSkipsBlankOnes() =
+        runStoreTest {
+            val repo =
+                repository(
+                    monthSettings =
+                        listOf(
+                            MonthSettings(YearMonth.of(2026, 10), 15, 2),
+                            MonthSettings(YearMonth.of(2026, 11), null, 3),
+                            MonthSettings(YearMonth.of(2026, 12), null, 0),
+                        ),
+                )
+
+            val doc = repo.buildBackup(at).getOrThrow()
+
+            assertEquals(
+                listOf(LocalMonthSettings("2026-10", 15, 2), LocalMonthSettings("2026-11", null, 3)),
+                doc.monthSettings,
+            )
+        }
+
+    @Test
+    fun restoreAsGuest_keepsDaysOff() =
+        runStoreTest {
+            val doc = backupDoc().copy(monthSettings = listOf(LocalMonthSettings("2026-10", null, 4)))
+
+            assertTrue(repository().restoreAsGuest(doc).isSuccess)
+
+            assertEquals(doc.monthSettings, localStore.data.first().monthSettings)
+        }
 }
