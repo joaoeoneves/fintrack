@@ -27,7 +27,7 @@ import java.util.Locale
  * Compose test rule with both provided explicitly.
  *
  * Money formatting now follows the *app locale* through [java.text.NumberFormat] rather than a
- * per-currency rule: en-US renders "$1,330.40" / "-€1,330.40" (prefixed symbol, period decimal,
+ * per-currency rule: en-US renders "$1,330.40" / "−€1,330.40" (prefixed symbol, period decimal,
  * comma grouping), while pt-PT renders "-12,34 €" (comma decimal, symbol suffixed after a
  * non-breaking space). The locale is pinned per test by overriding [LocalConfiguration], so the
  * results don't depend on the device's system language.
@@ -51,7 +51,7 @@ class CurrencyFormatTest {
     fun formatAmountCents_enUs_eur_negativeAmount_signPrecedesPrefixedSymbol() {
         setContent(EN_US, CurrencyOption.EUR, amountCents = -133_040)
 
-        composeTestRule.onNodeWithTag(TEST_TAG).assertTextEquals("-€1,330.40")
+        composeTestRule.onNodeWithTag(TEST_TAG).assertTextEquals("−€1,330.40")
     }
 
     @Test

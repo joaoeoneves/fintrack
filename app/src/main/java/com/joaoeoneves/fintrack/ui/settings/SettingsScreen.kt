@@ -4,25 +4,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
@@ -31,13 +21,14 @@ import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.backup.BackupFlow
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.importexport.ExportUiState
 import com.joaoeoneves.fintrack.ui.importexport.ImportExportViewModel
 import com.joaoeoneves.fintrack.ui.importexport.ImportPreviewDialog
 import com.joaoeoneves.fintrack.ui.importexport.ImportUiState
 import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
+import com.joaoeoneves.fintrack.ui.theme.Dimens
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -120,7 +111,6 @@ private data class SettingsActions(
     val onOpenRecurring: () -> Unit,
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsScaffold(
     onBack: () -> Unit,
@@ -128,60 +118,31 @@ private fun SettingsScaffold(
     actions: SettingsActions,
     modifier: Modifier = Modifier,
 ) {
-    val sectionModifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-
-    Scaffold(
+    LargeTitleScaffold(
+        title = stringResource(R.string.settings_title),
+        onBack = onBack,
         modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
-                    }
-                },
-            )
-        },
     ) { innerPadding ->
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Dimens.ScreenPadding)
+                    .padding(bottom = Dimens.Space32),
         ) {
-            AppearanceSection(
-                selected = uiState.themePreference,
-                onSelected = actions.onThemeSelected,
-                modifier = sectionModifier,
-            )
-            LanguageSection(
-                selected = uiState.language,
-                onSelected = actions.onLanguageSelected,
-                modifier = sectionModifier,
-            )
-            CurrencySection(
-                selected = uiState.currency,
-                onSelected = actions.onCurrencySelected,
-                modifier = sectionModifier,
-            )
-            CategoriesSection(onOpen = actions.onOpenCategories, modifier = sectionModifier)
-            RecurringSection(onOpen = actions.onOpenRecurring, modifier = sectionModifier)
-            DataSection(
-                onImportClick = actions.onImportClick,
-                onExportClick = actions.onExportClick,
-                modifier = sectionModifier,
-            )
+            AppearanceSection(selected = uiState.themePreference, onSelected = actions.onThemeSelected)
+            LanguageSection(selected = uiState.language, onSelected = actions.onLanguageSelected)
+            CurrencySection(selected = uiState.currency, onSelected = actions.onCurrencySelected)
+            CategoriesSection(onOpen = actions.onOpenCategories)
+            RecurringSection(onOpen = actions.onOpenRecurring)
+            DataSection(onImportClick = actions.onImportClick, onExportClick = actions.onExportClick)
             BackupFlow { onExport, onRestore ->
-                BackupSection(
-                    isGuest = uiState.isGuest,
-                    onExportClick = onExport,
-                    onRestoreClick = onRestore,
-                    modifier = sectionModifier,
-                )
+                BackupSection(isGuest = uiState.isGuest, onExportClick = onExport, onRestoreClick = onRestore)
             }
-            AccountCard(uiState = uiState, actions = actions, modifier = sectionModifier)
-            AboutSection(modifier = sectionModifier)
+            AccountCard(uiState = uiState, actions = actions)
+            AboutSection()
         }
     }
 }

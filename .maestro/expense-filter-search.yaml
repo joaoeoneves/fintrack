@@ -23,12 +23,10 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 1: Add A (Shopping, with a note) and B (Transfer).
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -36,17 +34,15 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Amount"
 - inputText: "11.11"
 - hideKeyboard
-- tapOn: "Category"
+# Category is now a FlowRow of chips ("Category" is a plain label), so tap the chip directly.
 - tapOn: "Shopping"
 - tapOn: "Note \\(optional\\)"
 - inputText: "maestro-note-xyz"
 - hideKeyboard
 - tapOn: "Save"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -54,10 +50,10 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Amount"
 - inputText: "22.22"
 - hideKeyboard
-- tapOn: "Category"
 - tapOn: "Transfer"
 - tapOn: "Save"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 2: Open the list. Searching the note matches only A.
 - scrollUntilVisible:
@@ -66,7 +62,8 @@ appId: com.joaoeoneves.fintrack
 - scroll
 - tapOn: "See all expenses"
 - assertVisible: "All expenses"
-- assertVisible: "All"
+- assertVisible:
+    id: "filter_chip_all"
 - tapOn: "Search"
 - inputText: "maestro-note-xyz"
 - hideKeyboard
@@ -74,26 +71,35 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Maestro E2E Filter B"
 
 # --- 3: Search by name shows both; the "Transfer" chip narrows it to B, "All" shows both again.
-# Rows render their category as "<Category> • <date>", so the bare "Transfer"/"All" text only
-# matches the chip itself.
+# Chips are tapped by test tag (resource id): filter_chip_all / filter_chip_<category id>.
 - tapOn: "maestro-note-xyz"
 - eraseText: 30
 - inputText: "Maestro E2E Filter"
 - hideKeyboard
 - assertVisible: "Maestro E2E Filter A"
 - assertVisible: "Maestro E2E Filter B"
-- tapOn: "Transfer"
+- tapOn:
+    id: "filter_chip_TRANSFER"
 - assertVisible: "Maestro E2E Filter B"
 - assertNotVisible: "Maestro E2E Filter A"
 - takeScreenshot: build/maestro/expense-filter-transfer
-- tapOn: "All"
+- tapOn:
+    id: "filter_chip_all"
 - assertVisible: "Maestro E2E Filter A"
 - assertVisible: "Maestro E2E Filter B"
 
 # --- 4: Delete both while the list only contains this flow's two rows.
-- tapOn: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertVisible: "Undo"
-- tapOn: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertNotVisible: "Maestro E2E Filter A"
 - assertNotVisible: "Maestro E2E Filter B"
 
@@ -101,14 +107,16 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Maestro E2E Filter"
 - eraseText: 30
 - hideKeyboard
-- tapOn: "All"
-# FilterChip exposes its selection as checked=true on the clickable chip node, whose child is the
-# label TextView.
+- tapOn:
+    id: "filter_chip_all"
+# CategoryChip is a selectable (Role.RadioButton) node, exposed as selected rather than checked.
+# TODO calibrate on first real run: confirm Maestro reads Compose `selected` via `selected: true`.
 - assertVisible:
-    checked: true
-    containsChild: "All"
+    id: "filter_chip_all"
+    selected: true
 - assertNotVisible:
-    checked: true
-    containsChild: "Transfer"
+    id: "filter_chip_TRANSFER"
+    selected: true
 - back
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"

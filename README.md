@@ -42,24 +42,25 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 - **Income tracking** — a separate, parallel entity (free-text source like "Salary" or "Freelance" instead
   of a fixed category), kept intentionally independent of expenses so it could be added later with zero
   risk to the existing expense code.
-- **Dashboard** — time-range filters (1 week / 1 month / 3 months / 6 months / 1 year), a pie chart of
-  spend by category, the last 5 expenses and last 5 income entries, and a **net balance** figure (income
-  minus expenses) for the selected range.
+- **Dashboard** — a large **net balance** (income minus expenses) that counts up on change, a minimal
+  cumulative-balance line chart you can long-press and scrub (with haptic ticks), 1M / 3M / 6M / 1Y period
+  tabs plus month navigation and custom ranges, an income / spending / saved strip, a category breakdown
+  (segmented bar + ranked list), and the latest expenses and income grouped by day.
 - **Per-category budget limits** — set a monthly limit per category; the Dashboard shows progress bars
   against the current calendar month (independent of the rolling time-range filter) with an over-budget
   visual state.
 - **Monthly plan / "safe to spend"** — list your expected income (e.g. salary, meal allowance); the
   category budgets are the planned allocations. A Dashboard card shows what's still free to spend this
   month (income minus, per category, the larger of planned and actual), expected vs received income,
-  what's left in spending budgets and a daily allowance; the spending donut toggles between actual and
+  what's left in spending budgets and a daily allowance; the category breakdown toggles between actual and
   planned. Edited on its own "Monthly plan" screen.
 - **Recurring transactions** — rent, subscriptions, salary: monthly or yearly templates with an explicit
   billing day (clamped to short months), start/end dates and pause/resume. An Upcoming card on the
   Dashboard lists due and soon-due occurrences with one-tap Confirm (creates the expense/income with a
   deterministic id, so it's never duplicated) or Skip, and shows the annualized cost of recurring expenses.
 - **Full expense/income lists** — the same time-range filters, text search, and sorting (newest/oldest
-  first, highest/lowest amount); swipe-to-dismiss delete with an Undo snackbar, plus a trash-icon button
-  for discoverability.
+  first, highest/lowest amount), rows grouped under day headers; swipe-to-delete with an Undo snackbar
+  (also exposed as a "Delete" accessibility action).
 - **CSV import/export** — for expenses, from Settings (income CSV support is a deliberate fast-follow, not
   yet built).
 - **Google Sign-In** via Credential Manager (not the legacy `GoogleSignInClient` API) + Firebase Auth.
@@ -70,8 +71,10 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 - **JSON backup** — export all data and preferences to a versioned `fintrack-backup` JSON file (signed in
   or as a guest) and restore it as a guest, e.g. to move to another phone.
 - **Settings** — reached from the Dashboard's gear icon:
-  - **Theme**: system default, light or dark, with a full, intentional Material 3 dark color scheme (not an
-    auto-inverted afterthought).
+  - **Theme**: system default, light or dark. The design is dark-first and monochrome (true black, hairline
+    dividers, color only for meaning: gains, overspending, category data), set in Inter with tabular
+    figures, with shared-axis screen transitions and motion that respects the system's reduced-motion
+    setting.
   - **Language**: English or Portuguese (or the system language), switched in-app. Theme, language and
     currency are stored locally (DataStore) and synced across your devices through Firestore.
   - **Display currency**: USD, EUR, GBP, JPY, CAD or AUD. Purely cosmetic: it changes the symbol and
@@ -98,6 +101,7 @@ A monthly expense- and income-tracking Android app, built with Kotlin, Jetpack C
 | Lint/format | ktlint + detekt |
 | Unit tests | JUnit4 + Robolectric (where Android framework classes are needed, e.g. the legacy `SharedPreferences` migration) |
 | E2E tests | [Maestro](https://maestro.mobile.dev) |
+| Typeface | [Inter](https://rsms.me/inter/) (bundled static TTFs) |
 | CI | GitHub Actions |
 
 Min SDK 24, target/compile SDK 36, Java 11 source/target compatibility.
@@ -281,3 +285,6 @@ slow and flake-prone) and are run manually instead.
 ## License
 
 [MIT](LICENSE) © 2026 João Neves
+
+The bundled typeface is [Inter](https://github.com/rsms/inter) by Rasmus Andersson, licensed under the
+SIL Open Font License 1.1 (see [`third_party/inter/OFL.txt`](third_party/inter/OFL.txt)).

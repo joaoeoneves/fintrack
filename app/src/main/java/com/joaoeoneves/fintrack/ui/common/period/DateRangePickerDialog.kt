@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.finTrackDatePickerColors
 import com.joaoeoneves.fintrack.ui.common.toUtcMillis
 import com.joaoeoneves.fintrack.ui.common.utcMillisToLocalDate
 import java.time.LocalDate
@@ -55,6 +56,7 @@ fun DateRangePickerDialog(
 
     DatePickerDialog(
         onDismissRequest = onDismiss,
+        colors = finTrackDatePickerColors(),
         confirmButton = {
             TextButton(
                 onClick = {
@@ -76,6 +78,7 @@ fun DateRangePickerDialog(
     ) {
         DateRangePicker(
             state = state,
+            colors = finTrackDatePickerColors(),
             title = {
                 Text(
                     text = stringResource(R.string.period_select_dates),

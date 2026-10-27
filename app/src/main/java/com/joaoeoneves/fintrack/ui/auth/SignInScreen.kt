@@ -1,32 +1,50 @@
 package com.joaoeoneves.fintrack.ui.auth
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
+import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.InterFamily
+import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
+
+private const val FADE_IN_MS = 400
+private val GoogleLogoSize = 20.dp
 
 @Composable
 fun SignInScreen(
@@ -36,78 +54,85 @@ fun SignInScreen(
     modifier: Modifier = Modifier,
 ) {
     val isLoading = uiState is AuthUiState.Loading
+    val reducedMotion = LocalReducedMotion.current
+    val alpha = remember { Animatable(if (reducedMotion) 1f else 0f) }
+    LaunchedEffect(reducedMotion) {
+        if (reducedMotion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(FADE_IN_MS))
+    }
 
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+                .background(MaterialTheme.colorScheme.background)
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space24)
+                .graphicsLayer { this.alpha = alpha.value },
     ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Text(
-            text = stringResource(R.string.auth_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
-        )
+        Column(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = WordmarkStyle,
+            )
+            Text(
+                text = stringResource(R.string.auth_subtitle),
+                style = MaterialTheme.typography.bodyLarge,
+                color = FinTrackTheme.colors.textSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = Dimens.Space8),
+            )
+        }
 
         if (uiState is AuthUiState.Error) {
             Text(
                 text = uiState.message.asString(),
-                color = MaterialTheme.colorScheme.error,
+                color = FinTrackTheme.colors.negative,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 16.dp),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(bottom = Dimens.Space16),
             )
         }
 
-        Button(
+        PrimaryPillButton(
+            text = stringResource(R.string.auth_sign_in_with_google),
             onClick = onSignInClick,
-            enabled = !isLoading,
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                )
-                Text(
-                    text = stringResource(R.string.auth_sign_in_with_google),
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    GoogleLogo(modifier = Modifier.size(18.dp))
-                    Text(
-                        text = stringResource(R.string.auth_sign_in_with_google),
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                }
-            }
-        }
+            loading = isLoading,
+            leadingIcon = { GoogleLogo(modifier = Modifier.size(GoogleLogoSize)) },
+        )
 
         GuestEntry(onContinueAsGuest = onContinueAsGuest, enabled = !isLoading)
     }
 }
+
+private val WordmarkStyle =
+    TextStyle(
+        fontFamily = InterFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 40.sp,
+        letterSpacing = (-1).sp,
+    )
 
 @Composable
 private fun GuestEntry(
     onContinueAsGuest: () -> Unit,
     enabled: Boolean,
 ) {
-    TextButton(
+    GhostButton(
+        text = stringResource(R.string.auth_continue_as_guest),
         onClick = onContinueAsGuest,
         enabled = enabled,
-        modifier = Modifier.padding(top = 8.dp).testTag(TestTags.CONTINUE_AS_GUEST),
-    ) {
-        Text(stringResource(R.string.auth_continue_as_guest))
-    }
+        modifier = Modifier.fillMaxWidth().padding(top = Dimens.Space12).testTag(TestTags.CONTINUE_AS_GUEST),
+    )
     Text(
         text = stringResource(R.string.auth_guest_hint),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = FinTrackTheme.colors.textSecondary,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(top = Dimens.Space12),
     )
 }
 

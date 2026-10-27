@@ -1,26 +1,15 @@
 package com.joaoeoneves.fintrack.ui.income.list
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,11 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.ui.common.DaySectionHeader
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
@@ -41,10 +30,17 @@ import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.dayHeaderOf
+import com.joaoeoneves.fintrack.ui.common.groupByDay
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import java.time.LocalDate
+import java.time.ZoneId
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncomeListScreen(
     onBack: () -> Unit,
@@ -78,10 +74,11 @@ fun IncomeListScreen(
         }
     }
 
-    Scaffold(
+    LargeTitleScaffold(
+        title = stringResource(R.string.income_list_title),
+        onBack = onBack,
         modifier = modifier,
-        topBar = { IncomeListTopBar(onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when (val state = uiState) {
             is IncomeListUiState.Loading -> {
@@ -121,19 +118,6 @@ fun IncomeListScreen(
 private fun IncomeListViewModel.periodActions(): PeriodActions =
     PeriodActions(onPrevious = ::onPreviousMonth, onNext = ::onNextMonth, onSelect = ::onPeriodSelected)
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun IncomeListTopBar(onBack: () -> Unit) {
-    TopAppBar(
-        title = { Text(stringResource(R.string.income_list_title)) },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
-            }
-        },
-    )
-}
-
 /** Bundles the income list's row-level and filter actions to keep [IncomeListContent]'s own parameter list short. */
 private data class IncomeListActions(
     val periodActions: PeriodActions,
@@ -162,23 +146,28 @@ private fun IncomeListContent(
             actions = actions.periodActions,
         )
 
-        SearchField(
-            query = query,
-            onQueryChanged = actions.onQueryChanged,
-            label = stringResource(R.string.income_list_search_label),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-
-        SortDropdown(
-            options = IncomeSortOption.entries,
-            selected = state.sortOption,
-            onSelected = actions.onSortSelected,
-            optionLabel = { it.label },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SearchField(
+                query = query,
+                onQueryChanged = actions.onQueryChanged,
+                label = stringResource(R.string.income_list_search_label),
+                modifier = Modifier.weight(1f),
+            )
+            SortDropdown(
+                options = IncomeSortOption.entries,
+                selected = state.sortOption,
+                onSelected = actions.onSortSelected,
+                optionLabel = { it.label },
+            )
+        }
 
         IncomeListItems(
             income = state.income,
+            sortOption = state.sortOption,
             query = state.query,
             onOpenIncome = actions.onOpenIncome,
             onDelete = actions.onDelete,
@@ -189,45 +178,73 @@ private fun IncomeListContent(
 @Composable
 private fun IncomeListItems(
     income: List<Income>,
+    sortOption: IncomeSortOption,
     query: String,
     onOpenIncome: (String) -> Unit,
     onDelete: (String) -> Unit,
 ) {
     if (income.isEmpty()) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text =
-                    if (query.isBlank()) {
-                        stringResource(R.string.dashboard_no_income)
-                    } else {
-                        stringResource(R.string.income_list_no_match, query)
-                    },
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
-    } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(income, key = { it.id }) { incomeItem ->
-                SwipeToDeleteRow(onDelete = { onDelete(incomeItem.id) }) {
-                    IncomeRow(
-                        income = incomeItem,
-                        onClick = { onOpenIncome(incomeItem.id) },
-                        modifier = Modifier.weight(1f),
+        EmptyState(
+            title =
+                if (query.isBlank()) {
+                    stringResource(R.string.dashboard_no_income)
+                } else {
+                    stringResource(R.string.income_list_no_match, query)
+                },
+            modifier = Modifier.fillMaxSize(),
+        )
+        return
+    }
+    val zone = remember { ZoneId.systemDefault() }
+    val today = remember(income) { LocalDate.now(zone) }
+    val grouped = shouldGroupByDay(sortOption)
+    val sections = remember(income, grouped) { if (grouped) groupByDay(income, zone) else emptyList() }
+    val deleteLabel = stringResource(R.string.cd_delete)
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        if (grouped) {
+            sections.forEach { section ->
+                item(key = "day_${section.date}") {
+                    DaySectionHeader(
+                        header = dayHeaderOf(section.date, today),
+                        modifier = Modifier.animateItem().padding(horizontal = Dimens.ScreenPadding),
                     )
-                    IconButton(onClick = { onDelete(incomeItem.id) }) {
-                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete))
-                    }
                 }
-                HorizontalDivider()
+                items(section.items, key = { it.id }) { entry ->
+                    IncomeListRow(entry, false, deleteLabel, onOpenIncome, onDelete, Modifier.animateItem())
+                }
+            }
+        } else {
+            items(income, key = { it.id }) { entry ->
+                IncomeListRow(entry, true, deleteLabel, onOpenIncome, onDelete, Modifier.animateItem())
             }
         }
     }
+}
+
+@Suppress("LongParameterList") // row content plus its two callbacks and modifier
+@Composable
+private fun IncomeListRow(
+    income: Income,
+    showDate: Boolean,
+    deleteLabel: String,
+    onOpenIncome: (String) -> Unit,
+    onDelete: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SwipeToDeleteRow(onDelete = { onDelete(income.id) }, deleteLabel = deleteLabel, modifier = modifier) {
+        IncomeRow(
+            income = income,
+            showDate = showDate,
+            onClick = { onOpenIncome(income.id) },
+            modifier = Modifier.weight(1f).padding(horizontal = Dimens.ScreenPadding),
+        )
+    }
+}
+
+/** Date sorts group the list under day headers; amount sorts interleave days, so they stay flat. */
+fun shouldGroupByDay(sort: IncomeSortOption): Boolean {
+    val dateSorts = setOf(IncomeSortOption.DATE_DESC, IncomeSortOption.DATE_ASC)
+    return sort in dateSorts
 }
 
 private val IncomeSortOption.label: String

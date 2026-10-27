@@ -45,7 +45,8 @@ appId: com.joaoeoneves.fintrack
 - back
 
 # --- 1: Open Settings via the gear icon on the Dashboard ---
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - tapOn: "Settings"
 - assertVisible: "Settings"
 - assertVisible: "Appearance"

@@ -1,17 +1,19 @@
 package com.joaoeoneves.fintrack.ui.plan
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
@@ -21,12 +23,17 @@ import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
+import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
+import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /**
- * Dialog to add or edit one expected-income line. The label is validated by the ViewModel (the
+ * Bottom sheet to add or edit one expected-income line. The label is validated by the ViewModel (the
  * result arrives through [IncomeLineEditorState.labelError]); the amount is parsed here.
  */
 @Composable
@@ -46,53 +53,49 @@ fun IncomeLineDialog(
     val labelErrorShown = editor.labelError != null && label.trim() == submittedLabel
     val editingId = editor.editingId
     val titleRes = if (editingId == null) R.string.plan_income_line_new else R.string.plan_income_line_edit
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(titleRes)) },
-        text = {
-            IncomeLineFields(
-                label =
-                    TextFieldModel(
-                        value = label,
-                        error = editor.labelError?.takeIf { labelErrorShown }?.asString(),
-                        onChange = {
-                            label = limitInput(label, it, MAX_PLAN_LABEL_LENGTH)
-                        },
-                    ),
-                amount =
-                    TextFieldModel(
-                        value = amountText,
-                        error = if (amountError) stringResource(R.string.error_invalid_amount) else null,
-                        onChange = {
-                            amountText = it
-                            amountError = false
-                        },
-                    ),
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = {
+    FinTrackBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            text = stringResource(titleRes),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = Dimens.Space12),
+        )
+        IncomeLineFields(
+            label =
+                TextFieldModel(
+                    value = label,
+                    error = editor.labelError?.takeIf { labelErrorShown }?.asString(),
+                    onChange = {
+                        label = limitInput(label, it, MAX_PLAN_LABEL_LENGTH)
+                    },
+                ),
+            amount =
+                TextFieldModel(
+                    value = amountText,
+                    error = if (amountError) stringResource(R.string.error_invalid_amount) else null,
+                    onChange = {
+                        amountText = it
+                        amountError = false
+                    },
+                ),
+        )
+        PrimaryPillButton(
+            text = stringResource(R.string.action_save),
+            onClick = {
                 submittedLabel = label.trim()
                 parseAmountCents(amountText)
                     .onSuccess { cents -> onSave(label, cents) }
                     .onFailure { amountError = true }
-            }) {
-                Text(stringResource(R.string.action_save))
-            }
-        },
-        dismissButton = {
-            Row {
-                if (editingId != null) {
-                    TextButton(onClick = { onDelete(editingId) }) {
-                        Text(stringResource(R.string.action_remove))
-                    }
-                }
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            }
-        },
-    )
+            },
+            modifier = Modifier.padding(top = Dimens.Space16),
+        )
+        if (editingId != null) {
+            DestructiveTextButton(
+                text = stringResource(R.string.action_remove),
+                onClick = { onDelete(editingId) },
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
+    }
 }
 
 /** A text field's value, its validation error (if any) and its edit callback. */
@@ -107,11 +110,11 @@ private fun IncomeLineFields(
     label: TextFieldModel,
     amount: TextFieldModel,
 ) {
-    Column {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
+        MinimalTextField(
             value = label.value,
             onValueChange = label.onChange,
-            label = { Text(stringResource(R.string.plan_field_label)) },
+            label = stringResource(R.string.plan_field_label),
             isError = label.error != null,
             supportingText = {
                 FieldSupportingText(
@@ -120,16 +123,16 @@ private fun IncomeLineFields(
                     max = MAX_PLAN_LABEL_LENGTH,
                 )
             },
-            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
         )
-        OutlinedTextField(
+        MinimalTextField(
             value = amount.value,
             onValueChange = amount.onChange,
-            label = { Text(stringResource(R.string.plan_field_amount)) },
+            label = stringResource(R.string.plan_field_amount),
             isError = amount.error != null,
             supportingText = { amount.error?.let { Text(it) } },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

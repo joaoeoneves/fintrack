@@ -18,7 +18,8 @@ appId: com.joaoeoneves.fintrack
 # --- 1: Sign-in screen -> Continue as guest -> Dashboard ---
 - assertVisible: "Continue as guest|Continuar como convidado"
 - tapOn: "Continue as guest|Continuar como convidado"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - assertVisible: "Net Balance|Saldo líquido.*"
 
 # Pin English + EUR so the assertions below are deterministic (same pattern as golden-path.yaml).
@@ -31,9 +32,6 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Net Balance"
 
 # --- 2: Add an expense via the Dashboard "Recent expenses" plus icon ---
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - tapOn: "Name"
 - inputText: "Maestro Guest Expense"
@@ -45,17 +43,18 @@ appId: com.joaoeoneves.fintrack
     element: "Maestro Guest Expense"
     direction: DOWN
 - assertVisible: "Maestro Guest Expense"
-- assertVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
 
 # --- 3: Restart the app (no clearState) -- guest session and data persist ---
 - stopApp
 - launchApp
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - assertNotVisible: "Continue as guest"
 - scrollUntilVisible:
     element: "Maestro Guest Expense"
     direction: DOWN
-- assertVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
 
 # --- 4: Settings -> Leave guest mode -> confirm -> back on the sign-in screen ---
 - scrollUntilVisible:
@@ -78,11 +77,12 @@ appId: com.joaoeoneves.fintrack
 
 # --- 5: Continue as guest again -- the expense is still there ---
 - tapOn: "Continue as guest"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - scrollUntilVisible:
     element: "Maestro Guest Expense"
     direction: DOWN
-- assertVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
 
 # --- 6: Clean up -- delete the expense via the full list (filter first so only this row is hit) ---
 - scrollUntilVisible:
@@ -94,7 +94,11 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Maestro Guest Expense"
 - hideKeyboard
-- assertVisible: "-€7\\.77"
-- tapOn: "Delete"
-- assertNotVisible: "-€7\\.77"
+- assertVisible: "[-−]€7\\.77"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
+- assertNotVisible: "[-−]€7\\.77"
 - back

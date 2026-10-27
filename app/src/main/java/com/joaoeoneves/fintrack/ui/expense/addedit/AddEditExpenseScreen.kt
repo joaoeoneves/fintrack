@@ -3,44 +3,18 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
@@ -49,15 +23,22 @@ import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
+import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
+import com.joaoeoneves.fintrack.ui.common.FormSaveError
+import com.joaoeoneves.fintrack.ui.common.FormScaffold
+import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
-import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.common.symbol
+import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
+import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
+import com.joaoeoneves.fintrack.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditExpenseScreen(
     onSaved: () -> Unit,
@@ -73,16 +54,13 @@ fun AddEditExpenseScreen(
         viewModel.savedEvent.collectLatest { onSaved() }
     }
 
-    Scaffold(
+    FormScaffold(
+        title = stringResource(if (viewModel.isEditRoute) R.string.expense_edit_title else R.string.action_add_expense),
+        onCancel = onCancel,
+        saveEnabled = readyForm != null && readyForm.isValid && !readyForm.isSaving,
+        onSave = viewModel::onSave,
+        showSave = readyForm != null,
         modifier = modifier,
-        topBar = {
-            AddEditExpenseTopBar(
-                isEditMode = viewModel.isEditRoute,
-                isSaveEnabled = readyForm != null && readyForm.isValid && !readyForm.isSaving,
-                onCancel = onCancel,
-                onSave = viewModel::onSave,
-            )
-        },
     ) { innerPadding ->
         when (val state = uiState) {
             is AddEditUiState.Loading -> {
@@ -101,6 +79,7 @@ fun AddEditExpenseScreen(
                 ExpenseForm(
                     form = state.form,
                     categoryOptions = categoryOptions.optionsIncluding(state.form.category),
+                    isEditMode = viewModel.isEditRoute,
                     actions = viewModel.formActions(),
                     modifier =
                         Modifier
@@ -121,33 +100,6 @@ fun AddEditExpenseScreen(
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddEditExpenseTopBar(
-    isEditMode: Boolean,
-    isSaveEnabled: Boolean,
-    onCancel: () -> Unit,
-    onSave: () -> Unit,
-) {
-    TopAppBar(
-        title = {
-            val titleRes = if (isEditMode) R.string.expense_edit_title else R.string.action_add_expense
-            Text(stringResource(titleRes))
-        },
-        navigationIcon = {
-            IconButton(onClick = onCancel) {
-                val cancelCd = stringResource(R.string.cd_cancel)
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = cancelCd)
-            }
-        },
-        actions = {
-            TextButton(onClick = onSave, enabled = isSaveEnabled) {
-                Text(stringResource(R.string.action_save))
-            }
-        },
-    )
 }
 
 /** Bundles [ExpenseForm]'s field-change callbacks to keep its own parameter list short. */
@@ -174,6 +126,7 @@ private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
 private fun ExpenseForm(
     form: ExpenseFormState,
     categoryOptions: List<Category>,
+    isEditMode: Boolean,
     actions: ExpenseFormActions,
     modifier: Modifier = Modifier,
 ) {
@@ -181,162 +134,74 @@ private fun ExpenseForm(
         modifier =
             modifier
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space16),
+        verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
     ) {
-        ExpenseNameAndAmountFields(form = form, actions = actions)
-
-        RefundToggleRow(
-            isRefund = form.isRefund,
-            onRefundChanged = actions.onRefundChanged,
-            modifier = Modifier.fillMaxWidth(),
+        BorderlessAmountField(
+            value = form.amountText,
+            onValueChange = actions.onAmountChanged,
+            currencySymbol = LocalCurrency.current.symbol,
+            label = stringResource(R.string.field_amount),
+            isError = form.amountError != null,
+            autoFocus = !isEditMode,
+            modifier = Modifier.padding(vertical = Dimens.Space16),
         )
+        form.amountError?.let { FormSaveError(it.asString(), Modifier.fillMaxWidth()) }
 
-        ExpenseCategoryField(
-            category = form.category,
-            options = categoryOptions,
-            error = form.categoryError?.asString(),
-            onCategorySelected = actions.onCategorySelected,
-        )
-
-        ReadOnlyDateField(
-            date = form.date,
-            onDateSelected = actions.onDateSelected,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedTextField(
-            value = form.note,
-            onValueChange = actions.onNoteChanged,
-            label = { Text(stringResource(R.string.field_note_optional)) },
+        MinimalTextField(
+            value = form.name,
+            onValueChange = actions.onNameChanged,
+            label = stringResource(R.string.expense_field_name),
+            isError = form.nameError != null,
             supportingText = {
-                FieldSupportingText(error = null, length = form.note.codePointLength(), max = MAX_NOTE_LENGTH)
+                FieldSupportingText(
+                    error = form.nameError?.asString(),
+                    length = form.name.codePointLength(),
+                    max = MAX_NAME_LENGTH,
+                )
             },
             modifier = Modifier.fillMaxWidth(),
         )
 
-        form.saveError?.let { error ->
-            Text(
-                text = error.asString(),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
+        CategoryChipFlow(
+            options = categoryOptions,
+            selected = form.category,
+            error = form.categoryError?.asString(),
+            onSelected = actions.onCategorySelected,
+        )
+
+        SettingsSwitchRow(
+            title = stringResource(R.string.expense_field_refund),
+            checked = form.isRefund,
+            onCheckedChange = actions.onRefundChanged,
+            supportingText = stringResource(R.string.expense_field_refund_hint),
+        )
+
+        ExpenseDateAndNoteFields(form = form, actions = actions)
+
+        form.saveError?.let { FormSaveError(it.asString()) }
     }
 }
 
 @Composable
-private fun ExpenseNameAndAmountFields(
+private fun ExpenseDateAndNoteFields(
     form: ExpenseFormState,
     actions: ExpenseFormActions,
 ) {
-    OutlinedTextField(
-        value = form.name,
-        onValueChange = actions.onNameChanged,
-        label = { Text(stringResource(R.string.expense_field_name)) },
-        isError = form.nameError != null,
+    ReadOnlyDateField(
+        date = form.date,
+        onDateSelected = actions.onDateSelected,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    MinimalTextField(
+        value = form.note,
+        onValueChange = actions.onNoteChanged,
+        label = stringResource(R.string.field_note_optional),
         supportingText = {
-            FieldSupportingText(
-                error = form.nameError?.asString(),
-                length = form.name.codePointLength(),
-                max = MAX_NAME_LENGTH,
-            )
+            FieldSupportingText(error = null, length = form.note.codePointLength(), max = MAX_NOTE_LENGTH)
         },
-        singleLine = true,
+        singleLine = false,
         modifier = Modifier.fillMaxWidth(),
     )
-
-    OutlinedTextField(
-        value = form.amountText,
-        onValueChange = actions.onAmountChanged,
-        label = { Text(stringResource(R.string.field_amount)) },
-        isError = form.amountError != null,
-        supportingText = { form.amountError?.let { Text(it.asString()) } },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
-
-/** A whole-row toggle marking the expense as a refund; the row itself carries the switch semantics. */
-@Composable
-private fun RefundToggleRow(
-    isRefund: Boolean,
-    onRefundChanged: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier.toggleable(
-                value = isRefund,
-                role = Role.Switch,
-                onValueChange = onRefundChanged,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.expense_field_refund),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                text = stringResource(R.string.expense_field_refund_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Switch(
-            checked = isRefund,
-            onCheckedChange = null,
-            modifier = Modifier.padding(start = 16.dp),
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ExpenseCategoryField(
-    category: Category,
-    options: List<Category>,
-    error: String?,
-    onCategorySelected: (Category) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var categoryMenuExpanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = categoryMenuExpanded,
-        onExpandedChange = { categoryMenuExpanded = it },
-        modifier = modifier,
-    ) {
-        OutlinedTextField(
-            readOnly = true,
-            value = category.displayName,
-            onValueChange = {},
-            label = { Text(stringResource(R.string.expense_field_category)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryMenuExpanded) },
-            isError = error != null,
-            supportingText = error?.let { { Text(it) } },
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-        )
-        ExposedDropdownMenu(
-            expanded = categoryMenuExpanded,
-            onDismissRequest = { categoryMenuExpanded = false },
-        ) {
-            options.forEach { entry ->
-                DropdownMenuItem(
-                    text = { Text(entry.displayName) },
-                    onClick = {
-                        onCategorySelected(entry)
-                        categoryMenuExpanded = false
-                    },
-                )
-            }
-        }
-    }
 }

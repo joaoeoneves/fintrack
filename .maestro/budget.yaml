@@ -28,7 +28,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 1: Set a limit using a comma decimal (B4) ---
 - scrollUntilVisible:

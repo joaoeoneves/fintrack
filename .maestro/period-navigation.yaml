@@ -26,7 +26,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # The month/year arrow IconButtons carry their content description ("Previous month"/"Next month",
 # "Previous year"/"Next year") on the clickable button node itself, the same node that holds the

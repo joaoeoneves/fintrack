@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,31 +16,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
+import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
+import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /** The annualized expense (with its monthly equivalent) and income of the active items. */
 @Composable
 internal fun RecurringTotals(state: RecurringListUiState.Content) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            text =
+    Column {
+        SettingsRow(
+            title =
                 stringResource(
                     R.string.recurring_annual_cost,
                     formatAmountCents(state.annualExpenseCents),
                     formatAmountCents(monthlyEquivalentCents(state.annualExpenseCents)),
                 ),
-            style = MaterialTheme.typography.bodyMedium,
         )
-        Text(
-            text = stringResource(R.string.recurring_annual_income, formatAmountCents(state.annualIncomeCents)),
-            style = MaterialTheme.typography.bodyMedium,
+        Hairline()
+        SettingsRow(
+            title = stringResource(R.string.recurring_annual_income, formatAmountCents(state.annualIncomeCents)),
         )
+        Hairline()
     }
 }
 
@@ -57,7 +61,7 @@ internal fun RecurringRowItem(
             Modifier
                 .fillMaxWidth()
                 .clickable { actions.onOpenEditor(item.id) }
-                .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                .padding(vertical = Dimens.Space4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -67,12 +71,19 @@ internal fun RecurringRowItem(
             Text(
                 text = stringResource(frequencyRes, amount),
                 style = MaterialTheme.typography.bodyMedium,
+                color = FinTrackTheme.colors.textSecondary,
             )
-            row.category?.let { Text(text = it.displayName, style = MaterialTheme.typography.bodySmall) }
+            row.category?.let {
+                Text(
+                    text = it.displayName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
             Text(
                 text = statusText(row),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = FinTrackTheme.colors.textSecondary,
             )
         }
         val toggleLabel = stringResource(if (item.active) R.string.recurring_pause else R.string.recurring_resume)
@@ -107,10 +118,10 @@ internal fun RecurringDeleteDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.recurring_delete_confirm, name)) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.cd_delete)) } },
+        confirmButton = { DestructiveTextButton(text = stringResource(R.string.cd_delete), onClick = onConfirm) },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

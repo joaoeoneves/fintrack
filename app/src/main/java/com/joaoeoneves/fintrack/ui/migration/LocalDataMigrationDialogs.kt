@@ -1,10 +1,7 @@
 package com.joaoeoneves.fintrack.ui.migration
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -12,14 +9,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
+import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
+import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /** Shows the migration flow's dialogs for the signed-in session; renders nothing when hidden. */
 @Composable
@@ -65,7 +64,7 @@ private fun ErrorDialog(
         )
         return
     }
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = actions.onDismiss,
         title = { Text(stringResource(R.string.migration_error_title)) },
         text = { Text(state.message.asString()) },
@@ -83,7 +82,7 @@ private fun OfferDialog(
     counts: BackupCounts,
     actions: MigrationActions,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = actions.onDismiss,
         title = { Text(stringResource(R.string.migration_offer_title)) },
         text = {
@@ -113,7 +112,7 @@ private fun OfferDialog(
 
 @Composable
 private fun RunningDialog(state: MigrationUiState.Running) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = {},
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
         title = { Text(stringResource(R.string.migration_running_title)) },
@@ -121,13 +120,13 @@ private fun RunningDialog(state: MigrationUiState.Running) {
             Column {
                 if (state.total > 0) {
                     Text(stringResource(R.string.migration_progress, state.done, state.total))
-                    LinearProgressIndicator(
-                        progress = { state.done.toFloat() / state.total },
-                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    ThinProgressBar(
+                        progress = state.done.toFloat() / state.total,
+                        modifier = Modifier.padding(top = Dimens.Space12),
                     )
                 } else {
                     Text(stringResource(R.string.migration_preparing))
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
+                    ThinProgressBar(progress = 0f, modifier = Modifier.padding(top = Dimens.Space12))
                 }
             }
         },
@@ -140,13 +139,13 @@ private fun PartialFailureDialog(
     state: MigrationUiState.PartialFailure,
     actions: MigrationActions,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = actions.onDismiss,
         title = { Text(stringResource(R.string.migration_error_title)) },
         text = {
             Column {
                 Text(pluralStringResource(R.plurals.migration_partial_progress, state.total, state.done, state.total))
-                Text(state.message.asString(), modifier = Modifier.padding(top = 8.dp))
+                Text(state.message.asString(), modifier = Modifier.padding(top = Dimens.Space8))
             }
         },
         confirmButton = {
@@ -163,7 +162,7 @@ private fun DoneDialog(
     state: MigrationUiState.Done,
     actions: MigrationActions,
 ) {
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = actions.onKeepLocal,
         title = { Text(stringResource(R.string.migration_done_title)) },
         text = {
@@ -172,7 +171,7 @@ private fun DoneDialog(
                 if (state.skipped > 0) {
                     Text(
                         pluralStringResource(R.plurals.migration_done_skipped, state.skipped, state.skipped),
-                        modifier = Modifier.padding(top = 8.dp),
+                        modifier = Modifier.padding(top = Dimens.Space8),
                     )
                 }
             }

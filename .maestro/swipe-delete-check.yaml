@@ -3,9 +3,8 @@ appId: com.joaoeoneves.fintrack
 # Regression flow for the confirmValueChange -> LaunchedEffect(dismissState.currentValue) swap in
 # ExpenseListScreen.kt / IncomeListScreen.kt (rememberSwipeToDismissBoxState deprecation fix).
 #
-# Confirms actual swipe gestures (not just tapping the row's Delete icon, which golden-path.yaml /
-# income-tracking.yaml already cover) still delete the row immediately in either direction, with
-# no crash, no ghost/stuck row, and no double-deletion. Uses temporary rows created and deleted
+# Confirms the end->start swipe deletes the row immediately and the (now disabled) start->end swipe
+# does not, with no crash, no ghost/stuck row, and no double-deletion. Uses temporary rows created and deleted
 # entirely within this flow so it never touches real seeded data.
 #
 # IMPORTANT: use explicit percentage `start`/`end` coordinates for the swipe, not
@@ -45,14 +44,9 @@ appId: com.joaoeoneves.fintrack
 - back
 
 # --- Expense row: swipe EndToStart (right-to-left) to delete ---
-# The Dashboard's own "Add expense" plus icon lives on the "Recent expenses" card header
-# (contentDescription "Add expense", same string resource the old FAB used and matched by Maestro
-# the same way). Tapping it navigates straight into the add-expense form from the Dashboard --
+# The floating add pill (contentDescription "Add expense") sits in the Scaffold FAB slot. Tapping it navigates straight into the add-expense form from the Dashboard --
 # saving pops back to the Dashboard, so navigate into "All expenses" via "See all expenses"
 # afterwards to reach the swipeable row.
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -69,6 +63,7 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "See all expenses"
 - assertVisible: "All expenses"
 - assertVisible: "Swipe Test Expense A"
+# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
 - swipe:
     start: "83%, 44%"
     end: "9%, 44%"
@@ -79,11 +74,8 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Ginasio"
 - back
 
-# --- Expense row: swipe StartToEnd (left-to-right) to delete ---
+# --- Expense row: StartToEnd (left-to-right) must NOT delete; EndToStart then does ---
 # Back on the Dashboard -- add the second test row via the same "Recent expenses" card plus icon.
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -99,9 +91,18 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "See all expenses"
 - assertVisible: "All expenses"
 - assertVisible: "Swipe Test Expense B"
+# StartToEnd is disabled (enableDismissFromStartToEnd = false): the row must survive this swipe.
+# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
 - swipe:
     start: "9%, 44%"
     end: "83%, 44%"
+    duration: 800
+- assertVisible: "Swipe Test Expense B"
+# Clean up with the real EndToStart swipe so no test data is left behind.
+# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
+- swipe:
+    start: "83%, 44%"
+    end: "9%, 44%"
     duration: 800
 - assertNotVisible: "Swipe Test Expense B"
 - assertVisible: "All expenses"
@@ -109,9 +110,6 @@ appId: com.joaoeoneves.fintrack
 - back
 
 # --- Income row: swipe EndToStart ---
-- scrollUntilVisible:
-    element: "Add income"
-    direction: DOWN
 - tapOn:
     text: "Add income"
 - assertVisible: "Add income"
@@ -143,6 +141,7 @@ appId: com.joaoeoneves.fintrack
 - extendedWaitUntil:
     visible: "Swipe Test Income A"
     timeout: 10000
+# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
 - swipe:
     start: "83%, 44%"
     end: "9%, 44%"
@@ -151,10 +150,7 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "All income"
 - back
 
-# --- Income row: swipe StartToEnd ---
-- scrollUntilVisible:
-    element: "Add income"
-    direction: DOWN
+# --- Income row: StartToEnd must NOT delete; EndToStart then does ---
 - tapOn:
     text: "Add income"
 - assertVisible: "Add income"
@@ -175,9 +171,18 @@ appId: com.joaoeoneves.fintrack
 - extendedWaitUntil:
     visible: "Swipe Test Income B"
     timeout: 10000
+# StartToEnd is disabled (enableDismissFromStartToEnd = false): the row must survive this swipe.
+# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
 - swipe:
     start: "9%, 44%"
     end: "83%, 44%"
+    duration: 800
+- assertVisible: "Swipe Test Income B"
+# Clean up with the real EndToStart swipe so no test data is left behind.
+# TODO calibrate on first real run: y=44% predates the redesign (day headers + chip row shift rows)
+- swipe:
+    start: "83%, 44%"
+    end: "9%, 44%"
     duration: 800
 - assertNotVisible: "Swipe Test Income B"
 - assertVisible: "All income"

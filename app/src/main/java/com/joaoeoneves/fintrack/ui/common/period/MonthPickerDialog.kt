@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import java.time.Month
 import java.time.YearMonth
 
@@ -50,7 +51,7 @@ fun MonthPickerDialog(
     val minYear = currentMonth.year - MONTH_PICKER_YEARS_BACK
     var year by rememberSaveable { mutableIntStateOf(initialMonth.year.coerceIn(minYear, currentMonth.year)) }
 
-    AlertDialog(
+    FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         text = {
             Column {
@@ -123,6 +124,7 @@ private fun MonthGrid(
                     TextButton(
                         onClick = { onMonthSelected(yearMonth) },
                         enabled = yearMonth <= currentMonth,
+                        shape = CircleShape,
                         colors =
                             if (isSelected) {
                                 ButtonDefaults.textButtonColors(
@@ -130,7 +132,7 @@ private fun MonthGrid(
                                     contentColor = MaterialTheme.colorScheme.onPrimary,
                                 )
                             } else {
-                                ButtonDefaults.textButtonColors()
+                                ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                             },
                         modifier = Modifier.weight(1f),
                     ) {

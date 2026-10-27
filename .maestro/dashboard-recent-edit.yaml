@@ -22,12 +22,10 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 1: Add the expense and open it from its recent row.
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -36,14 +34,15 @@ appId: com.joaoeoneves.fintrack
 - inputText: "23.45"
 - hideKeyboard
 - tapOn: "Save"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 # The extra plain scroll brings the row fully inside the LazyColumn's clip bounds before tapping
 # (see income-tracking.yaml step 4).
 - scrollUntilVisible:
     element: "Maestro E2E Recent Expense"
     direction: DOWN
 - scroll
-- assertVisible: "-€23\\.45"
+- assertVisible: "[-−]€23\\.45"
 - tapOn: "Maestro E2E Recent Expense"
 - assertVisible: "Edit expense"
 - assertVisible: "Maestro E2E Recent Expense"
@@ -54,9 +53,6 @@ appId: com.joaoeoneves.fintrack
 - assertVisible: "Maestro E2E Recent Expense"
 
 # --- 2: Same for income.
-- scrollUntilVisible:
-    element: "Add income"
-    direction: DOWN
 - tapOn: "Add income"
 - assertVisible: "Add income"
 - tapOn: "Source"
@@ -65,7 +61,8 @@ appId: com.joaoeoneves.fintrack
 - inputText: "34.56"
 - hideKeyboard
 - tapOn: "Save"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - scrollUntilVisible:
     element: "Maestro E2E Recent Income"
     direction: DOWN
@@ -89,15 +86,20 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Search"
 - inputText: "Maestro E2E Recent Expense"
 - hideKeyboard
-- assertVisible: "-€23\\.45"
-- tapOn: "Delete"
-- assertNotVisible: "-€23\\.45"
+- assertVisible: "[-−]€23\\.45"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
+- assertNotVisible: "[-−]€23\\.45"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Recent Expense"
 - eraseText: 30
 - hideKeyboard
 - back
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 4: Open the income list via "See all income" and delete the income the same way.
 - scrollUntilVisible:
@@ -110,11 +112,16 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Maestro E2E Recent Income"
 - hideKeyboard
 - assertVisible: "\\+€34\\.56"
-- tapOn: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertNotVisible: "\\+€34\\.56"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Recent Income"
 - eraseText: 30
 - hideKeyboard
 - back
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"

@@ -35,6 +35,8 @@ import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.Instant
 import java.time.ZoneId
 
@@ -85,6 +87,7 @@ fun PeriodSelector(
     canGoToNextMonth: Boolean,
     actions: PeriodActions,
     modifier: Modifier = Modifier,
+    alignment: Alignment.Horizontal = Alignment.CenterHorizontally,
 ) {
     var dialog by rememberSaveable { mutableStateOf(PeriodDialog.NONE) }
     val isMonthPeriod = period is Period.CurrentMonth || period is Period.Month
@@ -93,8 +96,8 @@ fun PeriodSelector(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.Center,
+                .padding(vertical = Dimens.Space4),
+        horizontalArrangement = alignment.toArrangement(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isMonthPeriod) {
@@ -136,6 +139,13 @@ fun PeriodSelector(
     )
 }
 
+private fun Alignment.Horizontal.toArrangement(): Arrangement.Horizontal =
+    when (this) {
+        Alignment.Start -> Arrangement.Start
+        Alignment.End -> Arrangement.End
+        else -> Arrangement.Center
+    }
+
 @Composable
 private fun PeriodMenuButton(
     period: Period,
@@ -151,7 +161,7 @@ private fun PeriodMenuButton(
                 Modifier
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { expanded = true }
-                    .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                    .padding(start = Dimens.Space12, end = Dimens.Space4, top = Dimens.Space8, bottom = Dimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -163,7 +173,12 @@ private fun PeriodMenuButton(
             )
             Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.cd_change_period))
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = MaterialTheme.shapes.medium,
+            containerColor = FinTrackTheme.colors.surface2,
+        ) {
             PeriodMenuOption.entries.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(option.label()) },

@@ -1,17 +1,17 @@
 package com.joaoeoneves.fintrack
 
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +33,7 @@ import com.joaoeoneves.fintrack.ui.migration.LocalDataMigrationHost
 import com.joaoeoneves.fintrack.ui.navigation.FinTrackNavHost
 import com.joaoeoneves.fintrack.ui.theme.CurrencyViewModel
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.NightModeSync
 import com.joaoeoneves.fintrack.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -65,8 +66,15 @@ class MainActivity : AppCompatActivity() {
                     null -> null
                 }
 
+            themePreference?.let { NightModeSync.apply(applicationContext, it) }
             if (resolvedDarkTheme != null) {
-                FinTrackTheme(darkTheme = resolvedDarkTheme, dynamicColor = false) {
+                // Status/navigation bar icons follow the resolved app theme, not the system one.
+                DisposableEffect(resolvedDarkTheme) {
+                    val barStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { resolvedDarkTheme }
+                    enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
+                    onDispose {}
+                }
+                FinTrackTheme(darkTheme = resolvedDarkTheme) {
                     val viewModel: AuthViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     val context = LocalContext.current
@@ -95,7 +103,6 @@ class MainActivity : AppCompatActivity() {
                                 uiState = state,
                                 onSignInClick = { viewModel.signIn(context) },
                                 onContinueAsGuest = viewModel::continueAsGuest,
-                                modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                             )
                         }
                     }

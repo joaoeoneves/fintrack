@@ -21,7 +21,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 1: Capture the Dashboard's Spending amount. The balance card renders each column as a label
 # TextView ("Income" / "Spending" / "Saved & invested") with its amount TextView directly below, so
@@ -37,9 +38,6 @@ appId: com.joaoeoneves.fintrack
 - evalScript: '${output.spendingBefore = (/^\s*[-−]/.test(maestro.copiedText) ? -1 : 1) * parseInt(maestro.copiedText.replace(/[^0-9]/g, ""), 10)}'
 
 # --- 2: Add a 12.34 refund via the "Recent expenses" card's plus button.
-- scrollUntilVisible:
-    element: "Add expense"
-    direction: DOWN
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -91,7 +89,8 @@ appId: com.joaoeoneves.fintrack
     checked: false
     containsChild: "Refund"
 - back
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 6: Delete it from the expense list while the list is search-filtered to its name.
 - scrollUntilVisible:
@@ -104,11 +103,16 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Maestro E2E Refund"
 - hideKeyboard
 - assertVisible: "\\+€12\\.34"
-- tapOn: "Delete"
+# TODO calibrate on first real run: y% estimated for the single search-filtered row
+- swipe:
+    start: "90%, 40%"
+    end: "10%, 40%"
+    duration: 800
 - assertNotVisible: "\\+€12\\.34"
 - assertVisible: "Undo"
 - tapOn: "Maestro E2E Refund"
 - eraseText: 30
 - hideKeyboard
 - back
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"

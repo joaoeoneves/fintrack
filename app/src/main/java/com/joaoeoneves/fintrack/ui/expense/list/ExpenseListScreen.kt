@@ -1,35 +1,20 @@
 package com.joaoeoneves.fintrack.ui.expense.list
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
@@ -38,6 +23,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.domain.model.resolve
+import com.joaoeoneves.fintrack.ui.common.DaySectionHeader
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
@@ -47,11 +33,18 @@ import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.dayHeaderOf
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.common.groupByDay
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.theme.Dimens
+import java.time.LocalDate
+import java.time.ZoneId
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseListScreen(
     onBack: () -> Unit,
@@ -90,10 +83,11 @@ fun ExpenseListScreen(
         }
     }
 
-    Scaffold(
+    LargeTitleScaffold(
+        title = stringResource(R.string.expense_list_title),
+        onBack = onBack,
         modifier = modifier,
-        topBar = { ExpenseListTopBar(onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when (val state = uiState) {
             is ExpenseListUiState.Loading -> {
@@ -137,19 +131,6 @@ private fun ExpenseListViewModel.listActions(onOpenExpense: (String) -> Unit): E
 private fun ExpenseListViewModel.periodActions(): PeriodActions =
     PeriodActions(onPrevious = ::onPreviousMonth, onNext = ::onNextMonth, onSelect = ::onPeriodSelected)
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ExpenseListTopBar(onBack: () -> Unit) {
-    TopAppBar(
-        title = { Text(stringResource(R.string.expense_list_title)) },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
-            }
-        },
-    )
-}
-
 /** Bundles the expense list's row-level and filter actions to keep [ExpenseListContent]'s own parameter list short. */
 private data class ExpenseListActions(
     val periodActions: PeriodActions,
@@ -184,7 +165,7 @@ private fun ExpenseListContent(
             query = query,
             onQueryChanged = actions.onQueryChanged,
             label = stringResource(R.string.expense_list_search_label),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
         )
 
         CategoryFilterRow(
@@ -192,20 +173,19 @@ private fun ExpenseListContent(
             categories = categories.optionsIncluding(state.categoryFilter?.let(categories::resolve)),
             selected = state.categoryFilter,
             onSelected = actions.onCategorySelected,
-        )
-
-        SortDropdown(
-            options = SortOption.entries,
-            selected = state.sortOption,
-            onSelected = actions.onSortSelected,
-            optionLabel = { it.label },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            leading = {
+                SortDropdown(
+                    options = SortOption.entries,
+                    selected = state.sortOption,
+                    onSelected = actions.onSortSelected,
+                    optionLabel = { it.label },
+                )
+            },
+            modifier = Modifier.padding(bottom = Dimens.Space8),
         )
 
         ExpenseListItems(
-            expenses = state.expenses,
-            query = state.query,
-            categoryFilter = state.categoryFilter,
+            state = state,
             onOpenExpense = actions.onOpenExpense,
             onDelete = actions.onDelete,
         )
@@ -214,48 +194,74 @@ private fun ExpenseListContent(
 
 @Composable
 private fun ExpenseListItems(
-    expenses: List<Expense>,
-    query: String,
-    categoryFilter: CategoryId?,
+    state: ExpenseListUiState.Content,
     onOpenExpense: (String) -> Unit,
     onDelete: (String) -> Unit,
 ) {
+    val expenses = state.expenses
+    val sortOption = state.sortOption
+    val query = state.query
+    val categoryFilter = state.categoryFilter
     if (expenses.isEmpty()) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text =
-                    when {
-                        query.isNotBlank() -> stringResource(R.string.expense_list_no_match, query)
-                        categoryFilter != null -> stringResource(R.string.expense_list_no_match_filter)
-                        else -> stringResource(R.string.dashboard_no_expenses)
-                    },
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
-    } else {
-        LazyColumn(modifier = Modifier.fillMaxSize().testTag(TestTags.EXPENSE_LIST)) {
-            items(expenses, key = { it.id }) { expense ->
-                SwipeToDeleteRow(onDelete = { onDelete(expense.id) }) {
-                    ExpenseRow(
-                        expense = expense,
-                        onClick = { onOpenExpense(expense.id) },
-                        modifier = Modifier.weight(1f),
+        EmptyState(
+            title =
+                when {
+                    query.isNotBlank() -> stringResource(R.string.expense_list_no_match, query)
+                    categoryFilter != null -> stringResource(R.string.expense_list_no_match_filter)
+                    else -> stringResource(R.string.dashboard_no_expenses)
+                },
+            modifier = Modifier.fillMaxSize(),
+        )
+        return
+    }
+    val zone = remember { ZoneId.systemDefault() }
+    val today = remember(expenses) { LocalDate.now(zone) }
+    val grouped = shouldGroupByDay(sortOption)
+    val sections = remember(expenses, grouped) { if (grouped) groupByDay(expenses, zone) else emptyList() }
+    val deleteLabel = stringResource(R.string.cd_delete)
+    LazyColumn(modifier = Modifier.fillMaxSize().testTag(TestTags.EXPENSE_LIST)) {
+        if (grouped) {
+            sections.forEach { section ->
+                item(key = "day_${section.date}") {
+                    DaySectionHeader(
+                        header = dayHeaderOf(section.date, today),
+                        modifier = Modifier.animateItem().padding(horizontal = Dimens.ScreenPadding),
                     )
-                    IconButton(onClick = { onDelete(expense.id) }) {
-                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete))
-                    }
                 }
-                HorizontalDivider()
+                items(section.items, key = { it.id }) { expense ->
+                    ExpenseListRow(expense, false, deleteLabel, onOpenExpense, onDelete, Modifier.animateItem())
+                }
+            }
+        } else {
+            items(expenses, key = { it.id }) { expense ->
+                ExpenseListRow(expense, true, deleteLabel, onOpenExpense, onDelete, Modifier.animateItem())
             }
         }
     }
 }
+
+@Suppress("LongParameterList") // row content plus its two callbacks and modifier
+@Composable
+private fun ExpenseListRow(
+    expense: Expense,
+    showDate: Boolean,
+    deleteLabel: String,
+    onOpenExpense: (String) -> Unit,
+    onDelete: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SwipeToDeleteRow(onDelete = { onDelete(expense.id) }, deleteLabel = deleteLabel, modifier = modifier) {
+        ExpenseRow(
+            expense = expense,
+            showDate = showDate,
+            onClick = { onOpenExpense(expense.id) },
+            modifier = Modifier.weight(1f).padding(horizontal = Dimens.ScreenPadding),
+        )
+    }
+}
+
+/** Date sorts group the list under day headers; amount sorts interleave days, so they stay flat. */
+fun shouldGroupByDay(sort: SortOption): Boolean = sort == SortOption.DATE_DESC || sort == SortOption.DATE_ASC
 
 private val SortOption.label: String
     @Composable

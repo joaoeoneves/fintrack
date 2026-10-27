@@ -25,7 +25,8 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Display currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 
 # --- 1: Open the recurring list from Settings ---
 - tapOn: "Settings"
@@ -53,7 +54,8 @@ appId: com.joaoeoneves.fintrack
 # --- 3: Back to the Dashboard: Upcoming card shows it as due today ---
 - tapOn: "Back"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
 - scrollUntilVisible:
     element:
       id: "recurring_card"
@@ -105,4 +107,5 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Maestro Rent"
 - tapOn: "Back"
 - tapOn: "Back"
-- assertVisible: "FinTrack"
+- assertVisible:
+    id: "dashboard_list"
