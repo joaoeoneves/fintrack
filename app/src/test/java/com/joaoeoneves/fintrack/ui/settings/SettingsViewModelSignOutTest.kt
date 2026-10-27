@@ -2,7 +2,7 @@ package com.joaoeoneves.fintrack.ui.settings
 
 import android.app.Application
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.FakeAuthRepository
+import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
@@ -64,7 +64,7 @@ class SettingsViewModelSignOutTest {
     fun signOut_failure_withNonNullMessage_showsSignOutResource_neverRawMessage() =
         runTest(testDispatcher) {
             val authRepo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )

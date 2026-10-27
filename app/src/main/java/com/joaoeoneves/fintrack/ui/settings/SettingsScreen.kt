@@ -19,6 +19,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val importState by importExportViewModel.importState.collectAsStateWithLifecycle()
     val exportState by importExportViewModel.exportState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     val importLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -70,6 +72,8 @@ fun SettingsScreen(
                 },
                 onExportClick = { exportLauncher.launch("fintrack-expenses.csv") },
                 onSignOut = viewModel::signOut,
+                onSignInToSync = { viewModel.signInToSync(context) },
+                onLeaveGuestMode = viewModel::leaveGuestMode,
                 onOpenCategories = onOpenCategories,
             ),
         modifier = modifier,
@@ -90,6 +94,14 @@ fun SettingsScreen(
             onDismiss = viewModel::dismissSignOutError,
         )
     }
+
+    uiState.signInError?.let { message ->
+        MessageDialog(
+            title = stringResource(R.string.label_sign_in_failed),
+            message = message.asString(),
+            onDismiss = viewModel::dismissSignInError,
+        )
+    }
 }
 
 /** Bundles [SettingsScaffold]'s section callbacks to keep its own parameter list short. */
@@ -100,6 +112,8 @@ private data class SettingsActions(
     val onImportClick: () -> Unit,
     val onExportClick: () -> Unit,
     val onSignOut: () -> Unit,
+    val onSignInToSync: () -> Unit,
+    val onLeaveGuestMode: () -> Unit,
     val onOpenCategories: () -> Unit,
 )
 
@@ -154,13 +168,26 @@ private fun SettingsScaffold(
                 onExportClick = actions.onExportClick,
                 modifier = sectionModifier,
             )
-            AccountSection(
-                currentUser = uiState.currentUser,
-                onSignOut = actions.onSignOut,
-                modifier = sectionModifier,
-            )
+            AccountCard(uiState = uiState, actions = actions, modifier = sectionModifier)
             AboutSection(modifier = sectionModifier)
         }
+    }
+}
+
+@Composable
+private fun AccountCard(
+    uiState: SettingsUiState,
+    actions: SettingsActions,
+    modifier: Modifier = Modifier,
+) {
+    if (uiState.isGuest) {
+        GuestAccountSection(
+            onSignInToSync = actions.onSignInToSync,
+            onLeaveGuestMode = actions.onLeaveGuestMode,
+            modifier = modifier,
+        )
+    } else {
+        AccountSection(currentUser = uiState.currentUser, onSignOut = actions.onSignOut, modifier = modifier)
     }
 }
 

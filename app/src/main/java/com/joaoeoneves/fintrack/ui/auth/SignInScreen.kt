@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +30,7 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 fun SignInScreen(
     uiState: AuthUiState,
     onSignInClick: () -> Unit,
+    onContinueAsGuest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isLoading = uiState is AuthUiState.Loading
@@ -83,7 +85,28 @@ fun SignInScreen(
                 }
             }
         }
+
+        GuestEntry(onContinueAsGuest = onContinueAsGuest, enabled = !isLoading)
     }
+}
+
+@Composable
+private fun GuestEntry(
+    onContinueAsGuest: () -> Unit,
+    enabled: Boolean,
+) {
+    TextButton(
+        onClick = onContinueAsGuest,
+        enabled = enabled,
+        modifier = Modifier.padding(top = 8.dp),
+    ) {
+        Text(stringResource(R.string.auth_continue_as_guest))
+    }
+    Text(
+        text = stringResource(R.string.auth_guest_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 // The ratio of the mark's stroke width to its overall size: a quarter of the smallest dimension
@@ -168,6 +191,6 @@ private fun GoogleLogo(modifier: Modifier = Modifier) {
 @Composable
 private fun SignInScreenPreview() {
     FinTrackTheme {
-        SignInScreen(uiState = AuthUiState.Idle, onSignInClick = {})
+        SignInScreen(uiState = AuthUiState.Idle, onSignInClick = {}, onContinueAsGuest = {})
     }
 }

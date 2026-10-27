@@ -100,6 +100,36 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
         }
 
     @Test
+    fun clearWithBackup_emptyDocument_keepsEarlierBackup_andStillBumpsRevision() =
+        runStoreTest {
+            val store = newStore()
+            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 7))) to Unit }
+            store.clearWithBackup()
+            val backup = File(tmp.root, "guest-data.migrated.json").readText()
+
+            // The store is now empty (revision 2); clearing again must not overwrite the backup with it.
+            assertTrue(store.clearWithBackup().isSuccess)
+
+            assertEquals(backup, File(tmp.root, "guest-data.migrated.json").readText())
+            assertEquals(LocalDataDocument(revision = 3), diskDoc())
+            assertEquals(LocalDataDocument(revision = 3), store.data.first())
+        }
+
+    @Test
+    fun clearWithBackup_existingEmptyFile_noBackupCreated() =
+        runStoreTest {
+            val store = newStore()
+            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }
+            store.replaceAll(LocalDataDocument())
+            assertTrue(diskDoc().budgets.isEmpty())
+
+            assertTrue(store.clearWithBackup().isSuccess)
+
+            assertFalse(File(tmp.root, "guest-data.migrated.json").exists())
+            assertEquals(3L, diskDoc().revision)
+        }
+
+    @Test
     fun ioErrorOnFirstLoad_isNotMovedAside_andFlowThrows() =
         runStoreTest {
             val asDir = File(tmp.root, "guest-data.json").apply { mkdirs() }

@@ -4,16 +4,16 @@ import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.FakeAuthRepository
+import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
+import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
-import com.joaoeoneves.fintrack.domain.repository.AuthRepository
+import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -33,9 +33,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for [AuthViewModel]'s state transitions, backed by [FakeAuthRepository] for
+ * Unit tests for [AuthViewModel]'s state transitions, backed by [FakeSessionRepository] for
  * everything except deterministically observing the transient `Loading` state during `signIn`
- * (where [GatedSignInAuthRepository], a small local fake implementing [AuthRepository] directly
+ * (where [GatedSignInAuthRepository], a small local fake implementing [SessionRepository] directly
  * and defined at the bottom of this file, is used instead -- see the comment above
  * `signIn_success_transitionsIdleThenLoadingThenSignedIn` for why).
  *
@@ -50,7 +50,7 @@ import org.robolectric.annotation.Config
 class AuthViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
-    // AuthRepository.signIn(context: Context) requires a real Context reference even though none
+    // SessionRepository.signIn(context: Context) requires a real Context reference even though none
     // of the fakes used here dereference it. ContextWrapper(null) constructs without invoking any
     // stubbed Android framework method body, so it's a safe, dependency-free stand-in on the JVM
     // unit test classpath (no Robolectric/Mockito needed) -- verified to construct cleanly under
@@ -80,7 +80,7 @@ class AuthViewModelTest {
     @Test
     fun initialState_isIdle_whenRepositoryStartsWithNoUser() =
         runTest(testDispatcher) {
-            val repo = FakeAuthRepository(initialUser = null)
+            val repo = FakeSessionRepository(initialUser = null)
             val viewModel = AuthViewModel(repo)
 
             advanceUntilIdle()
@@ -91,7 +91,7 @@ class AuthViewModelTest {
     @Test
     fun initialState_isSignedIn_whenRepositoryStartsWithAlreadyAuthenticatedUser() =
         runTest(testDispatcher) {
-            val repo = FakeAuthRepository(initialUser = user)
+            val repo = FakeSessionRepository(initialUser = user)
             val viewModel = AuthViewModel(repo)
 
             advanceUntilIdle()
@@ -101,13 +101,13 @@ class AuthViewModelTest {
 
     // ---- signIn: success ----
     //
-    // FakeAuthRepository.signIn() never actually suspends (no real await point), so under
+    // FakeSessionRepository.signIn() never actually suspends (no real await point), so under
     // StandardTestDispatcher's cooperative, non-preemptive scheduling the ViewModel's
     // Loading -> SignedIn writes can both happen inside the *same* dispatched task, before our
     // test's collector task ever gets to run. Because StateFlow only keeps the latest value
     // (conflation), a collector that hasn't been resumed yet can miss the transient Loading value
     // entirely -- this was observed directly: an earlier version of this test using
-    // FakeAuthRepository directly flaked/failed by only ever observing [Idle, SignedIn]. To
+    // FakeSessionRepository directly flaked/failed by only ever observing [Idle, SignedIn]. To
     // deterministically observe the intermediate Loading state we use GatedSignInAuthRepository,
     // a local fake whose signIn() suspends on a controllable gate until the test releases it.
 
@@ -211,7 +211,7 @@ class AuthViewModelTest {
     fun signIn_failure_withNullExceptionMessage_fallsBackToDefaultMessage() =
         runTest(testDispatcher) {
             val repo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = null,
                     nextSignInResult = Result.failure(RuntimeException()),
                 )
@@ -231,7 +231,7 @@ class AuthViewModelTest {
     fun signIn_cancelledByUser_withCause_stillEndsIdle() =
         runTest(testDispatcher) {
             val repo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = null,
                     nextSignInResult = Result.failure(SignInCancelledException(IllegalStateException("picker closed"))),
                 )
@@ -249,7 +249,7 @@ class AuthViewModelTest {
     @Test
     fun signOut_success_movesSignedInStateBackToIdle_viaObserveCurrentUserEmittingNull() =
         runTest(testDispatcher) {
-            val repo = FakeAuthRepository(initialUser = user)
+            val repo = FakeSessionRepository(initialUser = user)
             val viewModel = AuthViewModel(repo)
             advanceUntilIdle()
             assertEquals(AuthUiState.SignedIn(user), viewModel.uiState.value)
@@ -259,14 +259,14 @@ class AuthViewModelTest {
 
             // Confirm the *repository's* observable flow actually flipped to null -- this is the
             // real mechanism the ViewModel depends on, not an assumption.
-            assertNull(currentValueOf(repo.observeCurrentUser()))
+            assertNull(currentUserOf(repo))
             assertEquals(AuthUiState.Idle, viewModel.uiState.value)
         }
 
     @Test
     fun signOut_success_whenAlreadySignedOut_staysIdle() =
         runTest(testDispatcher) {
-            val repo = FakeAuthRepository(initialUser = null)
+            val repo = FakeSessionRepository(initialUser = null)
             val viewModel = AuthViewModel(repo)
             advanceUntilIdle()
             assertEquals(AuthUiState.Idle, viewModel.uiState.value)
@@ -279,7 +279,7 @@ class AuthViewModelTest {
 
     // ---- signOut: failure ----
     //
-    // FakeAuthRepository now takes a configurable `nextSignOutResult` (see
+    // FakeSessionRepository now takes a configurable `nextSignOutResult` (see
     // FakeExpenseRepository-style constructor param), which on failure returns that result
     // *without* touching userFlow, so we can exercise AuthViewModel's failure branch directly
     // against the real fake instead of a bespoke local subclass.
@@ -288,7 +288,7 @@ class AuthViewModelTest {
     fun signOut_failure_setsGenericErrorState_notUnderlyingMessage() =
         runTest(testDispatcher) {
             val repo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )
@@ -308,7 +308,7 @@ class AuthViewModelTest {
     fun signOut_failure_withNullExceptionMessage_fallsBackToDefaultMessage() =
         runTest(testDispatcher) {
             val repo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(RuntimeException()),
                 )
@@ -328,7 +328,7 @@ class AuthViewModelTest {
     fun signOut_failure_doesNotClearCurrentUser_repositoryFlowStillReflectsSignedInUser() =
         runTest(testDispatcher) {
             val repo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )
@@ -341,9 +341,9 @@ class AuthViewModelTest {
 
             // AuthViewModel itself doesn't clear any state on signOut failure -- it relies entirely on
             // observeCurrentUser()/userFlow being updated by the repository. Confirm the repository's
-            // own flow still reflects the signed-in user (i.e. FakeAuthRepository.signOut() did not
+            // own flow still reflects the signed-in user (i.e. FakeSessionRepository.signOut() did not
             // clear userFlow.value on failure), even though the ViewModel's uiState surfaces an Error.
-            assertEquals(user, currentValueOf(repo.observeCurrentUser()))
+            assertEquals(user, currentUserOf(repo))
             assertEquals(
                 AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed)),
                 viewModel.uiState.value,
@@ -354,7 +354,7 @@ class AuthViewModelTest {
     fun signOut_failureThenSuccess_eventuallyTransitionsToIdle_userClearedOnlyOnSuccess() =
         runTest(testDispatcher) {
             val repo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )
@@ -367,14 +367,14 @@ class AuthViewModelTest {
                 AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed)),
                 viewModel.uiState.value,
             )
-            assertEquals(user, currentValueOf(repo.observeCurrentUser()))
+            assertEquals(user, currentUserOf(repo))
 
             // Reconfigure the fake to succeed on the next call and retry.
             repo.nextSignOutResult = Result.success(Unit)
             viewModel.signOut()
             advanceUntilIdle()
 
-            assertNull(currentValueOf(repo.observeCurrentUser()))
+            assertNull(currentUserOf(repo))
             assertEquals(AuthUiState.Idle, viewModel.uiState.value)
         }
 
@@ -413,7 +413,7 @@ class AuthViewModelTest {
     fun backToBackSignInThenSignOut_endsIdle() =
         runTest(testDispatcher) {
             val repo =
-                FakeAuthRepository(
+                FakeSessionRepository(
                     initialUser = null,
                     nextSignInResult = Result.success(user),
                 )
@@ -429,14 +429,10 @@ class AuthViewModelTest {
             assertEquals(AuthUiState.Idle, viewModel.uiState.value)
         }
 
-    /**
-     * Peek at the current value of a hot [Flow] known to be backed by a [StateFlow] (as
-     * [FakeAuthRepository.observeCurrentUser] is), without needing a `first()` collection.
-     */
-    private fun currentValueOf(flow: Flow<AuthUser?>): AuthUser? = (flow as StateFlow<AuthUser?>).value
+    private fun currentUserOf(repo: SessionRepository): AuthUser? = (repo.session.value as? Session.SignedIn)?.user
 
     /**
-     * Local [AuthRepository] fake whose [signIn] suspends on a test-controlled
+     * Local [SessionRepository] fake whose [signIn] suspends on a test-controlled
      * [CompletableDeferred] gate before resolving to [signInResult]. This lets a test deterministically
      * pause the ViewModel coroutine right after it writes [AuthUiState.Loading] and before it
      * writes the outcome, so the intermediate state can be asserted without racing StateFlow's
@@ -445,20 +441,31 @@ class AuthViewModelTest {
     private class GatedSignInAuthRepository(
         initialUser: AuthUser?,
         private val signInResult: Result<AuthUser>,
-    ) : AuthRepository {
-        private val userFlow = MutableStateFlow(initialUser)
+    ) : SessionRepository {
+        private val state =
+            MutableStateFlow<Session>(initialUser?.let { Session.SignedIn(it) } ?: Session.SignedOut)
         val signInGate = CompletableDeferred<Unit>()
 
-        override fun observeCurrentUser(): Flow<AuthUser?> = userFlow
+        override val session: StateFlow<Session> = state
+
+        override suspend fun continueAsGuest(): Result<Unit> {
+            state.value = Session.Guest
+            return Result.success(Unit)
+        }
+
+        override suspend fun leaveGuestMode(): Result<Unit> {
+            state.value = Session.SignedOut
+            return Result.success(Unit)
+        }
 
         override suspend fun signIn(context: Context): Result<AuthUser> {
             signInGate.await()
-            signInResult.onSuccess { userFlow.value = it }
+            signInResult.onSuccess { state.value = Session.SignedIn(it) }
             return signInResult
         }
 
         override suspend fun signOut(): Result<Unit> {
-            userFlow.value = null
+            state.value = Session.SignedOut
             return Result.success(Unit)
         }
     }

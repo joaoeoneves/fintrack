@@ -4,8 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
-import com.joaoeoneves.fintrack.domain.repository.AuthRepository
+import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,15 +19,21 @@ import javax.inject.Inject
 class AuthViewModel
     @Inject
     constructor(
-        private val authRepository: AuthRepository,
+        private val sessionRepository: SessionRepository,
     ) : ViewModel() {
-        private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
+        private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Starting)
         val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
         init {
             viewModelScope.launch {
-                authRepository.observeCurrentUser().collect { user ->
-                    _uiState.value = if (user != null) AuthUiState.SignedIn(user) else AuthUiState.Idle
+                sessionRepository.session.collect { session ->
+                    _uiState.value =
+                        when (session) {
+                            Session.Loading -> AuthUiState.Starting
+                            Session.SignedOut -> AuthUiState.Idle
+                            Session.Guest -> AuthUiState.Guest
+                            is Session.SignedIn -> AuthUiState.SignedIn(session.user)
+                        }
                 }
             }
         }
@@ -34,7 +41,7 @@ class AuthViewModel
         fun signIn(context: Context) {
             viewModelScope.launch {
                 _uiState.value = AuthUiState.Loading
-                val result = authRepository.signIn(context)
+                val result = sessionRepository.signIn(context)
                 result.fold(
                     onSuccess = { user -> _uiState.value = AuthUiState.SignedIn(user) },
                     onFailure = { e ->
@@ -51,9 +58,17 @@ class AuthViewModel
             }
         }
 
+        fun continueAsGuest() {
+            viewModelScope.launch {
+                sessionRepository.continueAsGuest().onFailure {
+                    _uiState.value = AuthUiState.Error(UiText.StringResource(R.string.error_guest_start_failed))
+                }
+            }
+        }
+
         fun signOut() {
             viewModelScope.launch {
-                val result = authRepository.signOut()
+                val result = sessionRepository.signOut()
                 result.onFailure {
                     // Deliberately not e.message (see signIn above).
                     _uiState.value = AuthUiState.Error(UiText.StringResource(R.string.error_sign_out_failed))

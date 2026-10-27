@@ -37,8 +37,9 @@ interface ExpenseRepository {
     suspend fun addExpenses(expenses: List<Expense>): BulkAddResult
 
     /**
-     * Whether any expense uses the category with [categoryId]. May need the server (a local cache
-     * can be incomplete), so it can fail while offline.
+     * Whether any expense uses the category with [categoryId]. When signed in this needs the server
+     * (a local cache can be incomplete), so it can fail while offline; as a guest it scans the
+     * on-device data and does not need the network.
      */
     suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean>
 }

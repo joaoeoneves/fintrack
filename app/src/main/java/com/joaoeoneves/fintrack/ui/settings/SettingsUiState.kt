@@ -12,4 +12,6 @@ data class SettingsUiState(
     val language: AppLanguage = AppLanguage.PORTUGUESE,
     val currentUser: AuthUser? = null,
     val signOutError: UiText? = null,
+    val isGuest: Boolean = false,
+    val signInError: UiText? = null,
 )

@@ -44,6 +44,9 @@
     <!-- Autenticação -->
     <string name="auth_subtitle">Inicie sessão para acompanhar as suas despesas</string>
     <string name="auth_sign_in_with_google">Iniciar sessão com o Google</string>
+    <string name="auth_continue_as_guest">Continuar como convidado</string>
+    <string name="auth_guest_hint">Os seus dados ficam apenas neste dispositivo</string>
+    <string name="error_guest_start_failed">Não foi possível iniciar o modo convidado</string>
 
     <!-- Linha de despesa/rendimento partilhada -->
     <string name="row_category_date">%1$s • %2$s</string>
@@ -163,6 +166,12 @@
     <string name="settings_export_csv">Exportar CSV (despesas)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
     <string name="label_sign_out_failed">Falha ao terminar sessão</string>
+    <string name="settings_guest_account">Convidado — os dados ficam guardados apenas neste dispositivo</string>
+    <string name="action_sign_in_to_sync">Iniciar sessão para sincronizar</string>
+    <string name="action_leave_guest_mode">Sair do modo convidado</string>
+    <string name="leave_guest_confirm_title">Sair do modo convidado?</string>
+    <string name="leave_guest_confirm_message">Os seus dados ficam neste dispositivo; escolha Continuar como convidado para os voltar a ver.</string>
+    <string name="label_sign_in_failed">Falha ao iniciar sessão</string>
     <string name="about_version">Versão %1$s</string>
     <string name="about_version_unknown">desconhecida</string>
 

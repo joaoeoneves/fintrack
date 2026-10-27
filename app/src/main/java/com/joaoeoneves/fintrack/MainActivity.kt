@@ -73,7 +73,10 @@ class MainActivity : AppCompatActivity() {
                     // would apply them twice (double top/bottom padding).
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         val state = uiState
-                        if (state is AuthUiState.SignedIn) {
+                        if (state is AuthUiState.Starting) {
+                            // Session still resolving: render nothing rather than flash the sign-in screen.
+                            Unit
+                        } else if (state is AuthUiState.SignedIn || state is AuthUiState.Guest) {
                             val currencyViewModel: CurrencyViewModel = hiltViewModel()
                             val currency by currencyViewModel.currency.collectAsStateWithLifecycle()
                             CompositionLocalProvider(LocalCurrency provides currency) {
@@ -83,6 +86,7 @@ class MainActivity : AppCompatActivity() {
                             SignInScreen(
                                 uiState = state,
                                 onSignInClick = { viewModel.signIn(context) },
+                                onContinueAsGuest = viewModel::continueAsGuest,
                                 modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                             )
                         }

@@ -1,0 +1,100 @@
+appId: com.joaoeoneves.fintrack
+---
+# Guest-mode E2E flow for FinTrack.
+#
+# REQUIRES a signed-out app state (e.g. run after `clearState`, or after signing out), because it
+# starts on the sign-in screen. It does NOT need a Google account -- guest mode is the one path
+# Maestro can script end-to-end without real Google Sign-In. Data stays only on the device (local
+# JSON store), so no Firestore cleanup is needed; the flow still deletes its own expense at the end.
+# Run on its own (it leaves the app in guest mode, i.e. NOT in the signed-in state the other flows
+# assume).
+#
+# A fresh install defaults to Portuguese, so the sign-in screen text is matched with EN|PT regex
+# alternation until English is pinned from Settings below.
+
+- clearState
+- launchApp
+
+# --- 1: Sign-in screen -> Continue as guest -> Dashboard ---
+- assertVisible: "Continue as guest|Continuar como convidado"
+- tapOn: "Continue as guest|Continuar como convidado"
+- assertVisible: "FinTrack"
+- assertVisible: "Net Balance|Saldo líquido.*"
+
+# Pin English + EUR so the assertions below are deterministic (same pattern as golden-path.yaml).
+- tapOn:
+    text: "Settings|Definições"
+- tapOn: "English"
+- tapOn: "Display currency"
+- tapOn: "Euro (€)"
+- tapOn: "Back"
+- assertVisible: "Net Balance"
+
+# --- 2: Add an expense via the Dashboard "Recent expenses" plus icon ---
+- scrollUntilVisible:
+    element: "Add expense"
+    direction: DOWN
+- tapOn: "Add expense"
+- tapOn: "Name"
+- inputText: "Maestro Guest Expense"
+- tapOn: "Amount"
+- inputText: "7.77"
+- hideKeyboard
+- tapOn: "Save"
+- scrollUntilVisible:
+    element: "Maestro Guest Expense"
+    direction: DOWN
+- assertVisible: "Maestro Guest Expense"
+- assertVisible: "-€7\\.77"
+
+# --- 3: Restart the app (no clearState) -- guest session and data persist ---
+- stopApp
+- launchApp
+- assertVisible: "FinTrack"
+- assertNotVisible: "Continue as guest"
+- scrollUntilVisible:
+    element: "Maestro Guest Expense"
+    direction: DOWN
+- assertVisible: "-€7\\.77"
+
+# --- 4: Settings -> Leave guest mode -> confirm -> back on the sign-in screen ---
+- scrollUntilVisible:
+    element: "Net Balance"
+    direction: UP
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element: "Guest.*data is stored only on this device"
+    direction: DOWN
+- assertVisible: "Sign in to sync"
+- tapOn: "Leave guest mode"
+- assertVisible: "Leave guest mode\\?"
+# The dialog's confirm button shares its label with the card button behind it; target the one
+# rendered below the dialog title.
+- tapOn:
+    text: "Leave guest mode"
+    below: "Leave guest mode\\?"
+- assertVisible: "Continue as guest"
+- assertVisible: "Sign in with Google"
+
+# --- 5: Continue as guest again -- the expense is still there ---
+- tapOn: "Continue as guest"
+- assertVisible: "FinTrack"
+- scrollUntilVisible:
+    element: "Maestro Guest Expense"
+    direction: DOWN
+- assertVisible: "-€7\\.77"
+
+# --- 6: Clean up -- delete the expense via the full list (filter first so only this row is hit) ---
+- scrollUntilVisible:
+    element: "See all expenses"
+    direction: DOWN
+- scroll
+- tapOn: "See all expenses"
+- assertVisible: "All expenses"
+- tapOn: "Search"
+- inputText: "Maestro Guest Expense"
+- hideKeyboard
+- assertVisible: "-€7\\.77"
+- tapOn: "Delete"
+- assertNotVisible: "-€7\\.77"
+- back

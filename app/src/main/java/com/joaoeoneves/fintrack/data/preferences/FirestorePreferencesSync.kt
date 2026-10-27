@@ -7,8 +7,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.SetOptions
 import com.joaoeoneves.fintrack.di.ApplicationScope
+import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
-import com.joaoeoneves.fintrack.domain.repository.AuthRepository
+import com.joaoeoneves.fintrack.domain.repository.SessionRepository
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +29,8 @@ private const val TAG = "PreferencesSync"
 private const val UPDATED_AT = "updatedAt"
 
 /**
- * Syncs preferences with `users/{uid}/settings/preferences`. Local edits are pushed fire-and-forget
+ * Syncs preferences with `users/{uid}/settings/preferences` while signed in (a guest never touches
+ * Firestore, which is resolved lazily). Local edits are pushed fire-and-forget
  * (Firestore queues them offline); remote changes are applied to the DataStore only, so there is
  * no push/apply feedback loop.
  */
@@ -35,8 +38,8 @@ private const val UPDATED_AT = "updatedAt"
 class FirestorePreferencesSync
     @Inject
     constructor(
-        private val firestore: FirebaseFirestore,
-        private val authRepository: AuthRepository,
+        private val firestore: Lazy<FirebaseFirestore>,
+        private val sessionRepository: SessionRepository,
         private val store: UserPreferencesStore,
         @ApplicationScope private val scope: CoroutineScope,
     ) : PreferencesSync {
@@ -48,9 +51,8 @@ class FirestorePreferencesSync
         override fun start() {
             if (!started.compareAndSet(false, true)) return
             scope.launch {
-                authRepository
-                    .observeCurrentUser()
-                    .map { it?.uid }
+                sessionRepository.session
+                    .map { (it as? Session.SignedIn)?.user?.uid }
                     .distinctUntilChanged()
                     .collectLatest { uid ->
                         signedInUid = uid
@@ -119,6 +121,7 @@ class FirestorePreferencesSync
 
         private fun prefsDoc(uid: String): DocumentReference =
             firestore
+                .get()
                 .collection("users")
                 .document(uid)
                 .collection("settings")

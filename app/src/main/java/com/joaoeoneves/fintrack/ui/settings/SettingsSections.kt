@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -30,7 +29,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -48,7 +46,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -59,7 +56,7 @@ import com.joaoeoneves.fintrack.ui.common.symbol
  * detekt's TooManyFunctions threshold as more sections get added.
  */
 @Composable
-private fun SectionHeader(
+internal fun SectionHeader(
     text: String,
     icon: ImageVector,
 ) {
@@ -284,43 +281,6 @@ fun DataSection(
                         .clickable(onClick = onExportClick)
                         .padding(horizontal = 16.dp, vertical = 12.dp),
             )
-        }
-    }
-}
-
-@Composable
-fun AccountSection(
-    currentUser: AuthUser?,
-    onSignOut: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column {
-            SectionHeader(stringResource(R.string.settings_section_account), Icons.Filled.Person)
-            val signedInFallback = stringResource(R.string.settings_signed_in_fallback)
-            Text(
-                text = currentUser?.displayName ?: currentUser?.email ?: signedInFallback,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            )
-            if (currentUser?.email != null && currentUser.displayName != null) {
-                Text(
-                    text = currentUser.email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
-                )
-            }
-            OutlinedButton(
-                onClick = onSignOut,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                Text(stringResource(R.string.action_sign_out))
-            }
         }
     }
 }

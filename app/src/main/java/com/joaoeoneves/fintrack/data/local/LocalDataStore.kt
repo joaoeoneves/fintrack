@@ -78,8 +78,12 @@ class LocalDataStore
             runCatchingCancellable {
                 mutex.withLock {
                     val current = loadLocked()
-                    withContext(dispatcher) {
-                        if (file.exists()) file.copyTo(File(file.parentFile, MIGRATED_BACKUP_NAME), overwrite = true)
+                    // An empty document has nothing worth keeping; skipping it protects an earlier backup.
+                    val hasData = current.copy(revision = 0) != LocalDataDocument()
+                    if (hasData && file.exists()) {
+                        withContext(dispatcher) {
+                            file.copyTo(File(file.parentFile, MIGRATED_BACKUP_NAME), overwrite = true)
+                        }
                     }
                     persistLocked(LocalDataDocument(revision = current.revision + 1))
                 }
@@ -116,7 +120,8 @@ class LocalDataStore
         private fun moveAside() {
             val aside = File(file.parentFile, "guest-data.corrupt-${System.currentTimeMillis()}.json")
             if (!file.renameTo(aside)) {
-                // Never lose the original: if it can't be moved, keep a copy (the next write replaces it).
+                // Prefer keeping the original: if it can't be moved, try a copy (the next write replaces it).
+                // If both fail the original can still be lost.
                 runCatching { file.copyTo(aside, overwrite = true) }
                     .onFailure { Log.w(TAG, "Could not preserve unreadable guest data file", it) }
             }

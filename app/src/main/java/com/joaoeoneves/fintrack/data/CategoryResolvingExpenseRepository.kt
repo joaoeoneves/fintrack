@@ -1,6 +1,6 @@
 package com.joaoeoneves.fintrack.data
 
-import com.joaoeoneves.fintrack.di.FirestoreExpenses
+import com.joaoeoneves.fintrack.di.RawExpenses
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.resolvedWith
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
@@ -19,7 +19,7 @@ import javax.inject.Inject
 class CategoryResolvingExpenseRepository
     @Inject
     constructor(
-        @param:FirestoreExpenses private val delegate: ExpenseRepository,
+        @param:RawExpenses private val delegate: ExpenseRepository,
         private val categoryRepository: CategoryRepository,
     ) : ExpenseRepository by delegate {
         override fun observeExpenses(

@@ -18,7 +18,8 @@ data class CategoryUsage(
 
 /**
  * Checks whether a category is still in use, e.g. before deleting it. Fails when either check
- * can't be completed (the expense check needs the server, so it fails while offline).
+ * can't be completed (when signed in the expense check needs the server, so it fails while
+ * offline; as a guest everything is on the device and it always works).
  */
 class CheckCategoryUsage
     @Inject
