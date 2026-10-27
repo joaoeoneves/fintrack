@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,8 +32,12 @@ import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.time.LocalDate
+import java.time.YearMonth
 
-/** "Working days in Oct: 22 (2 holidays)"; tap to edit. Shows "(edited)" instead when overridden. */
+/**
+ * "Working days in Oct: 22 (2 holidays, 3 days off)"; tap to edit. Shows "(edited)" instead when overridden.
+ */
 @Composable
 fun WorkingDaysRow(
     state: WorkingDaysState,
@@ -39,10 +45,16 @@ fun WorkingDaysRow(
     modifier: Modifier = Modifier,
 ) {
     val value =
-        if (state.overridden) {
-            stringResource(R.string.plan_working_days_edited, state.days)
-        } else {
-            pluralStringResource(R.plurals.plan_working_days_value, state.holidays, state.days, state.holidays)
+        when {
+            state.overridden -> stringResource(R.string.plan_working_days_edited, state.days)
+            state.daysOff > 0 ->
+                stringResource(
+                    R.string.plan_working_days_value_off,
+                    state.days,
+                    pluralStringResource(R.plurals.plan_holidays_count, state.holidays, state.holidays),
+                    pluralStringResource(R.plurals.plan_days_off_count, state.daysOff, state.daysOff),
+                )
+            else -> pluralStringResource(R.plurals.plan_working_days_value, state.holidays, state.days, state.holidays)
         }
     SettingsRow(
         title = stringResource(R.string.plan_working_days_title, monthName(state)),
@@ -54,44 +66,54 @@ fun WorkingDaysRow(
 }
 
 @Composable
-private fun monthName(state: WorkingDaysState): String = formatShortMonthName(state.month, currentLocale())
+internal fun monthName(state: WorkingDaysState): String = formatShortMonthName(state.month, currentLocale())
 
 /**
- * Stepper dialog for the month's working days (0 to [MAX_WORKING_DAYS]). Saving a value equal to the
- * calendar count clears the override; "Reset to automatic" is offered while one is set.
+ * Dialog for the month's working days and days off. The working-days stepper (0 to [MAX_WORKING_DAYS]) follows
+ * "calendar count minus days off" until it is edited by hand; saving a value equal to that automatic count
+ * clears the override, and "Reset to automatic" is offered while one is set. Carnival is only a
+ * shortcut that adds a day off; they are never subtracted on their own.
  */
 @Composable
 fun WorkingDaysDialog(
     state: WorkingDaysState,
-    onSave: (month: java.time.YearMonth, days: Int?) -> Unit,
+    carnival: LocalDate?,
+    onSave: (month: YearMonth, override: Int?, daysOff: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var days by remember { mutableIntStateOf(state.days) }
+    var override by remember { mutableStateOf(state.days.takeIf { state.overridden }) }
+    var daysOff by remember { mutableIntStateOf(state.daysOff) }
+    val automatic = maxOf(0, state.calendarDays - daysOff)
     FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.plan_working_days_title, monthName(state))) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space12)) {
-                Stepper(value = days, onChange = { days = it })
+                Stepper(
+                    value = override ?: automatic,
+                    onChange = { override = it.takeIf { value -> value != automatic } },
+                    max = MAX_WORKING_DAYS,
+                    labels = StepperLabels(R.string.cd_fewer_working_days, R.string.cd_more_working_days),
+                )
                 Text(
                     text = stringResource(R.string.plan_working_days_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = FinTrackTheme.colors.textSecondary,
                 )
-                if (state.overridden) {
-                    TextButton(
-                        onClick = {
-                            onSave(state.month, null)
-                            onDismiss()
-                        },
-                    ) { Text(stringResource(R.string.plan_working_days_reset)) }
+                if (override != null) {
+                    TextButton(onClick = { override = null }) { Text(stringResource(R.string.plan_working_days_reset)) }
                 }
+                DaysOffFields(
+                    daysOff = daysOff,
+                    onChange = { daysOff = it },
+                    carnival = carnival,
+                )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    onSave(state.month, days.takeIf { it != state.calendarDays })
+                    onSave(state.month, override?.takeIf { it != automatic }, daysOff)
                     onDismiss()
                 },
             ) { Text(stringResource(R.string.action_save)) }
@@ -100,10 +122,18 @@ fun WorkingDaysDialog(
     )
 }
 
+/** Content descriptions of a [Stepper]'s two buttons. */
+internal data class StepperLabels(
+    @param:StringRes val decrease: Int,
+    @param:StringRes val increase: Int,
+)
+
 @Composable
-private fun Stepper(
+internal fun Stepper(
     value: Int,
     onChange: (Int) -> Unit,
+    max: Int,
+    labels: StepperLabels,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -112,7 +142,7 @@ private fun Stepper(
     ) {
         LabeledIconButton(
             icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-            contentDescription = stringResource(R.string.cd_fewer_working_days),
+            contentDescription = stringResource(labels.decrease),
             onClick = { onChange(value - 1) },
             enabled = value > 0,
         )
@@ -124,9 +154,9 @@ private fun Stepper(
         )
         LabeledIconButton(
             icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = stringResource(R.string.cd_more_working_days),
+            contentDescription = stringResource(labels.increase),
             onClick = { onChange(value + 1) },
-            enabled = value < MAX_WORKING_DAYS,
+            enabled = value < max,
         )
     }
 }

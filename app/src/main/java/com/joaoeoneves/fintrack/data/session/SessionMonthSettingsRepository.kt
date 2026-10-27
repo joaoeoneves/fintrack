@@ -31,4 +31,9 @@ class SessionMonthSettingsRepository
             month: YearMonth,
             days: Int?,
         ): Result<Unit> = switch.call { it.setWorkingDaysOverride(month, days) }
+
+        override suspend fun setDaysOff(
+            month: YearMonth,
+            days: Int,
+        ): Result<Unit> = switch.call { it.setDaysOff(month, days) }
     }
