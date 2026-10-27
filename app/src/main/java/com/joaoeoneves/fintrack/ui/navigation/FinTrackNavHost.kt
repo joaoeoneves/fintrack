@@ -145,6 +145,7 @@ private fun NavGraphBuilder.sharedRoutes(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenCategories = { navController.navigate(Categories) },
             onOpenRecurring = { navController.navigate(RecurringList) },
+            onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
         )
     }
     composable<Categories> {
