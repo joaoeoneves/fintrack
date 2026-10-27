@@ -1,0 +1,79 @@
+package com.joaoeoneves.fintrack.domain.usecase
+
+import com.joaoeoneves.fintrack.domain.model.AnnualPlan
+import com.joaoeoneves.fintrack.domain.model.AnnualPlanInputs
+import com.joaoeoneves.fintrack.domain.model.Budget
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.InstantRange
+import com.joaoeoneves.fintrack.domain.model.MonthSettings
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.annualPlanOf
+import com.joaoeoneves.fintrack.domain.model.resolvedWith
+import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import java.time.Year
+import java.time.ZoneId
+import javax.inject.Inject
+
+/** Observes the [AnnualPlan] of a calendar year: the plan-side repositories plus the year's transactions. */
+class ObserveAnnualPlan
+    @Inject
+    constructor(
+        private val transactionRepository: TransactionRepository,
+        private val sources: PlanDataSources,
+    ) {
+        operator fun invoke(
+            year: Int,
+            zone: ZoneId,
+        ): Flow<AnnualPlan> {
+            val start =
+                Year
+                    .of(year)
+                    .atDay(1)
+                    .atStartOfDay(zone)
+                    .toInstant()
+            val end =
+                Year
+                    .of(year + 1)
+                    .atDay(1)
+                    .atStartOfDay(zone)
+                    .toInstant()
+            val planInputs =
+                combine(
+                    sources.budgets.observeBudgets(),
+                    sources.plannedIncome.observePlannedIncome(),
+                    sources.monthSettings.observeMonthSettings(),
+                    sources.categories.observeCategories(),
+                ) { budgets, lines, settings, catalog -> AnnualPlanSources(budgets, lines, settings, catalog) }
+            val extraInputs =
+                combine(sources.groups.observeGroups(), sources.recurring.observeRecurring()) { groups, recurring ->
+                    groups to recurring
+                }
+            return combine(
+                planInputs,
+                extraInputs,
+                transactionRepository.observeTransactions(InstantRange(start, end)),
+            ) { plan, (groups, recurring), transactions ->
+                annualPlanOf(
+                    year,
+                    AnnualPlanInputs(
+                        lines = plan.plannedIncome,
+                        budgets = plan.budgets,
+                        recurring = recurring,
+                        categories = plan.categories,
+                        groups = groups,
+                        monthSettings = plan.monthSettings,
+                        yearExpenses = transactions.expenses.resolvedWith(plan.categories),
+                    ),
+                )
+            }
+        }
+    }
+
+private class AnnualPlanSources(
+    val budgets: List<Budget>,
+    val plannedIncome: List<PlannedIncome>,
+    val monthSettings: List<MonthSettings>,
+    val categories: List<Category>,
+)

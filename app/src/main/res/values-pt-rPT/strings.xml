@@ -573,4 +573,19 @@
     <string name="salary_line_net">Salário líquido</string>
     <string name="salary_line_holiday">Subsídio de férias</string>
     <string name="salary_line_christmas">Subsídio de Natal</string>
+    <string name="plan_tab_month">Mês</string>
+    <string name="plan_tab_year">Ano</string>
+    <string name="annual_income_title">Rendimento do ano</string>
+    <string name="annual_income_regular">Rendimento regular</string>
+    <string name="annual_income_extras">Extras</string>
+    <string name="annual_income_total">Rendimento total</string>
+    <string name="annual_extra_in_month">%1$s · %2$s</string>
+    <string name="annual_actual_of_planned">%1$s de %2$s</string>
+    <string name="annual_pots_title">Potes no ano</string>
+    <string name="annual_subscriptions_title">Subscrições anuais</string>
+    <string name="annual_subscription_row">%1$s · %2$s</string>
+    <string name="annual_leftover_title">Sobra deste ano</string>
+    <string name="annual_leftover_caption">Rendimento menos despesa planeada, %1$s</string>
+    <string name="annual_empty_title">Nada planeado para %1$s</string>
+    <string name="annual_empty_message">Adicione rendimento e dotações na vista Mês para ver o ano.</string>
 </resources>
