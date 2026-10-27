@@ -28,7 +28,7 @@ class BackupCodecRecurringTest {
     fun v1File_decodesWithEmptyRecurringAndCurrentSchemaVersion() {
         val result = BackupCodec.decode("""{$header,"schemaVersion":1}""").success()
 
-        assertEquals(6, result.document.schemaVersion)
+        assertEquals(7, result.document.schemaVersion)
         assertTrue(result.document.recurring.isEmpty())
     }
 
@@ -45,8 +45,8 @@ class BackupCodecRecurringTest {
     }
 
     @Test
-    fun v6File_isUnsupported() {
-        assertEquals(BackupDecodeResult.UnsupportedVersion(7), BackupCodec.decode("""{$header,"schemaVersion":7}"""))
+    fun v8File_isUnsupported() {
+        assertEquals(BackupDecodeResult.UnsupportedVersion(8), BackupCodec.decode("""{$header,"schemaVersion":8}"""))
     }
 
     @Test

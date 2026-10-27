@@ -121,7 +121,7 @@ fun planMigration(
     for (item in local.income.filter { it.id !in remote.incomeIds }) {
         if (isValid { validateIncome(item) }) income += item else skipped++
     }
-    val plannedIncome = plannedIncomeToCopy(local.plannedIncome, remote)
+    val plannedIncome = plannedIncomeToCopy(local.plannedIncome, remote, resolution, groups.idMap)
     if (remote.plannedIncomeIds.isEmpty()) skipped += local.plannedIncome.size - plannedIncome.size
     val recurring = recurringToCopy(local.recurring, remote, resolution, known)
     skipped += local.recurring.count { it.id !in remote.recurringIds } - recurring.size
@@ -164,9 +164,26 @@ private fun recurringToCopy(
 private fun plannedIncomeToCopy(
     local: List<LocalPlannedIncome>,
     remote: RemoteAccountSnapshot,
+    resolution: CategoryResolution,
+    groupIdMap: Map<String, String>,
 ): List<LocalPlannedIncome> {
     if (remote.plannedIncomeIds.isNotEmpty()) return emptyList()
-    return local.filter { isValid { validatePlannedIncome(it) } }
+    return local.map { it.withEarmarkRemapped(resolution, groupIdMap) }.filter { isValid { validatePlannedIncome(it) } }
+}
+
+// An earmark follows its category / group to the account's id; one that cannot be resolved is dropped, the line stays.
+private fun LocalPlannedIncome.withEarmarkRemapped(
+    resolution: CategoryResolution,
+    groupIdMap: Map<String, String>,
+): LocalPlannedIncome {
+    val id = earmarkId ?: return copy(earmarkType = null)
+    val target =
+        when (earmarkType) {
+            "CATEGORY" -> resolution.targetOf(id)
+            "GROUP" -> groupIdMap[id]
+            else -> null
+        }
+    return if (target == null) copy(earmarkType = null, earmarkId = null) else copy(earmarkId = target)
 }
 
 private fun LocalBudget.validated(known: Set<String>) = validateBudget(categoryId, limitCents, known, skipMonths)

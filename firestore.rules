@@ -87,14 +87,23 @@ service cloud.firestore {
 
     function isValidPlannedIncome(data) {
       return data.keys().hasOnly(['label', 'amountCents', 'order', 'basis', 'frequency', 'monthOfYear',
-          'yearMonth', 'skipMonths', 'updatedAt'])
+          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'updatedAt'])
         && data.keys().hasAll(['label', 'amountCents', 'order'])
         && data.label is string && data.label.size() > 0 && data.label.size() <= 50
         && isValidAmountCents(data.amountCents)
         && data.order is int
         && (!('basis' in data) || data.basis in ['FIXED', 'PER_WORKING_DAY'])
         && isValidIncomeFrequency(data)
+        && isValidEarmark(data)
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
+    }
+
+    // An earmark sets the line aside for a category or group: both fields or neither, the id shape-checked
+    // only (a dangling target is treated as no earmark).
+    function isValidEarmark(data) {
+      return ('earmarkType' in data) == ('earmarkId' in data)
+        && (!('earmarkType' in data)
+          || (data.earmarkType in ['CATEGORY', 'GROUP'] && isCategoryIdShape(data.earmarkId)));
     }
 
     // Absent frequency means MONTHLY. MONTHLY has neither month field, YEARLY a month 1..12, ONCE a

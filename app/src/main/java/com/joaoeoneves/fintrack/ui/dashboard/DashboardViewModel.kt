@@ -114,9 +114,11 @@ class DashboardViewModel
                 incomeCents = summary.incomeCents,
                 netCents = summary.netCents,
                 plan = plan,
+                pots = pots,
                 dailyAllowance =
                     if (isCurrentMonth) {
-                        dailyAllowanceOf(plan.safeToSpendCents, budgetMonth, now.atZone(zone).toLocalDate())
+                        val safe = pots?.base?.freeCents ?: plan.safeToSpendCents
+                        dailyAllowanceOf(safe, budgetMonth, now.atZone(zone).toLocalDate())
                     } else {
                         null
                     },

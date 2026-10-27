@@ -6,7 +6,9 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
+import com.joaoeoneves.fintrack.data.local.earmarkOrNull
 import com.joaoeoneves.fintrack.data.local.parseYearMonthOrNull
+import com.joaoeoneves.fintrack.data.local.typeName
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -85,7 +87,11 @@ internal fun PlannedIncome.toFirestoreMap(): Map<String, Any?> =
         "yearMonth" to yearMonth?.toString(),
         "skipMonths" to skipMonths.sorted(),
         "updatedAt" to FieldValue.serverTimestamp(),
-    )
+    ) + earmarkFields()
+
+// Both fields or neither; absent for an unearmarked line (the rules reject a null value).
+private fun PlannedIncome.earmarkFields(): Map<String, Any?> =
+    earmark?.let { mapOf("earmarkType" to it.typeName, "earmarkId" to it.id) }.orEmpty()
 
 private fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
     documents.mapNotNull { it.toPlannedIncomeOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
@@ -114,6 +120,7 @@ private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
                 monthOfYear = schedule.monthOfYear,
                 yearMonth = schedule.yearMonth,
                 skipMonths = schedule.skipMonths,
+                earmark = earmarkOrNull(getString("earmarkType"), getString("earmarkId")),
             )
     }
 }

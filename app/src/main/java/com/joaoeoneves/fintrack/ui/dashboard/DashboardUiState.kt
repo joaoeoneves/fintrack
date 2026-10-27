@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.PotsSummary
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.YearMonth
@@ -27,6 +28,7 @@ sealed interface DashboardUiState {
      * @property recent the latest expenses and income merged, newest first, at most [RECENT_ITEMS_LIMIT].
      * @property dailyAllowance what can be spent per remaining day; only for the current month.
      * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
+     * @property pots the plan split into earmarked pots and the base; `null` falls back to the plain plan.
      * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
      */
     data class Content(
@@ -47,7 +49,11 @@ sealed interface DashboardUiState {
         val plan: MonthlyPlanSummary,
         val dailyAllowance: DailyAllowance?,
         val fixedSpendingCents: Long = 0L,
-    ) : DashboardUiState
+        val pots: PotsSummary? = null,
+    ) : DashboardUiState {
+        /** What is free to spend: the base's free money (the plan's safe-to-spend when there are no earmarks). */
+        val safeToSpendCents: Long get() = pots?.base?.freeCents ?: plan.safeToSpendCents
+    }
 
     data class Error(
         val message: UiText,
