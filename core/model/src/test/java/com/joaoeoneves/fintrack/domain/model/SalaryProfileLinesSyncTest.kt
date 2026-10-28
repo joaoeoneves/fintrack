@@ -14,9 +14,7 @@ class SalaryProfileLinesSyncTest {
             irsBasePpm = 100_000,
             irsSubsidiesPpm = 50_000,
             mealRatePerDayCents = 900,
-            flexPpm = 70_000,
-            bonusCents = 10_000,
-            bonusMonth = 5,
+            extras = listOf(testExtra(), fixedExtra()),
         )
     private val workingDays = 21
 
@@ -100,7 +98,7 @@ class SalaryProfileLinesSyncTest {
     fun amountsOverAllManagedLines_matchBaseAndDuoInOneLine() {
         for (spread in SUBSIDY_SPREADS_PPM) {
             val p =
-                profile.copy(subsidySpreadPpm = spread, mealRatePerDayCents = null, flexPpm = null, bonusCents = null)
+                profile.copy(subsidySpreadPpm = spread, mealRatePerDayCents = null, extras = emptyList())
             val b = requireNotNull(salaryBreakdownOf(p))
             val combined =
                 PlannedIncome("x", "x", b.netMonthlyCents, 0, managedKey = MANAGED_NET_SALARY) // one line holding both
@@ -161,12 +159,56 @@ class SalaryProfileLinesSyncTest {
     @Test
     fun sync_onlyChangedLinesAreWritten() {
         val existing = lines()
-        val changed = profile.copy(bonusCents = 20_000)
+        val changed = profile.copy(extras = listOf(testExtra(), fixedExtra(cents = 20_000)))
 
         val sync = managedLinesSync(changed, existing)
 
-        assertEquals(listOf(MANAGED_BONUS), sync.upserts.map { it.id })
+        assertEquals(listOf(managedExtraKey("bonus", 5)), sync.upserts.map { it.id })
         assertEquals(20_000, sync.upserts.single().amountCents)
+    }
+
+    @Test
+    fun sync_renamingAnExtra_relabelsItsLines_keepingEarmarkAndOrder() {
+        val existing =
+            lines().map {
+                if (it.id == managedExtraKey("bonus", 5)) it.copy(earmark = Earmark.Group("g1"), order = 42) else it
+            }
+        val renamed = profile.copy(extras = listOf(testExtra(), fixedExtra(name = "Prize")))
+
+        val sync = managedLinesSync(renamed, existing)
+
+        val line = sync.upserts.single()
+        assertEquals("Prize", line.label)
+        assertEquals(Earmark.Group("g1"), line.earmark)
+        assertEquals(42, line.order)
+        assertTrue(sync.deletes.isEmpty())
+    }
+
+    @Test
+    fun sync_isIdempotent() {
+        assertTrue(managedLinesSync(profile, lines()).isEmpty)
+    }
+
+    @Test
+    fun sync_deletingAnExtraOrAMonth_deletesItsLines() {
+        val existing = lines()
+
+        val noBonus = managedLinesSync(profile.copy(extras = listOf(testExtra())), existing)
+        val fewer = profile.copy(extras = listOf(testExtra(months = setOf(1, 4)), fixedExtra()))
+        val fewerMonths = managedLinesSync(fewer, existing)
+
+        assertEquals(listOf(managedExtraKey("bonus", 5)), noBonus.deletes)
+        assertEquals(setOf(managedExtraKey("flex", 7), managedExtraKey("flex", 10)), fewerMonths.deletes.toSet())
+    }
+
+    @Test
+    fun sync_legacyFlexProfitAndBonusLines_areDeleted() {
+        val legacyKeys = listOf(managedFlexKey(0), managedProfitShareKey(4), MANAGED_BONUS, MANAGED_PROFIT_SHARE)
+        val legacy = legacyKeys.mapIndexed { i, k -> PlannedIncome(k, "old", 5, 80 + i, managedKey = k) }
+
+        val sync = managedLinesSync(profile, lines() + legacy)
+
+        assertEquals(legacyKeys.toSet(), sync.deletes.toSet())
     }
 
     @Test

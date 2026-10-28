@@ -6,9 +6,6 @@ enum class SalaryInputMode { GROSS, NET }
 /** Highest value of a rate in parts per million (100%). */
 const val PPM_SCALE = 1_000_000
 
-/** Largest profit-share multiplier (of the base salary) in ppm: 10x. */
-const val MAX_PROFIT_SHARE_PPM = 10_000_000
-
 /** The three "duodecimos" choices as a share of the two subsidies spread over the year (ppm). */
 const val SPREAD_NONE_PPM = 0
 const val SPREAD_HALF_PPM = 500_000
@@ -22,10 +19,6 @@ const val DEFAULT_SS_PPM = 110_000
 
 const val DEFAULT_HOLIDAY_SUBSIDY_MONTH = 6
 const val DEFAULT_CHRISTMAS_SUBSIDY_MONTH = 12
-const val DEFAULT_FLEX_FIRST_MONTH = 1
-
-/** Month a profit share or bonus is paid in when the profile does not say. */
-const val DEFAULT_EXTRA_PAY_MONTH = 3
 
 /** `plannedIncome.managedKey` values of the lines generated from the salary profile. */
 const val MANAGED_NET_SALARY = "profile_net_salary"
@@ -34,30 +27,29 @@ const val MANAGED_HOLIDAY = "profile_holiday"
 const val MANAGED_CHRISTMAS = "profile_christmas"
 const val MANAGED_DUODECIMOS = "profile_duodecimos"
 
-/** The key the single profit-share line used before it could be split over several months (legacy, cleaned up). */
+/** Legacy managed keys (before extras were user-defined); only recognised so stale lines can be cleaned up. */
 const val MANAGED_PROFIT_SHARE = "profile_profit_share"
 const val MANAGED_BONUS = "profile_bonus"
+private const val LEGACY_FLEX_PAYMENTS = 4
 
-/** Number of quarterly flexible-benefit payments. */
-const val FLEX_PAYMENTS = 4
-
-/** The managed key of the flexible-benefit payment [index] (0..3). */
+/** The legacy managed key of the flexible-benefit payment [index] (0..3). */
 fun managedFlexKey(index: Int): String = "profile_flex_q${index + 1}"
 
-/** The managed key of the profit-share line paid in [month] (1..12). */
+/** The legacy managed key of the profit-share line paid in [month] (1..12). */
 fun managedProfitShareKey(month: Int): String = "${MANAGED_PROFIT_SHARE}_$month"
 
-/** Every key a managed line can carry. */
-val MANAGED_KEYS: List<String> =
-    listOf(
-        MANAGED_NET_SALARY,
-        MANAGED_DUODECIMOS,
-        MANAGED_MEAL,
-        MANAGED_HOLIDAY,
-        MANAGED_CHRISTMAS,
-        MANAGED_PROFIT_SHARE,
-        MANAGED_BONUS,
-    ) + List(FLEX_PAYMENTS, ::managedFlexKey) + List(MAX_MONTH_OF_YEAR) { managedProfitShareKey(it + 1) }
+private val FIXED_MANAGED_KEYS =
+    setOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS)
+
+private val LEGACY_MANAGED_KEYS: Set<String> =
+    setOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS) +
+        List(LEGACY_FLEX_PAYMENTS, ::managedFlexKey) + List(MAX_MONTH_OF_YEAR) { managedProfitShareKey(it + 1) }
+
+/** Whether [key] is a `managedKey` the app can generate: a fixed one, a legacy one or an extra's per-month key. */
+fun isValidManagedKey(key: String): Boolean {
+    val known = key in FIXED_MANAGED_KEYS || key in LEGACY_MANAGED_KEYS
+    return known || parseManagedExtraKey(key) != null
+}
 
 /** Default (English) labels of the generated lines; the UI passes localized ones. Existing lines keep theirs. */
 data class SalaryLineLabels(
@@ -65,9 +57,6 @@ data class SalaryLineLabels(
     val duodecimos: String = "Subsidies (twelfths)",
     val meal: String = "Meal allowance",
     val subsidy: String = "Subsidy",
-    val flex: String = "Flexible benefits",
-    val profitShare: String = "Profit share",
-    val bonus: String = "Bonus",
 )
 
 /**
@@ -78,7 +67,7 @@ data class SalaryLineLabels(
  * GROSS mode: [subsidySpreadPpm] is the share of the holiday and Christmas subsidies paid in twelfths with the
  * monthly salary (0, 50% or 100%); [irsBasePpm] / [irsSubsidiesPpm] (default: the base rate) are the withholding
  * rates; [irsJovemExemptPpm] is the exempt share of the IRS (IRS paid = rate x (1 - exempt)).
- * NET mode: the net amounts as received, no tax fields. [flexPpm] applies to GROSS, [flexAnnualCents] to NET.
+ * NET mode: the net amounts as received, no tax fields. [extras] are the user-defined yearly extras.
  */
 data class SalaryProfile(
     val inputMode: SalaryInputMode = SalaryInputMode.GROSS,
@@ -96,25 +85,8 @@ data class SalaryProfile(
     val mealSkipMonths: Set<Int> = emptySet(),
     val holidaySubsidyMonth: Int = DEFAULT_HOLIDAY_SUBSIDY_MONTH,
     val christmasSubsidyMonth: Int = DEFAULT_CHRISTMAS_SUBSIDY_MONTH,
-    val flexPpm: Int? = null,
-    val flexAnnualCents: Long? = null,
-    val flexFirstMonth: Int = DEFAULT_FLEX_FIRST_MONTH,
-    val flexWithdrawalFeePpm: Int = 0,
-    val profitShareMultiplierPpm: Int? = null,
-    /** Legacy single month; read only when [profitShareMonths] is empty. */
-    val profitShareMonth: Int? = null,
-    val profitShareMonths: Set<Int> = emptySet(),
-    val bonusCents: Long? = null,
-    val bonusMonth: Int? = null,
+    val extras: List<SalaryExtra> = emptyList(),
 ) {
     /** The subsidy IRS rate actually used: the explicit one or the base rate. */
     val effectiveIrsSubsidiesPpm: Int get() = irsSubsidiesPpm ?: irsBasePpm
-
-    /** The months the profit share is paid in, ascending: the chosen ones, the legacy month or the default. */
-    val effectiveProfitShareMonths: List<Int>
-        get() =
-            profitShareMonths
-                .ifEmpty { setOfNotNull(profitShareMonth) }
-                .sorted()
-                .ifEmpty { listOf(DEFAULT_EXTRA_PAY_MONTH) }
 }

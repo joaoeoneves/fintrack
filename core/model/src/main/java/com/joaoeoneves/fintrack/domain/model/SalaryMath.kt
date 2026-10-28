@@ -7,7 +7,7 @@ import java.math.RoundingMode
 import java.math.RoundingMode.HALF_UP
 
 private const val MONTHS = 12
-private const val SALARY_MONTHS = 14
+private const val SALARY_MONTHS = 14L
 
 // Digits kept after the cent for the exact intermediate values (the only non-terminating one is duo / 12).
 private const val EXACT_SCALE = 12
@@ -15,7 +15,7 @@ private val PPM = BigDecimal(PPM_SCALE)
 
 /**
  * Every intermediate value of a salary computation, in cents (0 when not applicable). In NET mode only the
- * amounts the user typed are filled: [netMonthlyCents], the lump nets, the flex amounts, meal, bonus.
+ * amounts the user typed are filled: [netMonthlyCents], the lump nets, the fixed extras, meal.
  */
 data class SalaryBreakdown(
     val baseCents: Long,
@@ -34,15 +34,18 @@ data class SalaryBreakdown(
     val lumpGrossCents: Long,
     val holidayLumpNetCents: Long,
     val christmasLumpNetCents: Long,
-    /** Annual flexible benefit before the withdrawal fee. */
-    val flexGrossAnnualCents: Long,
-    /** Annual flexible benefit after the withdrawal fee. */
-    val flexAnnualCents: Long,
-    /** The four quarterly payments; they add up to [flexAnnualCents]. */
-    val flexQuarterlyCents: List<Long>,
-    val profitShareCents: Long,
-    val bonusCents: Long,
+    /** The user-defined extras that pay something, in the profile's order. */
+    val extras: List<ExtraBreakdown>,
     val mealRatePerDayCents: Long,
+)
+
+/** What one [SalaryExtra] pays: its [totalCents] for the year (after deductions and fee) and the [payments]. */
+data class ExtraBreakdown(
+    val extraId: String,
+    val name: String,
+    val totalCents: Long,
+    /** (month 1..12, cents) ascending; they add up to [totalCents], the rounding remainder on the last month. */
+    val payments: List<Pair<Int, Long>>,
 )
 
 /** The breakdown of [profile], or `null` while its required amount (base / net salary) is missing. */
@@ -70,8 +73,6 @@ private fun grossBreakdown(
     val netBase = baseExact.subtract(baseExact.ppm(profile.ssPpm)).subtract(irsBasePaid).cents()
     val lump = base.ppm(PPM_SCALE - spread)
     val lumpNet = lump.lumpNet(profile)
-    val flexGross = profile.flexPpm?.let { baseExact.multiply(BigDecimal(SALARY_MONTHS)).ppm(it) } ?: BigDecimal.ZERO
-    val flex = flexGross.ppm(PPM_SCALE - profile.flexWithdrawalFeePpm).cents()
     return SalaryBreakdown(
         baseCents = base,
         duoCents = duo.cents(),
@@ -86,11 +87,7 @@ private fun grossBreakdown(
         lumpGrossCents = lump,
         holidayLumpNetCents = lumpNet,
         christmasLumpNetCents = lumpNet,
-        flexGrossAnnualCents = flexGross.cents(),
-        flexAnnualCents = flex,
-        flexQuarterlyCents = quarterly(flex),
-        profitShareCents = profile.profitShareMultiplierPpm?.let { base.ppm(it) } ?: 0L,
-        bonusCents = profile.bonusCents ?: 0L,
+        extras = profile.extras.mapNotNull { extraBreakdown(it, profile, base) },
         mealRatePerDayCents = profile.mealRatePerDayCents ?: 0L,
     )
 }
@@ -98,9 +95,8 @@ private fun grossBreakdown(
 private fun netBreakdown(
     profile: SalaryProfile,
     net: Long,
-): SalaryBreakdown {
-    val flex = profile.flexAnnualCents ?: 0L
-    return SalaryBreakdown(
+): SalaryBreakdown =
+    SalaryBreakdown(
         baseCents = 0L,
         duoCents = 0L,
         grossCents = 0L,
@@ -114,14 +110,9 @@ private fun netBreakdown(
         lumpGrossCents = 0L,
         holidayLumpNetCents = profile.netHolidayLumpCents ?: 0L,
         christmasLumpNetCents = profile.netChristmasLumpCents ?: 0L,
-        flexGrossAnnualCents = flex,
-        flexAnnualCents = flex,
-        flexQuarterlyCents = quarterly(flex),
-        profitShareCents = 0L,
-        bonusCents = profile.bonusCents ?: 0L,
+        extras = profile.extras.mapNotNull { extraBreakdown(it, profile, null) },
         mealRatePerDayCents = profile.mealRatePerDayCents ?: 0L,
     )
-}
 
 /** A subsidy lump after SS and the subsidy IRS: lump x (1 - ss - irsSub x (1 - exempt)), rounded once. */
 private fun Long.lumpNet(profile: SalaryProfile): Long {
@@ -131,10 +122,63 @@ private fun Long.lumpNet(profile: SalaryProfile): Long {
     return BigDecimal(this).multiply(factor).divide(PPM.multiply(PPM), 0, RoundingMode.HALF_UP).toLong()
 }
 
-/** [annualCents] in [FLEX_PAYMENTS] equal payments, the rounding remainder on the last one. */
-private fun quarterly(annualCents: Long): List<Long> {
-    val each = annualCents / FLEX_PAYMENTS
-    return List(FLEX_PAYMENTS) { if (it == FLEX_PAYMENTS - 1) annualCents - each * (FLEX_PAYMENTS - 1) else each }
+/** What [extra] pays over the year and in which months; `null` when it pays nothing. [base] is `null` in NET mode. */
+private fun extraBreakdown(
+    extra: SalaryExtra,
+    profile: SalaryProfile,
+    base: Long?,
+): ExtraBreakdown? {
+    val total = extraTotalCents(extra, profile, base)
+    val months = extra.months.sorted()
+    if (total == 0L || months.isEmpty()) return null
+    val each = total / months.size
+    val payments =
+        months.mapIndexed { index, month -> month to if (index == months.lastIndex) total - each * index else each }
+    return ExtraBreakdown(extra.id, extra.name, total, payments)
+}
+
+/**
+ * The yearly total of [extra] in one exact computation, rounded HALF_UP once: FIXED is the amount, MULTIPLE is
+ * base x multiple, PERCENT is the annual gross (base x 14) x share; then x (1 - tax) x (1 - fee). [base] is `null`
+ * in NET mode, where only FIXED extras count and are already net. 0 when it pays nothing.
+ */
+private fun extraTotalCents(
+    extra: SalaryExtra,
+    profile: SalaryProfile,
+    base: Long?,
+): Long {
+    val amount = BigDecimal(extra.amount)
+    val exact =
+        when {
+            base == null && extra.amountType != SalaryExtraAmountType.FIXED_CENTS -> BigDecimal.ZERO
+            base == null -> amount
+            else -> {
+                val raw =
+                    when (extra.amountType) {
+                        SalaryExtraAmountType.FIXED_CENTS -> amount.multiply(PPM)
+                        SalaryExtraAmountType.MULTIPLE_OF_BASE_PPM -> BigDecimal(base).multiply(amount)
+                        SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM ->
+                            BigDecimal(base * SALARY_MONTHS).multiply(amount)
+                    }
+                // Denominators: raw / 1e6, tax factor / 1e12, fee / 1e6.
+                val oneNum = PPM.multiply(PPM)
+                raw
+                    .multiply(oneNum.subtract(extra.taxNumerator(profile)))
+                    .multiply(BigDecimal(PPM_SCALE - extra.feePpm))
+                    .divide(oneNum.multiply(oneNum), EXACT_SCALE, HALF_UP)
+            }
+        }
+    return exact.cents().coerceAtLeast(0L)
+}
+
+/** The tax taken from an extra in ppm squared: the base IRS rate (never the subsidy one) x (1 - exempt), plus SS. */
+private fun SalaryExtra.taxNumerator(profile: SalaryProfile): BigDecimal {
+    val irsPaid = BigDecimal(profile.irsBasePpm).multiply(BigDecimal(PPM_SCALE - profile.irsJovemExemptPpm))
+    return when (deductions) {
+        SalaryExtraDeductions.NONE -> BigDecimal.ZERO
+        SalaryExtraDeductions.IRS -> irsPaid
+        SalaryExtraDeductions.IRS_SS -> irsPaid.add(BigDecimal(profile.ssPpm).multiply(PPM))
+    }
 }
 
 /** This many cents times a ppm rate, rounded HALF_UP to cents. */

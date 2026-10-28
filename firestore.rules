@@ -99,9 +99,10 @@ service cloud.firestore {
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
     }
 
-    // The keys of the income lines generated from the salary profile (absent on the user's own lines).
+    // The keys of the income lines generated from the salary profile (absent on the user's own lines); the
+    // flex / profit_share / bonus alternatives are legacy, kept for one release so old lines can still be deleted.
     function managedKeyPattern() {
-      return '^profile_(net_salary|duodecimos|meal|holiday|christmas|bonus|flex_q[1-4]|profit_share(_([1-9]|1[0-2]))?)$';
+      return '^profile_(net_salary|duodecimos|meal|holiday|christmas|bonus|flex_q[1-4]|profit_share(_([1-9]|1[0-2]))?|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
     }
 
     // An earmark sets the line aside for a category or group: both fields or neither, the id shape-checked
@@ -209,7 +210,7 @@ service cloud.firestore {
           'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
           'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth', 'flexPpm',
           'flexAnnualCents', 'flexFirstMonth', 'flexWithdrawalFeePpm', 'profitShareMultiplierPpm',
-          'profitShareMonth', 'profitShareMonths', 'bonusCents', 'bonusMonth', 'updatedAt'])
+          'profitShareMonth', 'profitShareMonths', 'bonusCents', 'bonusMonth', 'extras', 'updatedAt'])
         && data.keys().hasAll(['inputMode'])
         && data.inputMode in ['GROSS', 'NET']
         && (!('subsidySpreadPpm' in data) || data.subsidySpreadPpm in [0, 500000, 1000000])
@@ -230,7 +231,35 @@ service cloud.firestore {
         && (!('profitShareMonths' in data) || (data.profitShareMonths is list && data.profitShareMonths.size() <= 12
             && data.profitShareMonths.hasOnly([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])))
         && (!('mealSkipMonths' in data) || (data.mealSkipMonths is list && data.mealSkipMonths.size() <= 12))
+        && (!('extras' in data) || isValidExtras(data.extras))
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    // At most 10 extras; rules have no loops, so each slot is checked when present.
+    function isValidExtras(l) {
+      return l is list && l.size() <= 10
+        && (l.size() <= 0 || isValidExtra(l[0])) && (l.size() <= 1 || isValidExtra(l[1]))
+        && (l.size() <= 2 || isValidExtra(l[2])) && (l.size() <= 3 || isValidExtra(l[3]))
+        && (l.size() <= 4 || isValidExtra(l[4])) && (l.size() <= 5 || isValidExtra(l[5]))
+        && (l.size() <= 6 || isValidExtra(l[6])) && (l.size() <= 7 || isValidExtra(l[7]))
+        && (l.size() <= 8 || isValidExtra(l[8])) && (l.size() <= 9 || isValidExtra(l[9]));
+    }
+
+    // amount is cents for FIXED_CENTS and ppm for the other two types.
+    function isValidExtra(e) {
+      return e is map
+        && e.keys().hasOnly(['id', 'name', 'amountType', 'amount', 'months', 'deductions', 'feePpm'])
+        && e.keys().hasAll(['id', 'name', 'amountType', 'amount', 'months'])
+        && e.id is string && e.id.matches('^[A-Za-z0-9]{1,20}$')
+        && e.name is string && e.name.size() >= 1 && e.name.size() <= 50
+        && e.amount is int
+        && ((e.amountType == 'FIXED_CENTS' && e.amount >= 1 && e.amount <= 100000000000)
+          || (e.amountType == 'MULTIPLE_OF_BASE_PPM' && e.amount >= 1 && e.amount <= 10000000)
+          || (e.amountType == 'PERCENT_OF_ANNUAL_GROSS_PPM' && e.amount >= 1 && e.amount <= 1000000))
+        && e.months is list && e.months.size() >= 1 && e.months.size() <= 12
+        && e.months.hasOnly([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+        && (!('deductions' in e) || e.deductions in ['NONE', 'IRS', 'IRS_SS'])
+        && (!('feePpm' in e) || (e.feePpm is int && e.feePpm >= 0 && e.feePpm <= 1000000));
     }
 
     // Each user can only read/write their own per-month plan settings: the document id is the month

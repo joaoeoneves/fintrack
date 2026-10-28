@@ -24,6 +24,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
+import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
@@ -131,7 +132,10 @@ private fun ColumnScope.RemoveLineButton(
 
 /** The component name of a managed line (its stored label when it belongs to none). */
 @Composable
-private fun IncomeLineEditorState.managedName(): String = component?.label() ?: initialLabel
+private fun IncomeLineEditorState.managedName(): String {
+    val salaryComponent = component?.takeIf { it != SalaryComponent.EXTRA }
+    return salaryComponent?.label() ?: initialLabel
+}
 
 private fun incomeLineTitle(editingId: String?): Int =
     if (editingId == null) R.string.plan_income_line_new else R.string.plan_income_line_edit

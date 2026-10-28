@@ -2,7 +2,9 @@ package com.joaoeoneves.fintrack.data.migration
 
 import android.app.Application
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
+import com.joaoeoneves.fintrack.data.local.LocalSalaryExtra
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
+import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -66,5 +68,74 @@ class PendingWriteSalaryProfileTest {
 
         assertEquals("profile_meal", writes.first { it.id == "profile_meal" }.data["managedKey"])
         assertFalse(writes.first { it.id == "own" }.data.containsKey("managedKey"))
+    }
+
+    @Test
+    fun legacyGuestProfile_isWrittenAsExtras_withNoLegacyFields() {
+        val legacy =
+            LocalSalaryProfile(
+                baseGrossCents = 100_000,
+                flexPpm = 70_000,
+                profitShareMultiplierPpm = 500_000,
+                profitShareMonths = listOf(4),
+                bonusCents = 10_000,
+                bonusMonth = 5,
+            )
+
+        val data =
+            plan(profile = legacy)
+                .toBatches()
+                .single()
+                .single()
+                .data
+
+        val extras = data["extras"] as List<*>
+        assertEquals(listOf("flex", "profitshare", "bonus"), extras.map { (it as Map<*, *>)["id"] })
+        assertEquals(listOf("Flexible benefits", "Profit share", "Bonus"), extras.map { (it as Map<*, *>)["name"] })
+        listOf("flexPpm", "profitShareMultiplierPpm", "profitShareMonths", "bonusCents", "bonusMonth")
+            .forEach { assertFalse(it, data.containsKey(it)) }
+    }
+
+    @Test
+    fun legacyGuestProfile_usesTheGivenLocalizedNames() {
+        val legacy = LocalSalaryProfile(baseGrossCents = 100_000, bonusCents = 10_000)
+
+        val data =
+            plan(profile = legacy)
+                .toBatches(LegacyExtraNames(bonus = "Premio"))
+                .single()
+                .single()
+                .data
+
+        assertEquals("Premio", ((data["extras"] as List<*>).single() as Map<*, *>)["name"])
+    }
+
+    @Test
+    fun v10GuestProfile_extrasAreCarriedOver() {
+        val extra = LocalSalaryExtra("e1", "Prize", "FIXED_CENTS", 5_000, listOf(3, 9), "IRS_SS", 1_000)
+
+        val data =
+            plan(profile = LocalSalaryProfile(baseGrossCents = 1, extras = listOf(extra)))
+                .toBatches()
+                .single()
+                .single()
+                .data
+
+        val written = (data["extras"] as List<*>).single() as Map<*, *>
+        assertEquals("Prize", written["name"])
+        assertEquals(listOf(3, 9), written["months"])
+        assertEquals("IRS_SS", written["deductions"])
+    }
+
+    @Test
+    fun profileWithoutExtrasOrLegacy_writesAnEmptyExtrasList() {
+        val data =
+            plan(profile = LocalSalaryProfile(baseGrossCents = 1))
+                .toBatches()
+                .single()
+                .single()
+                .data
+
+        assertEquals(emptyList<Any>(), data["extras"])
     }
 }

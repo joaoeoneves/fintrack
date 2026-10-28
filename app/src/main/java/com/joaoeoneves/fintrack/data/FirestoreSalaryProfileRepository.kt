@@ -6,8 +6,20 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
+import com.joaoeoneves.fintrack.domain.model.LegacySalaryExtras
+import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
+import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
+import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
+import com.joaoeoneves.fintrack.domain.model.SALARY_EXTRA_ID_PATTERN
+import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.amountRange
+import com.joaoeoneves.fintrack.domain.model.toExtras
+import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +35,7 @@ class FirestoreSalaryProfileRepository
     constructor(
         private val firestore: FirebaseFirestore,
         private val firebaseAuth: FirebaseAuth,
+        private val legacyNames: LegacyExtraNamesProvider,
     ) : SalaryProfileRepository {
         private fun docRef(uid: String) = salaryProfileDoc(firestore, uid)
 
@@ -37,7 +50,7 @@ class FirestoreSalaryProfileRepository
                             return@addSnapshotListener
                         }
                         if (snapshot != null) {
-                            trySend(snapshot.takeIf { it.exists() }?.toSalaryProfileOrNull())
+                            trySend(snapshot.takeIf { it.exists() }?.toSalaryProfileOrNull(legacyNames.names()))
                         }
                     }
                 awaitClose { registration.remove() }
@@ -77,7 +90,10 @@ internal fun salaryProfileDoc(
         .collection("plan")
         .document("salaryProfile")
 
-/** Written whole (no merge); optional fields are absent when unset (the rules reject a null value). */
+/**
+ * Written whole (no merge), so the legacy flex / profit-share / bonus fields drop out; optional fields are absent
+ * when unset (the rules reject a null value) and `extras` is always present, even empty, once saved.
+ */
 internal fun SalaryProfile.toFirestoreMap(): Map<String, Any?> =
     buildMap {
         put("inputMode", inputMode.name)
@@ -86,25 +102,28 @@ internal fun SalaryProfile.toFirestoreMap(): Map<String, Any?> =
         put("ssPpm", ssPpm)
         put("irsJovemExemptPpm", irsJovemExemptPpm)
         put("mealSkipMonths", mealSkipMonths.sorted())
-        if (profitShareMonths.isNotEmpty()) put("profitShareMonths", profitShareMonths.sorted())
         put("holidaySubsidyMonth", holidaySubsidyMonth)
         put("christmasSubsidyMonth", christmasSubsidyMonth)
-        put("flexFirstMonth", flexFirstMonth)
-        put("flexWithdrawalFeePpm", flexWithdrawalFeePpm)
+        put("extras", extras.map { it.toFirestoreMap() })
         putIfSet("baseGrossCents", baseGrossCents)
         putIfSet("irsSubsidiesPpm", irsSubsidiesPpm)
         putIfSet("netMonthlyCents", netMonthlyCents)
         putIfSet("netHolidayLumpCents", netHolidayLumpCents)
         putIfSet("netChristmasLumpCents", netChristmasLumpCents)
         putIfSet("mealRatePerDayCents", mealRatePerDayCents)
-        putIfSet("flexPpm", flexPpm)
-        putIfSet("flexAnnualCents", flexAnnualCents)
-        putIfSet("profitShareMultiplierPpm", profitShareMultiplierPpm)
-        putIfSet("profitShareMonth", profitShareMonth)
-        putIfSet("bonusCents", bonusCents)
-        putIfSet("bonusMonth", bonusMonth)
         put("updatedAt", FieldValue.serverTimestamp())
     }
+
+private fun SalaryExtra.toFirestoreMap(): Map<String, Any> =
+    mapOf(
+        "id" to id,
+        "name" to name,
+        "amountType" to amountType.name,
+        "amount" to amount,
+        "months" to months.sorted(),
+        "deductions" to deductions.name,
+        "feePpm" to feePpm,
+    )
 
 private fun MutableMap<String, Any?>.putIfSet(
     key: String,
@@ -113,9 +132,10 @@ private fun MutableMap<String, Any?>.putIfSet(
     if (value != null) put(key, value)
 }
 
-private fun DocumentSnapshot.toSalaryProfileOrNull() = mapOrNull("salaryProfile") { parseSalaryProfile() }
+private fun DocumentSnapshot.toSalaryProfileOrNull(legacyNames: LegacyExtraNames) =
+    mapOrNull("salaryProfile") { parseSalaryProfile(legacyNames) }
 
-private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
+private fun DocumentSnapshot.parseSalaryProfile(legacyNames: LegacyExtraNames): SalaryProfile? {
     val defaults = SalaryProfile()
     val mode = getString("inputMode")?.let { name -> SalaryInputMode.entries.find { it.name == name } }
     if (mode == null) {
@@ -141,15 +161,59 @@ private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
                 ?: defaults.mealSkipMonths,
         holidaySubsidyMonth = int("holidaySubsidyMonth") ?: defaults.holidaySubsidyMonth,
         christmasSubsidyMonth = int("christmasSubsidyMonth") ?: defaults.christmasSubsidyMonth,
+        extras = parseExtras(mode, legacyNames),
+    )
+}
+
+/** The `extras` list (malformed ones dropped, at most [MAX_SALARY_EXTRAS]) or, absent, the migrated legacy fields. */
+private fun DocumentSnapshot.parseExtras(
+    mode: SalaryInputMode,
+    legacyNames: LegacyExtraNames,
+): List<SalaryExtra> {
+    val raw = get("extras") as? List<*>
+    if (raw != null) {
+        return raw
+            .mapNotNull { entry ->
+                (entry as? Map<*, *>)?.toSalaryExtraOrNull().also {
+                    if (it == null) Log.w(TAG, "Dropping malformed extra")
+                }
+            }.distinctBy { it.id }
+            .take(MAX_SALARY_EXTRAS)
+    }
+
+    fun int(field: String) = getLong(field)?.toInt()
+    return LegacySalaryExtras(
         flexPpm = int("flexPpm"),
         flexAnnualCents = getLong("flexAnnualCents"),
-        flexFirstMonth = int("flexFirstMonth") ?: defaults.flexFirstMonth,
-        flexWithdrawalFeePpm = int("flexWithdrawalFeePpm") ?: defaults.flexWithdrawalFeePpm,
+        flexFirstMonth = int("flexFirstMonth") ?: 1,
+        flexWithdrawalFeePpm = int("flexWithdrawalFeePpm") ?: 0,
         profitShareMultiplierPpm = int("profitShareMultiplierPpm"),
         profitShareMonth = int("profitShareMonth"),
         profitShareMonths =
             (get("profitShareMonths") as? List<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toSet().orEmpty(),
         bonusCents = getLong("bonusCents"),
         bonusMonth = int("bonusMonth"),
-    )
+    ).toExtras(mode, legacyNames)
+}
+
+@Suppress("ComplexCondition") // flat null checks of the independently parsed fields
+private fun Map<*, *>.toSalaryExtraOrNull(): SalaryExtra? {
+    val id = (this["id"] as? String)?.takeIf { SALARY_EXTRA_ID_PATTERN.matches(it) }
+    val name = (this["name"] as? String)?.takeIf { it.isNotBlank() }
+    val type = SalaryExtraAmountType.entries.find { it.name == this["amountType"] }
+    val amount = (this["amount"] as? Number)?.toLong()?.takeIf { type != null && it in type.amountRange }
+    val months =
+        (this["months"] as? List<*>)
+            ?.mapNotNull { (it as? Number)?.toInt()?.takeIf { m -> m in 1..MAX_MONTH_OF_YEAR } }
+            ?.toSet()
+            ?.takeIf { it.isNotEmpty() }
+    val deductions =
+        this["deductions"]?.let { value -> SalaryExtraDeductions.entries.find { it.name == value } }
+            ?: SalaryExtraDeductions.NONE.takeIf { this["deductions"] == null }
+    val fee = ((this["feePpm"] as? Number)?.toInt() ?: 0).coerceIn(0, PPM_SCALE)
+    return if (id != null && name != null && type != null && amount != null && months != null && deductions != null) {
+        SalaryExtra(id, name, type, amount, months, deductions, fee)
+    } else {
+        null
+    }
 }

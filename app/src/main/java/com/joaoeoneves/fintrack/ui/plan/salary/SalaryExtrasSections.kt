@@ -1,9 +1,18 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
+import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
+import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
+import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /** The meal allowance per working day (paid every month; days off are set in the Plan's working days). */
 @Composable
@@ -23,80 +32,40 @@ internal fun MealSection(
     }
 }
 
-/**
- * Flexible benefits, paid in four quarterly payments: a share of the annual gross (gross mode, with a withdrawal
- * fee) or a plain yearly amount (net mode).
- */
+/** The user's extras: one tappable row each (its name and what it pays per year) and a button to add one. */
 @Composable
-internal fun FlexSection(
-    form: SalaryForm,
-    invalid: Set<SalaryField>,
-    onChange: (SalaryForm) -> Unit,
+internal fun SalaryExtrasSection(
+    state: SalaryProfileUiState.Content,
+    onAdd: () -> Unit,
+    onEdit: (String) -> Unit,
 ) {
-    SalaryGroup(stringResource(R.string.salary_group_flex)) {
-        if (form.mode == SalaryInputMode.GROSS) {
-            SalaryTextField(
-                label = stringResource(R.string.salary_field_flex_percent),
-                value = form.flexPercent,
-                onChange = { onChange(form.copy(flexPercent = it)) },
-                invalid = SalaryField.FLEX_PERCENT in invalid,
+    val gross = state.form.mode == SalaryInputMode.GROSS
+    SettingsGroup(label = stringResource(R.string.salary_group_extras)) {
+        state.form.extras.forEach { extra ->
+            val perYear =
+                state.breakdown
+                    ?.extras
+                    ?.find { it.extraId == extra.id }
+                    ?.totalCents
+            SettingsRow(
+                title = extra.name,
+                value =
+                    when {
+                        !gross && extra.amountType != SalaryExtraAmountType.FIXED_CENTS ->
+                            stringResource(R.string.salary_extra_gross_only)
+                        perYear != null -> formatAmountCents(perYear)
+                        else -> null
+                    },
+                onClick = { onEdit(extra.id) },
+                showChevron = true,
             )
-            SalaryTextField(
-                label = stringResource(R.string.salary_field_flex_fee),
-                value = form.flexFee,
-                onChange = { onChange(form.copy(flexFee = it)) },
-                invalid = SalaryField.FLEX_FEE in invalid,
-            )
-        } else {
-            SalaryTextField(
-                label = stringResource(R.string.salary_field_flex_annual),
-                value = form.flexAnnual,
-                onChange = { onChange(form.copy(flexAnnual = it)) },
-                invalid = SalaryField.FLEX_ANNUAL in invalid,
-            )
+            Hairline()
         }
-        SalaryMonthPicker(
-            title = stringResource(R.string.salary_flex_first_month),
-            selected = form.flexFirstMonth,
-            onChange = { onChange(form.copy(flexFirstMonth = it)) },
-        )
-    }
-}
-
-/** An optional profit share (a multiple of the base salary, gross mode only) and an optional bonus. */
-@Composable
-internal fun ExtrasSection(
-    form: SalaryForm,
-    invalid: Set<SalaryField>,
-    onChange: (SalaryForm) -> Unit,
-) {
-    SalaryGroup(stringResource(R.string.salary_group_extras)) {
-        if (form.mode == SalaryInputMode.GROSS) {
-            SalaryTextField(
-                label = stringResource(R.string.salary_field_profit_share),
-                value = form.profitMultiplier,
-                onChange = { onChange(form.copy(profitMultiplier = it)) },
-                invalid = SalaryField.PROFIT_SHARE in invalid,
-            )
-            if (form.profitMultiplier.isNotBlank()) {
-                SalaryMonthPicker(
-                    title = stringResource(R.string.salary_profit_month),
-                    selected = form.profitMonths,
-                    onChange = { onChange(form.copy(profitMonths = it)) },
-                )
-            }
-        }
-        SalaryTextField(
-            label = stringResource(R.string.salary_field_bonus),
-            value = form.bonus,
-            onChange = { onChange(form.copy(bonus = it)) },
-            invalid = SalaryField.BONUS in invalid,
-        )
-        if (form.bonus.isNotBlank()) {
-            SalaryMonthPicker(
-                title = stringResource(R.string.salary_bonus_month),
-                selected = form.bonusMonth,
-                onChange = { onChange(form.copy(bonusMonth = it)) },
+        if (state.canAddExtra) {
+            GhostButton(
+                text = stringResource(R.string.salary_extras_add),
+                onClick = onAdd,
+                modifier = Modifier.padding(top = Dimens.Space8),
             )
         }
     }
