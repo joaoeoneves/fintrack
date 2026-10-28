@@ -35,26 +35,46 @@ internal fun EarmarkPicker(
         style = MaterialTheme.typography.labelLarge,
         color = FinTrackTheme.colors.textSecondary,
     )
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-        verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
-    ) {
-        CategoryChip(
-            label = stringResource(R.string.plan_earmark_none),
-            selected = selected == null,
-            onClick = { onSelect(null) },
-        )
-        options.groups.forEach { group ->
-            val target = Earmark.Group(group.id)
-            CategoryChip(label = group.name, selected = selected == target, onClick = { onSelect(target) })
-        }
-        options.categories.forEach { category ->
-            val target = Earmark.Category(category.id.value)
-            CategoryChip(
-                label = category.displayName,
-                selected = selected == target,
-                onClick = { onSelect(target) },
-            )
+    CategoryChip(
+        label = stringResource(R.string.plan_earmark_none),
+        selected = selected == null,
+        onClick = { onSelect(null) },
+    )
+    if (options.groups.isNotEmpty()) {
+        EarmarkSubLabel(stringResource(R.string.plan_groups_title))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+            verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        ) {
+            options.groups.forEach { group ->
+                val target = Earmark.Group(group.id)
+                CategoryChip(label = group.name, selected = selected == target, onClick = { onSelect(target) })
+            }
         }
     }
+    if (options.categories.isNotEmpty()) {
+        EarmarkSubLabel(stringResource(R.string.categories_title))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+            verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        ) {
+            options.categories.forEach { category ->
+                val target = Earmark.Category(category.id.value)
+                CategoryChip(
+                    label = category.displayName,
+                    selected = selected == target,
+                    onClick = { onSelect(target) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EarmarkSubLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = FinTrackTheme.colors.textSecondary,
+    )
 }
