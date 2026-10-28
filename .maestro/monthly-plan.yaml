@@ -28,7 +28,7 @@ tags:
     direction: DOWN
 
 # Limits section lists the categories. (Not editing a limit here: with the soft keyboard up the
-# budget sheet's Save sits below the keyboard and the sheet doesn't scroll, and hideKeyboard is
+# limit sheet's Save sits below the keyboard and the sheet doesn't scroll, and hideKeyboard is
 # unsafe on ATD images that have no IME.)
 - scrollUntilVisible:
     element: "Limits"
@@ -37,10 +37,10 @@ tags:
     element: "Food"
     direction: DOWN
 - tapOn: "Food"
-- assertVisible: "Set budget for Food"
+- assertVisible: "Set limit for Food"
 - assertVisible: "Monthly limit"
 - back
-- assertNotVisible: "Set budget for Food"
+- assertNotVisible: "Set limit for Food"
 
 # The remaining sections further down the tab.
 - scrollUntilVisible:
