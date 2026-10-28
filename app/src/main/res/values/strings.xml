@@ -694,4 +694,19 @@
     <string name="home_start_step_payday">Set your pay day</string>
     <string name="home_start_step_payday_hint">Auto-record on an income line</string>
     <string name="home_start_step_expense">Record your first expense</string>
+    <string name="salary_setup_title">Salary set-up</string>
+    <string name="salary_setup_step">Step %1$d of %2$d</string>
+    <string name="salary_setup_pay_question">How do you want to enter your salary?</string>
+    <string name="salary_setup_gross">Gross</string>
+    <string name="salary_setup_net">Net</string>
+    <string name="salary_setup_irs_hint">Optional. Social security uses 11%.</string>
+    <string name="salary_setup_subsidies_title">Holiday and Christmas subsidies</string>
+    <string name="salary_setup_twelfths_question">Paid in twelfths with your salary?</string>
+    <string name="salary_setup_yes">Yes</string>
+    <string name="salary_setup_no_lumps">No, as lump sums</string>
+    <string name="salary_setup_summary">Summary</string>
+    <string name="salary_setup_net_per_month">Net per month</string>
+    <string name="salary_setup_later_hint">You can set IRS, social security and extras later in Salary profile.</string>
+    <string name="salary_setup_advanced">Advanced</string>
+    <string name="salary_setup_next">Next</string>
 </resources>

@@ -4,13 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.data.local.IdGenerator
-import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
-import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
@@ -152,11 +150,7 @@ class SalaryProfileViewModel
 
         // Leaves the screen, unless manual monthly lines may now be counted twice: then asks about them first.
         private suspend fun finishSave() {
-            val others =
-                plannedIncome
-                    .observePlannedIncome()
-                    .first()
-                    .filter { !it.isManaged && it.frequency == IncomeFrequency.MONTHLY && it.earmark == null }
+            val others = manualMonthlyLines(plannedIncome)
             if (others.isEmpty()) {
                 events.send(SalaryProfileEvent.Done)
             } else {

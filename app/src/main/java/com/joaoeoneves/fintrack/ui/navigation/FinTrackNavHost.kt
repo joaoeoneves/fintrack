@@ -24,6 +24,7 @@ import com.joaoeoneves.fintrack.ui.plan.PlanScreen
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeEditorScreen
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
+import com.joaoeoneves.fintrack.ui.plan.salary.setup.SalarySetupScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
 import com.joaoeoneves.fintrack.ui.savings.SavingsPlanEditorScreen
@@ -106,7 +107,7 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
 /** Where a "Get started" checklist step leads. */
 private fun routeForStartStep(step: StartStep): Any =
     when (step) {
-        StartStep.SALARY -> PlanIncome()
+        StartStep.SALARY -> SalarySetup
         StartStep.ENVELOPES -> PlanEnvelopes
         StartStep.BILLS -> RecurringList
         StartStep.SAVINGS_PLAN -> EditSavingsPlan()
@@ -149,7 +150,9 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
         composable<PlanIncome> {
             IncomeScreen(
                 onBack = dropUnlessResumed { navController.popBackStack() },
-                onOpenSalaryProfile = { navController.navigate(EditSalaryProfile) },
+                onOpenSalaryProfile = { hasProfile ->
+                    navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
+                },
             )
         }
     }
@@ -205,6 +208,15 @@ private fun NavGraphBuilder.sharedRoutes(
     }
     composable<EditSalaryProfile> {
         SalaryProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
+    }
+    composable<SalarySetup> {
+        SalarySetupScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onDone = dropUnlessResumed { navController.popBackStack() },
+            onOpenAdvanced = {
+                navController.navigate(EditSalaryProfile) { popUpTo<SalarySetup> { inclusive = true } }
+            },
+        )
     }
     composable<AddEditRecurring>(
         enterTransition = { transitions.enterFromBottom() },

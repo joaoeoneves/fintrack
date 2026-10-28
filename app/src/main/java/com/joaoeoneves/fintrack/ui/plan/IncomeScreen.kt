@@ -21,6 +21,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.carnivalWeekdayIn
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
@@ -36,7 +37,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 fun IncomeScreen(
     onBack: () -> Unit,
-    onOpenSalaryProfile: () -> Unit,
+    onOpenSalaryProfile: (hasProfile: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
 ) {
@@ -76,7 +77,7 @@ fun IncomeScreen(
 private fun IncomeContent(
     state: MonthlyPlanUiState.Content,
     viewModel: MonthlyPlanViewModel,
-    onOpenSalaryProfile: () -> Unit,
+    onOpenSalaryProfile: (hasProfile: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editingWorkingDays by remember { mutableStateOf(false) }
@@ -108,7 +109,7 @@ private fun IncomeContent(
                         onAdd = viewModel::onAddIncomeLine,
                         onEdit = viewModel::onEditIncomeLine,
                         onEditWorkingDays = { editingWorkingDays = true },
-                        onOpenSalaryProfile = onOpenSalaryProfile,
+                        onOpenSalaryProfile = { onOpenSalaryProfile(state.incomeLines.any { it.isManaged }) },
                         onReceive = viewModel::onReceive,
                         onUndoReceive = viewModel::onUndoReceive,
                     ),
