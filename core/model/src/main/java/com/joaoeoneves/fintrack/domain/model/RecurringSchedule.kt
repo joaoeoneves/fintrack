@@ -46,7 +46,7 @@ fun RecurringItem.occurrence(index: Int): LocalDate {
 }
 
 /** Index of the last occurrence on or before [date], or -1 when none. Pure index arithmetic. */
-private fun RecurringItem.lastIndexOnOrBefore(date: LocalDate): Int {
+internal fun RecurringItem.lastIndexOnOrBefore(date: LocalDate): Int {
     val months = YearMonth.from(firstScheduled()).until(YearMonth.from(date), ChronoUnit.MONTHS)
     val index = Math.floorDiv(months, stepMonths.toLong()).toInt()
     return when {

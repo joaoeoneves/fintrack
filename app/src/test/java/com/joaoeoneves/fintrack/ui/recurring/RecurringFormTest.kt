@@ -190,4 +190,19 @@ class RecurringFormTest {
         assertEquals(msg(R.string.error_category_required), validateRecurringForm(filled)?.category)
         assertNull(validateRecurringForm(filled.copy(category = BuiltInCategories.FOOD)))
     }
+
+    @Test
+    fun autoPost_defaultsOnForNewItems_andToItemCarriesIt() {
+        val form = newRecurringForm(start, BuiltInCategories.FOOD).copy(name = "Rent", amountText = "5")
+
+        assertTrue(form.autoPost)
+        assertTrue(form.toItem(null).autoPost)
+        assertEquals(false, form.copy(autoPost = false).toItem(null).autoPost)
+    }
+
+    @Test
+    fun toForm_keepsStoredAutoPost_includingOff() {
+        assertEquals(false, recurringItem(autoPost = false).toForm(null, ',').autoPost)
+        assertEquals(true, recurringItem(autoPost = true).toForm(null, ',').autoPost)
+    }
 }

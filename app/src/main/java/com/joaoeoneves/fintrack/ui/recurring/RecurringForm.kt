@@ -33,6 +33,7 @@ data class RecurringForm(
     val dayText: String = "",
     val monthOfYear: Int? = null,
     val endDate: LocalDate? = null,
+    val autoPost: Boolean = true,
 )
 
 /** Per-field validation messages; a `null` field is valid. */
@@ -98,7 +99,7 @@ private val monthRange = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
 /**
  * The item this (already validated) form describes: text trimmed, the category dropped for income,
  * the month dropped for monthly items. Keeps [existing]'s id, handled-through cursor and active
- * flag when editing; a new item is active with a blank id.
+ * flag when editing; a new item is active with a blank id. [autoPost] starts on for a new item.
  */
 fun RecurringForm.toItem(existing: RecurringItem?): RecurringItem =
     RecurringItem(
@@ -115,6 +116,7 @@ fun RecurringForm.toItem(existing: RecurringItem?): RecurringItem =
         endDate = endDate,
         handledThrough = existing?.handledThrough,
         active = existing?.active ?: true,
+        autoPost = autoPost,
     )
 
 /** This item as an editable form; [category] is the item's resolved category (expenses only). */
@@ -133,6 +135,7 @@ fun RecurringItem.toForm(
         dayText = dayOfMonth.toString(),
         monthOfYear = monthOfYear,
         endDate = endDate,
+        autoPost = autoPost,
     )
 
 /**

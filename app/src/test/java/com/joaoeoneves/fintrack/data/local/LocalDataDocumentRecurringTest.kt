@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import android.app.Application
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.decodeFromString
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -32,7 +33,7 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun v2File_isRewrittenAsV10_withRecurring_onNextWrite() =
+    fun v2File_isRewrittenAsV11_withRecurring_onNextWrite() =
         runStoreTest {
             dataFile.writeText(v2File)
             val item = recurringItem(id = "k").toLocal()
@@ -40,7 +41,7 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
             newStore().update { it.copy(recurring = listOf(item)) to Unit }
 
             val onDisk = diskDoc()
-            assertEquals(10, onDisk.schemaVersion)
+            assertEquals(11, onDisk.schemaVersion)
             assertEquals(listOf(item), onDisk.recurring)
             assertEquals(1, onDisk.plannedIncome.size)
         }
@@ -58,4 +59,26 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
 
             assertFalse(newStore().data.first().isEmpty)
         }
+
+    @Test
+    fun autoPost_roundTripsThroughLocalRecord() {
+        val on = recurringItem(id = "a", autoPost = true)
+        val off = recurringItem(id = "b", autoPost = false)
+
+        assertTrue(on.toLocal().toDomainOrNull()!!.autoPost)
+        assertFalse(off.toLocal().toDomainOrNull()!!.autoPost)
+        assertTrue(on.toLocal().autoPost)
+    }
+
+    @Test
+    fun oldJsonWithoutAutoPost_decodesAsOff() {
+        val old =
+            """{"id":"x","type":"EXPENSE","name":"Rent","amountCents":5,"categoryId":"FOOD","frequency":"MONTHLY",""" +
+                """"dayOfMonth":15,"startDate":"2026-01-01","active":true}"""
+
+        val record = json.decodeFromString<LocalRecurringItem>(old)
+
+        assertFalse(record.autoPost)
+        assertFalse(record.toDomainOrNull()!!.autoPost)
+    }
 }
