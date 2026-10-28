@@ -87,7 +87,8 @@ object BackupCodec {
         // 6 -> 7 the plannedIncome earmark fields (absent = none) and 7 -> 8 the salaryProfile and plannedIncome
         // managedKey (absent = none) and 8 -> 9 the goals (absent = empty) and
         // 9 -> 10 salaryProfile extras (absent = migrated from the legacy fields on read) and
-        // 11 -> 12 the automation settings (absent = none).
+        // 11 -> 12 the automation settings (absent = none) and
+        // 12 -> 13 the salary extra amountScope (absent = TOTAL).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)

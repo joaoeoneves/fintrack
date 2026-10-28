@@ -52,7 +52,7 @@ offline-first, and it can be used without an account at all (guest mode).
   allowance for the rest of the month. A yearly view shows all twelve months.
 - Income can be per working day, with Portuguese holidays, days off and a Carnival shortcut. Lines can be
   earmarked for a category or group as a pot.
-- Salary profile (optional): gross or net, subsidy months, youth IRS, meal allowance, and your own extras
+- Salary profile (optional): gross or net, subsidy months, youth IRS, meal allowance, and your own extras (a yearly total or an amount per payment)
   (a fixed amount, a multiple of the base or a share of the annual gross, with the months and deductions
   you choose). Each component gets its own income row: the salary is the net base and the subsidy
   twelfths show under Subsidies.

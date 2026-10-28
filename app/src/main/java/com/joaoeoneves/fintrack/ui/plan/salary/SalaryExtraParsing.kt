@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -37,6 +38,7 @@ internal fun SalaryExtraForm.toExtra(
                 months = months.toSet(),
                 deductions = if (gross) deductions else SalaryExtraDeductions.NONE,
                 feePpm = fee,
+                amountScope = if (months.size > 1) amountScope else SalaryExtraAmountScope.TOTAL,
             )
         } else {
             null
