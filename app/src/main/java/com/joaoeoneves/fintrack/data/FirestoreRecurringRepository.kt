@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // One helper per Firestore mapping step.
+
 package com.joaoeoneves.fintrack.data
 
 import android.util.Log
@@ -27,6 +29,7 @@ import javax.inject.Inject
 
 private const val TAG = "FirestoreRecurringRepo"
 
+@Suppress("TooManyFunctions") // One member per RecurringRepository operation.
 class FirestoreRecurringRepository
     @Inject
     constructor(
@@ -121,6 +124,42 @@ class FirestoreRecurringRepository
             }
         }
 
+        // The FieldValue array API is vararg-only (the arrays hold a handful of dates), hence the spread.
+        @Suppress("SpreadOperator")
+        override suspend fun skipOccurrences(
+            itemId: String,
+            dates: Set<LocalDate>,
+            advanceTo: LocalDate?,
+        ): Result<Unit> = updateSkipped(itemId, FieldValue.arrayUnion(*dates.isoStrings()), advanceTo)
+
+        @Suppress("SpreadOperator")
+        override suspend fun unskipOccurrences(
+            itemId: String,
+            dates: Set<LocalDate>,
+        ): Result<Unit> = updateSkipped(itemId, FieldValue.arrayRemove(*dates.isoStrings()), null)
+
+        private fun updateSkipped(
+            itemId: String,
+            skipped: FieldValue,
+            advanceTo: LocalDate?,
+        ): Result<Unit> {
+            val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
+            return runCatchingCancellable {
+                val changes =
+                    buildMap<String, Any?> {
+                        put("skipped", skipped)
+                        if (advanceTo != null) put("handledThrough", advanceTo.toString())
+                        put("updatedAt", FieldValue.serverTimestamp())
+                    }
+                // Not awaited (see saveRecurring); fails (in the log only) when the item is gone.
+                collection(uid)
+                    .document(itemId)
+                    .update(changes)
+                    .addOnFailureListener { Log.w(TAG, "Update skipped occurrences failed: $itemId", it) }
+                Unit
+            }
+        }
+
         override suspend fun confirmOccurrence(
             itemId: String,
             occurrence: LocalDate,
@@ -148,6 +187,8 @@ class FirestoreRecurringRepository
         private fun <T> notSignedIn(): Result<T> = Result.failure(IllegalStateException("Not signed in"))
     }
 
+private fun Set<LocalDate>.isoStrings(): Array<Any> = sorted().map { it.toString() }.toTypedArray()
+
 private fun handledThroughUpdate(date: LocalDate?): Map<String, Any?> =
     mapOf("handledThrough" to date?.toString(), "updatedAt" to FieldValue.serverTimestamp())
 
@@ -167,6 +208,8 @@ internal fun RecurringItem.toFirestoreMap(): Map<String, Any?> =
         "handledThrough" to handledThrough?.toString(),
         "active" to active,
         "autoPost" to autoPost,
+        "skipped" to skipped.sorted().map { it.toString() },
+        "pausedAt" to pausedAt?.toString(),
         "updatedAt" to FieldValue.serverTimestamp(),
     )
 
@@ -215,6 +258,8 @@ private fun DocumentSnapshot.parseRecurring(): RecurringItem? {
             handledThrough = parseDate("handledThrough"),
             active = checkNotNull(active),
             autoPost = get("autoPost") as? Boolean ?: false,
+            skipped = parseSkipped(),
+            pausedAt = parseDate("pausedAt"),
         )
     val consistent = item.hasValidSchedule && (item.type == RecurringType.INCOME || item.categoryId != null)
     return if (consistent) item else dropped("schedule/category")
@@ -232,6 +277,21 @@ private fun DocumentSnapshot.parseDate(field: String): LocalDate? =
         Log.w(TAG, "Recurring doc $id: unparsable '$field'", e)
         null
     }
+
+/** The skipped dates; an unparsable entry is ignored (logged), not a reason to drop the item. */
+private fun DocumentSnapshot.parseSkipped(): Set<LocalDate> =
+    (get("skipped") as? List<*>)
+        .orEmpty()
+        .mapNotNull { raw ->
+            (raw as? String)?.let {
+                try {
+                    LocalDate.parse(it)
+                } catch (e: DateTimeException) {
+                    Log.w(TAG, "Recurring doc $id: unparsable skipped entry '$it'", e)
+                    null
+                }
+            }
+        }.toSet()
 
 /** A present (non-null) date string that does not parse. */
 private fun DocumentSnapshot.isUnparsableDate(field: String): Boolean {

@@ -19,6 +19,8 @@ import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.model.normalizedMerchantName
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,6 +55,7 @@ class AddEditExpenseViewModel
     constructor(
         private val expenseRepository: ExpenseRepository,
         private val categoryRepository: CategoryRepository,
+        private val deleteTransaction: DeleteTransaction,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditExpense>()
@@ -72,10 +75,10 @@ class AddEditExpenseViewModel
         private val savedEvents = Channel<Unit>(Channel.BUFFERED)
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
 
-        private val deletedEvents = Channel<Expense>(Channel.BUFFERED)
+        private val deletedEvents = Channel<DeletedTransaction>(Channel.BUFFERED)
 
         /** Emits the deleted expense (as loaded) so the screen can offer to undo the deletion. */
-        val deletedEvent: Flow<Expense> = deletedEvents.receiveAsFlow()
+        val deletedEvent: Flow<DeletedTransaction> = deletedEvents.receiveAsFlow()
 
         // The expense as loaded in edit mode, kept so a deletion can be undone.
         private var loaded: Expense? = null
@@ -228,10 +231,9 @@ class AddEditExpenseViewModel
             if (current.form.isSaving || current.form.isDeleting) return
             _uiState.value = AddEditUiState.Ready(current.form.copy(isDeleting = true, saveError = null))
             viewModelScope.launch {
-                expenseRepository
-                    .deleteExpense(expense.id)
+                deleteTransaction(expense)
                     .onSuccess {
-                        deletedEvents.send(expense)
+                        deletedEvents.send(it)
                     }.onFailure { e ->
                         Log.w(TAG, "Failed to delete expense", e)
                         updateForm {

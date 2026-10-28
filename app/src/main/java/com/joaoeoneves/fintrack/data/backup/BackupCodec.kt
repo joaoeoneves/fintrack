@@ -90,6 +90,7 @@ object BackupCodec {
         // 11 -> 12 the automation settings (absent = none) and
         // 12 -> 13 the salary extra amountScope (absent = TOTAL) and
         // 15 -> 16 plannedIncome autoRecord/payDay and automation lineThrough (absent = off / last working day / none).
+        // 16 -> 17 recurring skipped/pausedAt (absent = empty / none).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)

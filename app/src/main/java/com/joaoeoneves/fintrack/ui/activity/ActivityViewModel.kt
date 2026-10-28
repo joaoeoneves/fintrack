@@ -8,11 +8,8 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
-import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
@@ -21,8 +18,8 @@ import com.joaoeoneves.fintrack.domain.model.netCents
 import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
-import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
-import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
@@ -87,8 +84,7 @@ class ActivityViewModel
     constructor(
         private val observePeriodOverview: ObservePeriodOverview,
         categoryRepository: CategoryRepository,
-        private val expenseRepository: ExpenseRepository,
-        private val incomeRepository: IncomeRepository,
+        private val deleteTransaction: DeleteTransaction,
         private val savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
@@ -140,8 +136,8 @@ class ActivityViewModel
             )
         val envelopeFilter: StateFlow<String?> = selectedEnvelope.asStateFlow()
 
-        private val undoEvents = Channel<Transaction>(Channel.BUFFERED)
-        val undoEvent: Flow<Transaction> = undoEvents.receiveAsFlow()
+        private val undoEvents = Channel<DeletedTransaction>(Channel.BUFFERED)
+        val undoEvent: Flow<DeletedTransaction> = undoEvents.receiveAsFlow()
 
         /** The full category catalog (archived included), for the filter chips and labels. */
         val categories: StateFlow<List<Category>> =
@@ -244,25 +240,13 @@ class ActivityViewModel
             viewModelScope.launch {
                 val transaction =
                     (uiState.value as? ActivityUiState.Content)?.items?.find { it.id == id } ?: return@launch
-                val result =
-                    when (transaction) {
-                        is Expense -> expenseRepository.deleteExpense(transaction.id)
-                        is Income -> incomeRepository.deleteIncome(transaction.id)
-                    }
-                if (result.isSuccess) {
-                    undoEvents.send(transaction)
-                }
+                deleteTransaction(transaction).onSuccess { undoEvents.send(it) }
             }
         }
 
-        /** Re-adds a deleted [transaction] under its original id. */
-        fun onUndoDelete(transaction: Transaction) {
-            viewModelScope.launch {
-                when (transaction) {
-                    is Expense -> expenseRepository.addExpense(transaction)
-                    is Income -> incomeRepository.addIncome(transaction)
-                }
-            }
+        /** Restores the [deleted] transaction under its original id (and un-skips the occurrence it skipped). */
+        fun onUndoDelete(deleted: DeletedTransaction) {
+            viewModelScope.launch { deleteTransaction.undo(deleted) }
         }
 
         private companion object {

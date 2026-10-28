@@ -30,6 +30,17 @@ class SessionRecurringRepository
 
         override suspend fun deleteRecurring(id: String): Result<Unit> = switch.call { it.deleteRecurring(id) }
 
+        override suspend fun skipOccurrences(
+            itemId: String,
+            dates: Set<LocalDate>,
+            advanceTo: LocalDate?,
+        ): Result<Unit> = switch.call { it.skipOccurrences(itemId, dates, advanceTo) }
+
+        override suspend fun unskipOccurrences(
+            itemId: String,
+            dates: Set<LocalDate>,
+        ): Result<Unit> = switch.call { it.unskipOccurrences(itemId, dates) }
+
         override suspend fun moveRecurringCategory(
             source: CategoryId,
             target: CategoryId,

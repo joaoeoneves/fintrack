@@ -121,6 +121,7 @@
     <string name="activity_type_all">Tudo</string>
     <string name="activity_search_label">Pesquisar</string>
     <string name="activity_deleted_snackbar">Eliminado \"%1$s\"</string>
+    <string name="activity_deleted_occurrence_snackbar">Eliminado. «%1$s» de %2$s fica ignorado.</string>
     <string name="activity_no_match">Nada corresponde a \"%1$s\".</string>
     <string name="activity_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
     <string name="activity_empty">Ainda não há movimentos neste período.</string>
