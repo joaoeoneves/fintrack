@@ -12,6 +12,7 @@ import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
+import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -32,15 +33,18 @@ data class PlanBackupData(
     val salaryProfile: SalaryProfile? = null,
     val goals: List<SavingsGoal> = emptyList(),
     val automation: AutomationSettings = AutomationSettings(),
+    /** The name given to the placeholder of a category a record references but that no longer exists. */
+    val deletedCategoryName: String = PLACEHOLDER_CATEGORY_NAME,
 )
 
-/** The salary profile, goal and automation repositories, bundled for detekt's LongParameterList. */
+/** The salary profile, goal and automation repositories (and default names), bundled for detekt's LongParameterList. */
 class PlanSingletonSources
     @Inject
     constructor(
         val salaryProfile: SalaryProfileRepository,
         val goals: GoalRepository,
         val automation: AutomationSettingsRepository,
+        val names: LegacyExtraNamesProvider,
     )
 
 /** Reads the plan data (budgets, planned income, recurring) of the current session for a backup. */
@@ -64,5 +68,6 @@ class PlanBackupSource
                 salaryProfile = singletons.salaryProfile.observeSalaryProfile().first(),
                 goals = singletons.goals.observeGoals().first(),
                 automation = singletons.automation.observeAutomationSettings().first(),
+                deletedCategoryName = singletons.names.names().deletedCategory,
             )
     }

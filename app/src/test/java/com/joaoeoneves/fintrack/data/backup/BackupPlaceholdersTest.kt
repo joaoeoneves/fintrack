@@ -94,3 +94,24 @@ class BackupPlaceholdersTest {
         assertEquals(listOf("gym", "gone"), result.map { it.id })
     }
 }
+
+class BackupPlaceholderNamingTest {
+    @Test
+    fun namingPlaceholders_renamesOnlyTheAppendedOnes() {
+        val stored = listOf(backupCategory("gym"))
+        val expenses = listOf(backupExpense(categoryId = "gone"))
+        val withPlaceholder = withPlaceholderCategories(stored, expenses, emptyList(), 0)
+
+        val named = withPlaceholder.namingPlaceholders(stored.size, "Categoria apagada")
+
+        assertEquals(listOf(stored.single().name, "Categoria apagada"), named.map { it.name })
+        assertEquals(withPlaceholder.map { it.id }, named.map { it.id })
+    }
+
+    @Test
+    fun namingPlaceholders_withNoPlaceholders_changesNothing() {
+        val stored = listOf(backupCategory("gym"))
+
+        assertEquals(stored, stored.namingPlaceholders(stored.size, "X"))
+    }
+}

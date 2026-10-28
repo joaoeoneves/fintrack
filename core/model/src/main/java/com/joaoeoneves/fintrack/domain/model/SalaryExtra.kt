@@ -84,11 +84,15 @@ fun parseManagedExtraKey(key: String): Pair<String, Int>? {
     return if (valid) id to month else null
 }
 
-/** The fixed English names given to the extras migrated from the legacy fields; the app passes localized ones. */
+/**
+ * The fixed English names written into stored data when the user supplied none (the extras migrated from the legacy
+ * fields, the placeholder of a deleted category kept by a restore); the app passes localized ones.
+ */
 data class LegacyExtraNames(
     val flex: String = "Flexible benefits",
     val profitShare: String = "Profit share",
     val bonus: String = "Bonus",
+    val deletedCategory: String = "Deleted category",
 )
 
 const val LEGACY_FLEX_ID = "flex"

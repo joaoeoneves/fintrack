@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
@@ -62,7 +63,13 @@ class UpcomingRecurringExpectedIncomeTest {
             ObserveUpcomingRecurring(recurring),
             ObserveExpectedIncome(plannedIncome, months, incomes),
             HandleRecurringOccurrence(recurring, FakeCategoryRepository()),
-            RecordPayday(plannedIncome, months, incomes, FakeAutomationSettingsRepository()),
+            RecordPayday(
+                plannedIncome,
+                months,
+                incomes,
+                FakeAutomationSettingsRepository(),
+                FakeSalaryLineLabelsProvider(),
+            ),
             clock,
         )
     }

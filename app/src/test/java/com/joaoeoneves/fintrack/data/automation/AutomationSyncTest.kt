@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -52,7 +53,7 @@ class AutomationSyncTest {
             FakeIncomeRepository(),
         ),
         PaydayData(automation, plan, repo),
-        RecordPayday(plan, FakeMonthSettingsRepository(), income, automation),
+        RecordPayday(plan, FakeMonthSettingsRepository(), income, automation, FakeSalaryLineLabelsProvider()),
         clock,
         backgroundScope,
     )
@@ -159,7 +160,7 @@ class AutomationSyncTest {
                         FakeIncomeRepository(),
                     ),
                     PaydayData(disabled, plan, repo),
-                    RecordPayday(plan, FakeMonthSettingsRepository(), income, disabled),
+                    RecordPayday(plan, FakeMonthSettingsRepository(), income, disabled, FakeSalaryLineLabelsProvider()),
                     clock,
                     backgroundScope,
                 )
