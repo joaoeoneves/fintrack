@@ -93,12 +93,40 @@ class HandleRecurringOccurrenceTest {
         }
 
     @Test
-    fun skip_advancesOnlyTheCursor() =
+    fun skip_recordsTheOccurrence_andAdvancesTheCursor() =
         runBlocking {
             assertTrue(useCase.skip("r1", march15).isSuccess)
 
             assertEquals(march15, cursor())
+            assertEquals(setOf(march15), repo.items.single().skipped)
             assertTrue(repo.confirmedTransactions.isEmpty())
+        }
+
+    @Test
+    fun skip_alreadySkipped_isNoOp() =
+        runBlocking {
+            repo.setItems(listOf(item.copy(skipped = setOf(march15))))
+
+            assertTrue(useCase.skip("r1", march15).isSuccess)
+
+            assertEquals(day(2026, 2, 15), cursor())
+            assertTrue(repo.calls.isEmpty())
+        }
+
+    @Test
+    fun skip_failure_changesNothing() =
+        runBlocking {
+            repo.nextSkipError = IllegalStateException("offline")
+
+            assertTrue(useCase.skip("r1", march15).isFailure)
+
+            assertTrue(
+                repo.items
+                    .single()
+                    .skipped
+                    .isEmpty(),
+            )
+            assertEquals(day(2026, 2, 15), cursor())
         }
 
     @Test
@@ -108,6 +136,12 @@ class HandleRecurringOccurrenceTest {
             assertTrue(useCase.skip("r1", day(2026, 1, 15)).isSuccess)
 
             assertEquals(day(2026, 2, 15), cursor())
+            assertTrue(
+                repo.items
+                    .single()
+                    .skipped
+                    .isEmpty(),
+            )
         }
 
     @Test
@@ -118,7 +152,7 @@ class HandleRecurringOccurrenceTest {
             assertSame(boom, useCase.confirm("r1", march15, today, zone).exceptionOrNull())
             assertEquals(day(2026, 2, 15), cursor())
 
-            repo.nextSetHandledError = CancellationException("cancelled")
+            repo.nextSkipError = CancellationException("cancelled")
             assertThrows(CancellationException::class.java) { runBlocking { useCase.skip("r1", march15) } }
             Unit
         }

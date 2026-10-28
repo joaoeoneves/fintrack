@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -27,11 +29,9 @@ import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
-import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
-import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -133,14 +133,6 @@ private fun RecurringItems(
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding)) {
         item(key = "totals") { RecurringTotals(state) }
-        item(key = "income-hint") {
-            SettingsRow(
-                title = stringResource(R.string.recurring_income_hint),
-                onClick = actions.onOpenIncome,
-                showChevron = true,
-            )
-            Hairline()
-        }
         if (state.active.isEmpty() && state.inactive.isEmpty()) {
             item(key = "empty") {
                 Text(
@@ -158,6 +150,17 @@ private fun RecurringItems(
         if (state.inactive.isNotEmpty()) {
             item(key = "inactive-header") { SectionHeader(R.string.recurring_section_inactive) }
             items(state.inactive, key = { it.item.id }) { RecurringRowItem(it, actions, motionAnimateItem()) }
+        }
+        item(key = "income-hint") {
+            Text(
+                text = stringResource(R.string.recurring_income_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+                modifier =
+                    Modifier
+                        .clickable(role = Role.Button, onClick = actions.onOpenIncome)
+                        .padding(vertical = Dimens.Space16),
+            )
         }
     }
 }

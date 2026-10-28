@@ -158,6 +158,29 @@ class SavingsPlanWriterTest {
         }
 
     @Test
+    fun revival_clearsPausedAt() =
+        runTest {
+            val inactive = savingsItem(active = false).copy(pausedAt = LocalDate.of(2026, 2, 1))
+            seed(item = inactive)
+
+            writer.save(draft, stored(itemValue = inactive), today).getOrThrow()
+
+            assertNull(itemRepo.items.single().pausedAt)
+        }
+
+    @Test
+    fun plainEdit_keepsSkippedAndPausedAt() =
+        runTest {
+            val skipped = setOf(LocalDate.of(2026, 2, 7))
+            val item = savingsItem().copy(skipped = skipped)
+            seed(item = item)
+
+            writer.save(draft, stored(itemValue = item), today).getOrThrow()
+
+            assertEquals(skipped, itemRepo.items.single().skipped)
+        }
+
+    @Test
     fun readdedMonthly_reactivatesWithStartDateToday() =
         runTest {
             val inactive = savingsItem(active = false, end = LocalDate.of(2026, 3, 1))

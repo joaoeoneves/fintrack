@@ -105,11 +105,13 @@ fun ExpectedIncomeCard(
     val receipts = model.receipts
     var undoing by remember { mutableStateOf<IncomeRow?>(null) }
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
-        Text(
-            text = stringResource(R.string.plan_payday, rememberPaydayText(receipts.payday)),
-            style = MaterialTheme.typography.bodySmall,
-            color = FinTrackTheme.colors.textSecondary,
-        )
+        receipts.payday?.let { payday ->
+            Text(
+                text = stringResource(R.string.plan_payday, rememberPaydayText(payday)),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+        }
         SettingsRow(
             title = stringResource(R.string.plan_salary_profile_row),
             onClick = actions.onOpenSalaryProfile,

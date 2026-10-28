@@ -61,7 +61,7 @@ fun AddEditExpenseScreen(
     FormScaffold(
         title = stringResource(if (viewModel.isEditRoute) R.string.expense_edit_title else R.string.action_add_expense),
         onCancel = onCancel,
-        saveEnabled = readyForm != null && readyForm.isValid && !readyForm.isBusy,
+        saveEnabled = readyForm != null && !readyForm.isBusy,
         onSave = viewModel::onSave,
         showSave = readyForm != null,
         modifier = modifier,

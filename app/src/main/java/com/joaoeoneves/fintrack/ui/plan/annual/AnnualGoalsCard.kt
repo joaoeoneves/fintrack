@@ -53,16 +53,22 @@ private fun AnnualGoalRow(row: AnnualGoal) {
             )
             Text(
                 text =
-                    stringResource(
-                        R.string.annual_goal_planned_of_target,
-                        formatAmountCents(row.plannedCents),
-                        formatAmountCents(row.goal.targetCents),
-                    ),
+                    if (row.goal.targetCents > 0L) {
+                        stringResource(
+                            R.string.annual_goal_planned_of_target,
+                            formatAmountCents(row.plannedCents),
+                            formatAmountCents(row.goal.targetCents),
+                        )
+                    } else {
+                        stringResource(R.string.annual_goal_planned, formatAmountCents(row.plannedCents))
+                    },
                 style = Amount,
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        ThinProgressBar(progress = row.fraction(), isOver = false, modifier = Modifier.padding(top = Dimens.Space8))
+        if (row.goal.targetCents > 0L) {
+            ThinProgressBar(progress = row.fraction(), isOver = false, modifier = Modifier.padding(top = Dimens.Space8))
+        }
     }
 }
 

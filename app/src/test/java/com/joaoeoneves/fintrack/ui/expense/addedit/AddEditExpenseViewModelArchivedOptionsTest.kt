@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.userCategory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,6 +50,7 @@ class AddEditExpenseViewModelArchivedOptionsTest {
                 AddEditExpenseViewModel(
                     FakeExpenseRepository(listOf(expenseIn(archived))),
                     FakeCategoryRepository(listOf(archived)),
+                    deleteTransactionFor(),
                     SavedStateHandle(mapOf("expenseId" to "e1")),
                 )
             backgroundScope.launch { vm.categoryOptions.collect {} }
@@ -70,6 +72,7 @@ class AddEditExpenseViewModelArchivedOptionsTest {
                 AddEditExpenseViewModel(
                     FakeExpenseRepository(),
                     FakeCategoryRepository(listOf(archived)),
+                    deleteTransactionFor(),
                     SavedStateHandle(),
                 )
             backgroundScope.launch { vm.categoryOptions.collect {} }

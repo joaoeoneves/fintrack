@@ -4,7 +4,7 @@ appId: com.joaoeoneves.fintrack
 # Run locally on a ~1080x2400 emulator with SystemUI demo mode on (clock 12:00, full battery, wifi,
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
-# Captures: home, activity (summary expanded), plan, plan-income, savings, add-expense.
+# Captures: home, activity (summary header, unscrolled), plan, plan-income, savings, add-expense.
 # Money inputs are cash-register style: digits only ("6420" = 64.20). `back` closes only the IME when
 # it is up; Save is tapped directly.
 
@@ -180,7 +180,9 @@ appId: com.joaoeoneves.fintrack
     visible: "Holiday fund"
     timeout: 10000
 
-# --- Income + expenses (Home's floating add pill) ---
+# Rent is already booked by the Bills entry above, so it is not added again as an expense.
+# --- Income + expenses, spread over different earlier days of the month (the date picker in the form)
+# so the Home balance chart has a real shape. Today is never used; days 1..25 exist in any month.
 - tapOn:
     id: "nav_home"
 - extendedWaitUntil:
@@ -192,6 +194,12 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Source"
 - inputText: "Freelance"
 - back
+- scrollUntilVisible:
+    element: "Date"
+- tapOn: "Date"
+- tapOn:
+    text: "\\w+, \\w+ 1, 20\\d\\d"
+- tapOn: "OK"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
@@ -203,6 +211,12 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Groceries"
 - back
 - tapOn: "Food"
+- scrollUntilVisible:
+    element: "Date"
+- tapOn: "Date"
+- tapOn:
+    text: "\\w+, \\w+ 5, 20\\d\\d"
+- tapOn: "OK"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
@@ -214,6 +228,29 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Cinema"
 - back
 - tapOn: "Shopping"
+- scrollUntilVisible:
+    element: "Date"
+- tapOn: "Date"
+- tapOn:
+    text: "\\w+, \\w+ 8, 20\\d\\d"
+- tapOn: "OK"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+- tapOn: "Add expense"
+- inputText: "5130"
+- tapOn: "Name"
+- inputText: "Groceries"
+- back
+- tapOn: "Food"
+- scrollUntilVisible:
+    element: "Date"
+- tapOn: "Date"
+- tapOn:
+    text: "\\w+, \\w+ 12, 20\\d\\d"
+- tapOn: "OK"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
@@ -225,6 +262,29 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Lunch"
 - back
 - tapOn: "Food"
+- scrollUntilVisible:
+    element: "Date"
+- tapOn: "Date"
+- tapOn:
+    text: "\\w+, \\w+ 19, 20\\d\\d"
+- tapOn: "OK"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+- tapOn: "Add expense"
+- inputText: "3600"
+- tapOn: "Name"
+- inputText: "Dinner out"
+- back
+- tapOn: "Food"
+- scrollUntilVisible:
+    element: "Date"
+- tapOn: "Date"
+- tapOn:
+    text: "\\w+, \\w+ 24, 20\\d\\d"
+- tapOn: "OK"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
@@ -244,12 +304,8 @@ appId: com.joaoeoneves.fintrack
     visible:
       id: "activity_list"
     timeout: 10000
-- scrollUntilVisible:
-    element: "Show breakdown"
-- tapOn: "Show breakdown"
-- scrollUntilVisible:
-    element: "Spent"
-    direction: UP
+# Unscrolled: the summary header (Spent, Fixed vs variable) is fully visible; the add pill only overlaps
+# the category chip row, never a transaction row.
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/activity
 - tapOn:

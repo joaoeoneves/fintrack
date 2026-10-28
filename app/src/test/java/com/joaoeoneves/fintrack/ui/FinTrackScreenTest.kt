@@ -101,7 +101,8 @@ class FinTrackScreenTest {
         awaitNode(hasText(str(R.string.action_save)) and hasClickAction()).performClick()
 
         // The form's own name field also shows the text until it closes, so wait for the list row.
-        awaitRow().performClick()
+        // The new row can sit under the floating add pill until it is scrolled into the clear area.
+        awaitRow().performScrollTo().performClick()
         awaitNode(hasText(str(R.string.action_delete)) and hasClickAction())
             .performScrollTo()
             .performClick()

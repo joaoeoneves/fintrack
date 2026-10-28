@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.activity
 
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 
@@ -8,8 +9,8 @@ import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 data class ActivityCallbacks(
     val onOpenExpense: (String) -> Unit,
     val onOpenIncome: (String) -> Unit,
-    val onAddExpense: () -> Unit,
-    val onAddIncome: () -> Unit,
+    val onAddExpense: (Period) -> Unit,
+    val onAddIncome: (Period) -> Unit,
     val onOpenSettings: () -> Unit,
 )
 

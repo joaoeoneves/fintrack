@@ -23,10 +23,11 @@ sealed interface DashboardUiState {
      * @property income every income entry in the period; with [expenses] and [range] it feeds the balance chart.
      * @property range the instant range [period] covers.
      * @property outflowCents everything that left in the period, i.e. [spendingCents] + [savedCents].
-     * @property netCents income minus all outflow (spending and saving alike).
+     * @property netCents income minus spending (saving is not subtracted).
      * @property plan the monthly plan evaluated for [budgetMonth].
      * @property recent the latest expenses and income merged, newest first, at most [RECENT_ITEMS_LIMIT].
      * @property dailyAllowance what can be spent per remaining day; only for the current month.
+     * @property chartExpenses [expenses] without the saving-kind ones: the balance chart ends at [netCents].
      * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
      * @property envelopes the month's envelopes and free money; `null` falls back to the plain plan.
      * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
@@ -49,6 +50,7 @@ sealed interface DashboardUiState {
         val plan: MonthlyPlanSummary,
         val dailyAllowance: DailyAllowance?,
         val fixedSpendingCents: Long = 0L,
+        val chartExpenses: List<Expense> = expenses,
         val envelopes: EnvelopesSummary? = null,
     ) : DashboardUiState {
         /** What is free to spend: the envelopes' free money (the plan's safe-to-spend without envelopes). */

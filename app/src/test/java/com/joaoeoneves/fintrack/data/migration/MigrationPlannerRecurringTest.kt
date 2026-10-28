@@ -90,4 +90,19 @@ class MigrationPlannerRecurringTest {
 
         assertEquals(3, planMigration(local, remoteSnapshot()).total)
     }
+
+    @Test
+    fun skippedAndPausedAt_surviveTheCategoryRemap() {
+        val item = localRecurring("r1", "gym").copy(skipped = listOf("2026-02-15"), pausedAt = "2026-03-01")
+
+        val plan =
+            planMigration(
+                localDoc(categories = listOf(localCategory("gym", "Gym")), recurring = listOf(item)),
+                remoteSnapshot(categories = listOf(userCategory("acct-gym", "gym"))),
+            )
+
+        assertEquals("acct-gym", plan.recurring.single().categoryId)
+        assertEquals(listOf("2026-02-15"), plan.recurring.single().skipped)
+        assertEquals("2026-03-01", plan.recurring.single().pausedAt)
+    }
 }

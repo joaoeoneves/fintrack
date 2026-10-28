@@ -109,8 +109,8 @@ fun DashboardScreen(
             if (content != null) {
                 AddTransactionPill(
                     visible = pill.visible,
-                    onAddExpense = callbacks.onAddExpense,
-                    onAddIncome = callbacks.onAddIncome,
+                    onAddExpense = { callbacks.onAddExpense(content.period) },
+                    onAddIncome = { callbacks.onAddIncome(content.period) },
                 )
             }
         },
@@ -286,8 +286,8 @@ private fun DashboardContent(
 ) {
     val zone = remember { ZoneId.systemDefault() }
     val series =
-        remember(state.expenses, state.income, state.range) {
-            dailyNetSeries(state.expenses, state.income, state.range, zone, LocalDate.now(zone))
+        remember(state.chartExpenses, state.income, state.range) {
+            dailyNetSeries(state.chartExpenses, state.income, state.range, zone, LocalDate.now(zone))
         }
     var scrubbedIndex by remember(series) { mutableStateOf<Int?>(null) }
     val chart =
@@ -313,7 +313,7 @@ private fun DashboardContent(
                 .nestedScroll(pill.connection)
                 .testTag(TestTags.DASHBOARD_LIST),
         contentPadding =
-            PaddingValues(bottom = Dimens.FloatingBarBottomPadding + contentPadding.calculateBottomPadding()),
+            PaddingValues(bottom = Dimens.AddPillClearance + contentPadding.calculateBottomPadding()),
     ) {
         balanceItems(state = state, chart = chart, start = actions.start)
         planItems(state = state, actions = actions, callbacks = callbacks)
@@ -382,7 +382,7 @@ private fun LazyListScope.planItems(
 ) {
     item(key = "safe_to_spend") {
         ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            SafeToSpendSection(state = state, onOpenMonthlyPlan = callbacks.onOpenPlan)
+            SafeToSpendSection(state = state, onOpenMonthlyPlan = { callbacks.onOpenPlan(state.period) })
         }
     }
     item(key = "upcoming") {

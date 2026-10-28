@@ -23,14 +23,14 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
-import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.common.rememberDeletedMessage
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
@@ -77,7 +77,7 @@ fun ActivityScreen(
                         state = state,
                         query = query,
                         categories = categories,
-                        actions = viewModel.activityActions(callbacks),
+                        actions = viewModel.activityActions(callbacks, state.period),
                         contentPadding = innerPadding,
                     )
                 }
@@ -100,29 +100,25 @@ private fun DeletedSnackbar(
     snackbarHostState: SnackbarHostState,
 ) {
     val undoLabel = stringResource(R.string.action_undo)
-    val deletedTemplate = stringResource(R.string.activity_deleted_snackbar)
-    val locale = currentLocale()
+    val deletedMessage = rememberDeletedMessage()
     LaunchedEffect(Unit) {
-        viewModel.undoEvent.collect { transaction ->
+        viewModel.undoEvent.collect { deleted ->
             val result =
                 snackbarHostState.showSnackbar(
-                    message = String.format(locale, deletedTemplate, transaction.title()),
+                    message = deletedMessage(deleted),
                     actionLabel = undoLabel,
                 )
             if (result == SnackbarResult.ActionPerformed) {
-                viewModel.onUndoDelete(transaction)
+                viewModel.onUndoDelete(deleted)
             }
         }
     }
 }
 
-private fun Transaction.title(): String =
-    when (this) {
-        is Expense -> name
-        is Income -> source
-    }
-
-private fun ActivityViewModel.activityActions(callbacks: ActivityCallbacks): ActivityActions =
+private fun ActivityViewModel.activityActions(
+    callbacks: ActivityCallbacks,
+    period: Period,
+): ActivityActions =
     ActivityActions(
         period = periodActions,
         onTypeSelected = ::onTypeSelected,
@@ -137,8 +133,8 @@ private fun ActivityViewModel.activityActions(callbacks: ActivityCallbacks): Act
             }
         },
         onDelete = ::onDelete,
-        onAddExpense = callbacks.onAddExpense,
-        onAddIncome = callbacks.onAddIncome,
+        onAddExpense = { callbacks.onAddExpense(period) },
+        onAddIncome = { callbacks.onAddIncome(period) },
     )
 
 @Composable
@@ -157,7 +153,7 @@ private fun ActivityContent(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().nestedScroll(pill.connection).testTag(TestTags.ACTIVITY_LIST),
-            contentPadding = PaddingValues(bottom = Dimens.FloatingBarBottomPadding),
+            contentPadding = PaddingValues(bottom = Dimens.AddPillClearance),
         ) {
             activityHeaderItems(state = state, query = query, categories = categories, actions = actions)
             activityRowItems(state = state, actions = actions)
@@ -166,7 +162,7 @@ private fun ActivityContent(
             visible = pill.visible,
             onAddExpense = actions.onAddExpense,
             onAddIncome = actions.onAddIncome,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Dimens.Space16),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Dimens.AddPillBottomMargin),
         )
     }
 }

@@ -14,6 +14,7 @@ import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
 import com.joaoeoneves.fintrack.ui.activity.ActivityScreen
+import com.joaoeoneves.fintrack.ui.common.newTransactionArg
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
@@ -66,13 +67,17 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
             DashboardScreen(
                 callbacks =
                     DashboardCallbacks(
-                        onAddExpense = { navController.navigate(AddEditExpense()) },
-                        onAddIncome = { navController.navigate(AddEditIncome()) },
+                        onAddExpense = { period ->
+                            navController.navigate(AddEditExpense(period = period.newTransactionArg()))
+                        },
+                        onAddIncome = { period ->
+                            navController.navigate(AddEditIncome(period = period.newTransactionArg()))
+                        },
                         onOpenSettings = { navController.navigate(Settings) },
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
                         onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
-                        onOpenPlan = { navController.navigateToTab(TopLevelTab.PLAN) },
+                        onOpenPlan = { period -> navController.navigateToTabWith(PlanHome(period.encode())) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
                     ),
@@ -100,8 +105,12 @@ private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
                     ActivityCallbacks(
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
-                        onAddExpense = { navController.navigate(AddEditExpense()) },
-                        onAddIncome = { navController.navigate(AddEditIncome()) },
+                        onAddExpense = { period ->
+                            navController.navigate(AddEditExpense(period = period.newTransactionArg()))
+                        },
+                        onAddIncome = { period ->
+                            navController.navigate(AddEditIncome(period = period.newTransactionArg()))
+                        },
                         onOpenSettings = { navController.navigate(Settings) },
                     ),
             )
@@ -110,7 +119,7 @@ private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
 }
 
 private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
-    navigation<PlanGraph>(startDestination = PlanHome) {
+    navigation<PlanGraph>(startDestination = PlanHome()) {
         composable<PlanHome> {
             PlanScreen(
                 onOpenSettings = { navController.navigate(Settings) },
