@@ -557,6 +557,12 @@
     <string name="salary_extra_value_fixed">Amount per year</string>
     <string name="salary_extra_value_multiple">Multiple of base salary</string>
     <string name="salary_extra_value_percent" formatted="false">Share of annual gross (%)</string>
+    <string name="salary_extra_scope_total">Yearly total</string>
+    <string name="salary_extra_scope_per_payment">Each payment</string>
+    <string name="salary_extra_value_fixed_per_payment">Amount per payment</string>
+    <string name="salary_extra_value_multiple_per_payment">Multiple of base salary per payment</string>
+    <string name="salary_extra_value_percent_per_payment" formatted="false">Share of annual gross per payment (%)</string>
+    <string name="salary_extra_per_payment_and_year">%1$s per payment · %2$s/year</string>
     <string name="salary_extra_months">Paid in</string>
     <string name="salary_extra_deductions">Deductions</string>
     <string name="salary_extra_deductions_none">None</string>

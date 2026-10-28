@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- A salary extra paid in several months can now be a yearly total (split over the months) or an amount per
+  payment (paid in each month).
+
 ## [2.3] - 2026-10-28
 
 ### Added

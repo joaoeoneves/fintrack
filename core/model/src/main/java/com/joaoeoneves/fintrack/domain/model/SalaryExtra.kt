@@ -15,9 +15,19 @@ enum class SalaryExtraAmountType {
 /** The tax taken from a gross [SalaryExtra] before it is paid. */
 enum class SalaryExtraDeductions { NONE, IRS, IRS_SS }
 
+/** Whether a [SalaryExtra.amount] is the year's total or the amount of each payment. */
+enum class SalaryExtraAmountScope {
+    /** The year's total, split over the months. */
+    TOTAL,
+
+    /** Paid in each selected month. */
+    PER_PAYMENT,
+}
+
 /**
  * A user-defined yearly extra (bonus, profit share, flexible benefits...) added to the salary profile. The total
- * for the year is split equally over [months]. [amount] is cents for FIXED_CENTS and ppm otherwise; [feePpm] is a
+ * for the year is split equally over [months], or with [amountScope] PER_PAYMENT [amount] is paid in each month.
+ * [amount] is cents for FIXED_CENTS and ppm otherwise; [feePpm] is a
  * withdrawal fee taken after [deductions]. In NET mode only FIXED_CENTS extras count, as already-net amounts.
  */
 data class SalaryExtra(
@@ -28,6 +38,7 @@ data class SalaryExtra(
     val months: Set<Int>,
     val deductions: SalaryExtraDeductions = SalaryExtraDeductions.NONE,
     val feePpm: Int = 0,
+    val amountScope: SalaryExtraAmountScope = SalaryExtraAmountScope.TOTAL,
 )
 
 const val MAX_SALARY_EXTRAS = 10

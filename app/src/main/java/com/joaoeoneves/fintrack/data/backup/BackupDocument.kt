@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 const val BACKUP_FORMAT = "fintrack-backup"
 
 /** Version written into [BackupDocument.schemaVersion]; a file with a higher one is refused. */
-const val BACKUP_SCHEMA_VERSION = 12
+const val BACKUP_SCHEMA_VERSION = 13
 
 /**
  * A portable JSON backup of one data set (works from both guest and signed-in mode). The record

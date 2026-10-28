@@ -45,6 +45,7 @@ internal fun SalaryExtra.toExtraForm(decimalSeparator: Char): SalaryExtraForm =
             },
         months = months.sorted(),
         deductions = deductions,
+        amountScope = amountScope,
         feeText = feePpm.takeIf { it > 0 }?.let { formatScaled(it, PERCENT_SCALE, decimalSeparator) }.orEmpty(),
     )
 

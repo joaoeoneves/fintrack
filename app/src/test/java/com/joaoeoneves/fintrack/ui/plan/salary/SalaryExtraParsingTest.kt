@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -165,5 +166,25 @@ class SalaryExtraParsingTest {
                 .toForm('.')
                 .extras,
         )
+    }
+
+    @Test
+    fun perPaymentScope_isKeptOnlyWithSeveralMonths() {
+        val several = form(months = listOf(2, 8)).copy(amountScope = SalaryExtraAmountScope.PER_PAYMENT)
+        val single = form(months = listOf(2)).copy(amountScope = SalaryExtraAmountScope.PER_PAYMENT)
+
+        assertEquals(SalaryExtraAmountScope.PER_PAYMENT, several.toExtra("a", gross).first?.amountScope)
+        assertEquals(SalaryExtraAmountScope.TOTAL, single.toExtra("a", gross).first?.amountScope)
+        assertEquals(SalaryExtraAmountScope.PER_PAYMENT, several.toExtra("a", net).first?.amountScope)
+    }
+
+    @Test
+    fun scope_roundTripsThroughTheForm() {
+        val scope = SalaryExtraAmountScope.PER_PAYMENT
+        val extra =
+            SalaryExtra("a", "B", SalaryExtraAmountType.FIXED_CENTS, 500, setOf(1, 2), amountScope = scope)
+
+        assertEquals(SalaryExtraAmountScope.PER_PAYMENT, extra.toExtraForm(',').amountScope)
+        assertEquals(extra, extra.toExtraForm(',').toExtra("a", gross).first)
     }
 }

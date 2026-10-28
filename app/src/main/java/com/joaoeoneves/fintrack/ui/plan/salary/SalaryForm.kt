@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.DEFAULT_HOLIDAY_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.SPREAD_HALF_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryBreakdown
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -59,6 +60,7 @@ data class SalaryExtraForm(
     val months: List<Int> = emptyList(),
     val deductions: SalaryExtraDeductions = SalaryExtraDeductions.NONE,
     val feeText: String = "",
+    val amountScope: SalaryExtraAmountScope = SalaryExtraAmountScope.TOTAL,
 )
 
 /** The open extra editor: [invalid] holds missing and malformed fields alike (the sheet flags typed ones only). */
