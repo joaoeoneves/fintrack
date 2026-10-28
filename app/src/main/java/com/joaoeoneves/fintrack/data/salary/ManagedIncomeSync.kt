@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.data.salary
 
 import android.util.Log
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
+import com.joaoeoneves.fintrack.data.backup.gatedBy
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.ManagedLinesSync
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -37,18 +39,29 @@ class ManagedIncomeSync
         private val plannedIncome: PlannedIncomeRepository,
         private val incomes: IncomeRepository,
         private val labelsProvider: SalaryLineLabelsProvider,
+        private val gate: RestoreGate,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
         private val started = AtomicBoolean(false)
         private var lastAttempted: ManagedLinesSync? = null
         private var lastIncomeRepair: Set<String>? = null
+        private var lastGeneration = 0
 
         fun start() {
             if (!started.compareAndSet(false, true)) return
             scope.launch {
                 combine(profiles.observeSalaryProfile(), plannedIncome.observePlannedIncome(), ::Pair)
                     .catch { Log.w(TAG, "Failed to observe the salary profile", it) }
-                    .collectLatest { (profile, existing) ->
+                    .gatedBy(gate)
+                    .collectLatest { gated ->
+                        // Paused while a backup is restored (a new emission cancels any pass in flight).
+                        if (gated.restoring) return@collectLatest
+                        if (gated.generation != lastGeneration) {
+                            lastGeneration = gated.generation
+                            lastAttempted = null
+                            lastIncomeRepair = null
+                        }
+                        val (profile, existing) = gated.value
                         repairPaydayIncomes(existing)
                         if (profile == null || existing.none { it.isManaged }) return@collectLatest
                         val labels = labelsProvider.current()

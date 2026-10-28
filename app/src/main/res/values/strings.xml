@@ -683,4 +683,17 @@
     <string name="plan_configure_none_yet">None yet</string>
     <string name="plan_envelopes_empty_cta">Create envelopes to split your money</string>
     <string name="income_title">Income</string>
+    <string name="backup_account_warning_title">Replace your account data?</string>
+    <string name="backup_account_warning_message">Restoring replaces everything in your account, on all your devices, with the file\'s contents. This can\'t be undone.</string>
+    <string name="backup_action_export_first">Export backup first</string>
+    <string name="backup_action_continue">Continue</string>
+    <string name="backup_action_replace">Replace</string>
+    <string name="backup_action_close">Close</string>
+    <string name="backup_restore_account_replace_warning">Your account\'s current data will be deleted and replaced.</string>
+    <string name="backup_restoring_title">Restoring your data</string>
+    <string name="backup_restoring_preparing">Restoring…</string>
+    <string name="backup_restoring_progress">Restoring… %1$d of %2$d</string>
+    <string name="backup_restore_partial_title">Restore incomplete</string>
+    <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish — retrying doesn\'t duplicate anything.</string>
+    <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
 </resources>

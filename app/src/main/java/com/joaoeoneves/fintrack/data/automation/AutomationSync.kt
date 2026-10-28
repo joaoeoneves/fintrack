@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.data.automation
 
 import android.util.Log
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
+import com.joaoeoneves.fintrack.data.backup.gatedBy
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -34,6 +36,7 @@ class PaydayData
         val settings: AutomationSettingsRepository,
         val plannedIncome: PlannedIncomeRepository,
         val recurring: RecurringRepository,
+        val gate: RestoreGate,
     )
 
 /**
@@ -57,6 +60,7 @@ class AutomationSync
         private val started = AtomicBoolean(false)
         private val foregroundTicks = MutableStateFlow(0)
         private var lastAttempted: Attempt? = null
+        private var lastGeneration = 0
 
         /** What a pass was run for: the same value means nothing new to do. */
         private data class Attempt(
@@ -92,7 +96,15 @@ class AutomationSync
                     paydayData.plannedIncome.observePlannedIncome(),
                 ) { current, _, recurring, settings, lines -> Inputs(current, recurring, settings, lines) }
                     .catch { Log.w(TAG, "Failed to observe the automation inputs", it) }
-                    .collectLatest { inputs ->
+                    .gatedBy(paydayData.gate)
+                    .collectLatest { gated ->
+                        // Paused while a backup is restored (a new emission cancels any pass in flight).
+                        if (gated.restoring) return@collectLatest
+                        if (gated.generation != lastGeneration) {
+                            lastGeneration = gated.generation
+                            lastAttempted = null
+                        }
+                        val inputs = gated.value
                         val current = inputs.session
                         if (current !is Session.SignedIn && current != Session.Guest) return@collectLatest
                         val today = LocalDate.now(clock)

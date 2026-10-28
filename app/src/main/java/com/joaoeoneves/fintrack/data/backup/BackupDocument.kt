@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.data.local.LocalAutomation
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
+import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
@@ -92,4 +93,20 @@ fun BackupDocument.counts(): BackupCounts =
         salaryProfile = if (salaryProfile != null) 1 else 0,
         goals = goals.size,
         automation = if (automation != null) 1 else 0,
+    )
+
+/** The data records of this backup as a guest-store document (preferences are not part of it). */
+internal fun BackupDocument.toLocalDataDocument(): LocalDataDocument =
+    LocalDataDocument(
+        expenses = expenses,
+        income = income,
+        budgets = budgets,
+        categories = categories,
+        plannedIncome = plannedIncome,
+        recurring = recurring,
+        monthSettings = monthSettings,
+        categoryGroups = categoryGroups,
+        salaryProfile = salaryProfile,
+        goals = goals,
+        automation = automation,
     )

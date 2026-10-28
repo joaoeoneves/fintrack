@@ -15,7 +15,8 @@ import java.time.Instant
 import javax.inject.Inject
 
 /**
- * Builds backups from the current (session-switched) data and restores them into the guest store.
+ * Builds backups from the current (session-switched) data and restores them into the guest store or the
+ * signed-in account.
  */
 class BackupRepository
     @Inject
@@ -25,7 +26,7 @@ class BackupRepository
         private val planBackupSource: PlanBackupSource,
         private val categoryRepository: CategoryRepository,
         private val preferencesStore: UserPreferencesStore,
-        private val restorer: GuestBackupRestorer,
+        private val restorer: BackupRestorer,
     ) {
         /** Snapshot of the current mode's data plus preferences; works signed in and as a guest. */
         suspend fun buildBackup(exportedAt: Instant): Result<BackupDocument> =
@@ -71,14 +72,17 @@ class BackupRepository
                 )
             }
 
-        /** Whether the guest store currently holds any data (a restore would replace it). */
-        suspend fun localHasData(): Boolean = restorer.localHasData()
+        /** Whether a restore would replace existing data (an account always has some to replace). */
+        suspend fun localHasData(): Boolean = restorer.hasData()
 
         /**
-         * Replaces the guest data with [document] and applies its preferences (unknown preference
-         * names keep the current value). Fails unless the session is a guest.
+         * Replaces the current data (guest store or signed-in account, by session) with [document] and applies its
+         * preferences (unknown preference names keep the current value). [onProgress] reports account progress.
          */
-        suspend fun restoreAsGuest(document: BackupDocument): Result<Unit> = restorer.restore(document)
+        suspend fun restore(
+            document: BackupDocument,
+            onProgress: (written: Int, total: Int) -> Unit = { _, _ -> },
+        ): AccountRestoreResult = restorer.restore(document, onProgress)
 
         /** User categories and changed built-ins are stored; untouched built-ins and placeholders are not. */
         private fun Category.needsStoring(): Boolean = !isUnknown && (!builtIn || this != BuiltInCategories.byId(id))

@@ -28,19 +28,16 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Backup, restore (guests only), CSV import/export and the wipe in one group. */
+/** Backup, restore, CSV import/export and the wipe in one group. */
 @Composable
 fun DataSection(
-    isGuest: Boolean,
     actions: DataSectionActions,
     modifier: Modifier = Modifier,
 ) {
     SettingsGroup(label = stringResource(R.string.settings_section_data), modifier = modifier) {
         SettingsRow(title = stringResource(R.string.settings_export_backup), onClick = actions.onExportBackup)
-        if (isGuest) {
-            Hairline()
-            SettingsRow(title = stringResource(R.string.settings_restore_backup), onClick = actions.onRestoreBackup)
-        }
+        Hairline()
+        SettingsRow(title = stringResource(R.string.settings_restore_backup), onClick = actions.onRestoreBackup)
         Hairline()
         SettingsRow(title = stringResource(R.string.settings_import_csv), onClick = actions.onImportCsv)
         Hairline()

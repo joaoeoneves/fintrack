@@ -700,4 +700,17 @@
     <string name="plan_configure_none_yet">Ainda nenhum</string>
     <string name="plan_envelopes_empty_cta">Cria envelopes para dividir o teu dinheiro</string>
     <string name="income_title">Rendimento</string>
+    <string name="backup_account_warning_title">Substituir os dados da conta?</string>
+    <string name="backup_account_warning_message">Restaurar substitui tudo na tua conta, em todos os teus dispositivos, pelo conteúdo do ficheiro. Não é possível anular.</string>
+    <string name="backup_action_export_first">Exportar cópia primeiro</string>
+    <string name="backup_action_continue">Continuar</string>
+    <string name="backup_action_replace">Substituir</string>
+    <string name="backup_action_close">Fechar</string>
+    <string name="backup_restore_account_replace_warning">Os dados atuais da conta serão apagados e substituídos.</string>
+    <string name="backup_restoring_title">A restaurar os teus dados</string>
+    <string name="backup_restoring_preparing">A restaurar…</string>
+    <string name="backup_restoring_progress">A restaurar… %1$d de %2$d</string>
+    <string name="backup_restore_partial_title">Restauro incompleto</string>
+    <string name="backup_restore_partial_message">Alguns dados já foram substituídos. Tenta novamente para terminar — repetir não duplica nada.</string>
+    <string name="backup_error_restore_offline">Sem ligação. Nada foi alterado.</string>
 </resources>
