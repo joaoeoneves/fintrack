@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
@@ -220,9 +221,15 @@ private fun AllocationRow(
                 )
             }
         }
-        Text(
-            text = allocation.planned?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),
-            style = Amount,
-        )
+        val planned = allocation.planned
+        if (planned != null) {
+            Text(text = formatAmountCents(planned), style = Amount)
+        } else {
+            Text(
+                text = stringResource(R.string.plan_not_planned),
+                style = Amount.copy(fontWeight = FontWeight.Normal),
+                color = FinTrackTheme.colors.textSecondary,
+            )
+        }
     }
 }

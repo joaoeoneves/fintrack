@@ -475,8 +475,9 @@
     <string name="cd_more_working_days">More working days</string>
 
     <string name="plan_groups_title">Groups</string>
-    <string name="plan_groups_empty">Group your categories (food, investments, …) to see each group\'s plan at a glance.</string>
+    <string name="plan_groups_empty">Group categories to see the plan by group</string>
     <string name="plan_groups_suggest">Create suggested groups</string>
+    <string name="plan_groups_create">Create group</string>
     <string name="plan_groups_manage">Manage groups</string>
     <string name="plan_group_other">Other</string>
     <string name="plan_from_recurring">from recurring</string>
