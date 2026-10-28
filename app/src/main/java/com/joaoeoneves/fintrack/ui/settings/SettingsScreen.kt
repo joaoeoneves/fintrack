@@ -141,14 +141,13 @@ private fun SettingsScaffold(
                 onCurrencySelected = actions.onCurrencySelected,
                 onMotionSelected = actions.onMotionSelected,
             )
-            BackupFlow { onExport, onRestore ->
+            BackupFlow(signedIn = !uiState.isGuest) { onExport, onRestore ->
                 DeleteAllDataFlow(
                     isGuest = uiState.isGuest,
                     onExportBackup = onExport,
                     onDeleted = actions.onDataDeleted,
                 ) { onDeleteAll ->
                     DataSection(
-                        isGuest = uiState.isGuest,
                         actions =
                             DataSectionActions(
                                 onExportBackup = onExport,

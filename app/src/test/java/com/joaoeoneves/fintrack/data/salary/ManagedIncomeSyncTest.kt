@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.MANAGED_PROFIT_SHARE
@@ -15,7 +16,9 @@ import com.joaoeoneves.fintrack.domain.model.managedFlexKey
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.testutil.bonusExtra
 import com.joaoeoneves.fintrack.testutil.flexExtra
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -38,11 +41,13 @@ class ManagedIncomeSyncTest {
     private fun TestScope.sync(
         profileRepo: FakeSalaryProfileRepository,
         incomeRepo: FakePlannedIncomeRepository,
+        gate: RestoreGate = RestoreGate(),
     ) = ManagedIncomeSync(
         profileRepo,
         incomeRepo,
         FakeIncomeRepository(),
         FakeSalaryLineLabelsProvider(),
+        gate,
         backgroundScope,
     )
 
@@ -170,6 +175,7 @@ class ManagedIncomeSyncTest {
                     counting,
                     FakeIncomeRepository(),
                     FakeSalaryLineLabelsProvider(),
+                    RestoreGate(),
                     backgroundScope,
                 )
             sync.start()
@@ -177,5 +183,42 @@ class ManagedIncomeSyncTest {
             advanceUntilIdle()
 
             assertEquals(listOf(MANAGED_DUODECIMOS), writes)
+        }
+
+    @Test
+    fun whileRestoring_writesNothing_thenFixesTheRestoredLinesAfterRelease() =
+        runTest(UnconfinedTestDispatcher()) {
+            val gate = RestoreGate()
+            val income = FakePlannedIncomeRepository(listOf(own) + full.filter { it.id != MANAGED_DUODECIMOS })
+            val release = CompletableDeferred<Unit>()
+            backgroundScope.launch { gate.hold { release.await() } }
+
+            sync(FakeSalaryProfileRepository(profile), income, gate).start()
+            advanceUntilIdle()
+            assertTrue(income.lines.none { it.id == MANAGED_DUODECIMOS })
+
+            release.complete(Unit)
+            advanceUntilIdle()
+
+            assertTrue(income.lines.any { it.id == MANAGED_DUODECIMOS })
+        }
+
+    @Test
+    fun aFailedDiff_isRetriedAfterANewGeneration() =
+        runTest(UnconfinedTestDispatcher()) {
+            val gate = RestoreGate()
+            val income =
+                FakePlannedIncomeRepository(
+                    listOf(own) + full.filter { it.id != MANAGED_DUODECIMOS },
+                    nextSaveError = IllegalStateException("boom"),
+                )
+            sync(FakeSalaryProfileRepository(profile), income, gate).start()
+            advanceUntilIdle()
+            assertTrue(income.lines.none { it.id == MANAGED_DUODECIMOS })
+
+            gate.hold { }
+            advanceUntilIdle()
+
+            assertTrue(income.lines.any { it.id == MANAGED_DUODECIMOS })
         }
 }
