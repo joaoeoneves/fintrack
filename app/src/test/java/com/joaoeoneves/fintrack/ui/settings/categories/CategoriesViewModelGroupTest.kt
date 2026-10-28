@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
-import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.testutil.userCategory
@@ -13,49 +12,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** [CategoriesViewModel]'s group picker data and the group assignment through the editor. */
+/** The category editor never touches an envelope: new categories are unfiled, edits keep the existing one. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CategoriesViewModelGroupTest : CategoriesViewModelTestBase() {
-    private suspend fun seedGroups() {
-        groups.addEnvelope("Food")
-        groups.addEnvelope("Fun")
-    }
-
     @Test
-    fun uiState_exposesGroupsInOrder() =
-        runTest(testDispatcher) {
-            seedGroups()
-            val viewModel = start(FakeCategoryRepository())
-
-            assertEquals(listOf("Food", "Fun"), viewModel.content().groups.map { it.name })
-        }
-
-    @Test
-    fun uiState_groupsObserveError_fallsBackToNoGroups() =
-        runTest(testDispatcher) {
-            val failing = FakeEnvelopeRepository(nextObserveEnvelopesError = IllegalStateException("down"))
-            val viewModel = start(FakeCategoryRepository(), failing)
-
-            assertTrue(viewModel.content().groups.isEmpty())
-        }
-
-    @Test
-    fun onSaveEditor_newCategoryWithGroup_isFiledUnderIt() =
-        runTest(testDispatcher) {
-            seedGroups()
-            val repo = FakeCategoryRepository()
-            val viewModel = start(repo)
-            val groupId = groups.envelopes.first().id
-
-            viewModel.onAdd()
-            viewModel.onSaveEditor(CategoryDraft("Gym", "home", "teal", CategoryKind.SPENDING, groupId))
-            advanceUntilIdle()
-
-            assertEquals(groupId, repo.docs.single().groupId)
-        }
-
-    @Test
-    fun onSaveEditor_newCategoryWithoutGroup_isUngrouped() =
+    fun onSaveEditor_newCategory_isUnfiled() =
         runTest(testDispatcher) {
             val repo = FakeCategoryRepository()
             val viewModel = start(repo)
@@ -68,64 +29,44 @@ class CategoriesViewModelGroupTest : CategoriesViewModelTestBase() {
         }
 
     @Test
-    fun onEdit_prefillsDraftGroup() =
-        runTest(testDispatcher) {
-            val gym = userCategory("custom-1", "Gym").copy(groupId = "g-food")
-            val viewModel = start(FakeCategoryRepository(listOf(gym)))
-
-            viewModel.onEdit(gym.id)
-            advanceUntilIdle()
-
-            assertEquals(
-                "g-food",
-                viewModel
-                    .content()
-                    .editor
-                    ?.initial
-                    ?.groupId,
-            )
-        }
-
-    @Test
-    fun onSaveEditor_changeGroup_updatesCategory_andClearingUngroups() =
+    fun onSaveEditor_editingFiledCategory_keepsItsEnvelope() =
         runTest(testDispatcher) {
             val gym = userCategory("custom-1", "Gym").copy(groupId = "g-food")
             val repo = FakeCategoryRepository(listOf(gym))
             val viewModel = start(repo)
 
             viewModel.onEdit(gym.id)
-            viewModel.onSaveEditor(CategoryDraft("Gym", "home", "teal", CategoryKind.SPENDING, "g-fun"))
+            viewModel.onSaveEditor(CategoryDraft("Gym 2", "home", "teal", CategoryKind.SPENDING))
             advanceUntilIdle()
-            assertEquals("g-fun", repo.docs.single().groupId)
 
-            viewModel.onEdit(gym.id)
-            viewModel.onSaveEditor(CategoryDraft("Gym", "home", "teal", CategoryKind.SPENDING, null))
-            advanceUntilIdle()
-            assertNull(repo.docs.single().groupId)
+            val saved = repo.docs.single()
+            assertEquals("Gym 2", saved.customName)
+            assertEquals("g-food", saved.groupId)
         }
 
     @Test
-    fun onSaveEditor_builtIn_canBeFiledUnderAGroup() =
+    fun onSaveEditor_editingFiledBuiltIn_keepsItsEnvelope() =
         runTest(testDispatcher) {
-            val repo = FakeCategoryRepository()
+            val food = BuiltInCategories.FOOD.copy(groupId = "g-food")
+            val repo = FakeCategoryRepository(listOf(food))
             val viewModel = start(repo)
 
-            viewModel.onEdit(BuiltInCategories.FOOD.id)
-            viewModel.onSaveEditor(CategoryDraft("", "restaurant", "violet", CategoryKind.SPENDING, "g-food"))
+            viewModel.onEdit(food.id)
+            viewModel.onSaveEditor(CategoryDraft("", "restaurant", "violet", CategoryKind.SPENDING))
             advanceUntilIdle()
 
-            assertEquals("g-food", repo.docs.single { it.id == BuiltInCategories.FOOD.id }.groupId)
+            assertEquals("g-food", repo.docs.single { it.id == food.id }.groupId)
             assertTrue(errors.isEmpty())
         }
 
     @Test
-    fun onSaveEditor_writeFailure_keepsEditorOpenAndReportsError() =
+    fun onSaveEditor_writeFailure_reportsError() =
         runTest(testDispatcher) {
             val repo = FakeCategoryRepository(nextWriteError = IllegalStateException("nope"))
             val viewModel = start(repo)
 
             viewModel.onAdd()
-            viewModel.onSaveEditor(CategoryDraft("Gym", "home", "teal", CategoryKind.SPENDING, "g-food"))
+            viewModel.onSaveEditor(CategoryDraft("Gym", "home", "teal", CategoryKind.SPENDING))
             advanceUntilIdle()
 
             assertTrue(repo.docs.isEmpty())
