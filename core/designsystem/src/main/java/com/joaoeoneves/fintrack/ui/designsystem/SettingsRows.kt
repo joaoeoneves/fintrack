@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
@@ -26,10 +27,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
+
+private val ValueMaxWidth = 160.dp
 
 /** A labelled group of settings-style rows (sentence-case label, rows below, no card chrome). */
 @Composable
@@ -97,8 +102,11 @@ fun SettingsRow(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,
                 color = FinTrackTheme.colors.textSecondary,
-                maxLines = 1,
+                textAlign = TextAlign.End,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                // Cap the value so a long one never squeezes the title into a sliver.
+                modifier = Modifier.widthIn(max = ValueMaxWidth),
             )
         }
         if (showChevron) {
