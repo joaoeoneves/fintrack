@@ -1,8 +1,10 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
+import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.payDateIn
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -13,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
 import java.time.YearMonth
 
 /** Auto-record, pay day and the salary-duplicate warning in [MonthlyPlanViewModel]. */
@@ -114,5 +117,51 @@ class MonthlyPlanViewModelAutoRecordTest : MonthlyPlanViewModelTestBase() {
 
             assertEquals(2, incomeRepo.lines.size)
             assertNull(vm.content().editor)
+        }
+
+    @Test
+    fun managedLine_persistsAutoRecordAndPayDay_withLabelAndEarmark() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(net)
+            val vm = viewModel()
+            collect(vm)
+
+            vm.onEditIncomeLine("net")
+            advanceUntilIdle()
+            vm.onSaveIncomeLine(
+                "Pay",
+                1,
+                IncomeSchedule(earmark = Earmark.Group("g1"), autoRecord = true, payDay = 25),
+                oct,
+            )
+            advanceUntilIdle()
+
+            val saved = incomeRepo.lines.single()
+            assertEquals("Pay", saved.label)
+            assertEquals(Earmark.Group("g1"), saved.earmark)
+            assertTrue(saved.autoRecord)
+            assertEquals(25, saved.payDay)
+            assertEquals(100_000L, saved.amountCents)
+        }
+
+    @Test
+    fun receiveDefaultDate_isThePayDateCappedAtToday() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(line("late").copy(payDay = 28))
+            incomeRepo.savePlannedIncome(line("early", order = 1).copy(payDay = 5))
+            incomeRepo.savePlannedIncome(line("last", order = 2))
+            val vm = viewModel()
+            collect(vm)
+
+            val today = vm.content().receipts.today
+            val defaults =
+                vm.content().incomeRows.associate { row ->
+                    row.lines.first().id to minOf(row.payDateIn(oct), today)
+                }
+
+            assertEquals(LocalDate.of(2026, 10, 15), today)
+            assertEquals(LocalDate.of(2026, 10, 15), defaults["late"])
+            assertEquals(LocalDate.of(2026, 10, 5), defaults["early"])
+            assertEquals(LocalDate.of(2026, 10, 15), defaults["last"])
         }
 }

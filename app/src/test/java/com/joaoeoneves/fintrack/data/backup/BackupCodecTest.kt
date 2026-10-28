@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.joaoeoneves.fintrack.data.local.LocalAutomation
 import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -28,6 +30,17 @@ class BackupCodecTest {
 
         assertEquals(doc, result.document)
         assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun roundTrip_keepsAutoRecordPayDayAndLineCursors() {
+        val doc =
+            backupDoc().copy(
+                plannedIncome = listOf(LocalPlannedIncome("p", "Rent", 5, 0, autoRecord = true, payDay = 5)),
+                automation = LocalAutomation(lineThrough = mapOf("p" to "2026-09")),
+            )
+
+        assertEquals(doc, decode(BackupCodec.encode(doc)).success().document)
     }
 
     @Test
