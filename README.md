@@ -126,7 +126,7 @@ the reasoning behind the main choices is in [docs/DECISIONS.md](docs/DECISIONS.m
 
 ## Quality
 
-- **1,700+ unit tests** (JVM, run against in-memory fake repositories; Robolectric where an Android
+- **2,700+ unit tests** (JVM, run against in-memory fake repositories; Robolectric where an Android
   class is unavoidable).
 - **Maestro E2E flows** (`.maestro/`) run on an emulator in GitHub Actions, only before a release: the
   Release workflow runs the two flows tagged `release` and does not publish if they fail. Any flow can
