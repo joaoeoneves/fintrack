@@ -163,11 +163,17 @@ class MoneyInputTest {
     }
 
     @Test
-    fun transformation_empty_showsZeroAndOffsetsStayInBounds() {
+    fun transformation_empty_isEmptyWithIdentityOffsets() {
         val out = MoneyVisualTransformation(pt).filter(AnnotatedString(""))
-        assertEquals("0,00", out.text.text)
-        assertEquals(out.text.length, out.offsetMapping.originalToTransformed(0))
-        assertEquals(0, out.offsetMapping.transformedToOriginal(out.text.length))
+        assertEquals("", out.text.text)
+        assertEquals(0, out.offsetMapping.originalToTransformed(0))
+        assertEquals(0, out.offsetMapping.transformedToOriginal(0))
+    }
+
+    @Test
+    fun transformation_nonEmpty_showsFormattedText() {
+        val out = MoneyVisualTransformation(pt).filter(AnnotatedString("5"))
+        assertEquals("0,05", out.text.text)
     }
 
     @Test

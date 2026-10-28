@@ -32,6 +32,8 @@ class MoneyVisualTransformation(
     private val symbols: MoneySymbols,
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
+        // Empty input shows nothing so the field's grey "0,00" placeholder is the only zero drawn.
+        if (text.text.isEmpty()) return TransformedText(AnnotatedString(""), OffsetMapping.Identity)
         val cents = text.text.toLongOrNull() ?: 0L
         val shown = formatCentsGrouped(cents, symbols)
         val mapping =
