@@ -12,7 +12,7 @@ class BackupRestorer
     @Inject
     constructor(
         private val guest: GuestBackupRestorer,
-        private val account: AccountBackupRestorer,
+        private val account: AccountRestore,
         private val sessions: SessionRepository,
         private val gate: RestoreGate,
     ) {

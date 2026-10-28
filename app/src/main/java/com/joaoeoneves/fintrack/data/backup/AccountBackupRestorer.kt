@@ -72,8 +72,8 @@ class AccountBackupRestorer
         private val themes: ThemeRepository,
         private val currencies: CurrencyRepository,
         private val languages: LanguageRepository,
-    ) {
-        suspend fun restore(
+    ) : AccountRestore {
+        override suspend fun restore(
             document: BackupDocument,
             onProgress: (written: Int, total: Int) -> Unit,
         ): AccountRestoreResult {
