@@ -26,6 +26,8 @@ import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
+import com.joaoeoneves.fintrack.ui.savings.SavingsPlanEditorScreen
+import com.joaoeoneves.fintrack.ui.savings.SavingsScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
@@ -74,6 +76,7 @@ fun FinTrackNavHost(
         homeRoutes(navController)
         activityRoutes(navController)
         planRoutes(navController)
+        savingsRoutes(navController)
         insightsRoutes(navController)
         sharedRoutes(navController, transitions)
         envelopeRoutes(navController)
@@ -141,6 +144,17 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
     }
 }
 
+private fun NavGraphBuilder.savingsRoutes(navController: NavHostController) {
+    navigation<SavingsGraph>(startDestination = SavingsHome) {
+        composable<SavingsHome> {
+            SavingsScreen(
+                onOpenSettings = { navController.navigate(Settings) },
+                onOpenPlan = { id -> navController.navigate(EditSavingsPlan(id = id)) },
+            )
+        }
+    }
+}
+
 private fun NavGraphBuilder.insightsRoutes(navController: NavHostController) {
     navigation<InsightsGraph>(startDestination = Insights()) {
         composable<Insights> {
@@ -160,6 +174,9 @@ private fun NavGraphBuilder.envelopeRoutes(navController: NavHostController) {
             onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenEditor = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
         )
+    }
+    composable<EditSavingsPlan> {
+        SavingsPlanEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
     composable<EditEnvelope> {
         EnvelopeEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })

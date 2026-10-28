@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Savings
@@ -14,7 +15,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.TestTags
 
 /**
- * The four bottom-navigation tabs. Each owns a nested graph ([graph]) with its own back stack. This
+ * The bottom-navigation tabs. Each owns a nested graph ([graph]) with its own back stack. This
  * enum is never a route argument, so it is safe under R8.
  */
 enum class TopLevelTab(
@@ -25,11 +26,12 @@ enum class TopLevelTab(
 ) {
     HOME(HomeGraph, R.string.nav_home, Icons.Default.Home, TestTags.NAV_HOME),
     ACTIVITY(ActivityGraph, R.string.nav_activity, Icons.AutoMirrored.Filled.ReceiptLong, TestTags.NAV_ACTIVITY),
-    PLAN(PlanGraph, R.string.nav_plan, Icons.Default.Savings, TestTags.NAV_PLAN),
+    PLAN(PlanGraph, R.string.nav_plan, Icons.Default.AccountBalanceWallet, TestTags.NAV_PLAN),
+    SAVINGS(SavingsGraph, R.string.nav_savings, Icons.Default.Savings, TestTags.NAV_SAVINGS),
     INSIGHTS(InsightsGraph, R.string.nav_insights, Icons.Default.Insights, TestTags.NAV_INSIGHTS),
 }
 
-/** Whether this destination is one of the four tab roots (the bottom bar shows only there). */
+/** Whether this destination is one of the tab roots (the bottom bar shows only there). */
 fun NavDestination?.isTopLevel(): Boolean = this?.hierarchy?.any { it.isTabRoot() } == true
 
 /** The tab whose graph contains this destination, or `null` outside the tab graphs (forms, Settings). */
@@ -39,6 +41,6 @@ fun NavDestination?.currentTab(): TopLevelTab? =
     }
 
 private fun NavDestination.isTabRoot(): Boolean {
-    val roots = listOf(hasRoute<Home>(), hasRoute<Activity>(), hasRoute<PlanHome>(), hasRoute<Insights>())
-    return roots.any { it }
+    val roots = listOf(hasRoute<Home>(), hasRoute<Activity>(), hasRoute<PlanHome>(), hasRoute<SavingsHome>())
+    return roots.any { it } || hasRoute<Insights>()
 }

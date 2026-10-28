@@ -31,13 +31,10 @@ import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanActions
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
 import com.joaoeoneves.fintrack.ui.plan.annual.PlanTab
-import com.joaoeoneves.fintrack.ui.plan.goals.CollectPlanErrors
-import com.joaoeoneves.fintrack.ui.plan.goals.GoalsSection
-import com.joaoeoneves.fintrack.ui.plan.goals.GoalsViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
-/** The Plan tab: the month's tiles, its envelope cards, the goals and the set-up section. */
+/** The Plan tab: the month's tiles, its envelope cards, and the set-up section. */
 @Composable
 fun PlanScreen(
     onOpenSettings: () -> Unit,
@@ -45,10 +42,9 @@ fun PlanScreen(
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val goalsViewModel: GoalsViewModel = hiltViewModel()
     CollectPlanErrors(
         snackbarHostState = snackbarHostState,
-        events = listOf(viewModel.errorEvent, goalsViewModel.errorEvent),
+        events = listOf(viewModel.errorEvent),
     )
     PlanScaffold(
         onOpenSettings = onOpenSettings,
@@ -172,7 +168,6 @@ private fun MonthlyPlanContent(
                 modifier = cardModifier,
             )
         }
-        item { GoalsSection(modifier = cardModifier) }
         item {
             ConfigureSection(
                 status = state.configure,

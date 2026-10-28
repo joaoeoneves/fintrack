@@ -156,7 +156,6 @@
     <string name="error_failed_save_income">Couldn\'t save the income</string>
     <string name="error_failed_delete_income">Couldn\'t delete the income</string>
     <string name="confirm_remove_title">Remove \"%1$s\"?</string>
-    <string name="goal_remove_message">The goal is removed. Expenses and recurring items are kept.</string>
     <string name="income_line_remove_message">It stops counting as expected income. Income already recorded is kept.</string>
 
 
@@ -556,28 +555,37 @@
     <string name="annual_empty_title">Nothing planned for %1$s</string>
     <string name="annual_empty_message">Add income and limits in the Month view to see the year.</string>
 
-    <string name="plan_goals_title">Goals</string>
-    <string name="plan_goals_add">Add goal</string>
-    <string name="plan_goals_from_investments">Create from investments</string>
-    <string name="goal_new">New goal</string>
-    <string name="goal_edit">Edit goal</string>
     <string name="goal_field_name">Name</string>
-    <string name="goal_field_target">Target</string>
     <string name="goal_field_target_date">Target date</string>
     <string name="goal_field_initial">Already saved (optional)</string>
     <string name="goal_target_date_add">Add a target date</string>
     <string name="goal_target_date_clear">Remove target date</string>
     <string name="goal_error_dates">The target date is before the start date</string>
-    <string name="goal_type_annual">Annual</string>
-    <string name="goal_type_total">Total</string>
     <string name="goal_status_on_track">On track</string>
     <string name="goal_status_behind">Behind</string>
     <string name="goal_status_done">Done</string>
     <string name="goal_status_no_monthly">No monthly amount</string>
-    <string name="goal_link_recurring">Link to recurring items</string>
-    <string name="goal_link_category">Link to a category</string>
-    <string name="goal_link_category_none">None</string>
     <string name="error_goal_save_failed">Couldn\'t save the goal</string>
+    <string name="nav_savings">Savings</string>
+    <string name="savings_saved_in_year">Saved in %1$d</string>
+    <string name="savings_rate_of_income">Savings rate: %1$s of income</string>
+    <string name="savings_target_year">%1$s / %2$s this year</string>
+    <string name="savings_target_by">%1$s / %2$s by %3$s</string>
+    <string name="savings_schedule">%1$s · %2$s/month · day %3$d</string>
+    <string name="savings_suggestion">Suggested: %1$s/month</string>
+    <string name="savings_new_plan">New plan</string>
+    <string name="savings_edit_plan">Edit plan</string>
+    <string name="savings_monthly_amount">Monthly amount</string>
+    <string name="savings_day">Day</string>
+    <string name="savings_target">Target</string>
+    <string name="savings_auto_post">Record automatically</string>
+    <string name="savings_per_year">Per year</string>
+    <string name="savings_total">Total</string>
+    <string name="savings_empty">No savings plans yet</string>
+    <string name="savings_delete_plan">Delete plan</string>
+    <string name="savings_delete_message">“%1$s” and its monthly amount are removed. Expenses already recorded are kept.</string>
+    <string name="savings_plan_deleted">Plan deleted</string>
+    <string name="recurring_no_saving_hint">For savings use the Savings tab</string>
     <string name="annual_goals_title">Goals</string>
     <string name="annual_goal_planned_of_target">%1$s planned of %2$s</string>
     <string name="settings_delete_all_data">Delete all data</string>

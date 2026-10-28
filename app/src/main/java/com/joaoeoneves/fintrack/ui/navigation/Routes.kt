@@ -20,6 +20,9 @@ object ActivityGraph
 object PlanGraph
 
 @Serializable
+object SavingsGraph
+
+@Serializable
 object InsightsGraph
 
 /** Start destination of [HomeGraph]. */
@@ -46,6 +49,16 @@ fun activityRouteFor(
 /** Start destination of [PlanGraph]. */
 @Serializable
 object PlanHome
+
+/** Start destination of [SavingsGraph]. */
+@Serializable
+object SavingsHome
+
+/** The savings plan editor, full screen; a null [id] creates a new plan. */
+@Serializable
+data class EditSavingsPlan(
+    val id: String? = null,
+)
 
 /** Start destination of [InsightsGraph]; [period] is an encoded `Period` token. */
 @Serializable
