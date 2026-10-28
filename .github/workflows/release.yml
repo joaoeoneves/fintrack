@@ -1,8 +1,15 @@
 name: Release
 
+# Either push a vX.Y tag, or run it from Actions → Release with a version: the run checks the E2E release
+# flows, builds and signs the APK, and creates the tag and the GitHub release itself.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, X.Y (e.g. 2.4)"
+        required: true
 
 permissions:
   contents: write
@@ -16,7 +23,7 @@ jobs:
     needs: e2e
     runs-on: ubuntu-latest
     env:
-      TAG: ${{ github.ref_name }}
+      TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
     steps:
       - uses: actions/checkout@v7
 
@@ -101,7 +108,7 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "FinTrack-${TAG}.apk" "FinTrack-${TAG}-mapping.txt" --clobber
           else
-            gh release create "$TAG" "FinTrack-${TAG}.apk" "FinTrack-${TAG}-mapping.txt" --title "FinTrack ${TAG}" --generate-notes
+            gh release create "$TAG" "FinTrack-${TAG}.apk" "FinTrack-${TAG}-mapping.txt" --title "FinTrack ${TAG}" --generate-notes --target "$GITHUB_SHA"
           fi
 
       - name: Remove keystore and credentials

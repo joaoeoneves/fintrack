@@ -70,6 +70,24 @@ jobs:
           }
           JSON
 
+      # Robolectric downloads its android-all jars from Maven at test time; a flaky download fails every
+      # Robolectric test, so keep them cached between runs.
+      - name: Cache Robolectric jars
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      # The spreadsheet parity test reads a private fixture; it's skipped when the secret isn't there (forks).
+      - name: Write private parity fixture
+        env:
+          PARITY_FIXTURE_BASE64: ${{ secrets.PARITY_FIXTURE_BASE64 }}
+        run: |
+          if [ -n "$PARITY_FIXTURE_BASE64" ]; then
+            mkdir -p app/src/test/resources/private
+            echo "$PARITY_FIXTURE_BASE64" | base64 -d > app/src/test/resources/private/spreadsheet.json
+          fi
+
       - name: ktlint
         run: ./gradlew ktlintCheck
 
@@ -93,6 +111,10 @@ jobs:
       # Compile-only: generating the profile needs a device, so CI never runs it.
       - name: Compile baseline profile generator
         run: ./gradlew :baselineprofile:assemble
+
+      - name: Remove private parity fixture
+        if: always()
+        run: rm -rf app/src/test/resources/private
 
       - name: Upload reports on failure
         if: failure()
