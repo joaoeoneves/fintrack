@@ -45,41 +45,18 @@ fun FinTrackNavHost(
         navController = navController,
         startDestination = HomeGraph,
         modifier = modifier,
-        enterTransition = {
-            if (isTabSwitch(initialState.destination, targetState.destination)) {
-                transitions.fadeEnter()
-            } else {
-                transitions.enter()
-            }
-        },
-        exitTransition = {
-            when {
-                isTabSwitch(initialState.destination, targetState.destination) -> transitions.fadeExit()
-                targetState.destination.isForm() -> transitions.exitUnderForm()
-                else -> transitions.exit()
-            }
-        },
-        popEnterTransition = {
-            when {
-                isTabSwitch(initialState.destination, targetState.destination) -> transitions.fadeEnter()
-                initialState.destination.isForm() -> transitions.popEnterUnderForm()
-                else -> transitions.popEnter()
-            }
-        },
-        popExitTransition = {
-            if (isTabSwitch(initialState.destination, targetState.destination)) {
-                transitions.fadeExit()
-            } else {
-                transitions.popExit()
-            }
-        },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         homeRoutes(navController)
         activityRoutes(navController)
         planRoutes(navController)
         savingsRoutes(navController)
-        sharedRoutes(navController, transitions)
+        sharedRoutes(navController)
         envelopeRoutes(navController)
+        formRoutes(navController, transitions)
     }
 }
 
@@ -186,10 +163,7 @@ private fun NavGraphBuilder.envelopeRoutes(navController: NavHostController) {
 }
 
 /** Screens pushed on top of whichever tab is current; the bottom bar is hidden on all of them. */
-private fun NavGraphBuilder.sharedRoutes(
-    navController: NavHostController,
-    transitions: NavTransitions,
-) {
+private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
     composable<Settings> {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
@@ -218,9 +192,18 @@ private fun NavGraphBuilder.sharedRoutes(
             },
         )
     }
+}
+
+/** Add/edit forms: they enter from the bottom and leave downwards. */
+private fun NavGraphBuilder.formRoutes(
+    navController: NavHostController,
+    transitions: NavTransitions,
+) {
     composable<AddEditRecurring>(
-        enterTransition = { transitions.enterFromBottom() },
-        popExitTransition = { transitions.popExitToBottom() },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         AddEditRecurringScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },
@@ -228,8 +211,10 @@ private fun NavGraphBuilder.sharedRoutes(
         )
     }
     composable<AddEditExpense>(
-        enterTransition = { transitions.enterFromBottom() },
-        popExitTransition = { transitions.popExitToBottom() },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         AddEditExpenseScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },
@@ -238,8 +223,10 @@ private fun NavGraphBuilder.sharedRoutes(
         )
     }
     composable<AddEditIncome>(
-        enterTransition = { transitions.enterFromBottom() },
-        popExitTransition = { transitions.popExitToBottom() },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         AddEditIncomeScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },

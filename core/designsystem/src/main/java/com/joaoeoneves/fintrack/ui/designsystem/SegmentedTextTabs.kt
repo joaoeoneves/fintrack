@@ -27,7 +27,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.Motion
 import com.joaoeoneves.fintrack.ui.theme.indicatorDpSpring
+import com.joaoeoneves.fintrack.ui.theme.motionSpec
 
 /** Touch target height of each tab; the visible indicator pill stays [IndicatorHeight] tall. */
 private val TabHeight = 48.dp
@@ -53,12 +55,12 @@ fun <T> SegmentedTextTabs(
         val tabWidth = maxWidth / options.size.coerceAtLeast(1)
         val indicatorOffset by animateDpAsState(
             targetValue = tabWidth * selectedIndex.coerceAtLeast(0),
-            animationSpec = indicatorDpSpring(),
+            animationSpec = motionSpec(indicatorDpSpring()),
             label = "tabIndicatorOffset",
         )
         val indicatorAlpha by animateFloatAsState(
             targetValue = if (selectedIndex >= 0) 1f else 0f,
-            animationSpec = tween(durationMillis = 150),
+            animationSpec = motionSpec(tween(durationMillis = Motion.Short)),
             label = "tabIndicatorAlpha",
         )
         Box(

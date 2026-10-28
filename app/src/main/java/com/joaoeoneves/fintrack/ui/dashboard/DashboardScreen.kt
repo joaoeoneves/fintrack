@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,6 +56,8 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.Motion
+import com.joaoeoneves.fintrack.ui.theme.motionSpec
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -172,7 +175,11 @@ private fun DashboardTopBar(
     onOpenSettings: () -> Unit,
     scrolled: Boolean,
 ) {
-    val separator by animateFloatAsState(if (scrolled) 1f else 0f, label = "topBarSeparator")
+    val separator by animateFloatAsState(
+        targetValue = if (scrolled) 1f else 0f,
+        animationSpec = motionSpec(tween(Motion.Short)),
+        label = "topBarSeparator",
+    )
     Box(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
         Row(
             modifier =
