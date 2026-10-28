@@ -17,13 +17,15 @@ val PlannedIncome.isManaged: Boolean get() = managedKey != null
 /**
  * The managed income lines [profile] produces, with the deterministic id = managedKey. A line whose input is
  * empty is not returned (so the caller removes it), and a line already in [existing] keeps the user's label,
- * earmark and order. The result is the same when applied again (idempotent). Empty when the profile's required
+ * earmark and order (a label that is still a default of some language, see [knownDefaults], is replaced by
+ * the wanted one). The result is the same when applied again (idempotent). Empty when the profile's required
  * amount (base / net salary) is missing.
  */
 fun salaryProfileLines(
     profile: SalaryProfile,
     existing: List<PlannedIncome>,
     labels: SalaryLineLabels = SalaryLineLabels(),
+    knownDefaults: List<SalaryLineLabels> = emptyList(),
 ): List<PlannedIncome> {
     val breakdown = salaryBreakdownOf(profile) ?: return emptyList()
     val byKey = existing.filter { it.managedKey != null }.associateBy { it.managedKey }
@@ -33,7 +35,7 @@ fun salaryProfileLines(
         val current = byKey[wanted.key]
         PlannedIncome(
             id = wanted.key,
-            label = wanted.label.takeIf { parseManagedExtraKey(wanted.key) != null } ?: current?.label ?: wanted.label,
+            label = keptLabel(wanted, current, knownDefaults),
             amountCents = wanted.amountCents,
             order = current?.order ?: nextOrder++,
             basis = wanted.basis,
@@ -68,14 +70,37 @@ fun managedLinesSync(
     profile: SalaryProfile,
     existing: List<PlannedIncome>,
     labels: SalaryLineLabels = SalaryLineLabels(),
+    knownDefaults: List<SalaryLineLabels> = emptyList(),
 ): ManagedLinesSync {
     val byId = existing.associateBy { it.id }
     val (changed, created) =
-        salaryProfileLines(profile, existing, labels)
+        salaryProfileLines(profile, existing, labels, knownDefaults)
             .filter { byId[it.id] != it }
             .partition { it.id in byId }
     return ManagedLinesSync(upserts = created + changed, deletes = staleManagedIds(profile, existing))
 }
+
+/** The existing line's own label, unless it is an extra (named after the extra) or still an untouched default. */
+private fun keptLabel(
+    wanted: WantedLine,
+    current: PlannedIncome?,
+    knownDefaults: List<SalaryLineLabels>,
+): String =
+    when {
+        parseManagedExtraKey(wanted.key) != null || current == null -> wanted.label
+        knownDefaults.any { it.labelFor(wanted.key) == current.label } -> wanted.label
+        else -> current.label
+    }
+
+/** The label of the fixed managed line [managedKey]; `null` for an extra's line (named after the extra) or unknown. */
+fun SalaryLineLabels.labelFor(managedKey: String): String? =
+    when (managedKey) {
+        MANAGED_NET_SALARY -> netSalary
+        MANAGED_DUODECIMOS -> duodecimos
+        MANAGED_MEAL -> meal
+        MANAGED_HOLIDAY, MANAGED_CHRISTMAS -> subsidy
+        else -> null
+    }
 
 private fun wantedLines(
     profile: SalaryProfile,

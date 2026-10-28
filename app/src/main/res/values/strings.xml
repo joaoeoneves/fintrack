@@ -574,6 +574,7 @@
     <string name="salary_extra_default_flex">Flexible benefits</string>
     <string name="salary_extra_default_profit_share">Profit share</string>
     <string name="salary_extra_default_bonus">Bonus</string>
+    <string name="category_deleted_placeholder">Deleted category</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Enter a valid value</string>
     <string name="salary_breakdown_title">Breakdown</string>
