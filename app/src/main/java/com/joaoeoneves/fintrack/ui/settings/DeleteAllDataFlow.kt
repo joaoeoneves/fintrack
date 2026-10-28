@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -122,7 +123,11 @@ private fun DeletingDialog() {
                 horizontalArrangement = Arrangement.spacedBy(Dimens.Space16),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircularProgressIndicator(modifier = Modifier.size(SpinnerSize), strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(SpinnerSize),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
                 Text(stringResource(R.string.delete_all_data_progress))
             }
         },

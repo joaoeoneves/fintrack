@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:enableOnBackInvokedCallback="true"
         android:name=".FinTrackApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

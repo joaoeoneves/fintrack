@@ -2,15 +2,11 @@ package com.joaoeoneves.fintrack.data
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.domain.repository.DataResetRepository
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withTimeoutOrNull
-import java.io.IOException
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 /** Every subcollection of `users/{uid}` that can be listed (the rules allow whole-collection reads). */
 private val WIPED_COLLECTIONS =
@@ -27,7 +23,6 @@ private val WIPED_COLLECTIONS =
     )
 
 private const val PAGE_SIZE = 400L
-private val SERVER_TIMEOUT = 30.seconds
 
 /**
  * Deletes everything under `users/{uid}`: each collection is paged through the server and removed in
@@ -46,7 +41,8 @@ class FirestoreDataResetRepository
                 val uid = firebaseAuth.currentUser?.uid ?: error("Not signed in")
                 val user = firestore.collection("users").document(uid)
                 WIPED_COLLECTIONS.forEach { wipe(user.collection(it)) }
-                deleteDocuments(
+                deleteDocumentBatch(
+                    firestore,
                     listOf(
                         user.collection("plan").document("salaryProfile"),
                         user.collection("plan").document("automation"),
@@ -56,18 +52,9 @@ class FirestoreDataResetRepository
 
         private suspend fun wipe(collection: CollectionReference) {
             while (true) {
-                val page = serverCall { collection.limit(PAGE_SIZE).get(Source.SERVER).await() }
+                val page = awaitServer { collection.limit(PAGE_SIZE).get(Source.SERVER).await() }
                 if (page.isEmpty) return
-                deleteDocuments(page.documents.map { it.reference })
+                deleteDocumentBatch(firestore, page.documents.map { it.reference })
             }
         }
-
-        private suspend fun deleteDocuments(refs: List<DocumentReference>) {
-            val batch = firestore.batch()
-            refs.forEach { batch.delete(it) }
-            serverCall { batch.commit().await() }
-        }
-
-        private suspend fun <T> serverCall(block: suspend () -> T): T =
-            withTimeoutOrNull(SERVER_TIMEOUT) { block() } ?: throw IOException("Firestore did not respond in time")
     }

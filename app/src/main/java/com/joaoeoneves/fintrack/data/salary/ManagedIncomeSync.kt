@@ -1,6 +1,9 @@
 package com.joaoeoneves.fintrack.data.salary
 
 import android.util.Log
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
+import com.joaoeoneves.fintrack.data.backup.gatedBy
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.ManagedLinesSync
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -19,7 +22,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "ManagedIncomeSync"
 
@@ -37,18 +39,29 @@ class ManagedIncomeSync
         private val plannedIncome: PlannedIncomeRepository,
         private val incomes: IncomeRepository,
         private val labelsProvider: SalaryLineLabelsProvider,
+        private val gate: RestoreGate,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
         private val started = AtomicBoolean(false)
         private var lastAttempted: ManagedLinesSync? = null
         private var lastIncomeRepair: Set<String>? = null
+        private var lastGeneration = 0
 
         fun start() {
             if (!started.compareAndSet(false, true)) return
             scope.launch {
                 combine(profiles.observeSalaryProfile(), plannedIncome.observePlannedIncome(), ::Pair)
                     .catch { Log.w(TAG, "Failed to observe the salary profile", it) }
-                    .collectLatest { (profile, existing) ->
+                    .gatedBy(gate)
+                    .collectLatest { gated ->
+                        // Paused while a backup is restored (a new emission cancels any pass in flight).
+                        if (gated.restoring) return@collectLatest
+                        if (gated.generation != lastGeneration) {
+                            lastGeneration = gated.generation
+                            lastAttempted = null
+                            lastIncomeRepair = null
+                        }
+                        val (profile, existing) = gated.value
                         repairPaydayIncomes(existing)
                         if (profile == null || existing.none { it.isManaged }) return@collectLatest
                         val labels = labelsProvider.current()
@@ -62,31 +75,25 @@ class ManagedIncomeSync
 
         // Renames the incomes recorded from a generated line under another language's default name, once per
         // set of lines (so again after the session switches between guest and account).
-        @Suppress("TooGenericExceptionCaught") // Intentional: a repair must never crash the app.
         private suspend fun repairPaydayIncomes(existing: List<PlannedIncome>) {
             val ids = existing.filter { it.isManaged }.mapTo(mutableSetOf()) { it.id }
             if (ids.isEmpty() || ids == lastIncomeRepair) return
             lastIncomeRepair = ids
-            try {
+            runCatchingCancellable {
                 val all = incomes.getAllIncome().getOrThrow()
                 relabelPaydayIncomes(all, labelsProvider.current(), labelsProvider.knownDefaults())
                     .forEach { incomes.updateIncome(it).getOrThrow() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Failed to rename the recorded payday incomes", e)
             }
         }
 
         // Stops at the first failure: the next change of the data computes a fresh sync.
-        @Suppress("TooGenericExceptionCaught") // Intentional: a repair must never crash the app.
         private suspend fun apply(sync: ManagedLinesSync) {
-            try {
+            runCatchingCancellable {
                 sync.upserts.forEach { plannedIncome.savePlannedIncome(it).getOrThrow() }
                 sync.deletes.forEach { plannedIncome.deletePlannedIncome(it).getOrThrow() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Failed to re-sync the managed income lines", e)
             }
         }

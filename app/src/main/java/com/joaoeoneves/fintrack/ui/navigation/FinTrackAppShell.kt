@@ -1,6 +1,13 @@
 package com.joaoeoneves.fintrack.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -16,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.joaoeoneves.fintrack.R
@@ -35,6 +43,8 @@ import com.joaoeoneves.fintrack.ui.plan.envelopes.LocalEnvelopeDeleteUndo
 import com.joaoeoneves.fintrack.ui.savings.DeletedSavingsPlan
 import com.joaoeoneves.fintrack.ui.savings.LocalSavingsPlanDeleteUndo
 import com.joaoeoneves.fintrack.ui.savings.SavingsUndoViewModel
+import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
+import com.joaoeoneves.fintrack.ui.theme.Motion
 import kotlinx.coroutines.launch
 
 /**
@@ -81,11 +91,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
         // Each screen inside applies its own system-bar insets; the bar below applies the bottom one.
         contentWindowInsets = WindowInsets(0),
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
-        bottomBar = {
-            AnimatedVisibility(visible = destination.isTopLevel()) {
-                TabBar(selected = destination.currentTab(), onSelect = navController::navigateToTab)
-            }
-        },
+        bottomBar = { AnimatedTabBar(destination, navController::navigateToTab) },
     ) { inner ->
         CompositionLocalProvider(
             LocalAppSnackbar provides showMessage,
@@ -100,6 +106,38 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
         }
     }
 }
+
+@Composable
+private fun AnimatedTabBar(
+    destination: NavDestination?,
+    onSelect: (TopLevelTab) -> Unit,
+) {
+    val reduced = LocalReducedMotion.current
+    AnimatedVisibility(
+        visible = destination.isTopLevel(),
+        enter = barEnter(reduced),
+        exit = barExit(reduced),
+    ) {
+        TabBar(selected = destination.currentTab(), onSelect = onSelect)
+    }
+}
+
+/** The bar slides up while fading in; under reduced motion it is a short fade. */
+private fun barEnter(reduced: Boolean): EnterTransition =
+    if (reduced) {
+        fadeIn(tween(Motion.Short))
+    } else {
+        slideInVertically(tween(Motion.Medium, easing = Motion.EmphasizedDecelerate)) { it } +
+            fadeIn(tween(Motion.Medium))
+    }
+
+private fun barExit(reduced: Boolean): ExitTransition =
+    if (reduced) {
+        fadeOut(tween(Motion.Short))
+    } else {
+        slideOutVertically(tween(Motion.Medium, easing = Motion.EmphasizedAccelerate)) { it } +
+            fadeOut(tween(Motion.Medium))
+    }
 
 private fun Transaction.title(): String =
     when (this) {

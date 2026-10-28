@@ -3,6 +3,8 @@ package com.joaoeoneves.fintrack.domain.repository
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 
 /**
@@ -18,11 +20,21 @@ data class BulkAddResult(
     val isCompleteSuccess: Boolean get() = failure == null
 }
 
+@Suppress("TooManyFunctions") // One member per ExpenseRepository operation.
 interface ExpenseRepository {
     fun observeExpenses(
         startInclusive: Instant,
         endExclusive: Instant,
     ): Flow<List<Expense>>
+
+    /**
+     * Whether at least one expense exists. The default reads everything; real repositories override it
+     * with a cheap single-document listener.
+     */
+    fun observeHasAnyExpense(): Flow<Boolean> {
+        val all = observeExpenses(Instant.MIN, Instant.MAX)
+        return all.map { it.isNotEmpty() }.distinctUntilChanged()
+    }
 
     suspend fun addExpense(expense: Expense): Result<String>
 

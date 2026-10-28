@@ -19,10 +19,10 @@
 
 <p align="center">
   <img src="docs/screenshots/home.png" width="200" alt="Home with the month's balance, income, expenses and savings">
-  <img src="docs/screenshots/activity.png" width="200" alt="Activity: expenses and income in one list">
+  <img src="docs/screenshots/activity.png" width="200" alt="Activity: spending summary and the list of expenses and income">
   <img src="docs/screenshots/plan.png" width="200" alt="Plan tab for the month">
   <img src="docs/screenshots/plan-income.png" width="200" alt="Expected income, one row per salary component">
-  <img src="docs/screenshots/insights.png" width="200" alt="Insights: fixed and variable spending">
+  <img src="docs/screenshots/savings.png" width="200" alt="Savings plans with progress rings">
   <img src="docs/screenshots/add-expense.png" width="200" alt="Add expense form">
 </p>
 
@@ -30,7 +30,7 @@
 
 FinTrack started as a personal replacement for a monthly budgeting spreadsheet. The spreadsheet answered
 one question: *given what I earn and what is already committed, how much can I still spend this month?*
-The app keeps that idea at its centre: you list expected income, give each category a monthly budget, add
+The app keeps that idea at its centre: you list expected income, split spending into envelopes, add
 the recurring bills, and the dashboard shows what is safe to spend and a daily allowance. It works fully
 offline-first, and it can be used without an account at all (guest mode).
 
@@ -46,38 +46,49 @@ offline-first, and it can be used without an account at all (guest mode).
 - CSV import/export for expenses.
 
 **Planning**
-- The Plan tab goes: summary, pots, income, limits and groups, goals, recurring. Limits are per-category
-  monthly budgets with progress bars, listed inside their category group.
-- Monthly plan: expected income lines plus the limits give a *safe to spend* figure and a daily
-  allowance for the rest of the month. A yearly view shows all twelve months.
-- Income can be per working day, with Portuguese holidays, days off and a Carnival shortcut. Lines can be
-  earmarked for a category or group as a pot.
-- Salary profile (optional): gross or net, subsidy months, youth IRS, meal allowance, and your own extras (a yearly total or an amount per payment)
-  (a fixed amount, a multiple of the base or a share of the annual gross, with the months and deductions
-  you choose). Each component gets its own income row: the salary is the net base and the subsidy
-  twelfths show under Subsidies.
-- Savings goals linked to recurring items or a category, and an Insights tab with fixed versus variable
-  spending.
+- Tabs: Home, Activity, Plan and Savings. An avatar with your initial opens Account & settings.
+- **Envelopes**: a name, its categories and a monthly amount (one amount or the sum of per-category
+  limits), with progress on Plan. An envelope can also be "no budget" and only track spending. What is
+  left after income, bills, savings and envelopes is shown as *Free*, with a daily allowance. A yearly
+  view shows all twelve months.
+- **Income** in one place: the salary profile plus your own income lines. Any line can be recorded
+  automatically on its pay day (last working day, with Portuguese holidays, or a fixed day). Income can
+  be per working day, with days off and a Carnival shortcut.
+- Salary profile (optional): a three-step set-up (gross or net, subsidies, meal allowance), with the full
+  form under Advanced for youth IRS, deductions and your own extras (a fixed amount, a multiple of the
+  base or a share of the annual gross, paid in the months you choose). Each component gets its own income
+  row.
+- **Savings plans** on the Savings tab: a monthly amount, a day and a category, recorded automatically,
+  with an optional target per year or in total. A goal is a plan without a monthly amount. The tab also
+  shows the amount saved this year and the savings rate.
+- A **Get started** checklist on Home walks through the set-up and hides when done.
 - When you add an expense, the category you used last time for that name is suggested.
 
-**Recurring**
-- Monthly or yearly templates for rent, subscriptions or salary, with start/end dates and pause/resume.
-- An Upcoming card lists due items; Confirm creates the transaction, Skip moves on. Confirming twice
-  (double tap, second device) never creates a duplicate.
-- An item can be set to "Post automatically" and is then recorded on its due date.
-- Optional "Record income on payday" books the planned income on the last working day of the month; a
-  "Received" action on Plan and Home records it earlier.
+**Activity**
+- One list of expenses and income with search, sorting and period filters. Delete by swiping, or from
+  the edit screen, with undo.
+- A summary header: 1M / 3M / 6M / 1Y tabs or a custom range, the total spent, fixed versus variable,
+  spending by envelope with filter chips, and a breakdown by category or envelope.
+
+**Bills**
+- Monthly or yearly recurring expenses (rent, subscriptions) with start and end dates and pause/resume.
+- An Upcoming card lists the bills that are due. Confirm records the expense and Skip moves on. Confirming
+  twice (a double tap, or a second device) never creates a duplicate. A bill can also be posted
+  automatically on its due date.
 
 **Guest mode and backup**
 - "Continue as guest" uses the whole app with data kept in a single JSON file on the device; no Firebase
   is involved.
 - Signing in later offers to copy guest data into the account, then to remove it from the device.
-- Versioned JSON backup and restore (for example to move to another phone). Settings has a "delete all
-data" action.
+- Versioned JSON backup and restore (for example to move to another phone), for guests and signed-in
+  accounts. Restoring into an account offers to export a backup first. A "delete all data" action is
+  also available.
 
 **Localization and appearance**
 - English and Portuguese (pt-PT), switchable in-app; follows the system language by default.
-- System, light or dark theme; display currency (USD, EUR, GBP, JPY, CAD, AUD) is cosmetic, with no
+- System, light or dark theme, and a Reduce animations option. Motion includes smooth transitions,
+  predictive back, counting amounts, skeleton loading and haptics.
+- Display currency (USD, EUR, GBP, JPY, CAD, AUD) is cosmetic, with no
   exchange-rate conversion.
 
 **Privacy-relevant bits**
@@ -130,14 +141,14 @@ the reasoning behind the main choices is in [docs/DECISIONS.md](docs/DECISIONS.m
 
 - **2,700+ unit tests** (JVM, run against in-memory fake repositories; Robolectric where an Android
   class is unavoidable).
-- **Maestro E2E flows** (`.maestro/`) run on an emulator in GitHub Actions, only before a release: the
-  Release workflow runs the two flows tagged `release` and does not publish if they fail. Any flow can
-  also be run by hand. They use guest mode, so no Google account is needed.
+- **JVM screen tests** (Robolectric + Compose) drive the main flows on every PR, with no emulator.
+- **Maestro E2E flows** (`.maestro/`, guest mode) can be run on demand from the E2E workflow or by hand.
 - **CI** on every push and PR to `main`: ktlint, detekt, Android lint, unit tests, debug and (unsigned)
   release builds, and compilation of the baseline-profile generator.
 - **Baseline profile** generated on a CI emulator and committed.
-- **Signed releases**: pushing a tag `vX.Y` runs the E2E flows, then builds, tests and signs the APK, verifies the signature and
-  publishes a GitHub release with the APK and the R8 mapping file.
+- **Signed releases**: the Release workflow (run it with a version, or push a tag `vX.Y`) builds, tests
+  and signs the APK, verifies the signature, and publishes a GitHub release with the APK and the R8
+  mapping file.
 
 Run the same checks locally with the shared gate script:
 

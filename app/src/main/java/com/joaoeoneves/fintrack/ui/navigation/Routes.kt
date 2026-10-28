@@ -89,6 +89,10 @@ data class EditEnvelope(
 @Serializable
 object EditSalaryProfile
 
+/** The three-step salary set-up wizard; with a stored profile it forwards to [EditSalaryProfile]. */
+@Serializable
+object SalarySetup
+
 @Serializable
 data class AddEditRecurring(
     val recurringId: String? = null,

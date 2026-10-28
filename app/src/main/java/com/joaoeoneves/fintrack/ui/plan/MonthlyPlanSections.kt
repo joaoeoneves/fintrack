@@ -30,6 +30,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
+import com.joaoeoneves.fintrack.ui.designsystem.rememberFinTrackHaptics
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -180,6 +181,7 @@ private fun IncomeRowItem(
     val receivedOn = receipts.receivedOn[row.key]
     val received = receivedOn != null
     val feedback = LocalReceiveFeedback.current
+    val haptics = rememberFinTrackHaptics()
     val title = row.displayLabel()
     val receiveDate = minOf(row.payDateIn(model.workingDays.month), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
@@ -212,6 +214,7 @@ private fun IncomeRowItem(
                             if (received) {
                                 onUndo(row)
                             } else {
+                                haptics.success()
                                 actions.onReceive(row, receiveDate, null)
                                 feedback?.announce(
                                     message = snackbarText,

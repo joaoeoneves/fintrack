@@ -1,6 +1,9 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import android.util.Log
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
+import com.joaoeoneves.fintrack.data.backup.gatedBy
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Envelope
@@ -24,7 +27,6 @@ import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "SavingsPlanMigrationSync"
 private const val SETTLE_DELAY_MS = 2_000L
@@ -44,10 +46,12 @@ class SavingsPlanMigrationSync
         private val goals: GoalRepository,
         private val sessions: SessionRepository,
         private val clock: Clock,
+        private val gate: RestoreGate,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
         private val started = AtomicBoolean(false)
         private var lastAttempted: SavingsPlanMigration? = null
+        private var lastGeneration = 0
 
         fun start() {
             if (!started.compareAndSet(false, true)) return
@@ -59,7 +63,15 @@ class SavingsPlanMigrationSync
                     sources.envelopes.observeEnvelopes(),
                     ::SavingsSnapshot,
                 ).catch { Log.w(TAG, "Failed to observe the savings", it) }
-                    .collectLatest { snapshot ->
+                    .gatedBy(gate)
+                    .collectLatest { gated ->
+                        // Paused while a backup is restored (a new emission cancels any pass in flight).
+                        if (gated.restoring) return@collectLatest
+                        if (gated.generation != lastGeneration) {
+                            lastGeneration = gated.generation
+                            lastAttempted = null
+                        }
+                        val snapshot = gated.value
                         // Let a partial cache (e.g. right after sign-in) fill in, and never act mid session switch.
                         val session = sessions.session.value
                         delay(SETTLE_DELAY_MS)
@@ -83,12 +95,11 @@ class SavingsPlanMigrationSync
             )
 
         // Goals first, then the saving-only envelopes; stops at the first failure.
-        @Suppress("TooGenericExceptionCaught") // Intentional: a migration must never crash the app.
         private suspend fun apply(
             migration: SavingsPlanMigration,
             envelopes: List<Envelope>,
         ) {
-            try {
+            runCatchingCancellable {
                 (migration.patchedGoals + migration.newGoals).forEach { goals.saveGoal(it).getOrThrow() }
                 migration.savingEnvelopeIds.forEach { id ->
                     val envelope = envelopes.first { it.id == id }
@@ -98,9 +109,7 @@ class SavingsPlanMigrationSync
                     sources.envelopes.saveEnvelope(edit).getOrThrow()
                     sources.envelopes.deleteEnvelope(id).getOrThrow()
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Failed to migrate savings to savings plans", e)
             }
         }

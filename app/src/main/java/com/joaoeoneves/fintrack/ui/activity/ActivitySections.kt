@@ -33,10 +33,12 @@ import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
 import com.joaoeoneves.fintrack.ui.common.dayHeaderOf
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.designsystem.AnimatedAmountText
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -117,7 +119,7 @@ fun LazyListScope.activityRowItems(
             val today = remember(state.items) { LocalDate.now(ZoneId.systemDefault()) }
             DaySectionHeader(
                 header = dayHeaderOf(section.date, today),
-                modifier = Modifier.animateItem().padding(horizontal = Dimens.ScreenPadding),
+                modifier = motionAnimateItem(Modifier.padding(horizontal = Dimens.ScreenPadding)),
             )
         }
         items(section.items, key = { it.rowKey() }) { transaction ->
@@ -158,12 +160,13 @@ private fun ActivityTotalsRow(
     ) {
         TotalCell(
             label = stringResource(R.string.activity_total_in),
-            text = "+${formatAmountCents(totals.inCents)}",
+            cents = totals.inCents,
+            prefix = "+",
             color = FinTrackTheme.colors.positive,
         )
         TotalCell(
             label = stringResource(R.string.activity_total_out),
-            text = formatAmountCents(totals.outCents),
+            cents = totals.outCents,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
@@ -172,12 +175,18 @@ private fun ActivityTotalsRow(
 @Composable
 private fun TotalCell(
     label: String,
-    text: String,
+    cents: Long,
     color: Color,
+    prefix: String = "",
 ) {
     Column {
         Text(text = label, style = MaterialTheme.typography.labelMedium, color = FinTrackTheme.colors.textSecondary)
-        Text(text = text, style = MaterialTheme.typography.titleMedium, color = color)
+        AnimatedAmountText(
+            cents = cents,
+            style = MaterialTheme.typography.titleMedium,
+            color = color,
+            format = { prefix + formatAmountCents(it) },
+        )
     }
 }
 
@@ -190,7 +199,7 @@ private fun LazyItemScope.ActivityRow(
     SwipeToDeleteRow(
         onDelete = { actions.onDelete(transaction.id) },
         deleteLabel = stringResource(R.string.cd_delete),
-        modifier = Modifier.animateItem(),
+        modifier = motionAnimateItem(),
     ) {
         val rowModifier = Modifier.weight(1f).padding(horizontal = Dimens.ScreenPadding)
         when (transaction) {

@@ -1,6 +1,9 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import android.util.Log
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
+import com.joaoeoneves.fintrack.data.backup.gatedBy
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.IncomeMigration
@@ -22,7 +25,6 @@ import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "IncomeMigrationSync"
 private const val SETTLE_DELAY_MS = 2_000L
@@ -41,10 +43,12 @@ class IncomeMigrationSync
         private val automation: AutomationSettingsRepository,
         private val sessions: SessionRepository,
         private val clock: Clock,
+        private val gate: RestoreGate,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
         private val started = AtomicBoolean(false)
         private var lastAttempted: IncomeMigration? = null
+        private var lastGeneration = 0
 
         fun start() {
             if (!started.compareAndSet(false, true)) return
@@ -55,7 +59,15 @@ class IncomeMigrationSync
                     automation.observeAutomationSettings(),
                     ::IncomeSnapshot,
                 ).catch { Log.w(TAG, "Failed to observe the income", it) }
-                    .collectLatest { snapshot ->
+                    .gatedBy(gate)
+                    .collectLatest { gated ->
+                        // Paused while a backup is restored (a new emission cancels any pass in flight).
+                        if (gated.restoring) return@collectLatest
+                        if (gated.generation != lastGeneration) {
+                            lastGeneration = gated.generation
+                            lastAttempted = null
+                        }
+                        val snapshot = gated.value
                         // Let a partial cache (e.g. right after sign-in) fill in, and never act mid session switch.
                         val session = sessions.session.value
                         delay(SETTLE_DELAY_MS)
@@ -72,12 +84,11 @@ class IncomeMigrationSync
 
         // Cursors first (a line without one would only get an initial cursor), then the lines, the legacy switch off
         // and finally the recurring items; stops at the first failure.
-        @Suppress("TooGenericExceptionCaught") // Intentional: a migration must never crash the app.
         private suspend fun apply(
             migration: IncomeMigration,
             lines: List<PlannedIncome>,
         ) {
-            try {
+            runCatchingCancellable {
                 if (migration.cursors.isNotEmpty()) automation.updateLineCursors(migration.cursors).getOrThrow()
                 migration.newLines.forEach { sources.plannedIncome.savePlannedIncome(it).getOrThrow() }
                 lines
@@ -85,9 +96,7 @@ class IncomeMigrationSync
                     .forEach { sources.plannedIncome.savePlannedIncome(it.copy(autoRecord = true)).getOrThrow() }
                 if (migration.clearLegacyPayday) automation.updateLineCursors(clearLegacyPayday = true).getOrThrow()
                 migration.deleteRecurringIds.forEach { sources.recurring.deleteRecurring(it).getOrThrow() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Failed to fold recurring income into planned income", e)
             }
         }

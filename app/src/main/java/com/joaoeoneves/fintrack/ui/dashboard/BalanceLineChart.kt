@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.text.format.DateFormat
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -45,7 +44,9 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
+import com.joaoeoneves.fintrack.ui.theme.Motion
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
+import com.joaoeoneves.fintrack.ui.theme.motionSpec
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -56,16 +57,13 @@ private val StrokeWidth = 1.5.dp
 private val DotRadius = 5.dp
 private val DotHaloRadius = 9.dp
 private const val SAMPLE_COUNT = 128
-private const val DRAW_IN_MS = 600
-private const val MORPH_MS = 450
-private const val FADE_MS = 160
 private const val FILL_ALPHA = 0.12f
 private const val GUIDE_ALPHA = 0.35f
 private const val HALO_ALPHA = 0.18f
 
 /**
  * Frameless line chart of the cumulative net balance. [series] is one value per day starting at
- * [startDate]. The line draws in on first appearance and morphs when the series changes; a long
+ * [startDate]. The line draws in on first appearance and when the period's length changes, and morphs otherwise; a long
  * press followed by a drag scrubs a guide line across the days and reports the index through
  * [onScrub] (null when released), with a haptic tick for every day crossed.
  */
@@ -79,11 +77,11 @@ fun BalanceLineChart(
     val reducedMotion = LocalReducedMotion.current
     val target = remember(series) { resample(normalize(series), SAMPLE_COUNT) }
     val morph = rememberMorph(target, reducedMotion)
-    val drawIn = rememberDrawIn(reducedMotion)
+    val drawIn = rememberDrawIn(reducedMotion, startDate, series.size)
     val scrub = rememberScrubState(count = series.size, onScrub = onScrub)
     val guideAlpha by animateFloatAsState(
         targetValue = if (scrub.active) 1f else 0f,
-        animationSpec = if (reducedMotion) tween(0) else tween(FADE_MS),
+        animationSpec = motionSpec(tween(Motion.Short)),
         label = "scrubGuide",
     )
     val description =
@@ -230,7 +228,7 @@ private class MorphState(
         to = target
         progress.snapTo(0f)
         if (animate) {
-            progress.animateTo(1f, tween(MORPH_MS, easing = FastOutSlowInEasing))
+            progress.animateTo(1f, tween(Motion.Emphasis, easing = Motion.Standard))
         } else {
             progress.snapTo(1f)
         }
@@ -247,11 +245,26 @@ private fun rememberMorph(
     return state
 }
 
+/**
+ * Draw-in progress: plays on first appearance and again when the period changes to one with a different number of
+ * days (a new length can't morph smoothly); a same-length change just morphs.
+ */
 @Composable
-private fun rememberDrawIn(reducedMotion: Boolean): Animatable<Float, *> {
+private fun rememberDrawIn(
+    reducedMotion: Boolean,
+    startDate: LocalDate,
+    count: Int,
+): Animatable<Float, *> {
     val progress = remember { Animatable(if (reducedMotion) 1f else 0f) }
-    LaunchedEffect(Unit) {
-        if (!reducedMotion) progress.animateTo(1f, tween(DRAW_IN_MS, easing = FastOutSlowInEasing))
+    val last = remember { arrayOfNulls<Pair<LocalDate, Int>>(1) }
+    LaunchedEffect(startDate) {
+        val previous = last[0]
+        last[0] = startDate to count
+        val replay = previous == null || previous.second != count
+        if (!reducedMotion && replay) {
+            progress.snapTo(0f)
+            progress.animateTo(1f, tween(Motion.DrawIn, easing = Motion.Standard))
+        }
     }
     return progress
 }

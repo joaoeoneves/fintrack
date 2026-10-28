@@ -5,9 +5,83 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [3.0] - 2026-10-28
+
+"Organise": fewer concepts, a clear place for everything, and a smoother app.
+
+### Added
+- **Envelopes** replace groups, category limits and pots. An envelope has a name, its categories and a
+  monthly amount (a single amount or the sum of per-category limits). An envelope can also be "no budget",
+  which only tracks what was spent this month. Plan shows envelope cards with progress and what is left
+  ("Free").
+- **Savings tab** with savings plans. A plan has a monthly amount, a day, a category and an optional target
+  (per year or total, with an optional date). Its monthly contribution is recorded automatically. A goal is
+  a savings plan without a monthly amount. The tab also shows the amount saved this year and the savings
+  rate.
+- **Income in one place.** Each income line can be recorded automatically on its pay day (last working day
+  or a fixed day). Recurring income becomes an income line, and a manual line that looks like the salary
+  shows a warning.
+- **Activity summary**: period tabs (1M/3M/6M/1Y), total spent, fixed vs variable, spending by envelope
+  with filter chips, and a breakdown by category or envelope.
+- **Get started** checklist on Home (salary, envelopes, bills, savings plan, pay day, first expense). Each
+  step links to its screen. The checklist hides when done or dismissed.
+- **Salary set-up** in three steps (gross or net, subsidies, meal allowance) with a summary. The full
+  profile is still under "Advanced".
+- **Restore a JSON backup into a signed-in account.** A warning offers to export a backup first. The
+  restore replaces the account data, and a restore that stops part-way can be retried safely.
+- **Reduce animations** option (System/On/Off), stored on the device.
+- Motion: smoother screen and tab transitions, predictive back, counting amounts, progress bars and rings
+  that draw in, animated lists, haptics, a small celebration when a goal is reached, and skeleton loading
+  instead of spinners.
+
+### Changed
+- Tabs are now Home, Activity, Plan and Savings. An avatar with your initial opens "Account & settings",
+  which keeps only account, preferences, data and about.
+- Bills (recurring items) are expenses only. Savings categories are no longer part of envelopes.
+- Plan has a "Set up" section: Income, Envelopes, Bills and Categories.
+- First start migrates existing data automatically: groups and limits become envelopes, investment
+  recurring items and goals become savings plans, and recurring income becomes income lines. Old documents
+  are kept read-only until 3.1.
+- The local and backup JSON schema is now 16. Older backups still restore and are converted.
+- A smaller APK: only the English and Portuguese resources are bundled.
+
+### Removed
+- The Insights tab (its charts are now in Activity), the groups sheet, the earmark picker, the goals card
+  on Plan and the payday switch in Settings.
+
+## [2.6] - 2026-10-28
+
+### Fixed
+- Empty amount fields show a single grey 0,00 instead of two overlapping zeros.
+- Salary extras show their name in full, with the amount on a second line, and long values no longer
+  squeeze row titles.
+
+## [2.5] - 2026-10-28
+
 ### Added
 - A salary extra paid in several months can now be a yearly total (split over the months) or an amount per
   payment (paid in each month).
+
+### Changed
+- Amounts are typed as digits and the app places the decimal separator (1250 → 12,50 €). Separators follow
+  the app language, so Portuguese never shows a dot.
+- Salary lines and income recorded with "Received" or on payday use the app language. Existing English
+  names are fixed automatically.
+
+## [2.4] - 2026-10-28
+
+### Added
+- Delete an expense or income from its edit screen, with Undo. Removing a goal, an income line or a limit
+  now asks first.
+- Mark income as received with a small check next to the amount. It turns green, and tapping it again
+  undoes it.
+
+### Changed
+- The "Earmark for" picker separates groups from categories.
+- Clearer wording: "No limit", "Recurring", no duplicate plan title, readable CSV errors.
+- Settings: theme, language and currency as single rows under Preferences.
+- Tapping a category in Insights opens its transactions. Suggested groups use your own active categories,
+  and group names must be unique.
 
 ## [2.3] - 2026-10-28
 

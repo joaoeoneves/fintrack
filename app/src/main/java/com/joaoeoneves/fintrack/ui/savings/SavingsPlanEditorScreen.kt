@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.savings
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -88,8 +86,7 @@ fun SavingsPlanEditorScreen(
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (val current = state) {
-            SavingsPlanEditorUiState.Loading ->
-                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            SavingsPlanEditorUiState.Loading -> Unit
 
             SavingsPlanEditorUiState.NotFound ->
                 EmptyState(title = stringResource(R.string.error_state_title), modifier = contentModifier)

@@ -77,7 +77,7 @@ jobs:
       - name: Resize to 540 px
         run: |
           mkdir -p docs/screenshots
-          for f in home activity plan plan-income insights add-expense; do
+          for f in home activity plan plan-income savings add-expense; do
             convert "maestro-out/screens/$f.png" -resize 540x "docs/screenshots/$f.png"
           done
 

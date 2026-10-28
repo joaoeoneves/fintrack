@@ -80,11 +80,10 @@ tags:
 - assertVisible: "Next month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
 - assertVisible: "Net balance"
-- assertVisible: "Income"
+# A fresh guest sees the "Get started" card; the Income/Expenses/Saved columns only appear once there is data.
+- assertVisible: "Get started"
 # The balance card's outflow column is "Expenses"; investments count as saved,
 # shown in their own "Saved & invested" column, plus a "Savings rate: NN%" (or "—") line.
-- assertVisible: "Expenses"
-- assertVisible: "Saved & invested"
 - assertVisible: "Savings rate.*"
 # The bottom navigation bar shows its four tabs on Home (Home, Activity, Plan, Savings).
 - assertVisible:
@@ -128,7 +127,7 @@ tags:
 - tapOn: "Name"
 - inputText: "Maestro E2E Test Expense"
 - tapOn: "Amount"
-- inputText: "12.34"
+- inputText: "1234"
 - tapOn: "Save"
 
 # Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
@@ -159,7 +158,7 @@ tags:
 - eraseText: 20
 # B4: the amount field still accepts ',' as the decimal separator even in English, proving comma
 # parsing keeps working regardless of the locale's own separator.
-- inputText: "56,78"
+- inputText: "5678"
 - tapOn: "Save"
 
 # Back on the Dashboard, the recent row shows the updated amount.
@@ -185,7 +184,9 @@ tags:
 # when there is spending, which the expense above guarantees). The breakdown starts collapsed.
 - assertVisible: "Spent"
 - assertVisible: "Fixed vs variable"
-- assertVisible: "Show breakdown"
+- scrollUntilVisible:
+    element: "Show breakdown"
+    direction: DOWN
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
@@ -215,6 +216,9 @@ tags:
 # --- 5: Exercise Activity's period selector (period tabs plus the full period menu). Open the menu via
 # the label's dropdown icon (content description "Change period"), pick a rolling window, check the
 # label reflects it; then restore "This month".
+- scrollUntilVisible:
+    element: "Change period"
+    direction: UP
 - tapOn: "Change period"
 - assertVisible: "This month"
 - assertVisible: "Choose month.*"

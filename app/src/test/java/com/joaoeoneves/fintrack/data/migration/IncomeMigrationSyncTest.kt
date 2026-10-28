@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringType
@@ -20,7 +21,9 @@ import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -51,6 +54,7 @@ class IncomeMigrationSyncTest {
             AutomationSettings(legacyPaydayEnabled = true, legacyPaydayRecordedThrough = YearMonth.of(2026, 9)),
         )
     private val session = FakeSessionRepository(Session.Guest)
+    private val gate = RestoreGate()
     private val clock = MutableClock(Instant.parse("2026-10-28T10:00:00Z"), ZoneOffset.UTC)
 
     private var failSaves = false
@@ -94,6 +98,7 @@ class IncomeMigrationSyncTest {
             loggedAutomation,
             session,
             clock,
+            gate,
             backgroundScope,
         )
 
@@ -192,5 +197,57 @@ class IncomeMigrationSyncTest {
             assertTrue(log.all { it.startsWith("cursors") || it == "save:rinc_i1:true" })
             assertTrue(log.none { it.startsWith("delete") || it == "clearLegacy" })
             assertTrue(recurring.items.any { it.id == "i1" })
+        }
+
+    @Test
+    fun afterAFailedWrite_aLaterDifferentRecurringItem_isStillMigrated() =
+        runTest {
+            automation.nextWriteError = IllegalStateException("offline")
+            sync().start()
+            settle()
+            assertEquals(1, log.size)
+
+            val bonus =
+                recurringItem("i2", type = RecurringType.INCOME, name = "Bonus", autoPost = true)
+                    .copy(handledThrough = day(2026, 8, 5))
+            recurring.saveRecurring(bonus)
+            settle()
+
+            assertTrue(log.size > 1)
+            assertTrue(recurring.items.none { it.id == "i1" })
+        }
+
+    @Test
+    fun whileRestoring_writesNothing_thenMigratesAfterRelease() =
+        runTest {
+            val release = CompletableDeferred<Unit>()
+            backgroundScope.launch { gate.hold { release.await() } }
+            runCurrent()
+            sync().start()
+
+            settle()
+            assertTrue(log.isEmpty())
+            assertEquals(1, recurring.items.size)
+
+            release.complete(Unit)
+            settle()
+
+            assertTrue(log.isNotEmpty())
+            assertTrue(recurring.items.isEmpty())
+        }
+
+    @Test
+    fun aFailedAttempt_isRetriedAfterANewGeneration() =
+        runTest {
+            automation.nextWriteError = IllegalStateException("offline")
+            sync().start()
+            settle()
+            assertEquals(1, log.size)
+
+            gate.hold { }
+            settle()
+
+            assertTrue(log.size > 1)
+            assertTrue(recurring.items.isEmpty())
         }
 }

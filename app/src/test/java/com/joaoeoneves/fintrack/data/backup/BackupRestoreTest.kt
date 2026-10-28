@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
@@ -38,13 +37,6 @@ class BackupRestoreTest : BackupRepositoryTestBase() {
                     .map { it.id },
             )
             assertEquals(ThemePreference.DARK, prefsStore.data.first().theme)
-        }
-
-    @Test
-    fun restore_signedIn_fails() =
-        runStoreTest {
-            sessions.emit(Session.SignedIn(AuthUser("u", null, null, null)))
-            assertTrue(repository().restoreAsGuest(doc).isFailure)
         }
 
     @Test

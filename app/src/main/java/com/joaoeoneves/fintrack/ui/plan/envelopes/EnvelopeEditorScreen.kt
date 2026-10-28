@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.ui.plan.envelopes
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -16,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -142,8 +140,7 @@ fun EnvelopeEditorScreen(
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (val current = state) {
-            EnvelopeEditorUiState.Loading ->
-                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            EnvelopeEditorUiState.Loading -> Unit
 
             EnvelopeEditorUiState.NotFound ->
                 EmptyState(title = stringResource(R.string.error_state_title), modifier = contentModifier)
