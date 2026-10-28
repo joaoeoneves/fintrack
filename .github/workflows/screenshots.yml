@@ -51,6 +51,10 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          # Private-repo runners have 2 vCPUs (public ones have 4), so the emulator boots much slower.
+          cores: 2
+          ram-size: 4096M
+          emulator-boot-timeout: 1500
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
