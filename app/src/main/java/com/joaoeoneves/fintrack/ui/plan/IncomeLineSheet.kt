@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
@@ -29,16 +28,13 @@ import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.asString
-import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
-import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
-import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
-import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.YearMonth
@@ -56,10 +52,8 @@ fun IncomeLineSheet(
     onDelete: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val decimalSeparator = decimalSeparatorFor(currentLocale())
     var label by remember { mutableStateOf(editor.initialLabel) }
-    val initialAmount = editor.initialAmountCents?.toAmountInputText(decimalSeparator).orEmpty()
-    var amountText by remember { mutableStateOf(initialAmount) }
+    var amountCents by remember { mutableLongStateOf(editor.initialAmountCents ?: 0L) }
     var amountError by remember { mutableStateOf(false) }
     var schedule by remember { mutableStateOf(editor.initialSchedule) }
     // The VM's label error is shown only while the text still equals the last submitted text.
@@ -71,15 +65,15 @@ fun IncomeLineSheet(
             onChange = { label = limitInput(label, it, MAX_PLAN_LABEL_LENGTH) },
         )
     val amountModel =
-        TextFieldModel(
-            value = amountText,
+        AmountModel(
+            cents = amountCents,
             error = if (amountError) stringResource(R.string.error_invalid_amount) else null,
             onChange = {
-                amountText = it
+                amountCents = it
                 amountError = false
             },
         )
-    val preview = incomePreview(schedule.basis, amountText, workingDays.days)
+    val preview = incomePreview(schedule.basis, amountCents, workingDays.days)
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(
             text = stringResource(incomeLineTitle(editor.editingId)),
@@ -105,9 +99,7 @@ fun IncomeLineSheet(
                 if (editor.managed) {
                     onSave(editor.initialLabel, editor.initialAmountCents ?: 0L, schedule)
                 } else {
-                    parseAmountCents(amountText)
-                        .onSuccess { cents -> onSave(label, cents, schedule) }
-                        .onFailure { amountError = true }
+                    if (amountCents > 0L) onSave(label, amountCents, schedule) else amountError = true
                 }
             },
             modifier = Modifier.padding(top = Dimens.Space16),
@@ -161,9 +153,16 @@ private data class TextFieldModel(
     val onChange: (String) -> Unit,
 )
 
+/** The money field's cents, its validation error (if any) and its edit callback. */
+private data class AmountModel(
+    val cents: Long,
+    val error: String?,
+    val onChange: (Long) -> Unit,
+)
+
 private class FieldModels(
     val label: TextFieldModel,
-    val amount: TextFieldModel,
+    val amount: AmountModel,
     val preview: String?,
 )
 
@@ -217,19 +216,18 @@ private fun ManagedLineFields(
 @Composable
 private fun incomePreview(
     basis: IncomeBasis,
-    amountText: String,
+    rateCents: Long,
     days: Int,
 ): String? {
     if (basis != IncomeBasis.PER_WORKING_DAY) return null
-    val rate = parseAmountCents(amountText).getOrDefault(0L)
-    return pluralStringResource(R.plurals.plan_income_preview, days, days, formatAmountCents(rate * days))
+    return pluralStringResource(R.plurals.plan_income_preview, days, days, formatAmountCents(rateCents * days))
 }
 
 @Composable
 private fun IncomeLineFields(
     perDay: Boolean,
     label: TextFieldModel,
-    amount: TextFieldModel,
+    amount: AmountModel,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
         MinimalTextField(
@@ -246,13 +244,12 @@ private fun IncomeLineFields(
             },
             modifier = Modifier.fillMaxWidth(),
         )
-        MinimalTextField(
-            value = amount.value,
-            onValueChange = amount.onChange,
+        MoneyTextField(
+            cents = amount.cents,
+            onCentsChange = amount.onChange,
             label = stringResource(if (perDay) R.string.plan_field_amount_per_day else R.string.plan_field_amount),
             isError = amount.error != null,
-            supportingText = { amount.error?.let { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            supportingText = amount.error,
             modifier = Modifier.fillMaxWidth(),
         )
     }

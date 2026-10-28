@@ -24,7 +24,7 @@ class RecurringFormTest {
         RecurringForm(
             startDate = start,
             name = "Rent",
-            amountText = "12,50",
+            amountCents = 1_250L,
             category = BuiltInCategories.FOOD,
             dayText = "15",
         )
@@ -47,12 +47,12 @@ class RecurringFormTest {
     }
 
     @Test
-    fun amount_mustBePositiveAndParseable() {
-        for (bad in listOf("", "0", "0,00", "-5", "abc", "1,2,3")) {
-            val errors = validateRecurringForm(validForm().copy(amountText = bad))
-            assertEquals("amount '$bad'", msg(R.string.error_invalid_amount), errors?.amount)
+    fun amount_mustBePositive() {
+        for (bad in listOf(0L, -5L)) {
+            val errors = validateRecurringForm(validForm().copy(amountCents = bad))
+            assertEquals("amount $bad", msg(R.string.error_invalid_amount), errors?.amount)
         }
-        assertNull(validateRecurringForm(validForm().copy(amountText = "0,01")))
+        assertNull(validateRecurringForm(validForm().copy(amountCents = 1L)))
     }
 
     @Test
@@ -162,12 +162,12 @@ class RecurringFormTest {
     }
 
     @Test
-    fun toForm_roundTripsWithSeparator_andNewFormDefaultsToToday() {
+    fun toForm_prefillsStoredCentsExactly_andNewFormDefaultsToToday() {
         val item = recurringItem(amountCents = 1_205L, note = "memo", endDate = day(2027, 1, 1))
 
-        val form = item.toForm(BuiltInCategories.FOOD, ',')
+        val form = item.toForm(BuiltInCategories.FOOD)
 
-        assertEquals("12,05", form.amountText)
+        assertEquals(1_205L, form.amountCents)
         assertEquals("15", form.dayText)
         assertEquals("memo", form.note)
         assertEquals(BuiltInCategories.FOOD, form.category)
@@ -186,14 +186,14 @@ class RecurringFormTest {
         val fresh = newRecurringForm(day(2026, 8, 31))
 
         assertNull(fresh.category)
-        val filled = fresh.copy(name = "Rent", amountText = "10,00")
+        val filled = fresh.copy(name = "Rent", amountCents = 1_000L)
         assertEquals(msg(R.string.error_category_required), validateRecurringForm(filled)?.category)
         assertNull(validateRecurringForm(filled.copy(category = BuiltInCategories.FOOD)))
     }
 
     @Test
     fun autoPost_defaultsOnForNewItems_andToItemCarriesIt() {
-        val form = newRecurringForm(start, BuiltInCategories.FOOD).copy(name = "Rent", amountText = "5")
+        val form = newRecurringForm(start, BuiltInCategories.FOOD).copy(name = "Rent", amountCents = 500L)
 
         assertTrue(form.autoPost)
         assertTrue(form.toItem(null).autoPost)
@@ -202,7 +202,7 @@ class RecurringFormTest {
 
     @Test
     fun toForm_keepsStoredAutoPost_includingOff() {
-        assertEquals(false, recurringItem(autoPost = false).toForm(null, ',').autoPost)
-        assertEquals(true, recurringItem(autoPost = true).toForm(null, ',').autoPost)
+        assertEquals(false, recurringItem(autoPost = false).toForm(null).autoPost)
+        assertEquals(true, recurringItem(autoPost = true).toForm(null).autoPost)
     }
 }

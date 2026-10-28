@@ -42,8 +42,9 @@ class FirestoreAccountMigrator
                 firebaseAuth.currentUser?.uid
                     ?: return MigrationResult(0, 0, 0, IllegalStateException("Not signed in"))
             return runCatchingCancellable {
-                val plan = planMigration(local, fetchSnapshot(uid))
-                plan to plan.toBatches(legacyNames.names())
+                val names = legacyNames.names()
+                val plan = planMigration(local, fetchSnapshot(uid), names.deletedCategory)
+                plan to plan.toBatches(names)
             }.fold(
                 onSuccess = { (plan, batches) ->
                     onProgress(0, plan.total)

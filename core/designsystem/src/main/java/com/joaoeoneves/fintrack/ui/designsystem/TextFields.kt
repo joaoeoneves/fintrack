@@ -8,6 +8,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /**
@@ -37,6 +39,52 @@ fun MinimalTextField(
         supportingText = supportingText,
         singleLine = singleLine,
         keyboardOptions = keyboardOptions,
+        shape = MaterialTheme.shapes.medium,
+        colors =
+            TextFieldDefaults.colors(
+                focusedContainerColor = surface2,
+                unfocusedContainerColor = surface2,
+                errorContainerColor = surface2,
+                disabledContainerColor = surface2,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                errorIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                cursorColor = FinTrackTheme.colors.accentText,
+                errorCursorColor = FinTrackTheme.colors.negative,
+                focusedLabelColor = FinTrackTheme.colors.textSecondary,
+                unfocusedLabelColor = FinTrackTheme.colors.textSecondary,
+                errorLabelColor = FinTrackTheme.colors.negative,
+            ),
+        modifier = modifier,
+    )
+}
+
+@Suppress("LongParameterList")
+@Composable
+fun MinimalTextField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    placeholder: (@Composable () -> Unit)? = null,
+    supportingText: (@Composable () -> Unit)? = null,
+    singleLine: Boolean = true,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+) {
+    val surface2 = FinTrackTheme.colors.surface2
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        isError = isError,
+        placeholder = placeholder,
+        supportingText = supportingText,
+        singleLine = singleLine,
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         shape = MaterialTheme.shapes.medium,
         colors =
             TextFieldDefaults.colors(

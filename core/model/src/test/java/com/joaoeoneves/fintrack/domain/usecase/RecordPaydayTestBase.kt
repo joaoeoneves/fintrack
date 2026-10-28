@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -22,7 +23,8 @@ abstract class RecordPaydayTestBase {
     protected val monthSettings = FakeMonthSettingsRepository()
     protected val automation = FakeAutomationSettingsRepository(incomeRepo = incomes)
 
-    protected val useCase = RecordPayday(plan, monthSettings, incomes, automation)
+    protected val labels = FakeSalaryLineLabelsProvider()
+    protected val useCase = RecordPayday(plan, monthSettings, incomes, automation, labels)
 
     protected fun enabled(through: YearMonth?) {
         automation.replaceSettings(AutomationSettings(paydayEnabled = true, paydayRecordedThrough = through))

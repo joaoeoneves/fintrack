@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.MAX_GOAL_NAME_LENGTH
@@ -23,6 +21,7 @@ import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
@@ -50,15 +49,13 @@ internal fun GoalBasicFields(
         },
         modifier = Modifier.fillMaxWidth(),
     )
-    MinimalTextField(
-        value = draft.targetText,
-        onValueChange = { onChange(draft.copy(targetText = it)) },
+    val targetInvalid = draft.showErrors && draft.targetCents <= 0L
+    MoneyTextField(
+        cents = draft.targetCents,
+        onCentsChange = { onChange(draft.copy(targetCents = it)) },
         label = stringResource(R.string.goal_field_target),
-        isError = draft.showErrors && draft.targetCents == null,
-        supportingText = {
-            if (draft.showErrors && draft.targetCents == null) Text(stringResource(R.string.error_invalid_amount))
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        isError = targetInvalid,
+        supportingText = stringResource(R.string.error_invalid_amount).takeIf { targetInvalid },
         modifier = Modifier.fillMaxWidth(),
     )
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
@@ -108,15 +105,10 @@ internal fun GoalTotalFields(
             onClick = { onChange(draft.copy(targetDate = null)) },
         )
     }
-    MinimalTextField(
-        value = draft.initialText,
-        onValueChange = { onChange(draft.copy(initialText = it)) },
+    MoneyTextField(
+        cents = draft.initialCents,
+        onCentsChange = { onChange(draft.copy(initialCents = it)) },
         label = stringResource(R.string.goal_field_initial),
-        isError = draft.showErrors && draft.initialCents == null,
-        supportingText = {
-            if (draft.showErrors && draft.initialCents == null) Text(stringResource(R.string.error_invalid_amount))
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth(),
     )
 }

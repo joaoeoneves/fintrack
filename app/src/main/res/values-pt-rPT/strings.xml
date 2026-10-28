@@ -582,6 +582,7 @@
     <string name="salary_extra_default_flex">Benefícios flexíveis</string>
     <string name="salary_extra_default_profit_share">Distribuição de lucros</string>
     <string name="salary_extra_default_bonus">Prémio</string>
+    <string name="category_deleted_placeholder">Categoria eliminada</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Introduza um valor válido</string>
     <string name="salary_breakdown_title">Detalhe</string>

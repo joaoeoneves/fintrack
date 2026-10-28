@@ -112,7 +112,7 @@ fun AddEditExpenseScreen(
 /** Bundles [ExpenseForm]'s field-change callbacks to keep its own parameter list short. */
 private data class ExpenseFormActions(
     val onNameChanged: (String) -> Unit,
-    val onAmountChanged: (String) -> Unit,
+    val onAmountChanged: (Long) -> Unit,
     val onCategorySelected: (Category) -> Unit,
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
@@ -148,8 +148,8 @@ private fun ExpenseForm(
     ) {
         val affix = rememberCurrencyAffix()
         BorderlessAmountField(
-            value = form.amountText,
-            onValueChange = actions.onAmountChanged,
+            cents = form.amountCents,
+            onCentsChange = actions.onAmountChanged,
             currencySymbol = affix.symbol,
             symbolLeads = affix.leads,
             label = stringResource(R.string.field_amount),

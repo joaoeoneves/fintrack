@@ -65,7 +65,7 @@ class RecordPaydayUnreceiveTest : RecordPaydayTestBase() {
         runTest {
             val boom = IllegalStateException("offline")
             val failing = FailingDelete(incomes, failOn = "pay_b_202610", error = boom)
-            val failingUseCase = RecordPayday(plan, monthSettings, failing, automation)
+            val failingUseCase = RecordPayday(plan, monthSettings, failing, automation, labels)
             val a = line("a")
             val b = line("b")
             val c = line("c")

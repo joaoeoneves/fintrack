@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.data.migration
 
+import com.joaoeoneves.fintrack.data.backup.PLACEHOLDER_CATEGORY_NAME
+import com.joaoeoneves.fintrack.data.backup.namingPlaceholders
 import com.joaoeoneves.fintrack.data.backup.withPlaceholderCategories
 import com.joaoeoneves.fintrack.data.local.LocalAutomation
 import com.joaoeoneves.fintrack.data.local.LocalBudget
@@ -118,10 +120,12 @@ private class CategoryResolution(
 fun planMigration(
     local: LocalDataDocument,
     remote: RemoteAccountSnapshot,
+    placeholderName: String = PLACEHOLDER_CATEGORY_NAME,
 ): MigrationPlan {
     val localMaxOrder = local.categories.maxOfOrNull { it.order } ?: -1
     val categories =
         withPlaceholderCategories(local.categories, local.expenses, local.budgets, localMaxOrder, local.recurring)
+            .namingPlaceholders(local.categories.size, placeholderName)
     val groups = resolveGroups(local.categoryGroups, remote)
     val resolution = resolveCategories(categories, remote, groups.idMap)
     val known = BuiltInCategories.all.mapTo(mutableSetOf()) { it.id.value } + resolution.idMap.values

@@ -230,7 +230,7 @@ class RecordPaydayRunDueTest : RecordPaydayTestBase() {
             enabled(YearMonth.of(2026, 7))
             // Succeeds for August, then fails for September.
             val flaky = FlakyAfterOne(automation)
-            val flakyUseCase = RecordPayday(plan, monthSettings, incomes, flaky)
+            val flakyUseCase = RecordPayday(plan, monthSettings, incomes, flaky, labels)
 
             assertEquals(1, flakyUseCase.runDue(payday, utc))
 
