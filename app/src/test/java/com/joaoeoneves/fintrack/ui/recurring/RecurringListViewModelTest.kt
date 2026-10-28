@@ -3,9 +3,12 @@ package com.joaoeoneves.fintrack.ui.recurring
 import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.RecurringType
+import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
@@ -45,7 +48,10 @@ class RecurringListViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel(repo: FakeRecurringRepository) = RecurringListViewModel(repo, FakeCategoryRepository(), clock)
+    private fun viewModel(
+        repo: FakeRecurringRepository,
+        goals: FakeGoalRepository = FakeGoalRepository(),
+    ) = RecurringListViewModel(repo, FakeCategoryRepository(), goals, clock)
 
     private fun TestScope.started(vm: RecurringListViewModel): RecurringListUiState {
         backgroundScope.launch { vm.uiState.collect {} }
@@ -80,6 +86,37 @@ class RecurringListViewModelTest {
                     .category
                     ?.id,
             )
+        }
+
+    @Test
+    fun planOwnedItems_areHidden_otherSavingItemsStay() =
+        runTest(testDispatcher) {
+            val owned = recurringItem(id = "own", amountCents = 5_000)
+            val linkedOnly = recurringItem(id = "lnk", amountCents = 1_000)
+            val ownedInactive = recurringItem(id = "off", amountCents = 7_000, active = false)
+            val goals =
+                FakeGoalRepository(
+                    listOf(
+                        SavingsGoal("g1", "Plan", 0, GoalTargetType.ANNUAL, day(2026, 1, 1), recurringId = "own"),
+                        SavingsGoal(
+                            "g2",
+                            "Linked",
+                            100,
+                            GoalTargetType.ANNUAL,
+                            day(2026, 1, 1),
+                            linkedRecurringIds = setOf("lnk"),
+                        ),
+                        SavingsGoal("g3", "Off", 0, GoalTargetType.ANNUAL, day(2026, 1, 1), recurringId = "off"),
+                    ),
+                )
+            val vm = viewModel(FakeRecurringRepository(listOf(owned, linkedOnly, ownedInactive)), goals)
+            started(vm)
+
+            val state = content(vm)
+
+            assertEquals(listOf("lnk"), state.active.map { it.item.id })
+            assertTrue(state.inactive.isEmpty())
+            assertEquals(12_000L, state.annualExpenseCents)
         }
 
     @Test

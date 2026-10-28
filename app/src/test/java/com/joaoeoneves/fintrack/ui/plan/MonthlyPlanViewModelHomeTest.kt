@@ -3,9 +3,11 @@ package com.joaoeoneves.fintrack.ui.plan
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringType
+import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 import com.joaoeoneves.fintrack.testutil.recurringItem
@@ -17,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
 import java.time.YearMonth
 
 /** The Plan tab's tiles, set-up status and envelope cards, and the month seeded from the route. */
@@ -85,6 +88,28 @@ class MonthlyPlanViewModelHomeTest : MonthlyPlanViewModelTestBase() {
 
             assertEquals(10_000L, vm.content().tiles.savingCents)
             assertEquals(vm.content().summary.plannedSavingCents, vm.content().tiles.savingCents)
+        }
+
+    @Test
+    fun configure_billCount_excludesSavingsPlanOwnedItems() =
+        runTest(testDispatcher) {
+            recurringRepo.saveRecurring(recurringItem("bill", amountCents = 10_000L))
+            recurringRepo.saveRecurring(recurringItem("own", amountCents = 50_000L))
+            goalRepo.saveGoal(
+                SavingsGoal(
+                    "plan_own",
+                    "Plan",
+                    0,
+                    GoalTargetType.ANNUAL,
+                    LocalDate.of(2026, 1, 1),
+                    recurringId = "own",
+                ),
+            )
+            val vm = viewModel()
+            collect(vm)
+
+            assertEquals(1, vm.content().configure.billCount)
+            assertEquals(10_000L, vm.content().configure.billsMonthlyCents)
         }
 
     @Test

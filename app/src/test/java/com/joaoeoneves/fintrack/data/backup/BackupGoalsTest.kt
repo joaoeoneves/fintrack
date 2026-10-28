@@ -56,17 +56,17 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
         val result = BackupCodec.decode(text).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(14, result.document.schemaVersion)
+        assertEquals(15, result.document.schemaVersion)
         assertTrue(result.document.goals.isEmpty())
         assertEquals(0, result.document.counts().goals)
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v15File_isUnsupported() {
+    fun v16File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(15),
-            BackupCodec.decode("""{$header,"schemaVersion":15}"""),
+            BackupDecodeResult.UnsupportedVersion(16),
+            BackupCodec.decode("""{$header,"schemaVersion":16}"""),
         )
     }
 
@@ -89,7 +89,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
                 goals =
                     listOf(
                         localGoal("ok"),
-                        localGoal("zero", targetCents = 0),
+                        localGoal("zero", targetCents = -1),
                         localGoal("reversed", startDate = "2026-05-01", targetDate = "2026-04-30"),
                         localGoal("dup"),
                         localGoal("dup"),
@@ -100,6 +100,40 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
 
         assertEquals(listOf("ok", "dup"), result.document.goals.map { it.id })
         assertEquals(3, result.skippedCount)
+    }
+
+    @Test
+    fun noTargetPlan_withRecurringId_roundTripsThroughBackup() {
+        val plan = goal.copy(id = "plan_r1", targetCents = 0, recurringId = "r1")
+        val doc = backupDoc().copy(goals = listOf(plan.toLocal()))
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(listOf(plan.toLocal()), result.document.goals)
+        assertEquals(
+            "r1",
+            result.document.goals
+                .single()
+                .recurringId,
+        )
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun v14GoalWithoutRecurringId_decodesWithNull() {
+        val v14 =
+            """{$header,"schemaVersion":14,
+            "goals":[{"id":"g1","name":"G","targetCents":100,"startDate":"2026-01-01"}]}"""
+
+        val result = BackupCodec.decode(v14).success()
+
+        assertEquals(15, result.document.schemaVersion)
+        assertEquals(
+            null,
+            result.document.goals
+                .single()
+                .recurringId,
+        )
     }
 
     @Test

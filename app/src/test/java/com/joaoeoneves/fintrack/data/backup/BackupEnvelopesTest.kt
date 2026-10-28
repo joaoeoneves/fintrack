@@ -7,7 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 
-/** Backup schema v14: an envelope's amount and funding line. */
+/** Backup schema v15: an envelope's amount and funding line. */
 class BackupEnvelopesTest : BackupRepositoryTestBase() {
     private val header = """"format":"fintrack-backup","exportedAt":"$EXPORTED_AT""""
 
@@ -21,7 +21,7 @@ class BackupEnvelopesTest : BackupRepositoryTestBase() {
 
         val result = BackupCodec.decode(v13).success()
 
-        assertEquals(14, result.document.schemaVersion)
+        assertEquals(15, result.document.schemaVersion)
         assertEquals(LocalCategoryGroup("g-food", "Food", 0, null, null), result.document.categoryGroups.single())
         assertEquals(
             "g-food",
