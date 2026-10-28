@@ -406,6 +406,9 @@
     <string name="recurring_end_date">Data de fim</string>
     <string name="recurring_end_date_add">Adicionar data de fim</string>
     <string name="recurring_end_date_clear">Remover data de fim</string>
+    <string name="recurring_auto_post">Lançar automaticamente</string>
+    <string name="recurring_auto_post_hint">Registado na data, sem precisar de confirmar</string>
+    <string name="recurring_automatic">Automático</string>
     <string name="error_recurring_save_failed">Não foi possível guardar o item recorrente</string>
     <string name="error_recurring_not_found">Este item recorrente já não existe</string>
     <string name="error_recurring_end_before_start">A data de fim não pode ser anterior à data de início</string>

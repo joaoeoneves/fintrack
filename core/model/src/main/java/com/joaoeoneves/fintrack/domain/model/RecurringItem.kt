@@ -22,7 +22,8 @@ const val MAX_MONTH_OF_YEAR = 12
  * months) and, for [RecurringFrequency.YEARLY], [monthOfYear]. [startDate] only says "counts from":
  * the first occurrence is the first scheduled date on or after it. Confirmed occurrences become
  * ordinary transactions; [handledThrough] is the latest occurrence confirmed or skipped. A blank
- * [id] means "not saved yet".
+ * [id] means "not saved yet". With [autoPost] on, due occurrences are confirmed by the app itself (see
+ * [autoPostDueOccurrences]) instead of waiting in the upcoming list.
  *
  * [categoryId] is required for [RecurringType.EXPENSE] and `null` for [RecurringType.INCOME];
  * [monthOfYear] is non-null exactly when [frequency] is yearly.
@@ -41,6 +42,7 @@ data class RecurringItem(
     val endDate: LocalDate?,
     val handledThrough: LocalDate?,
     val active: Boolean,
+    val autoPost: Boolean = false,
 ) {
     /** Whether the day/month combination is within range and consistent with [frequency]. */
     val hasValidSchedule: Boolean

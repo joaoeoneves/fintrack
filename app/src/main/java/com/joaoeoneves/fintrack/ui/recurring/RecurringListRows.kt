@@ -80,6 +80,13 @@ internal fun RecurringRowItem(
                     color = FinTrackTheme.colors.textSecondary,
                 )
             }
+            if (item.autoPost) {
+                Text(
+                    text = stringResource(R.string.recurring_automatic),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
             Text(
                 text = statusText(row),
                 style = MaterialTheme.typography.bodySmall,

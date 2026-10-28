@@ -33,6 +33,7 @@ import com.joaoeoneves.fintrack.ui.common.FormScaffold
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 
@@ -117,6 +118,12 @@ private fun RecurringFormContent(
             },
             singleLine = false,
             modifier = Modifier.fillMaxWidth(),
+        )
+        SettingsSwitchRow(
+            title = stringResource(R.string.recurring_auto_post),
+            checked = form.autoPost,
+            onCheckedChange = { onFormChanged(form.copy(autoPost = it)) },
+            supportingText = stringResource(R.string.recurring_auto_post_hint),
         )
         state.saveError?.let { error ->
             FormSaveError(error.asString())

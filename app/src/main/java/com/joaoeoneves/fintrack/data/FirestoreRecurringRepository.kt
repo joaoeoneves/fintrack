@@ -166,6 +166,7 @@ internal fun RecurringItem.toFirestoreMap(): Map<String, Any?> =
         "endDate" to endDate?.toString(),
         "handledThrough" to handledThrough?.toString(),
         "active" to active,
+        "autoPost" to autoPost,
         "updatedAt" to FieldValue.serverTimestamp(),
     )
 
@@ -213,6 +214,7 @@ private fun DocumentSnapshot.parseRecurring(): RecurringItem? {
             endDate = parseDate("endDate"),
             handledThrough = parseDate("handledThrough"),
             active = checkNotNull(active),
+            autoPost = get("autoPost") as? Boolean ?: false,
         )
     val consistent = item.hasValidSchedule && (item.type == RecurringType.INCOME || item.categoryId != null)
     return if (consistent) item else dropped("schedule/category")

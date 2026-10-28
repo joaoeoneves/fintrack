@@ -395,6 +395,9 @@
     <string name="recurring_end_date">End date</string>
     <string name="recurring_end_date_add">Add end date</string>
     <string name="recurring_end_date_clear">Remove end date</string>
+    <string name="recurring_auto_post">Post automatically</string>
+    <string name="recurring_auto_post_hint">Recorded on its date, no need to confirm</string>
+    <string name="recurring_automatic">Automatic</string>
     <string name="error_recurring_save_failed">Couldn\'t save the recurring item</string>
     <string name="error_recurring_not_found">This recurring item no longer exists</string>
     <string name="error_recurring_end_before_start">The end date can\'t be before the start date</string>
