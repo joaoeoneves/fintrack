@@ -47,7 +47,7 @@ internal fun SalaryExtrasSection(
                     ?.find { it.extraId == extra.id }
             SettingsRow(
                 title = extra.name,
-                value =
+                supportingText =
                     when {
                         !gross && extra.amountType != SalaryExtraAmountType.FIXED_CENTS ->
                             stringResource(R.string.salary_extra_gross_only)
