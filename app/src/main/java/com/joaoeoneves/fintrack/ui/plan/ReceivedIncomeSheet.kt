@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,7 +55,10 @@ fun ReceivedIncomeSheet(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = Dimens.Space12),
         )
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
+        Column(
+            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        ) {
             ReadOnlyDateField(
                 date = date.atTime(LocalTime.NOON).atZone(zone).toInstant(),
                 onDateSelected = { date = it.atZone(zone).toLocalDate().coerceAtMost(today) },

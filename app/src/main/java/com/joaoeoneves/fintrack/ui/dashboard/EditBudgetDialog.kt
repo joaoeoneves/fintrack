@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,22 +51,22 @@ internal fun EditBudgetDialog(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = Dimens.Space12),
         )
-        MinimalTextField(
-            value = amountText,
-            onValueChange = {
-                amountText = it
-                error = null
-            },
-            label = stringResource(R.string.budget_dialog_limit_label),
-            isError = error != null,
-            supportingText = { error?.let { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth(),
-        )
         Column(
-            modifier = Modifier.padding(top = Dimens.Space16),
+            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
         ) {
+            MinimalTextField(
+                value = amountText,
+                onValueChange = {
+                    amountText = it
+                    error = null
+                },
+                label = stringResource(R.string.budget_dialog_limit_label),
+                isError = error != null,
+                supportingText = { error?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth(),
+            )
             MonthChips(
                 title = stringResource(R.string.plan_not_in),
                 selected = skipMonths,
