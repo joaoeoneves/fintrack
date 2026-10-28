@@ -313,7 +313,7 @@ private fun DashboardContent(
                 .nestedScroll(pill.connection)
                 .testTag(TestTags.DASHBOARD_LIST),
         contentPadding =
-            PaddingValues(bottom = Dimens.FloatingBarBottomPadding + contentPadding.calculateBottomPadding()),
+            PaddingValues(bottom = Dimens.AddPillClearance + contentPadding.calculateBottomPadding()),
     ) {
         balanceItems(state = state, chart = chart, start = actions.start)
         planItems(state = state, actions = actions, callbacks = callbacks)

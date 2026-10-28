@@ -157,7 +157,7 @@ private fun ActivityContent(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().nestedScroll(pill.connection).testTag(TestTags.ACTIVITY_LIST),
-            contentPadding = PaddingValues(bottom = Dimens.FloatingBarBottomPadding),
+            contentPadding = PaddingValues(bottom = Dimens.AddPillClearance),
         ) {
             activityHeaderItems(state = state, query = query, categories = categories, actions = actions)
             activityRowItems(state = state, actions = actions)
@@ -166,7 +166,7 @@ private fun ActivityContent(
             visible = pill.visible,
             onAddExpense = actions.onAddExpense,
             onAddIncome = actions.onAddIncome,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Dimens.Space16),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Dimens.AddPillBottomMargin),
         )
     }
 }

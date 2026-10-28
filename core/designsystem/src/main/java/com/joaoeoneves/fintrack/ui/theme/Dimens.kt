@@ -17,5 +17,13 @@ object Dimens {
     val PillButtonHeight = 56.dp
     val ThinBarHeight = 4.dp
     val HairlineThickness = 1.dp
-    val FloatingBarBottomPadding = 96.dp
+
+    /** Height of the floating add pill (two 48dp actions plus the capsule padding). */
+    val AddPillHeight = 56.dp
+
+    /** Gap between the floating add pill and the bottom of its screen area. */
+    val AddPillBottomMargin = Space16
+
+    /** Bottom content padding that lets the last list rows scroll clear of the floating add pill. */
+    val AddPillClearance = AddPillHeight + AddPillBottomMargin + Space32
 }
