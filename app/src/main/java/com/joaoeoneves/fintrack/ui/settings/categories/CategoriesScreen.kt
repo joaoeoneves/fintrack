@@ -140,7 +140,6 @@ internal fun CategoriesContent(
                 state.editor?.let { editor ->
                     CategoryEditorDialog(
                         state = editor,
-                        groups = state.groups,
                         onSave = actions.onSave,
                         onDismiss = actions.onDismissEditor,
                     )

@@ -33,6 +33,8 @@ import com.joaoeoneves.fintrack.ui.dashboard.EditBudgetDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanActions
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
@@ -48,15 +50,15 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 fun PlanScreen(
     onOpenSettings: () -> Unit,
     onOpenRecurring: () -> Unit,
+    onOpenEnvelopes: () -> Unit,
     onOpenSalaryProfile: () -> Unit,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
-    groupsViewModel: CategoryGroupsViewModel = hiltViewModel(),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val goalsViewModel: GoalsViewModel = hiltViewModel()
     CollectPlanErrors(
         snackbarHostState = snackbarHostState,
-        events = listOf(viewModel.errorEvent, groupsViewModel.errorEvent, goalsViewModel.errorEvent),
+        events = listOf(viewModel.errorEvent, goalsViewModel.errorEvent),
     )
 
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
@@ -67,8 +69,7 @@ fun PlanScreen(
             onOpenSettings = onOpenSettings,
             snackbarHostState = snackbarHostState,
             viewModel = viewModel,
-            groupsViewModel = groupsViewModel,
-            navigation = PlanNavigation(onOpenRecurring, onOpenSalaryProfile),
+            navigation = PlanNavigation(onOpenRecurring, onOpenEnvelopes, onOpenSalaryProfile),
         )
     }
 }
@@ -78,7 +79,6 @@ private fun PlanScaffold(
     onOpenSettings: () -> Unit,
     snackbarHostState: SnackbarHostState,
     viewModel: MonthlyPlanViewModel,
-    groupsViewModel: CategoryGroupsViewModel,
     navigation: PlanNavigation,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -114,7 +114,6 @@ private fun PlanScaffold(
                 MonthPlanBody(
                     state = uiState,
                     viewModel = viewModel,
-                    groupsViewModel = groupsViewModel,
                     navigation = navigation,
                     modifier = contentModifier,
                 )
@@ -127,7 +126,6 @@ private fun PlanScaffold(
 private fun MonthPlanBody(
     state: MonthlyPlanUiState,
     viewModel: MonthlyPlanViewModel,
-    groupsViewModel: CategoryGroupsViewModel,
     navigation: PlanNavigation,
     modifier: Modifier,
 ) {
@@ -142,7 +140,6 @@ private fun MonthPlanBody(
             MonthlyPlanContent(
                 state = state,
                 viewModel = viewModel,
-                groupsViewModel = groupsViewModel,
                 navigation = navigation,
                 modifier = modifier,
             )
@@ -152,6 +149,7 @@ private fun MonthPlanBody(
 /** Where the Plan tab can navigate to, bundled for detekt's LongParameterList. */
 private class PlanNavigation(
     val onOpenRecurring: () -> Unit,
+    val onOpenEnvelopes: () -> Unit,
     val onOpenSalaryProfile: () -> Unit,
 )
 
@@ -159,13 +157,11 @@ private class PlanNavigation(
 private fun MonthlyPlanContent(
     state: MonthlyPlanUiState.Content,
     viewModel: MonthlyPlanViewModel,
-    groupsViewModel: CategoryGroupsViewModel,
     navigation: PlanNavigation,
     modifier: Modifier = Modifier,
 ) {
     var editingAllocation by remember { mutableStateOf<CategoryBudget?>(null) }
     var editingWorkingDays by remember { mutableStateOf(false) }
-    var managingGroups by remember { mutableStateOf(false) }
     val cardModifier = Modifier.fillMaxWidth()
 
     LazyColumn(
@@ -191,9 +187,8 @@ private fun MonthlyPlanContent(
         expectedIncomeItem(state, viewModel, navigation, { editingWorkingDays = true }, cardModifier)
         limitsItems(
             state = state,
-            groupsViewModel = groupsViewModel,
             viewModel = viewModel,
-            actions = LimitsActions(onEdit = { editingAllocation = it }, onManage = { managingGroups = true }),
+            actions = LimitsActions(onEdit = { editingAllocation = it }, onManage = navigation.onOpenEnvelopes),
             modifier = cardModifier,
         )
         item { GoalsSection(modifier = cardModifier) }
@@ -207,9 +202,6 @@ private fun MonthlyPlanContent(
             onSave = viewModel::onSetWorkingDays,
             onDismiss = { editingWorkingDays = false },
         )
-    }
-    if (managingGroups) {
-        ManageGroupsDialog(groupsViewModel, onDismiss = { managingGroups = false })
     }
     PlanDialogs(
         state = state,
@@ -314,7 +306,6 @@ private class LimitsActions(
  */
 private fun LazyListScope.limitsItems(
     state: MonthlyPlanUiState.Content,
-    groupsViewModel: CategoryGroupsViewModel,
     viewModel: MonthlyPlanViewModel,
     actions: LimitsActions,
     modifier: Modifier,
@@ -333,42 +324,12 @@ private fun LazyListScope.limitsItems(
     item { AllocationsCard(allocations = state.allocations, onEdit = actions.onEdit, modifier = modifier) }
     plannedVsActualItem(state.progress, viewModel, modifier)
     item {
-        val otherName = stringResource(R.string.plan_group_other)
-        val names =
-            SuggestedGroupNames(
-                recurring = stringResource(R.string.group_suggested_recurring),
-                investments = stringResource(R.string.group_suggested_investments),
-                food = stringResource(R.string.group_suggested_food),
-                other = stringResource(R.string.group_suggested_other),
+        SettingsGroup(label = stringResource(R.string.plan_envelopes_title), modifier = modifier) {
+            SettingsRow(
+                title = stringResource(R.string.plan_envelopes_create),
+                onClick = actions.onManage,
+                showChevron = true,
             )
-        GroupsEmptyCard(
-            actions =
-                GroupsActions(
-                    onCreateSuggested = { groupsViewModel.onCreateSuggested(names, listOf(otherName)) },
-                    onManage = actions.onManage,
-                ),
-            modifier = modifier,
-        )
+        }
     }
-}
-
-@Composable
-private fun ManageGroupsDialog(
-    groupsViewModel: CategoryGroupsViewModel,
-    onDismiss: () -> Unit,
-) {
-    val groups by groupsViewModel.groups.collectAsStateWithLifecycle()
-    val reserved = listOf(stringResource(R.string.plan_group_other))
-    ManageGroupsSheet(
-        groups = groups.orEmpty(),
-        reservedNames = reserved,
-        actions =
-            ManageGroupsActions(
-                onAdd = { groupsViewModel.onAdd(it, reserved) },
-                onRename = { id, name -> groupsViewModel.onRename(id, name, reserved) },
-                onMove = groupsViewModel::onMove,
-                onDelete = groupsViewModel::onDelete,
-            ),
-        onDismiss = onDismiss,
-    )
 }

@@ -51,33 +51,6 @@ fun LimitsByGroupCard(
     }
 }
 
-/** The "Groups" card while no group is defined: the starter set and "Create group" entry points. */
-@Composable
-fun GroupsEmptyCard(
-    actions: GroupsActions,
-    modifier: Modifier = Modifier,
-) {
-    SettingsGroup(label = stringResource(R.string.plan_envelopes_title), modifier = modifier) {
-        Text(
-            text = stringResource(R.string.plan_envelopes_empty),
-            style = MaterialTheme.typography.bodySmall,
-            color = FinTrackTheme.colors.textSecondary,
-            modifier = Modifier.padding(bottom = Dimens.Space8),
-        )
-        SettingsRow(
-            title = stringResource(R.string.plan_envelopes_suggest),
-            onClick = actions.onCreateSuggested,
-            showChevron = true,
-        )
-        Hairline()
-        SettingsRow(
-            title = stringResource(R.string.plan_envelopes_create),
-            onClick = actions.onManage,
-            titleColor = FinTrackTheme.colors.textSecondary,
-        )
-    }
-}
-
 @Composable
 private fun LimitGroupHeader(group: LimitGroup) {
     val isOver = group.plannedCents > 0 && group.spentCents > group.plannedCents

@@ -19,6 +19,8 @@ import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.insights.InsightsScreen
 import com.joaoeoneves.fintrack.ui.plan.PlanScreen
+import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeEditorScreen
+import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
@@ -72,6 +74,7 @@ fun FinTrackNavHost(
         planRoutes(navController)
         insightsRoutes(navController)
         sharedRoutes(navController, transitions)
+        envelopeRoutes(navController)
     }
 }
 
@@ -118,6 +121,7 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
             PlanScreen(
                 onOpenSettings = { navController.navigate(Settings) },
                 onOpenRecurring = { navController.navigate(RecurringList) },
+                onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
                 onOpenSalaryProfile = { navController.navigate(EditSalaryProfile) },
             )
         }
@@ -133,6 +137,19 @@ private fun NavGraphBuilder.insightsRoutes(navController: NavHostController) {
                 onAddExpense = { navController.navigate(AddEditExpense()) },
             )
         }
+    }
+}
+
+/** The envelope list and editor, pushed from the Plan tab. */
+private fun NavGraphBuilder.envelopeRoutes(navController: NavHostController) {
+    composable<PlanEnvelopes> {
+        EnvelopesScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onOpenEditor = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
+        )
+    }
+    composable<EditEnvelope> {
+        EnvelopeEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
 }
 

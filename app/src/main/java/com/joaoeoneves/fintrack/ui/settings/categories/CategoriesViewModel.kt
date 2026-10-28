@@ -10,7 +10,6 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.repository.BuiltInCategoryNames
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
-import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.usecase.CategoryMovePreview
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
@@ -46,7 +45,6 @@ class CategoriesViewModel
         private val checkCategoryUsage: CheckCategoryUsage,
         private val builtInCategoryNames: BuiltInCategoryNames,
         private val moveCategoryItems: MoveCategoryItems,
-        private val categoryGroupRepository: EnvelopeRepository,
     ) : ViewModel() {
         private val editor = MutableStateFlow<CategoryEditorState?>(null)
         private val deleteDialog = MutableStateFlow<DeleteDialogState?>(null)
@@ -68,15 +66,13 @@ class CategoriesViewModel
                 editor,
                 deleteDialog,
                 moveDialog,
-                categoryGroupRepository.observeEnvelopes().catch { emit(emptyList()) },
-            ) { categories, editorState, dialog, move, groups ->
+            ) { categories, editorState, dialog, move ->
                 CategoriesUiState.Content(
                     active = categories.active(),
                     archived = categories.filter { it.archived },
                     editor = editorState,
                     deleteDialog = dialog,
                     moveDialog = move,
-                    groups = groups,
                 )
             }.stateIn(
                 viewModelScope,
@@ -100,7 +96,6 @@ class CategoriesViewModel
                                 iconKey = category.iconKey,
                                 colorKey = category.colorKey,
                                 kind = category.kind,
-                                groupId = category.groupId,
                             ),
                     )
             }
@@ -126,7 +121,7 @@ class CategoriesViewModel
                         draft.iconKey,
                         draft.colorKey,
                         draft.kind,
-                        draft.groupId,
+                        null,
                     )
                 } else {
                     categoryRepository.updateCategory(
@@ -135,7 +130,6 @@ class CategoriesViewModel
                             iconKey = draft.iconKey,
                             colorKey = draft.colorKey,
                             kind = draft.kind,
-                            groupId = draft.groupId,
                         ),
                     )
                 }

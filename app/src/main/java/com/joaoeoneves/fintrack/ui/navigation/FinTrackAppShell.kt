@@ -29,6 +29,9 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackNavigationBar
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
 import com.joaoeoneves.fintrack.ui.designsystem.NavigationBarEntry
+import com.joaoeoneves.fintrack.ui.plan.envelopes.DeletedEnvelope
+import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeUndoViewModel
+import com.joaoeoneves.fintrack.ui.plan.envelopes.LocalEnvelopeDeleteUndo
 import kotlinx.coroutines.launch
 
 /**
@@ -57,6 +60,17 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
                 }
             }
         }
+    val envelopeUndoViewModel = hiltViewModel<EnvelopeUndoViewModel>()
+    val envelopeDeletedMessage = stringResource(R.string.envelope_deleted)
+    val showEnvelopeDeleted: (DeletedEnvelope) -> Unit =
+        remember(envelopeDeletedMessage, undoLabel) {
+            { deleted ->
+                scope.launch {
+                    val result = snackbarHostState.showSnackbar(envelopeDeletedMessage, actionLabel = undoLabel)
+                    if (result == SnackbarResult.ActionPerformed) envelopeUndoViewModel.restore(deleted)
+                }
+            }
+        }
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
@@ -69,7 +83,11 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
             }
         },
     ) { inner ->
-        CompositionLocalProvider(LocalAppSnackbar provides showMessage, LocalDeleteUndo provides showDeleted) {
+        CompositionLocalProvider(
+            LocalAppSnackbar provides showMessage,
+            LocalDeleteUndo provides showDeleted,
+            LocalEnvelopeDeleteUndo provides showEnvelopeDeleted,
+        ) {
             FinTrackNavHost(
                 navController = navController,
                 modifier = Modifier.padding(inner).consumeWindowInsets(inner),

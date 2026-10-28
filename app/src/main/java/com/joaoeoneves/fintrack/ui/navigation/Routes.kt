@@ -72,6 +72,16 @@ object Categories
 @Serializable
 object RecurringList
 
+/** The envelopes list, pushed from the Plan tab. */
+@Serializable
+object PlanEnvelopes
+
+/** The envelope editor; a null [envelopeId] creates a new envelope. */
+@Serializable
+data class EditEnvelope(
+    val envelopeId: String? = null,
+)
+
 /** The salary profile editor, pushed from the Plan tab; it takes no arguments. */
 @Serializable
 object EditSalaryProfile
