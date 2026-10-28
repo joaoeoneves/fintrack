@@ -53,15 +53,8 @@ class LocalEnvelopeRepository
                             val sameLine = edit.fundedByLineId != null && group.fundedByLineId == edit.fundedByLineId
                             if (group.id != id && sameLine) group.copy(fundedByLineId = null) else group
                         }.upserted(record) { it.id == id }
-                val categories =
-                    doc.categories.map { category ->
-                        when {
-                            category.id in members -> category.copy(groupId = id)
-                            category.groupId == id -> category.copy(groupId = null)
-                            else -> category
-                        }
-                    }
-                doc.copy(categoryGroups = groups, categories = categories, budgets = budgets) to id
+                val withMembers = doc.withMembers(id, members)
+                withMembers.copy(categoryGroups = groups, budgets = budgets) to id
             }
 
         override suspend fun reorderEnvelopes(orderedIds: List<String>): Result<Unit> =
@@ -77,11 +70,29 @@ class LocalEnvelopeRepository
 
         override suspend fun deleteEnvelope(id: String): Result<Unit> =
             store.update { doc ->
-                val members = doc.categories.filter { it.groupId == id }.mapTo(mutableSetOf()) { it.id }
-                doc.copy(
-                    categoryGroups = doc.categoryGroups.filterNot { it.id == id },
-                    categories = doc.categories.map { if (it.groupId == id) it.copy(groupId = null) else it },
-                    budgets = doc.budgets.filterNot { it.categoryId in members },
-                ) to Unit
+                val filed = doc.catalog().filter { it.groupId == id }
+                val members = filed.mapTo(mutableSetOf()) { it.id.value }
+                doc
+                    .withCategories(filed.map { it.copy(groupId = null).toLocal() })
+                    .copy(
+                        categoryGroups = doc.categoryGroups.filterNot { it.id == id },
+                        budgets = doc.budgets.filterNot { it.categoryId in members },
+                    ) to Unit
             }
+
+        /** This document with exactly the [members] filed under envelope [id], upserting built-ins as overrides. */
+        private fun LocalDataDocument.withMembers(
+            id: String,
+            members: Set<String>,
+        ): LocalDataDocument {
+            val refiled =
+                catalog().mapNotNull { category ->
+                    when {
+                        category.id.value in members && category.groupId != id -> category.copy(groupId = id)
+                        category.id.value !in members && category.groupId == id -> category.copy(groupId = null)
+                        else -> null
+                    }
+                }
+            return withCategories(refiled.map { it.toLocal() })
+        }
     }

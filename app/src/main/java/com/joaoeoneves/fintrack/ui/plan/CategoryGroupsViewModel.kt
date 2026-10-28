@@ -91,7 +91,9 @@ class CategoryGroupsViewModel
                 return rejectName()
             }
             write {
-                val current = groups.value.orEmpty().first { it.id == id }
+                val current =
+                    groups.value.orEmpty().firstOrNull { it.id == id }
+                        ?: return@write Result.failure<Unit>(NoSuchElementException("Unknown group $id"))
                 val members =
                     categoryRepository
                         .observeCategories()
