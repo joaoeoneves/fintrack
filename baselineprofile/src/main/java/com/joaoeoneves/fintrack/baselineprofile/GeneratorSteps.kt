@@ -21,7 +21,7 @@ object GeneratorTags {
     const val NAV_HOME = "nav_home"
     const val NAV_ACTIVITY = "nav_activity"
     const val NAV_PLAN = "nav_plan"
-    const val NAV_INSIGHTS = "nav_insights"
+    const val NAV_SAVINGS = "nav_savings"
 }
 
 /** Enters guest mode when the sign-in screen shows; otherwise assumes a session already exists. */

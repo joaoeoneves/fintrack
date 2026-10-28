@@ -19,6 +19,7 @@ data class ActivityActions(
     val onTypeSelected: (ActivityType) -> Unit,
     val onQueryChanged: (String) -> Unit,
     val onCategorySelected: (CategoryId?) -> Unit,
+    val onEnvelopeSelected: (String?) -> Unit,
     val onSortSelected: (SortOption) -> Unit,
     val onOpen: (Transaction) -> Unit,
     val onDelete: (String) -> Unit,

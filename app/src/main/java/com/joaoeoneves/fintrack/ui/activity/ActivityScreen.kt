@@ -129,6 +129,7 @@ private fun ActivityViewModel.activityActions(callbacks: ActivityCallbacks): Act
         onTypeSelected = ::onTypeSelected,
         onQueryChanged = ::onQueryChanged,
         onCategorySelected = ::onCategorySelected,
+        onEnvelopeSelected = ::onEnvelopeSelected,
         onSortSelected = ::onSortSelected,
         onOpen = { transaction ->
             when (transaction) {

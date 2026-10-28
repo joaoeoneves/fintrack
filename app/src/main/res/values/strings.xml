@@ -126,6 +126,12 @@
     <string name="activity_empty">No activity in this period yet.</string>
     <string name="activity_total_in">In</string>
     <string name="activity_total_out">Out</string>
+    <string name="activity_spent_total">Spent</string>
+    <string name="activity_show_breakdown">Show breakdown</string>
+    <string name="activity_hide_breakdown">Hide breakdown</string>
+    <string name="activity_envelope_all">All</string>
+    <string name="cd_envelope_bar">Spending by envelope: %1$s</string>
+    <string name="cd_envelope_chip">%1$s, %2$s spent</string>
 
     <!-- Sort options -->
     <string name="sort_newest_first">Newest first</string>
@@ -423,8 +429,6 @@
     <string name="nav_home">Home</string>
     <string name="nav_activity">Activity</string>
     <string name="nav_plan">Plan</string>
-    <string name="nav_insights">Insights</string>
-    <string name="insights_title">Insights</string>
     <string name="insights_empty">No spending to analyse in this period yet.</string>
     <string name="insights_split_title">Fixed vs variable</string>
     <string name="insights_split_fixed">Fixed</string>

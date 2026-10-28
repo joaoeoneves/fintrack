@@ -16,7 +16,6 @@ object TestTags {
     const val NAV_ACTIVITY = "nav_activity"
     const val NAV_PLAN = "nav_plan"
     const val NAV_SAVINGS = "nav_savings"
-    const val NAV_INSIGHTS = "nav_insights"
     const val RECURRING_CARD = "recurring_card"
     const val RECURRING_CONFIRM = "recurring_confirm"
     const val RECURRING_SKIP = "recurring_skip"

@@ -1,8 +1,5 @@
 package com.joaoeoneves.fintrack.ui.navigation
 
-import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.domain.model.encode
 import kotlinx.serialization.Serializable
 
 /**
@@ -22,29 +19,22 @@ object PlanGraph
 @Serializable
 object SavingsGraph
 
-@Serializable
-object InsightsGraph
-
 /** Start destination of [HomeGraph]. */
 @Serializable
 object Home
 
 /**
  * Start destination of [ActivityGraph]. [period] is an encoded `Period` token, [type] is
- * `"EXPENSE"` or `"INCOME"` and [category] a category id; all are only initial values.
+ * `"EXPENSE"` or `"INCOME"`, [category] a category id and [envelope] an envelope id (`""` for no envelope); all
+ * are only initial values.
  */
 @Serializable
 data class Activity(
     val period: String? = null,
     val type: String? = null,
     val category: String? = null,
+    val envelope: String? = null,
 )
-
-/** The [Activity] route showing [category]'s transactions in [period] (a deep link from Insights). */
-fun activityRouteFor(
-    period: Period,
-    category: CategoryId,
-): Activity = Activity(period = period.encode(), category = category.value)
 
 /** Start destination of [PlanGraph]. */
 @Serializable
@@ -58,12 +48,6 @@ object SavingsHome
 @Serializable
 data class EditSavingsPlan(
     val id: String? = null,
-)
-
-/** Start destination of [InsightsGraph]; [period] is an encoded `Period` token. */
-@Serializable
-data class Insights(
-    val period: String? = null,
 )
 
 @Serializable

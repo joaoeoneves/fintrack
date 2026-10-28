@@ -38,7 +38,7 @@ class BaselineProfileGenerator {
             openAndBack(GeneratorTags.SEE_ALL_ACTIVITY, GeneratorTags.ACTIVITY_LIST)
             openTab(GeneratorTags.NAV_ACTIVITY)
             openTab(GeneratorTags.NAV_PLAN)
-            openTab(GeneratorTags.NAV_INSIGHTS)
+            openTab(GeneratorTags.NAV_SAVINGS)
             openTab(GeneratorTags.NAV_HOME)
         }
 }
