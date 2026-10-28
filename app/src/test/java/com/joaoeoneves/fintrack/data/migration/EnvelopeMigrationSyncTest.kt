@@ -8,13 +8,16 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.testutil.userCategory
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -39,6 +42,7 @@ class EnvelopeMigrationSyncTest {
     private val lines =
         FakePlannedIncomeRepository(listOf(PlannedIncome("meal", "Meal", 100, 0, earmark = Earmark.Category("gym"))))
     private val session = FakeSessionRepository(Session.Guest)
+    private val gate = RestoreGate()
 
     private fun TestScope.sync() =
         EnvelopeMigrationSync(
@@ -52,6 +56,7 @@ class EnvelopeMigrationSyncTest {
             ),
             session,
             RuntimeEnvironment.getApplication(),
+            gate,
             backgroundScope,
         )
 
@@ -126,7 +131,8 @@ class EnvelopeMigrationSyncTest {
                     envelopes,
                     FakeRecurringRepository(),
                 )
-            EnvelopeMigrationSync(sources, session, RuntimeEnvironment.getApplication(), backgroundScope).start()
+            val app = RuntimeEnvironment.getApplication()
+            EnvelopeMigrationSync(sources, session, app, RestoreGate(), backgroundScope).start()
 
             advanceTimeBy(10_000)
             runCurrent()
@@ -146,4 +152,43 @@ class EnvelopeMigrationSyncTest {
             assertTrue(envelopes.savedEdits.isEmpty())
             assertEquals(Earmark.Category("gym"), lines.lines.single().earmark)
         }
+
+    @Test
+    fun whileRestoring_writesNothing_thenMigratesTheRestoredSnapshotAfterRelease() =
+        runTest {
+            val release = CompletableDeferred<Unit>()
+            backgroundScope.launch { gate.hold { release.await() } }
+            runCurrent()
+            sync().start()
+
+            settle()
+            assertTrue(envelopes.savedEdits.isEmpty())
+
+            // The restore replaces the line with another earmarked one; the gate opens afterwards.
+            lines.deletePlannedIncome("meal")
+            lines.savePlannedIncome(PlannedIncome("meal2", "Meal", 100, 0, earmark = Earmark.Category("gym")))
+            release.complete(Unit)
+            settle()
+
+            assertEquals("meal2", envelopes.savedEdits.single().fundedByLineId)
+        }
+
+    @Test
+    fun aFailedAttempt_isRetriedAfterANewGeneration() =
+        runTest {
+            envelopes.nextWriteError = IllegalStateException("offline")
+            sync().start()
+            settle()
+            assertTrue(envelopes.savedEdits.isEmpty())
+
+            gate.hold { }
+            settle()
+
+            assertEquals("meal", envelopes.savedEdits.single().fundedByLineId)
+        }
+
+    private suspend fun TestScope.settle() {
+        advanceTimeBy(10_000)
+        runCurrent()
+    }
 }

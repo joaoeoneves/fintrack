@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Envelope
@@ -16,8 +17,10 @@ import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -42,6 +45,7 @@ class SavingsPlanMigrationSyncTest {
     private val recurring = FakeRecurringRepository(listOf(recurringItem("r1", name = "ETF", categoryId = invest)))
     private val goals = FakeGoalRepository()
     private val session = FakeSessionRepository(Session.Guest)
+    private val gate = RestoreGate()
     private val clock = MutableClock(Instant.parse("2026-10-28T10:00:00Z"), ZoneOffset.UTC)
 
     private fun TestScope.sync(
@@ -59,6 +63,7 @@ class SavingsPlanMigrationSyncTest {
         goalRepo,
         session,
         clock,
+        gate,
         backgroundScope,
     )
 
@@ -167,5 +172,38 @@ class SavingsPlanMigrationSyncTest {
 
             assertTrue(failing.goals.isEmpty())
             assertEquals(0, failing.saveCount)
+        }
+
+    @Test
+    fun whileRestoring_writesNothing_thenCreatesThePlanAfterRelease() =
+        runTest {
+            val release = CompletableDeferred<Unit>()
+            backgroundScope.launch { gate.hold { release.await() } }
+            runCurrent()
+            sync().start()
+
+            settle()
+            assertTrue(goals.goals.isEmpty())
+
+            // The restore brings another recurring item; the plan is built from what is there after release.
+            recurring.saveRecurring(recurringItem("r2", name = "Bond", categoryId = invest))
+            release.complete(Unit)
+            settle()
+
+            assertEquals(setOf("plan_r1", "plan_r2"), goals.goals.map { it.id }.toSet())
+        }
+
+    @Test
+    fun aFailedAttempt_isRetriedAfterANewGeneration() =
+        runTest {
+            goals.nextSaveError = IllegalStateException("offline")
+            sync().start()
+            settle()
+            assertTrue(goals.goals.isEmpty())
+
+            gate.hold { }
+            settle()
+
+            assertEquals("plan_r1", goals.goals.single().id)
         }
 }

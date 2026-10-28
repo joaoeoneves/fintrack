@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -62,7 +63,14 @@ class ManagedIncomeSyncPaydayTest {
             val plan = FakePlannedIncomeRepository(lines + own)
             val labels = FakeSalaryLineLabelsProvider(FakeSalaryLineLabelsProvider.PORTUGUESE)
 
-            ManagedIncomeSync(FakeSalaryProfileRepository(profile), plan, counting, labels, backgroundScope).start()
+            ManagedIncomeSync(
+                FakeSalaryProfileRepository(profile),
+                plan,
+                counting,
+                labels,
+                RestoreGate(),
+                backgroundScope,
+            ).start()
             advanceUntilIdle()
 
             val byId = incomes.getAllIncome().getOrThrow().associate { it.id to it.source }
@@ -91,6 +99,7 @@ class ManagedIncomeSyncPaydayTest {
                 FakePlannedIncomeRepository(lines + own),
                 counting,
                 labels,
+                RestoreGate(),
                 backgroundScope,
             ).start()
             advanceUntilIdle()
@@ -109,6 +118,7 @@ class ManagedIncomeSyncPaydayTest {
                 plan,
                 FakeIncomeRepository(),
                 labels,
+                RestoreGate(),
                 backgroundScope,
             ).start()
             advanceUntilIdle()

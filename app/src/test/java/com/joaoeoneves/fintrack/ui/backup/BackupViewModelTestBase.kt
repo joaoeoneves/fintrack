@@ -23,6 +23,7 @@ import com.joaoeoneves.fintrack.data.backup.PlanSingletonSources
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.testutil.MutableClock
+import com.joaoeoneves.fintrack.testutil.unsignedAccountRestorer
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,6 +47,8 @@ import java.time.ZoneOffset
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 abstract class BackupViewModelTestBase : BackupRepositoryTestBase() {
+    override val accountRestorer by lazy { unsignedAccountRestorer(RuntimeEnvironment.getApplication()) }
+
     protected val clock = MutableClock(Instant.parse("2026-10-27T10:00:00Z"), ZoneOffset.UTC)
 
     @Before

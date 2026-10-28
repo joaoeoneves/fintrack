@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.Session
@@ -17,7 +18,9 @@ import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -44,6 +47,7 @@ class AutomationSyncTest {
     private fun TestScope.sync(
         session: FakeSessionRepository,
         repo: FakeRecurringRepository,
+        gate: RestoreGate = RestoreGate(),
     ) = AutomationSync(
         session,
         AutoPostRecurring(
@@ -51,7 +55,7 @@ class AutomationSyncTest {
             HandleRecurringOccurrence(repo, FakeCategoryRepository()),
             FakeExpenseRepository(),
         ),
-        PaydayData(automation, plan, repo),
+        PaydayData(automation, plan, repo, gate),
         RecordPayday(plan, FakeMonthSettingsRepository(), income, automation, FakeSalaryLineLabelsProvider()),
         clock,
         backgroundScope,
@@ -161,7 +165,7 @@ class AutomationSyncTest {
                         HandleRecurringOccurrence(repo, FakeCategoryRepository()),
                         FakeExpenseRepository(),
                     ),
-                    PaydayData(manual, plan, repo),
+                    PaydayData(manual, plan, repo, RestoreGate()),
                     RecordPayday(plan, FakeMonthSettingsRepository(), income, manual, FakeSalaryLineLabelsProvider()),
                     clock,
                     backgroundScope,
@@ -231,5 +235,43 @@ class AutomationSyncTest {
                     .second
                     .map { it.id },
             )
+        }
+
+    @Test
+    fun whileRestoring_postsNothing_thenRunsOnTheRestoredDataAfterRelease() =
+        runTest(UnconfinedTestDispatcher()) {
+            val gate = RestoreGate()
+            val repo = FakeRecurringRepository(listOf(due()))
+            val release = CompletableDeferred<Unit>()
+            backgroundScope.launch { gate.hold { release.await() } }
+
+            sync(guest(), repo, gate).start()
+            advanceUntilIdle()
+            assertTrue(repo.confirmedTransactions.isEmpty())
+
+            // The restore swaps in another due item; the pass looks at it only after the gate opens.
+            repo.setItems(listOf(recurringItem(id = "r9", handledThrough = day(2026, 2, 15), autoPost = true)))
+            advanceUntilIdle()
+            assertTrue(repo.confirmedTransactions.isEmpty())
+
+            release.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(listOf("rec_r9_20260315"), repo.confirmedTransactions.map { it.id })
+        }
+
+    @Test
+    fun aFailedAttempt_isRetriedAfterANewGeneration() =
+        runTest(UnconfinedTestDispatcher()) {
+            val gate = RestoreGate()
+            val repo = FakeRecurringRepository(listOf(due()), nextConfirmError = IllegalStateException("down"))
+            sync(guest(), repo, gate).start()
+            advanceUntilIdle()
+            assertTrue(repo.confirmedTransactions.isEmpty())
+
+            gate.hold { }
+            advanceUntilIdle()
+
+            assertEquals(1, repo.confirmedTransactions.size)
         }
 }
