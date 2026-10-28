@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Source
+import com.joaoeoneves.fintrack.data.automationSettingsDoc
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
@@ -75,6 +76,7 @@ class FirestoreAccountMigrator
                 categories = categories,
                 categoryGroups = groups,
                 hasSalaryProfile = hasSalaryProfile(uid),
+                hasAutomation = serverGet { automationSettingsDoc(firestore, uid).get(Source.SERVER).await() }.exists(),
             )
         }
 

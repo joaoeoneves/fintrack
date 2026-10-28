@@ -26,6 +26,12 @@ fun effectiveWorkingDays(
     daysOff: Int = 0,
 ): Int = override ?: maxOf(0, workingDaysIn(month) - daysOff)
 
+/** The last Monday to Friday day of [month] that is not in [holidays]: the day pay is expected. */
+fun lastWorkingDayOf(
+    month: YearMonth,
+    holidays: Set<LocalDate> = portugueseNationalHolidays(month.year),
+): LocalDate = weekdaysOf(month).last { it !in holidays }
+
 private fun weekdaysOf(month: YearMonth): List<LocalDate> =
     (1..month.lengthOfMonth())
         .map { month.atDay(it) }

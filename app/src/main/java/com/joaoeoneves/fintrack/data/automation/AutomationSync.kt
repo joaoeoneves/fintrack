@@ -2,10 +2,16 @@ package com.joaoeoneves.fintrack.data.automation
 
 import android.util.Log
 import com.joaoeoneves.fintrack.di.ApplicationScope
+import com.joaoeoneves.fintrack.domain.model.AutomationSettings
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Session
+import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
+import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.usecase.AutoPostRecurring
+import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
@@ -21,19 +27,30 @@ import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "AutomationSync"
 
+/** The repositories the sync observes besides the session, bundled for detekt's LongParameterList. */
+class PaydayData
+    @Inject
+    constructor(
+        val settings: AutomationSettingsRepository,
+        val plannedIncome: PlannedIncomeRepository,
+        val recurring: RecurringRepository,
+    )
+
 /**
- * Runs the automatic steps (for now: posting due auto-post recurring items) whenever the session, the data they
- * read or the app coming to the foreground changes, so a new day is picked up without a background job. Every
- * step only fills what is due; a failing step is logged and never crashes the app, and an identical situation
- * (same step inputs and day) is attempted once per process, so a failing write is not retried in a loop.
+ * Runs the automatic steps (posting due auto-post recurring items and recording income on payday) whenever the
+ * session, the data they read or the app coming to the foreground changes, so a new day is picked up without a
+ * background job. Every step only fills what is due; a failing step is logged and never crashes the app, and an
+ * identical situation (same step inputs and day) is attempted once per process, so a failing write is not retried
+ * in a loop.
  */
 @Singleton
 class AutomationSync
     @Inject
     constructor(
         private val session: SessionRepository,
-        private val recurringRepository: RecurringRepository,
         private val autoPostRecurring: AutoPostRecurring,
+        private val paydayData: PaydayData,
+        private val recordPayday: RecordPayday,
         private val clock: Clock,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
@@ -46,18 +63,41 @@ class AutomationSync
             val session: Session,
             val today: LocalDate,
             val recurringKey: List<Any?>,
+            val paydayKey: List<Any?>,
         )
+
+        private data class Inputs(
+            val session: Session,
+            val recurring: List<RecurringItem>,
+            val settings: AutomationSettings,
+            val lines: List<PlannedIncome>,
+        ) {
+            fun recurringKey() = recurring.map { listOf(it.id, it.handledThrough, it.active, it.autoPost, it.endDate) }
+
+            fun paydayKey() =
+                listOf(
+                    settings.paydayEnabled,
+                    settings.paydayRecordedThrough,
+                    lines.map { it.id to it.amountCents },
+                )
+        }
 
         fun start() {
             if (!started.compareAndSet(false, true)) return
             scope.launch {
-                combine(session.session, foregroundTicks, recurringRepository.observeRecurring(), ::Triple)
+                combine(
+                    session.session,
+                    foregroundTicks,
+                    paydayData.recurring.observeRecurring(),
+                    paydayData.settings.observeAutomationSettings(),
+                    paydayData.plannedIncome.observePlannedIncome(),
+                ) { current, _, recurring, settings, lines -> Inputs(current, recurring, settings, lines) }
                     .catch { Log.w(TAG, "Failed to observe the automation inputs", it) }
-                    .collectLatest { (current, _, recurring) ->
+                    .collectLatest { inputs ->
+                        val current = inputs.session
                         if (current !is Session.SignedIn && current != Session.Guest) return@collectLatest
                         val today = LocalDate.now(clock)
-                        val key = recurring.map { listOf(it.id, it.handledThrough, it.active, it.autoPost, it.endDate) }
-                        val attempt = Attempt(current, today, key)
+                        val attempt = Attempt(current, today, inputs.recurringKey(), inputs.paydayKey())
                         if (attempt == lastAttempted) return@collectLatest
                         lastAttempted = attempt
                         runSteps(today)
@@ -73,6 +113,7 @@ class AutomationSync
         // Steps run in order and are independent: one failing must not stop the next.
         private suspend fun runSteps(today: LocalDate) {
             step("auto-post recurring") { autoPostRecurring(today, clock.zone) }
+            step("record payday") { recordPayday.runDue(today, clock.zone) }
         }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: automation must never crash the app.
