@@ -5,12 +5,14 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
+import com.joaoeoneves.fintrack.domain.model.initialLineCursor
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
 import com.joaoeoneves.fintrack.domain.model.labelFor
+import com.joaoeoneves.fintrack.domain.model.legacyRecurringIncome
+import com.joaoeoneves.fintrack.domain.model.lineMonthsDue
+import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.paydayIncome
 import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
-import com.joaoeoneves.fintrack.domain.model.paydayMonthsDue
-import com.joaoeoneves.fintrack.domain.model.paydayOf
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
@@ -36,7 +38,7 @@ data class ReceiveRequest(
 )
 
 /**
- * Records the planned income as real income: automatically on each month's payday ([runDue]) or when the user
+ * Records the planned income as real income: automatically on each line's pay date ([runDue]) or when the user
  * marks a row as received ([receive]). Both use the deterministic id `pay_<lineId>_<yyyyMM>`, so repeating or two
  * devices racing never duplicates an income.
  */
@@ -50,33 +52,50 @@ class RecordPayday
         private val labelsProvider: SalaryLineLabelsProvider,
     ) {
         /**
-         * Records every active line of each month whose payday passed since the stored cursor, oldest first, and
-         * moves the cursor after each month. Does nothing while the automation is off or the plan has no lines (a
-         * line list that has not loaded yet must not advance the cursor). Returns how many incomes were created;
-         * stops at the first failure so the next run resumes there.
+         * Records, for every line with automatic recording on, each month whose pay date passed since the line's
+         * cursor, oldest first, moving the cursors after each month. A line without a cursor only gets one (this
+         * month or last, see [initialLineCursor]) and records nothing: turning it on never backfills. Does nothing
+         * for an empty line list (maybe not loaded yet). Returns how many incomes were created; stops at the first
+         * failure so the next run resumes there.
          */
         suspend fun runDue(
             today: LocalDate,
             zone: ZoneId,
         ): Int {
-            val settings = automationRepository.observeAutomationSettings().first()
-            val due =
-                if (settings.paydayEnabled) paydayMonthsDue(settings.paydayRecordedThrough, today) else emptyList()
-            val lines = if (due.isEmpty()) emptyList() else plannedIncomeRepository.observePlannedIncome().first()
-            // A line list that is empty (maybe not loaded yet) records nothing and leaves the cursor alone.
-            val months = if (lines.isEmpty()) emptyList() else due
+            val lines = plannedIncomeRepository.observePlannedIncome().first()
+            val cursors = automationRepository.observeAutomationSettings().first().lineRecordedThrough
+            val autoLines = lines.filter { it.autoRecord }
+            val fresh = autoLines.filter { it.id !in cursors }.associate { it.id to initialLineCursor(it, today) }
+            val stale = cursors.keys - autoLines.mapTo(mutableSetOf()) { it.id }
+            // An empty line list (maybe not loaded yet) leaves the cursors alone.
+            val synced =
+                lines.isEmpty() ||
+                    (fresh.isEmpty() && stale.isEmpty()) ||
+                    automationRepository.updateLineCursors(fresh, stale).isSuccess
+            return if (synced && lines.isNotEmpty()) recordDue(autoLines, cursors, today, zone) else 0
+        }
+
+        private suspend fun recordDue(
+            autoLines: List<PlannedIncome>,
+            cursors: Map<String, YearMonth>,
+            today: LocalDate,
+            zone: ZoneId,
+        ): Int {
+            val due = autoLines.filter { it.id in cursors }.associateWith { lineMonthsDue(it, cursors[it.id], today) }
+            val months = due.values.flatten().toSortedSet()
             val monthSettings =
                 if (months.isEmpty()) emptyList() else monthSettingsRepository.observeMonthSettings().first()
             var recorded = 0
             for (month in months) {
                 val current = monthSettings.firstOrNull { it.month == month }
                 val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
-                recorded += recordMonth(month, lines, workingDays, zone) ?: break
+                val monthLines = due.filterValues { month in it }.keys.toList()
+                recorded += recordMonth(month, monthLines, workingDays, zone) ?: break
             }
             return recorded
         }
 
-        /** Records [month]'s missing incomes and moves the cursor; the count created, or `null` on a failure. */
+        /** Records [month]'s missing incomes of [lines] and moves their cursors; the count created, or `null`. */
         private suspend fun recordMonth(
             month: YearMonth,
             lines: List<PlannedIncome>,
@@ -84,20 +103,31 @@ class RecordPayday
             zone: ZoneId,
         ): Int? {
             val labels = labelsProvider.current()
-            val incomes =
+            val existing = existingIncomes(month, zone) ?: return null
+            val missing =
                 lines
                     .filter { it.isActiveIn(month) }
-                    .mapNotNull {
-                        it.paydayIncome(month, workingDays, paydayOf(month), zone)?.named(it, labels)
-                    }
-            val missing = mutableListOf<Income>()
-            for (income in incomes) {
-                val existing = incomeRepository.getIncome(income.id)
-                if (existing.isFailure) return null
-                if (existing.getOrNull() == null) missing += income
-            }
-            return missing.size.takeIf { automationRepository.recordPayday(month, missing).isSuccess }
+                    .filter { line -> existing.none { it.id == paydayIncomeId(line.id, month) } }
+                    .filter { line -> legacyRecurringIncome(line, month, existing) == null }
+                    .mapNotNull { it.paydayIncome(month, workingDays, it.payDateIn(month), zone)?.named(it, labels) }
+            val cursors = lines.associate { it.id to month }
+            return missing.size.takeIf { automationRepository.recordPayday(missing, cursors).isSuccess }
         }
+
+        private suspend fun existingIncomes(
+            month: YearMonth,
+            zone: ZoneId,
+        ): List<Income>? =
+            runCatching {
+                val start = month.atDay(1).atStartOfDay(zone).toInstant()
+                val end =
+                    month
+                        .plusMonths(1)
+                        .atDay(1)
+                        .atStartOfDay(zone)
+                        .toInstant()
+                incomeRepository.observeIncome(start, end).first()
+            }.getOrNull()
 
         /**
          * Records the paying lines of [ReceiveRequest.lines] as received on [ReceiveRequest.date]. Refused for a
@@ -128,16 +158,26 @@ class RecordPayday
             }
 
         /**
-         * Deletes the payday incomes recorded for [lines] in [month], so the row counts as not received again.
-         * Lines without a recorded income are skipped silently; stops at the first failure.
+         * Deletes the incomes recorded for [lines] in [month] (the payday ones and, for a line migrated from a
+         * recurring income, the old `rec_` ones), so the row counts as not received again. Lines without a recorded
+         * income are skipped silently; stops at the first failure.
          */
         suspend fun unreceive(
             lines: List<PlannedIncome>,
             month: YearMonth,
+            zone: ZoneId = ZoneId.systemDefault(),
         ): Result<Unit> {
+            val existing = existingIncomes(month, zone).orEmpty()
             for (line in lines) {
-                val result = incomeRepository.deleteIncome(paydayIncomeId(line.id, month))
-                if (result.isFailure) return result
+                val ids =
+                    listOfNotNull(
+                        paydayIncomeId(line.id, month),
+                        legacyRecurringIncome(line, month, existing)?.id,
+                    )
+                for (id in ids) {
+                    val result = incomeRepository.deleteIncome(id)
+                    if (result.isFailure) return result
+                }
             }
             return Result.success(Unit)
         }

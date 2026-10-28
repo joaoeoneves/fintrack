@@ -71,93 +71,6 @@ class PaydayTest {
         assertNull(line().paydayIncome(oct, 21, octPayday, utc, amountCents = 0L))
     }
 
-    // --- paydayMonthsDue ---
-
-    @Test
-    fun monthsDue_nullCursor_isEmpty() {
-        assertTrue(paydayMonthsDue(null, LocalDate.of(2026, 12, 31)).isEmpty())
-    }
-
-    @Test
-    fun monthsDue_beforePayday_excludesTheCurrentMonth() {
-        // Oct payday is Fri 30; on Wed 28 only September (already recorded) is behind us.
-        assertTrue(paydayMonthsDue(YearMonth.of(2026, 9), LocalDate.of(2026, 10, 28)).isEmpty())
-        assertEquals(
-            listOf(YearMonth.of(2026, 9)),
-            paydayMonthsDue(YearMonth.of(2026, 8), LocalDate.of(2026, 10, 28)),
-        )
-    }
-
-    @Test
-    fun monthsDue_onAndAfterPayday_includesTheCurrentMonth() {
-        val cursor = YearMonth.of(2026, 9)
-
-        assertEquals(listOf(oct), paydayMonthsDue(cursor, octPayday))
-        // Saturday 31st, after a Friday payday.
-        assertEquals(listOf(oct), paydayMonthsDue(cursor, LocalDate.of(2026, 10, 31)))
-    }
-
-    @Test
-    fun monthsDue_weekendMonthEnd_dueOnTheFridayNotTheMonthLastDay() {
-        // Jan 2027 payday is Fri 29, not Sun 31.
-        val cursor = YearMonth.of(2026, 12)
-
-        assertTrue(paydayMonthsDue(cursor, LocalDate.of(2027, 1, 28)).isEmpty())
-        assertEquals(listOf(YearMonth.of(2027, 1)), paydayMonthsDue(cursor, LocalDate.of(2027, 1, 29)))
-    }
-
-    @Test
-    fun monthsDue_isOldestFirst_andCappedToTheLastThree() {
-        val due = paydayMonthsDue(YearMonth.of(2026, 1), octPayday)
-
-        assertEquals(listOf(YearMonth.of(2026, 8), YearMonth.of(2026, 9), oct), due)
-    }
-
-    @Test
-    fun monthsDue_customCap() {
-        assertEquals(listOf(oct), paydayMonthsDue(YearMonth.of(2026, 1), octPayday, cap = 1))
-        assertEquals(10, paydayMonthsDue(YearMonth.of(2025, 12), octPayday, cap = 100).size)
-    }
-
-    @Test
-    fun monthsDue_cursorAtOrAfterToday_isEmpty() {
-        assertTrue(paydayMonthsDue(oct, octPayday).isEmpty())
-        assertTrue(paydayMonthsDue(YearMonth.of(2027, 5), octPayday).isEmpty())
-    }
-
-    @Test
-    fun monthsDue_acrossYearEnd() {
-        val due = paydayMonthsDue(YearMonth.of(2026, 11), LocalDate.of(2027, 1, 29))
-
-        assertEquals(listOf(YearMonth.of(2026, 12), YearMonth.of(2027, 1)), due)
-    }
-
-    // --- initialPaydayCursor ---
-
-    @Test
-    fun initialCursor_beforePayday_isLastMonth() {
-        assertEquals(YearMonth.of(2026, 9), initialPaydayCursor(LocalDate.of(2026, 10, 29)))
-        assertEquals(YearMonth.of(2026, 9), initialPaydayCursor(LocalDate.of(2026, 10, 1)))
-    }
-
-    @Test
-    fun initialCursor_onOrAfterPayday_isThisMonth() {
-        assertEquals(oct, initialPaydayCursor(octPayday))
-        assertEquals(oct, initialPaydayCursor(LocalDate.of(2026, 10, 31)))
-    }
-
-    @Test
-    fun initialCursor_januaryBeforePayday_rollsBackToDecember() {
-        assertEquals(YearMonth.of(2026, 12), initialPaydayCursor(LocalDate.of(2027, 1, 10)))
-    }
-
-    @Test
-    fun initialCursor_leavesNothingDueToday() {
-        for (day in listOf(LocalDate.of(2026, 10, 15), octPayday, LocalDate.of(2027, 1, 31))) {
-            assertTrue(paydayMonthsDue(initialPaydayCursor(day), day).isEmpty())
-        }
-    }
-
     // --- receivedIncomes / receivedOn ---
 
     private fun row(vararg lines: PlannedIncome) = incomeRowsIn(lines.toList(), oct, 21).first()
@@ -220,5 +133,51 @@ class PaydayTest {
         val l = line().copy(skipMonths = setOf(10))
 
         assertNull(row(l).receivedIncomes(oct, 21, listOf(received(line()))))
+    }
+
+    // --- legacy rec_ incomes of a migrated line ---
+
+    private fun legacyIncome(
+        itemId: String,
+        date: String,
+    ) = Income("rec_${itemId}_$date", "Old", 500L, Instant.parse("2026-10-05T12:00:00Z"), null)
+
+    @Test
+    fun received_legacyRecIncomeInMonth_countsForItsRincLineOnly() {
+        val migrated = line("rinc_abc")
+        val other = line("p1")
+        val legacy = listOf(legacyIncome("abc", "20261005"))
+
+        assertEquals(legacy, row(migrated).receivedIncomes(oct, 21, legacy))
+        assertNull(row(other).receivedIncomes(oct, 21, legacy))
+    }
+
+    @Test
+    fun received_legacyRecIncomeInAnotherMonth_orBadSuffix_doesNotCount() {
+        val migrated = line("rinc_abc")
+
+        assertNull(row(migrated).receivedIncomes(oct, 21, listOf(legacyIncome("abc", "20260905"))))
+        assertNull(row(migrated).receivedIncomes(oct, 21, listOf(legacyIncome("abc", "2026100"))))
+        assertNull(row(migrated).receivedIncomes(oct, 21, listOf(legacyIncome("abcd", "20261005"))))
+    }
+
+    @Test
+    fun received_partialRowWithLegacy_isNotReceived() {
+        val a = line("rinc_abc", managedKey = MANAGED_NET_SALARY)
+        val b = line("b", managedKey = MANAGED_NET_SALARY)
+
+        assertNull(row(a, b).receivedIncomes(oct, 21, listOf(legacyIncome("abc", "20261005"))))
+    }
+
+    @Test
+    fun legacyRecurringIncome_nonMigratedLine_isNull() {
+        assertNull(legacyRecurringIncome(line("p1"), oct, listOf(legacyIncome("p1", "20261005"))))
+    }
+
+    @Test
+    fun legacyIds_roundTrip() {
+        assertEquals("rinc_abc", recurringIncomeLineId("abc"))
+        assertEquals("abc", line("rinc_abc").legacyRecurringItemId())
+        assertNull(line("p1").legacyRecurringItemId())
     }
 }

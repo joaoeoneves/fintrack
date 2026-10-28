@@ -136,7 +136,6 @@ private fun SettingsScaffold(
                 onLanguageSelected = actions.onLanguageSelected,
                 onCurrencySelected = actions.onCurrencySelected,
             )
-            AutomationSection()
             DataSection(onImportClick = actions.onImportClick, onExportClick = actions.onExportClick)
             BackupFlow { onExport, onRestore ->
                 DeleteAllDataFlow(

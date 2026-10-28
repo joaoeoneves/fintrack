@@ -38,6 +38,7 @@ import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
 import com.joaoeoneves.fintrack.domain.model.amountIn
+import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -139,13 +140,14 @@ private fun ExpectedIncomeGroup(
     onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
 ) {
     val feedback = LocalReceiveFeedback.current
-    val paydayText = rememberPaydayText(expected.payday)
-    val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(today))
     val changeLabel = stringResource(R.string.action_change)
     SectionTitle(title = stringResource(R.string.plan_expected_income))
     expected.rows.forEachIndexed { index, row ->
         if (index > 0) Hairline()
         val title = row.displayLabel()
+        val payDate = row.payDateIn(expected.month)
+        val receiveDate = minOf(payDate, today)
+        val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
         Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space4)) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
@@ -163,7 +165,7 @@ private fun ExpectedIncomeGroup(
                     ReceivedCheckButton(
                         received = false,
                         onClick = {
-                            onReceive(row, today, null)
+                            onReceive(row, receiveDate, null)
                             val paying = row.lines.filter { it.amountIn(expected.month, expected.workingDays) > 0L }
                             feedback?.announce(
                                 message = snackbarText,
@@ -172,6 +174,7 @@ private fun ExpectedIncomeGroup(
                                     ReceiveChange(
                                         title = title,
                                         today = today,
+                                        date = receiveDate,
                                         editableAmountCents =
                                             paying.singleOrNull()?.amountIn(expected.month, expected.workingDays),
                                         onConfirm = { date, cents -> onReceive(row, date, cents) },
@@ -182,7 +185,7 @@ private fun ExpectedIncomeGroup(
                 }
             }
             Text(
-                text = stringResource(R.string.plan_payday, paydayText),
+                text = stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
                 modifier = Modifier.padding(bottom = Dimens.Space8),

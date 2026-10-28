@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.joaoeoneves.fintrack.data.local.LocalAutomation
 import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,6 +33,17 @@ class BackupCodecTest {
     }
 
     @Test
+    fun roundTrip_keepsAutoRecordPayDayAndLineCursors() {
+        val doc =
+            backupDoc().copy(
+                plannedIncome = listOf(LocalPlannedIncome("p", "Rent", 5, 0, autoRecord = true, payDay = 5)),
+                automation = LocalAutomation(lineThrough = mapOf("p" to "2026-09")),
+            )
+
+        assertEquals(doc, decode(BackupCodec.encode(doc)).success().document)
+    }
+
+    @Test
     fun roundTrip_nullPreferencesAndAppVersion() {
         val doc = backupDoc()
 
@@ -53,7 +66,7 @@ class BackupCodecTest {
         val text = BackupCodec.encode(backupDoc())
 
         assertTrue(text.contains("\"format\": \"fintrack-backup\""))
-        assertTrue(text.contains("\"schemaVersion\": 15"))
+        assertTrue(text.contains("\"schemaVersion\": 16"))
     }
 
     @Test
@@ -83,9 +96,9 @@ class BackupCodecTest {
 
     @Test
     fun decode_futureVersion_unsupported() {
-        val text = """{"format":"fintrack-backup","schemaVersion":16,"exportedAt":"$EXPORTED_AT"}"""
+        val text = """{"format":"fintrack-backup","schemaVersion":17,"exportedAt":"$EXPORTED_AT"}"""
 
-        assertEquals(BackupDecodeResult.UnsupportedVersion(16), decode(text))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(17), decode(text))
     }
 
     @Test

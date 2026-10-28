@@ -29,7 +29,8 @@ fun salaryProfileLines(
 ): List<PlannedIncome> {
     val breakdown = salaryBreakdownOf(profile) ?: return emptyList()
     val byKey = existing.filter { it.managedKey != null }.associateBy { it.managedKey }
-    val salaryEarmark = byKey[MANAGED_NET_SALARY]?.earmark
+    val salaryLine = byKey[MANAGED_NET_SALARY]
+    val salaryEarmark = salaryLine?.earmark
     var nextOrder = (existing.maxOfOrNull { it.order } ?: -1) + 1
     return wantedLines(profile, breakdown, labels).filter { it.amountCents > 0L }.map { wanted ->
         val current = byKey[wanted.key]
@@ -44,6 +45,8 @@ fun salaryProfileLines(
             skipMonths = wanted.skipMonths,
             earmark = if (wanted.key == MANAGED_DUODECIMOS) salaryEarmark else current?.earmark,
             managedKey = wanted.key,
+            autoRecord = (current ?: salaryLine)?.autoRecord ?: false,
+            payDay = (current ?: salaryLine)?.payDay,
         )
     }
 }

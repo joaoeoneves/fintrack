@@ -201,6 +201,7 @@ private fun NavGraphBuilder.sharedRoutes(
         RecurringListScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenEditor = { id -> navController.navigate(AddEditRecurring(recurringId = id)) },
+            onOpenIncome = { navController.navigate(PlanIncome()) },
         )
     }
     composable<EditSalaryProfile> {

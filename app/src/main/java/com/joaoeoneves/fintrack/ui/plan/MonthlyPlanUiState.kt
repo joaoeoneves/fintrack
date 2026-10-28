@@ -29,6 +29,7 @@ sealed interface MonthlyPlanUiState {
      * @property envelopeCards one card per envelope of the month, then the one for the unenveloped categories.
      * @property configure what the "Set up" section says about each part of the plan.
      * @property receipts payday and which [incomeRows] were already received.
+     * @property duplicateKeys the [key]s of the manual rows that look like a repeat of the profile's salary.
      */
     data class Content(
         val incomeLines: List<PlannedIncome>,
@@ -44,6 +45,7 @@ sealed interface MonthlyPlanUiState {
         val envelopeCards: List<EnvelopeCardUi> = emptyList(),
         val configure: ConfigureStatus,
         val receipts: IncomeReceipts,
+        val duplicateKeys: Set<String> = emptySet(),
     ) : MonthlyPlanUiState
 
     data class Error(
@@ -106,6 +108,8 @@ data class IncomeSchedule(
     val yearMonth: YearMonth? = null,
     val skipMonths: Set<Int> = emptySet(),
     val earmark: Earmark? = null,
+    val autoRecord: Boolean = false,
+    val payDay: Int? = null,
 ) {
     /**
      * Keeps only the fields that belong to [frequency] (only monthly lines can be earmarked); a missing month
@@ -140,4 +144,6 @@ data class IncomeLineEditorState(
     val managed: Boolean = false,
     /** The salary component of a managed line, whose name replaces the label in the sheet. */
     val component: SalaryComponent? = null,
+    /** Set once a save was held back because the line looks like the profile's salary; the next save goes through. */
+    val looksLikeSalary: Boolean = false,
 )

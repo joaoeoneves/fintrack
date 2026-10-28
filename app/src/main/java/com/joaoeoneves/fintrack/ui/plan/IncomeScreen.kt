@@ -101,6 +101,7 @@ private fun IncomeContent(
                         canAdd = state.canAddIncomeLine,
                         workingDays = state.workingDays,
                         receipts = state.receipts,
+                        duplicateKeys = state.duplicateKeys,
                     ),
                 actions =
                     ExpectedIncomeActions(

@@ -26,21 +26,24 @@ abstract class RecordPaydayTestBase {
     protected val labels = FakeSalaryLineLabelsProvider()
     protected val useCase = RecordPayday(plan, monthSettings, incomes, automation, labels)
 
-    protected fun enabled(through: YearMonth?) {
-        automation.replaceSettings(AutomationSettings(paydayEnabled = true, paydayRecordedThrough = through))
+    /** Sets the cursors of the given lines (id to month). */
+    protected fun cursors(vararg entries: Pair<String, YearMonth>) {
+        automation.replaceSettings(AutomationSettings(lineRecordedThrough = entries.toMap()))
     }
 
     protected fun line(
         id: String,
         cents: Long = 100_000L,
         managedKey: String? = null,
-    ) = PlannedIncome(id, "Line $id", cents, 0, managedKey = managedKey)
+        autoRecord: Boolean = true,
+        payDay: Int? = null,
+    ) = PlannedIncome(id, "Line $id", cents, 0, managedKey = managedKey, autoRecord = autoRecord, payDay = payDay)
 
     protected suspend fun stored(): List<Income> = incomes.getAllIncome().getOrThrow().sortedBy { it.id }
 
     protected fun at(iso: String): Instant = Instant.parse(iso)
 
-    protected suspend fun cursor(): YearMonth? = automation.observeAutomationSettings().first().paydayRecordedThrough
+    protected suspend fun cursor(id: String = "p1"): YearMonth? = automation.observeAutomationSettings().first().lineRecordedThrough[id]
 }
 
 /** Delegates to [delegate] but fails every [recordPayday] after the first, to test resuming after a partial run. */
@@ -50,10 +53,11 @@ class FlakyAfterOne(
     private var calls = 0
 
     override suspend fun recordPayday(
-        month: YearMonth,
         incomes: List<Income>,
+        cursors: Map<String, YearMonth>,
     ): Result<Unit> {
         val failing = calls++ > 0
-        return if (failing) Result.failure(IllegalStateException("offline")) else delegate.recordPayday(month, incomes)
+        if (failing) return Result.failure(IllegalStateException("offline"))
+        return delegate.recordPayday(incomes, cursors)
     }
 }
