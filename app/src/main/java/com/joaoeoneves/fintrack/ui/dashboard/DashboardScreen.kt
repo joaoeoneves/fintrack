@@ -33,6 +33,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
@@ -64,9 +65,11 @@ fun DashboardScreen(
     callbacks: DashboardCallbacks,
     viewModel: DashboardViewModel = hiltViewModel(),
     upcomingViewModel: UpcomingRecurringViewModel = hiltViewModel(),
+    startViewModel: StartChecklistViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val upcomingState by upcomingViewModel.uiState.collectAsStateWithLifecycle()
+    val startState by startViewModel.uiState.collectAsStateWithLifecycle()
 
     OnResumeEffect(
         onResume = {
@@ -79,7 +82,8 @@ fun DashboardScreen(
     UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
-    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, callbacks)
+    val start = StartChecklistModel(startState, callbacks.onOpenStartStep, startViewModel::onDismiss)
+    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, start, callbacks)
 
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
@@ -213,6 +217,7 @@ private fun dashboardActions(
     viewModel: DashboardViewModel,
     upcomingViewModel: UpcomingRecurringViewModel,
     upcomingState: UpcomingRecurringUiState,
+    start: StartChecklistModel,
     callbacks: DashboardCallbacks,
 ) = DashboardActions(
     period =
@@ -229,6 +234,7 @@ private fun dashboardActions(
             onReceiveIncome = upcomingViewModel::onReceiveIncome,
             onManage = callbacks.onOpenRecurring,
         ),
+    start = start,
     onRetry = viewModel::onRetry,
 )
 
@@ -236,7 +242,15 @@ private fun dashboardActions(
 private data class DashboardActions(
     val period: PeriodActions,
     val upcoming: UpcomingRecurringModel,
+    val start: StartChecklistModel,
     val onRetry: () -> Unit,
+)
+
+/** The "Get started" card's state and callbacks. */
+private data class StartChecklistModel(
+    val state: StartChecklistUiState,
+    val onOpenStep: (StartStep) -> Unit,
+    val onDismiss: () -> Unit,
 )
 
 /** What the balance chart needs, plus the scrub position shared with the hero. */
@@ -286,7 +300,7 @@ private fun DashboardContent(
         contentPadding =
             PaddingValues(bottom = Dimens.FloatingBarBottomPadding + contentPadding.calculateBottomPadding()),
     ) {
-        balanceItems(state = state, chart = chart)
+        balanceItems(state = state, chart = chart, start = actions.start)
         planItems(state = state, actions = actions, callbacks = callbacks)
         activityItems(state = state, callbacks = callbacks)
     }
@@ -310,6 +324,7 @@ private fun LazyItemScope.ScreenItem(
 private fun LazyListScope.balanceItems(
     state: DashboardUiState.Content,
     chart: ChartModel,
+    start: StartChecklistModel,
 ) {
     item(key = "hero") {
         ScreenItem(Modifier.padding(top = Dimens.Space8)) {
@@ -318,6 +333,13 @@ private fun LazyListScope.balanceItems(
                 savingsRate = state.savingsRate,
                 scrubbedCents = chart.scrubbedIndex?.let { chart.series.getOrNull(it) },
             )
+        }
+    }
+    if (start.state is StartChecklistUiState.Visible) {
+        item(key = "start_checklist") {
+            ScreenItem(Modifier.padding(top = Dimens.Space16)) {
+                StartChecklistCard(state = start.state, onOpenStep = start.onOpenStep, onDismiss = start.onDismiss)
+            }
         }
     }
     if (state.expenses.isNotEmpty() || state.income.isNotEmpty()) {

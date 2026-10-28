@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
 import com.joaoeoneves.fintrack.ui.activity.ActivityScreen
@@ -95,11 +96,23 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
                         onOpenPlan = { navController.navigateToTab(TopLevelTab.PLAN) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
+                        onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
                     ),
             )
         }
     }
 }
+
+/** Where a "Get started" checklist step leads. */
+private fun routeForStartStep(step: StartStep): Any =
+    when (step) {
+        StartStep.SALARY -> PlanIncome()
+        StartStep.ENVELOPES -> PlanEnvelopes
+        StartStep.BILLS -> RecurringList
+        StartStep.SAVINGS_PLAN -> EditSavingsPlan()
+        StartStep.PAYDAY -> PlanIncome()
+        StartStep.FIRST_EXPENSE -> AddEditExpense()
+    }
 
 private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
     navigation<ActivityGraph>(startDestination = Activity()) {

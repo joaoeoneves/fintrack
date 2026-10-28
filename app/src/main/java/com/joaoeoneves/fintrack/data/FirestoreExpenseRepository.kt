@@ -21,6 +21,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 import java.time.Instant
@@ -61,6 +62,23 @@ class FirestoreExpenseRepository
                     }
                 awaitClose { registration.remove() }
             }
+        }
+
+        override fun observeHasAnyExpense(): Flow<Boolean> {
+            val uid = firebaseAuth.currentUser?.uid ?: return flowOf(false)
+            return callbackFlow {
+                val registration =
+                    expensesCollection(uid).limit(1).addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            trySend(!snapshot.isEmpty)
+                        }
+                    }
+                awaitClose { registration.remove() }
+            }.distinctUntilChanged()
         }
 
         override suspend fun addExpense(expense: Expense): Result<String> {

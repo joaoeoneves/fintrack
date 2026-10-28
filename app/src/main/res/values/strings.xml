@@ -683,4 +683,15 @@
     <string name="plan_configure_none_yet">None yet</string>
     <string name="plan_envelopes_empty_cta">Create envelopes to split your money</string>
     <string name="income_title">Income</string>
+    <string name="home_start_title">Get started</string>
+    <string name="home_start_progress">%1$d of %2$d</string>
+    <string name="home_start_dismiss">Dismiss</string>
+    <string name="home_start_done">Done</string>
+    <string name="home_start_step_salary">Set your salary or income</string>
+    <string name="home_start_step_envelopes">Create envelopes</string>
+    <string name="home_start_step_bills">Add bills</string>
+    <string name="home_start_step_savings">Create a savings plan</string>
+    <string name="home_start_step_payday">Set your pay day</string>
+    <string name="home_start_step_payday_hint">Auto-record on an income line</string>
+    <string name="home_start_step_expense">Record your first expense</string>
 </resources>

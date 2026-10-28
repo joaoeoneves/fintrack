@@ -700,4 +700,15 @@
     <string name="plan_configure_none_yet">Ainda nenhum</string>
     <string name="plan_envelopes_empty_cta">Cria envelopes para dividir o teu dinheiro</string>
     <string name="income_title">Rendimento</string>
+    <string name="home_start_title">Começar</string>
+    <string name="home_start_progress">%1$d de %2$d</string>
+    <string name="home_start_dismiss">Dispensar</string>
+    <string name="home_start_done">Feito</string>
+    <string name="home_start_step_salary">Definir o salário ou rendimento</string>
+    <string name="home_start_step_envelopes">Criar envelopes</string>
+    <string name="home_start_step_bills">Adicionar contas</string>
+    <string name="home_start_step_savings">Criar um plano de poupança</string>
+    <string name="home_start_step_payday">Escolher o dia de pagamento</string>
+    <string name="home_start_step_payday_hint">Registo automático numa linha de rendimento</string>
+    <string name="home_start_step_expense">Registar o primeiro gasto</string>
 </resources>

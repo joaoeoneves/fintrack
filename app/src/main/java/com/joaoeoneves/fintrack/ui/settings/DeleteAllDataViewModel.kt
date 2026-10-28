@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.preferences.StartChecklistStore
 import com.joaoeoneves.fintrack.domain.repository.DataResetRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,6 +38,7 @@ class DeleteAllDataViewModel
     @Inject
     constructor(
         private val dataResetRepository: DataResetRepository,
+        private val startChecklistStore: StartChecklistStore,
     ) : ViewModel() {
         private val _state = MutableStateFlow<DeleteAllDataState>(DeleteAllDataState.Idle)
         val state: StateFlow<DeleteAllDataState> = _state.asStateFlow()
@@ -62,6 +64,7 @@ class DeleteAllDataViewModel
             viewModelScope.launch {
                 dataResetRepository.deleteAllData().fold(
                     onSuccess = {
+                        startChecklistStore.clear()
                         _state.value = DeleteAllDataState.Idle
                         deletedEvents.send(Unit)
                     },
