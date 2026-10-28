@@ -80,7 +80,7 @@ fun PlanSummaryCard(
     fixedThisMonthCents: Long = 0L,
 ) {
     val negative = FinTrackTheme.colors.negative
-    SettingsGroup(label = stringResource(R.string.plan_title), modifier = modifier) {
+    Column(modifier = modifier.fillMaxWidth().padding(top = Dimens.Space24)) {
         AmountRow(stringResource(R.string.plan_expected_income), formatAmountCents(summary.expectedIncomeCents))
         if (summary.extrasExpectedCents > 0L) {
             Hairline()

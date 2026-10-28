@@ -26,8 +26,10 @@ import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
+import com.joaoeoneves.fintrack.ui.common.DeletedEffect
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
+import com.joaoeoneves.fintrack.ui.common.FormDeleteButton
 import com.joaoeoneves.fintrack.ui.common.FormSaveError
 import com.joaoeoneves.fintrack.ui.common.FormScaffold
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
@@ -45,6 +47,7 @@ import java.time.Instant
 @Composable
 fun AddEditExpenseScreen(
     onSaved: () -> Unit,
+    onDeleted: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AddEditExpenseViewModel = hiltViewModel(),
@@ -56,11 +59,12 @@ fun AddEditExpenseScreen(
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collectLatest { onSaved() }
     }
+    DeletedEffect(viewModel.deletedEvent, onDeleted)
 
     FormScaffold(
         title = stringResource(if (viewModel.isEditRoute) R.string.expense_edit_title else R.string.action_add_expense),
         onCancel = onCancel,
-        saveEnabled = readyForm != null && readyForm.isValid && !readyForm.isSaving,
+        saveEnabled = readyForm != null && readyForm.isValid && !readyForm.isBusy,
         onSave = viewModel::onSave,
         showSave = readyForm != null,
         modifier = modifier,
@@ -113,6 +117,7 @@ private data class ExpenseFormActions(
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
     val onRefundChanged: (Boolean) -> Unit,
+    val onDelete: () -> Unit,
 )
 
 private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
@@ -123,6 +128,7 @@ private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
         onDateSelected = ::onDateSelected,
         onNoteChanged = ::onNoteChanged,
         onRefundChanged = ::onRefundChanged,
+        onDelete = ::onDelete,
     )
 
 @Composable
@@ -192,6 +198,7 @@ private fun ExpenseForm(
         ExpenseDateAndNoteFields(form = form, actions = actions)
 
         form.saveError?.let { FormSaveError(it.asString()) }
+        if (form.canDelete) FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
     }
 }
 

@@ -23,7 +23,11 @@ tags:
 # settings.yaml, which restores theme/currency because other flows depend on those defaults).
 - tapOn:
     text: "Settings|Definições"
-- tapOn: "English"
+- tapOn: "Language|Idioma"
+# Index -1 = the open menu's option (the row's own value can also read "English").
+- tapOn:
+    text: "English"
+    index: -1
 - back
 
 # --- 0b: Pin currency to EUR before the "−€12.34"/"−€56.78" assertions below. Fresh installs now
@@ -32,7 +36,7 @@ tags:
 # what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
 # so pin a known baseline here explicitly rather than assuming whatever currency another flow left
 # the device on. Mirrors the exact navigation pattern already used in settings.yaml's own
-# currency-switching steps: open Settings, tap "Display currency" (an inline exposed-dropdown on
+# currency-switching steps: open Settings, tap "Currency" (an anchored dropdown menu on
 # the Settings screen itself, not a separate screen), tap the target currency option (selects it
 # and closes the dropdown, still on Settings), then tap "Back" (the top-app-bar back arrow,
 # content-desc "Back") to return directly to the Dashboard. No restore-to-original-currency step at
@@ -40,13 +44,16 @@ tags:
 - tapOn:
     text: "Settings|Definições"
 - extendedWaitUntil:
-    visible: "Appearance"
+    visible: "Preferences"
     timeout: 10000
 - scrollUntilVisible:
-    element: "Display currency"
+    element: "Currency"
     direction: DOWN
-- tapOn: "Display currency"
-- tapOn: "Euro (€)"
+- tapOn: "Currency"
+# Index -1 = the open menu's option (the Currency row's value also reads "Euro (€)").
+- tapOn:
+    text: "Euro \\(€\\)"
+    index: -1
 - tapOn: "Back"
 
 # --- 1: Home (the former dashboard) loads with the month selector, balance summary card and bottom bar ---

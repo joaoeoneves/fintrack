@@ -47,6 +47,7 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val SUGGESTION_HISTORY_MONTHS = 12L
 private const val DAY_SECONDS = 86_400L
 
+@Suppress("TooManyFunctions") // One handler per form field plus load, save and delete.
 @HiltViewModel
 class AddEditExpenseViewModel
     @Inject
@@ -72,6 +73,14 @@ class AddEditExpenseViewModel
         private val savedEvents = Channel<Unit>(Channel.BUFFERED)
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
 
+        private val deletedEvents = Channel<Expense>(Channel.BUFFERED)
+
+        /** Emits the deleted expense (as loaded) so the screen can offer to undo the deletion. */
+        val deletedEvent: Flow<Expense> = deletedEvents.receiveAsFlow()
+
+        // The expense as loaded in edit mode, kept so a deletion can be undone.
+        private var loaded: Expense? = null
+
         private var suggestionIndex: Map<String, CategoryId> = emptyMap()
 
         init {
@@ -89,6 +98,7 @@ class AddEditExpenseViewModel
                             // Prefill with the locale's own decimal separator, matching how amounts
                             // are displayed (parseAmountCents accepts either '.' or ',').
                             val separator = decimalSeparatorFor(Locale.getDefault(Locale.Category.FORMAT))
+                            loaded = existing
                             _uiState.value =
                                 if (existing != null) {
                                     AddEditUiState.Ready(
@@ -210,6 +220,30 @@ class AddEditExpenseViewModel
                             val saveError = UiText.StringResource(R.string.error_failed_save_expense)
                             _uiState.value =
                                 AddEditUiState.Ready(latest.form.copy(isSaving = false, saveError = saveError))
+                        }
+                    }
+            }
+        }
+
+        /** Deletes the expense being edited; the screen then closes and offers an undo. */
+        fun onDelete() {
+            val current = _uiState.value
+            val expense = loaded
+            if (current !is AddEditUiState.Ready || !current.form.isEditMode || expense == null) return
+            if (current.form.isSaving || current.form.isDeleting) return
+            _uiState.value = AddEditUiState.Ready(current.form.copy(isDeleting = true, saveError = null))
+            viewModelScope.launch {
+                expenseRepository
+                    .deleteExpense(expense.id)
+                    .onSuccess {
+                        deletedEvents.send(expense)
+                    }.onFailure { e ->
+                        Log.w(TAG, "Failed to delete expense", e)
+                        updateForm {
+                            it.copy(
+                                isDeleting = false,
+                                saveError = UiText.StringResource(R.string.error_failed_delete_expense),
+                            )
                         }
                     }
             }

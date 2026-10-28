@@ -5,6 +5,7 @@
     <string name="action_save">Guardar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_remove">Remover</string>
+    <string name="action_delete">Eliminar</string>
     <string name="action_ok">OK</string>
     <string name="action_retry">Tentar novamente</string>
     <string name="action_undo">Anular</string>
@@ -99,6 +100,7 @@
     <string name="expense_category_suggested">Igual à última vez</string>
     <string name="error_category_required">Escolha uma categoria</string>
     <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
+    <string name="error_failed_delete_expense">Não foi possível eliminar a despesa</string>
 
     <string name="expense_field_refund">Reembolso</string>
     <string name="expense_field_refund_hint">Dinheiro devolvido; reduz os gastos desta categoria</string>
@@ -139,12 +141,12 @@
     <string name="error_import_read_file">Não foi possível ler o ficheiro selecionado</string>
     <string name="error_import_failed">Falha na importação</string>
     <string name="error_csv_empty">O ficheiro está vazio</string>
-    <string name="error_csv_header">Cabeçalho não reconhecido — esperado name,amountCents,category,date,note</string>
+    <string name="error_csv_header">Este ficheiro não é um CSV do FinTrack (os cabeçalhos das colunas não correspondem)</string>
     <string name="error_csv_row_columns">Esperadas 5 colunas, encontradas %1$d</string>
     <string name="error_csv_row_name_required">O nome é obrigatório</string>
     <string name="error_csv_row_name_too_long">O nome é demasiado longo (máximo: %1$d)</string>
-    <string name="error_csv_row_amount_invalid">Valor de amountCents inválido: \'%1$s\'</string>
-    <string name="error_csv_row_amount_zero">amountCents não pode ser zero: \'%1$s\'</string>
+    <string name="error_csv_row_amount_invalid">Valor inválido: \'%1$s\'</string>
+    <string name="error_csv_row_amount_zero">O valor não pode ser zero: \'%1$s\'</string>
     <string name="error_csv_row_category_unknown">Categoria desconhecida: \'%1$s\'</string>
     <string name="error_csv_row_date_invalid">Data inválida: \'%1$s\'</string>
     <string name="error_csv_row_note_too_long">A nota é demasiado longa (máximo: %1$d)</string>
@@ -156,17 +158,24 @@
     <string name="income_field_source">Origem</string>
     <string name="error_source_required">A origem é obrigatória</string>
     <string name="error_failed_save_income">Não foi possível guardar o rendimento</string>
+    <string name="error_failed_delete_income">Não foi possível eliminar o rendimento</string>
+    <string name="confirm_remove_title">Remover \"%1$s\"?</string>
+    <string name="goal_remove_message">O objetivo é removido. As despesas e os itens recorrentes mantêm-se.</string>
+    <string name="income_line_remove_message">Deixa de contar como rendimento previsto. Os rendimentos já registados mantêm-se.</string>
+    <string name="budget_remove_title">Remover o limite de %1$s?</string>
+    <string name="budget_remove_message">O limite é removido. As despesas desta categoria mantêm-se.</string>
 
 
     <!-- Definições -->
     <string name="settings_title">Definições</string>
-    <string name="settings_section_appearance">Aparência</string>
     <string name="settings_section_language">Idioma</string>
+    <string name="settings_section_preferences">Preferências</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_currency_hint">Só visual — os valores não são convertidos</string>
     <string name="settings_section_currency">Moeda</string>
     <string name="settings_section_data">Dados</string>
     <string name="settings_section_account">Conta</string>
     <string name="settings_section_about">Acerca de</string>
-    <string name="settings_currency_label">Moeda de apresentação</string>
     <string name="settings_import_csv">Importar CSV (despesas)</string>
     <string name="settings_export_csv">Exportar CSV (despesas)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
@@ -328,7 +337,6 @@
         <item quantity="other">%d registos não puderam ser copiados e foram ignorados.</item>
     </plurals>
 
-    <string name="plan_title">Plano mensal</string>
     <string name="plan_safe_to_spend">Disponível para gastar</string>
     <string name="plan_safe_to_spend_month">Disponível para gastar (%1$s)</string>
     <string name="plan_over_by">Acima do plano em %1$s</string>
@@ -349,7 +357,7 @@
     <string name="plan_setup_title">Planeie o seu mês</string>
     <string name="plan_setup_message">Adicione o rendimento previsto para ver quanto pode gastar.</string>
     <string name="plan_allocations">Limites</string>
-    <string name="plan_not_planned">Sem plano</string>
+    <string name="plan_not_planned">Sem limite</string>
     <string name="plan_add_income_line">Adicionar rendimento</string>
     <string name="plan_income_line_new">Novo rendimento</string>
     <string name="plan_income_line_edit">Editar rendimento</string>
@@ -365,11 +373,11 @@
 
     <!-- Recorrentes -->
     <string name="settings_section_recurring">Recorrentes</string>
-    <string name="settings_manage_recurring">Gerir contas e rendimentos recorrentes</string>
+    <string name="settings_manage_recurring">Gerir recorrentes</string>
     <string name="recurring_title">Recorrentes</string>
     <string name="recurring_add">Adicionar recorrente</string>
     <string name="recurring_edit_title">Editar recorrente</string>
-    <string name="recurring_upcoming_title">Próximas contas e rendimentos</string>
+    <string name="recurring_upcoming_title">Próximos recorrentes</string>
     <string name="recurring_confirm">Confirmar</string>
     <string name="recurring_skip">Ignorar</string>
     <string name="recurring_overdue">Em atraso</string>
@@ -383,7 +391,7 @@
     <string name="recurring_annual_cost">Despesas recorrentes: %1$s/ano (%2$s/mês)</string>
     <string name="recurring_annual_income">Rendimentos recorrentes: %1$s/ano</string>
     <string name="recurring_manage">Gerir</string>
-    <string name="recurring_empty_cta">Configurar contas e rendimentos recorrentes</string>
+    <string name="recurring_empty_cta">Configurar recorrentes</string>
     <string name="recurring_added">Adicionado: \'%1$s\'</string>
     <string name="recurring_per_month">%1$s / mês</string>
     <string name="recurring_per_year">%1$s / ano</string>
@@ -499,11 +507,13 @@
     <string name="group_suggested_recurring">Recorrentes</string>
     <string name="group_suggested_investments">Investimentos</string>
     <string name="group_suggested_food">Alimentação</string>
-    <string name="group_suggested_other">Outros</string>
+    <string name="group_suggested_other">Compras e transferências</string>
     <string name="groups_manage_title">Gerir grupos</string>
     <string name="groups_none_yet">Ainda não há grupos</string>
     <string name="groups_field_name">Nome do grupo</string>
     <string name="groups_add">Adicionar grupo</string>
+    <string name="groups_name_taken">Já existe um grupo com este nome</string>
+    <string name="groups_suggested_none">Não há categorias ativas para agrupar</string>
     <string name="groups_rename">Mudar o nome</string>
     <string name="groups_delete_title">Eliminar \"%1$s\"?</string>
     <string name="groups_delete_message">As categorias mantêm-se, sem grupo.</string>

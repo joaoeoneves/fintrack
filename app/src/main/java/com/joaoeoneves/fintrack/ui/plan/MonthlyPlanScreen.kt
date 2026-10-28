@@ -344,6 +344,7 @@ private fun LazyListScope.limitsItems(
     item { AllocationsCard(allocations = state.allocations, onEdit = actions.onEdit, modifier = modifier) }
     plannedVsActualItem(state.progress, viewModel, modifier)
     item {
+        val otherName = stringResource(R.string.plan_group_other)
         val names =
             SuggestedGroupNames(
                 recurring = stringResource(R.string.group_suggested_recurring),
@@ -354,7 +355,7 @@ private fun LazyListScope.limitsItems(
         GroupsEmptyCard(
             actions =
                 GroupsActions(
-                    onCreateSuggested = { groupsViewModel.onCreateSuggested(names) },
+                    onCreateSuggested = { groupsViewModel.onCreateSuggested(names, listOf(otherName)) },
                     onManage = actions.onManage,
                 ),
             modifier = modifier,
@@ -368,12 +369,14 @@ private fun ManageGroupsDialog(
     onDismiss: () -> Unit,
 ) {
     val groups by groupsViewModel.groups.collectAsStateWithLifecycle()
+    val reserved = listOf(stringResource(R.string.plan_group_other))
     ManageGroupsSheet(
         groups = groups.orEmpty(),
+        reservedNames = reserved,
         actions =
             ManageGroupsActions(
-                onAdd = groupsViewModel::onAdd,
-                onRename = groupsViewModel::onRename,
+                onAdd = { groupsViewModel.onAdd(it, reserved) },
+                onRename = { id, name -> groupsViewModel.onRename(id, name, reserved) },
                 onMove = groupsViewModel::onMove,
                 onDelete = groupsViewModel::onDelete,
             ),

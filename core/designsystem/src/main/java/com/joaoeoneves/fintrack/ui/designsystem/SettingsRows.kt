@@ -52,7 +52,10 @@ fun SettingsGroup(
     }
 }
 
-/** A tappable (when [onClick] is set) row: [title] on the left, optional [value] and chevron on the right. */
+/**
+ * A tappable (when [onClick] is set) row: [title] (with optional [supportingText] below) on the left, optional
+ * [value] and chevron on the right.
+ */
 @Suppress("LongParameterList") // title/value/click/chevron/colour are independent row options
 @Composable
 fun SettingsRow(
@@ -62,6 +65,7 @@ fun SettingsRow(
     onClick: (() -> Unit)? = null,
     showChevron: Boolean = false,
     titleColor: Color = Color.Unspecified,
+    supportingText: String? = null,
 ) {
     Row(
         modifier =
@@ -72,14 +76,22 @@ fun SettingsRow(
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = titleColor,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = titleColor,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (supportingText != null) {
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+        }
         if (value != null) {
             Text(
                 text = value,

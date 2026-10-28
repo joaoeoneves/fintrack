@@ -12,14 +12,18 @@ tags:
 # Pin English (fresh installs default to Portuguese).
 - tapOn:
     text: "Settings|Definições"
-- tapOn: "English"
+- tapOn: "Language|Idioma"
+# Index -1 = the open menu's option (the row's own value can also read "English").
+- tapOn:
+    text: "English"
+    index: -1
 - back
 - assertVisible:
     id: "dashboard_list"
 
 - tapOn:
     id: "nav_plan"
-- assertVisible: "Monthly plan"
+- assertVisible: "Expected income"
 - assertVisible: "Previous month"
 
 # Expected income starts with the salary profile row.
