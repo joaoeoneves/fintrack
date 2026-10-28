@@ -115,4 +115,5 @@ private fun GoalStatus.labelRes(): Int =
         GoalStatus.ON_TRACK -> R.string.goal_status_on_track
         GoalStatus.BEHIND -> R.string.goal_status_behind
         GoalStatus.DONE -> R.string.goal_status_done
+        GoalStatus.NO_MONTHLY -> R.string.goal_status_no_monthly
     }

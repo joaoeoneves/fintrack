@@ -20,6 +20,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedSource
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
+import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
@@ -318,10 +319,8 @@ private fun planFlow(
         repositories.budgets.observeBudgets(),
         repositories.categories.observeCategories(),
         selected.overview,
-        combine(repositories.monthSettings.observeMonthSettings(), editor) { settings, editorState ->
-            settings to editorState
-        },
-    ) { lines, budgets, categories, overview, (settings, editorState) ->
+        combine(repositories.monthSettings.observeMonthSettings(), editor, repositories.goals.observeGoals(), ::Triple),
+    ) { lines, budgets, categories, overview, (settings, editorState, goals) ->
         val allocations = budgetProgressOf(emptyList(), budgets, categories, overview.recurring, overview.budgetMonth)
         val workingDays = workingDaysOf(overview.budgetMonth, settings)
         val content: MonthlyPlanUiState =
@@ -348,7 +347,7 @@ private fun planFlow(
                 envelopes = overview.envelopes,
                 tiles = tilesOf(allocations, overview),
                 envelopeCards = envelopeCardsOf(overview.envelopes),
-                configure = configureOf(lines, categories, overview, workingDays.days),
+                configure = configureOf(lines, categories, overview, workingDays.days, goals),
                 receipts = receiptsOf(selected, overview, lines, workingDays.days),
             )
         content
@@ -377,8 +376,11 @@ private fun configureOf(
     categories: List<Category>,
     overview: PeriodOverview,
     workingDays: Int,
+    goals: List<SavingsGoal>,
 ): ConfigureStatus {
-    val bills = overview.recurring.filter { it.type == RecurringType.EXPENSE && it.active }
+    // A savings plan's monthly item is the plan's, not a bill.
+    val planOwned = goals.mapNotNullTo(mutableSetOf()) { it.recurringId }
+    val bills = overview.recurring.filter { it.type == RecurringType.EXPENSE && it.active && it.id !in planOwned }
     return ConfigureStatus(
         incomeMonthlyCents = lines.filterNot { it.isExtra }.sumOf { it.amountIn(overview.budgetMonth, workingDays) },
         incomeLineCount = lines.size,

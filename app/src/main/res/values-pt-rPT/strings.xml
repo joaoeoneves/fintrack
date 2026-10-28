@@ -588,6 +588,7 @@
     <string name="goal_status_on_track">Em linha</string>
     <string name="goal_status_behind">Atrasado</string>
     <string name="goal_status_done">Concluído</string>
+    <string name="goal_status_no_monthly">Sem valor mensal</string>
     <string name="goal_link_recurring">Ligar a recorrentes</string>
     <string name="goal_link_category">Ligar a uma categoria</string>
     <string name="goal_link_category_none">Nenhuma</string>

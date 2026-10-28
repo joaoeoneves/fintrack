@@ -128,7 +128,7 @@ private fun annualGoalsOf(
         .map { goal ->
             val linked =
                 inputs.recurring.filter {
-                    it.type == RecurringType.EXPENSE && it.active && it.id in goal.linkedRecurringIds
+                    it.type == RecurringType.EXPENSE && it.active && it.id in goal.countedRecurringIds
                 }
             AnnualGoal(goal, linked.sumOf { item -> item.amountCents * months.count { item.occursIn(it) } })
         }

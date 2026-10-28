@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.domain.model.isEnded
 import com.joaoeoneves.fintrack.domain.model.lastOccurrenceBefore
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,6 +45,7 @@ class RecurringListViewModel
     constructor(
         private val recurringRepository: RecurringRepository,
         private val categoryRepository: CategoryRepository,
+        private val goalRepository: GoalRepository,
         private val clock: Clock,
     ) : ViewModel() {
         private val retryTrigger = MutableStateFlow(0)
@@ -62,11 +64,15 @@ class RecurringListViewModel
                         recurringRepository.observeRecurring(),
                         categoryRepository.observeCategories(),
                         deleteTarget,
-                    ) { items, catalog, target -> contentOf(items, catalog, target, today) }
-                        .catch { e ->
-                            Log.w(TAG, "Failed to observe recurring items", e)
-                            emit(RecurringListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
-                        }
+                        goalRepository.observeGoals(),
+                    ) { items, catalog, target, goals ->
+                        // A savings plan's monthly item lives in the plan, not in Contas.
+                        val planOwned = goals.mapNotNullTo(mutableSetOf()) { it.recurringId }
+                        contentOf(items.filter { it.id !in planOwned }, catalog, target, today)
+                    }.catch { e ->
+                        Log.w(TAG, "Failed to observe recurring items", e)
+                        emit(RecurringListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
+                    }
                 }.stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
