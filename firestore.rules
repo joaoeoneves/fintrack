@@ -101,7 +101,7 @@ service cloud.firestore {
 
     // The keys of the income lines generated from the salary profile (absent on the user's own lines).
     function managedKeyPattern() {
-      return '^profile_(net_salary|meal|holiday|christmas|bonus|flex_q[1-4]|profit_share(_([1-9]|1[0-2]))?)$';
+      return '^profile_(net_salary|duodecimos|meal|holiday|christmas|bonus|flex_q[1-4]|profit_share(_([1-9]|1[0-2]))?)$';
     }
 
     // An earmark sets the line aside for a category or group: both fields or neither, the id shape-checked

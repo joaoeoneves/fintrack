@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
@@ -139,7 +140,7 @@ class SalaryProfileViewModelTest {
             advanceUntilIdle()
 
             assertEquals(100_000L, profiles.profile?.baseGrossCents)
-            assertEquals(listOf(MANAGED_NET_SALARY), income.lines.map { it.id })
+            assertEquals(listOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS), income.lines.map { it.id })
             assertEquals(SalaryProfileEvent.Done, vm.eventFlow.first())
         }
 

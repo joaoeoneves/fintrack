@@ -26,6 +26,10 @@ data class SalaryBreakdown(
     val irsSubsidiesCents: Long,
     val irsCents: Long,
     val netMonthlyCents: Long,
+    /** The base salary alone after SS and IRS; with [netDuoCents] it adds up to [netMonthlyCents] exactly. */
+    val netBaseCents: Long,
+    /** The twelfths of the subsidies paid with the monthly salary, net. */
+    val netDuoCents: Long,
     /** Gross of each of the two subsidy lump sums (base x (1 - spread)). */
     val lumpGrossCents: Long,
     val holidayLumpNetCents: Long,
@@ -61,6 +65,9 @@ private fun grossBreakdown(
     val irsBase = baseExact.ppm(profile.irsBasePpm)
     val irsSubs = duo.ppm(profile.effectiveIrsSubsidiesPpm)
     val irs = irsBase.add(irsSubs).ppm(PPM_SCALE - profile.irsJovemExemptPpm)
+    val netMonthly = gross.subtract(ss).subtract(irs).cents()
+    val irsBasePaid = irsBase.ppm(PPM_SCALE - profile.irsJovemExemptPpm)
+    val netBase = baseExact.subtract(baseExact.ppm(profile.ssPpm)).subtract(irsBasePaid).cents()
     val lump = base.ppm(PPM_SCALE - spread)
     val lumpNet = lump.lumpNet(profile)
     val flexGross = profile.flexPpm?.let { baseExact.multiply(BigDecimal(SALARY_MONTHS)).ppm(it) } ?: BigDecimal.ZERO
@@ -73,7 +80,9 @@ private fun grossBreakdown(
         irsBaseCents = irsBase.cents(),
         irsSubsidiesCents = irsSubs.cents(),
         irsCents = irs.cents(),
-        netMonthlyCents = gross.subtract(ss).subtract(irs).cents(),
+        netMonthlyCents = netMonthly,
+        netBaseCents = netBase,
+        netDuoCents = netMonthly - netBase,
         lumpGrossCents = lump,
         holidayLumpNetCents = lumpNet,
         christmasLumpNetCents = lumpNet,
@@ -100,6 +109,8 @@ private fun netBreakdown(
         irsSubsidiesCents = 0L,
         irsCents = 0L,
         netMonthlyCents = net,
+        netBaseCents = net,
+        netDuoCents = 0L,
         lumpGrossCents = 0L,
         holidayLumpNetCents = profile.netHolidayLumpCents ?: 0L,
         christmasLumpNetCents = profile.netChristmasLumpCents ?: 0L,

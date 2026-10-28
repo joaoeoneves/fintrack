@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.MANAGED_BONUS
+import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
@@ -30,7 +31,8 @@ class ManageSalaryProfileTest {
             assertTrue(useCase.save(profile, labels).isSuccess)
 
             assertEquals(profile, profiles.profile)
-            assertEquals(setOf("own", MANAGED_NET_SALARY, MANAGED_BONUS), income.lines.map { it.id }.toSet())
+            val expected = setOf("own", MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_BONUS)
+            assertEquals(expected, income.lines.map { it.id }.toSet())
         }
 
     @Test
@@ -51,7 +53,7 @@ class ManageSalaryProfileTest {
 
             useCase.save(profile.copy(bonusCents = null), labels)
 
-            assertEquals(setOf("own", MANAGED_NET_SALARY), income.lines.map { it.id }.toSet())
+            assertEquals(setOf("own", MANAGED_NET_SALARY, MANAGED_DUODECIMOS), income.lines.map { it.id }.toSet())
         }
 
     @Test
@@ -65,7 +67,7 @@ class ManageSalaryProfileTest {
 
             val net = income.lines.single { it.id == MANAGED_NET_SALARY }
             assertEquals("Pay", net.label)
-            assertEquals(116_667L, net.amountCents)
+            assertEquals(100_000L, net.amountCents)
         }
 
     @Test
@@ -125,6 +127,54 @@ class ManageSalaryProfileTest {
             assertTrue(useCase.delete().isFailure)
 
             assertEquals(profile, profiles.profile)
-            assertEquals(3, income.lines.size)
+            assertEquals(4, income.lines.size)
+        }
+
+    @Test
+    fun resync_withoutProfile_writesNothing() =
+        runTest {
+            val before = income.lines
+
+            assertTrue(useCase.resync().isSuccess)
+
+            assertEquals(before, income.lines)
+        }
+
+    @Test
+    fun resync_withoutManagedLines_writesNothing() =
+        runTest {
+            profiles.saveSalaryProfile(profile)
+
+            assertTrue(useCase.resync().isSuccess)
+
+            assertEquals(listOf(own), income.lines)
+        }
+
+    @Test
+    fun resync_fixesStaleLines_thenIsANoOp() =
+        runTest {
+            useCase.save(profile, labels)
+            income.deletePlannedIncome(MANAGED_DUODECIMOS)
+            income.savePlannedIncome(income.lines.single { it.id == MANAGED_NET_SALARY }.copy(amountCents = 1))
+
+            assertTrue(useCase.resync().isSuccess)
+            val fixed = income.lines.toSet()
+
+            assertTrue(fixed.any { it.id == MANAGED_DUODECIMOS })
+            assertTrue(useCase.resync().isSuccess)
+            assertEquals(fixed, income.lines.toSet())
+        }
+
+    @Test
+    fun resync_stopsAtTheFirstFailure() =
+        runTest {
+            useCase.save(profile, labels)
+            income.deletePlannedIncome(MANAGED_DUODECIMOS)
+            income.deletePlannedIncome(MANAGED_BONUS)
+            income.nextSaveError = IllegalStateException("boom")
+
+            assertTrue(useCase.resync().isFailure)
+
+            assertTrue(income.lines.none { it.id == MANAGED_DUODECIMOS || it.id == MANAGED_BONUS })
         }
 }

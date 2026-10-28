@@ -37,8 +37,6 @@
     <string name="error_generic_fallback">Ocorreu um erro</string>
     <string name="error_invalid_amount">Introduza um montante válido</string>
     <string name="error_sign_in_failed">Não foi possível iniciar sessão</string>
-    <string name="error_budget_save_failed">Não foi possível guardar o orçamento</string>
-    <string name="error_budget_remove_failed">Não foi possível remover o orçamento</string>
     <string name="error_sign_out_failed">Não foi possível terminar sessão</string>
 
     <!-- Autenticação -->
@@ -496,7 +494,6 @@
     <string name="plan_groups_manage">Gerir grupos</string>
     <string name="plan_group_other">Outros</string>
     <string name="plan_from_recurring">a partir de recorrentes</string>
-    <string name="cd_group_toggle">Mostrar as categorias de %1$s</string>
     <string name="group_suggested_recurring">Recorrentes</string>
     <string name="group_suggested_investments">Investimentos</string>
     <string name="group_suggested_food">Alimentação</string>
@@ -514,7 +511,6 @@
     <string name="plan_not_in">Exceto em</string>
     <string name="plan_earmark_for">Reservar para</string>
     <string name="plan_earmark_none">Nenhum</string>
-    <string name="plan_earmark_categories">Categorias</string>
     <string name="plan_pot">Pote</string>
     <string name="plan_pots_title">Potes</string>
     <string name="plan_pot_base">Base</string>
@@ -524,7 +520,6 @@
     <string name="plan_pot_overflow_row">−%1$s · %2$s</string>
     <string name="cd_pot">Pote: %1$s</string>
 
-    <string name="plan_salary_section">Salário</string>
     <string name="plan_salary_profile_row">Perfil salarial</string>
     <string name="plan_from_salary_profile">Do perfil salarial</string>
     <string name="plan_managed_line_hint">Gerada a partir do perfil salarial. Altere o valor e o calendário aí.</string>
@@ -582,10 +577,7 @@
     <string name="plan_tab_month">Mês</string>
     <string name="plan_tab_year">Ano</string>
     <string name="annual_income_title">Rendimento do ano</string>
-    <string name="annual_income_regular">Rendimento regular</string>
-    <string name="annual_income_extras">Extras</string>
     <string name="annual_income_total">Rendimento total</string>
-    <string name="annual_extra_in_month">%1$s · %2$s</string>
     <string name="annual_actual_of_planned">%1$s de %2$s</string>
     <string name="annual_pots_title">Potes no ano</string>
     <string name="annual_subscriptions_title">Subscrições anuais</string>
@@ -596,7 +588,7 @@
     <string name="annual_empty_message">Adicione rendimentos e limites na vista Mês para ver o ano.</string>
 
     <string name="plan_goals_title">Objetivos</string>
-    <string name="plan_goals_add">Adicionar um objetivo</string>
+    <string name="plan_goals_add">Adicionar objetivo</string>
     <string name="plan_goals_from_investments">Criar a partir dos investimentos</string>
     <string name="goal_new">Novo objetivo</string>
     <string name="goal_edit">Editar objetivo</string>
@@ -632,4 +624,13 @@
     <string name="salary_duplicates_message">Tem outras linhas de rendimento mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-las para não contar a dobrar?</string>
     <string name="salary_duplicates_remove">Remover selecionadas</string>
     <string name="salary_duplicates_keep">Manter</string>
+    <string name="plan_income_salary">Salário</string>
+    <string name="plan_income_meal">Subsídio de refeição</string>
+    <string name="plan_income_subsidies">Subsídios</string>
+    <string name="plan_income_flex">Benefícios flexíveis</string>
+    <string name="plan_income_profit_share">Distribuição de lucros</string>
+    <string name="plan_income_bonus">Prémio</string>
+    <string name="salary_breakdown_net_base">Salário base (líquido)</string>
+    <string name="salary_breakdown_net_duo">Duodécimos (líquido)</string>
+    <string name="salary_line_duodecimos">Subsídios (duodécimos)</string>
 </resources>

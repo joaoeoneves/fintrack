@@ -32,6 +32,7 @@ const val MANAGED_NET_SALARY = "profile_net_salary"
 const val MANAGED_MEAL = "profile_meal"
 const val MANAGED_HOLIDAY = "profile_holiday"
 const val MANAGED_CHRISTMAS = "profile_christmas"
+const val MANAGED_DUODECIMOS = "profile_duodecimos"
 
 /** The key the single profit-share line used before it could be split over several months (legacy, cleaned up). */
 const val MANAGED_PROFIT_SHARE = "profile_profit_share"
@@ -48,12 +49,20 @@ fun managedProfitShareKey(month: Int): String = "${MANAGED_PROFIT_SHARE}_$month"
 
 /** Every key a managed line can carry. */
 val MANAGED_KEYS: List<String> =
-    listOf(MANAGED_NET_SALARY, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS, MANAGED_PROFIT_SHARE, MANAGED_BONUS) +
-        List(FLEX_PAYMENTS, ::managedFlexKey) + List(MAX_MONTH_OF_YEAR) { managedProfitShareKey(it + 1) }
+    listOf(
+        MANAGED_NET_SALARY,
+        MANAGED_DUODECIMOS,
+        MANAGED_MEAL,
+        MANAGED_HOLIDAY,
+        MANAGED_CHRISTMAS,
+        MANAGED_PROFIT_SHARE,
+        MANAGED_BONUS,
+    ) + List(FLEX_PAYMENTS, ::managedFlexKey) + List(MAX_MONTH_OF_YEAR) { managedProfitShareKey(it + 1) }
 
 /** Default (English) labels of the generated lines; the UI passes localized ones. Existing lines keep theirs. */
 data class SalaryLineLabels(
     val netSalary: String = "Net salary",
+    val duodecimos: String = "Subsidies (twelfths)",
     val meal: String = "Meal allowance",
     val subsidy: String = "Subsidy",
     val flex: String = "Flexible benefits",

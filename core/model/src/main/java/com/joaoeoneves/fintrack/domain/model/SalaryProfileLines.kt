@@ -27,6 +27,7 @@ fun salaryProfileLines(
 ): List<PlannedIncome> {
     val breakdown = salaryBreakdownOf(profile) ?: return emptyList()
     val byKey = existing.filter { it.managedKey != null }.associateBy { it.managedKey }
+    val salaryEarmark = byKey[MANAGED_NET_SALARY]?.earmark
     var nextOrder = (existing.maxOfOrNull { it.order } ?: -1) + 1
     return wantedLines(profile, breakdown, labels).filter { it.amountCents > 0L }.map { wanted ->
         val current = byKey[wanted.key]
@@ -39,7 +40,7 @@ fun salaryProfileLines(
             frequency = wanted.frequency,
             monthOfYear = wanted.monthOfYear,
             skipMonths = wanted.skipMonths,
-            earmark = current?.earmark,
+            earmark = if (wanted.key == MANAGED_DUODECIMOS) salaryEarmark else current?.earmark,
             managedKey = wanted.key,
         )
     }
@@ -54,6 +55,28 @@ fun staleManagedIds(
     return existing.filter { it.isManaged && it.id !in keep }.map { it.id }
 }
 
+/** The writes that bring the stored managed lines in line with the profile: [upserts] (new first) and [deletes]. */
+data class ManagedLinesSync(
+    val upserts: List<PlannedIncome>,
+    val deletes: List<String>,
+) {
+    val isEmpty: Boolean get() = upserts.isEmpty() && deletes.isEmpty()
+}
+
+/** The minimal writes that make the managed lines in [existing] match [profile]; empty when they already do. */
+fun managedLinesSync(
+    profile: SalaryProfile,
+    existing: List<PlannedIncome>,
+    labels: SalaryLineLabels = SalaryLineLabels(),
+): ManagedLinesSync {
+    val byId = existing.associateBy { it.id }
+    val (changed, created) =
+        salaryProfileLines(profile, existing, labels)
+            .filter { byId[it.id] != it }
+            .partition { it.id in byId }
+    return ManagedLinesSync(upserts = created + changed, deletes = staleManagedIds(profile, existing))
+}
+
 private fun wantedLines(
     profile: SalaryProfile,
     breakdown: SalaryBreakdown,
@@ -65,7 +88,13 @@ private fun wantedLines(
         WantedLine(
             MANAGED_NET_SALARY,
             labels.netSalary,
-            breakdown.netMonthlyCents,
+            breakdown.netBaseCents,
+            frequency = IncomeFrequency.MONTHLY,
+        ),
+        WantedLine(
+            MANAGED_DUODECIMOS,
+            labels.duodecimos,
+            breakdown.netDuoCents,
             frequency = IncomeFrequency.MONTHLY,
         ),
         WantedLine(
@@ -119,7 +148,7 @@ private fun flexLines(
     breakdown.flexQuarterlyCents.mapIndexed { index, cents ->
         WantedLine(
             managedFlexKey(index),
-            "${labels.flex} ${index + 1}/$FLEX_PAYMENTS",
+            labels.flex,
             cents,
             monthOfYear = (profile.flexFirstMonth - 1 + index * FLEX_MONTH_STEP) % MONTHS_IN_YEAR + 1,
         )
