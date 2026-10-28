@@ -2,11 +2,15 @@ package com.joaoeoneves.fintrack.ui.settings
 
 import android.app.Application
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.preferences.StartChecklistState
+import com.joaoeoneves.fintrack.data.preferences.StartChecklistStore
 import com.joaoeoneves.fintrack.domain.repository.DataResetRepository
+import com.joaoeoneves.fintrack.testutil.InMemoryPreferencesDataStore
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -16,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -42,6 +47,7 @@ private class FakeDataResetRepository : DataResetRepository {
 class DeleteAllDataViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repo = FakeDataResetRepository()
+    private val checklistStore = StartChecklistStore(InMemoryPreferencesDataStore())
     private val failed = DeleteAllDataState.Failed(UiText.StringResource(R.string.delete_all_data_error))
 
     @Before
@@ -50,7 +56,7 @@ class DeleteAllDataViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm() = DeleteAllDataViewModel(repo)
+    private fun vm() = DeleteAllDataViewModel(repo, checklistStore)
 
     @Test
     fun initialState_isIdle() {
@@ -201,5 +207,30 @@ class DeleteAllDataViewModelTest {
             advanceUntilIdle()
             assertEquals(DeleteAllDataState.Idle, vm.state.value)
             assertEquals(1, repo.calls)
+        }
+
+    @Test
+    fun confirm_success_clearsTheStartChecklistDecision() =
+        runTest(dispatcher) {
+            checklistStore.set(StartChecklistState.DISMISSED)
+            val vm = vm()
+            vm.onRequestDelete()
+            vm.onConfirmDelete()
+            advanceUntilIdle()
+
+            assertNull(checklistStore.state.first())
+        }
+
+    @Test
+    fun confirm_failure_keepsTheStartChecklistDecision() =
+        runTest(dispatcher) {
+            checklistStore.set(StartChecklistState.DISMISSED)
+            repo.results.add(Result.failure(java.io.IOException("offline")))
+            val vm = vm()
+            vm.onRequestDelete()
+            vm.onConfirmDelete()
+            advanceUntilIdle()
+
+            assertEquals(StartChecklistState.DISMISSED, checklistStore.state.first())
         }
 }
