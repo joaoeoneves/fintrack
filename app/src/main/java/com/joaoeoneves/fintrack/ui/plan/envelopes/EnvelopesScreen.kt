@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan.envelopes
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,8 +30,10 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.settings.categories.MoveDirection
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -58,19 +58,20 @@ fun EnvelopesScreen(
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
-        when (val current = state) {
-            EnvelopesUiState.Loading ->
-                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        StateCrossfade(state) { current ->
+            when (current) {
+                EnvelopesUiState.Loading -> ListSkeleton(contentModifier)
 
-            is EnvelopesUiState.Error ->
-                EmptyState(
-                    title = stringResource(R.string.error_state_title),
-                    message = current.message.asString(),
-                    modifier = contentModifier,
-                )
+                is EnvelopesUiState.Error ->
+                    EmptyState(
+                        title = stringResource(R.string.error_state_title),
+                        message = current.message.asString(),
+                        modifier = contentModifier,
+                    )
 
-            is EnvelopesUiState.Content ->
-                EnvelopesList(current.rows, viewModel::onMove, onOpenEditor, contentModifier)
+                is EnvelopesUiState.Content ->
+                    EnvelopesList(current.rows, viewModel::onMove, onOpenEditor, contentModifier)
+            }
         }
     }
 }

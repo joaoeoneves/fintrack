@@ -51,10 +51,12 @@ import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import com.joaoeoneves.fintrack.ui.designsystem.AnimatedAmountText
+import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ProgressRing
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.designsystem.pressScale
 import com.joaoeoneves.fintrack.ui.designsystem.rememberAnimatedCents
 import com.joaoeoneves.fintrack.ui.designsystem.rememberGoalCelebration
@@ -92,8 +94,12 @@ fun SavingsScreen(
             )
         },
     ) { innerPadding ->
-        if (state.loaded) {
-            SavingsContent(state, onOpenPlan, Modifier.fillMaxSize().padding(innerPadding))
+        StateCrossfade(state.loaded) { loaded ->
+            if (loaded) {
+                SavingsContent(state, onOpenPlan, Modifier.fillMaxSize().padding(innerPadding))
+            } else {
+                CardsSkeleton(Modifier.padding(innerPadding))
+            }
         }
     }
 }

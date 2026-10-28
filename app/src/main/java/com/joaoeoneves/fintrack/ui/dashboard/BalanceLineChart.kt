@@ -63,7 +63,7 @@ private const val HALO_ALPHA = 0.18f
 
 /**
  * Frameless line chart of the cumulative net balance. [series] is one value per day starting at
- * [startDate]. The line draws in on first appearance and morphs when the series changes; a long
+ * [startDate]. The line draws in on first appearance and when the period's length changes, and morphs otherwise; a long
  * press followed by a drag scrubs a guide line across the days and reports the index through
  * [onScrub] (null when released), with a haptic tick for every day crossed.
  */
@@ -77,7 +77,7 @@ fun BalanceLineChart(
     val reducedMotion = LocalReducedMotion.current
     val target = remember(series) { resample(normalize(series), SAMPLE_COUNT) }
     val morph = rememberMorph(target, reducedMotion)
-    val drawIn = rememberDrawIn(reducedMotion)
+    val drawIn = rememberDrawIn(reducedMotion, startDate, series.size)
     val scrub = rememberScrubState(count = series.size, onScrub = onScrub)
     val guideAlpha by animateFloatAsState(
         targetValue = if (scrub.active) 1f else 0f,
@@ -245,11 +245,26 @@ private fun rememberMorph(
     return state
 }
 
+/**
+ * Draw-in progress: plays on first appearance and again when the period changes to one with a different number of
+ * days (a new length can't morph smoothly); a same-length change just morphs.
+ */
 @Composable
-private fun rememberDrawIn(reducedMotion: Boolean): Animatable<Float, *> {
+private fun rememberDrawIn(
+    reducedMotion: Boolean,
+    startDate: LocalDate,
+    count: Int,
+): Animatable<Float, *> {
     val progress = remember { Animatable(if (reducedMotion) 1f else 0f) }
-    LaunchedEffect(Unit) {
-        if (!reducedMotion) progress.animateTo(1f, tween(Motion.DrawIn, easing = Motion.Standard))
+    val last = remember { arrayOfNulls<Pair<LocalDate, Int>>(1) }
+    LaunchedEffect(startDate) {
+        val previous = last[0]
+        last[0] = startDate to count
+        val replay = previous == null || previous.second != count
+        if (!reducedMotion && replay) {
+            progress.snapTo(0f)
+            progress.animateTo(1f, tween(Motion.DrawIn, easing = Motion.Standard))
+        }
     }
     return progress
 }

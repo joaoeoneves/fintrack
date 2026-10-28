@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -45,7 +44,9 @@ import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.HeroListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.plan.ChangeSheet
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
@@ -135,15 +136,21 @@ private fun DashboardBody(
     scroll: DashboardScroll,
     contentPadding: PaddingValues,
 ) {
+    StateCrossfade(uiState) { current ->
+        DashboardBodyFor(current, actions, callbacks, scroll, contentPadding)
+    }
+}
+
+@Composable
+private fun DashboardBodyFor(
+    uiState: DashboardUiState,
+    actions: DashboardActions,
+    callbacks: DashboardCallbacks,
+    scroll: DashboardScroll,
+    contentPadding: PaddingValues,
+) {
     when (uiState) {
-        is DashboardUiState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(contentPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground)
-            }
-        }
+        is DashboardUiState.Loading -> HeroListSkeleton(Modifier.padding(contentPadding))
 
         is DashboardUiState.Content -> {
             DashboardContent(

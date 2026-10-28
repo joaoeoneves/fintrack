@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
@@ -36,7 +35,9 @@ import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /** The Activity tab: one filterable, searchable, day-grouped list of expenses and income. */
@@ -67,29 +68,27 @@ fun ActivityScreen(
         navigationIcon = { AccountAvatar(onClick = callbacks.onOpenSettings) },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        when (val state = uiState) {
-            is ActivityUiState.Loading -> {
-                Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+        StateCrossfade(uiState) { state ->
+            when (state) {
+                is ActivityUiState.Loading -> ListSkeleton(Modifier.padding(innerPadding))
+
+                is ActivityUiState.Content -> {
+                    ActivityContent(
+                        state = state,
+                        query = query,
+                        categories = categories,
+                        actions = viewModel.activityActions(callbacks),
+                        contentPadding = innerPadding,
+                    )
                 }
-            }
 
-            is ActivityUiState.Content -> {
-                ActivityContent(
-                    state = state,
-                    query = query,
-                    categories = categories,
-                    actions = viewModel.activityActions(callbacks),
-                    contentPadding = innerPadding,
-                )
-            }
-
-            is ActivityUiState.Error -> {
-                ErrorState(
-                    message = state.message.asString(),
-                    onRetry = viewModel::onRetry,
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                )
+                is ActivityUiState.Error -> {
+                    ErrorState(
+                        message = state.message.asString(),
+                        onRetry = viewModel::onRetry,
+                        modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    )
+                }
             }
         }
     }

@@ -1,12 +1,10 @@
 package com.joaoeoneves.fintrack.ui.plan
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -14,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -25,8 +22,10 @@ import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /**
@@ -55,19 +54,20 @@ fun IncomeScreen(
             snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
         ) { innerPadding ->
             val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
-            when (val current = state) {
-                MonthlyPlanUiState.Loading ->
-                    Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            StateCrossfade(state) { current ->
+                when (current) {
+                    MonthlyPlanUiState.Loading -> CardsSkeleton(contentModifier)
 
-                is MonthlyPlanUiState.Error ->
-                    ErrorState(
-                        message = current.message.asString(),
-                        onRetry = viewModel::onRetry,
-                        modifier = contentModifier,
-                    )
+                    is MonthlyPlanUiState.Error ->
+                        ErrorState(
+                            message = current.message.asString(),
+                            onRetry = viewModel::onRetry,
+                            modifier = contentModifier,
+                        )
 
-                is MonthlyPlanUiState.Content ->
-                    IncomeContent(current, viewModel, onOpenSalaryProfile, contentModifier)
+                    is MonthlyPlanUiState.Content ->
+                        IncomeContent(current, viewModel, onOpenSalaryProfile, contentModifier)
+                }
             }
         }
     }

@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan.annual
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +22,9 @@ import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.HeroAmount
@@ -36,14 +36,15 @@ fun AnnualPlanView(
     actions: AnnualPlanActions,
     modifier: Modifier = Modifier,
 ) {
-    when (state) {
-        AnnualPlanUiState.Loading ->
-            Box(modifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    StateCrossfade(state) { state ->
+        when (state) {
+            AnnualPlanUiState.Loading -> CardsSkeleton(modifier)
 
-        is AnnualPlanUiState.Error ->
-            ErrorState(message = state.message.asString(), onRetry = actions.onRetry, modifier = modifier)
+            is AnnualPlanUiState.Error ->
+                ErrorState(message = state.message.asString(), onRetry = actions.onRetry, modifier = modifier)
 
-        is AnnualPlanUiState.Content -> AnnualPlanContent(state, actions, modifier)
+            is AnnualPlanUiState.Content -> AnnualPlanContent(state, actions, modifier)
+        }
     }
 }
 

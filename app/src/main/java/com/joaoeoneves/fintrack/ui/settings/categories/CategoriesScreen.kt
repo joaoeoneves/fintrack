@@ -1,20 +1,17 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -28,7 +25,9 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
@@ -129,31 +128,29 @@ internal fun CategoriesContent(
             )
         },
     ) { innerPadding ->
-        when (state) {
-            CategoriesUiState.Loading -> {
-                Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
+        StateCrossfade(state) { state ->
+            when (state) {
+                CategoriesUiState.Loading -> ListSkeleton(Modifier.padding(innerPadding))
 
-            is CategoriesUiState.Content -> {
-                CategoryList(state, actions.rows, Modifier.padding(innerPadding))
-                state.editor?.let { editor ->
-                    CategoryEditorDialog(
-                        state = editor,
-                        onSave = actions.onSave,
-                        onDismiss = actions.onDismissEditor,
-                    )
+                is CategoriesUiState.Content -> {
+                    CategoryList(state, actions.rows, Modifier.padding(innerPadding))
+                    state.editor?.let { editor ->
+                        CategoryEditorDialog(
+                            state = editor,
+                            onSave = actions.onSave,
+                            onDismiss = actions.onDismissEditor,
+                        )
+                    }
+                    state.deleteDialog?.let { dialog ->
+                        CategoryDeleteDialog(
+                            state = dialog,
+                            onDelete = actions.onConfirmDelete,
+                            onArchive = { actions.rows.onToggleArchived(dialog.category.id) },
+                            onDismiss = actions.onDismissDelete,
+                        )
+                    }
+                    state.moveDialog?.let { dialog -> CategoryMoveDialog(dialog, actions.move) }
                 }
-                state.deleteDialog?.let { dialog ->
-                    CategoryDeleteDialog(
-                        state = dialog,
-                        onDelete = actions.onConfirmDelete,
-                        onArchive = { actions.rows.onToggleArchived(dialog.category.id) },
-                        onDismiss = actions.onDismissDelete,
-                    )
-                }
-                state.moveDialog?.let { dialog -> CategoryMoveDialog(dialog, actions.move) }
             }
         }
     }
