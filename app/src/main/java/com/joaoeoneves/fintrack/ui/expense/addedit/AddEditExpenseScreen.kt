@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -172,6 +174,13 @@ private fun ExpenseForm(
             error = form.categoryError?.asString(),
             onSelected = actions.onCategorySelected,
         )
+        if (form.suggestedCategory) {
+            Text(
+                text = stringResource(R.string.expense_category_suggested),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         SettingsSwitchRow(
             title = stringResource(R.string.expense_field_refund),

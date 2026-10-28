@@ -96,6 +96,7 @@
     <string name="expense_field_name">Name</string>
     <string name="expense_field_category">Category</string>
     <string name="error_name_required">Name is required</string>
+    <string name="expense_category_suggested">Same as last time</string>
     <string name="error_category_required">Choose a category</string>
     <string name="error_failed_save_expense">Couldn\'t save the expense</string>
 
