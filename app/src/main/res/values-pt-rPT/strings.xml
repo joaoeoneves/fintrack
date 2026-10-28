@@ -84,10 +84,10 @@
     <string name="dashboard_savings_rate">Taxa de poupança: %1$s</string>
     <string name="dashboard_savings_rate_unavailable">—</string>
 
-    <!-- Orçamentos -->
+    <!-- Limites -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
     <string name="budget_spent_no_limit">%1$s gasto — sem limite definido</string>
-    <string name="budget_dialog_title">Definir orçamento para %1$s</string>
+    <string name="budget_dialog_title">Definir limite para %1$s</string>
     <string name="budget_dialog_limit_label">Limite mensal</string>
 
     <!-- Adicionar/editar despesa -->
@@ -230,8 +230,8 @@
     <string name="cd_category_icon_option">Ícone %1$d</string>
     <string name="cd_category_color_option">Cor %1$d</string>
     <string name="category_delete_confirm">Eliminar \"%1$s\"?</string>
-    <string name="category_in_use_message">\"%1$s\" é usada por despesas, orçamentos ou itens recorrentes. Arquivar em vez disso?</string>
-    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas, orçamentos ou itens recorrentes e não pode ser eliminada.</string>
+    <string name="category_in_use_message">\"%1$s\" é usada por despesas, limites ou itens recorrentes. Arquivar em vez disso?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas, limites ou itens recorrentes e não pode ser eliminada.</string>
     <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação à internet. Arquivar em vez disso?</string>
     <string name="category_cannot_verify_archived_message">Não é possível verificar a utilização sem ligação à internet. Tente novamente quando estiver ligado.</string>
     <string name="error_category_name_required">Introduza um nome</string>
@@ -256,8 +256,8 @@
         <item quantity="many">%1$d itens recorrentes</item>
         <item quantity="other">%1$d itens recorrentes</item>
     </plurals>
-    <string name="category_move_budget">O respetivo orçamento</string>
-    <string name="category_move_budget_merge">O respetivo orçamento (\"%1$s\" já tem um, que se mantém; este é descartado)</string>
+    <string name="category_move_budget">O respetivo limite</string>
+    <string name="category_move_budget_merge">O respetivo limite (\"%1$s\" já tem um, que se mantém; este é descartado)</string>
     <string name="category_action_move">Mover</string>
     <string name="category_move_moving">A mover…</string>
     <string name="category_move_done">Itens movidos</string>
@@ -273,7 +273,7 @@
     <string name="settings_backup_guest_hint">Exporte uma cópia de segurança para mover os seus dados para outro dispositivo</string>
     <string name="settings_backup_signed_in_hint">Guarde uma cópia dos seus dados num ficheiro JSON</string>
     <string name="action_restore">Restaurar</string>
-    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nOrçamentos: %3$d\nCategorias: %4$d\nRendimentos previstos: %5$d\nItens recorrentes: %6$d</string>
+    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nLimites: %3$d\nCategorias: %4$d\nRendimentos previstos: %5$d\nItens recorrentes: %6$d</string>
     <string name="backup_export_done_title">Cópia de segurança exportada</string>
     <string name="backup_export_done_message">A cópia de segurança foi guardada.\n\n%1$s</string>
     <string name="backup_export_failed_title">Falha na exportação</string>
@@ -337,7 +337,7 @@
     <string name="plan_planned_spending">Gastos planeados</string>
     <string name="plan_planned_saving">Poupança planeada</string>
     <string name="plan_leftover">Restante</string>
-    <string name="plan_left_in_budgets">Restante nos orçamentos de gastos</string>
+    <string name="plan_left_in_budgets">Restante nos limites de gastos</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/dia durante %2$d dia</item>
         <item quantity="many">≈ %1$s/dia durante %2$d dias</item>

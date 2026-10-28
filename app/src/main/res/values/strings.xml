@@ -84,10 +84,10 @@
     <string name="dashboard_savings_rate">Savings rate: %1$s</string>
     <string name="dashboard_savings_rate_unavailable">—</string>
 
-    <!-- Budgets -->
+    <!-- Limits -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
     <string name="budget_spent_no_limit">%1$s spent — no limit set</string>
-    <string name="budget_dialog_title">Set budget for %1$s</string>
+    <string name="budget_dialog_title">Set limit for %1$s</string>
     <string name="budget_dialog_limit_label">Monthly limit</string>
 
     <!-- Add/edit expense -->
@@ -227,8 +227,8 @@
     <string name="cd_category_icon_option">Icon %1$d</string>
     <string name="cd_category_color_option">Color %1$d</string>
     <string name="category_delete_confirm">Delete \"%1$s\"?</string>
-    <string name="category_in_use_message">\"%1$s\" is used by expenses, a budget or a recurring item. Archive it instead?</string>
-    <string name="category_in_use_archived_message">\"%1$s\" is used by expenses, a budget or a recurring item and can\'t be deleted.</string>
+    <string name="category_in_use_message">\"%1$s\" is used by expenses, a limit or a recurring item. Archive it instead?</string>
+    <string name="category_in_use_archived_message">\"%1$s\" is used by expenses, a limit or a recurring item and can\'t be deleted.</string>
     <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
     <string name="category_cannot_verify_archived_message">Can\'t check usage while offline. Try again when you\'re online.</string>
     <string name="error_category_name_required">Enter a name</string>
@@ -251,8 +251,8 @@
         <item quantity="one">%1$d recurring item</item>
         <item quantity="other">%1$d recurring items</item>
     </plurals>
-    <string name="category_move_budget">Its budget</string>
-    <string name="category_move_budget_merge">Its budget (\"%1$s\" already has one, which is kept; this one is dropped)</string>
+    <string name="category_move_budget">Its limit</string>
+    <string name="category_move_budget_merge">Its limit (\"%1$s\" already has one, which is kept; this one is dropped)</string>
     <string name="category_action_move">Move</string>
     <string name="category_move_moving">Moving…</string>
     <string name="category_move_done">Items moved</string>
@@ -268,7 +268,7 @@
     <string name="settings_backup_guest_hint">Export a backup to move your data to another device</string>
     <string name="settings_backup_signed_in_hint">Save a copy of your data as a JSON file</string>
     <string name="action_restore">Restore</string>
-    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nBudgets: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring items: %6$d</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nLimits: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring items: %6$d</string>
     <string name="backup_export_done_title">Backup exported</string>
     <string name="backup_export_done_message">Your backup was saved.\n\n%1$s</string>
     <string name="backup_export_failed_title">Export failed</string>
@@ -328,7 +328,7 @@
     <string name="plan_planned_spending">Planned spending</string>
     <string name="plan_planned_saving">Planned saving</string>
     <string name="plan_leftover">Remaining</string>
-    <string name="plan_left_in_budgets">Left in spending budgets</string>
+    <string name="plan_left_in_budgets">Left in spending limits</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/day for %2$d day</item>
         <item quantity="other">≈ %1$s/day for %2$d days</item>
