@@ -96,6 +96,7 @@
     <string name="expense_field_name">Nome</string>
     <string name="expense_field_category">Categoria</string>
     <string name="error_name_required">O nome é obrigatório</string>
+    <string name="expense_category_suggested">Igual à última vez</string>
     <string name="error_category_required">Escolha uma categoria</string>
     <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
 
