@@ -1,8 +1,7 @@
 name: E2E (Maestro)
 
-# Runs the Maestro flows tagged `release` on an Android emulator. It runs only before a release: the Release
-# workflow calls it on a vX.Y tag and only publishes when it passes. It can also be run by hand (Actions → E2E →
-# Run workflow) with a list of flows. Flows can't use a Google account here, so they start in guest mode.
+# Runs Maestro flows on an Android emulator, by hand only (Actions → E2E → Run workflow): the flows tagged
+# `release` by default, or a list of flows. Releases don't wait for it; screen tests run on every PR instead. Flows can't use a Google account here, so they start in guest mode.
 on:
   workflow_call:
   workflow_dispatch:
@@ -115,8 +114,7 @@ jobs:
               fi
             done
           } >> "$GITHUB_STEP_SUMMARY"
-          # Manual runs are used to iterate on flows: report failures without failing the run. Before a release
-          # (called from the Release workflow) a failure blocks publishing.
+          # Manual runs are used to iterate on flows: report failures without failing the run.
           if [ -f maestro-out/FAILED ]; then
             echo "::warning::Some Maestro flows failed — see the summary and the maestro-results artifact."
             if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then exit 1; fi
