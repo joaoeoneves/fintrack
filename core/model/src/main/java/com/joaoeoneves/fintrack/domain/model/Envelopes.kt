@@ -48,6 +48,8 @@ data class EnvelopesSummary(
     val freeCents: Long,
     val baseCents: Long = 0L,
     val committedCents: Long = 0L,
+    /** The part of [committedCents] set aside in SAVING-kind categories (not part of any envelope). */
+    val savingCommittedCents: Long = 0L,
 ) {
     /** The funded envelopes whose commitment exceeds their funding. */
     val overflowing: List<EnvelopeProgress> get() = envelopes.filter { it.overflowCents > 0 }
@@ -85,7 +87,9 @@ internal fun monthAmountOf(
  * funded by a regular monthly income line (the first by order when several name the same line) is paid from that
  * line: [EnvelopesSummary.baseCents] is the larger of the expected regular income and the month's actual income,
  * minus the funding; only a funded envelope's overflow reduces it. Without funding the free money equals
- * [MonthlyPlanSummary.safeToSpendCents]. A funding line that is missing or is an extra counts as no funding.
+ * [MonthlyPlanSummary.safeToSpendCents]. SAVING-kind categories belong to no envelope: they only add what
+ * they commit (the larger of planned and spent) to [EnvelopesSummary.committedCents].
+ * A funding line that is missing or is an extra counts as no funding.
  */
 @Suppress("LongParameterList") // The plan's inputs, one per source.
 fun envelopesOf(
@@ -98,7 +102,10 @@ fun envelopesOf(
 ): EnvelopesSummary {
     val (month, workingDays) = planMonth
     val groupById = categories.associate { it.id to it.groupId }
-    val split = splitBuckets(buckets, envelopes) { groupById[it.category.id] ?: it.category.groupId }
+    val kindById = categories.associate { it.id to it.kind }
+    val (saving, others) = buckets.partition { (kindById[it.category.id] ?: it.category.kind) == CategoryKind.SAVING }
+    val savingCommitted = saving.sumOf { maxOf(it.planned ?: 0L, it.spentCents) }
+    val split = splitBuckets(others, envelopes) { groupById[it.category.id] ?: it.category.groupId }
     val regular = plannedIncome.filterNot { it.isExtra }
     val lineById = regular.associateBy { it.id }
     val usedLines = mutableSetOf<String>()
@@ -122,6 +129,6 @@ fun envelopesOf(
     val committed =
         progress.filter { it.fundingCents == null }.sumOf { it.committedCents } +
             loose.sumOf { maxOf(it.planned ?: 0L, it.spentCents) } +
-            progress.sumOf { it.overflowCents }
-    return EnvelopesSummary(progress, loose, base - committed, base, committed)
+            progress.sumOf { it.overflowCents } + savingCommitted
+    return EnvelopesSummary(progress, loose, base - committed, base, committed, savingCommitted)
 }

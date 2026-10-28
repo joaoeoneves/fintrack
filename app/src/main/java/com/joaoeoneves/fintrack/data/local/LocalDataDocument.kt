@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 14
+internal const val LOCAL_SCHEMA_VERSION = 15
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -138,7 +138,8 @@ data class LocalCategoryGroup(
 
 /**
  * A savings goal (schema v9): [targetType] is a [com.joaoeoneves.fintrack.domain.model.GoalTargetType] name, dates
- * are ISO `yyyy-MM-dd`, [linkedRecurringIds] the recurring items whose generated expenses count towards it.
+ * are ISO `yyyy-MM-dd`, [linkedRecurringIds] the recurring items whose generated expenses count towards it and
+ * [recurringId] (schema v15) the one a savings plan owns.
  */
 @Serializable
 data class LocalSavingsGoal(
@@ -153,6 +154,7 @@ data class LocalSavingsGoal(
     val linkedCategoryId: String? = null,
     val archived: Boolean = false,
     val order: Int = 0,
+    val recurringId: String? = null,
 )
 
 /** The automation settings (schema v12): [paydayThrough] is the ISO `yyyy-MM` cursor of the payday automation. */

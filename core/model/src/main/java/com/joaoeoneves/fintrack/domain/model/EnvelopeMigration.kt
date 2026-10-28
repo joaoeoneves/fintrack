@@ -35,7 +35,8 @@ fun envelopeMigrationOf(
     val state = MigrationState(categories, envelopes, nameOf)
     budgets.forEach { budget ->
         val category = categories.resolve(budget.categoryId)
-        if (!category.isUnknown) state.envelopeOf(category)
+        // Saving is not part of the envelopes (see savingsPlanMigrationOf).
+        if (!category.isUnknown && category.kind != CategoryKind.SAVING) state.envelopeOf(category)
     }
     val dropped = mutableListOf<String>()
     val usedLines = mutableSetOf<String>()
@@ -94,7 +95,10 @@ private class MigrationState(
         when (earmark) {
             is Earmark.Group -> earmark.id.takeIf { it in envelopes }
             is Earmark.Category ->
-                categories.resolve(CategoryId(earmark.id)).takeIf { !it.isUnknown }?.let(::envelopeOf)
+                categories
+                    .resolve(CategoryId(earmark.id))
+                    .takeIf { !it.isUnknown && it.kind != CategoryKind.SAVING }
+                    ?.let(::envelopeOf)
             null -> null
         }
 

@@ -333,10 +333,10 @@ service cloud.firestore {
 
     function isValidGoal(data) {
       return data.keys().hasOnly(['name', 'targetCents', 'targetType', 'startDate', 'targetDate', 'initialCents',
-          'linkedRecurringIds', 'linkedCategoryId', 'archived', 'order', 'updatedAt'])
+          'linkedRecurringIds', 'linkedCategoryId', 'archived', 'order', 'recurringId', 'updatedAt'])
         && data.keys().hasAll(['name', 'targetCents', 'targetType', 'startDate', 'archived', 'order'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 50
-        && isValidAmountCents(data.targetCents)
+        && data.targetCents is int && data.targetCents >= 0 && data.targetCents <= 100000000000
         && data.targetType in ['ANNUAL', 'TOTAL']
         && isDateString(data.startDate) && isOptionalDate(data, 'targetDate')
         && (data.get('targetDate', null) == null || data.targetDate >= data.startDate)
@@ -344,6 +344,7 @@ service cloud.firestore {
         && (!('linkedRecurringIds' in data)
           || (data.linkedRecurringIds is list && data.linkedRecurringIds.size() <= 20))
         && (data.get('linkedCategoryId', null) == null || isCategoryIdShape(data.linkedCategoryId))
+        && (data.get('recurringId', null) == null || isCategoryIdShape(data.recurringId))
         && data.archived is bool
         && data.order is int
         && (!('updatedAt' in data) || data.updatedAt is timestamp);

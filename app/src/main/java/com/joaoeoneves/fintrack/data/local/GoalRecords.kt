@@ -34,6 +34,7 @@ internal fun LocalSavingsGoal.toDomainOrNull(): SavingsGoal? {
             linkedCategoryId = linkedCategoryId?.let(::CategoryId),
             archived = archived,
             order = order,
+            recurringId = recurringId,
         )
     }
 }
@@ -51,13 +52,14 @@ internal fun SavingsGoal.toLocal(): LocalSavingsGoal =
         linkedCategoryId = linkedCategoryId?.value,
         archived = archived,
         order = order,
+        recurringId = recurringId,
     )
 
 /** Mirror of the firestore.rules check (plus `targetDate >= startDate`); throws [IllegalArgumentException]. */
 internal fun validateGoal(goal: LocalSavingsGoal) {
     require(goal.id.isNotBlank()) { "Goal id is blank" }
     requireText(goal.name, MAX_GOAL_NAME_LENGTH, "Goal name")
-    require(goal.targetCents in 1..MAX_AMOUNT_CENTS) { "Goal target must be 1..$MAX_AMOUNT_CENTS cents" }
+    require(goal.targetCents in 0..MAX_AMOUNT_CENTS) { "Goal target must be 0..$MAX_AMOUNT_CENTS cents" }
     require(goal.initialCents in 0..MAX_AMOUNT_CENTS) { "Goal initial amount must be 0..$MAX_AMOUNT_CENTS cents" }
     require(GoalTargetType.entries.any { it.name == goal.targetType }) { "Invalid goal type ${goal.targetType}" }
     val start = requireGoalDate(goal.startDate)
@@ -65,6 +67,7 @@ internal fun validateGoal(goal: LocalSavingsGoal) {
     require(end == null || end >= start) { "Target date is before start date" }
     require(goal.linkedRecurringIds.size <= MAX_GOAL_LINKED_RECURRING) { "Too many linked recurring items" }
     goal.linkedCategoryId?.let(::requireCategoryIdShape)
+    goal.recurringId?.let(::requireCategoryIdShape)
 }
 
 private fun parseGoalDate(raw: String): LocalDate? =

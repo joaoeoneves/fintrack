@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -207,7 +208,7 @@ class EnvelopeEditorViewModel
         ): List<AddableCategoryUi> {
             val names = data.envelopes.associate { it.id to it.name }
             return data.categories
-                .filter { !it.archived && it.id !in current.categoryIds }
+                .filter { !it.archived && it.kind != CategoryKind.SAVING && it.id !in current.categoryIds }
                 .map { AddableCategoryUi(it, it.groupId?.takeIf { group -> group != current.id }?.let(names::get)) }
         }
 

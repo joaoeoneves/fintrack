@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
@@ -45,6 +46,7 @@ open class MonthlyPlanViewModelTestBase {
     protected val expenseRepo = FakeExpenseRepository()
     protected val envelopeRepo = FakeEnvelopeRepository()
     protected val recurringRepo = FakeRecurringRepository()
+    protected val goalRepo = FakeGoalRepository()
     protected val clock = MutableClock(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
 
     @Before
@@ -64,7 +66,7 @@ open class MonthlyPlanViewModelTestBase {
         expenses: ExpenseRepository = expenseRepo,
         incomes: IncomeRepository = actualIncomeRepo,
     ) = MonthlyPlanViewModel(
-        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo),
+        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo, goalRepo),
         observePeriodOverviewOf(
             DashboardRepositories(
                 expenses,

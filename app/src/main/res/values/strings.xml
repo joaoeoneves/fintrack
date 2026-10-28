@@ -573,6 +573,7 @@
     <string name="goal_status_on_track">On track</string>
     <string name="goal_status_behind">Behind</string>
     <string name="goal_status_done">Done</string>
+    <string name="goal_status_no_monthly">No monthly amount</string>
     <string name="goal_link_recurring">Link to recurring items</string>
     <string name="goal_link_category">Link to a category</string>
     <string name="goal_link_category_none">None</string>

@@ -20,7 +20,7 @@ class BackupCodecSalaryProfileTest {
 
         val result = BackupCodec.decode(text).success()
 
-        assertEquals(14, result.document.schemaVersion)
+        assertEquals(15, result.document.schemaVersion)
         assertNull(result.document.salaryProfile)
         assertNull(
             result.document.plannedIncome
@@ -90,7 +90,7 @@ class BackupCodecSalaryProfileTest {
         val result = BackupCodec.decode(text).success()
 
         val decoded = requireNotNull(result.document.salaryProfile)
-        assertEquals(14, result.document.schemaVersion)
+        assertEquals(15, result.document.schemaVersion)
         assertEquals(0, result.skippedCount)
         assertEquals(listOf("flex", "bonus"), decoded.toDomain().extras.map { it.id })
     }
