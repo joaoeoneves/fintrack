@@ -76,6 +76,12 @@ object RecurringList
 @Serializable
 object PlanEnvelopes
 
+/** The income screen, pushed from the Plan tab; [month] is an encoded `Period` token (null: the current month). */
+@Serializable
+data class PlanIncome(
+    val month: String? = null,
+)
+
 /** The envelope editor; a null [envelopeId] creates a new envelope. */
 @Serializable
 data class EditEnvelope(

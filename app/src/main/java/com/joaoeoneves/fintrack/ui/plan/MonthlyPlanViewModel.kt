@@ -7,8 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Earmark
-import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
@@ -16,6 +16,11 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.PlannedSource
+import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
+import com.joaoeoneves.fintrack.domain.model.RecurringType
+import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
@@ -23,6 +28,7 @@ import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
 import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
+import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.paydayOf
@@ -59,8 +65,10 @@ import javax.inject.Inject
 private const val TAG = "MonthlyPlanViewModel"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val KEY_SELECTED_MONTH = "selectedMonth"
+private const val ROUTE_MONTH_ARG = "month"
+private const val MONTHS_PER_YEAR = 12
 
-/** Edits the global monthly plan: expected-income lines and the per-category planned allocations. */
+/** The monthly plan: expected-income lines and the month's figures, envelope cards and set-up status. */
 @Suppress("TooManyFunctions") // One handler per user action on the screen.
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -76,7 +84,13 @@ class MonthlyPlanViewModel
         // The selected month, month periods only; the plan itself is global, the month only decides
         // which actuals the "planned vs actual" progress and the fixed-spending line are measured on.
         private val selection =
-            PeriodSelection(savedStateHandle, KEY_SELECTED_MONTH, Period.CurrentMonth.encode(), clock)
+            PeriodSelection(
+                savedStateHandle,
+                KEY_SELECTED_MONTH,
+                // The income screen is opened for a month (route argument); the Plan tab has none.
+                savedStateHandle.get<String>(ROUTE_MONTH_ARG) ?: Period.CurrentMonth.encode(),
+                clock,
+            )
         private val editor = MutableStateFlow<IncomeLineEditorState?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
 
@@ -246,22 +260,6 @@ class MonthlyPlanViewModel
             }
         }
 
-        fun onSetAllocation(
-            category: Category,
-            limitCents: Long,
-            skipMonths: Set<Int> = emptySet(),
-        ) {
-            viewModelScope.launch {
-                repositories.budgets.setBudget(category.id, limitCents, skipMonths).onFailure { reportFailure(it) }
-            }
-        }
-
-        fun onClearAllocation(category: Category) {
-            viewModelScope.launch {
-                repositories.budgets.clearBudget(category.id).onFailure { reportFailure(it) }
-            }
-        }
-
         private suspend fun reportFailure(error: Throwable) {
             Log.w(TAG, "Failed to save the monthly plan", error)
             errors.send(UiText.StringResource(R.string.error_plan_save_failed))
@@ -330,7 +328,6 @@ private fun planFlow(
             MonthlyPlanUiState.Content(
                 incomeLines = lines,
                 incomeRows = incomeRowsIn(lines, overview.budgetMonth, workingDays.days),
-                allocations = allocations,
                 summary =
                     monthlyPlanOf(
                         allocations,
@@ -345,13 +342,13 @@ private fun planFlow(
                     ),
                 period = selected.period,
                 canGoToNextMonth = selected.canGoToNextMonth,
-                progress = overview.budgets,
-                fixedThisMonthCents = overview.summary.fixedSpendingCents,
                 canAddIncomeLine = lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
                 editor = editorState,
                 envelopes = overview.envelopes,
-                limitGroups = limitGroupsOf(allocations, overview),
+                tiles = tilesOf(allocations, overview),
+                envelopeCards = envelopeCardsOf(overview.envelopes),
+                configure = configureOf(lines, categories, overview, workingDays.days),
                 receipts = receiptsOf(selected, overview, lines, workingDays.days),
             )
         content
@@ -359,6 +356,43 @@ private fun planFlow(
         Log.w(TAG, "Failed to observe the monthly plan", e)
         emit(MonthlyPlanUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
     }
+
+private fun tilesOf(
+    allocations: List<CategoryBudget>,
+    overview: PeriodOverview,
+): PlanTiles =
+    PlanTiles(
+        incomeCents = overview.plan.expectedIncomeCents,
+        billsCents =
+            allocations
+                .filter { it.plannedSource == PlannedSource.RECURRING && it.category.kind == CategoryKind.SPENDING }
+                .sumOf { it.planned ?: 0L },
+        savingCents = overview.plan.plannedSavingCents,
+        envelopesCents = overview.envelopes.envelopes.sumOf { it.committedCents },
+        freeCents = overview.envelopes.freeCents,
+    )
+
+private fun configureOf(
+    lines: List<PlannedIncome>,
+    categories: List<Category>,
+    overview: PeriodOverview,
+    workingDays: Int,
+): ConfigureStatus {
+    val bills = overview.recurring.filter { it.type == RecurringType.EXPENSE && it.active }
+    return ConfigureStatus(
+        incomeMonthlyCents = lines.filterNot { it.isExtra }.sumOf { it.amountIn(overview.budgetMonth, workingDays) },
+        incomeLineCount = lines.size,
+        envelopeCount = overview.envelopes.envelopes.size,
+        billCount = bills.size,
+        billsMonthlyCents = bills.sumOf { it.monthlyCents() },
+        categoryCount = categories.count { !it.archived },
+    )
+}
+
+private fun RecurringItem.monthlyCents(): Long {
+    val yearly = frequency == RecurringFrequency.YEARLY
+    return if (yearly) amountCents / MONTHS_PER_YEAR else amountCents
+}
 
 private fun receiptsOf(
     selected: SelectedMonth,
@@ -396,32 +430,3 @@ private fun workingDaysOf(
         overridden = override != null,
     )
 }
-
-/**
- * Every plan row (all categories that can carry a limit) filed under its envelope, in envelope order, the rows of
- * no envelope last; spent comes from the overview's progress.
- */
-private fun limitGroupsOf(
-    allocations: List<CategoryBudget>,
-    overview: PeriodOverview,
-): List<LimitGroup> {
-    val spentById = overview.budgets.associate { it.category.id to it.spentCents }
-    val rows = allocations.map { it.copy(spentCents = spentById[it.category.id] ?: it.spentCents) }
-    val envelopes = overview.envelopes.envelopes.map { it.envelope }
-    val ids = envelopes.mapTo(mutableSetOf()) { it.id }
-    val byEnvelope = rows.groupBy { row -> row.category.groupId?.takeIf { it in ids } }
-    val defined = envelopes.map { limitGroupOf(it, byEnvelope[it.id].orEmpty()) }
-    val other = byEnvelope[null].orEmpty()
-    return if (other.isEmpty()) defined else defined + limitGroupOf(null, other)
-}
-
-private fun limitGroupOf(
-    envelope: Envelope?,
-    rows: List<CategoryBudget>,
-): LimitGroup =
-    LimitGroup(
-        envelope = envelope,
-        plannedCents = envelope?.amountCents ?: rows.sumOf { it.planned ?: 0L },
-        spentCents = rows.sumOf { it.spentCents },
-        rows = rows,
-    )

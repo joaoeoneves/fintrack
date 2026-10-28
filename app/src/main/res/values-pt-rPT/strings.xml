@@ -88,9 +88,6 @@
 
     <!-- Limites -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
-    <string name="budget_spent_no_limit">%1$s gasto — sem limite definido</string>
-    <string name="budget_dialog_title">Definir limite para %1$s</string>
-    <string name="budget_dialog_limit_label">Limite mensal</string>
 
     <!-- Adicionar/editar despesa -->
     <string name="expense_edit_title">Editar despesa</string>
@@ -162,8 +159,6 @@
     <string name="confirm_remove_title">Remover \"%1$s\"?</string>
     <string name="goal_remove_message">O objetivo é removido. As despesas e os itens recorrentes mantêm-se.</string>
     <string name="income_line_remove_message">Deixa de contar como rendimento previsto. Os rendimentos já registados mantêm-se.</string>
-    <string name="budget_remove_title">Remover o limite de %1$s?</string>
-    <string name="budget_remove_message">O limite é removido. As despesas desta categoria mantêm-se.</string>
 
 
     <!-- Definições -->
@@ -217,8 +212,6 @@
         <item quantity="other">%1$d despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
     </plurals>
 
-    <string name="settings_section_categories">Categorias</string>
-    <string name="settings_manage_categories">Gerir categorias</string>
     <string name="categories_title">Categorias</string>
     <string name="categories_add">Adicionar categoria</string>
     <string name="categories_archived_header">Arquivadas</string>
@@ -273,8 +266,6 @@
     <string name="category_move_done">Itens movidos</string>
     <string name="error_category_move_failed">Não foi possível mover todos os itens. Verifique a ligação e tente novamente.</string>
     <string name="dashboard_fixed_variable">Fixas %1$s\nVariáveis %2$s</string>
-    <string name="plan_fixed_this_month">Despesas fixas (recorrentes) este mês</string>
-    <string name="plan_archived_hint">Categoria arquivada. Mova os respetivos itens em Definições, Categorias.</string>
 
     <!-- Cópia de segurança -->
     <string name="settings_section_backup">Cópia de segurança</string>
@@ -343,9 +334,6 @@
     <string name="plan_expected_income">Rendimento previsto</string>
     <string name="plan_received">recebido %1$s</string>
     <string name="plan_planned_allocations">Planeado</string>
-    <string name="plan_planned_spending">Gastos planeados</string>
-    <string name="plan_planned_saving">Poupança planeada</string>
-    <string name="plan_leftover">Restante</string>
     <string name="plan_left_in_budgets">Restante nos limites de gastos</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/dia durante %2$d dia</item>
@@ -356,8 +344,6 @@
     <string name="plan_edit">Editar plano</string>
     <string name="plan_setup_title">Planeie o seu mês</string>
     <string name="plan_setup_message">Adicione o rendimento previsto para ver quanto pode gastar.</string>
-    <string name="plan_allocations">Limites</string>
-    <string name="plan_not_planned">Sem limite</string>
     <string name="plan_add_income_line">Adicionar rendimento</string>
     <string name="plan_income_line_new">Novo rendimento</string>
     <string name="plan_income_line_edit">Editar rendimento</string>
@@ -372,8 +358,6 @@
     <string name="cd_pie_chart_planned_total">Alocação planeada. Total: %1$s (gastos %2$s, poupança %3$s).</string>
 
     <!-- Recorrentes -->
-    <string name="settings_section_recurring">Recorrentes</string>
-    <string name="settings_manage_recurring">Gerir recorrentes</string>
     <string name="recurring_title">Recorrentes</string>
     <string name="recurring_add">Adicionar recorrente</string>
     <string name="recurring_edit_title">Editar recorrente</string>
@@ -451,7 +435,6 @@
     <string name="insights_by_category">Por categoria</string>
     <string name="insights_by_group">Por envelope</string>
     <string name="cd_insights_split">Divisão da despesa: %1$s fixo, %2$s variável</string>
-    <string name="plan_planned_vs_actual">Planeado vs real</string>
     <string name="home_recent_title">Movimentos recentes</string>
     <string name="home_recent_empty">Ainda sem movimentos</string>
     <string name="dashboard_see_all_activity">Ver todos os movimentos</string>
@@ -493,16 +476,12 @@
     <string name="plan_working_days_edited">%1$d (alterado)</string>
     <string name="plan_working_days_reset">Repor automático</string>
     <string name="plan_working_days_hint">Substitui a contagem do calendário apenas neste mês.</string>
-    <string name="plan_extras_this_month">Extras este mês</string>
     <string name="cd_fewer_working_days">Menos dias úteis</string>
     <string name="cd_more_working_days">Mais dias úteis</string>
 
     <string name="plan_envelope_overflow">%1$s acima do envelope %2$s</string>
     <string name="plan_envelopes_title">Envelopes</string>
-    <string name="plan_envelopes_create">Criar envelope</string>
-    <string name="plan_envelopes_manage">Gerir envelopes</string>
     <string name="plan_group_other">Sem envelope</string>
-    <string name="plan_from_recurring">a partir de recorrentes</string>
     <string name="error_group_save_failed">Não foi possível guardar o envelope</string>
     <string name="plan_not_in">Exceto em</string>
     <string name="plan_pot_left">%1$s · restam %2$s de %3$s</string>
@@ -671,4 +650,36 @@
     <string name="envelope_row_status">%1$d categorias · %2$s/mês</string>
     <string name="envelope_row_tracking">Só registo</string>
     <string name="envelope_row_empty">Sem categorias</string>
+    <string name="envelope_card_of">%1$s de %2$s</string>
+    <string name="envelope_card_over">Excedido em %1$s</string>
+    <string name="envelope_card_paid">%1$s de %2$s pagos</string>
+    <string name="envelope_card_spent">Gasto este mês: %1$s</string>
+    <string name="envelope_card_funded">Pago por %1$s</string>
+    <string name="envelope_card_overflow">%1$s acima de %2$s</string>
+    <plurals name="envelopes_status">
+        <item quantity="one">%d envelope</item>
+        <item quantity="many">%d de envelopes</item>
+        <item quantity="other">%d envelopes</item>
+    </plurals>
+    <string name="plan_tile_income">Rendimento</string>
+    <string name="plan_tile_bills">Contas</string>
+    <string name="plan_tile_saving">Poupança</string>
+    <string name="plan_tile_envelopes">Envelopes</string>
+    <string name="plan_tile_free">Livre</string>
+    <string name="plan_configure">Configurar</string>
+    <string name="plan_configure_income">Rendimento</string>
+    <string name="plan_configure_envelopes">Envelopes</string>
+    <string name="plan_configure_bills">Contas</string>
+    <string name="plan_configure_categories">Categorias</string>
+    <string name="plan_configure_income_status">%1$s por mês · %2$d linhas</string>
+    <string name="plan_configure_bills_status">%1$d contas · %2$s/mês</string>
+    <plurals name="plan_configure_categories_status">
+        <item quantity="one">%d categoria</item>
+        <item quantity="many">%d de categorias</item>
+        <item quantity="other">%d categorias</item>
+    </plurals>
+    <string name="plan_configure_not_set">Por definir</string>
+    <string name="plan_configure_none_yet">Ainda nenhum</string>
+    <string name="plan_envelopes_empty_cta">Cria envelopes para dividir o teu dinheiro</string>
+    <string name="income_title">Rendimento</string>
 </resources>

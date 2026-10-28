@@ -18,6 +18,8 @@ import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.insights.InsightsScreen
+import com.joaoeoneves.fintrack.ui.plan.IncomeScreen
+import com.joaoeoneves.fintrack.ui.plan.PlanNavigation
 import com.joaoeoneves.fintrack.ui.plan.PlanScreen
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeEditorScreen
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
@@ -120,8 +122,19 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
         composable<PlanHome> {
             PlanScreen(
                 onOpenSettings = { navController.navigate(Settings) },
-                onOpenRecurring = { navController.navigate(RecurringList) },
-                onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
+                navigation =
+                    PlanNavigation(
+                        onOpenIncome = { period -> navController.navigate(PlanIncome(month = period.encode())) },
+                        onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
+                        onOpenEnvelope = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
+                        onOpenRecurring = { navController.navigate(RecurringList) },
+                        onOpenCategories = { navController.navigate(Categories) },
+                    ),
+            )
+        }
+        composable<PlanIncome> {
+            IncomeScreen(
+                onBack = dropUnlessResumed { navController.popBackStack() },
                 onOpenSalaryProfile = { navController.navigate(EditSalaryProfile) },
             )
         }
@@ -161,8 +174,6 @@ private fun NavGraphBuilder.sharedRoutes(
     composable<Settings> {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
-            onOpenCategories = { navController.navigate(Categories) },
-            onOpenRecurring = { navController.navigate(RecurringList) },
             onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
         )
     }
