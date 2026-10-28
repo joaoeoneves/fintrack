@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
-import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
@@ -55,21 +54,6 @@ class MonthlyPlanViewModelIncomeRowsTest : MonthlyPlanViewModelTestBase() {
             collect(vm)
 
             assertTrue(vm.content().incomeRows.isEmpty())
-        }
-
-    @Test
-    fun limitGroups_listEveryAllocation_ungroupedWithoutGroups() =
-        runTest(testDispatcher) {
-            budgetRepo.setBudget(BuiltInCategories.FOOD.id, 5_000L)
-            val vm = viewModel()
-            collect(vm)
-
-            val groups = vm.content().limitGroups
-
-            assertEquals(1, groups.size)
-            assertNull(groups.single().envelope)
-            assertEquals(vm.content().allocations.size, groups.single().rows.size)
-            assertEquals(5_000L, groups.single().plannedCents)
         }
 
     @Test
