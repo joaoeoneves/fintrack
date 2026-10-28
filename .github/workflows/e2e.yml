@@ -1,17 +1,16 @@
 name: E2E (Maestro)
 
-# Runs Maestro flows on an Android emulator in GitHub Actions, so they don't need the local PC.
-# Manual (Actions → E2E → Run workflow) plus a weekly run. Flows that need a Google account can't run
-# here — use guest-mode flows (they start from a fresh install and tap "Continue as guest").
+# Runs the Maestro flows tagged `release` on an Android emulator. It runs only before a release: the Release
+# workflow calls it on a vX.Y tag and only publishes when it passes. It can also be run by hand (Actions → E2E →
+# Run workflow) with a list of flows. Flows can't use a Google account here, so they start in guest mode.
 on:
+  workflow_call:
   workflow_dispatch:
     inputs:
       flows:
-        description: "Space-separated flow files under .maestro/"
-        default: "guest-mode.yaml"
-        required: true
-  schedule:
-    - cron: "0 5 * * 1"
+        description: "Space-separated flow files under .maestro/ (empty = the flows tagged release)"
+        default: ""
+        required: false
 
 concurrency:
   group: e2e-${{ github.ref }}
@@ -22,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      FLOWS: ${{ github.event.inputs.flows || 'guest-mode.yaml' }}
+      FLOWS: ${{ github.event.inputs.flows }}
     steps:
       - uses: actions/checkout@v7
 
@@ -69,7 +68,7 @@ jobs:
             adb wait-for-device && adb shell 'while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 2; done'
             sleep 20 && adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS && adb shell input keyevent KEYCODE_HOME
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            mkdir -p maestro-out/screens && for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; true
+            mkdir -p maestro-out/screens && if [ -z "$FLOWS" ]; then maestro test .maestro --include-tags release --format junit --output maestro-out/release.xml --debug-output maestro-out/release || touch maestro-out/FAILED; else for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; fi; true
 
       - name: Collect screenshots
         if: always()
@@ -107,11 +106,11 @@ jobs:
               fi
             done
           } >> "$GITHUB_STEP_SUMMARY"
-          # Manual runs are used to iterate on flows: report failures in the summary without failing the run
-          # (and emailing). The weekly scheduled run stays strict.
+          # Manual runs are used to iterate on flows: report failures without failing the run. Before a release
+          # (called from the Release workflow) a failure blocks publishing.
           if [ -f maestro-out/FAILED ]; then
             echo "::warning::Some Maestro flows failed — see the summary and the maestro-results artifact."
-            if [ "${{ github.event_name }}" = "schedule" ]; then exit 1; fi
+            if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then exit 1; fi
           fi
 
       - name: Remove credentials
