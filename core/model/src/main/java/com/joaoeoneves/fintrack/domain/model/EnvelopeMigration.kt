@@ -39,7 +39,11 @@ fun envelopeMigrationOf(
     }
     val dropped = mutableListOf<String>()
     val usedLines = mutableSetOf<String>()
-    val earmarked = lines.filter { it.earmark != null }.sortedWith(compareBy({ it.order }, { it.id }))
+    // An earmark whose target is not (yet) in the data is left alone until it shows up, e.g. a partial cache.
+    val earmarked =
+        lines
+            .filter { it.earmark != null && !state.isPending(it.earmark) }
+            .sortedWith(compareBy({ it.order }, { it.id }))
     earmarked.forEach { line ->
         val target = state.targetOf(line.earmark)
         if (target == null || line.id in usedLines || !state.fund(target, line.id)) {
@@ -63,14 +67,28 @@ private class MigrationState(
 
     private fun groupOf(category: Category): String? = category.groupId?.takeIf { it in envelopes }
 
-    /** The envelope [category] is in, created (as `env_<id>`) when it is in none. */
-    fun envelopeOf(category: Category): String {
-        groupOf(category)?.let { return it }
+    /**
+     * The envelope [category] is in, created (as `env_<id>`) when it is in none; `null` while its group is not in
+     * the data yet (pending, never replaced by a new envelope).
+     */
+    fun envelopeOf(category: Category): String? {
+        if (category.groupId != null) return groupOf(category)
         val id = "env_${category.id.value}".take(MAX_ID_LENGTH)
         if (id !in envelopes) envelopes[id] = Envelope(id, nameOf(category).trim().take(MAX_NAME), nextOrder++)
         added.getOrPut(id) { mutableSetOf() }.add(category.id)
         return id
     }
+
+    /** Whether the earmark's envelope (or its category's) is not in the data (yet). */
+    fun isPending(earmark: Earmark?): Boolean =
+        when (earmark) {
+            is Earmark.Group -> earmark.id !in envelopes
+            is Earmark.Category -> {
+                val category = categories.resolve(CategoryId(earmark.id))
+                !category.isUnknown && category.groupId != null && groupOf(category) == null
+            }
+            null -> false
+        }
 
     fun targetOf(earmark: Earmark?): String? =
         when (earmark) {
