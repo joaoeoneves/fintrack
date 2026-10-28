@@ -18,6 +18,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
@@ -30,6 +33,7 @@ import com.joaoeoneves.fintrack.ui.dashboard.toPeriod
 import com.joaoeoneves.fintrack.ui.dashboard.toTab
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -37,6 +41,8 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 fun InsightsScreen(
     onOpenSettings: () -> Unit,
+    onOpenActivity: (Period, CategoryId) -> Unit,
+    onAddExpense: () -> Unit,
     viewModel: InsightsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -63,6 +69,8 @@ fun InsightsScreen(
                             onNext = viewModel::onNextMonth,
                             onSelect = viewModel::onPeriodSelected,
                         ),
+                    onCategoryClick = { onOpenActivity(state.period, it.id) },
+                    onAddExpense = onAddExpense,
                     modifier = contentModifier,
                 )
         }
@@ -73,6 +81,7 @@ fun InsightsScreen(
 @Composable
 private fun BreakdownCard(
     breakdown: InsightsBreakdown,
+    onCategoryClick: (Category) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var byGroup by rememberSaveable { mutableStateOf(false) }
@@ -90,7 +99,7 @@ private fun BreakdownCard(
         if (showGroups) {
             GroupBreakdown(groups = breakdown.groups)
         } else {
-            CategoryBreakdownSection(breakdown = breakdown)
+            CategoryBreakdownSection(breakdown = breakdown, onCategoryClick = onCategoryClick)
         }
     }
 }
@@ -99,6 +108,8 @@ private fun BreakdownCard(
 private fun InsightsContent(
     state: InsightsUiState.Content,
     actions: PeriodActions,
+    onCategoryClick: (Category) -> Unit,
+    onAddExpense: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -126,10 +137,14 @@ private fun InsightsContent(
                 EmptyState(
                     title = stringResource(R.string.insights_empty),
                     modifier = Modifier.padding(top = Dimens.Space32),
+                    action = {
+                        PrimaryPillButton(text = stringResource(R.string.action_add_expense), onClick = onAddExpense)
+                    },
                 )
             } else {
                 BreakdownCard(
                     breakdown = state.breakdown,
+                    onCategoryClick = onCategoryClick,
                     modifier = Modifier.padding(top = Dimens.Space16),
                 )
             }

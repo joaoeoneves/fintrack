@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
 import com.joaoeoneves.fintrack.domain.model.paydayIncome
+import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
 import com.joaoeoneves.fintrack.domain.model.paydayMonthsDue
 import com.joaoeoneves.fintrack.domain.model.paydayOf
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
@@ -115,6 +116,21 @@ class RecordPayday
                 // Broad catch: validation and repository failures all surface as a Result for the caller.
                 Result.failure(e)
             }
+
+        /**
+         * Deletes the payday incomes recorded for [lines] in [month], so the row counts as not received again.
+         * Lines without a recorded income are skipped silently; stops at the first failure.
+         */
+        suspend fun unreceive(
+            lines: List<PlannedIncome>,
+            month: YearMonth,
+        ): Result<Unit> {
+            for (line in lines) {
+                val result = incomeRepository.deleteIncome(paydayIncomeId(line.id, month))
+                if (result.isFailure) return result
+            }
+            return Result.success(Unit)
+        }
 
         private fun ReceiveRequest.amountFor(l: PlannedIncome) = amountOverrideCents ?: l.amountIn(month, workingDays)
     }

@@ -8,6 +8,8 @@ import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SuggestedGroup
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.domain.model.isGroupNameTaken
+import com.joaoeoneves.fintrack.domain.model.suggestedGroupsFor
 import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -65,18 +67,28 @@ class CategoryGroupsViewModel
                     emit(emptyList())
                 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
 
-        fun onAdd(name: String) {
-            val trimmed = name.trim()
-            if (!isValidName(trimmed)) return
-            write { groupRepository.addGroup(trimmed) }
-        }
-
-        fun onRename(
-            id: String,
+        /** Adds a group; a name already used by a group or in [reserved] is rejected with an error message. */
+        fun onAdd(
             name: String,
+            reserved: List<String> = emptyList(),
         ) {
             val trimmed = name.trim()
             if (!isValidName(trimmed)) return
+            if (isGroupNameTaken(trimmed, groups.value.orEmpty(), reserved = reserved)) return rejectName()
+            write { groupRepository.addGroup(trimmed) }
+        }
+
+        /** Renames a group; a name used by another group or in [reserved] is rejected (a case change is fine). */
+        fun onRename(
+            id: String,
+            name: String,
+            reserved: List<String> = emptyList(),
+        ) {
+            val trimmed = name.trim()
+            if (!isValidName(trimmed)) return
+            if (isGroupNameTaken(trimmed, groups.value.orEmpty(), excludingId = id, reserved = reserved)) {
+                return rejectName()
+            }
             write { groupRepository.renameGroup(id, trimmed) }
         }
 
@@ -96,17 +108,36 @@ class CategoryGroupsViewModel
             write { groupRepository.deleteGroup(id) }
         }
 
-        /** Creates the [SuggestedGroup]s and files their built-in categories; does nothing once groups exist. */
-        fun onCreateSuggested(names: SuggestedGroupNames) {
+        /**
+         * Creates the [SuggestedGroup]s that have active categories and files those categories; does nothing once
+         * groups exist, and skips a group whose name is in [reserved] or was just created.
+         */
+        fun onCreateSuggested(
+            names: SuggestedGroupNames,
+            reserved: List<String> = emptyList(),
+        ) {
             write {
                 runCatching {
                     check(groupRepository.observeGroups().first().isEmpty()) { "Groups already exist" }
-                    SuggestedGroup.entries.forEach { suggested ->
-                        val id = groupRepository.addGroup(names.of(suggested)).getOrThrow()
-                        suggested.categoryIds.forEach { categoryRepository.setGroup(it, id).getOrThrow() }
+                    val suggestions = suggestedGroupsFor(categoryRepository.observeCategories().first())
+                    if (suggestions.isEmpty()) {
+                        errors.send(UiText.StringResource(R.string.groups_suggested_none))
+                        return@runCatching
+                    }
+                    val created = mutableListOf<String>()
+                    suggestions.forEach { (suggested, categoryIds) ->
+                        val name = names.of(suggested)
+                        if (isGroupNameTaken(name, emptyList(), reserved = reserved + created)) return@forEach
+                        val id = groupRepository.addGroup(name).getOrThrow()
+                        created += name
+                        categoryIds.forEach { categoryRepository.setGroup(it, id).getOrThrow() }
                     }
                 }
             }
+        }
+
+        private fun rejectName() {
+            viewModelScope.launch { errors.send(UiText.StringResource(R.string.groups_name_taken)) }
         }
 
         private fun isValidName(name: String) = name.isNotEmpty() && name.codePointLength() <= MAX_GROUP_NAME_LENGTH

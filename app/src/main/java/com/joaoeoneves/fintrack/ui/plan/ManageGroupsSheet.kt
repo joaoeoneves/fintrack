@@ -28,6 +28,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.domain.model.isGroupNameTaken
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
@@ -47,6 +48,7 @@ fun ManageGroupsSheet(
     groups: List<CategoryGroup>,
     actions: ManageGroupsActions,
     onDismiss: () -> Unit,
+    reservedNames: List<String> = emptyList(),
 ) {
     var editing by remember { mutableStateOf<CategoryGroup?>(null) }
     var deleting by remember { mutableStateOf<CategoryGroup?>(null) }
@@ -77,14 +79,13 @@ fun ManageGroupsSheet(
             }
         }
         NameEditor(
-            initial = editing?.name.orEmpty(),
-            isRenaming = editing != null,
+            editing = editing,
+            nameCheck = { name -> isGroupNameTaken(name, groups, excludingId = editing?.id, reserved = reservedNames) },
             onSubmit = { name ->
                 editing?.let { actions.onRename(it.id, name) } ?: actions.onAdd(name)
                 editing = null
             },
             onCancelRename = { editing = null },
-            key = editing?.id,
         )
     }
     deleting?.let { group ->
@@ -146,13 +147,14 @@ private fun GroupRow(
 /** The name field under the list: adds a group, or renames the one picked with the edit button. */
 @Composable
 private fun NameEditor(
-    initial: String,
-    isRenaming: Boolean,
+    editing: CategoryGroup?,
+    nameCheck: (String) -> Boolean,
     onSubmit: (String) -> Unit,
     onCancelRename: () -> Unit,
-    key: String?,
 ) {
-    var text by remember(key) { mutableStateOf(initial) }
+    var text by remember(editing?.id) { mutableStateOf(editing?.name.orEmpty()) }
+    val taken = nameCheck(text)
+    val canSubmit = text.isNotBlank() && !taken
     Column(
         modifier = Modifier.padding(top = Dimens.Space16),
         verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
@@ -161,16 +163,21 @@ private fun NameEditor(
             value = text,
             onValueChange = { text = limitInput(text, it, MAX_GROUP_NAME_LENGTH) },
             label = stringResource(R.string.groups_field_name),
+            isError = taken,
             supportingText = {
-                FieldSupportingText(error = null, length = text.codePointLength(), max = MAX_GROUP_NAME_LENGTH)
+                FieldSupportingText(
+                    error = if (taken) stringResource(R.string.groups_name_taken) else null,
+                    length = text.codePointLength(),
+                    max = MAX_GROUP_NAME_LENGTH,
+                )
             },
             modifier = Modifier.fillMaxWidth(),
         )
-        if (isRenaming) {
+        if (editing != null) {
             PrimaryPillButton(
                 text = stringResource(R.string.action_save),
                 onClick = { onSubmit(text) },
-                enabled = text.isNotBlank(),
+                enabled = canSubmit,
             )
             TextButton(onClick = onCancelRename, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text(stringResource(R.string.action_cancel))
@@ -182,7 +189,7 @@ private fun NameEditor(
                     onSubmit(text)
                     text = ""
                 },
-                enabled = text.isNotBlank(),
+                enabled = canSubmit,
             )
         }
     }

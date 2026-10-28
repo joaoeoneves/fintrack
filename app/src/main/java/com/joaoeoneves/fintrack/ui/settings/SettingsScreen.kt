@@ -136,9 +136,12 @@ private fun SettingsScaffold(
                     .padding(horizontal = Dimens.ScreenPadding)
                     .padding(bottom = Dimens.Space32),
         ) {
-            AppearanceSection(selected = uiState.themePreference, onSelected = actions.onThemeSelected)
-            LanguageSection(selected = uiState.language, onSelected = actions.onLanguageSelected)
-            CurrencySection(selected = uiState.currency, onSelected = actions.onCurrencySelected)
+            PreferencesSection(
+                uiState = uiState,
+                onThemeSelected = actions.onThemeSelected,
+                onLanguageSelected = actions.onLanguageSelected,
+                onCurrencySelected = actions.onCurrencySelected,
+            )
             CategoriesSection(onOpen = actions.onOpenCategories)
             RecurringSection(onOpen = actions.onOpenRecurring)
             AutomationSection()

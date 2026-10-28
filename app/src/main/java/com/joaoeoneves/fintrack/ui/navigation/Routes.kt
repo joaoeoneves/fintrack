@@ -1,5 +1,8 @@
 package com.joaoeoneves.fintrack.ui.navigation
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.encode
 import kotlinx.serialization.Serializable
 
 /**
@@ -33,6 +36,12 @@ data class Activity(
     val type: String? = null,
     val category: String? = null,
 )
+
+/** The [Activity] route showing [category]'s transactions in [period] (a deep link from Insights). */
+fun activityRouteFor(
+    period: Period,
+    category: CategoryId,
+): Activity = Activity(period = period.encode(), category = category.value)
 
 /** Start destination of [PlanGraph]. */
 @Serializable

@@ -180,6 +180,14 @@ class MonthlyPlanViewModel
             }
         }
 
+        /** Takes [row] of the selected month back to not received by deleting its payday incomes. */
+        fun onUndoReceive(row: IncomeRow) {
+            val content = uiState.value as? MonthlyPlanUiState.Content ?: return
+            viewModelScope.launch {
+                recordPayday.unreceive(row.lines, content.workingDays.month).onFailure { reportFailure(it) }
+            }
+        }
+
         fun onDismissEditor() {
             editor.value = null
         }

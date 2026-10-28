@@ -13,11 +13,18 @@ data class IncomeFormState(
     val amountError: UiText? = null,
     val saveError: UiText? = null,
     val isSaving: Boolean = false,
+    val isDeleting: Boolean = false,
     val isEditMode: Boolean = false,
     val incomeId: String? = null,
 ) {
     val isValid: Boolean
         get() = source.isNotBlank() && parseAmountCents(amountText).isSuccess
+
+    val isBusy: Boolean
+        get() = isSaving || isDeleting
+
+    val canDelete: Boolean
+        get() = isEditMode && incomeId != null
 }
 
 sealed interface AddEditIncomeUiState {

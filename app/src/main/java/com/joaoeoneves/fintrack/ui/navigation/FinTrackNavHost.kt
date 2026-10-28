@@ -88,10 +88,7 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
                         onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
                         onOpenPlan = { navController.navigateToTab(TopLevelTab.PLAN) },
-                        onOpenRecurring = {
-                            navController.navigateToTab(TopLevelTab.PLAN)
-                            navController.navigate(RecurringList)
-                        },
+                        onOpenRecurring = { navController.navigate(RecurringList) },
                     ),
             )
         }
@@ -130,7 +127,11 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
 private fun NavGraphBuilder.insightsRoutes(navController: NavHostController) {
     navigation<InsightsGraph>(startDestination = Insights()) {
         composable<Insights> {
-            InsightsScreen(onOpenSettings = { navController.navigate(Settings) })
+            InsightsScreen(
+                onOpenSettings = { navController.navigate(Settings) },
+                onOpenActivity = { period, id -> navController.navigateToTabWith(activityRouteFor(period, id)) },
+                onAddExpense = { navController.navigate(AddEditExpense()) },
+            )
         }
     }
 }
@@ -175,6 +176,7 @@ private fun NavGraphBuilder.sharedRoutes(
     ) {
         AddEditExpenseScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },
+            onDeleted = dropUnlessResumed { navController.popBackStack() },
             onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }
@@ -184,6 +186,7 @@ private fun NavGraphBuilder.sharedRoutes(
     ) {
         AddEditIncomeScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },
+            onDeleted = dropUnlessResumed { navController.popBackStack() },
             onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }

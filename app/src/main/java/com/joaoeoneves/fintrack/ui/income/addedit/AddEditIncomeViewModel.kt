@@ -47,6 +47,14 @@ class AddEditIncomeViewModel
         private val savedEvents = Channel<Unit>(Channel.BUFFERED)
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
 
+        private val deletedEvents = Channel<Income>(Channel.BUFFERED)
+
+        /** Emits the deleted income (as loaded) so the screen can offer to undo the deletion. */
+        val deletedEvent: Flow<Income> = deletedEvents.receiveAsFlow()
+
+        // The income as loaded in edit mode, kept so a deletion can be undone.
+        private var loaded: Income? = null
+
         init {
             loadIncome()
         }
@@ -62,6 +70,7 @@ class AddEditIncomeViewModel
                             // Prefill with the locale's own decimal separator, matching how amounts
                             // are displayed (parseAmountCents accepts either '.' or ',').
                             val separator = decimalSeparatorFor(Locale.getDefault(Locale.Category.FORMAT))
+                            loaded = existing
                             _uiState.value =
                                 if (existing != null) {
                                     AddEditIncomeUiState.Ready(
@@ -154,6 +163,30 @@ class AddEditIncomeViewModel
                             val saveError = UiText.StringResource(R.string.error_failed_save_income)
                             _uiState.value =
                                 AddEditIncomeUiState.Ready(latest.form.copy(isSaving = false, saveError = saveError))
+                        }
+                    }
+            }
+        }
+
+        /** Deletes the income being edited; the screen then closes and offers an undo. */
+        fun onDelete() {
+            val current = _uiState.value
+            val income = loaded
+            if (current !is AddEditIncomeUiState.Ready || !current.form.isEditMode || income == null) return
+            if (current.form.isSaving || current.form.isDeleting) return
+            _uiState.value = AddEditIncomeUiState.Ready(current.form.copy(isDeleting = true, saveError = null))
+            viewModelScope.launch {
+                incomeRepository
+                    .deleteIncome(income.id)
+                    .onSuccess {
+                        deletedEvents.send(income)
+                    }.onFailure { e ->
+                        Log.w(TAG, "Failed to delete income", e)
+                        updateForm {
+                            it.copy(
+                                isDeleting = false,
+                                saveError = UiText.StringResource(R.string.error_failed_delete_income),
+                            )
                         }
                     }
             }

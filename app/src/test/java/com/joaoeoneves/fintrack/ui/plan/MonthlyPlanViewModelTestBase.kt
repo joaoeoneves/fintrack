@@ -11,6 +11,7 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardRepositories
@@ -56,19 +57,20 @@ open class MonthlyPlanViewModelTestBase {
     protected fun viewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         expenses: ExpenseRepository = expenseRepo,
+        incomes: IncomeRepository = actualIncomeRepo,
     ) = MonthlyPlanViewModel(
         PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo),
         observePeriodOverviewOf(
             DashboardRepositories(
                 expenses,
                 budgetRepo,
-                actualIncomeRepo,
+                incomes,
                 categoryRepo,
                 incomeRepo,
                 monthSettingsRepo,
             ),
         ),
-        RecordPayday(incomeRepo, monthSettingsRepo, actualIncomeRepo, FakeAutomationSettingsRepository()),
+        RecordPayday(incomeRepo, monthSettingsRepo, incomes, FakeAutomationSettingsRepository()),
         savedStateHandle,
         clock,
     )

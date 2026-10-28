@@ -18,9 +18,11 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" width="200" alt="Dashboard with balance, spending breakdown and budgets">
-  <img src="docs/screenshots/recent.png" width="200" alt="Recent expenses and income">
-  <img src="docs/screenshots/all-expenses.png" width="200" alt="Expense list with period filter, search and sort">
+  <img src="docs/screenshots/home.png" width="200" alt="Home with the month's balance, income, expenses and savings">
+  <img src="docs/screenshots/activity.png" width="200" alt="Activity: expenses and income in one list">
+  <img src="docs/screenshots/plan.png" width="200" alt="Plan tab for the month">
+  <img src="docs/screenshots/plan-income.png" width="200" alt="Expected income, one row per salary component">
+  <img src="docs/screenshots/insights.png" width="200" alt="Insights: fixed and variable spending">
   <img src="docs/screenshots/add-expense.png" width="200" alt="Add expense form">
 </p>
 

@@ -1,10 +1,12 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
+import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.MANAGED_MEAL
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
+import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -179,4 +181,79 @@ class MonthlyPlanViewModelReceiveTest : MonthlyPlanViewModelTestBase() {
 
             assertTrue(actualIncomeRepo.getAllIncome().getOrThrow().isEmpty())
         }
+
+    @Test
+    fun onUndoReceive_removesThePaydayIncomes_andTheRowIsNoLongerReceived() =
+        runTest(testDispatcher) {
+            val a = line("a", 100_000, 0).copy(managedKey = MANAGED_NET_SALARY)
+            incomeRepo.savePlannedIncome(a)
+            incomeRepo.savePlannedIncome(line("b", 20_000, 1).copy(managedKey = MANAGED_NET_SALARY))
+            val vm = viewModel()
+            collect(vm)
+            val row = vm.content().incomeRows.single()
+            vm.onReceive(row, LocalDate.of(2026, 10, 10), null)
+            advanceUntilIdle()
+            assertEquals(
+                setOf("a"),
+                vm
+                    .content()
+                    .receipts.receivedOn.keys,
+            )
+
+            vm.onUndoReceive(row)
+            advanceUntilIdle()
+
+            assertTrue(actualIncomeRepo.getAllIncome().getOrThrow().isEmpty())
+            assertTrue(
+                vm
+                    .content()
+                    .receipts.receivedOn
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun onUndoReceive_failure_surfacesAnErrorEvent() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(line("a"))
+            val failing = FailingDeleteIncomeRepository(actualIncomeRepo)
+            val vm = viewModel(incomes = failing)
+            collect(vm)
+
+            vm.onUndoReceive(vm.content().incomeRows.single())
+            advanceUntilIdle()
+
+            vm.errorEvent.first()
+        }
+
+    @Test
+    fun onUndoReceive_beforeTheStateLoaded_isANoOp() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(line("a"))
+            actualIncomeRepo.addIncome(
+                com.joaoeoneves.fintrack.domain.model.Income(
+                    paydayIncomeId("a", oct),
+                    "a",
+                    100_000,
+                    java.time.Instant.parse("2026-10-10T12:00:00Z"),
+                    null,
+                ),
+            )
+            val vm = viewModel()
+            val row =
+                com.joaoeoneves.fintrack.domain.model
+                    .IncomeRow(null, listOf(line("a")), 100_000L)
+
+            vm.onUndoReceive(row)
+            advanceUntilIdle()
+
+            assertEquals(1, actualIncomeRepo.getAllIncome().getOrThrow().size)
+        }
+}
+
+/** Delegates to [delegate] but every delete fails. */
+private class FailingDeleteIncomeRepository(
+    private val delegate: FakeIncomeRepository,
+) : IncomeRepository by delegate {
+    override suspend fun deleteIncome(id: String): Result<Unit> = Result.failure(IllegalStateException("offline"))
 }
