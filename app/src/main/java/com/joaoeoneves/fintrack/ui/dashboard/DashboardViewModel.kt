@@ -80,7 +80,7 @@ class DashboardViewModel
                 }
         }
 
-        /** Home is month-only: rolling and custom periods (now on Insights) fall back to the current month. */
+        /** Home is month-only: rolling and custom periods (now on Activity) fall back to the current month. */
         fun onPeriodSelected(period: Period) = selection.select(period.asMonthPeriod())
 
         fun onPreviousMonth() = selection.previous()

@@ -30,8 +30,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.GoalStatus
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
+import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
-import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -61,13 +61,13 @@ fun SavingsScreen(
     LargeTitleScaffold(
         title = stringResource(R.string.nav_savings),
         modifier = modifier,
+        navigationIcon = { AccountAvatar(onClick = onOpenSettings) },
         actions = {
             LabeledIconButton(
                 icon = Icons.Default.Add,
                 contentDescription = stringResource(R.string.savings_new_plan),
                 onClick = { onOpenPlan(null) },
             )
-            SettingsIconButton(onClick = onOpenSettings)
         },
     ) { innerPadding ->
         if (state.loaded) {

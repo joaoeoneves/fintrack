@@ -15,8 +15,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
@@ -33,12 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
-import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
@@ -162,7 +158,7 @@ private fun DashboardBody(
 }
 
 /**
- * Period selector on the left (once content is loaded), settings on the right; no title. Solid
+ * Account avatar on the left, then the period selector (once content is loaded); no title. Solid
  * background, with a hairline along its bottom edge that fades in once content is [scrolled] under it.
  */
 @Composable
@@ -182,6 +178,7 @@ private fun DashboardTopBar(
                     .padding(horizontal = Dimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            AccountAvatar(onClick = onOpenSettings)
             Box(modifier = Modifier.weight(1f)) {
                 if (state != null) {
                     PeriodSelector(
@@ -193,12 +190,6 @@ private fun DashboardTopBar(
                     )
                 }
             }
-            LabeledIconButton(
-                icon = Icons.Default.Settings,
-                contentDescription = stringResource(R.string.cd_settings),
-                onClick = onOpenSettings,
-                modifier = Modifier.testTag(TestTags.DASHBOARD_SETTINGS),
-            )
         }
         Box(
             modifier =

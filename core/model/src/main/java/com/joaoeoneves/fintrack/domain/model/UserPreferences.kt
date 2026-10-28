@@ -5,4 +5,5 @@ data class UserPreferences(
     val theme: ThemePreference = ThemePreference.DARK,
     val currency: CurrencyOption = CurrencyOption.EUR,
     val language: AppLanguage = AppLanguage.SYSTEM,
+    val reducedMotion: MotionPreference = MotionPreference.SYSTEM,
 )

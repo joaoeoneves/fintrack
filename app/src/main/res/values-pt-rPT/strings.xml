@@ -30,7 +30,7 @@
     <string name="cd_cancel">Cancelar</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_change_date">Alterar data</string>
-    <string name="cd_settings">Definições</string>
+    <string name="cd_account_avatar">Conta e definições</string>
     <string name="cd_previous_month">Mês anterior</string>
     <string name="cd_next_month">Mês seguinte</string>
     <string name="cd_previous_year">Ano anterior</string>
@@ -126,6 +126,12 @@
     <string name="activity_empty">Ainda não há movimentos neste período.</string>
     <string name="activity_total_in">Entradas</string>
     <string name="activity_total_out">Saídas</string>
+    <string name="activity_spent_total">Gasto</string>
+    <string name="activity_show_breakdown">Mostrar detalhe</string>
+    <string name="activity_hide_breakdown">Ocultar detalhe</string>
+    <string name="activity_envelope_all">Todos</string>
+    <string name="cd_envelope_bar">Gastos por envelope: %1$s</string>
+    <string name="cd_envelope_chip">%1$s, %2$s gastos</string>
 
     <!-- Opções de ordenação -->
     <string name="sort_newest_first">Mais recentes primeiro</string>
@@ -172,11 +178,15 @@
 
 
     <!-- Definições -->
-    <string name="settings_title">Definições</string>
+    <string name="settings_title">Conta e definições</string>
     <string name="settings_section_language">Idioma</string>
     <string name="settings_section_preferences">Preferências</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_currency_hint">Só visual — os valores não são convertidos</string>
+    <string name="settings_reduce_motion">Reduzir animações</string>
+    <string name="motion_system">Sistema</string>
+    <string name="motion_on">Ativado</string>
+    <string name="motion_off">Desativado</string>
     <string name="settings_section_currency">Moeda</string>
     <string name="settings_section_data">Dados</string>
     <string name="settings_section_account">Conta</string>
@@ -278,11 +288,8 @@
     <string name="dashboard_fixed_variable">Fixas %1$s\nVariáveis %2$s</string>
 
     <!-- Cópia de segurança -->
-    <string name="settings_section_backup">Cópia de segurança</string>
     <string name="settings_export_backup">Exportar cópia (JSON)</string>
     <string name="settings_restore_backup">Restaurar cópia (JSON)</string>
-    <string name="settings_backup_guest_hint">Exporte uma cópia de segurança para mover os seus dados para outro dispositivo</string>
-    <string name="settings_backup_signed_in_hint">Guarde uma cópia dos seus dados num ficheiro JSON</string>
     <string name="action_restore">Restaurar</string>
     <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nLimites: %3$d\nCategorias: %4$d\nRendimentos previstos: %5$d\nItens recorrentes: %6$d</string>
     <string name="backup_export_done_title">Cópia de segurança exportada</string>
@@ -433,8 +440,6 @@
     <string name="nav_home">Início</string>
     <string name="nav_activity">Movimentos</string>
     <string name="nav_plan">Plano</string>
-    <string name="nav_insights">Análise</string>
-    <string name="insights_title">Análise</string>
     <string name="insights_empty">Ainda não há despesas para analisar neste período.</string>
     <string name="insights_split_title">Fixo vs. variável</string>
     <string name="insights_split_fixed">Fixo</string>

@@ -1,10 +1,12 @@
 package com.joaoeoneves.fintrack.ui.activity
 
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,13 +31,16 @@ class ActivityFilteringTest {
     private val gift = Income(id = "g", source = "Gift", amountCents = 5_050L, date = now, note = null)
     private val all: List<Transaction> = listOf(coffee, lunch, salary, gift)
 
+    // FOOD is filed under "env-food"; SHOPPING (and any unknown category) is in no envelope.
+    private val envelopeOf: (CategoryId) -> String? = { if (it == BuiltInCategories.FOOD.id) "env-food" else null }
+
     private fun filter(
         type: ActivityType = ActivityType.ALL,
         category: CategoryId? = null,
         query: String = "",
-        labels: Map<CategoryId, String> = emptyMap(),
         list: List<Transaction> = all,
-    ) = filterTransactions(list, type, category, query, labels)
+        envelope: String? = null,
+    ) = filterTransactions(list, type, category, query, emptyMap(), envelope, envelopeOf)
 
     @Test
     fun noFilters_returnsEverything() {
@@ -102,7 +107,7 @@ class ActivityFilteringTest {
     fun query_matchesLocalizedCategoryLabel_forExpensesOnly() {
         val labels = mapOf(BuiltInCategories.FOOD.id to "Alimentação")
 
-        assertEquals(listOf(lunch), filter(query = "aliment", labels = labels))
+        assertEquals(listOf(lunch), filterTransactions(all, ActivityType.ALL, null, "aliment", labels))
     }
 
     @Test
@@ -126,5 +131,60 @@ class ActivityFilteringTest {
             listOf(beans),
             filter(type = ActivityType.EXPENSE, category = BuiltInCategories.FOOD.id, query = "coffee", list = list),
         )
+    }
+
+    @Test
+    fun envelope_withTypeAll_showsOnlyThatEnvelopesExpenses_hidingIncome() {
+        assertEquals(listOf(lunch), filter(envelope = "env-food"))
+    }
+
+    @Test
+    fun envelope_withTypeExpense_narrowsExpenses() {
+        assertEquals(listOf(lunch), filter(type = ActivityType.EXPENSE, envelope = "env-food"))
+    }
+
+    @Test
+    fun envelope_isIgnoredForIncome() {
+        assertEquals(listOf(salary, gift), filter(type = ActivityType.INCOME, envelope = "env-food"))
+    }
+
+    @Test
+    fun noEnvelope_keepsOnlyUnenvelopedExpenses_hidingIncome() {
+        assertEquals(listOf(coffee), filter(envelope = NO_ENVELOPE))
+    }
+
+    @Test
+    fun noEnvelope_isIgnoredForIncome() {
+        assertEquals(listOf(salary, gift), filter(type = ActivityType.INCOME, envelope = NO_ENVELOPE))
+    }
+
+    @Test
+    fun unknownCategory_countsAsNoEnvelope() {
+        val ghost = coffee.copy(id = "x", category = Category.unknown(CategoryId("ghost")))
+
+        assertEquals(listOf(ghost), filter(envelope = NO_ENVELOPE, list = listOf(ghost, lunch)))
+        assertTrue(filter(envelope = "env-food", list = listOf(ghost)).isEmpty())
+    }
+
+    @Test
+    fun envelope_withNoMatchingExpense_isEmpty() {
+        assertTrue(filter(envelope = "env-other").isEmpty())
+    }
+
+    @Test
+    fun nullEnvelope_doesNotFilter() {
+        assertEquals(all, filter(envelope = null))
+    }
+
+    @Test
+    fun envelopeAndCategory_areAnded() {
+        assertEquals(listOf(lunch), filter(category = BuiltInCategories.FOOD.id, envelope = "env-food"))
+        assertTrue(filter(category = BuiltInCategories.SHOPPING.id, envelope = "env-food").isEmpty())
+    }
+
+    @Test
+    fun envelopeAndQuery_areAnded() {
+        assertEquals(listOf(lunch), filter(query = "lunch", envelope = "env-food"))
+        assertTrue(filter(query = "coffee", envelope = "env-food").isEmpty())
     }
 }

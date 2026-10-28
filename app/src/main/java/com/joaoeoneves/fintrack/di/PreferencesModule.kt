@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.preferences.PreferencesSync
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
+import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import dagger.Binds
 import dagger.Module
@@ -18,6 +19,10 @@ interface PreferencesModule {
     @Binds
     @Singleton
     fun bindThemeRepository(impl: UserPreferencesRepository): ThemeRepository
+
+    @Binds
+    @Singleton
+    fun bindMotionRepository(impl: UserPreferencesRepository): MotionRepository
 
     @Binds
     @Singleton

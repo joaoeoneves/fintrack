@@ -17,7 +17,6 @@ import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
-import com.joaoeoneves.fintrack.ui.insights.InsightsScreen
 import com.joaoeoneves.fintrack.ui.plan.IncomeScreen
 import com.joaoeoneves.fintrack.ui.plan.PlanNavigation
 import com.joaoeoneves.fintrack.ui.plan.PlanScreen
@@ -77,7 +76,6 @@ fun FinTrackNavHost(
         activityRoutes(navController)
         planRoutes(navController)
         savingsRoutes(navController)
-        insightsRoutes(navController)
         sharedRoutes(navController, transitions)
         envelopeRoutes(navController)
     }
@@ -150,18 +148,6 @@ private fun NavGraphBuilder.savingsRoutes(navController: NavHostController) {
             SavingsScreen(
                 onOpenSettings = { navController.navigate(Settings) },
                 onOpenPlan = { id -> navController.navigate(EditSavingsPlan(id = id)) },
-            )
-        }
-    }
-}
-
-private fun NavGraphBuilder.insightsRoutes(navController: NavHostController) {
-    navigation<InsightsGraph>(startDestination = Insights()) {
-        composable<Insights> {
-            InsightsScreen(
-                onOpenSettings = { navController.navigate(Settings) },
-                onOpenActivity = { period, id -> navController.navigateToTabWith(activityRouteFor(period, id)) },
-                onAddExpense = { navController.navigate(AddEditExpense()) },
             )
         }
     }

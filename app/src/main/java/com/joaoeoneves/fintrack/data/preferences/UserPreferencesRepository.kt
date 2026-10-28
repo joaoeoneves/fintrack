@@ -2,10 +2,12 @@ package com.joaoeoneves.fintrack.data.preferences
 
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
+import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -25,7 +27,8 @@ class UserPreferencesRepository
         private val sync: PreferencesSync,
     ) : ThemeRepository,
         CurrencyRepository,
-        LanguageRepository {
+        LanguageRepository,
+        MotionRepository {
         override fun observeThemePreference(): Flow<ThemePreference> = pick { it.theme }
 
         override suspend fun setThemePreference(preference: ThemePreference) {
@@ -45,6 +48,13 @@ class UserPreferencesRepository
         override suspend fun setLanguage(language: AppLanguage) {
             store.update { it.copy(language = language) }
             sync.push(PreferenceField.LANGUAGE, language.name)
+        }
+
+        override fun observeMotionPreference(): Flow<MotionPreference> = pick { it.reducedMotion }
+
+        // Device-local: not synced to Firestore.
+        override suspend fun setMotionPreference(preference: MotionPreference) {
+            store.update { it.copy(reducedMotion = preference) }
         }
 
         private fun <T> pick(f: (UserPreferences) -> T): Flow<T> = store.data.map(f).distinctUntilChanged()

@@ -25,9 +25,9 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
-import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
@@ -64,7 +64,7 @@ fun ActivityScreen(
     LargeTitleScaffold(
         title = stringResource(R.string.activity_title),
         modifier = modifier,
-        actions = { SettingsIconButton(onClick = callbacks.onOpenSettings) },
+        navigationIcon = { AccountAvatar(onClick = callbacks.onOpenSettings) },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when (val state = uiState) {
@@ -129,6 +129,7 @@ private fun ActivityViewModel.activityActions(callbacks: ActivityCallbacks): Act
         onTypeSelected = ::onTypeSelected,
         onQueryChanged = ::onQueryChanged,
         onCategorySelected = ::onCategorySelected,
+        onEnvelopeSelected = ::onEnvelopeSelected,
         onSortSelected = ::onSortSelected,
         onOpen = { transaction ->
             when (transaction) {

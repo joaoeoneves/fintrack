@@ -34,11 +34,11 @@ class BaselineProfileGenerator {
             waitForDashboard()
             flingDashboard()
             openAndBack(GeneratorTags.DASHBOARD_ADD_EXPENSE)
-            openAndBack(GeneratorTags.DASHBOARD_SETTINGS)
+            openAndBack(GeneratorTags.ACCOUNT_AVATAR)
             openAndBack(GeneratorTags.SEE_ALL_ACTIVITY, GeneratorTags.ACTIVITY_LIST)
             openTab(GeneratorTags.NAV_ACTIVITY)
             openTab(GeneratorTags.NAV_PLAN)
-            openTab(GeneratorTags.NAV_INSIGHTS)
+            openTab(GeneratorTags.NAV_SAVINGS)
             openTab(GeneratorTags.NAV_HOME)
         }
 }

@@ -23,6 +23,8 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.domain.model.resolve
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalyticsActions
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalyticsHeader
 import com.joaoeoneves.fintrack.ui.common.DaySectionHeader
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
@@ -31,7 +33,6 @@ import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
 import com.joaoeoneves.fintrack.ui.common.dayHeaderOf
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
-import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -39,23 +40,14 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** Period selector, totals, type chips, category chips (not for income) and the search and sort row. */
+/** The analytics header, totals, type chips, category chips (not for income) and the search and sort row. */
 fun LazyListScope.activityHeaderItems(
     state: ActivityUiState.Content,
     query: String,
     categories: List<Category>,
     actions: ActivityActions,
 ) {
-    item(key = "period") {
-        PeriodSelector(
-            period = state.period,
-            canGoToNextMonth = state.canGoToNextMonth,
-            actions = actions.period,
-            alignment = Alignment.Start,
-            monthOnly = true,
-            modifier = Modifier.padding(horizontal = Dimens.Space8),
-        )
-    }
+    item(key = "analytics") { AnalyticsItem(state, actions) }
     item(key = "totals") { ActivityTotalsRow(state.totals) }
     item(key = "type") {
         SegmentedTextTabs(
@@ -71,7 +63,10 @@ fun LazyListScope.activityHeaderItems(
             val selected = state.filters.category
             CategoryFilterRow(
                 // Archived categories are hidden unless one is the active filter.
-                categories = categories.optionsIncluding(selected?.let(categories::resolve)),
+                categories =
+                    categories
+                        .optionsIncluding(selected?.let(categories::resolve))
+                        .filter { state.categoryScope == null || it.id in state.categoryScope },
                 selected = selected,
                 onSelected = actions.onCategorySelected,
                 modifier = Modifier.padding(top = Dimens.Space8),
@@ -129,6 +124,27 @@ fun LazyListScope.activityRowItems(
             ActivityRow(transaction, showDate = false, actions = actions)
         }
     }
+}
+
+@Composable
+private fun AnalyticsItem(
+    state: ActivityUiState.Content,
+    actions: ActivityActions,
+) {
+    val onlyIncome = state.filters.type == ActivityType.INCOME
+    ActivityAnalyticsHeader(
+        period = state.period,
+        canGoToNextMonth = state.canGoToNextMonth,
+        // Income has no envelopes, so the envelope bar and chips are hidden for it.
+        analytics = if (onlyIncome) state.analytics.copy(envelopeChips = emptyList()) else state.analytics,
+        selectedEnvelope = state.filters.envelope,
+        actions =
+            ActivityAnalyticsActions(
+                period = actions.period,
+                onEnvelopeSelected = actions.onEnvelopeSelected,
+                onCategorySelected = { actions.onCategorySelected(it.id) },
+            ),
+    )
 }
 
 @Composable
@@ -207,7 +223,7 @@ private fun Transaction.rowKey(): String =
 private fun emptyTitle(filters: ActivityFilters): String =
     when {
         filters.query.isNotBlank() -> stringResource(R.string.activity_no_match, filters.query)
-        filters.category != null && filters.type != ActivityType.INCOME ->
+        (filters.category != null || filters.envelope != null) && filters.type != ActivityType.INCOME ->
             stringResource(R.string.activity_no_match_filter)
         filters.type == ActivityType.EXPENSE -> stringResource(R.string.dashboard_no_expenses)
         filters.type == ActivityType.INCOME -> stringResource(R.string.dashboard_no_income)
