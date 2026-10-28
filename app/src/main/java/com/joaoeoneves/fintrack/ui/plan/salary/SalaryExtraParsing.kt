@@ -19,7 +19,7 @@ internal fun SalaryExtraForm.toExtra(
     val gross = mode == SalaryInputMode.GROSS
     val type = if (gross) amountType else SalaryExtraAmountType.FIXED_CENTS
     val trimmedName = name.trim()
-    val amount = parseExtraAmount(type, amountText)
+    val amount = parseExtraAmount(type, amountText, amountCents)
     val fee = if (gross) parsePercentPpm(feeText).orZeroIfEmpty() else 0
     val invalid =
         buildSet {
@@ -49,9 +49,10 @@ internal fun SalaryExtraForm.toExtra(
 private fun parseExtraAmount(
     type: SalaryExtraAmountType,
     text: String,
+    cents: Long,
 ): Long? =
     when (type) {
-        SalaryExtraAmountType.FIXED_CENTS -> (parseCents(text) as? Parsed.Value)?.value
+        SalaryExtraAmountType.FIXED_CENTS -> cents.takeIf { it > 0L }
         SalaryExtraAmountType.MULTIPLE_OF_BASE_PPM -> (parseMultiplierPpm(text) as? Parsed.Value)?.value?.toLong()
         // A zero share pays nothing, so it counts as missing like the other types' blank / zero.
         SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM ->

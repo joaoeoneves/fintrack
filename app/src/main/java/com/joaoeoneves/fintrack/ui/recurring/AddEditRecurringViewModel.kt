@@ -16,7 +16,6 @@ import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.navigation.AddEditRecurring
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
-import java.util.Locale
 import javax.inject.Inject
 
 private const val TAG = "AddEditRecurringVM"
@@ -107,9 +105,8 @@ class AddEditRecurringViewModel
                 item == null -> AddEditRecurringUiState.Error(UiText.StringResource(R.string.error_recurring_not_found))
                 else -> {
                     existing = item
-                    val separator = decimalSeparatorFor(Locale.getDefault(Locale.Category.FORMAT))
                     val category = item.categoryId?.let { catalog.resolve(it) }
-                    AddEditRecurringUiState.Ready(item.toForm(category, separator), isEditMode = true)
+                    AddEditRecurringUiState.Ready(item.toForm(category), isEditMode = true)
                 }
             }
         }

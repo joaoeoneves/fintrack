@@ -92,16 +92,16 @@ class SalaryFormParsingTest {
     fun grossForm_toProfile() {
         val form =
             SalaryForm(
-                base = "1000,00",
+                base = 100_000L,
                 spreadPpm = SPREAD_FULL_PPM,
                 irsBase = "10",
                 irsSubsidies = "5",
                 ss = "12.5",
                 exempt = "50",
-                meal = "9,00",
+                meal = 900L,
                 extras = listOf(flexExtra(), bonusExtra()),
                 // NET-only fields must not leak into a GROSS profile.
-                netMonthly = "999",
+                netMonthly = 99_900L,
             )
 
         val result = form.toResult()
@@ -129,9 +129,9 @@ class SalaryFormParsingTest {
         val form =
             SalaryForm(
                 mode = SalaryInputMode.NET,
-                netMonthly = "1200",
-                netHoliday = "600",
-                base = "5000",
+                netMonthly = 120_000L,
+                netHoliday = 60_000L,
+                base = 500_000L,
                 irsBase = "10",
                 extras = listOf(bonusExtra(cents = 5_000)),
             )
@@ -149,17 +149,17 @@ class SalaryFormParsingTest {
 
     @Test
     fun netForm_withoutNet_hasNoRequiredAmount() {
-        assertFalse(SalaryForm(mode = SalaryInputMode.NET, base = "1000").toResult().hasRequiredAmount)
+        assertFalse(SalaryForm(mode = SalaryInputMode.NET, base = 100_000L).toResult().hasRequiredAmount)
     }
 
     @Test
     fun invalidFields_areReported() {
-        val form = SalaryForm(base = "abc", irsBase = "120", ss = "x", meal = "-1")
+        val form = SalaryForm(base = 0L, irsBase = "120", ss = "x")
 
         val result = form.toResult()
 
         assertEquals(
-            setOf(SalaryField.BASE, SalaryField.IRS_BASE, SalaryField.SS, SalaryField.MEAL),
+            setOf(SalaryField.IRS_BASE, SalaryField.SS),
             result.invalid,
         )
         assertFalse(result.hasRequiredAmount)
@@ -167,8 +167,8 @@ class SalaryFormParsingTest {
 
     @Test
     fun blankSs_defaultsToEleven_explicitZeroIsKept() {
-        assertEquals(DEFAULT_SS_PPM, SalaryForm(base = "10").toResult().profile.ssPpm)
-        assertEquals(0, SalaryForm(base = "10", ss = "0").toResult().profile.ssPpm)
+        assertEquals(DEFAULT_SS_PPM, SalaryForm(base = 1_000L).toResult().profile.ssPpm)
+        assertEquals(0, SalaryForm(base = 1_000L, ss = "0").toResult().profile.ssPpm)
     }
 
     @Test
@@ -184,11 +184,11 @@ class SalaryFormParsingTest {
         val comma = profile.toForm(',')
         val dot = profile.toForm('.')
 
-        assertEquals("1234,56", comma.base)
-        assertEquals("1234.56", dot.base)
+        assertEquals(123_456L, comma.base)
+        assertEquals(123_456L, dot.base)
         assertEquals("11,5", comma.irsBase)
         assertEquals("12.5", dot.ss)
-        assertEquals("9", dot.meal.substringBefore('.'))
+        assertEquals(900L, dot.meal)
     }
 
     @Test
@@ -250,8 +250,8 @@ class SalaryFormParsingTest {
 
     @Test
     fun subsidyMonths_reachTheProfileOrdered_grossAndNet() {
-        val gross = SalaryForm(base = "1000", subsidyMonths = listOf(11, 2)).toResult().profile
-        val netForm = SalaryForm(mode = SalaryInputMode.NET, netMonthly = "1000", subsidyMonths = listOf(4))
+        val gross = SalaryForm(base = 100_000L, subsidyMonths = listOf(11, 2)).toResult().profile
+        val netForm = SalaryForm(mode = SalaryInputMode.NET, netMonthly = 100_000L, subsidyMonths = listOf(4))
         val net = netForm.toResult().profile
 
         assertEquals(2, gross.holidaySubsidyMonth)
@@ -272,7 +272,7 @@ class SalaryFormParsingTest {
     @Test
     fun toResult_ignoresMealSkipMonths() {
         assertTrue(
-            SalaryForm(base = "10")
+            SalaryForm(base = 1_000L)
                 .toResult()
                 .profile.mealSkipMonths
                 .isEmpty(),

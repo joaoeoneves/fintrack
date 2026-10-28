@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -17,22 +16,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
-import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
-import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
-import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
-import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
@@ -53,9 +49,8 @@ fun ReceivedIncomeSheet(
     onDismiss: () -> Unit,
 ) {
     val zone = ZoneId.systemDefault()
-    val decimalSeparator = decimalSeparatorFor(currentLocale())
     var date by remember { mutableStateOf(today) }
-    var amountText by remember { mutableStateOf(editableAmountCents?.toAmountInputText(decimalSeparator).orEmpty()) }
+    var amountCents by remember { mutableLongStateOf(editableAmountCents ?: 0L) }
     var amountError by remember { mutableStateOf(false) }
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(
@@ -74,16 +69,15 @@ fun ReceivedIncomeSheet(
                 maxDate = today.atTime(LocalTime.NOON).atZone(zone).toInstant(),
             )
             if (editableAmountCents != null) {
-                MinimalTextField(
-                    value = amountText,
-                    onValueChange = {
-                        amountText = it
+                MoneyTextField(
+                    cents = amountCents,
+                    onCentsChange = {
+                        amountCents = it
                         amountError = false
                     },
                     label = stringResource(R.string.plan_received_amount),
                     isError = amountError,
-                    supportingText = { if (amountError) Text(stringResource(R.string.error_invalid_amount)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    supportingText = stringResource(R.string.error_invalid_amount).takeIf { amountError },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -94,9 +88,7 @@ fun ReceivedIncomeSheet(
                 if (editableAmountCents == null) {
                     onConfirm(date, null)
                 } else {
-                    parseAmountCents(amountText)
-                        .onSuccess { onConfirm(date, it) }
-                        .onFailure { amountError = true }
+                    if (amountCents > 0L) onConfirm(date, amountCents) else amountError = true
                 }
             },
             modifier = Modifier.padding(top = Dimens.Space16),

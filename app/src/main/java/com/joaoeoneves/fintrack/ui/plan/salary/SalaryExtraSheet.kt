@@ -62,7 +62,7 @@ internal fun SalaryExtraSheet(
                     options = SalaryExtraAmountType.entries,
                     selected = form.amountType,
                     label = { stringResource(typeLabel(it)) },
-                    onSelect = { onChange(form.copy(amountType = it, amountText = "")) },
+                    onSelect = { onChange(form.copy(amountType = it, amountText = "", amountCents = 0L)) },
                 )
             }
             AmountAndMonthsFields(editor, onChange)
@@ -92,15 +92,18 @@ private fun AmountAndMonthsFields(
     val form = editor.form
     val gross = editor.mode == SalaryInputMode.GROSS
     val perPayment = form.months.size > 1 && form.amountScope == SalaryExtraAmountScope.PER_PAYMENT
-    SalaryTextField(
-        label =
-            stringResource(
-                valueLabel(if (gross) form.amountType else SalaryExtraAmountType.FIXED_CENTS, perPayment),
-            ),
-        value = form.amountText,
-        onChange = { onChange(form.copy(amountText = it)) },
-        invalid = SalaryExtraField.AMOUNT in editor.invalid && form.amountText.isNotBlank(),
-    )
+    val type = if (gross) form.amountType else SalaryExtraAmountType.FIXED_CENTS
+    val label = stringResource(valueLabel(type, perPayment))
+    if (type == SalaryExtraAmountType.FIXED_CENTS) {
+        SalaryMoneyField(label = label, cents = form.amountCents, onChange = { onChange(form.copy(amountCents = it)) })
+    } else {
+        SalaryTextField(
+            label = label,
+            value = form.amountText,
+            onChange = { onChange(form.copy(amountText = it)) },
+            invalid = SalaryExtraField.AMOUNT in editor.invalid && form.amountText.isNotBlank(),
+        )
+    }
     SalaryMonthPicker(
         title = stringResource(R.string.salary_extra_months),
         selected = form.months,

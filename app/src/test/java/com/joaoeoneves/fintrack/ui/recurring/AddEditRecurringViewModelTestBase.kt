@@ -46,11 +46,11 @@ abstract class AddEditRecurringViewModelTestBase {
     protected fun AddEditRecurringViewModel.ready() = uiState.value as AddEditRecurringUiState.Ready
 
     protected fun AddEditRecurringViewModel.fill() {
-        onFormChanged(ready().form.copy(name = "Gym", amountText = "20,00", category = BuiltInCategories.SHOPPING))
+        onFormChanged(ready().form.copy(name = "Gym", amountCents = 2_000L, category = BuiltInCategories.SHOPPING))
     }
 
     /** Like [fill] but leaves the category unset, as a new item starts. */
     protected fun AddEditRecurringViewModel.fillWithoutCategory() {
-        onFormChanged(ready().form.copy(name = "Gym", amountText = "20,00"))
+        onFormChanged(ready().form.copy(name = "Gym", amountCents = 2_000L))
     }
 }

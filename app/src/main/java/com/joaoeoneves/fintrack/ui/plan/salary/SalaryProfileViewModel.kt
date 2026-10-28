@@ -99,7 +99,7 @@ class SalaryProfileViewModel
             val editing = extra.toExtraForm(decimalSeparator)
             extraForm.value =
                 if (current.mode == SalaryInputMode.NET && extra.amountType != SalaryExtraAmountType.FIXED_CENTS) {
-                    editing.copy(amountType = SalaryExtraAmountType.FIXED_CENTS, amountText = "")
+                    editing.copy(amountType = SalaryExtraAmountType.FIXED_CENTS, amountText = "", amountCents = 0L)
                 } else {
                     editing
                 }

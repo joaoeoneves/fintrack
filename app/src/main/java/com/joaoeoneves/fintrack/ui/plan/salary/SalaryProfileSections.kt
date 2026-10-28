@@ -3,20 +3,19 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SPREAD_HALF_PPM
 import com.joaoeoneves.fintrack.domain.model.SPREAD_NONE_PPM
 import com.joaoeoneves.fintrack.domain.model.SUBSIDY_SPREADS_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
-import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.DecimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -31,22 +30,29 @@ internal fun SalaryTextField(
     invalid: Boolean,
     hint: String? = null,
 ) {
-    MinimalTextField(
+    DecimalTextField(
         value = value,
         onValueChange = onChange,
         label = label,
         isError = invalid,
-        supportingText =
-            when {
-                invalid -> {
-                    { Text(stringResource(R.string.salary_error_invalid)) }
-                }
-                hint != null -> {
-                    { Text(hint) }
-                }
-                else -> null
-            },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        supportingText = if (invalid) stringResource(R.string.salary_error_invalid) else hint,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** A money field of the salary form (cash-register input); shows [hint] under it. */
+@Composable
+internal fun SalaryMoneyField(
+    label: String,
+    cents: Long,
+    onChange: (Long) -> Unit,
+    hint: String? = null,
+) {
+    MoneyTextField(
+        cents = cents,
+        onCentsChange = onChange,
+        label = label,
+        supportingText = hint,
         modifier = Modifier.fillMaxWidth(),
     )
 }
@@ -70,11 +76,10 @@ internal fun GrossSections(
     onChange: (SalaryForm) -> Unit,
 ) {
     SalaryGroup(stringResource(R.string.salary_group_salary)) {
-        SalaryTextField(
+        SalaryMoneyField(
             label = stringResource(R.string.salary_field_base),
-            value = form.base,
+            cents = form.base,
             onChange = { onChange(form.copy(base = it)) },
-            invalid = SalaryField.BASE in invalid,
         )
         Text(
             text = stringResource(R.string.salary_group_duo),
@@ -135,28 +140,24 @@ private fun spreadLabel(spreadPpm: Int): Int =
 @Composable
 internal fun NetSection(
     form: SalaryForm,
-    invalid: Set<SalaryField>,
     onChange: (SalaryForm) -> Unit,
 ) {
     SalaryGroup(stringResource(R.string.salary_group_net)) {
-        SalaryTextField(
+        SalaryMoneyField(
             label = stringResource(R.string.salary_field_net_monthly),
-            value = form.netMonthly,
+            cents = form.netMonthly,
             onChange = { onChange(form.copy(netMonthly = it)) },
-            invalid = SalaryField.NET_MONTHLY in invalid,
             hint = stringResource(R.string.salary_net_monthly_hint),
         )
-        SalaryTextField(
+        SalaryMoneyField(
             label = stringResource(R.string.salary_field_net_holiday),
-            value = form.netHoliday,
+            cents = form.netHoliday,
             onChange = { onChange(form.copy(netHoliday = it)) },
-            invalid = SalaryField.NET_HOLIDAY in invalid,
         )
-        SalaryTextField(
+        SalaryMoneyField(
             label = stringResource(R.string.salary_field_net_christmas),
-            value = form.netChristmas,
+            cents = form.netChristmas,
             onChange = { onChange(form.copy(netChristmas = it)) },
-            invalid = SalaryField.NET_CHRISTMAS in invalid,
         )
     }
 }

@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.recurring
 
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_DAY_OF_MONTH
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
@@ -13,8 +14,6 @@ import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
-import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import java.time.LocalDate
 
 /**
@@ -26,7 +25,7 @@ data class RecurringForm(
     val startDate: LocalDate,
     val type: RecurringType = RecurringType.EXPENSE,
     val name: String = "",
-    val amountText: String = "",
+    val amountCents: Long = 0L,
     val category: Category? = null,
     val note: String = "",
     val frequency: RecurringFrequency = RecurringFrequency.MONTHLY,
@@ -68,7 +67,7 @@ fun validateRecurringForm(form: RecurringForm): RecurringFormErrors? {
                     name.codePointLength() > MAX_NAME_LENGTH -> message(R.string.error_recurring_too_long)
                     else -> null
                 },
-            amount = message(R.string.error_invalid_amount).takeIf { parseAmountCents(form.amountText).isFailure },
+            amount = message(R.string.error_invalid_amount).takeIf { form.amountCents !in 1..MAX_AMOUNT_CENTS },
             category =
                 message(R.string.error_category_required).takeIf {
                     form.type == RecurringType.EXPENSE && (form.category == null || form.category.isUnknown)
@@ -106,7 +105,7 @@ fun RecurringForm.toItem(existing: RecurringItem?): RecurringItem =
         id = existing?.id.orEmpty(),
         type = type,
         name = name.trim(),
-        amountCents = parseAmountCents(amountText).getOrThrow(),
+        amountCents = amountCents,
         categoryId = category?.id.takeIf { type == RecurringType.EXPENSE },
         note = note.trim().ifBlank { null },
         frequency = frequency,
@@ -120,15 +119,12 @@ fun RecurringForm.toItem(existing: RecurringItem?): RecurringItem =
     )
 
 /** This item as an editable form; [category] is the item's resolved category (expenses only). */
-fun RecurringItem.toForm(
-    category: Category?,
-    decimalSeparator: Char,
-): RecurringForm =
+fun RecurringItem.toForm(category: Category?): RecurringForm =
     RecurringForm(
         startDate = startDate,
         type = type,
         name = name,
-        amountText = amountCents.toAmountInputText(decimalSeparator),
+        amountCents = amountCents,
         category = category,
         note = note.orEmpty(),
         frequency = frequency,
