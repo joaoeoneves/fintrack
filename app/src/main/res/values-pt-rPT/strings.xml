@@ -440,7 +440,6 @@
     <string name="nav_home">Início</string>
     <string name="nav_activity">Movimentos</string>
     <string name="nav_plan">Plano</string>
-    <string name="insights_empty">Ainda não há despesas para analisar neste período.</string>
     <string name="insights_split_title">Fixo vs. variável</string>
     <string name="insights_split_fixed">Fixo</string>
     <string name="insights_split_variable">Variável</string>
@@ -495,7 +494,6 @@
     <string name="plan_envelopes_title">Envelopes</string>
     <string name="plan_group_other">Sem envelope</string>
     <string name="error_group_save_failed">Não foi possível guardar o envelope</string>
-    <string name="plan_not_in">Exceto em</string>
     <string name="plan_pot_left">%1$s · restam %2$s de %3$s</string>
     <string name="plan_pot_over">%1$s · %2$s acima (de %3$s)</string>
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.data.preferences.StartChecklistState
 import com.joaoeoneves.fintrack.data.preferences.StartChecklistStore
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.StartChecklistSettleMillis
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.StartChecklist
@@ -12,7 +13,6 @@ import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObserveStartChecklist
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -93,17 +93,13 @@ class StartChecklistViewModel
         }
 
         private suspend fun decide() {
-            try {
+            runCatchingCancellable {
                 sessionRepository.session.first { it is Session.Guest || it is Session.SignedIn }
                 delay(settleMillis)
                 val checklist = observeChecklist().first()
                 val alreadySetUp = checklist.doneCount >= RETIRE_THRESHOLD
                 store.set(if (alreadySetUp) StartChecklistState.RETIRED else StartChecklistState.ACTIVE)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
-            ) {
+            }.onFailure { e ->
                 Log.w(TAG, "Could not decide whether to show the start checklist", e)
             }
         }

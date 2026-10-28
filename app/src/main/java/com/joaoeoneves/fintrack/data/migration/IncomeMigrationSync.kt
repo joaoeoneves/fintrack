@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data.migration
 import android.util.Log
 import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.data.backup.gatedBy
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.IncomeMigration
@@ -24,7 +25,6 @@ import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "IncomeMigrationSync"
 private const val SETTLE_DELAY_MS = 2_000L
@@ -84,12 +84,11 @@ class IncomeMigrationSync
 
         // Cursors first (a line without one would only get an initial cursor), then the lines, the legacy switch off
         // and finally the recurring items; stops at the first failure.
-        @Suppress("TooGenericExceptionCaught") // Intentional: a migration must never crash the app.
         private suspend fun apply(
             migration: IncomeMigration,
             lines: List<PlannedIncome>,
         ) {
-            try {
+            runCatchingCancellable {
                 if (migration.cursors.isNotEmpty()) automation.updateLineCursors(migration.cursors).getOrThrow()
                 migration.newLines.forEach { sources.plannedIncome.savePlannedIncome(it).getOrThrow() }
                 lines
@@ -97,9 +96,7 @@ class IncomeMigrationSync
                     .forEach { sources.plannedIncome.savePlannedIncome(it.copy(autoRecord = true)).getOrThrow() }
                 if (migration.clearLegacyPayday) automation.updateLineCursors(clearLegacyPayday = true).getOrThrow()
                 migration.deleteRecurringIds.forEach { sources.recurring.deleteRecurring(it).getOrThrow() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Failed to fold recurring income into planned income", e)
             }
         }

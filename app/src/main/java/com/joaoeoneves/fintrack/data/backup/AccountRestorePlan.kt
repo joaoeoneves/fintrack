@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.validOrNull
@@ -92,21 +93,13 @@ private inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSu
  * links (envelope of a category, earmark, funding line, goal category, automation cursor) are cleared instead of
  * dropping the record.
  */
-@Suppress("LongMethod")
 internal fun restoreMigrationPlanOf(
     local: LocalDataDocument,
     placeholderName: String = PLACEHOLDER_CATEGORY_NAME,
 ): MigrationPlan {
-    val maxOrder = local.categories.maxOfOrNull { it.order } ?: -1
-    val allCategories =
-        withPlaceholderCategories(local.categories, local.expenses, local.budgets, maxOrder, local.recurring)
-            .namingPlaceholders(local.categories.size, placeholderName)
     val groupIds = local.categoryGroups.filter { isValid { validateCategoryGroup(it) } }.mapTo(mutableSetOf()) { it.id }
-    val categories =
-        allCategories
-            .map { it.copy(groupId = it.groupId?.takeIf { id -> id in groupIds }) }
-            .filter { isValid { validateCategory(it) } }
-            .distinctBy { it.id }
+    val restored = restoredCategories(local, groupIds, placeholderName)
+    val categories = restored.categories
     val known = BuiltInCategories.all.mapTo(mutableSetOf()) { it.id.value } + categories.map { it.id }
 
     val budgets = local.budgets.filter { it.isValid(known) }.distinctBy { it.categoryId }
@@ -138,7 +131,7 @@ internal fun restoreMigrationPlanOf(
             settings.copy(lineThrough = settings.lineThrough.filterKeys { id -> id in lineIds })
         }
     val skipped =
-        (allCategories.size - categories.size) + (local.budgets.size - budgets.size) +
+        (restored.candidateCount - categories.size) + (local.budgets.size - budgets.size) +
             (local.expenses.size - expenses.size) + (local.income.size - income.size) +
             (local.recurring.size - recurring.size) + (local.monthSettings.size - monthSettings.size) +
             (local.goals.size - goals.size) + (local.plannedIncome.size - lines.size) +
@@ -157,6 +150,30 @@ internal fun restoreMigrationPlanOf(
         goals = goals,
         automation = automation,
     )
+}
+
+private class RestoredCategories(
+    val categories: List<LocalCategory>,
+    val candidateCount: Int,
+)
+
+// Categories to restore: placeholders for ids only referenced elsewhere, unknown groups unlinked, invalid ones and
+// duplicates dropped. candidateCount is the number considered, for the skipped tally.
+private fun restoredCategories(
+    local: LocalDataDocument,
+    groupIds: Set<String>,
+    placeholderName: String,
+): RestoredCategories {
+    val maxOrder = local.categories.maxOfOrNull { it.order } ?: -1
+    val allCategories =
+        withPlaceholderCategories(local.categories, local.expenses, local.budgets, maxOrder, local.recurring)
+            .namingPlaceholders(local.categories.size, placeholderName)
+    val categories =
+        allCategories
+            .map { it.copy(groupId = it.groupId?.takeIf { id -> id in groupIds }) }
+            .filter { isValid { validateCategory(it) } }
+            .distinctBy { it.id }
+    return RestoredCategories(categories, allCategories.size)
 }
 
 private fun LocalBudget.isValid(known: Set<String>): Boolean {

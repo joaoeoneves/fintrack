@@ -429,7 +429,6 @@
     <string name="nav_home">Home</string>
     <string name="nav_activity">Activity</string>
     <string name="nav_plan">Plan</string>
-    <string name="insights_empty">No spending to analyse in this period yet.</string>
     <string name="insights_split_title">Fixed vs variable</string>
     <string name="insights_split_fixed">Fixed</string>
     <string name="insights_split_variable">Variable</string>
@@ -480,7 +479,6 @@
     <string name="plan_envelopes_title">Envelopes</string>
     <string name="plan_group_other">No envelope</string>
     <string name="error_group_save_failed">Couldn\'t save the envelope</string>
-    <string name="plan_not_in">Not in</string>
     <string name="plan_pot_left">%1$s · %2$s left of %3$s</string>
     <string name="plan_pot_over">%1$s · %2$s over (of %3$s)</string>
 

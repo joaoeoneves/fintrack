@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.data.backup.gatedBy
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
@@ -25,7 +26,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "EnvelopeMigrationSync"
 private const val SETTLE_DELAY_MS = 2_000L
@@ -100,14 +100,11 @@ class EnvelopeMigrationSync
                 ?: category.id.value
 
         // Envelopes first (they file the categories), then the lines; stops at the first failure.
-        @Suppress("TooGenericExceptionCaught") // Intentional: a migration must never crash the app.
         private suspend fun apply(migration: EnvelopeMigration) {
-            try {
+            runCatchingCancellable {
                 migration.envelopes.forEach { sources.envelopes.saveEnvelope(it).getOrThrow() }
                 migration.lines.forEach { sources.plannedIncome.savePlannedIncome(it).getOrThrow() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Failed to migrate the plan to envelopes", e)
             }
         }

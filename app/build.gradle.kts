@@ -88,6 +88,7 @@ android {
     }
     androidResources {
         generateLocaleConfig = true
+        localeFilters += listOf("en", "pt-rPT")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

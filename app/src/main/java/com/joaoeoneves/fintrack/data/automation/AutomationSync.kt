@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data.automation
 import android.util.Log
 import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.data.backup.gatedBy
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -25,7 +26,6 @@ import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "AutomationSync"
 
@@ -127,16 +127,13 @@ class AutomationSync
             step("record payday") { recordPayday.runDue(today, clock.zone) }
         }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: automation must never crash the app.
         private suspend fun step(
             name: String,
             block: suspend () -> Unit,
         ) {
-            try {
+            runCatchingCancellable {
                 block()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Automation step failed: $name", e)
             }
         }
