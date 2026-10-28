@@ -1,215 +1,225 @@
 appId: com.joaoeoneves.fintrack
 ---
-# Visual-review flow: captures the redesigned UI (gold accent, splash -> sign-in, localization) as
-# screenshots; it asserts very little and is NOT a regression gate. Run it via the e2e.yml workflow
-# with `flows: screenshots.yaml` and download the maestro-out/screens/*.png files from the artifact.
-#
-# Self-contained: starts from clearState, uses guest mode (no Google account), and leaves the app
-# in guest mode with the demo data below (it does not clean up; the CI emulator is throw-away).
-#
-# takeScreenshot paths are relative to the working directory of `maestro test` (the repo root in
-# CI), so files land in maestro-out/screens/ -- the folder the workflow already uploads. Maestro
-# appends ".png" and creates missing parent directories.
-#
-# New navigation: the Plan/Insights/Activity tabs are captured in en-dark and pt-light (names
-# {en-dark,pt-light}-{plan,insights,activity}); the Plan tab is also captured as *-monthly-plan.
-#
-# Order: sign-in (system theme, before anything is pinned) -> guest -> pin English + EUR + Dark ->
-# seed demo data -> dark shots -> Light shots -> Portuguese shots (stays on Light).
-# Android `back` (not the localized "Back" label) is used for navigation so the same steps work in
-# both languages; category chips / settings rows are only tapped while English is active.
+# README screenshots flow (guest mode, English, EUR, dark, demo data only). NOT a regression gate.
+# Run locally on a ~1080x2400 emulator with SystemUI demo mode on (clock 12:00, full battery, wifi,
+# no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
+#   maestro test .maestro/screenshots.yaml
+# Captures: home, activity, plan, plan-income, insights, add-expense.
+# Soft keyboards: `back` closes only the IME when it is up; Save is tapped directly in sheets.
 
-- clearState
-- launchApp
+- runFlow: _guest-start.yaml
 
-# --- 0: Sign-in screen (before continuing as guest; theme is still the system default) ---
-- extendedWaitUntil:
-    visible:
-      id: "continue_as_guest"
-    timeout: 25000
-- takeScreenshot: maestro-out/screens/en-system-signin
-- tapOn:
-    id: "continue_as_guest"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 15000
-
-# --- 1: Pin English + EUR + Dark from Settings ---
+# --- Pin English + EUR + Dark ---
 - tapOn:
     id: "dashboard_settings"
 - tapOn: "English"
-# Language change recreates the activity; wait for an English-only section title, then scroll to
-# each row (the redesigned Settings screen is long).
 - extendedWaitUntil:
     visible: "Appearance"
     timeout: 10000
+- tapOn: "Dark"
 - scrollUntilVisible:
     element: "Display currency"
     direction: DOWN
 - tapOn: "Display currency"
 - tapOn: "Euro \\(€\\)"
-- scrollUntilVisible:
-    element: "Dark"
-    direction: UP
-- tapOn: "Dark"
 - back
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
 
-# --- 2: Seed demo data ---
-# Expenses (pickable built-in categories: Food, Shopping, Transfer, Investments; "Recurring" is archived).
+# --- Expenses (Food, Shopping, Transfer, Investments) ---
+- repeat:
+    times: 1
+    commands:
+      - tapOn:
+          id: "dashboard_add_expense"
+      - inputText: "64.20"
+      - tapOn: "Name"
+      - inputText: "Groceries"
+      - back
+      - tapOn: "Food"
+      - tapOn: "Save"
+      - extendedWaitUntil:
+          visible:
+            id: "dashboard_list"
+          timeout: 10000
 - tapOn:
     id: "dashboard_add_expense"
-- tapOn: "Name"
-- inputText: "Groceries"
-- tapOn: "Amount"
-- inputText: "64.20"
-- hideKeyboard
-- tapOn: "Food"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-
-- tapOn:
-    id: "dashboard_add_expense"
+- inputText: "750"
 - tapOn: "Name"
 - inputText: "Rent"
-- tapOn: "Amount"
-- inputText: "750.00"
-- hideKeyboard
+- back
 - tapOn: "Transfer"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
-
 - tapOn:
     id: "dashboard_add_expense"
+- inputText: "18.50"
 - tapOn: "Name"
 - inputText: "Cinema"
-- tapOn: "Amount"
-- inputText: "18.50"
-- hideKeyboard
+- back
 - tapOn: "Shopping"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
-
-# Income.
-- tapOn: "Add income"
-- tapOn: "Source"
-- inputText: "Salary"
-- tapOn: "Amount"
-- inputText: "1900.00"
-- hideKeyboard
+- tapOn:
+    id: "dashboard_add_expense"
+- inputText: "200"
+- tapOn: "Name"
+- inputText: "Savings"
+- back
+- tapOn: "Investments"
 - tapOn: "Save"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
 
-# Recurring item (due today -> shows in the dashboard's upcoming card).
+# --- Income ---
+- tapOn: "Add income"
+- inputText: "1400"
+- tapOn: "Source"
+- inputText: "Freelance"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+
+# --- Plan: salary profile (1500 base, 15% IRS, meal allowance, one extra) ---
 - tapOn:
-    id: "dashboard_settings"
+    id: "nav_plan"
+- scrollUntilVisible:
+    element: "Salary profile"
+- tapOn: "Salary profile"
+- scroll
+- tapOn: "Gross base salary \\(monthly\\)"
+- inputText: "1500.00"
+- back
+- scroll
+- tapOn: "IRS withholding rate \\(%\\)"
+- inputText: "15"
+- back
+- scrollUntilVisible:
+    element: "Meal allowance per working day"
+- tapOn: "Meal allowance per working day"
+- inputText: "7.63"
+- back
+- scrollUntilVisible:
+    element: "Add extra"
+- tapOn: "Add extra"
+- tapOn: "Name"
+- inputText: "Bonus"
+- back
+- tapOn: "Amount per year"
+- inputText: "600"
+- back
+- tapOn: "Dec"
+- tapOn: "Save"
+- waitForAnimationToEnd
+# Persist the profile itself (its own Save at the bottom of the screen).
+- scrollUntilVisible:
+    element: "Save"
+- tapOn: "Save"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      notVisible:
+        id: "nav_plan"
+    commands:
+      - back
+
+# --- Limits ---
+- scrollUntilVisible:
+    element: "Food"
+- tapOn: "Food"
+- tapOn: "Monthly limit"
+- inputText: "300"
+- tapOn: "Save"
+- waitForAnimationToEnd
+- tapOn: "Shopping"
+- tapOn: "Monthly limit"
+- inputText: "150"
+- tapOn: "Save"
+- waitForAnimationToEnd
+- tapOn: "Transfer"
+- tapOn: "Monthly limit"
+- inputText: "750"
+- tapOn: "Save"
+- waitForAnimationToEnd
+
+# --- Goal (linked to Investments) ---
+- scrollUntilVisible:
+    element: "Add goal"
+- tapOn: "Add goal"
+- tapOn: "Name"
+- inputText: "Holiday fund"
+- back
+- tapOn: "Target"
+- inputText: "1200"
+- back
+- tapOn: "Investments"
+- tapOn: "Save"
+- waitForAnimationToEnd
+
+# --- Recurring ---
 - scrollUntilVisible:
     element: "Manage recurring bills & income"
-    direction: DOWN
 - tapOn: "Manage recurring bills & income"
 - tapOn:
     id: "recurring_add"
 - tapOn: "Name"
 - inputText: "Internet"
+- back
 - tapOn: "Amount"
 - inputText: "39.99"
-- hideKeyboard
-# The form no longer preselects a category; pick one explicitly.
+- back
 - tapOn: "Shopping"
 - tapOn: "Save"
 - assertVisible: "Internet"
-- takeScreenshot: maestro-out/screens/en-dark-recurring
 - back
-- back
+
+# --- Screenshots ---
+- tapOn:
+    id: "nav_home"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
-
-# Monthly plan (Plan tab; system back returns to Home): one expected-income line + a Food allocation of 300 (this is also the Food budget).
-- scrollUntilVisible:
-    element: "Plan your month|Edit plan"
-    direction: DOWN
-- tapOn: "Plan your month|Edit plan"
-- tapOn: "Add income line"
-- tapOn: "Label"
-- inputText: "Salary"
-- tapOn: "Amount"
-- inputText: "1900"
-- hideKeyboard
-- tapOn: "Save"
-- assertVisible: "Salary"
-- scrollUntilVisible:
-    element: "Food"
-    direction: DOWN
-- tapOn: "Food"
-- tapOn: "Monthly limit"
-- inputText: "300"
-- hideKeyboard
-- tapOn: "Save"
-- takeScreenshot: maestro-out/screens/en-dark-monthly-plan
-- scrollUntilVisible:
-    element: "Add income line"
-    direction: UP
-- back
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-
-# --- 3: English / Dark shots ---
-- scrollUntilVisible:
-    element: "Net balance|Saldo líquido"
-    direction: UP
-- takeScreenshot: maestro-out/screens/en-dark-dashboard
-- scroll
-- scroll
-- takeScreenshot: maestro-out/screens/en-dark-dashboard-scrolled
-- scrollUntilVisible:
-    element:
-      id: "see_all_activity"
-    direction: DOWN
-- tapOn:
-    id: "see_all_activity"
-- extendedWaitUntil:
-    visible:
-      id: "activity_list"
-    timeout: 10000
-- takeScreenshot: maestro-out/screens/en-dark-expense-list
-# Bottom-bar tabs: Plan, Insights, then back to Activity, and finally Home.
-- tapOn:
-    id: "nav_plan"
-- waitForAnimationToEnd:
-    timeout: 3000
-- takeScreenshot: maestro-out/screens/en-dark-plan
-- tapOn:
-    id: "nav_insights"
-- waitForAnimationToEnd:
-    timeout: 3000
-- takeScreenshot: maestro-out/screens/en-dark-insights
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/home
 - tapOn:
     id: "nav_activity"
 - extendedWaitUntil:
     visible:
       id: "activity_list"
     timeout: 10000
-- takeScreenshot: maestro-out/screens/en-dark-activity
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/activity
+- tapOn:
+    id: "nav_plan"
+- waitForAnimationToEnd
+# The Plan tab keeps its scroll position: go back to the top for the first shot.
+- scrollUntilVisible:
+    element: "Monthly plan"
+    direction: UP
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/plan
+- scrollUntilVisible:
+    element: "Meal allowance"
+    centerElement: true
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/plan-income
+- tapOn:
+    id: "nav_insights"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/insights
 - tapOn:
     id: "nav_home"
 - extendedWaitUntil:
@@ -218,148 +228,10 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - tapOn:
     id: "dashboard_add_expense"
-- extendedWaitUntil:
-    visible: "Name"
-    timeout: 10000
-- takeScreenshot: maestro-out/screens/en-dark-add-expense
+- waitForAnimationToEnd
+- inputText: "42.00"
+- tapOn: "Name"
+- inputText: "Dinner"
 - back
-- runFlow:
-    when:
-      notVisible:
-        id: "dashboard_list"
-    commands:
-      - back
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn:
-    id: "dashboard_settings"
-- extendedWaitUntil:
-    visible: "Appearance"
-    timeout: 10000
-- takeScreenshot: maestro-out/screens/en-dark-settings
-
-# --- 4: Light theme: settings, dashboard, add-expense ---
-- scrollUntilVisible:
-    element: "Light"
-    direction: UP
-- tapOn: "Light"
-- takeScreenshot: maestro-out/screens/en-light-settings
-- back
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Net balance|Saldo líquido"
-    direction: UP
-- takeScreenshot: maestro-out/screens/en-light-dashboard
-- tapOn:
-    id: "dashboard_add_expense"
-- extendedWaitUntil:
-    visible: "Name"
-    timeout: 10000
-- takeScreenshot: maestro-out/screens/en-light-add-expense
-- back
-- runFlow:
-    when:
-      notVisible:
-        id: "dashboard_list"
-    commands:
-      - back
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-
-# --- 5: Português (Light theme kept) ---
-- tapOn:
-    id: "dashboard_settings"
-- scrollUntilVisible:
-    element: "Português"
-    direction: DOWN
-- tapOn: "Português"
-# Language change recreates the activity (stays on Settings); wait for the PT label.
-- extendedWaitUntil:
-    visible: "Aparência"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Aparência"
-    direction: UP
-- takeScreenshot: maestro-out/screens/pt-light-settings
-- back
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Net balance|Saldo líquido"
-    direction: UP
-- takeScreenshot: maestro-out/screens/pt-light-dashboard
-- scroll
-- scroll
-- takeScreenshot: maestro-out/screens/pt-light-dashboard-scrolled
-- scrollUntilVisible:
-    element:
-      id: "see_all_activity"
-    direction: DOWN
-- tapOn:
-    id: "see_all_activity"
-- extendedWaitUntil:
-    visible:
-      id: "activity_list"
-    timeout: 10000
-- takeScreenshot: maestro-out/screens/pt-light-expense-list
-# Bottom-bar tabs: Plan, Insights, then back to Activity, and finally Home.
-- tapOn:
-    id: "nav_plan"
-- waitForAnimationToEnd:
-    timeout: 3000
-- takeScreenshot: maestro-out/screens/pt-light-plan
-- tapOn:
-    id: "nav_insights"
-- waitForAnimationToEnd:
-    timeout: 3000
-- takeScreenshot: maestro-out/screens/pt-light-insights
-- tapOn:
-    id: "nav_activity"
-- extendedWaitUntil:
-    visible:
-      id: "activity_list"
-    timeout: 10000
-- takeScreenshot: maestro-out/screens/pt-light-activity
-- tapOn:
-    id: "nav_home"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn:
-    id: "dashboard_add_expense"
-- extendedWaitUntil:
-    visible: "Nome"
-    timeout: 10000
-- takeScreenshot: maestro-out/screens/pt-light-add-expense
-- back
-- runFlow:
-    when:
-      notVisible:
-        id: "dashboard_list"
-    commands:
-      - back
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Planeie o seu mês|Editar plano"
-    direction: UP
-- tapOn: "Planeie o seu mês|Editar plano"
-- extendedWaitUntil:
-    visible:
-      id: "nav_plan"
-    timeout: 10000
-- waitForAnimationToEnd:
-    timeout: 3000
-- takeScreenshot: maestro-out/screens/pt-light-monthly-plan
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/add-expense
