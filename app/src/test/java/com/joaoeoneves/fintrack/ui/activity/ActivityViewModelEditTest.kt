@@ -3,7 +3,10 @@ package com.joaoeoneves.fintrack.ui.activity
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
+import com.joaoeoneves.fintrack.domain.usecase.IgnoredOccurrence
 import com.joaoeoneves.fintrack.testutil.genericErrorText
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.userCategory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -24,7 +27,7 @@ class ActivityViewModelEditTest : ActivityViewModelTestBase() {
     fun onDelete_expense_removesItAndEmitsUndoEvent() =
         runTest(testDispatcher) {
             val fixture = Fixture(listOf(groceries, expense("keep")), listOf(salary))
-            val events = mutableListOf<Transaction>()
+            val events = mutableListOf<DeletedTransaction>()
             backgroundScope.launch { fixture.vm.undoEvent.collect { events += it } }
             content(fixture.vm)
 
@@ -33,14 +36,14 @@ class ActivityViewModelEditTest : ActivityViewModelTestBase() {
 
             assertNull(fixture.expenseRepo.getExpense("groceries").getOrThrow())
             assertEquals(listOf("keep", "salary"), current(fixture.vm).items.map { it.id }.sorted())
-            assertEquals(listOf<Transaction>(groceries), events)
+            assertEquals(listOf(DeletedTransaction(groceries)), events)
         }
 
     @Test
     fun onDelete_income_removesItAndEmitsUndoEvent() =
         runTest(testDispatcher) {
             val fixture = Fixture(listOf(groceries), listOf(salary))
-            val events = mutableListOf<Transaction>()
+            val events = mutableListOf<DeletedTransaction>()
             backgroundScope.launch { fixture.vm.undoEvent.collect { events += it } }
             content(fixture.vm)
 
@@ -49,14 +52,14 @@ class ActivityViewModelEditTest : ActivityViewModelTestBase() {
 
             assertNull(fixture.incomeRepo.getIncome("salary").getOrThrow())
             assertEquals(listOf("groceries"), current(fixture.vm).items.map { it.id })
-            assertEquals(listOf<Transaction>(salary), events)
+            assertEquals(listOf(DeletedTransaction(salary)), events)
         }
 
     @Test
     fun onDelete_unknownId_isNoOp_andEmitsNothing() =
         runTest(testDispatcher) {
             val fixture = Fixture(listOf(groceries), listOf(salary))
-            val events = mutableListOf<Transaction>()
+            val events = mutableListOf<DeletedTransaction>()
             backgroundScope.launch { fixture.vm.undoEvent.collect { events += it } }
             content(fixture.vm)
 
@@ -79,10 +82,45 @@ class ActivityViewModelEditTest : ActivityViewModelTestBase() {
         }
 
     @Test
+    fun deletingARecurringOccurrence_skipsIt_andUndoUnskips() =
+        runTest(testDispatcher) {
+            val occurrenceDay = java.time.LocalDate.ofInstant(now, java.time.ZoneOffset.UTC)
+            val occurrence = expense("rec_r1_${occurrenceDay.toString().replace("-", "")}")
+            val fixture = Fixture(listOf(occurrence))
+            fixture.recurringRepo.setItems(listOf(recurringItem(id = "r1", handledThrough = occurrenceDay)))
+            val events = mutableListOf<DeletedTransaction>()
+            backgroundScope.launch { fixture.vm.undoEvent.collect { events += it } }
+            content(fixture.vm)
+
+            fixture.vm.onDelete(occurrence.id)
+            advanceUntilIdle()
+
+            val ignored = events.single().ignored
+            assertEquals(IgnoredOccurrence("r1", "Rent", occurrenceDay, newlySkipped = true), ignored)
+            assertEquals(
+                setOf(occurrenceDay),
+                fixture.recurringRepo.items
+                    .single()
+                    .skipped,
+            )
+
+            fixture.vm.onUndoDelete(events.single())
+            advanceUntilIdle()
+
+            assertEquals(occurrence, fixture.expenseRepo.getExpense(occurrence.id).getOrThrow())
+            assertTrue(
+                fixture.recurringRepo.items
+                    .single()
+                    .skipped
+                    .isEmpty(),
+            )
+        }
+
+    @Test
     fun deleteThenUndo_expense_roundTrips() =
         runTest(testDispatcher) {
             val fixture = Fixture(listOf(groceries, expense("keep")))
-            val events = mutableListOf<Transaction>()
+            val events = mutableListOf<DeletedTransaction>()
             backgroundScope.launch { fixture.vm.undoEvent.collect { events += it } }
             content(fixture.vm)
             fixture.vm.onDelete("groceries")
@@ -99,7 +137,7 @@ class ActivityViewModelEditTest : ActivityViewModelTestBase() {
     fun deleteThenUndo_income_roundTrips() =
         runTest(testDispatcher) {
             val fixture = Fixture(incomes = listOf(salary))
-            val events = mutableListOf<Transaction>()
+            val events = mutableListOf<DeletedTransaction>()
             backgroundScope.launch { fixture.vm.undoEvent.collect { events += it } }
             content(fixture.vm)
             fixture.vm.onDelete("salary")

@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.genericErrorText
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
@@ -70,13 +71,23 @@ class AddEditExpenseViewModelTest {
 
     private fun addModeViewModel(repository: ExpenseRepository): AddEditExpenseViewModel {
         val savedStateHandle = SavedStateHandle()
-        return AddEditExpenseViewModel(repository, FakeCategoryRepository(), savedStateHandle)
+        return AddEditExpenseViewModel(
+            repository,
+            FakeCategoryRepository(),
+            deleteTransactionFor(repository),
+            savedStateHandle,
+        )
     }
 
     private fun editModeViewModel(
         repository: ExpenseRepository,
         expenseId: String,
-    ) = AddEditExpenseViewModel(repository, FakeCategoryRepository(), SavedStateHandle(mapOf("expenseId" to expenseId)))
+    ) = AddEditExpenseViewModel(
+        repository,
+        FakeCategoryRepository(),
+        deleteTransactionFor(repository),
+        SavedStateHandle(mapOf("expenseId" to expenseId)),
+    )
 
     // ---- add mode: initial state ----
 

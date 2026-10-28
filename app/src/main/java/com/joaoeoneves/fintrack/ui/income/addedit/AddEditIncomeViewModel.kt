@@ -11,6 +11,8 @@ import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.defaultNewTransactionDate
 import com.joaoeoneves.fintrack.ui.navigation.AddEditIncome
@@ -33,6 +35,7 @@ class AddEditIncomeViewModel
     @Inject
     constructor(
         private val incomeRepository: IncomeRepository,
+        private val deleteTransaction: DeleteTransaction,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditIncome>()
@@ -45,10 +48,10 @@ class AddEditIncomeViewModel
         private val savedEvents = Channel<Unit>(Channel.BUFFERED)
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
 
-        private val deletedEvents = Channel<Income>(Channel.BUFFERED)
+        private val deletedEvents = Channel<DeletedTransaction>(Channel.BUFFERED)
 
         /** Emits the deleted income (as loaded) so the screen can offer to undo the deletion. */
-        val deletedEvent: Flow<Income> = deletedEvents.receiveAsFlow()
+        val deletedEvent: Flow<DeletedTransaction> = deletedEvents.receiveAsFlow()
 
         // The income as loaded in edit mode, kept so a deletion can be undone.
         private var loaded: Income? = null
@@ -175,10 +178,9 @@ class AddEditIncomeViewModel
             if (current.form.isSaving || current.form.isDeleting) return
             _uiState.value = AddEditIncomeUiState.Ready(current.form.copy(isDeleting = true, saveError = null))
             viewModelScope.launch {
-                incomeRepository
-                    .deleteIncome(income.id)
+                deleteTransaction(income)
                     .onSuccess {
-                        deletedEvents.send(income)
+                        deletedEvents.send(it)
                     }.onFailure { e ->
                         Log.w(TAG, "Failed to delete income", e)
                         updateForm {

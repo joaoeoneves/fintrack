@@ -5,6 +5,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -212,6 +213,28 @@ class FirestoreExpenseRepository
                     .get(Source.SERVER)
                     .await()
                     .isEmpty
+            }
+        }
+
+        override suspend fun expenseIdsBetween(
+            firstId: String,
+            lastId: String,
+        ): Result<Set<String>> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            // Server-only on purpose (see hasExpenseWithCategory): a partial cache would report an existing
+            // expense as missing. Fails while offline.
+            return runCatchingCancellable {
+                expensesCollection(uid)
+                    .orderBy(FieldPath.documentId())
+                    .startAt(firstId)
+                    .endAt(lastId)
+                    .get(Source.SERVER)
+                    .await()
+                    .documents
+                    .map { it.id }
+                    .toSet()
             }
         }
 

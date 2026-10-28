@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.testExpense
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,7 +48,12 @@ class AddEditExpenseViewModelDefaultDateTest {
     private fun viewModel(
         vararg args: Pair<String, Any?>,
         repository: FakeExpenseRepository = FakeExpenseRepository(),
-    ) = AddEditExpenseViewModel(repository, FakeCategoryRepository(), SavedStateHandle(mapOf(*args)))
+    ) = AddEditExpenseViewModel(
+        repository,
+        FakeCategoryRepository(),
+        deleteTransactionFor(repository),
+        SavedStateHandle(mapOf(*args)),
+    )
 
     private fun AddEditExpenseViewModel.date(): Instant = (uiState.value as AddEditUiState.Ready).form.date
 
@@ -58,7 +64,14 @@ class AddEditExpenseViewModelDefaultDateTest {
             val vm = viewModel("period" to "month:$month")
             advanceUntilIdle()
 
-            assertEquals(month.atEndOfMonth().atTime(LocalTime.NOON).atZone(zone).toInstant(), vm.date())
+            assertEquals(
+                month
+                    .atEndOfMonth()
+                    .atTime(LocalTime.NOON)
+                    .atZone(zone)
+                    .toInstant(),
+                vm.date(),
+            )
         }
 
     @Test
@@ -96,7 +109,7 @@ class AddEditExpenseViewModelDefaultDateTest {
         runTest(testDispatcher) {
             val stored = Instant.parse("2026-03-10T08:00:00Z")
             val expense = testExpense("e1", 250L, stored)
-            
+
             val repo = FakeExpenseRepository(listOf(expense))
             val month = YearMonth.now(zone).minusMonths(2)
             val vm = viewModel("expenseId" to "e1", "period" to "month:$month", repository = repo)

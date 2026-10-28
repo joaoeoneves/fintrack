@@ -120,6 +120,7 @@
     <string name="activity_type_all">All</string>
     <string name="activity_search_label">Search</string>
     <string name="activity_deleted_snackbar">Deleted “%1$s”</string>
+    <string name="activity_deleted_occurrence_snackbar">Deleted. “%1$s” for %2$s is now skipped.</string>
     <string name="activity_no_match">Nothing matches “%1$s”.</string>
     <string name="activity_no_match_filter">No expenses match the selected filter.</string>
     <string name="activity_empty">No activity in this period yet.</string>

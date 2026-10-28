@@ -36,6 +36,16 @@ interface ExpenseRepository {
         return all.map { it.isNotEmpty() }.distinctUntilChanged()
     }
 
+    /**
+     * The ids of the expenses whose id lies in the inclusive range [firstId]..[lastId] (lexicographic). Signed
+     * in this reads the server (a partial cache could report an existing expense as missing), so it can fail
+     * while offline. The default filters [getAllExpenses]; real repositories override it.
+     */
+    suspend fun expenseIdsBetween(
+        firstId: String,
+        lastId: String,
+    ): Result<Set<String>> = getAllExpenses().map { all -> all.map { it.id }.filter { it in firstId..lastId }.toSet() }
+
     suspend fun addExpense(expense: Expense): Result<String>
 
     suspend fun updateExpense(expense: Expense): Result<Unit>

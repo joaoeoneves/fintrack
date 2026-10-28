@@ -53,6 +53,7 @@ class AutomationSyncThrowingTest {
                 repo,
                 HandleRecurringOccurrence(repo, FakeCategoryRepository()),
                 FakeExpenseRepository(),
+                FakeCategoryRepository(),
             ),
             PaydayData(automation, plan, repo, RestoreGate()),
             RecordPayday(plan, FakeMonthSettingsRepository(), income, automation, FakeSalaryLineLabelsProvider()),
@@ -86,6 +87,7 @@ class AutomationSyncThrowingTest {
             repo.setItems(listOf(due.copy(handledThrough = day(2026, 1, 15))))
             advanceUntilIdle()
 
-            assertEquals(2, repo.confirmedTransactions.size)
+            // The first attempt healed Jan/Feb 15 into the expense store, so only Mar 15 is posted now.
+            assertEquals(1, repo.confirmedTransactions.size)
         }
 }

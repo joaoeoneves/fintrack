@@ -40,12 +40,32 @@ class PendingWriteRecurringTest {
         assertEquals("recurring", write.collection)
         assertEquals("r1", write.id)
         val keys = setOf("type", "name", "amountCents", "category", "note", "frequency", "dayOfMonth", "monthOfYear")
-        val dates = setOf("startDate", "endDate", "handledThrough", "active", "autoPost", "updatedAt")
+        val dates =
+            setOf(
+                "startDate",
+                "endDate",
+                "handledThrough",
+                "active",
+                "autoPost",
+                "skipped",
+                "pausedAt",
+                "updatedAt",
+            )
         assertEquals(keys + dates, write.data.keys)
         assertEquals("EXPENSE", write.data["type"])
         assertEquals("FOOD", write.data["category"])
         assertEquals(5000L, write.data["amountCents"])
         assertEquals("2026-01-01", write.data["startDate"])
+    }
+
+    @Test
+    fun guestSkippedAndPausedAt_reachTheFirestoreMap() {
+        val item = localRecurring("r1", "FOOD").copy(skipped = listOf("2026-02-15"), pausedAt = "2026-03-01")
+
+        val write = plan(listOf(item)).toBatches().single().single()
+
+        assertEquals(listOf("2026-02-15"), write.data["skipped"])
+        assertEquals("2026-03-01", write.data["pausedAt"])
     }
 
     @Test

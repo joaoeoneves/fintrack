@@ -55,4 +55,3 @@ class CountsTextTest {
         assertEquals(true, text.endsWith("Savings plans: 0\nSalary profile: No"))
     }
 }
-

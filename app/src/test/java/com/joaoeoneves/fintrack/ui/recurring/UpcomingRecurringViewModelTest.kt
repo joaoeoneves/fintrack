@@ -158,7 +158,7 @@ class UpcomingRecurringViewModelTest {
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
             val row = content(started(vm)).overview.upcoming.single()
 
-            repo.nextSetHandledError = IllegalStateException("boom")
+            repo.nextSkipError = IllegalStateException("boom")
             vm.onSkip(row)
             advanceUntilIdle()
             assertEquals(1, errors.size)
@@ -167,6 +167,7 @@ class UpcomingRecurringViewModelTest {
             vm.onSkip(row)
             advanceUntilIdle()
             assertEquals(day(2026, 3, 15), repo.items.single().handledThrough)
+            assertEquals(setOf(day(2026, 3, 15)), repo.items.single().skipped)
             assertTrue(repo.confirmedTransactions.isEmpty())
             assertEquals(1, errors.size)
         }

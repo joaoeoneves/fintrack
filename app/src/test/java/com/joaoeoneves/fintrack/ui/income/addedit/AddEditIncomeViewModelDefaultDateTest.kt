@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.income.addedit
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.testIncome
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +47,11 @@ class AddEditIncomeViewModelDefaultDateTest {
     private fun viewModel(
         vararg args: Pair<String, Any?>,
         repository: FakeIncomeRepository = FakeIncomeRepository(),
-    ) = AddEditIncomeViewModel(repository, SavedStateHandle(mapOf(*args)))
+    ) = AddEditIncomeViewModel(
+        repository,
+        deleteTransactionFor(incomes = repository),
+        SavedStateHandle(mapOf(*args)),
+    )
 
     private fun AddEditIncomeViewModel.date(): Instant = (uiState.value as AddEditIncomeUiState.Ready).form.date
 
@@ -57,7 +62,14 @@ class AddEditIncomeViewModelDefaultDateTest {
             val vm = viewModel("period" to "month:$month")
             advanceUntilIdle()
 
-            assertEquals(month.atEndOfMonth().atTime(LocalTime.NOON).atZone(zone).toInstant(), vm.date())
+            assertEquals(
+                month
+                    .atEndOfMonth()
+                    .atTime(LocalTime.NOON)
+                    .atZone(zone)
+                    .toInstant(),
+                vm.date(),
+            )
         }
 
     @Test

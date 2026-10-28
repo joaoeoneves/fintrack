@@ -284,7 +284,12 @@ class GoalProgressTest {
 
     @Test
     fun status_savedSomething_isNotNotStarted() {
-        val goal = savingsGoal(targetCents = 36_500, startDate = LocalDate.of(2026, 7, 1), linkedCategoryId = linkedCategory)
+        val goal =
+            savingsGoal(
+                targetCents = 36_500,
+                startDate = LocalDate.of(2026, 7, 1),
+                linkedCategoryId = linkedCategory,
+            )
         val result = progress(goal, listOf(expense("e", 100, date = LocalDate.of(2026, 7, 1), category = savings)))
 
         assertEquals(GoalStatus.ON_TRACK, result.status)
