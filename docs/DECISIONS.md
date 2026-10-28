@@ -64,10 +64,23 @@ Short records of the main architectural choices: context, decision, consequences
 - **Consequences:** Releases are reproducible from CI and need no manual steps. There is no store
   distribution or staged rollout, and the signing key is held in repository secrets.
 
-## 8. End-to-end tests on CI emulators
+## 8. End-to-end tests on CI emulators, only before a release
 
-- **Context:** Local emulators tie testing to one machine, and Google sign-in cannot be scripted.
-- **Decision:** Maestro flows run on an emulator in GitHub Actions (manual and weekly), written against
-  guest mode. The baseline profile is generated the same way.
-- **Consequences:** E2E coverage does not depend on a developer machine. Flows that need a Google
-  account are not covered on CI, and emulator runs are slow, so they are kept out of the per-PR job.
+- **Context:** Local emulators tie testing to one machine, and Google sign-in cannot be scripted. A full
+  emulator run is slow and was flaky enough on every push to cost more than it caught.
+- **Decision:** Maestro flows run on an emulator in GitHub Actions, written against guest mode. The Release
+  workflow calls the E2E workflow on a `vX.Y` tag and only publishes if the flows tagged `release` pass;
+  it can also be run by hand. The baseline profile is generated the same way.
+- **Consequences:** E2E coverage does not depend on a developer machine and a broken release is caught
+  before the APK is published. Ordinary PRs get unit tests, lint and builds only, so a UI regression can
+  sit on `main` until the next tag. Flows that need a Google account are not covered.
+
+## 9. Automation runs on app start, not in the background
+
+- **Context:** Recurring items that post themselves and income recorded on payday should happen without
+  a tap, but a background job (WorkManager) means scheduling, permissions and a second code path.
+- **Decision:** `AutomationSync` runs the steps when the app starts or returns to the foreground and
+  whenever the data they read changes. Each step only fills what is already due and is idempotent, using
+  the deterministic recurring ids and a `paydayThrough` cursor.
+- **Consequences:** Nothing is posted while the app stays closed; the next time you open it, everything
+  that fell due is caught up. It is simple, safe across two devices, and testable on the JVM.
