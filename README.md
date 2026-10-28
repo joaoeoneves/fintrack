@@ -44,20 +44,34 @@ offline-first, and it can be used without an account at all (guest mode).
 - CSV import/export for expenses.
 
 **Planning**
-- Per-category monthly budgets with progress bars and an over-budget state.
-- Monthly plan: expected income lines plus the category budgets give a *safe to spend* figure and a daily
-  allowance for the rest of the month.
+- The Plan tab goes: summary, pots, income, limits and groups, goals, recurring. Limits are per-category
+  monthly budgets with progress bars, listed inside their category group.
+- Monthly plan: expected income lines plus the limits give a *safe to spend* figure and a daily
+  allowance for the rest of the month. A yearly view shows all twelve months.
+- Income can be per working day, with Portuguese holidays, days off and a Carnival shortcut. Lines can be
+  earmarked for a category or group as a pot.
+- Salary profile (optional): gross or net, subsidy months, youth IRS, meal allowance, and your own extras
+  (a fixed amount, a multiple of the base or a share of the annual gross, with the months and deductions
+  you choose). Each component gets its own income row: the salary is the net base and the subsidy
+  twelfths show under Subsidies.
+- Savings goals linked to recurring items or a category, and an Insights tab with fixed versus variable
+  spending.
+- When you add an expense, the category you used last time for that name is suggested.
 
 **Recurring**
 - Monthly or yearly templates for rent, subscriptions or salary, with start/end dates and pause/resume.
 - An Upcoming card lists due items; Confirm creates the transaction, Skip moves on. Confirming twice
   (double tap, second device) never creates a duplicate.
+- An item can be set to "Post automatically" and is then recorded on its due date.
+- Optional "Record income on payday" books the planned income on the last working day of the month; a
+  "Received" action on Plan and Home records it earlier.
 
 **Guest mode and backup**
 - "Continue as guest" uses the whole app with data kept in a single JSON file on the device; no Firebase
   is involved.
 - Signing in later offers to copy guest data into the account, then to remove it from the device.
-- Versioned JSON backup and restore (for example to move to another phone).
+- Versioned JSON backup and restore (for example to move to another phone). Settings has a "delete all
+data" action.
 
 **Localization and appearance**
 - English and Portuguese (pt-PT), switchable in-app; follows the system language by default.
@@ -114,12 +128,13 @@ the reasoning behind the main choices is in [docs/DECISIONS.md](docs/DECISIONS.m
 
 - **1,700+ unit tests** (JVM, run against in-memory fake repositories; Robolectric where an Android
   class is unavoidable).
-- **Maestro E2E flows** (`.maestro/`, 15 flows) run on emulators in GitHub Actions (manual dispatch plus
-  a weekly schedule). They use guest mode, so no Google account is needed.
+- **Maestro E2E flows** (`.maestro/`) run on an emulator in GitHub Actions, only before a release: the
+  Release workflow runs the two flows tagged `release` and does not publish if they fail. Any flow can
+  also be run by hand. They use guest mode, so no Google account is needed.
 - **CI** on every push and PR to `main`: ktlint, detekt, Android lint, unit tests, debug and (unsigned)
   release builds, and compilation of the baseline-profile generator.
 - **Baseline profile** generated on a CI emulator and committed.
-- **Signed releases**: pushing a tag `vX.Y` builds, tests and signs the APK, verifies the signature and
+- **Signed releases**: pushing a tag `vX.Y` runs the E2E flows, then builds, tests and signs the APK, verifies the signature and
   publishes a GitHub release with the APK and the R8 mapping file.
 
 Run the same checks locally with the shared gate script:
@@ -154,10 +169,10 @@ Guest mode works without any Firebase sign-in, but the build still needs a `goog
 app/src/main/java/com/joaoeoneves/fintrack/
 ├── ui/        Compose screens by feature (dashboard, expense, income, plan, recurring, settings, ...),
 │              designsystem/, theme/, navigation/
-├── domain/    models, repository interfaces, use cases
 ├── data/      Firestore repositories, local/ (guest JSON store), session/ (switching), backup/,
-│              migration/, preferences/, csv/
+│              migration/, preferences/, csv/, automation/ and salary/ (app-start syncs)
 └── di/        Hilt modules
+core/model/            pure-Kotlin module: domain models, repository interfaces, use cases
 app/src/test/          JVM unit tests and shared fakes
 app/src/androidTest/   instrumented tests
 baselineprofile/       baseline profile generator module

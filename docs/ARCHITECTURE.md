@@ -90,10 +90,11 @@ All data lives under `users/{uid}/`. Money is stored as integer minor units (`am
 | `budgets/{categoryId}` | `limitCents` (the document id is the category id), `skipMonths?` (months 1..12 the limit does not apply to) |
 | `plannedIncome/{lineId}` | `label` (1..50), `amountCents` (the rate for per-working-day lines), `order`, `basis?` (`FIXED`/`PER_WORKING_DAY`), `frequency?` (`MONTHLY`/`YEARLY`/`ONCE`), `monthOfYear?` (yearly only), `yearMonth?` (`yyyy-MM`, one-off only), `skipMonths?` (list of months 1..12 a monthly line is not paid in), `earmarkType?` (`CATEGORY`/`GROUP`) + `earmarkId?` (both or neither: sets the line aside for that category/group as a pot), `managedKey?` (one of the `profile_*` keys: the line is generated from the salary profile, read-only except label/earmark); absent fields mean fixed/monthly; at most 20 lines (enforced client-side, rules cannot count documents) |
 | `plan/salaryProfile` | singleton: `inputMode` (`GROSS`/`NET`), rates as integer ppm (`subsidySpreadPpm` 0/500000/1000000, `irsBasePpm`, `irsSubsidiesPpm?`, `ssPpm`, `irsJovemExemptPpm`), amounts in cents (`baseGrossCents?`, `netMonthlyCents?`, `netHolidayLumpCents?`, `netChristmasLumpCents?`, `mealRatePerDayCents?`), months 1..12 (`holidaySubsidyMonth`, `christmasSubsidyMonth`), `mealSkipMonths`, `extras` (list of up to 10 `{id, name, amountType` FIXED_CENTS/MULTIPLE_OF_BASE_PPM/PERCENT_OF_ANNUAL_GROSS_PPM`, amount, months, deductions?, feePpm?}`; absent = legacy `flex*`/`profitShare*`/`bonus*` fields migrated on read), `updatedAt`; saving it upserts the managed `plannedIncome` lines, deleting it removes them |
+| `plan/automation` | singleton: `paydayEnabled?` (record the planned income on payday), `paydayThrough?` (`yyyy-MM`, the last month already recorded), `updatedAt` |
 | `categoryGroups/{id}` | `name` (1..50), `order`, `updatedAt`; categories point at one with the optional `groupId` (shape-checked only, a dangling id means ungrouped); deleting a group clears `groupId` on its categories |
 | `goals/{id}` | `name` (1..50), `targetCents`, `targetType` (`ANNUAL`/`TOTAL`), `startDate`, `targetDate?` (not before `startDate`), `initialCents?` >= 0, `linkedRecurringIds?` (list, at most 20), `linkedCategoryId?` (shape-checked only), `archived`, `order`, `updatedAt`; progress is computed from the expenses of the linked recurring items (id prefix `rec_<itemId>_`) and category |
 | `monthSettings/{yyyy-MM}` | `workingDays?` 0..23 (manual working-days count replacing the Portuguese-holiday calendar count for that month), `daysOff?` 0..23 (vacation/days off taken; effective working days = override, else calendar count minus days off); the document is deleted when neither is set; `updatedAt` |
-| `recurring/{itemId}` | `type` (`EXPENSE`/`INCOME`), `name`, `amountCents`, `category?`, `note?`, `frequency` (`MONTHLY`/`YEARLY`), `dayOfMonth` 1..31, `monthOfYear?`, `startDate`, `endDate?`, `handledThrough?`, `active`, `updatedAt` (dates as `yyyy-MM-dd`) |
+| `recurring/{itemId}` | `type` (`EXPENSE`/`INCOME`), `name`, `amountCents`, `category?`, `note?`, `frequency` (`MONTHLY`/`YEARLY`), `dayOfMonth` 1..31, `monthOfYear?`, `startDate`, `endDate?`, `handledThrough?`, `active`, `autoPost?`, `updatedAt` (dates as `yyyy-MM-dd`) |
 | `categories/{id}` | `name?`, `iconKey`, `colorKey`, `kind` (`SPENDING`/`SAVING`), `order`, `archived`, `builtIn`, timestamps. User categories have generated ids; a built-in's override document reuses the built-in id with `name` null meaning the localized default |
 | `settings/preferences` | `theme` (`SYSTEM`/`LIGHT`/`DARK`), `currency` (`USD`/`EUR`/`GBP`/`JPY`/`CAD`/`AUD`), `language` (`SYSTEM`/`ENGLISH`/`PORTUGUESE`), `updatedAt` |
 
@@ -126,24 +127,24 @@ acknowledgement while offline. Reads are snapshot listeners wrapped in `callback
 ## Guest mode: the local JSON store
 
 `LocalDataStore` holds the guest data set (`LocalDataDocument`: `schemaVersion`, `revision`, and lists of
-expenses, income, budgets, planned income, categories, recurring items, month settings, category groups, salary profile, goals; ISO-8601 dates) in
+expenses, income, budgets, planned income, categories, recurring items, month settings, category groups, salary profile, goals, automation settings; ISO-8601 dates) in
 `guest-data.json` under `filesDir`.
 
 - Loaded lazily, kept in memory, rewritten on every change.
 - **Atomic writes**: temp file, fsync, rename. New state is published to observers only after the write
   succeeded, so no one sees data that is not on disk. A mutex serialises writers.
-- **Versioning**: `schemaVersion` is currently 9. A corrupt file, or one with a newer schema, is moved to
+- **Versioning**: `schemaVersion` is currently 12. A corrupt file, or one with a newer schema, is moved to
   `guest-data.corrupt-<millis>.json` (never deleted) and the store starts empty.
 - After a migration to an account and a confirmed "Remove from this device", one safety copy remains as
   `guest-data.migrated.json`, overwritten next time.
 
 ## Backup format
 
-A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 9, "exportedAt",
+A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 12, "exportedAt",
 "appVersion", "preferences", ...records }` using the same record shapes as the guest store. Decoding:
 
 - a missing or invalid version is rejected; a version newer than the app supports is refused;
-- older versions (1 to 5) are upgraded in memory to the current one;
+- older versions are upgraded in memory to the current one;
 - records that fail validation are skipped and reported to the user on restore.
 
 Backups can be exported signed in or as a guest and restored as a guest.
@@ -190,6 +191,9 @@ function of the item and date, a double tap or a second device writes the same d
 duplicate; `HandleRecurringOccurrence` also re-reads the latest item and treats an already-handled
 occurrence as a successful no-op. Skipping only advances the cursor.
 
+Items with `autoPost` set go through the same path without a tap: `AutoPostRecurring` confirms every
+occurrence that is due, so the deterministic id keeps it safe if two devices do it at once.
+
 ## Monthly plan
 
 The plan is global (one set of expected-income lines) and built on the category budgets. For a month
@@ -211,6 +215,16 @@ charged to the pot (a category earmark beats a group earmark), everything else t
 max(non-earmarked expected, actual month income - earmarked expected), and the daily allowance applies to the
 base. Without earmarks the base equals the safe-to-spend above. An earmark whose target no longer exists is
 ignored.
+
+## App-start syncs
+
+Two singletons run when the app starts and follow the session. `ManagedIncomeSync` (`data/salary/`)
+re-generates the income lines managed by the salary profile, so a rule or holiday change shows up without
+re-saving the profile. `AutomationSync` (`data/automation/`) runs `AutoPostRecurring` and `RecordPayday`
+whenever the session, the data they read or the foreground state changes, which is how a new day is picked
+up without a background job. Payday is the last working day of the month (Portuguese holidays); the
+`paydayThrough` cursor in `plan/automation` stops a month being recorded twice, and the "Received" action
+on Plan and Home runs the same step early. A failing step is logged and not retried for the same inputs.
 
 ## Localization
 
