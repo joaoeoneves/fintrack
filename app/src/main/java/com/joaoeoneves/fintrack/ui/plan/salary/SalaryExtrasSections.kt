@@ -19,15 +19,13 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 internal fun MealSection(
     form: SalaryForm,
-    invalid: Set<SalaryField>,
     onChange: (SalaryForm) -> Unit,
 ) {
     SalaryGroup(stringResource(R.string.salary_group_meal)) {
-        SalaryTextField(
+        SalaryMoneyField(
             label = stringResource(R.string.salary_field_meal),
-            value = form.meal,
+            cents = form.meal,
             onChange = { onChange(form.copy(meal = it)) },
-            invalid = SalaryField.MEAL in invalid,
             hint = stringResource(R.string.salary_meal_hint),
         )
     }

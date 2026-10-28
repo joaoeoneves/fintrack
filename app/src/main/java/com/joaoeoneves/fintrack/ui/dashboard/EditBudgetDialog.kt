@@ -5,30 +5,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
-import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
-import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
-import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
-import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
-import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.plan.MonthChips
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -39,11 +35,8 @@ internal fun EditBudgetDialog(
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val decimalSeparator = decimalSeparatorFor(currentLocale())
-    var amountText by remember { mutableStateOf(budget.limitCents?.toAmountInputText(decimalSeparator).orEmpty()) }
+    var limitCents by rememberSaveable { mutableLongStateOf(budget.limitCents ?: 0L) }
     var skipMonths by remember { mutableStateOf(budget.skipMonths) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val invalidAmountMessage = stringResource(R.string.error_invalid_amount)
     val hasLimit = budget.limitCents != null
     var confirmingRemove by remember { mutableStateOf(false) }
 
@@ -53,16 +46,10 @@ internal fun EditBudgetDialog(
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
         ) {
-            MinimalTextField(
-                value = amountText,
-                onValueChange = {
-                    amountText = it
-                    error = null
-                },
+            MoneyTextField(
+                cents = limitCents,
+                onCentsChange = { limitCents = it },
                 label = stringResource(R.string.budget_dialog_limit_label),
-                isError = error != null,
-                supportingText = { error?.let { Text(it) } },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
             )
             SkipMonthChips(skipMonths) { skipMonths = it }
@@ -72,12 +59,10 @@ internal fun EditBudgetDialog(
             onClick = {
                 // Clearing the field means "no limit": remove an existing one (after confirming), otherwise
                 // there is nothing to change.
-                if (amountText.isBlank()) {
+                if (limitCents == 0L) {
                     if (hasLimit) confirmingRemove = true else onDismiss()
                 } else {
-                    parseAmountCents(amountText)
-                        .onSuccess { cents -> onSave(cents, skipMonths) }
-                        .onFailure { error = invalidAmountMessage }
+                    onSave(limitCents, skipMonths)
                 }
             },
             modifier = Modifier.padding(top = Dimens.Space16),
