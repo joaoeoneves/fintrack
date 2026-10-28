@@ -2,15 +2,14 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.Earmark
-import com.joaoeoneves.fintrack.domain.model.GroupProgress
+import com.joaoeoneves.fintrack.domain.model.Envelope
+import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.LimitGroup
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.domain.model.PotsSummary
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.LocalDate
@@ -29,9 +28,8 @@ sealed interface MonthlyPlanUiState {
      * @property canAddIncomeLine whether the line cap has not been reached yet.
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
      * @property editor the income-line sheet, or `null` when it is closed.
-     * @property groups planned vs actual per category group (and the implicit "Other") for [period]'s month.
-     * @property limitGroups every category with a limit, filed under its group, for the limits card.
-     * @property pots the month's money split into earmarked pots and the base; `null` when not computed.
+     * @property envelopes the month's envelopes (amounts, spend, funding) and free money.
+     * @property limitGroups every category, filed under its envelope, for the limits card.
      * @property receipts payday and which [incomeRows] were already received.
      */
     data class Content(
@@ -46,9 +44,8 @@ sealed interface MonthlyPlanUiState {
         val canAddIncomeLine: Boolean,
         val workingDays: WorkingDaysState,
         val editor: IncomeLineEditorState?,
-        val groups: List<GroupProgress> = emptyList(),
+        val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
         val limitGroups: List<LimitGroup> = emptyList(),
-        val pots: PotsSummary? = null,
         val receipts: IncomeReceipts,
     ) : MonthlyPlanUiState
 
@@ -56,6 +53,14 @@ sealed interface MonthlyPlanUiState {
         val message: UiText,
     ) : MonthlyPlanUiState
 }
+
+/** One envelope of the limits card (`envelope == null` is "no envelope"): its category [rows] and their totals. */
+data class LimitGroup(
+    val envelope: Envelope?,
+    val plannedCents: Long,
+    val spentCents: Long,
+    val rows: List<CategoryBudget>,
+)
 
 /**
  * Payday and the receipts of [Content.period]'s month: [receivedOn] holds the day each fully received income row
@@ -123,7 +128,6 @@ data class IncomeLineEditorState(
     val initialAmountCents: Long?,
     val initialSchedule: IncomeSchedule = IncomeSchedule(),
     val labelError: UiText? = null,
-    val earmarkOptions: EarmarkOptions = EarmarkOptions(),
     /** A line generated from the salary profile: only its label and earmark can be changed here. */
     val managed: Boolean = false,
     /** The salary component of a managed line, whose name replaces the label in the sheet. */

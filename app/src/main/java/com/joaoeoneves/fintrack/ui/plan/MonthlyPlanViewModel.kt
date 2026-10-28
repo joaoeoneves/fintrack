@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.Earmark
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
@@ -23,7 +24,6 @@ import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
 import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
 import com.joaoeoneves.fintrack.domain.model.isManaged
-import com.joaoeoneves.fintrack.domain.model.limitGroupsOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.paydayOf
 import com.joaoeoneves.fintrack.domain.model.receivedOn
@@ -331,17 +331,27 @@ private fun planFlow(
                 incomeLines = lines,
                 incomeRows = incomeRowsIn(lines, overview.budgetMonth, workingDays.days),
                 allocations = allocations,
-                summary = monthlyPlanOf(allocations, lines, emptyList(), overview.budgetMonth, workingDays.days),
+                summary =
+                    monthlyPlanOf(
+                        allocations,
+                        lines,
+                        emptyList(),
+                        overview.budgetMonth,
+                        workingDays.days,
+                        overview.envelopes.envelopes
+                            .map {
+                                it.envelope
+                            },
+                    ),
                 period = selected.period,
                 canGoToNextMonth = selected.canGoToNextMonth,
                 progress = overview.budgets,
                 fixedThisMonthCents = overview.summary.fixedSpendingCents,
                 canAddIncomeLine = lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
-                editor = editorState?.copy(earmarkOptions = earmarkOptionsOf(overview, allocations)),
-                groups = overview.groups,
-                limitGroups = limitGroupsOf(allocations, overview.budgets, overview.groups),
-                pots = overview.pots,
+                editor = editorState,
+                envelopes = overview.envelopes,
+                limitGroups = limitGroupsOf(allocations, overview),
                 receipts = receiptsOf(selected, overview, lines, workingDays.days),
             )
         content
@@ -387,12 +397,31 @@ private fun workingDaysOf(
     )
 }
 
-/** The defined groups and the active, named categories (those of the plan rows) an income line can be earmarked for. */
-private fun earmarkOptionsOf(
+/**
+ * Every plan row (all categories that can carry a limit) filed under its envelope, in envelope order, the rows of
+ * no envelope last; spent comes from the overview's progress.
+ */
+private fun limitGroupsOf(
+    allocations: List<CategoryBudget>,
     overview: PeriodOverview,
+): List<LimitGroup> {
+    val spentById = overview.budgets.associate { it.category.id to it.spentCents }
+    val rows = allocations.map { it.copy(spentCents = spentById[it.category.id] ?: it.spentCents) }
+    val envelopes = overview.envelopes.envelopes.map { it.envelope }
+    val ids = envelopes.mapTo(mutableSetOf()) { it.id }
+    val byEnvelope = rows.groupBy { row -> row.category.groupId?.takeIf { it in ids } }
+    val defined = envelopes.map { limitGroupOf(it, byEnvelope[it.id].orEmpty()) }
+    val other = byEnvelope[null].orEmpty()
+    return if (other.isEmpty()) defined else defined + limitGroupOf(null, other)
+}
+
+private fun limitGroupOf(
+    envelope: Envelope?,
     rows: List<CategoryBudget>,
-): EarmarkOptions =
-    EarmarkOptions(
-        groups = overview.groups.mapNotNull { it.group },
-        categories = rows.map { it.category }.filterNot { it.archived || it.isUnknown },
+): LimitGroup =
+    LimitGroup(
+        envelope = envelope,
+        plannedCents = envelope?.amountCents ?: rows.sumOf { it.planned ?: 0L },
+        spentCents = rows.sumOf { it.spentCents },
+        rows = rows,
     )

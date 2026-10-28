@@ -23,7 +23,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
-import com.joaoeoneves.fintrack.domain.model.PotsSummary
 import com.joaoeoneves.fintrack.domain.model.carnivalWeekdayIn
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
@@ -189,7 +188,6 @@ private fun MonthlyPlanContent(
                 fixedThisMonthCents = state.fixedThisMonthCents,
             )
         }
-        potsItem(state.pots, cardModifier)
         expectedIncomeItem(state, viewModel, navigation, { editingWorkingDays = true }, cardModifier)
         limitsItems(
             state = state,
@@ -285,15 +283,6 @@ private fun LazyListScope.expectedIncomeItem(
     }
 }
 
-/** The "Pots" card: one row per earmarked pot plus the base; only when some income line is earmarked. */
-private fun LazyListScope.potsItem(
-    pots: PotsSummary?,
-    modifier: Modifier,
-) {
-    if (pots == null || pots.pots.isEmpty()) return
-    item { PotsCard(pots = pots, modifier = modifier) }
-}
-
 /** The "Planned vs actual" card: the planned categories with how much of each limit the month has used. */
 private fun LazyListScope.plannedVsActualItem(
     progress: List<CategoryBudget>,
@@ -330,7 +319,7 @@ private fun LazyListScope.limitsItems(
     actions: LimitsActions,
     modifier: Modifier,
 ) {
-    if (state.groups.any { it.group != null }) {
+    if (state.envelopes.envelopes.isNotEmpty()) {
         item {
             LimitsByGroupCard(
                 groups = state.limitGroups,

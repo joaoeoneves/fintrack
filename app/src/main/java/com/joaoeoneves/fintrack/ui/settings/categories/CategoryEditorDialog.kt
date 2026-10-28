@@ -36,8 +36,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MAX_CATEGORY_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.limitInput
@@ -68,7 +68,7 @@ internal fun CategoryEditorDialog(
     state: CategoryEditorState,
     onSave: (CategoryDraft) -> Unit,
     onDismiss: () -> Unit,
-    groups: List<CategoryGroup> = emptyList(),
+    groups: List<Envelope> = emptyList(),
 ) {
     var draft by remember(state.editingId, state.initial) { mutableStateOf(state.initial) }
     var submittedName by remember(state.editingId) { mutableStateOf<String?>(null) }
@@ -235,7 +235,7 @@ private fun KindPicker(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun GroupPicker(
-    groups: List<CategoryGroup>,
+    groups: List<Envelope>,
     selectedId: String?,
     onSelected: (String?) -> Unit,
 ) {

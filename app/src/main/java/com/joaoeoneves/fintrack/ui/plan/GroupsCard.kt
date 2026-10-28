@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
-import com.joaoeoneves.fintrack.domain.model.LimitGroup
 import com.joaoeoneves.fintrack.domain.model.PlannedSource
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -48,7 +47,7 @@ fun LimitsByGroupCard(
             group.rows.forEach { LimitCategoryRow(it, onClick = { onEdit(it) }) }
             Hairline()
         }
-        SettingsRow(title = stringResource(R.string.plan_groups_manage), onClick = onManage, showChevron = true)
+        SettingsRow(title = stringResource(R.string.plan_envelopes_manage), onClick = onManage, showChevron = true)
     }
 }
 
@@ -58,21 +57,21 @@ fun GroupsEmptyCard(
     actions: GroupsActions,
     modifier: Modifier = Modifier,
 ) {
-    SettingsGroup(label = stringResource(R.string.plan_groups_title), modifier = modifier) {
+    SettingsGroup(label = stringResource(R.string.plan_envelopes_title), modifier = modifier) {
         Text(
-            text = stringResource(R.string.plan_groups_empty),
+            text = stringResource(R.string.plan_envelopes_empty),
             style = MaterialTheme.typography.bodySmall,
             color = FinTrackTheme.colors.textSecondary,
             modifier = Modifier.padding(bottom = Dimens.Space8),
         )
         SettingsRow(
-            title = stringResource(R.string.plan_groups_suggest),
+            title = stringResource(R.string.plan_envelopes_suggest),
             onClick = actions.onCreateSuggested,
             showChevron = true,
         )
         Hairline()
         SettingsRow(
-            title = stringResource(R.string.plan_groups_create),
+            title = stringResource(R.string.plan_envelopes_create),
             onClick = actions.onManage,
             titleColor = FinTrackTheme.colors.textSecondary,
         )
@@ -88,7 +87,7 @@ private fun LimitGroupHeader(group: LimitGroup) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = group.group?.name ?: stringResource(R.string.plan_group_other),
+                text = group.envelope?.name ?: stringResource(R.string.plan_group_other),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

@@ -2,7 +2,7 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Budget
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
@@ -10,7 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
@@ -28,7 +28,7 @@ data class PlanBackupData(
     val plannedIncome: List<PlannedIncome>,
     val recurring: List<RecurringItem>,
     val monthSettings: List<MonthSettings> = emptyList(),
-    val categoryGroups: List<CategoryGroup> = emptyList(),
+    val categoryGroups: List<Envelope> = emptyList(),
     val salaryProfile: SalaryProfile? = null,
     val goals: List<SavingsGoal> = emptyList(),
     val automation: AutomationSettings = AutomationSettings(),
@@ -51,7 +51,7 @@ class PlanBackupSource
         private val plannedIncomeRepository: PlannedIncomeRepository,
         private val recurringRepository: RecurringRepository,
         private val monthSettingsRepository: MonthSettingsRepository,
-        private val categoryGroupRepository: CategoryGroupRepository,
+        private val categoryGroupRepository: EnvelopeRepository,
         private val singletons: PlanSingletonSources,
     ) {
         suspend fun read(): PlanBackupData =
@@ -60,7 +60,7 @@ class PlanBackupSource
                 plannedIncome = plannedIncomeRepository.observePlannedIncome().first(),
                 recurring = recurringRepository.observeRecurring().first(),
                 monthSettings = monthSettingsRepository.observeMonthSettings().first(),
-                categoryGroups = categoryGroupRepository.observeGroups().first(),
+                categoryGroups = categoryGroupRepository.observeEnvelopes().first(),
                 salaryProfile = singletons.salaryProfile.observeSalaryProfile().first(),
                 goals = singletons.goals.observeGoals().first(),
                 automation = singletons.automation.observeAutomationSettings().first(),

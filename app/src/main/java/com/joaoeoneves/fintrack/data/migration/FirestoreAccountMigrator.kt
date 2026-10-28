@@ -9,8 +9,8 @@ import com.joaoeoneves.fintrack.data.automationSettingsDoc
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
-import com.joaoeoneves.fintrack.data.toCategoryGroupOrNull
 import com.joaoeoneves.fintrack.data.toCategoryOrNull
+import com.joaoeoneves.fintrack.data.toEnvelopeOrNull
 import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
@@ -64,7 +64,7 @@ class FirestoreAccountMigrator
             val groups =
                 serverGet { userDoc(uid).collection("categoryGroups").get(Source.SERVER).await() }
                     .documents
-                    .mapNotNull { it.toCategoryGroupOrNull() }
+                    .mapNotNull { it.toEnvelopeOrNull() }
             return RemoteAccountSnapshot(
                 expenseIds = ids("expenses"),
                 incomeIds = ids("income"),

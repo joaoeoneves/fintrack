@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.isGroupNameTaken
@@ -45,13 +45,13 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 /** The sheet to add, rename, reorder and delete category groups. Deleting asks first. */
 @Composable
 fun ManageGroupsSheet(
-    groups: List<CategoryGroup>,
+    groups: List<Envelope>,
     actions: ManageGroupsActions,
     onDismiss: () -> Unit,
     reservedNames: List<String> = emptyList(),
 ) {
-    var editing by remember { mutableStateOf<CategoryGroup?>(null) }
-    var deleting by remember { mutableStateOf<CategoryGroup?>(null) }
+    var editing by remember { mutableStateOf<Envelope?>(null) }
+    var deleting by remember { mutableStateOf<Envelope?>(null) }
 
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(
@@ -102,7 +102,7 @@ fun ManageGroupsSheet(
 
 @Composable
 private fun GroupRow(
-    group: CategoryGroup,
+    group: Envelope,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
     actions: ManageGroupsActions,
@@ -147,7 +147,7 @@ private fun GroupRow(
 /** The name field under the list: adds a group, or renames the one picked with the edit button. */
 @Composable
 private fun NameEditor(
-    editing: CategoryGroup?,
+    editing: Envelope?,
     nameCheck: (String) -> Boolean,
     onSubmit: (String) -> Unit,
     onCancelRename: () -> Unit,

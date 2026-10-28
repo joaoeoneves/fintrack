@@ -9,8 +9,8 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.repository.BuiltInCategoryNames
-import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.usecase.CategoryMovePreview
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
@@ -46,7 +46,7 @@ class CategoriesViewModel
         private val checkCategoryUsage: CheckCategoryUsage,
         private val builtInCategoryNames: BuiltInCategoryNames,
         private val moveCategoryItems: MoveCategoryItems,
-        private val categoryGroupRepository: CategoryGroupRepository,
+        private val categoryGroupRepository: EnvelopeRepository,
     ) : ViewModel() {
         private val editor = MutableStateFlow<CategoryEditorState?>(null)
         private val deleteDialog = MutableStateFlow<DeleteDialogState?>(null)
@@ -68,7 +68,7 @@ class CategoriesViewModel
                 editor,
                 deleteDialog,
                 moveDialog,
-                categoryGroupRepository.observeGroups().catch { emit(emptyList()) },
+                categoryGroupRepository.observeEnvelopes().catch { emit(emptyList()) },
             ) { categories, editorState, dialog, move, groups ->
                 CategoriesUiState.Content(
                     active = categories.active(),

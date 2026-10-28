@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.GroupProgress
+import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.SpendingSplit
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -129,20 +129,25 @@ private fun SplitRow(
     AmountRow(label = label, cents = cents, total = total, marker = color)
 }
 
-/** The Group view of the breakdown: each group's share of the period's outflow, "Other" for ungrouped categories. */
+/** The envelope view of the breakdown: each envelope's share of the period's outflow, "No envelope" for the rest. */
 @Composable
-fun GroupBreakdown(
-    groups: List<GroupProgress>,
+fun EnvelopeBreakdown(
+    summary: EnvelopesSummary,
     modifier: Modifier = Modifier,
 ) {
-    val shown = groups.filter { it.spent > 0 }.sortedByDescending { it.spent }
-    val total = shown.sumOf { it.spent }
+    val noEnvelope = stringResource(R.string.plan_group_other)
+    val shown =
+        (
+            summary.envelopes.map { it.envelope.id to (it.envelope.name to it.spentCents) } +
+                listOf("" to (noEnvelope to summary.unenvelopedSpentCents))
+        ).filter { it.second.second > 0 }
+            .sortedByDescending { it.second.second }
+    val total = shown.sumOf { it.second.second }
     Column(modifier = modifier.fillMaxWidth()) {
-        shown.forEach { progress ->
-            key(progress.group?.id.orEmpty()) {
-                val name = progress.group?.name ?: stringResource(R.string.plan_group_other)
-                AmountRow(label = name, cents = progress.spent, total = total)
-                ThinProgressBar(progress = progress.spent.toFloat() / total.toFloat())
+        shown.forEach { (id, named) ->
+            key(id) {
+                AmountRow(label = named.first, cents = named.second, total = total)
+                ThinProgressBar(progress = named.second.toFloat() / total.toFloat())
             }
         }
     }

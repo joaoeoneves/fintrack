@@ -1,9 +1,9 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.usecase.CategoryMovePreview
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -18,7 +18,7 @@ sealed interface CategoriesUiState {
         val deleteDialog: DeleteDialogState?,
         val moveDialog: MoveDialogState? = null,
         /** The category groups the editor's group picker offers. */
-        val groups: List<CategoryGroup> = emptyList(),
+        val groups: List<Envelope> = emptyList(),
     ) : CategoriesUiState
 }
 
