@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan
 
+import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
@@ -16,4 +17,5 @@ class PlanRepositories
         val categories: CategoryRepository,
         val monthSettings: MonthSettingsRepository,
         val goals: GoalRepository,
+        val automation: AutomationSettingsRepository,
     )

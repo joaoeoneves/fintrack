@@ -22,7 +22,6 @@ import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
-import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
@@ -51,7 +50,7 @@ private data class Choice<T>(
     val label: String,
 )
 
-/** Amount first, then the Type tabs and the name. */
+/** Amount first, then the name (a recurring item is always an expense; recurring income lives in Income). */
 @Composable
 internal fun RecurringTypeAndNameFields(
     form: RecurringForm,
@@ -71,15 +70,6 @@ internal fun RecurringTypeAndNameFields(
         modifier = Modifier.padding(vertical = Dimens.Space16),
     )
     errors?.amount?.let { Text(it.asString(), color = FinTrackTheme.colors.negative) }
-    ChoiceRow(
-        selected = form.type,
-        choices =
-            listOf(
-                Choice(RecurringType.EXPENSE, stringResource(R.string.recurring_type_expense)),
-                Choice(RecurringType.INCOME, stringResource(R.string.recurring_type_income)),
-            ),
-        onSelected = { onChange(form.copy(type = it)) },
-    )
     MinimalTextField(
         value = form.name,
         onValueChange = { onChange(form.copy(name = it)) },

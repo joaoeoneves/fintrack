@@ -30,8 +30,10 @@ import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
@@ -40,6 +42,7 @@ import com.joaoeoneves.fintrack.ui.theme.SectionLabel
 fun RecurringListScreen(
     onBack: () -> Unit,
     onOpenEditor: (String?) -> Unit,
+    onOpenIncome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RecurringListViewModel = hiltViewModel(),
 ) {
@@ -61,6 +64,7 @@ fun RecurringListScreen(
                 onConfirmDelete = viewModel::onConfirmDelete,
                 onDismissDelete = viewModel::onDismissDelete,
                 onRetry = viewModel::onRetry,
+                onOpenIncome = onOpenIncome,
             ),
         onBack = onBack,
         snackbarHostState = snackbarHostState,
@@ -124,6 +128,14 @@ private fun RecurringItems(
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding)) {
         item(key = "totals") { RecurringTotals(state) }
+        item(key = "income-hint") {
+            SettingsRow(
+                title = stringResource(R.string.recurring_income_hint),
+                onClick = actions.onOpenIncome,
+                showChevron = true,
+            )
+            Hairline()
+        }
         if (state.active.isEmpty() && state.inactive.isEmpty()) {
             item(key = "empty") {
                 Text(

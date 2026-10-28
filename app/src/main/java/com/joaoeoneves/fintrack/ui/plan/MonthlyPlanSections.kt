@@ -24,6 +24,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.amountIn
+import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
@@ -81,6 +82,8 @@ data class ExpectedIncomeModel(
     val canAdd: Boolean,
     val workingDays: WorkingDaysState,
     val receipts: IncomeReceipts,
+    /** Keys of the manual rows that look like a repeat of the salary the profile already generates. */
+    val duplicateKeys: Set<String> = emptySet(),
 )
 
 /**
@@ -138,6 +141,18 @@ fun ExpectedIncomeCard(
     }
 }
 
+/** "Automatic · day 5" or "Automatic · last working day" for a row with a self-recording line; else `null`. */
+@Composable
+private fun autoRecordText(row: IncomeRow): String? {
+    val line = row.lines.firstOrNull { it.autoRecord } ?: return null
+    val payDay = line.payDay
+    return if (payDay == null) {
+        stringResource(R.string.plan_auto_last_working_day)
+    } else {
+        stringResource(R.string.plan_auto_day, payDay)
+    }
+}
+
 @Composable
 private fun IncomeGroupHeader(text: String) {
     Text(
@@ -166,7 +181,8 @@ private fun IncomeRowItem(
     val received = receivedOn != null
     val feedback = LocalReceiveFeedback.current
     val title = row.displayLabel()
-    val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receipts.today))
+    val receiveDate = minOf(row.payDateIn(model.workingDays.month), receipts.today)
+    val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val changeLabel = stringResource(R.string.action_change)
     val showCheck = paysThisMonth && (received || receipts.canReceive)
     val valueColor =
@@ -177,7 +193,12 @@ private fun IncomeRowItem(
         }
     AmountRow(
         label = title,
-        badge = receivedOn?.let { stringResource(R.string.plan_received_on, rememberReceivedText(it)) },
+        badge =
+            listOfNotNull(
+                receivedOn?.let { stringResource(R.string.plan_received_on, rememberReceivedText(it)) },
+                autoRecordText(row),
+                stringResource(R.string.plan_looks_like_salary).takeIf { row.key in model.duplicateKeys },
+            ).joinToString("\n").ifEmpty { null },
         value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
         valueColor = valueColor,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
@@ -191,11 +212,11 @@ private fun IncomeRowItem(
                             if (received) {
                                 onUndo(row)
                             } else {
-                                actions.onReceive(row, receipts.today, null)
+                                actions.onReceive(row, receiveDate, null)
                                 feedback?.announce(
                                     message = snackbarText,
                                     actionLabel = changeLabel,
-                                    change = receiveChange(row, title, model, actions),
+                                    change = receiveChange(row, title, model, actions, receiveDate),
                                 )
                             }
                         },
@@ -214,12 +235,14 @@ private fun receiveChange(
     title: String,
     model: ExpectedIncomeModel,
     actions: ExpectedIncomeActions,
+    date: LocalDate,
 ): ReceiveChange {
     val (month, days) = model.workingDays.let { it.month to it.days }
     val paying = row.lines.filter { it.amountIn(month, days) > 0L }
     return ReceiveChange(
         title = title,
         today = model.receipts.today,
+        date = date,
         editableAmountCents = paying.singleOrNull()?.amountIn(month, days),
         onConfirm = { date, cents -> actions.onReceive(row, date, cents) },
     )

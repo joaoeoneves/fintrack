@@ -24,7 +24,6 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
-import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.ui.common.ErrorState
@@ -102,9 +101,7 @@ private fun RecurringFormContent(
         verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
     ) {
         RecurringTypeAndNameFields(form, errors, onFormChanged, autoFocusAmount = !state.isEditMode)
-        if (form.type == RecurringType.EXPENSE) {
-            RecurringCategoryField(form, categoryOptions, errors, onFormChanged, showSavingsHint = !state.isEditMode)
-        }
+        RecurringCategoryField(form, categoryOptions, errors, onFormChanged, showSavingsHint = !state.isEditMode)
         RecurringScheduleFields(form, errors, onFormChanged)
         RecurringDateFields(form, errors, onFormChanged)
         MinimalTextField(

@@ -2,6 +2,17 @@
     <string name="app_name">FinTrack</string>
 
     <!-- Ações partilhadas -->
+    <string name="action_save_anyway">Guardar na mesma</string>
+    <string name="plan_auto_record">Registar automaticamente</string>
+    <string name="plan_auto_record_hint">No dia de pagamento</string>
+    <string name="plan_payday_label">Dia de pagamento</string>
+    <string name="plan_payday_last_working_day">Último dia útil</string>
+    <string name="plan_payday_fixed">Dia fixo</string>
+    <string name="plan_auto_day">Automático · dia %d</string>
+    <string name="plan_auto_last_working_day">Automático · último dia útil</string>
+    <string name="plan_looks_like_salary_warning">Isto parece ser o teu salário, que já vem do perfil salarial.</string>
+    <string name="plan_looks_like_salary">Parece repetir o salário</string>
+    <string name="recurring_income_hint">Rendimento recorrente? Está em Rendimento.</string>
     <string name="action_save">Guardar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_remove">Remover</string>
@@ -372,7 +383,6 @@
     </plurals>
     <string name="recurring_nothing_due">Nada a vencer em breve</string>
     <string name="recurring_annual_cost">Despesas recorrentes: %1$s/ano (%2$s/mês)</string>
-    <string name="recurring_annual_income">Rendimentos recorrentes: %1$s/ano</string>
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar recorrentes</string>
     <string name="recurring_added">Adicionado: \'%1$s\'</string>
@@ -387,8 +397,6 @@
     <string name="recurring_pause">Pausar</string>
     <string name="recurring_resume">Retomar</string>
     <string name="recurring_delete_confirm">Eliminar \"%1$s\"? As transações já criadas são mantidas.</string>
-    <string name="recurring_type_expense">Despesa</string>
-    <string name="recurring_type_income">Rendimento</string>
     <string name="recurring_frequency_monthly">Mensal</string>
     <string name="recurring_frequency_yearly">Anual</string>
     <string name="recurring_day_of_month">Dia do mês</string>
