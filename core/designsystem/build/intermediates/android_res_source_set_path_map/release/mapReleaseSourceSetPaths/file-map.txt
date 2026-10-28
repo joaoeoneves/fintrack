@@ -1,9 +1,0 @@
-com.joaoeoneves.fintrack.core.designsystem-pngs-0 /home/joaoe/personal/fintrack/core/designsystem/build/generated/res/pngs/release
-com.joaoeoneves.fintrack.core.designsystem-updated_navigation_xml-1 /home/joaoe/personal/fintrack/core/designsystem/build/generated/updated_navigation_xml/release
-com.joaoeoneves.fintrack.core.designsystem-mergeReleaseResources-2 /home/joaoe/personal/fintrack/core/designsystem/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
-com.joaoeoneves.fintrack.core.designsystem-mergeReleaseResources-3 /home/joaoe/personal/fintrack/core/designsystem/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
-com.joaoeoneves.fintrack.core.designsystem-release-4 /home/joaoe/personal/fintrack/core/designsystem/build/intermediates/merged_res/release/mergeReleaseResources
-com.joaoeoneves.fintrack.core.designsystem-release-5 /home/joaoe/personal/fintrack/core/designsystem/build/intermediates/packaged_res/release/packageReleaseResources
-com.joaoeoneves.fintrack.core.designsystem-main-6 /home/joaoe/personal/fintrack/core/designsystem/src/main/res
-com.joaoeoneves.fintrack.core.designsystem-release-7 /home/joaoe/personal/fintrack/core/designsystem/src/release/res
-gradleHome-0 /home/joaoe/.gradle

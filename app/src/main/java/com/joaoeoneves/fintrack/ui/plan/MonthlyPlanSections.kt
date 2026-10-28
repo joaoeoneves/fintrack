@@ -50,6 +50,7 @@ private fun AmountRow(
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
     valueStyle: TextStyle = Amount,
     badge: String? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight),
@@ -67,6 +68,7 @@ private fun AmountRow(
             }
         }
         Text(text = value, style = valueStyle, color = valueColor)
+        trailing?.invoke()
     }
 }
 
@@ -108,6 +110,7 @@ data class ExpectedIncomeActions(
     val onEditWorkingDays: () -> Unit,
     val onOpenSalaryProfile: () -> Unit,
     val onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
+    val onUndoReceive: (row: IncomeRow) -> Unit,
 )
 
 /** What the expected-income card shows, bundled for detekt's LongParameterList. */
@@ -122,8 +125,9 @@ data class ExpectedIncomeModel(
  * The salary-profile entry, the working-days row and the expected-income rows with what each pays in the
  * selected month. A manual line, the salary and the meal allowance open their editor on tap; the other salary
  * components (which sum several lines) open the salary profile. The add button is hidden at the line cap. Under the
- * header sits the month's payday; a paying row of a past or current month can be marked "Received", after which it
- * shows the day it was received.
+ * header sits the month's payday; a paying row of a past or current month has a check that records it as received
+ * today (the snackbar then offers to change the date or amount); once received it shows a green amount, the day it
+ * was received and a filled check that undoes it after a confirmation.
  */
 @Composable
 fun ExpectedIncomeCard(
@@ -133,7 +137,7 @@ fun ExpectedIncomeCard(
 ) {
     val (rows, canAdd, workingDays) = model
     val receipts = model.receipts
-    var receiving by remember { mutableStateOf<IncomeRow?>(null) }
+    var undoing by remember { mutableStateOf<IncomeRow?>(null) }
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
         Text(
             text = stringResource(R.string.plan_payday, rememberPaydayText(receipts.payday)),
@@ -150,9 +154,9 @@ fun ExpectedIncomeCard(
         Hairline()
         val (managed, manual) = rows.partition { it.component != null }
         if (managed.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_from_salary_profile))
-        managed.forEach { IncomeRowItem(it, receipts, actions, onReceive = { receiving = it }) }
+        managed.forEach { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) }
         if (managed.isNotEmpty() && manual.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_other_income))
-        manual.forEach { IncomeRowItem(it, receipts, actions, onReceive = { receiving = it }) }
+        manual.forEach { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) }
         if (canAdd) {
             GhostButton(
                 text = stringResource(R.string.plan_add_income_line),
@@ -161,17 +165,13 @@ fun ExpectedIncomeCard(
             )
         }
     }
-    receiving?.let { row ->
-        val paying = row.lines.filter { it.amountIn(workingDays.month, workingDays.days) > 0L }
-        ReceivedIncomeSheet(
-            title = row.displayLabel(),
-            today = receipts.today,
-            editableAmountCents = paying.singleOrNull()?.amountIn(workingDays.month, workingDays.days),
-            onConfirm = { date, cents ->
-                actions.onReceive(row, date, cents)
-                receiving = null
+    undoing?.let { row ->
+        UndoReceivedDialog(
+            onConfirm = {
+                actions.onUndoReceive(row)
+                undoing = null
             },
-            onDismiss = { receiving = null },
+            onDismiss = { undoing = null },
         )
     }
 }
@@ -192,30 +192,75 @@ private val EDITABLE_COMPONENTS = listOf(null, SalaryComponent.SALARY, SalaryCom
 @Composable
 private fun IncomeRowItem(
     row: IncomeRow,
-    receipts: IncomeReceipts,
+    model: ExpectedIncomeModel,
     actions: ExpectedIncomeActions,
-    onReceive: (IncomeRow) -> Unit,
+    onUndo: (IncomeRow) -> Unit,
 ) {
+    val receipts = model.receipts
     val line = row.lines.first()
     val opensEditor = row.component in EDITABLE_COMPONENTS
     val paysThisMonth = row.cents > 0L
     val receivedOn = receipts.receivedOn[row.key]
+    val received = receivedOn != null
+    val feedback = LocalReceiveFeedback.current
+    val title = row.displayLabel()
+    val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receipts.today))
+    val changeLabel = stringResource(R.string.action_change)
+    val showCheck = paysThisMonth && (received || receipts.canReceive)
+    val valueColor =
+        when {
+            !paysThisMonth -> FinTrackTheme.colors.textSecondary
+            received -> FinTrackTheme.colors.positive
+            else -> MaterialTheme.colorScheme.onSurface
+        }
     AmountRow(
-        label = row.displayLabel(),
+        label = title,
         badge = receivedOn?.let { stringResource(R.string.plan_received_on, rememberReceivedText(it)) },
         value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
-        valueColor = if (paysThisMonth) MaterialTheme.colorScheme.onSurface else FinTrackTheme.colors.textSecondary,
+        valueColor = valueColor,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
         modifier = Modifier.clickable { if (opensEditor) actions.onEdit(line.id) else actions.onOpenSalaryProfile() },
+        trailing =
+            if (showCheck) {
+                {
+                    ReceivedCheckButton(
+                        received = received,
+                        onClick = {
+                            if (received) {
+                                onUndo(row)
+                            } else {
+                                actions.onReceive(row, receipts.today, null)
+                                feedback?.announce(
+                                    message = snackbarText,
+                                    actionLabel = changeLabel,
+                                    change = receiveChange(row, title, model, actions),
+                                )
+                            }
+                        },
+                    )
+                }
+            } else {
+                null
+            },
     )
-    if (receipts.canReceive && paysThisMonth && receivedOn == null) {
-        GhostButton(
-            text = stringResource(R.string.income_received),
-            onClick = { onReceive(row) },
-            modifier = Modifier.padding(bottom = Dimens.Space8),
-        )
-    }
     Hairline()
+}
+
+/** What the received snackbar's "Change" reopens for [row]: the sheet, with the amount editable for one line. */
+private fun receiveChange(
+    row: IncomeRow,
+    title: String,
+    model: ExpectedIncomeModel,
+    actions: ExpectedIncomeActions,
+): ReceiveChange {
+    val (month, days) = model.workingDays.let { it.month to it.days }
+    val paying = row.lines.filter { it.amountIn(month, days) > 0L }
+    return ReceiveChange(
+        title = title,
+        today = model.receipts.today,
+        editableAmountCents = paying.singleOrNull()?.amountIn(month, days),
+        onConfirm = { date, cents -> actions.onReceive(row, date, cents) },
+    )
 }
 
 /** One row per category with its planned amount; tap one to set, change or remove it. */

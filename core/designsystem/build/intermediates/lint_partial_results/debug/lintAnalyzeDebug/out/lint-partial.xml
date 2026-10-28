@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<incidents format="6" by="lint 9.4.1" type="partial_results">
-    <map id="UnusedResources">
-        <entry
-            name="model"
-            string="font[inter_regular(R),inter_medium(R),inter_semibold(R),inter_bold(R)],string[action_add_expense(U),action_add_income(U),cd_back(U),dashboard_add_expense_short(U),dashboard_add_income_short(U)];;;;"/>
-    </map>
-
-</incidents>

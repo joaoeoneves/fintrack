@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +48,9 @@ import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
+import com.joaoeoneves.fintrack.ui.plan.ChangeSheet
+import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
+import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringCard
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringModel
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
@@ -77,6 +81,8 @@ fun DashboardScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
+    val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
+    receiveFeedback.ChangeSheet()
     val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, callbacks)
 
     val pill = remember { PillVisibility() }
@@ -105,13 +111,15 @@ fun DashboardScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
     ) { innerPadding ->
-        DashboardBody(
-            uiState = uiState,
-            actions = actions,
-            callbacks = callbacks,
-            scroll = DashboardScroll(pill, listState),
-            contentPadding = innerPadding,
-        )
+        CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
+            DashboardBody(
+                uiState = uiState,
+                actions = actions,
+                callbacks = callbacks,
+                scroll = DashboardScroll(pill, listState),
+                contentPadding = innerPadding,
+            )
+        }
     }
 }
 
