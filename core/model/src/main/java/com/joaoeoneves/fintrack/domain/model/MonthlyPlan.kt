@@ -37,26 +37,45 @@ data class MonthlyPlanSummary(
 
 /**
  * Evaluates the plan for [month]: [buckets] are the month's budget rows, [monthIncome] only that month's
- * income and [workingDays] the working days of the month (per-working-day lines multiply by it).
+ * income and [workingDays] the working days of the month (per-working-day lines multiply by it). With
+ * [envelopes] the buckets filed under one commit pooled (the larger of its amount and its spend); an
+ * envelope with a fixed amount counts as spending.
  */
+@Suppress("LongParameterList") // The plan's inputs, one per source.
 fun monthlyPlanOf(
     buckets: List<CategoryBudget>,
     plannedIncome: List<PlannedIncome>,
     monthIncome: List<Income>,
     month: YearMonth,
     workingDays: Int,
+    envelopes: List<Envelope> = emptyList(),
 ): MonthlyPlanSummary {
     val (extras, regular) = plannedIncome.partition { it.isExtra }
-    val limited = buckets.filter { it.planned != null }
+    val split = splitBuckets(buckets, envelopes)
+    val fixed = split.byEnvelope.filter { it.first.amountCents != null }
+    val perCategory = split.byEnvelope.filter { it.first.amountCents == null }.flatMap { it.second } + split.loose
+    val limited = perCategory.filter { it.planned != null }
     val spendingLimited = limited.filter { it.category.kind == CategoryKind.SPENDING }
+    val pooledCommitted =
+        split.byEnvelope.sumOf { (envelope, rows) ->
+            maxOf(monthAmountOf(envelope, rows) ?: 0L, rows.sumOf { it.spentCents })
+        }
+    val pooledRemaining =
+        split.byEnvelope.sumOf { (envelope, rows) ->
+            monthAmountOf(envelope, rows)?.let { maxOf(it - rows.sumOf { row -> row.spentCents }, 0L) } ?: 0L
+        }
     return MonthlyPlanSummary(
         expectedIncomeCents = regular.sumOf { it.amountIn(month, workingDays) },
         extrasExpectedCents = extras.sumOf { it.amountIn(month, workingDays) },
         actualIncomeCents = monthIncome.sumOf { it.amountCents },
-        plannedSpendingCents = spendingLimited.sumOf { it.planned ?: 0L },
+        plannedSpendingCents = spendingLimited.sumOf { it.planned ?: 0L } + fixed.sumOf { it.first.amountCents ?: 0L },
         plannedSavingCents = limited.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.planned ?: 0L },
-        committedCents = buckets.sumOf { maxOf(it.planned ?: 0L, it.spentCents) },
-        remainingInBucketsCents = spendingLimited.sumOf { maxOf((it.planned ?: 0L) - it.spentCents, 0L) },
+        committedCents = pooledCommitted + split.loose.sumOf { maxOf(it.planned ?: 0L, it.spentCents) },
+        remainingInBucketsCents =
+            pooledRemaining +
+                split.loose
+                    .filter { it.planned != null && it.category.kind == CategoryKind.SPENDING }
+                    .sumOf { maxOf((it.planned ?: 0L) - it.spentCents, 0L) },
         isConfigured = plannedIncome.isNotEmpty(),
     )
 }

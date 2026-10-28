@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 13
+internal const val LOCAL_SCHEMA_VERSION = 14
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -123,12 +123,17 @@ data class LocalCategory(
     val groupId: String? = null,
 )
 
-/** A named bucket of categories; [order] is its position in the list. */
+/**
+ * An envelope (kept under its pre-envelope name): a named bucket of categories; [order] is its position in the
+ * list. [amountCents] is its fixed monthly amount and [fundedByLineId] the income line paying for it (schema v14).
+ */
 @Serializable
 data class LocalCategoryGroup(
     val id: String,
     val name: String,
     val order: Int,
+    val amountCents: Long? = null,
+    val fundedByLineId: String? = null,
 )
 
 /**

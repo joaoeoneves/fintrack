@@ -50,15 +50,15 @@ class ObserveAnnualPlan
                 ) { budgets, lines, settings, catalog -> AnnualPlanSources(budgets, lines, settings, catalog) }
             val extraInputs =
                 combine(
-                    sources.groups.observeGroups(),
+                    sources.envelopes.observeEnvelopes(),
                     sources.recurring.observeRecurring(),
                     goalRepository.observeGoals(),
-                ) { groups, recurring, goals -> Triple(groups, recurring, goals) }
+                ) { envelopes, recurring, goals -> Triple(envelopes, recurring, goals) }
             return combine(
                 planInputs,
                 extraInputs,
                 transactionRepository.observeTransactions(InstantRange(start, end)),
-            ) { plan, (groups, recurring, goals), transactions ->
+            ) { plan, (envelopes, recurring, goals), transactions ->
                 annualPlanOf(
                     year,
                     AnnualPlanInputs(
@@ -66,7 +66,7 @@ class ObserveAnnualPlan
                         budgets = plan.budgets,
                         recurring = recurring,
                         categories = plan.categories,
-                        groups = groups,
+                        envelopes = envelopes,
                         monthSettings = plan.monthSettings,
                         yearExpenses = transactions.expenses.resolvedWith(plan.categories),
                         goals = goals,

@@ -3,8 +3,8 @@ package com.joaoeoneves.fintrack.ui.insights
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
@@ -56,7 +56,7 @@ open class InsightsViewModelTestBase {
         budgetRepository: FakeBudgetRepository = FakeBudgetRepository(),
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         categoryRepository: FakeCategoryRepository = FakeCategoryRepository(),
-        groupRepository: FakeCategoryGroupRepository = FakeCategoryGroupRepository(),
+        groupRepository: FakeEnvelopeRepository = FakeEnvelopeRepository(),
     ) = InsightsViewModel(
         observePeriodOverviewOf(
             DashboardRepositories(
@@ -64,7 +64,7 @@ open class InsightsViewModelTestBase {
                 budgetRepository,
                 FakeIncomeRepository(),
                 categoryRepository,
-                categoryGroupRepository = groupRepository,
+                envelopeRepository = groupRepository,
             ),
         ),
         savedStateHandle,

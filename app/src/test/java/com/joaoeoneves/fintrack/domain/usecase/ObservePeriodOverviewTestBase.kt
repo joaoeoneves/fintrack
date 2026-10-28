@@ -1,8 +1,8 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
@@ -33,7 +33,7 @@ abstract class ObservePeriodOverviewTestBase {
     protected val budgets = CountingBudgetRepository()
     protected val plannedIncome = FakePlannedIncomeRepository()
     protected val categories = FakeCategoryRepository()
-    protected val groups = FakeCategoryGroupRepository()
+    protected val groups = FakeEnvelopeRepository()
     protected val recurring = FakeRecurringRepository()
     protected val monthSettings = FakeMonthSettingsRepository()
 
@@ -46,7 +46,7 @@ abstract class ObservePeriodOverviewTestBase {
                     plannedIncome = plannedIncome,
                     monthSettings = monthSettings,
                     categories = categories,
-                    groups = groups,
+                    envelopes = groups,
                     recurring = recurring,
                 ),
         )

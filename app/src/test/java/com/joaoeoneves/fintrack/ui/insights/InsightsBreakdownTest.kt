@@ -1,29 +1,36 @@
 package com.joaoeoneves.fintrack.ui.insights
 
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
-import com.joaoeoneves.fintrack.domain.model.GroupProgress
+import com.joaoeoneves.fintrack.domain.model.Envelope
+import com.joaoeoneves.fintrack.domain.model.EnvelopeProgress
+import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** [InsightsBreakdown.hasGroups]. */
+/** [InsightsBreakdown.hasEnvelopes]. */
 class InsightsBreakdownTest {
-    private fun breakdown(groups: List<GroupProgress>) = InsightsBreakdown(emptyList(), emptyList(), false, groups)
+    private fun breakdown(envelopes: EnvelopesSummary) = InsightsBreakdown(emptyList(), emptyList(), false, envelopes)
 
-    private fun row(group: CategoryGroup?) = GroupProgress(group, planned = 0L, spent = 0L, categories = emptyList())
+    private fun progress() =
+        EnvelopeProgress(
+            Envelope("g1", "Food", 0),
+            amountCents = null,
+            spentCents = 0L,
+            rows = emptyList(),
+        )
 
     @Test
-    fun default_hasNoGroups() {
-        assertFalse(InsightsBreakdown(emptyList(), emptyList(), hasExpenses = false).hasGroups)
+    fun default_hasNoEnvelopes() {
+        assertFalse(InsightsBreakdown(emptyList(), emptyList(), hasExpenses = false).hasEnvelopes)
     }
 
     @Test
-    fun onlyOtherEntry_hasNoGroups() {
-        assertFalse(breakdown(listOf(row(null))).hasGroups)
+    fun onlyUnenvelopedRows_hasNoEnvelopes() {
+        assertFalse(breakdown(EnvelopesSummary(emptyList(), emptyList(), 0L)).hasEnvelopes)
     }
 
     @Test
-    fun anyRealGroup_hasGroups() {
-        assertTrue(breakdown(listOf(row(CategoryGroup("g1", "Food", 0)), row(null))).hasGroups)
+    fun anyRealEnvelope_hasEnvelopes() {
+        assertTrue(breakdown(EnvelopesSummary(listOf(progress()), emptyList(), 0L)).hasEnvelopes)
     }
 }

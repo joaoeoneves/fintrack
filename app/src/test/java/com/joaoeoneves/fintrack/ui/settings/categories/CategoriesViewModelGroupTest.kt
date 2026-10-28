@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.testutil.userCategory
@@ -17,8 +17,8 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class CategoriesViewModelGroupTest : CategoriesViewModelTestBase() {
     private suspend fun seedGroups() {
-        groups.addGroup("Food")
-        groups.addGroup("Fun")
+        groups.addEnvelope("Food")
+        groups.addEnvelope("Fun")
     }
 
     @Test
@@ -33,7 +33,7 @@ class CategoriesViewModelGroupTest : CategoriesViewModelTestBase() {
     @Test
     fun uiState_groupsObserveError_fallsBackToNoGroups() =
         runTest(testDispatcher) {
-            val failing = FakeCategoryGroupRepository(nextObserveGroupsError = IllegalStateException("down"))
+            val failing = FakeEnvelopeRepository(nextObserveEnvelopesError = IllegalStateException("down"))
             val viewModel = start(FakeCategoryRepository(), failing)
 
             assertTrue(viewModel.content().groups.isEmpty())
@@ -45,7 +45,7 @@ class CategoriesViewModelGroupTest : CategoriesViewModelTestBase() {
             seedGroups()
             val repo = FakeCategoryRepository()
             val viewModel = start(repo)
-            val groupId = groups.groups.first().id
+            val groupId = groups.envelopes.first().id
 
             viewModel.onAdd()
             viewModel.onSaveEditor(CategoryDraft("Gym", "home", "teal", CategoryKind.SPENDING, groupId))

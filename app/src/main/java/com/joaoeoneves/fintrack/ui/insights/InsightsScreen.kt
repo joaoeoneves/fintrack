@@ -85,9 +85,9 @@ private fun BreakdownCard(
     modifier: Modifier = Modifier,
 ) {
     var byGroup by rememberSaveable { mutableStateOf(false) }
-    val showGroups = byGroup && breakdown.hasGroups
+    val showGroups = byGroup && breakdown.hasEnvelopes
     Column(modifier = modifier) {
-        if (breakdown.hasGroups) {
+        if (breakdown.hasEnvelopes) {
             SegmentedTextTabs(
                 options = listOf(false, true),
                 selected = showGroups,
@@ -97,7 +97,7 @@ private fun BreakdownCard(
             )
         }
         if (showGroups) {
-            GroupBreakdown(groups = breakdown.groups)
+            EnvelopeBreakdown(summary = breakdown.envelopes)
         } else {
             CategoryBreakdownSection(breakdown = breakdown, onCategoryClick = onCategoryClick)
         }

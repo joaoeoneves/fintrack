@@ -67,7 +67,7 @@ class MonthlyPlanViewModelIncomeRowsTest : MonthlyPlanViewModelTestBase() {
             val groups = vm.content().limitGroups
 
             assertEquals(1, groups.size)
-            assertNull(groups.single().group)
+            assertNull(groups.single().envelope)
             assertEquals(vm.content().allocations.size, groups.single().rows.size)
             assertEquals(5_000L, groups.single().plannedCents)
         }

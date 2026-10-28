@@ -5,9 +5,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class AnnualPlanGroupsTest {
-    private val food = planGroup("food", order = 0)
-    private val invest = planGroup("invest", order = 1)
+class AnnualPlanEnvelopesTest {
+    private val food = planEnvelope("food", order = 0)
+    private val invest = planEnvelope("invest", order = 1)
     private val dinners = planCategory("dinners", "food")
     private val snacks = planCategory("snacks", "food")
     private val savings = planCategory("savings", "invest")
@@ -24,12 +24,12 @@ class AnnualPlanGroupsTest {
             budgets = budgets,
             recurring = recurring,
             categories = listOf(dinners, snacks, savings, loose),
-            groups = listOf(food, invest),
+            envelopes = listOf(food, invest),
             expenses = expenses,
         ),
     )
 
-    private fun AnnualPlan.planned(id: String) = groups.first { it.group?.id == id }.plannedCents
+    private fun AnnualPlan.planned(id: String) = envelopes.first { it.envelope?.id == id }.plannedCents
 
     @Test
     fun foodGroup_sumsBudgetsOverTwelveMonths_honouringSkipMonths() {
@@ -137,24 +137,24 @@ class AnnualPlanGroupsTest {
 
     @Test
     fun otherGroup_shownOnlyWhenItHasMoney() {
-        assertTrue(plan().groups.none { it.group == null })
+        assertTrue(plan().envelopes.none { it.envelope == null })
 
         val planned = plan(budgets = listOf(Budget(loose.id, 500L)))
-        val other = planned.groups.last()
-        assertNull(other.group)
+        val other = planned.envelopes.last()
+        assertNull(other.envelope)
         assertEquals(6_000L, other.plannedCents)
 
         val spentOnly = plan(expenses = listOf(planExpense("e", loose, 700L)))
-        assertEquals(700L, spentOnly.groups.last().actualCents)
-        assertEquals(0L, spentOnly.groups.last().plannedCents)
+        assertEquals(700L, spentOnly.envelopes.last().actualCents)
+        assertEquals(0L, spentOnly.envelopes.last().plannedCents)
     }
 
     @Test
     fun definedGroups_areAlwaysListed_inOrder() {
-        val groups = plan().groups
+        val listed = plan().envelopes
 
-        assertEquals(listOf("food", "invest"), groups.map { it.group?.id })
-        assertEquals(0L, groups.sumOf { it.plannedCents })
+        assertEquals(listOf("food", "invest"), listed.map { it.envelope?.id })
+        assertEquals(0L, listed.sumOf { it.plannedCents })
     }
 
     @Test
@@ -166,12 +166,12 @@ class AnnualPlanGroupsTest {
                 planInputs(
                     budgets = listOf(Budget(orphan.id, 100L)),
                     categories = listOf(orphan),
-                    groups = listOf(food),
+                    envelopes = listOf(food),
                 ),
             )
 
-        assertNull(result.groups.last().group)
-        assertEquals(1_200L, result.groups.last().plannedCents)
+        assertNull(result.envelopes.last().envelope)
+        assertEquals(1_200L, result.envelopes.last().plannedCents)
     }
 
     @Test
@@ -186,7 +186,7 @@ class AnnualPlanGroupsTest {
                     ),
             )
 
-        assertEquals(6_500L, result.groups.first { it.group?.id == "food" }.actualCents)
+        assertEquals(6_500L, result.envelopes.first { it.envelope?.id == "food" }.actualCents)
     }
 
     @Test
@@ -201,12 +201,29 @@ class AnnualPlanGroupsTest {
                     ),
             )
 
-        assertEquals(500L, result.groups.first { it.group?.id == "food" }.actualCents)
+        assertEquals(500L, result.envelopes.first { it.envelope?.id == "food" }.actualCents)
+    }
+
+    @Test
+    fun fixedAmountEnvelope_plannedIsAmountTimesTwelve_ignoringItsCategoriesLimits() {
+        val fixed = food.copy(amountCents = 40_000L)
+        val result =
+            annualPlanOf(
+                PLAN_YEAR,
+                planInputs(
+                    budgets = listOf(Budget(dinners.id, 999L)),
+                    categories = listOf(dinners, snacks),
+                    envelopes = listOf(fixed, invest),
+                ),
+            )
+
+        assertEquals(480_000L, result.envelopes.first { it.envelope?.id == "food" }.plannedCents)
+        assertEquals(480_000L, result.plannedCents)
     }
 
     @Test
     fun isOver_onlyWhenSpentExceedsAPositivePlan() {
-        val over = AnnualGroup(food, plannedCents = 100L, actualCents = 101L)
+        val over = AnnualEnvelope(food, plannedCents = 100L, actualCents = 101L)
 
         assertTrue(over.isOver)
         assertTrue(!over.copy(actualCents = 100L).isOver)

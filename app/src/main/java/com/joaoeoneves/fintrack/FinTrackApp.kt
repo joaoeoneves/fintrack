@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack
 
 import android.app.Application
 import com.joaoeoneves.fintrack.data.automation.AutomationSync
+import com.joaoeoneves.fintrack.data.migration.EnvelopeMigrationSync
 import com.joaoeoneves.fintrack.data.preferences.PreferencesSync
 import com.joaoeoneves.fintrack.data.salary.ManagedIncomeSync
 import com.joaoeoneves.fintrack.ui.theme.NightModeSync
@@ -17,6 +18,9 @@ class FinTrackApp : Application() {
     lateinit var managedIncomeSync: ManagedIncomeSync
 
     @Inject
+    lateinit var envelopeMigrationSync: EnvelopeMigrationSync
+
+    @Inject
     lateinit var automationSync: AutomationSync
 
     override fun onCreate() {
@@ -24,6 +28,7 @@ class FinTrackApp : Application() {
         NightModeSync.restore(this)
         preferencesSync.start()
         managedIncomeSync.start()
+        envelopeMigrationSync.start()
         automationSync.start()
     }
 }

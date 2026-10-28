@@ -3,11 +3,11 @@ package com.joaoeoneves.fintrack.ui.settings.categories
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeBuiltInCategoryNames
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
-import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
 import com.joaoeoneves.fintrack.domain.usecase.MoveCategoryItems
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -44,11 +44,11 @@ abstract class CategoriesViewModelTestBase {
         Dispatchers.resetMain()
     }
 
-    protected val groups = FakeCategoryGroupRepository()
+    protected val groups = FakeEnvelopeRepository()
 
     protected fun newViewModel(
         repo: FakeCategoryRepository,
-        groupRepo: CategoryGroupRepository = groups,
+        groupRepo: EnvelopeRepository = groups,
     ): CategoriesViewModel =
         CategoriesViewModel(
             repo,
@@ -61,7 +61,7 @@ abstract class CategoriesViewModelTestBase {
     /** Creates the view model, collects its state and events, and lets the first emission land. */
     protected fun TestScope.start(
         repo: FakeCategoryRepository,
-        groupRepo: CategoryGroupRepository = groups,
+        groupRepo: EnvelopeRepository = groups,
     ): CategoriesViewModel {
         val viewModel = newViewModel(repo, groupRepo)
         backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }

@@ -4,7 +4,7 @@ import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.testutil.userCategory
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
@@ -27,7 +27,7 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
         val result = BackupCodec.decode(v4).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(13, result.document.schemaVersion)
+        assertEquals(14, result.document.schemaVersion)
         assertTrue(result.document.categoryGroups.isEmpty())
         assertEquals(
             null,
@@ -45,10 +45,10 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
     }
 
     @Test
-    fun v14File_isUnsupported() {
+    fun v15File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(14),
-            BackupCodec.decode("""{$header,"schemaVersion":14}"""),
+            BackupDecodeResult.UnsupportedVersion(15),
+            BackupCodec.decode("""{$header,"schemaVersion":15}"""),
         )
     }
 
@@ -95,7 +95,7 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
                 repository(
                     budgets = listOf(Budget(BuiltInCategories.FOOD.id, 16_000, setOf(8, 2))),
                     categoryDocs = listOf(userCategory("gym", "Gym").copy(groupId = "g-food")),
-                    groups = listOf(CategoryGroup("g2", "Fun", 1), CategoryGroup("g-food", "Food", 0)),
+                    groups = listOf(Envelope("g2", "Fun", 1), Envelope("g-food", "Food", 0)),
                 )
 
             val doc = repo.buildBackup(Instant.parse(EXPORTED_AT)).getOrThrow()

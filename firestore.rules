@@ -105,7 +105,7 @@ service cloud.firestore {
       return '^profile_(net_salary|duodecimos|meal|holiday|christmas|bonus|flex_q[1-4]|profit_share(_([1-9]|1[0-2]))?|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
     }
 
-    // An earmark sets the line aside for a category or group: both fields or neither, the id shape-checked
+    // An earmark sets the line aside (legacy, remove in 3.1) for a category or group: both fields or neither, the id shape-checked
     // only (a dangling target is treated as no earmark).
     function isValidEarmark(data) {
       return ('earmarkType' in data) == ('earmarkId' in data)
@@ -304,10 +304,13 @@ service cloud.firestore {
     }
 
     function isValidCategoryGroup(data) {
-      return data.keys().hasOnly(['name', 'order', 'updatedAt'])
+      return data.keys().hasOnly(['name', 'order', 'amountCents', 'fundedBy', 'updatedAt'])
         && data.keys().hasAll(['name', 'order'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 50
         && data.order is int
+        && (!('amountCents' in data) || (data.amountCents is int
+          && data.amountCents >= 1 && data.amountCents <= 100000000000))
+        && (!('fundedBy' in data) || (data.fundedBy is string && isCategoryIdShape(data.fundedBy)))
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 

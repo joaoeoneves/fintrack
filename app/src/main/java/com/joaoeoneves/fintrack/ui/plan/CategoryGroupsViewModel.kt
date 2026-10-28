@@ -4,14 +4,15 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SuggestedGroup
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.isGroupNameTaken
 import com.joaoeoneves.fintrack.domain.model.suggestedGroupsFor
-import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.settings.categories.MoveDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,7 +51,7 @@ data class SuggestedGroupNames(
 class CategoryGroupsViewModel
     @Inject
     constructor(
-        private val groupRepository: CategoryGroupRepository,
+        private val groupRepository: EnvelopeRepository,
         private val categoryRepository: CategoryRepository,
     ) : ViewModel() {
         private val errors = Channel<UiText>(Channel.BUFFERED)
@@ -59,9 +60,9 @@ class CategoryGroupsViewModel
         val errorEvent: Flow<UiText> = errors.receiveAsFlow()
 
         /** The groups in order; `null` until the first load. */
-        val groups: StateFlow<List<CategoryGroup>?> =
+        val groups: StateFlow<List<Envelope>?> =
             groupRepository
-                .observeGroups()
+                .observeEnvelopes()
                 .catch {
                     Log.w(TAG, "Failed to observe the category groups", it)
                     emit(emptyList())
@@ -75,7 +76,7 @@ class CategoryGroupsViewModel
             val trimmed = name.trim()
             if (!isValidName(trimmed)) return
             if (isGroupNameTaken(trimmed, groups.value.orEmpty(), reserved = reserved)) return rejectName()
-            write { groupRepository.addGroup(trimmed) }
+            write { groupRepository.saveEnvelope(EnvelopeEdit(null, trimmed, null, null, emptySet(), emptyMap())) }
         }
 
         /** Renames a group; a name used by another group or in [reserved] is rejected (a case change is fine). */
@@ -89,7 +90,20 @@ class CategoryGroupsViewModel
             if (isGroupNameTaken(trimmed, groups.value.orEmpty(), excludingId = id, reserved = reserved)) {
                 return rejectName()
             }
-            write { groupRepository.renameGroup(id, trimmed) }
+            write {
+                val current =
+                    groups.value.orEmpty().firstOrNull { it.id == id }
+                        ?: return@write Result.failure<Unit>(NoSuchElementException("Unknown group $id"))
+                val members =
+                    categoryRepository
+                        .observeCategories()
+                        .first()
+                        .filter { it.groupId == id }
+                        .map { it.id }
+                groupRepository.saveEnvelope(
+                    EnvelopeEdit(id, trimmed, current.amountCents, current.fundedByLineId, members.toSet(), emptyMap()),
+                )
+            }
         }
 
         fun onMove(
@@ -101,11 +115,11 @@ class CategoryGroupsViewModel
             val target = if (direction == MoveDirection.UP) index - 1 else index + 1
             if (index < 0 || target !in ids.indices) return
             val reordered = ids.toMutableList().apply { add(target, removeAt(index)) }
-            write { groupRepository.reorderGroups(reordered) }
+            write { groupRepository.reorderEnvelopes(reordered) }
         }
 
         fun onDelete(id: String) {
-            write { groupRepository.deleteGroup(id) }
+            write { groupRepository.deleteEnvelope(id) }
         }
 
         /**
@@ -118,7 +132,7 @@ class CategoryGroupsViewModel
         ) {
             write {
                 runCatching {
-                    check(groupRepository.observeGroups().first().isEmpty()) { "Groups already exist" }
+                    check(groupRepository.observeEnvelopes().first().isEmpty()) { "Groups already exist" }
                     val suggestions = suggestedGroupsFor(categoryRepository.observeCategories().first())
                     if (suggestions.isEmpty()) {
                         errors.send(UiText.StringResource(R.string.groups_suggested_none))
@@ -128,7 +142,8 @@ class CategoryGroupsViewModel
                     suggestions.forEach { (suggested, categoryIds) ->
                         val name = names.of(suggested)
                         if (isGroupNameTaken(name, emptyList(), reserved = reserved + created)) return@forEach
-                        val id = groupRepository.addGroup(name).getOrThrow()
+                        val edit = EnvelopeEdit(null, name, null, null, emptySet(), emptyMap())
+                        val id = groupRepository.saveEnvelope(edit).getOrThrow()
                         created += name
                         categoryIds.forEach { categoryRepository.setGroup(it, id).getOrThrow() }
                     }

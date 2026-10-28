@@ -35,7 +35,7 @@ private const val MAX_ONCE_YEAR = 2099
 /**
  * The basis and frequency tabs of an income line plus the month selection its frequency needs: "not
  * paid in" chips (monthly), a paid-in month (yearly) or a year and month (one-off). [preview], when
- * set, is shown under the basis tabs. Monthly lines also get the "Earmark for" picker over [earmarkOptions].
+ * set, is shown under the basis tabs.
  */
 @Composable
 internal fun IncomeScheduleFields(
@@ -43,7 +43,6 @@ internal fun IncomeScheduleFields(
     onChange: (IncomeSchedule) -> Unit,
     fallbackMonth: YearMonth,
     preview: String?,
-    earmarkOptions: EarmarkOptions,
 ) {
     SegmentedTextTabs(
         options = IncomeBasis.entries,
@@ -69,11 +68,6 @@ internal fun IncomeScheduleFields(
                     val skip = schedule.skipMonths
                     onChange(schedule.copy(skipMonths = if (month in skip) skip - month else skip + month))
                 },
-            )
-            EarmarkPicker(
-                options = earmarkOptions,
-                selected = schedule.earmark,
-                onSelect = { onChange(schedule.copy(earmark = it)) },
             )
         }
         IncomeFrequency.YEARLY ->

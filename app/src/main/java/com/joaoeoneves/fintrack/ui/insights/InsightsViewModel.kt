@@ -87,7 +87,7 @@ class InsightsViewModel
                                 categoryTotals = overview.summary.categoryTotals,
                                 plannedSlices = overview.budgets.plannedSlices(),
                                 hasExpenses = overview.transactions.expenses.isNotEmpty(),
-                                groups = overview.periodGroups,
+                                envelopes = overview.periodEnvelopes,
                             ),
                         split = spendingSplitOf(overview.transactions.expenses),
                     )

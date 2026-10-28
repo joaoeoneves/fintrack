@@ -21,7 +21,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
-import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.codePointLength
@@ -179,9 +178,6 @@ private fun SheetFields(
         ManagedLineFields(
             name = editor.managedName(),
             amountCents = editor.initialAmountCents ?: 0L,
-            schedule = schedule,
-            onChange = onScheduleChange,
-            earmarkOptions = editor.earmarkOptions,
         )
     } else {
         IncomeLineFields(
@@ -194,22 +190,18 @@ private fun SheetFields(
             onChange = onScheduleChange,
             fallbackMonth = fallbackMonth,
             preview = models.preview,
-            earmarkOptions = editor.earmarkOptions,
         )
     }
 }
 
 /**
  * The fields of a line generated from the salary profile: its read-only component name and amount, a hint to
- * change it in the profile, and (monthly lines only) the earmark.
+ * change it in the profile.
  */
 @Composable
 private fun ManagedLineFields(
     name: String,
     amountCents: Long,
-    schedule: IncomeSchedule,
-    onChange: (IncomeSchedule) -> Unit,
-    earmarkOptions: EarmarkOptions,
 ) {
     SettingsRow(title = stringResource(R.string.plan_field_label), value = name)
     SettingsRow(title = stringResource(R.string.plan_field_amount), value = formatAmountCents(amountCents))
@@ -218,13 +210,6 @@ private fun ManagedLineFields(
         style = MaterialTheme.typography.bodySmall,
         color = FinTrackTheme.colors.textSecondary,
     )
-    if (schedule.frequency == IncomeFrequency.MONTHLY) {
-        EarmarkPicker(
-            options = earmarkOptions,
-            selected = schedule.earmark,
-            onSelect = { onChange(schedule.copy(earmark = it)) },
-        )
-    }
 }
 
 /** The "x N working days = amount" line for per-working-day lines; `null` for fixed ones. */

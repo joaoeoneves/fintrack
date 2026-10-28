@@ -3,8 +3,8 @@ package com.joaoeoneves.fintrack.data.backup
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -19,7 +19,7 @@ import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -64,7 +64,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         plannedIncome: List<PlannedIncome> = emptyList(),
         recurring: List<RecurringItem> = emptyList(),
         monthSettings: List<MonthSettings> = emptyList(),
-        groups: List<CategoryGroup> = emptyList(),
+        groups: List<Envelope> = emptyList(),
         salaryProfile: SalaryProfile? = null,
         goals: List<SavingsGoal> = emptyList(),
         automation: AutomationSettings = AutomationSettings(),
@@ -76,7 +76,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
             FakePlannedIncomeRepository(plannedIncome),
             FakeRecurringRepository(recurring),
             FakeMonthSettingsRepository(monthSettings),
-            FakeCategoryGroupRepository(groups),
+            FakeEnvelopeRepository(groups),
             PlanSingletonSources(
                 FakeSalaryProfileRepository(salaryProfile),
                 FakeGoalRepository(goals),

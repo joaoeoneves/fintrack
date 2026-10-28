@@ -7,7 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GroupNamesTest {
-    private val groups = listOf(CategoryGroup("g1", "Food", 0), CategoryGroup("g2", "Fun", 1))
+    private val groups = listOf(Envelope("g1", "Food", 0), Envelope("g2", "Fun", 1))
 
     @Test
     fun taken_matchesTrimmedCaseInsensitive() {

@@ -2,11 +2,11 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SuggestedGroup
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -38,7 +38,7 @@ import org.robolectric.annotation.Config
 class CategoryGroupsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val categories = FakeCategoryRepository()
-    private val groupRepo = FakeCategoryGroupRepository(categories = categories)
+    private val groupRepo = FakeEnvelopeRepository(categories = categories)
     private val errors = mutableListOf<UiText>()
     private val saveFailed = UiText.StringResource(R.string.error_group_save_failed)
     private val names = SuggestedGroupNames("Recurring", "Investments", "Food", "Other")
@@ -53,7 +53,7 @@ class CategoryGroupsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun TestScope.start(repo: FakeCategoryGroupRepository = groupRepo): CategoryGroupsViewModel {
+    private fun TestScope.start(repo: FakeEnvelopeRepository = groupRepo): CategoryGroupsViewModel {
         val viewModel = CategoryGroupsViewModel(repo, categories)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.groups.collect {} }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -64,7 +64,7 @@ class CategoryGroupsViewModelTest {
     }
 
     private fun failingGroups() =
-        FakeCategoryGroupRepository(
+        FakeEnvelopeRepository(
             nextWriteError = IllegalStateException("nope"),
             categories = categories,
         )
@@ -79,15 +79,15 @@ class CategoryGroupsViewModelTest {
 
             val started = start()
 
-            assertEquals(emptyList<CategoryGroup>(), started.groups.value)
+            assertEquals(emptyList<Envelope>(), started.groups.value)
         }
 
     @Test
     fun observeError_fallsBackToEmpty() =
         runTest(testDispatcher) {
-            val viewModel = start(FakeCategoryGroupRepository(nextObserveGroupsError = IllegalStateException("x")))
+            val viewModel = start(FakeEnvelopeRepository(nextObserveEnvelopesError = IllegalStateException("x")))
 
-            assertEquals(emptyList<CategoryGroup>(), viewModel.groups.value)
+            assertEquals(emptyList<Envelope>(), viewModel.groups.value)
         }
 
     @Test
@@ -113,7 +113,7 @@ class CategoryGroupsViewModelTest {
             viewModel.onAdd("x".repeat(MAX_GROUP_NAME_LENGTH + 1))
             advanceUntilIdle()
 
-            assertTrue(groupRepo.groups.isEmpty())
+            assertTrue(groupRepo.envelopes.isEmpty())
             assertTrue(errors.isEmpty())
         }
 
@@ -125,7 +125,7 @@ class CategoryGroupsViewModelTest {
             viewModel.onAdd("x".repeat(MAX_GROUP_NAME_LENGTH))
             advanceUntilIdle()
 
-            assertEquals(1, groupRepo.groups.size)
+            assertEquals(1, groupRepo.envelopes.size)
         }
 
     @Test
@@ -134,7 +134,7 @@ class CategoryGroupsViewModelTest {
             val viewModel = start()
             viewModel.onAdd("Food")
             advanceUntilIdle()
-            val id = groupRepo.groups.single().id
+            val id = groupRepo.envelopes.single().id
 
             viewModel.onRename(id, "  Meals ")
             advanceUntilIdle()
@@ -162,7 +162,7 @@ class CategoryGroupsViewModelTest {
             val viewModel = start()
             listOf("A", "B", "C").forEach { viewModel.onAdd(it) }
             advanceUntilIdle()
-            val ids = groupRepo.groups.map { it.id }
+            val ids = groupRepo.envelopes.map { it.id }
 
             viewModel.onMove(ids[2], MoveDirection.UP)
             advanceUntilIdle()
@@ -186,14 +186,14 @@ class CategoryGroupsViewModelTest {
             val viewModel = start()
             viewModel.onAdd("Food")
             advanceUntilIdle()
-            val id = groupRepo.groups.single().id
+            val id = groupRepo.envelopes.single().id
             val gym = categories.addCategory("Gym", "home", "teal", CategoryKind.SPENDING, id).getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, id)
 
             viewModel.onDelete(id)
             advanceUntilIdle()
 
-            assertTrue(groupRepo.groups.isEmpty())
+            assertTrue(groupRepo.envelopes.isEmpty())
             val catalog = categories.observeCategories().first().associateBy { it.id }
             assertNull(catalog.getValue(gym).groupId)
             assertNull(catalog.getValue(BuiltInCategories.FOOD.id).groupId)
@@ -208,11 +208,11 @@ class CategoryGroupsViewModelTest {
             viewModel.onAdd("Food")
             advanceUntilIdle()
             assertEquals(listOf(saveFailed), errors)
-            assertTrue(repo.groups.isEmpty())
+            assertTrue(repo.envelopes.isEmpty())
 
             viewModel.onAdd("Food")
             advanceUntilIdle()
-            assertEquals(1, repo.groups.size)
+            assertEquals(1, repo.envelopes.size)
             assertEquals(1, errors.size)
         }
 
@@ -225,7 +225,7 @@ class CategoryGroupsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(listOf("Investments", "Food", "Other"), viewModel.names())
-            val idByName = groupRepo.groups.associate { it.name to it.id }
+            val idByName = groupRepo.envelopes.associate { it.name to it.id }
             val catalog = categories.observeCategories().first().associateBy { it.id }
             assertEquals(idByName["Investments"], catalog.getValue(BuiltInCategories.INVESTMENTS.id).groupId)
             assertEquals(idByName["Food"], catalog.getValue(BuiltInCategories.FOOD.id).groupId)
@@ -258,7 +258,7 @@ class CategoryGroupsViewModelTest {
             viewModel.onCreateSuggested(names)
             advanceUntilIdle()
 
-            assertEquals(3, groupRepo.groups.size) // built-in Recurring is archived, so it gets no group
+            assertEquals(3, groupRepo.envelopes.size) // built-in Recurring is archived, so it gets no group
         }
 
     @Test
@@ -271,7 +271,7 @@ class CategoryGroupsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(listOf(saveFailed), errors)
-            assertTrue(repo.groups.isEmpty())
+            assertTrue(repo.envelopes.isEmpty())
             assertTrue(categories.docs.isEmpty())
         }
 

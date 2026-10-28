@@ -2,7 +2,9 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.PlannedSource
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 import com.joaoeoneves.fintrack.testutil.assertFailsWithError
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
@@ -12,21 +14,21 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The category groups and recurring-derived planned amounts [ObservePeriodOverview] assembles. */
-class ObservePeriodOverviewGroupsTest : ObservePeriodOverviewTestBase() {
+/** The envelopes and recurring-derived planned amounts [ObservePeriodOverview] assembles. */
+class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
     private val billsCategory = BuiltInCategories.RECURRING.id
 
     @Test
-    fun noGroupsOrData_hasNoGroupRows() =
+    fun noEnvelopesOrData_hasNoEnvelopeRows() =
         runTest {
-            assertTrue(overview(Period.CurrentMonth).groups.isEmpty())
+            assertTrue(overview(Period.CurrentMonth).envelopes.envelopes.isEmpty())
         }
 
     @Test
     fun groups_sumPlannedFromBudgetsAndRecurring_andSpend() =
         runTest {
-            val food = groups.addGroup("Food").getOrThrow()
-            val bills = groups.addGroup("Bills").getOrThrow()
+            val food = groups.addEnvelope("Food").getOrThrow()
+            val bills = groups.addEnvelope("Bills").getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, food)
             categories.setGroup(BuiltInCategories.RECURRING.id, bills)
             budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 16_000L)
@@ -36,10 +38,11 @@ class ObservePeriodOverviewGroupsTest : ObservePeriodOverviewTestBase() {
 
             val result = overview(Period.CurrentMonth)
 
-            assertEquals(listOf("Food", "Bills"), result.groups.map { it.group?.name })
-            assertEquals(16_000L, result.groups[0].planned)
-            assertEquals(4_000L, result.groups[0].spent)
-            assertEquals(8_650L, result.groups[1].planned)
+            val rows = result.envelopes.envelopes
+            assertEquals(listOf("Food", "Bills"), rows.map { it.envelope.name })
+            assertEquals(16_000L, rows[0].amountCents)
+            assertEquals(4_000L, rows[0].spentCents)
+            assertEquals(8_650L, rows[1].amountCents)
             assertEquals(2, result.recurring.size)
             val row = result.budgets.single { it.category.id == BuiltInCategories.RECURRING.id }
             assertNull(row.limitCents)
@@ -61,22 +64,40 @@ class ObservePeriodOverviewGroupsTest : ObservePeriodOverviewTestBase() {
         }
 
     @Test
-    fun ungroupedSpend_appearsAsOtherGroup() =
+    fun unenvelopedSpend_appearsInUnenveloped() =
         runTest {
-            groups.addGroup("Food")
+            groups.addEnvelope("Food")
             expenses.delegate.addExpense(testExpense("e1", 700L, noonOn(october, 5), BuiltInCategories.SHOPPING))
 
-            val result = overview(Period.CurrentMonth).groups
+            val result = overview(Period.CurrentMonth).envelopes.unenveloped
 
-            assertNull(result.last().group)
-            assertEquals(700L, result.last().spent)
+            assertEquals(listOf(BuiltInCategories.SHOPPING), result.map { it.category })
+            assertEquals(700L, result.single().spentCents)
         }
 
     @Test
-    fun groupsFlowError_propagates() =
+    fun fixedAmountAndFunding_flowIntoTheOverview() =
+        runTest {
+            val food = groups.saveEnvelope(envelopeEdit("Food", amount = 20_000L, fundedBy = "meal")).getOrThrow()
+            categories.setGroup(BuiltInCategories.FOOD.id, food)
+            plannedIncome.savePlannedIncome(PlannedIncome("salary", "Salary", 100_000L, 0))
+            plannedIncome.savePlannedIncome(PlannedIncome("meal", "Meal", 20_000L, 1))
+            expenses.delegate.addExpense(testExpense("e1", 25_000L, noonOn(october, 5), BuiltInCategories.FOOD))
+
+            val result = overview(Period.CurrentMonth)
+
+            val progress = result.envelopes.envelopes.single()
+            assertEquals(20_000L, progress.fundingCents)
+            assertEquals(5_000L, progress.overflowCents)
+            assertEquals(100_000L - 5_000L, result.envelopes.freeCents)
+            assertEquals(100_000L + 20_000L - 25_000L, result.plan.safeToSpendCents)
+        }
+
+    @Test
+    fun envelopesFlowError_propagates() =
         runTest {
             val error = IllegalStateException("groups down")
-            groups.nextObserveGroupsError = error
+            groups.nextObserveEnvelopesError = error
 
             assertFailsWithError(error) { overview(Period.CurrentMonth) }
         }
@@ -100,4 +121,10 @@ class ObservePeriodOverviewGroupsTest : ObservePeriodOverviewTestBase() {
             assertEquals(PlannedSource.BUDGET, food.plannedSource)
             assertEquals(100L, food.planned)
         }
+
+    private fun envelopeEdit(
+        name: String,
+        amount: Long?,
+        fundedBy: String?,
+    ) = EnvelopeEdit(null, name, amount, fundedBy, emptySet(), emptyMap())
 }
