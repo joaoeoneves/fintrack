@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
-import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MAX_CATEGORY_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.limitInput
@@ -48,7 +47,6 @@ import com.joaoeoneves.fintrack.ui.common.categoryColorKeys
 import com.joaoeoneves.fintrack.ui.common.categoryIconFor
 import com.joaoeoneves.fintrack.ui.common.categoryIconKeys
 import com.joaoeoneves.fintrack.ui.common.displayName
-import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
@@ -68,7 +66,6 @@ internal fun CategoryEditorDialog(
     state: CategoryEditorState,
     onSave: (CategoryDraft) -> Unit,
     onDismiss: () -> Unit,
-    groups: List<Envelope> = emptyList(),
 ) {
     var draft by remember(state.editingId, state.initial) { mutableStateOf(state.initial) }
     var submittedName by remember(state.editingId) { mutableStateOf<String?>(null) }
@@ -93,9 +90,6 @@ internal fun CategoryEditorDialog(
             IconPicker(draft.iconKey, onSelected = { draft = draft.copy(iconKey = it) })
             ColorPicker(draft.colorKey, onSelected = { draft = draft.copy(colorKey = it) })
             KindPicker(draft.kind, onSelected = { draft = draft.copy(kind = it) })
-            if (groups.isNotEmpty()) {
-                GroupPicker(groups, draft.groupId, onSelected = { draft = draft.copy(groupId = it) })
-            }
         }
         PrimaryPillButton(
             text = stringResource(R.string.action_save),
@@ -228,30 +222,5 @@ private fun KindPicker(
             label = { it.label },
             onSelect = onSelected,
         )
-    }
-}
-
-/** "No group" plus one chip per group; a single-select like the other pickers. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun GroupPicker(
-    groups: List<Envelope>,
-    selectedId: String?,
-    onSelected: (String?) -> Unit,
-) {
-    PickerSection(stringResource(R.string.category_field_group)) {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(OptionSpacing),
-            verticalArrangement = Arrangement.spacedBy(OptionSpacing),
-        ) {
-            CategoryChip(
-                label = stringResource(R.string.category_group_none),
-                selected = selectedId == null || groups.none { it.id == selectedId },
-                onClick = { onSelected(null) },
-            )
-            groups.forEach { group ->
-                CategoryChip(label = group.name, selected = group.id == selectedId, onClick = { onSelected(group.id) })
-            }
-        }
     }
 }

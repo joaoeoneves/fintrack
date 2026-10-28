@@ -72,6 +72,22 @@ object Categories
 @Serializable
 object RecurringList
 
+/** The envelopes list, pushed from the Plan tab. */
+@Serializable
+object PlanEnvelopes
+
+/** The income screen, pushed from the Plan tab; [month] is an encoded `Period` token (null: the current month). */
+@Serializable
+data class PlanIncome(
+    val month: String? = null,
+)
+
+/** The envelope editor; a null [envelopeId] creates a new envelope. */
+@Serializable
+data class EditEnvelope(
+    val envelopeId: String? = null,
+)
+
 /** The salary profile editor, pushed from the Plan tab; it takes no arguments. */
 @Serializable
 object EditSalaryProfile

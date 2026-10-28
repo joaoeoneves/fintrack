@@ -18,7 +18,11 @@ import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.insights.InsightsScreen
+import com.joaoeoneves.fintrack.ui.plan.IncomeScreen
+import com.joaoeoneves.fintrack.ui.plan.PlanNavigation
 import com.joaoeoneves.fintrack.ui.plan.PlanScreen
+import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeEditorScreen
+import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
@@ -72,6 +76,7 @@ fun FinTrackNavHost(
         planRoutes(navController)
         insightsRoutes(navController)
         sharedRoutes(navController, transitions)
+        envelopeRoutes(navController)
     }
 }
 
@@ -117,7 +122,19 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
         composable<PlanHome> {
             PlanScreen(
                 onOpenSettings = { navController.navigate(Settings) },
-                onOpenRecurring = { navController.navigate(RecurringList) },
+                navigation =
+                    PlanNavigation(
+                        onOpenIncome = { period -> navController.navigate(PlanIncome(month = period.encode())) },
+                        onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
+                        onOpenEnvelope = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
+                        onOpenRecurring = { navController.navigate(RecurringList) },
+                        onOpenCategories = { navController.navigate(Categories) },
+                    ),
+            )
+        }
+        composable<PlanIncome> {
+            IncomeScreen(
+                onBack = dropUnlessResumed { navController.popBackStack() },
                 onOpenSalaryProfile = { navController.navigate(EditSalaryProfile) },
             )
         }
@@ -136,6 +153,19 @@ private fun NavGraphBuilder.insightsRoutes(navController: NavHostController) {
     }
 }
 
+/** The envelope list and editor, pushed from the Plan tab. */
+private fun NavGraphBuilder.envelopeRoutes(navController: NavHostController) {
+    composable<PlanEnvelopes> {
+        EnvelopesScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onOpenEditor = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
+        )
+    }
+    composable<EditEnvelope> {
+        EnvelopeEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
+    }
+}
+
 /** Screens pushed on top of whichever tab is current; the bottom bar is hidden on all of them. */
 private fun NavGraphBuilder.sharedRoutes(
     navController: NavHostController,
@@ -144,8 +174,6 @@ private fun NavGraphBuilder.sharedRoutes(
     composable<Settings> {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
-            onOpenCategories = { navController.navigate(Categories) },
-            onOpenRecurring = { navController.navigate(RecurringList) },
             onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
         )
     }

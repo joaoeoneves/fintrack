@@ -27,7 +27,7 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
         }
 
     @Test
-    fun empty_contentHasNoLinesUnconfiguredSummaryAndAllCategoryAllocations() =
+    fun empty_contentHasNoLinesAndUnconfiguredSummary() =
         runTest(testDispatcher) {
             val vm = viewModel()
             collect(vm)
@@ -35,7 +35,6 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
             val content = vm.content()
             assertTrue(content.incomeLines.isEmpty())
             assertFalse(content.summary.isConfigured)
-            assertEquals(BuiltInCategories.all.filterNot { it.archived }, content.allocations.map { it.category })
             assertTrue(content.canAddIncomeLine)
             assertEquals(null, content.editor)
         }
@@ -57,10 +56,6 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
             assertEquals(10_000L, content.summary.plannedSavingCents)
             assertEquals(80_000L, content.summary.plannedLeftoverCents)
             assertEquals(0L, content.summary.actualIncomeCents)
-            assertEquals(
-                listOf(30_000L),
-                content.allocations.filter { it.category == BuiltInCategories.SHOPPING }.map { it.limitCents },
-            )
         }
 
     @Test

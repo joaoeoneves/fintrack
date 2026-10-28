@@ -33,8 +33,6 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    onOpenCategories: () -> Unit,
-    onOpenRecurring: () -> Unit,
     onDataDeleted: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -68,8 +66,6 @@ fun SettingsScreen(
                 onSignOut = viewModel::signOut,
                 onSignInToSync = { viewModel.signInToSync(context) },
                 onLeaveGuestMode = viewModel::leaveGuestMode,
-                onOpenCategories = onOpenCategories,
-                onOpenRecurring = onOpenRecurring,
                 onDataDeleted = onDataDeleted,
             ),
         modifier = modifier,
@@ -110,8 +106,6 @@ private data class SettingsActions(
     val onSignOut: () -> Unit,
     val onSignInToSync: () -> Unit,
     val onLeaveGuestMode: () -> Unit,
-    val onOpenCategories: () -> Unit,
-    val onOpenRecurring: () -> Unit,
     val onDataDeleted: () -> Unit,
 )
 
@@ -142,8 +136,6 @@ private fun SettingsScaffold(
                 onLanguageSelected = actions.onLanguageSelected,
                 onCurrencySelected = actions.onCurrencySelected,
             )
-            CategoriesSection(onOpen = actions.onOpenCategories)
-            RecurringSection(onOpen = actions.onOpenRecurring)
             AutomationSection()
             DataSection(onImportClick = actions.onImportClick, onExportClick = actions.onExportClick)
             BackupFlow { onExport, onRestore ->
