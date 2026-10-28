@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.activity
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.common.DaySection
 import com.joaoeoneves.fintrack.ui.common.UiText
 
@@ -17,6 +18,7 @@ enum class ActivityType {
 data class ActivityFilters(
     val type: ActivityType,
     val category: CategoryId?,
+    val envelope: String?,
     val query: String,
     val sort: SortOption,
 )
@@ -32,7 +34,8 @@ sealed interface ActivityUiState {
 
     /**
      * [items] are the filtered and sorted transactions; [days] groups them under day headers and is
-     * empty when [filters] sort by amount (the list then stays flat).
+     * empty when [filters] sort by amount (the list then stays flat). [analytics] covers the whole period before the
+     * filters; [categoryScope] limits the category chips to the selected envelope's categories (`null`: no limit).
      */
     data class Content(
         val period: Period,
@@ -41,6 +44,8 @@ sealed interface ActivityUiState {
         val days: List<DaySection<Transaction>>,
         val totals: ActivityTotals,
         val filters: ActivityFilters,
+        val analytics: ActivityAnalytics,
+        val categoryScope: Set<CategoryId>? = null,
     ) : ActivityUiState
 
     data class Error(

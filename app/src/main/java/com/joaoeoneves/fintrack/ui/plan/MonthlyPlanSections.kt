@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,20 +21,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.CategoryBudget
-import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
-import com.joaoeoneves.fintrack.domain.model.PlannedSource
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.amountIn
-import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
-import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
+import com.joaoeoneves.fintrack.ui.designsystem.rememberFinTrackHaptics
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -72,37 +67,6 @@ private fun AmountRow(
     }
 }
 
-/** Planned totals: expected income, planned spending and saving, and what is left over. */
-@Composable
-fun PlanSummaryCard(
-    summary: MonthlyPlanSummary,
-    modifier: Modifier = Modifier,
-    fixedThisMonthCents: Long = 0L,
-) {
-    val negative = FinTrackTheme.colors.negative
-    Column(modifier = modifier.fillMaxWidth().padding(top = Dimens.Space24)) {
-        AmountRow(stringResource(R.string.plan_expected_income), formatAmountCents(summary.expectedIncomeCents))
-        if (summary.extrasExpectedCents > 0L) {
-            Hairline()
-            AmountRow(stringResource(R.string.plan_extras_this_month), formatAmountCents(summary.extrasExpectedCents))
-        }
-        Hairline()
-        AmountRow(stringResource(R.string.plan_planned_spending), formatAmountCents(summary.plannedSpendingCents))
-        Hairline()
-        AmountRow(stringResource(R.string.plan_planned_saving), formatAmountCents(summary.plannedSavingCents))
-        Hairline()
-        AmountRow(
-            label = stringResource(R.string.plan_leftover),
-            value = formatAmountCents(summary.plannedLeftoverCents),
-            valueColor = if (summary.plannedLeftoverCents < 0) negative else MaterialTheme.colorScheme.onSurface,
-        )
-        if (fixedThisMonthCents > 0L) {
-            Hairline()
-            AmountRow(stringResource(R.string.plan_fixed_this_month), formatAmountCents(fixedThisMonthCents))
-        }
-    }
-}
-
 /** What the expected-income card can trigger, bundled for detekt's LongParameterList. */
 data class ExpectedIncomeActions(
     val onAdd: () -> Unit,
@@ -119,6 +83,8 @@ data class ExpectedIncomeModel(
     val canAdd: Boolean,
     val workingDays: WorkingDaysState,
     val receipts: IncomeReceipts,
+    /** Keys of the manual rows that look like a repeat of the salary the profile already generates. */
+    val duplicateKeys: Set<String> = emptySet(),
 )
 
 /**
@@ -176,6 +142,18 @@ fun ExpectedIncomeCard(
     }
 }
 
+/** "Automatic · day 5" or "Automatic · last working day" for a row with a self-recording line; else `null`. */
+@Composable
+private fun autoRecordText(row: IncomeRow): String? {
+    val line = row.lines.firstOrNull { it.autoRecord } ?: return null
+    val payDay = line.payDay
+    return if (payDay == null) {
+        stringResource(R.string.plan_auto_last_working_day)
+    } else {
+        stringResource(R.string.plan_auto_day, payDay)
+    }
+}
+
 @Composable
 private fun IncomeGroupHeader(text: String) {
     Text(
@@ -203,8 +181,10 @@ private fun IncomeRowItem(
     val receivedOn = receipts.receivedOn[row.key]
     val received = receivedOn != null
     val feedback = LocalReceiveFeedback.current
+    val haptics = rememberFinTrackHaptics()
     val title = row.displayLabel()
-    val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receipts.today))
+    val receiveDate = minOf(row.payDateIn(model.workingDays.month), receipts.today)
+    val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val changeLabel = stringResource(R.string.action_change)
     val showCheck = paysThisMonth && (received || receipts.canReceive)
     val valueColor =
@@ -215,7 +195,12 @@ private fun IncomeRowItem(
         }
     AmountRow(
         label = title,
-        badge = receivedOn?.let { stringResource(R.string.plan_received_on, rememberReceivedText(it)) },
+        badge =
+            listOfNotNull(
+                receivedOn?.let { stringResource(R.string.plan_received_on, rememberReceivedText(it)) },
+                autoRecordText(row),
+                stringResource(R.string.plan_looks_like_salary).takeIf { row.key in model.duplicateKeys },
+            ).joinToString("\n").ifEmpty { null },
         value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
         valueColor = valueColor,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
@@ -229,11 +214,12 @@ private fun IncomeRowItem(
                             if (received) {
                                 onUndo(row)
                             } else {
-                                actions.onReceive(row, receipts.today, null)
+                                haptics.success()
+                                actions.onReceive(row, receiveDate, null)
                                 feedback?.announce(
                                     message = snackbarText,
                                     actionLabel = changeLabel,
-                                    change = receiveChange(row, title, model, actions),
+                                    change = receiveChange(row, title, model, actions, receiveDate),
                                 )
                             }
                         },
@@ -252,87 +238,15 @@ private fun receiveChange(
     title: String,
     model: ExpectedIncomeModel,
     actions: ExpectedIncomeActions,
+    date: LocalDate,
 ): ReceiveChange {
     val (month, days) = model.workingDays.let { it.month to it.days }
     val paying = row.lines.filter { it.amountIn(month, days) > 0L }
     return ReceiveChange(
         title = title,
         today = model.receipts.today,
+        date = date,
         editableAmountCents = paying.singleOrNull()?.amountIn(month, days),
         onConfirm = { date, cents -> actions.onReceive(row, date, cents) },
     )
-}
-
-/** One row per category with its planned amount; tap one to set, change or remove it. */
-@Composable
-fun AllocationsCard(
-    allocations: List<CategoryBudget>,
-    onEdit: (CategoryBudget) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SettingsGroup(label = stringResource(R.string.plan_allocations), modifier = modifier) {
-        allocations.forEach { allocation ->
-            AllocationRow(allocation = allocation, onClick = { onEdit(allocation) })
-            Hairline()
-        }
-    }
-}
-
-@Composable
-private fun AllocationRow(
-    allocation: CategoryBudget,
-    onClick: () -> Unit,
-) {
-    val category = allocation.category
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = Dimens.SettingsRowMinHeight)
-                .clickable(onClick = onClick)
-                .padding(vertical = Dimens.Space8),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(imageVector = category.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = category.displayName, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text =
-                    stringResource(
-                        if (category.kind == CategoryKind.SAVING) {
-                            R.string.category_kind_saving
-                        } else {
-                            R.string.category_kind_spending
-                        },
-                    ),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-            if (allocation.plannedSource == PlannedSource.RECURRING) {
-                Text(
-                    text = stringResource(R.string.plan_from_recurring),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FinTrackTheme.colors.textSecondary,
-                )
-            }
-            if (category.archived && allocation.planned != null) {
-                Text(
-                    text = stringResource(R.string.plan_archived_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FinTrackTheme.colors.textSecondary,
-                )
-            }
-        }
-        val planned = allocation.planned
-        if (planned != null) {
-            Text(text = formatAmountCents(planned), style = Amount)
-        } else {
-            Text(
-                text = stringResource(R.string.plan_not_planned),
-                style = Amount.copy(fontWeight = FontWeight.Normal),
-                color = FinTrackTheme.colors.textSecondary,
-            )
-        }
-    }
 }

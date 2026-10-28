@@ -124,6 +124,7 @@ private fun ColorScheme.withSurfaceContainers(
 @Composable
 fun FinTrackTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    reducedMotion: Boolean? = null,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
@@ -144,7 +145,7 @@ fun FinTrackTheme(
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme,
         LocalFinTrackColors provides finTrackColors,
-        LocalReducedMotion provides rememberReducedMotion(),
+        LocalReducedMotion provides (reducedMotion ?: rememberReducedMotion()),
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

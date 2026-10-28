@@ -2,14 +2,12 @@ package com.joaoeoneves.fintrack.di
 
 import com.joaoeoneves.fintrack.data.CategoryResolvingExpenseRepository
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.data.FirebaseAuthRepository
 import com.joaoeoneves.fintrack.data.session.DefaultSessionRepository
 import com.joaoeoneves.fintrack.data.session.SessionBudgetRepository
 import com.joaoeoneves.fintrack.data.session.SessionCategoryRepository
 import com.joaoeoneves.fintrack.data.session.SessionDataResetRepository
 import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
 import com.joaoeoneves.fintrack.data.session.SessionIncomeRepository
-import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.DataResetRepository
@@ -35,9 +33,6 @@ interface RepositoryModule {
 
     @Binds
     fun bindCategoryRepository(impl: SessionCategoryRepository): CategoryRepository
-
-    @Binds
-    fun bindAuthRepository(impl: FirebaseAuthRepository): AuthRepository
 
     @Binds
     fun bindBudgetRepository(impl: SessionBudgetRepository): BudgetRepository

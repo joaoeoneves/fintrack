@@ -28,45 +28,26 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** The navigation/action groups (categories, recurring, data, about) shown on [SettingsScreen]. */
-@Composable
-fun CategoriesSection(
-    onOpen: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SettingsGroup(label = stringResource(R.string.settings_section_categories), modifier = modifier) {
-        SettingsRow(
-            title = stringResource(R.string.settings_manage_categories),
-            onClick = onOpen,
-            showChevron = true,
-        )
-    }
-}
-
-@Composable
-fun RecurringSection(
-    onOpen: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SettingsGroup(label = stringResource(R.string.settings_section_recurring), modifier = modifier) {
-        SettingsRow(
-            title = stringResource(R.string.settings_manage_recurring),
-            onClick = onOpen,
-            showChevron = true,
-        )
-    }
-}
-
+/** Backup, restore, CSV import/export and the wipe in one group. */
 @Composable
 fun DataSection(
-    onImportClick: () -> Unit,
-    onExportClick: () -> Unit,
+    actions: DataSectionActions,
     modifier: Modifier = Modifier,
 ) {
     SettingsGroup(label = stringResource(R.string.settings_section_data), modifier = modifier) {
-        SettingsRow(title = stringResource(R.string.settings_import_csv), onClick = onImportClick)
+        SettingsRow(title = stringResource(R.string.settings_export_backup), onClick = actions.onExportBackup)
         Hairline()
-        SettingsRow(title = stringResource(R.string.settings_export_csv), onClick = onExportClick)
+        SettingsRow(title = stringResource(R.string.settings_restore_backup), onClick = actions.onRestoreBackup)
+        Hairline()
+        SettingsRow(title = stringResource(R.string.settings_import_csv), onClick = actions.onImportCsv)
+        Hairline()
+        SettingsRow(title = stringResource(R.string.settings_export_csv), onClick = actions.onExportCsv)
+        Hairline()
+        SettingsRow(
+            title = stringResource(R.string.settings_delete_all_data),
+            onClick = actions.onDeleteAll,
+            titleColor = FinTrackTheme.colors.negative,
+        )
     }
 }
 

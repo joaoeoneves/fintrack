@@ -1,29 +1,26 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
-import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.ui.common.ErrorState
@@ -62,13 +59,13 @@ fun AddEditRecurringScreen(
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (val state = uiState) {
-            AddEditRecurringUiState.Loading ->
-                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            AddEditRecurringUiState.Loading -> Unit
 
             is AddEditRecurringUiState.Ready ->
                 RecurringFormContent(
                     state = state,
-                    categoryOptions = categoryOptions.optionsIncluding(state.form.category),
+                    categoryOptions =
+                        categoryOptions.optionsIncluding(state.form.category).forNewItem(!state.isEditMode),
                     onFormChanged = viewModel::onFormChanged,
                     onDelete = viewModel::onDelete,
                     modifier = contentModifier,
@@ -100,9 +97,7 @@ private fun RecurringFormContent(
         verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
     ) {
         RecurringTypeAndNameFields(form, errors, onFormChanged, autoFocusAmount = !state.isEditMode)
-        if (form.type == RecurringType.EXPENSE) {
-            RecurringCategoryField(form, categoryOptions, errors, onFormChanged)
-        }
+        RecurringCategoryField(form, categoryOptions, errors, onFormChanged, showSavingsHint = !state.isEditMode)
         RecurringScheduleFields(form, errors, onFormChanged)
         RecurringDateFields(form, errors, onFormChanged)
         MinimalTextField(
@@ -148,3 +143,6 @@ private fun RecurringFormContent(
         )
     }
 }
+
+/** New items cannot go to a SAVING-kind category (those belong to savings plans); existing items keep theirs. */
+private fun List<Category>.forNewItem(isNew: Boolean) = if (isNew) filter { it.kind != CategoryKind.SAVING } else this

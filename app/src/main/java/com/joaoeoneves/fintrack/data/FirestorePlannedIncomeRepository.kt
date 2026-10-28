@@ -11,6 +11,8 @@ import com.joaoeoneves.fintrack.data.local.parseYearMonthOrNull
 import com.joaoeoneves.fintrack.data.local.typeName
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.MAX_DAY_OF_MONTH
+import com.joaoeoneves.fintrack.domain.model.MIN_DAY_OF_MONTH
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -87,7 +89,7 @@ internal fun PlannedIncome.toFirestoreMap(): Map<String, Any?> =
         "yearMonth" to yearMonth?.toString(),
         "skipMonths" to skipMonths.sorted(),
         "updatedAt" to FieldValue.serverTimestamp(),
-    ) + earmarkFields() + managedKeyFields()
+    ) + earmarkFields() + managedKeyFields() + automationFields()
 
 // Both fields or neither; absent for an unearmarked line (the rules reject a null value).
 private fun PlannedIncome.earmarkFields(): Map<String, Any?> =
@@ -98,6 +100,13 @@ private fun PlannedIncome.managedKeyFields(): Map<String, Any?> {
     val key = managedKey ?: return emptyMap()
     return mapOf("managedKey" to key)
 }
+
+// Absent while off / last working day (the rules reject a null value).
+private fun PlannedIncome.automationFields(): Map<String, Any?> =
+    buildMap {
+        if (autoRecord) put("autoRecord", true)
+        payDay?.let { put("payDay", it) }
+    }
 
 private fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
     documents.mapNotNull { it.toPlannedIncomeOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
@@ -128,6 +137,8 @@ private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
                 skipMonths = schedule.skipMonths,
                 earmark = earmarkOrNull(getString("earmarkType"), getString("earmarkId")),
                 managedKey = getString("managedKey"),
+                autoRecord = getBoolean("autoRecord") ?: false,
+                payDay = getLong("payDay")?.toInt()?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
             )
     }
 }

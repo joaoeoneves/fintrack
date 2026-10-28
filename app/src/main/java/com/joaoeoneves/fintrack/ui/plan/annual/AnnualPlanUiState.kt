@@ -40,7 +40,7 @@ sealed interface AnnualPlanUiState {
             get() =
                 plan.income.totalCents > 0 ||
                     plan.plannedCents > 0 ||
-                    plan.groups.any { it.actualCents > 0 } ||
+                    plan.envelopes.any { it.actualCents > 0 } ||
                     plan.subscriptions.isNotEmpty()
     }
 }

@@ -78,10 +78,19 @@ class LocalGoalRepositoryTest : LocalStoreTestBase() {
         runStoreTest {
             assertTrue(repo.saveGoal(goal(name = "")).exceptionOrNull() is IllegalArgumentException)
             assertTrue(repo.saveGoal(goal(name = "a".repeat(51))).isFailure)
-            assertTrue(repo.saveGoal(goal(target = 0)).isFailure)
             assertTrue(repo.saveGoal(goal(target = -1)).isFailure)
             assertTrue(repo.saveGoal(goal(targetDate = LocalDate.of(2025, 12, 31))).isFailure)
             assertFalse(dataFile.exists())
+        }
+
+    @Test
+    fun save_noTargetPlan_withRecurringId_roundTrips() =
+        runStoreTest {
+            val plan = goal(id = "p1", target = 0).copy(recurringId = "r1")
+
+            assertTrue(repo.saveGoal(plan).isSuccess)
+
+            assertEquals(listOf(plan), goals())
         }
 
     @Test

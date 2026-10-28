@@ -88,7 +88,8 @@ object BackupCodec {
         // managedKey (absent = none) and 8 -> 9 the goals (absent = empty) and
         // 9 -> 10 salaryProfile extras (absent = migrated from the legacy fields on read) and
         // 11 -> 12 the automation settings (absent = none) and
-        // 12 -> 13 the salary extra amountScope (absent = TOTAL).
+        // 12 -> 13 the salary extra amountScope (absent = TOTAL) and
+        // 15 -> 16 plannedIncome autoRecord/payDay and automation lineThrough (absent = off / last working day / none).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)

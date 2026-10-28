@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.backup.BackupFlow
 import com.joaoeoneves.fintrack.ui.common.asString
@@ -33,8 +34,6 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    onOpenCategories: () -> Unit,
-    onOpenRecurring: () -> Unit,
     onDataDeleted: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -61,6 +60,7 @@ fun SettingsScreen(
                 onThemeSelected = viewModel::setThemePreference,
                 onLanguageSelected = viewModel::setLanguage,
                 onCurrencySelected = viewModel::setCurrency,
+                onMotionSelected = viewModel::setMotionPreference,
                 onImportClick = {
                     importLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "*/*"))
                 },
@@ -68,8 +68,6 @@ fun SettingsScreen(
                 onSignOut = viewModel::signOut,
                 onSignInToSync = { viewModel.signInToSync(context) },
                 onLeaveGuestMode = viewModel::leaveGuestMode,
-                onOpenCategories = onOpenCategories,
-                onOpenRecurring = onOpenRecurring,
                 onDataDeleted = onDataDeleted,
             ),
         modifier = modifier,
@@ -105,13 +103,12 @@ private data class SettingsActions(
     val onThemeSelected: (ThemePreference) -> Unit,
     val onLanguageSelected: (AppLanguage) -> Unit,
     val onCurrencySelected: (CurrencyOption) -> Unit,
+    val onMotionSelected: (MotionPreference) -> Unit,
     val onImportClick: () -> Unit,
     val onExportClick: () -> Unit,
     val onSignOut: () -> Unit,
     val onSignInToSync: () -> Unit,
     val onLeaveGuestMode: () -> Unit,
-    val onOpenCategories: () -> Unit,
-    val onOpenRecurring: () -> Unit,
     val onDataDeleted: () -> Unit,
 )
 
@@ -136,31 +133,32 @@ private fun SettingsScaffold(
                     .padding(horizontal = Dimens.ScreenPadding)
                     .padding(bottom = Dimens.Space32),
         ) {
+            AccountCard(uiState = uiState, actions = actions)
             PreferencesSection(
                 uiState = uiState,
                 onThemeSelected = actions.onThemeSelected,
                 onLanguageSelected = actions.onLanguageSelected,
                 onCurrencySelected = actions.onCurrencySelected,
+                onMotionSelected = actions.onMotionSelected,
             )
-            CategoriesSection(onOpen = actions.onOpenCategories)
-            RecurringSection(onOpen = actions.onOpenRecurring)
-            AutomationSection()
-            DataSection(onImportClick = actions.onImportClick, onExportClick = actions.onExportClick)
-            BackupFlow { onExport, onRestore ->
+            BackupFlow(signedIn = !uiState.isGuest) { onExport, onRestore ->
                 DeleteAllDataFlow(
                     isGuest = uiState.isGuest,
                     onExportBackup = onExport,
                     onDeleted = actions.onDataDeleted,
                 ) { onDeleteAll ->
-                    BackupSection(
-                        isGuest = uiState.isGuest,
-                        onExportClick = onExport,
-                        onRestoreClick = onRestore,
-                        onDeleteAllClick = onDeleteAll,
+                    DataSection(
+                        actions =
+                            DataSectionActions(
+                                onExportBackup = onExport,
+                                onRestoreBackup = onRestore,
+                                onImportCsv = actions.onImportClick,
+                                onExportCsv = actions.onExportClick,
+                                onDeleteAll = onDeleteAll,
+                            ),
                     )
                 }
             }
-            AccountCard(uiState = uiState, actions = actions)
             AboutSection()
         }
     }

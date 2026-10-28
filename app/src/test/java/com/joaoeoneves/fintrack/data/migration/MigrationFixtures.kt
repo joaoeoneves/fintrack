@@ -12,7 +12,7 @@ import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 
 @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
 internal fun remoteSnapshot(
@@ -23,7 +23,7 @@ internal fun remoteSnapshot(
     recurringIds: Set<String> = emptySet(),
     categories: List<Category> = emptyList(),
     monthSettingsIds: Set<String> = emptySet(),
-    categoryGroups: List<CategoryGroup> = emptyList(),
+    categoryGroups: List<Envelope> = emptyList(),
 ) = RemoteAccountSnapshot(
     expenseIds,
     incomeIds,

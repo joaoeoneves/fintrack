@@ -30,7 +30,7 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
 
             assertEquals(listOf("coffee", "food", "salary"), ids(content.items))
             assertEquals(
-                ActivityFilters(ActivityType.ALL, null, "", SortOption.DATE_DESC),
+                ActivityFilters(ActivityType.ALL, null, null, "", SortOption.DATE_DESC),
                 content.filters,
             )
             assertEquals(1, content.days.size)
@@ -207,7 +207,7 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
             val content = content(restored)
 
             assertEquals(
-                ActivityFilters(ActivityType.EXPENSE, BuiltInCategories.FOOD.id, "fo", SortOption.AMOUNT_ASC),
+                ActivityFilters(ActivityType.EXPENSE, BuiltInCategories.FOOD.id, null, "fo", SortOption.AMOUNT_ASC),
                 content.filters,
             )
             assertEquals("fo", restored.query.value)

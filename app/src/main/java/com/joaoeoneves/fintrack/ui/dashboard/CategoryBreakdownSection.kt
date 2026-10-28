@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.ui.dashboard
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -51,12 +51,12 @@ import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
-import com.joaoeoneves.fintrack.ui.insights.InsightsBreakdown
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
+import com.joaoeoneves.fintrack.ui.theme.Motion
 import kotlin.math.roundToInt
 
 // The multiplier used to convert a fractional share into a whole-number percentage.
@@ -67,7 +67,6 @@ private val SegmentGap = 2.dp
 private val DotSize = 8.dp
 private val PercentColumnWidth = 48.dp
 private val TabsWidth = 176.dp
-private const val SEGMENT_MS = 600
 
 /**
  * Plain (non-composable), unit-testable computation of a slice's share of the total, rounded to
@@ -119,13 +118,13 @@ fun rankedBreakdown(slices: List<CategoryTotal>): List<BreakdownEntry> {
 }
 
 /**
- * The Insights tab's breakdown block: total outflow (or the planned total), an "Actual | Planned"
+ * The Activity header's breakdown block: total outflow (or the planned total), an "Actual | Planned"
  * switch when the plan has planned allocations, and the stateless [CategoryBreakdown] below it. When
  * [onCategoryClick] is set, each category row is tappable.
  */
 @Composable
 fun CategoryBreakdownSection(
-    breakdown: InsightsBreakdown,
+    breakdown: ActivityBreakdown,
     modifier: Modifier = Modifier,
     onCategoryClick: ((Category) -> Unit)? = null,
 ) {
@@ -271,7 +270,7 @@ private fun BarSegment(
         if (reducedMotion) {
             animated.snapTo(fraction)
         } else {
-            animated.animateTo(fraction, tween(SEGMENT_MS, easing = FastOutSlowInEasing))
+            animated.animateTo(fraction, tween(Motion.Emphasis, easing = Motion.Standard))
         }
     }
     Box(

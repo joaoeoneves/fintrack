@@ -49,10 +49,9 @@ import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
+import com.joaoeoneves.fintrack.ui.theme.Motion
 
 private const val SCROLL_THRESHOLD_PX = 6f
-private const val ENTER_MS = 240
-private const val EXIT_MS = 180
 private val PillShadow = 8.dp
 private val PillInnerMinHeight = 48.dp
 private val CapsulePadding = 4.dp
@@ -118,10 +117,16 @@ fun AddTransactionPill(
     modifier: Modifier = Modifier,
 ) {
     val reducedMotion = LocalReducedMotion.current
+    val enterSpec = tween<Float>(Motion.Medium, easing = Motion.EmphasizedDecelerate)
+    val exitSpec = tween<Float>(Motion.Short, easing = Motion.EmphasizedAccelerate)
     AnimatedVisibility(
         visible = visible || reducedMotion,
-        enter = slideInVertically(tween(ENTER_MS)) { it / 2 } + fadeIn(tween(ENTER_MS)),
-        exit = slideOutVertically(tween(EXIT_MS)) { it / 2 } + fadeOut(tween(EXIT_MS)),
+        enter =
+            slideInVertically(tween(Motion.Medium, easing = Motion.EmphasizedDecelerate)) { it / 2 } +
+                fadeIn(enterSpec),
+        exit =
+            slideOutVertically(tween(Motion.Short, easing = Motion.EmphasizedAccelerate)) { it / 2 } +
+                fadeOut(exitSpec),
         modifier = modifier,
     ) {
         Surface(

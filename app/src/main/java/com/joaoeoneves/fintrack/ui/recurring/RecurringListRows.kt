@@ -29,7 +29,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
-/** The annualized expense (with its monthly equivalent) and income of the active items. */
+/** The annualized expense of the active items, with its monthly equivalent. */
 @Composable
 internal fun RecurringTotals(state: RecurringListUiState.Content) {
     Column {
@@ -42,10 +42,6 @@ internal fun RecurringTotals(state: RecurringListUiState.Content) {
                 ),
         )
         Hairline()
-        SettingsRow(
-            title = stringResource(R.string.recurring_annual_income, formatAmountCents(state.annualIncomeCents)),
-        )
-        Hairline()
     }
 }
 
@@ -53,12 +49,13 @@ internal fun RecurringTotals(state: RecurringListUiState.Content) {
 internal fun RecurringRowItem(
     row: RecurringRow,
     actions: RecurringListActions,
+    modifier: Modifier = Modifier,
 ) {
     val item = row.item
     val amount = formatAmountCents(item.amountCents)
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .clickable { actions.onOpenEditor(item.id) }
                 .padding(vertical = Dimens.Space4),

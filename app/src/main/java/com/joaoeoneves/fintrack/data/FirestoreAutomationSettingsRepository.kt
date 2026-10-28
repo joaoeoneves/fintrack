@@ -41,29 +41,32 @@ class FirestoreAutomationSettingsRepository
             }
         }
 
-        override suspend fun setPaydayEnabled(
-            enabled: Boolean,
-            cursor: YearMonth?,
+        override suspend fun updateLineCursors(
+            set: Map<String, YearMonth>,
+            remove: Set<String>,
+            clearLegacyPayday: Boolean,
         ): Result<Unit> {
             val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
             return runCatchingCancellable {
+                val removed = remove.associateWith<String, Any> { FieldValue.delete() }
+                val cursors = removed + set.mapValues { it.value.toString() }
                 val data =
                     buildMap<String, Any> {
-                        put("paydayEnabled", enabled)
-                        cursor?.let { put("paydayThrough", it.toString()) }
+                        if (cursors.isNotEmpty()) put("lineThrough", cursors)
+                        if (clearLegacyPayday) put("paydayEnabled", false)
                         put("updatedAt", FieldValue.serverTimestamp())
                     }
                 // Not awaited (see FirestoreSalaryProfileRepository): the write lands in the local cache at once.
                 automationSettingsDoc(firestore, uid)
                     .set(data, SetOptions.merge())
-                    .addOnFailureListener { Log.w(TAG, "Set payday enabled failed", it) }
+                    .addOnFailureListener { Log.w(TAG, "Update line cursors failed", it) }
                 Unit
             }
         }
 
         override suspend fun recordPayday(
-            month: YearMonth,
             incomes: List<Income>,
+            cursors: Map<String, YearMonth>,
         ): Result<Unit> {
             val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
             return runCatchingCancellable {
@@ -72,10 +75,14 @@ class FirestoreAutomationSettingsRepository
                 incomes.forEach {
                     batch.set(user.collection("income").document(it.id), it.toFirestoreMap(includeCreatedAt = true))
                 }
-                val cursor = mapOf("paydayThrough" to month.toString(), "updatedAt" to FieldValue.serverTimestamp())
-                batch.set(automationSettingsDoc(firestore, uid), cursor, SetOptions.merge())
+                val data =
+                    buildMap<String, Any> {
+                        if (cursors.isNotEmpty()) put("lineThrough", cursors.mapValues { it.value.toString() })
+                        put("updatedAt", FieldValue.serverTimestamp())
+                    }
+                batch.set(automationSettingsDoc(firestore, uid), data, SetOptions.merge())
                 // Not awaited: the batch is applied to the local cache at once and syncs when online.
-                batch.commit().addOnFailureListener { Log.w(TAG, "Record payday $month failed", it) }
+                batch.commit().addOnFailureListener { Log.w(TAG, "Record payday failed", it) }
                 Unit
             }
         }
@@ -94,16 +101,25 @@ internal fun automationSettingsDoc(
         .collection("plan")
         .document("automation")
 
-/** Written whole; the cursor is absent while unset (the rules reject only a malformed one). */
+/** Written whole; the legacy cursor is absent while unset (the rules reject only a malformed one). */
 internal fun AutomationSettings.toFirestoreMap(): Map<String, Any?> =
     buildMap {
-        put("paydayEnabled", paydayEnabled)
-        paydayRecordedThrough?.let { put("paydayThrough", it.toString()) }
+        put("paydayEnabled", legacyPaydayEnabled)
+        legacyPaydayRecordedThrough?.let { put("paydayThrough", it.toString()) }
+        if (lineRecordedThrough.isNotEmpty()) put("lineThrough", lineRecordedThrough.mapValues { it.value.toString() })
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
 private fun DocumentSnapshot.toAutomationSettings(): AutomationSettings =
     AutomationSettings(
-        paydayEnabled = getBoolean("paydayEnabled") ?: false,
-        paydayRecordedThrough = getString("paydayThrough")?.let { runCatching { YearMonth.parse(it) }.getOrNull() },
+        legacyPaydayEnabled = getBoolean("paydayEnabled") ?: false,
+        legacyPaydayRecordedThrough =
+            getString("paydayThrough")?.let { runCatching { YearMonth.parse(it) }.getOrNull() },
+        lineRecordedThrough =
+            (get("lineThrough") as? Map<*, *>)
+                .orEmpty()
+                .mapNotNull { (id, raw) ->
+                    val month = (raw as? String)?.let { runCatching { YearMonth.parse(it) }.getOrNull() }
+                    if (id is String && month != null) id to month else null
+                }.toMap(),
     )

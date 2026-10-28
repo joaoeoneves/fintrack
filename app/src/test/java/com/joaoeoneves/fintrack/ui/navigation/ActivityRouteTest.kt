@@ -1,35 +1,33 @@
 package com.joaoeoneves.fintrack.ui.navigation
 
-import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.domain.model.encode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
-import java.time.LocalDate
-import java.time.YearMonth
 
+/** The [Activity] route's initial-value arguments. */
 class ActivityRouteTest {
     @Test
-    fun currentMonth_encodesPeriodAndCategory() {
-        assertEquals(
-            Activity(period = "current", category = BuiltInCategories.FOOD.id.value),
-            activityRouteFor(Period.CurrentMonth, BuiltInCategories.FOOD.id),
-        )
+    fun defaults_haveNoInitialValues() {
+        val route = Activity()
+
+        assertNull(route.period)
+        assertNull(route.type)
+        assertNull(route.category)
+        assertNull(route.envelope)
     }
 
     @Test
-    fun month_usesPeriodCodec() {
-        val period = Period.Month(YearMonth.of(2026, 9))
+    fun envelope_isCarriedIndependentlyOfTheOtherArguments() {
+        val route = Activity(period = "current", envelope = "env1")
 
-        assertEquals(period.encode(), activityRouteFor(period, CategoryId("gym")).period)
-        assertEquals("gym", activityRouteFor(period, CategoryId("gym")).category)
+        assertEquals("env1", route.envelope)
+        assertNull(route.category)
+        assertEquals(Activity(period = "current", envelope = "env1"), route)
     }
 
     @Test
-    fun custom_roundTripsToken() {
-        val period = Period.Custom(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 15))
-
-        assertEquals("custom:2026-10-01:2026-10-15", activityRouteFor(period, CategoryId("x")).period)
+    fun emptyEnvelope_isDistinctFromNone() {
+        assertEquals("", Activity(envelope = "").envelope)
+        assertNull(Activity().envelope)
     }
 }

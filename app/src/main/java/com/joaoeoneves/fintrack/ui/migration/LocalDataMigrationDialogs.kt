@@ -122,11 +122,12 @@ private fun RunningDialog(state: MigrationUiState.Running) {
                     Text(stringResource(R.string.migration_progress, state.done, state.total))
                     ThinProgressBar(
                         progress = state.done.toFloat() / state.total,
+                        drawIn = false,
                         modifier = Modifier.padding(top = Dimens.Space12),
                     )
                 } else {
                     Text(stringResource(R.string.migration_preparing))
-                    ThinProgressBar(progress = 0f, modifier = Modifier.padding(top = Dimens.Space12))
+                    ThinProgressBar(progress = 0f, drawIn = false, modifier = Modifier.padding(top = Dimens.Space12))
                 }
             }
         },

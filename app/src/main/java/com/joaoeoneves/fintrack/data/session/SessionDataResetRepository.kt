@@ -35,5 +35,6 @@ class SessionDataResetRepository
             preferences.setThemePreference(defaults.theme)
             preferences.setCurrency(defaults.currency)
             preferences.setLanguage(defaults.language)
+            preferences.setMotionPreference(defaults.reducedMotion)
         }
     }

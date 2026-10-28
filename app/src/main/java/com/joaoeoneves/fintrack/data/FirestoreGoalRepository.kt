@@ -93,6 +93,7 @@ internal fun SavingsGoal.toFirestoreMap(): Map<String, Any?> =
         "linkedCategoryId" to linkedCategoryId?.value,
         "archived" to archived,
         "order" to order,
+        "recurringId" to recurringId,
         "updatedAt" to FieldValue.serverTimestamp(),
     )
 
@@ -123,6 +124,7 @@ private fun DocumentSnapshot.parseGoal(): SavingsGoal? {
             linkedRecurringIds = (get("linkedRecurringIds") as? List<*>).orEmpty().filterIsInstance<String>().toSet(),
             linkedCategoryId = getString("linkedCategoryId")?.takeIf { it.isNotBlank() }?.let(::CategoryId),
             archived = get("archived") as? Boolean ?: false,
+            recurringId = getString("recurringId")?.takeIf { it.isNotBlank() },
             order = checkNotNull(order).coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt(),
         )
     }

@@ -108,6 +108,6 @@ class AnnualPlanGoalsTest {
 
         assertEquals(without.leftoverCents, with.leftoverCents)
         assertEquals(without.plannedCents, with.plannedCents)
-        assertEquals(without.groups, with.groups)
+        assertEquals(without.envelopes, with.envelopes)
     }
 }

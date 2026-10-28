@@ -88,6 +88,7 @@ android {
     }
     androidResources {
         generateLocaleConfig = true
+        localeFilters += listOf("en", "pt-rPT")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -192,6 +193,11 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.android.compiler)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

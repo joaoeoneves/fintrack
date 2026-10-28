@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.testutil.userCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -78,7 +78,7 @@ class MigrationPlannerPlannedIncomeTest {
 
     @Test
     fun earmark_group_followsGroupToTheAccountId() {
-        val remote = remoteSnapshot(categoryGroups = listOf(CategoryGroup("acct-food", "Food", 0)))
+        val remote = remoteSnapshot(categoryGroups = listOf(Envelope("acct-food", "Food", 0)))
         val local =
             localDoc()
                 .copy(

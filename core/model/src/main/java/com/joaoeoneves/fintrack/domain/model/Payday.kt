@@ -51,32 +51,9 @@ fun PlannedIncome.paydayIncome(
     }
 
 /**
- * The months whose payday has come and gone since [recordedThrough] (exclusive), oldest first, at most the last
- * [cap]. Empty while the cursor is `null` (the automation was never switched on).
- */
-fun paydayMonthsDue(
-    recordedThrough: YearMonth?,
-    today: LocalDate,
-    cap: Int = PAYDAY_CATCH_UP_MONTHS,
-): List<YearMonth> {
-    if (recordedThrough == null) return emptyList()
-    val current = YearMonth.from(today)
-    return generateSequence(recordedThrough.plusMonths(1)) { it.plusMonths(1) }
-        .takeWhile { it <= current }
-        .filter { paydayOf(it) <= today }
-        .toList()
-        .takeLast(cap)
-}
-
-/** The cursor to start from when the automation is switched on [today]: this month if payday is over, else last. */
-fun initialPaydayCursor(today: LocalDate): YearMonth {
-    val current = YearMonth.from(today)
-    return if (paydayOf(current) <= today) current else current.minusMonths(1)
-}
-
-/**
- * The payday incomes already recorded for every paying line of this row in [month], or `null` when the row pays
- * nothing or any of its lines is missing one (a partly received row counts as not received).
+ * The incomes already recorded for every paying line of this row in [month], or `null` when the row pays nothing
+ * or any of its lines is missing one (a partly received row counts as not received). A line migrated from a
+ * recurring income also matches that item's old `rec_<itemId>_<yyyyMMdd>` incomes dated in [month].
  */
 fun IncomeRow.receivedIncomes(
     month: YearMonth,
@@ -85,8 +62,26 @@ fun IncomeRow.receivedIncomes(
 ): List<Income>? {
     val byId = incomes.associateBy { it.id }
     val paying = lines.filter { it.amountIn(month, workingDays) > 0L }
-    val found = paying.mapNotNull { byId[paydayIncomeId(it.id, month)] }
+    val found = paying.mapNotNull { byId[paydayIncomeId(it.id, month)] ?: legacyRecurringIncome(it, month, incomes) }
     return found.takeIf { paying.isNotEmpty() && found.size == paying.size }
+}
+
+private val LEGACY_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE
+private const val LEGACY_DATE_LENGTH = 8
+
+/** The old recurring-income income (`rec_<itemId>_<yyyyMMdd>`) of a migrated [line] dated in [month], if any. */
+fun legacyRecurringIncome(
+    line: PlannedIncome,
+    month: YearMonth,
+    incomes: Collection<Income>,
+): Income? {
+    val prefix = line.legacyRecurringItemId()?.let { occurrenceIdPrefix(it) } ?: return null
+    return incomes.firstOrNull { income ->
+        val suffix = income.id.removePrefix(prefix)
+        income.id.startsWith(prefix) &&
+            suffix.length == LEGACY_DATE_LENGTH &&
+            runCatching { YearMonth.from(LocalDate.parse(suffix, LEGACY_DATE_FORMAT)) }.getOrNull() == month
+    }
 }
 
 /** The day the row was received on (the latest of its incomes' local days), or `null` when not received. */
@@ -98,8 +93,10 @@ fun IncomeRow.receivedOn(
 ): LocalDate? = receivedIncomes(month, workingDays, incomes)?.maxOf { it.date }?.atZone(zone)?.toLocalDate()
 
 /**
- * The expected income the dashboard offers: the [rows] of [month] not yet received, shown from [PAYDAY_LEAD_DAYS]
- * before [payday] to the end of the month. [workingDays] is the month's effective count.
+ * The expected income the dashboard offers: the [rows] of [month] not yet received, each shown from
+ * [PAYDAY_LEAD_DAYS] before its own pay date ([IncomeRow.payDateIn]) to the end of the month. [workingDays] is the
+ * month's effective count. [payday] is only a summary: the earliest pay date among [rows] (the month's last working
+ * day while there are none).
  */
 data class ExpectedIncome(
     val month: YearMonth,

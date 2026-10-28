@@ -1,77 +1,56 @@
 package com.joaoeoneves.fintrack.ui.plan
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.CategoryBudget
-import com.joaoeoneves.fintrack.domain.model.PotsSummary
-import com.joaoeoneves.fintrack.domain.model.carnivalWeekdayIn
+import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
-import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
-import com.joaoeoneves.fintrack.ui.dashboard.BudgetSection
-import com.joaoeoneves.fintrack.ui.dashboard.EditBudgetDialog
+import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanActions
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
 import com.joaoeoneves.fintrack.ui.plan.annual.PlanTab
-import com.joaoeoneves.fintrack.ui.plan.goals.CollectPlanErrors
-import com.joaoeoneves.fintrack.ui.plan.goals.GoalsSection
-import com.joaoeoneves.fintrack.ui.plan.goals.GoalsViewModel
-import com.joaoeoneves.fintrack.ui.settings.RecurringSection
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
-/** The Plan tab: the monthly plan, the selected month's planned-vs-actual progress and the recurring list link. */
+/** The Plan tab: the month's tiles, its envelope cards, and the set-up section. */
 @Composable
 fun PlanScreen(
     onOpenSettings: () -> Unit,
-    onOpenRecurring: () -> Unit,
-    onOpenSalaryProfile: () -> Unit,
+    navigation: PlanNavigation,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
-    groupsViewModel: CategoryGroupsViewModel = hiltViewModel(),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val goalsViewModel: GoalsViewModel = hiltViewModel()
     CollectPlanErrors(
         snackbarHostState = snackbarHostState,
-        events = listOf(viewModel.errorEvent, groupsViewModel.errorEvent, goalsViewModel.errorEvent),
+        events = listOf(viewModel.errorEvent),
     )
-
-    val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
-    receiveFeedback.ChangeSheet()
-
-    CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
-        PlanScaffold(
-            onOpenSettings = onOpenSettings,
-            snackbarHostState = snackbarHostState,
-            viewModel = viewModel,
-            groupsViewModel = groupsViewModel,
-            navigation = PlanNavigation(onOpenRecurring, onOpenSalaryProfile),
-        )
-    }
+    PlanScaffold(
+        onOpenSettings = onOpenSettings,
+        snackbarHostState = snackbarHostState,
+        viewModel = viewModel,
+        navigation = navigation,
+    )
 }
 
 @Composable
@@ -79,13 +58,12 @@ private fun PlanScaffold(
     onOpenSettings: () -> Unit,
     snackbarHostState: SnackbarHostState,
     viewModel: MonthlyPlanViewModel,
-    groupsViewModel: CategoryGroupsViewModel,
     navigation: PlanNavigation,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LargeTitleScaffold(
         title = stringResource(R.string.nav_plan),
-        actions = { SettingsIconButton(onClick = onOpenSettings) },
+        navigationIcon = { AccountAvatar(onClick = onOpenSettings) },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val annualViewModel: AnnualPlanViewModel = hiltViewModel()
@@ -115,7 +93,6 @@ private fun PlanScaffold(
                 MonthPlanBody(
                     state = uiState,
                     viewModel = viewModel,
-                    groupsViewModel = groupsViewModel,
                     navigation = navigation,
                     modifier = contentModifier,
                 )
@@ -128,47 +105,35 @@ private fun PlanScaffold(
 private fun MonthPlanBody(
     state: MonthlyPlanUiState,
     viewModel: MonthlyPlanViewModel,
-    groupsViewModel: CategoryGroupsViewModel,
     navigation: PlanNavigation,
     modifier: Modifier,
 ) {
-    when (state) {
-        MonthlyPlanUiState.Loading ->
-            Box(modifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    StateCrossfade(state) { state ->
+        when (state) {
+            MonthlyPlanUiState.Loading -> CardsSkeleton(modifier)
 
-        is MonthlyPlanUiState.Error ->
-            ErrorState(message = state.message.asString(), onRetry = viewModel::onRetry, modifier = modifier)
+            is MonthlyPlanUiState.Error ->
+                ErrorState(message = state.message.asString(), onRetry = viewModel::onRetry, modifier = modifier)
 
-        is MonthlyPlanUiState.Content ->
-            MonthlyPlanContent(
-                state = state,
-                viewModel = viewModel,
-                groupsViewModel = groupsViewModel,
-                navigation = navigation,
-                modifier = modifier,
-            )
+            is MonthlyPlanUiState.Content ->
+                MonthlyPlanContent(
+                    state = state,
+                    viewModel = viewModel,
+                    navigation = navigation,
+                    modifier = modifier,
+                )
+        }
     }
 }
-
-/** Where the Plan tab can navigate to, bundled for detekt's LongParameterList. */
-private class PlanNavigation(
-    val onOpenRecurring: () -> Unit,
-    val onOpenSalaryProfile: () -> Unit,
-)
 
 @Composable
 private fun MonthlyPlanContent(
     state: MonthlyPlanUiState.Content,
     viewModel: MonthlyPlanViewModel,
-    groupsViewModel: CategoryGroupsViewModel,
     navigation: PlanNavigation,
     modifier: Modifier = Modifier,
 ) {
-    var editingAllocation by remember { mutableStateOf<CategoryBudget?>(null) }
-    var editingWorkingDays by remember { mutableStateOf(false) }
-    var managingGroups by remember { mutableStateOf(false) }
     val cardModifier = Modifier.fillMaxWidth()
-
     LazyColumn(
         modifier = modifier,
         contentPadding =
@@ -182,204 +147,39 @@ private fun MonthlyPlanContent(
                 monthOnly = true,
             )
         }
+        item { PlanTilesRow(tiles = state.tiles, modifier = cardModifier) }
         item {
-            PlanSummaryCard(
-                summary = state.summary,
+            Text(
+                text = stringResource(R.string.plan_payday, rememberPaydayText(state.receipts.payday)),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+                modifier = cardModifier.padding(top = Dimens.Space16),
+            )
+        }
+        item {
+            EnvelopeCardsSection(
+                cards = state.envelopeCards,
+                actions =
+                    EnvelopeCardActions(
+                        onOpenEnvelope = navigation.onOpenEnvelope,
+                        onOpenEnvelopes = navigation.onOpenEnvelopes,
+                        onOpenCategories = navigation.onOpenCategories,
+                    ),
                 modifier = cardModifier,
-                fixedThisMonthCents = state.fixedThisMonthCents,
             )
         }
-        potsItem(state.pots, cardModifier)
-        expectedIncomeItem(state, viewModel, navigation, { editingWorkingDays = true }, cardModifier)
-        limitsItems(
-            state = state,
-            groupsViewModel = groupsViewModel,
-            viewModel = viewModel,
-            actions = LimitsActions(onEdit = { editingAllocation = it }, onManage = { managingGroups = true }),
-            modifier = cardModifier,
-        )
-        item { GoalsSection(modifier = cardModifier) }
-        item { RecurringSection(onOpen = navigation.onOpenRecurring, modifier = cardModifier) }
-    }
-
-    if (editingWorkingDays) {
-        WorkingDaysDialog(
-            state = state.workingDays,
-            carnival = carnivalWeekdayIn(state.workingDays.month),
-            onSave = viewModel::onSetWorkingDays,
-            onDismiss = { editingWorkingDays = false },
-        )
-    }
-    if (managingGroups) {
-        ManageGroupsDialog(groupsViewModel, onDismiss = { managingGroups = false })
-    }
-    PlanDialogs(
-        state = state,
-        editingAllocation = editingAllocation,
-        onCloseAllocation = { editingAllocation = null },
-        viewModel = viewModel,
-    )
-}
-
-@Composable
-private fun PlanDialogs(
-    state: MonthlyPlanUiState.Content,
-    editingAllocation: CategoryBudget?,
-    onCloseAllocation: () -> Unit,
-    viewModel: MonthlyPlanViewModel,
-) {
-    state.editor?.let {
-        IncomeLineSheet(
-            editor = it,
-            workingDays = state.workingDays,
-            onSave = { label, cents, schedule ->
-                viewModel.onSaveIncomeLine(label, cents, schedule, state.workingDays.month)
-            },
-            onDelete = viewModel::onDeleteIncomeLine,
-            onDismiss = viewModel::onDismissEditor,
-        )
-    }
-    editingAllocation?.let { budget ->
-        EditBudgetDialog(
-            budget = budget,
-            onSave = { limitCents, skipMonths ->
-                viewModel.onSetAllocation(budget.category, limitCents, skipMonths)
-                onCloseAllocation()
-            },
-            onRemove = {
-                viewModel.onClearAllocation(budget.category)
-                onCloseAllocation()
-            },
-            onDismiss = onCloseAllocation,
-        )
-    }
-}
-
-private fun LazyListScope.expectedIncomeItem(
-    state: MonthlyPlanUiState.Content,
-    viewModel: MonthlyPlanViewModel,
-    navigation: PlanNavigation,
-    onEditWorkingDays: () -> Unit,
-    modifier: Modifier,
-) {
-    item {
-        ExpectedIncomeCard(
-            model =
-                ExpectedIncomeModel(
-                    rows = state.incomeRows,
-                    canAdd = state.canAddIncomeLine,
-                    workingDays = state.workingDays,
-                    receipts = state.receipts,
-                ),
-            actions =
-                ExpectedIncomeActions(
-                    onAdd = viewModel::onAddIncomeLine,
-                    onEdit = viewModel::onEditIncomeLine,
-                    onEditWorkingDays = onEditWorkingDays,
-                    onOpenSalaryProfile = navigation.onOpenSalaryProfile,
-                    onReceive = viewModel::onReceive,
-                    onUndoReceive = viewModel::onUndoReceive,
-                ),
-            modifier = modifier,
-        )
-    }
-}
-
-/** The "Pots" card: one row per earmarked pot plus the base; only when some income line is earmarked. */
-private fun LazyListScope.potsItem(
-    pots: PotsSummary?,
-    modifier: Modifier,
-) {
-    if (pots == null || pots.pots.isEmpty()) return
-    item { PotsCard(pots = pots, modifier = modifier) }
-}
-
-/** The "Planned vs actual" card: the planned categories with how much of each limit the month has used. */
-private fun LazyListScope.plannedVsActualItem(
-    progress: List<CategoryBudget>,
-    viewModel: MonthlyPlanViewModel,
-    modifier: Modifier,
-) {
-    val planned = progress.filter { it.planned != null }
-    if (planned.isEmpty()) return
-    item {
-        BudgetSection(
-            budgets = planned,
-            title = stringResource(R.string.plan_planned_vs_actual),
-            onSetBudget = viewModel::onSetAllocation,
-            onClearBudget = viewModel::onClearAllocation,
-            modifier = modifier.padding(top = Dimens.Space24),
-        )
-    }
-}
-
-/** What the limits cards can trigger, bundled for detekt's LongParameterList. */
-private class LimitsActions(
-    val onEdit: (CategoryBudget) -> Unit,
-    val onManage: () -> Unit,
-)
-
-/**
- * Without groups: the flat "Limits" card, "Planned vs actual" and the groups empty state (the suggested starter
- * set is created with the names in the current language). With groups: the single "Limits" card by group.
- */
-private fun LazyListScope.limitsItems(
-    state: MonthlyPlanUiState.Content,
-    groupsViewModel: CategoryGroupsViewModel,
-    viewModel: MonthlyPlanViewModel,
-    actions: LimitsActions,
-    modifier: Modifier,
-) {
-    if (state.groups.any { it.group != null }) {
         item {
-            LimitsByGroupCard(
-                groups = state.limitGroups,
-                onEdit = actions.onEdit,
-                onManage = actions.onManage,
-                modifier = modifier,
+            ConfigureSection(
+                status = state.configure,
+                actions =
+                    ConfigureActions(
+                        onOpenIncome = { navigation.onOpenIncome(state.period) },
+                        onOpenEnvelopes = navigation.onOpenEnvelopes,
+                        onOpenRecurring = navigation.onOpenRecurring,
+                        onOpenCategories = navigation.onOpenCategories,
+                    ),
+                modifier = cardModifier,
             )
         }
-        return
     }
-    item { AllocationsCard(allocations = state.allocations, onEdit = actions.onEdit, modifier = modifier) }
-    plannedVsActualItem(state.progress, viewModel, modifier)
-    item {
-        val otherName = stringResource(R.string.plan_group_other)
-        val names =
-            SuggestedGroupNames(
-                recurring = stringResource(R.string.group_suggested_recurring),
-                investments = stringResource(R.string.group_suggested_investments),
-                food = stringResource(R.string.group_suggested_food),
-                other = stringResource(R.string.group_suggested_other),
-            )
-        GroupsEmptyCard(
-            actions =
-                GroupsActions(
-                    onCreateSuggested = { groupsViewModel.onCreateSuggested(names, listOf(otherName)) },
-                    onManage = actions.onManage,
-                ),
-            modifier = modifier,
-        )
-    }
-}
-
-@Composable
-private fun ManageGroupsDialog(
-    groupsViewModel: CategoryGroupsViewModel,
-    onDismiss: () -> Unit,
-) {
-    val groups by groupsViewModel.groups.collectAsStateWithLifecycle()
-    val reserved = listOf(stringResource(R.string.plan_group_other))
-    ManageGroupsSheet(
-        groups = groups.orEmpty(),
-        reservedNames = reserved,
-        actions =
-            ManageGroupsActions(
-                onAdd = { groupsViewModel.onAdd(it, reserved) },
-                onRename = { id, name -> groupsViewModel.onRename(id, name, reserved) },
-                onMove = groupsViewModel::onMove,
-                onDelete = groupsViewModel::onDelete,
-            ),
-        onDismiss = onDismiss,
-    )
 }

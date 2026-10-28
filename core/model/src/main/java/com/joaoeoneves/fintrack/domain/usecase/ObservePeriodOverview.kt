@@ -2,7 +2,8 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
+import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
@@ -17,9 +18,8 @@ import com.joaoeoneves.fintrack.domain.model.contains
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encloses
-import com.joaoeoneves.fintrack.domain.model.groupProgressOf
+import com.joaoeoneves.fintrack.domain.model.envelopesOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
-import com.joaoeoneves.fintrack.domain.model.potsOf
 import com.joaoeoneves.fintrack.domain.model.recentActivity
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
@@ -62,9 +62,9 @@ class ObservePeriodOverview
             val inputs =
                 combine(
                     planInputs,
-                    sources.groups.observeGroups(),
+                    sources.envelopes.observeEnvelopes(),
                     sources.recurring.observeRecurring(),
-                ) { plan, groups, recurring -> OverviewInputs(plan, groups, recurring) }
+                ) { plan, envelopes, recurring -> OverviewInputs(plan, envelopes, recurring) }
             return if (range.encloses(budgetRange)) {
                 combine(transactions, inputs) { tx, plan ->
                     val month =
@@ -101,6 +101,7 @@ class ObservePeriodOverview
             val monthSettings = plan.monthSettings.firstOrNull { it.month == budgetMonth }
             val workingDays =
                 effectiveWorkingDays(budgetMonth, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
+            val planMonth = PlanMonth(budgetMonth, workingDays)
             return PeriodOverview(
                 budgetMonth = budgetMonth,
                 transactions = transactions,
@@ -113,29 +114,39 @@ class ObservePeriodOverview
                         monthIncome = monthTransactions.income,
                         month = budgetMonth,
                         workingDays = workingDays,
+                        envelopes = inputs.envelopes,
                     ),
                 recent = transactions.recentActivity(recentLimit),
-                groups = groupProgressOf(rows, plan.categories, inputs.groups),
-                recurring = inputs.recurring,
-                periodGroups = periodGroupsOf(transactions, plan.categories, inputs.groups),
-                pots =
-                    potsOf(
+                envelopes =
+                    envelopesOf(
                         buckets = rows,
-                        groups = inputs.groups,
+                        categories = plan.categories,
+                        envelopes = inputs.envelopes,
                         plannedIncome = plan.plannedIncome,
                         monthIncome = monthTransactions.income,
-                        planMonth = PlanMonth(budgetMonth, workingDays),
+                        planMonth = planMonth,
                     ),
+                recurring = inputs.recurring,
+                periodEnvelopes = periodEnvelopesOf(transactions, plan.categories, inputs.envelopes, planMonth),
             )
         }
     }
 
-/** Spent per group over the whole period's [transactions] (planned amounts are left out). */
-private fun periodGroupsOf(
+/** Spent per envelope over the whole period's [transactions] (planned amounts and funding are left out). */
+private fun periodEnvelopesOf(
     transactions: TransactionsInRange,
     categories: List<Category>,
-    groups: List<CategoryGroup>,
-) = groupProgressOf(budgetProgressOf(transactions.expenses, emptyList(), categories), categories, groups)
+    envelopes: List<Envelope>,
+    planMonth: PlanMonth,
+): EnvelopesSummary =
+    envelopesOf(
+        buckets = budgetProgressOf(transactions.expenses, emptyList(), categories),
+        categories = categories,
+        envelopes = envelopes,
+        plannedIncome = emptyList(),
+        monthIncome = emptyList(),
+        planMonth = planMonth,
+    )
 
 /** The plan-side flows of an overview, combined once so the main combine stays within five flows. */
 private class PlanInputs(
@@ -145,9 +156,9 @@ private class PlanInputs(
     val categories: List<Category>,
 )
 
-/** [PlanInputs] with the category groups and recurring items, combined once more to stay within five flows. */
+/** [PlanInputs] with the envelopes and recurring items, combined once more to stay within five flows. */
 private class OverviewInputs(
     val plan: PlanInputs,
-    val groups: List<CategoryGroup>,
+    val envelopes: List<Envelope>,
     val recurring: List<RecurringItem>,
 )

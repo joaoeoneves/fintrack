@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.backup
 
-import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
@@ -26,21 +25,8 @@ class GuestBackupRestorer
             runCatchingCancellable {
                 check(sessionRepository.session.value == Session.Guest) { "Restore is only available in guest mode" }
                 localDataStore
-                    .replaceAll(
-                        LocalDataDocument(
-                            expenses = document.expenses,
-                            income = document.income,
-                            budgets = document.budgets,
-                            categories = document.categories,
-                            plannedIncome = document.plannedIncome,
-                            recurring = document.recurring,
-                            monthSettings = document.monthSettings,
-                            categoryGroups = document.categoryGroups,
-                            salaryProfile = document.salaryProfile,
-                            goals = document.goals,
-                            automation = document.automation,
-                        ),
-                    ).getOrThrow()
+                    .replaceAll(document.toLocalDataDocument())
+                    .getOrThrow()
                 document.preferences?.let { backup ->
                     preferencesStore.update { current ->
                         current.copy(

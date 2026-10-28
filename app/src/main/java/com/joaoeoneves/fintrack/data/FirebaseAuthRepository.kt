@@ -95,7 +95,7 @@ class FirebaseAuthRepository
             clearResult.exceptionOrNull()?.let {
                 Log.w(TAG, "Failed to clear credential state during sign-out", it)
             }
-            return combineSignOutResults(clearResult, signOutResult)
+            return combineSignOutResults(signOutResult)
         }
 
         private fun FirebaseUser.toAuthUser(): AuthUser =
@@ -109,11 +109,7 @@ class FirebaseAuthRepository
         companion object {
             private const val TAG = "FirebaseAuthRepository"
 
-            @Suppress("UnusedParameter")
-            internal fun combineSignOutResults(
-                clearCredentialResult: Result<Unit>,
-                firebaseSignOutResult: Result<Unit>,
-            ): Result<Unit> =
+            internal fun combineSignOutResults(firebaseSignOutResult: Result<Unit>): Result<Unit> =
                 firebaseSignOutResult.fold(
                     onSuccess = { Result.success(Unit) },
                     onFailure = { e -> Result.failure(e) },

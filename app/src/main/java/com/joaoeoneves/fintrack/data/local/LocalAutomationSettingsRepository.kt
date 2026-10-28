@@ -19,31 +19,32 @@ class LocalAutomationSettingsRepository
         override fun observeAutomationSettings(): Flow<AutomationSettings> =
             store.data.map { it.automation?.toDomain() ?: AutomationSettings() }
 
-        override suspend fun setPaydayEnabled(
-            enabled: Boolean,
-            cursor: YearMonth?,
+        override suspend fun updateLineCursors(
+            set: Map<String, YearMonth>,
+            remove: Set<String>,
+            clearLegacyPayday: Boolean,
         ): Result<Unit> =
             store.update { doc ->
                 val current = doc.automation ?: LocalAutomation()
+                val cursors = current.lineThrough - remove + set.mapValues { it.value.toString() }
+                val updated = current.copy(lineThrough = cursors)
                 doc.copy(
-                    automation =
-                        current.copy(
-                            paydayEnabled = enabled,
-                            paydayThrough = cursor?.toString() ?: current.paydayThrough,
-                        ),
+                    automation = if (clearLegacyPayday) updated.copy(paydayEnabled = false) else updated,
                 ) to Unit
             }
 
         override suspend fun recordPayday(
-            month: YearMonth,
             incomes: List<Income>,
+            cursors: Map<String, YearMonth>,
         ): Result<Unit> =
             store.update { doc ->
                 val records = incomes.map { it.toLocal().also(::validateIncome) }
                 val ids = records.mapTo(mutableSetOf()) { it.id }
+                val current = doc.automation ?: LocalAutomation()
                 doc.copy(
                     income = doc.income.filterNot { it.id in ids } + records,
-                    automation = (doc.automation ?: LocalAutomation()).copy(paydayThrough = month.toString()),
+                    automation =
+                        current.copy(lineThrough = current.lineThrough + cursors.mapValues { it.value.toString() }),
                 ) to Unit
             }
     }

@@ -80,7 +80,7 @@ class DashboardViewModel
                 }
         }
 
-        /** Home is month-only: rolling and custom periods (now on Insights) fall back to the current month. */
+        /** Home is month-only: rolling and custom periods (now on Activity) fall back to the current month. */
         fun onPeriodSelected(period: Period) = selection.select(period.asMonthPeriod())
 
         fun onPreviousMonth() = selection.previous()
@@ -114,10 +114,10 @@ class DashboardViewModel
                 incomeCents = summary.incomeCents,
                 netCents = summary.netCents,
                 plan = plan,
-                pots = pots,
+                envelopes = envelopes,
                 dailyAllowance =
                     if (isCurrentMonth) {
-                        val safe = pots?.base?.freeCents ?: plan.safeToSpendCents
+                        val safe = envelopes.freeCents
                         dailyAllowanceOf(safe, budgetMonth, now.atZone(zone).toLocalDate())
                     } else {
                         null

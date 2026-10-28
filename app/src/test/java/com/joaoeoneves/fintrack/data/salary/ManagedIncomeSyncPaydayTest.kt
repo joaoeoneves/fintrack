@@ -5,10 +5,12 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
@@ -62,7 +64,14 @@ class ManagedIncomeSyncPaydayTest {
             val plan = FakePlannedIncomeRepository(lines + own)
             val labels = FakeSalaryLineLabelsProvider(FakeSalaryLineLabelsProvider.PORTUGUESE)
 
-            ManagedIncomeSync(FakeSalaryProfileRepository(profile), plan, counting, labels, backgroundScope).start()
+            ManagedIncomeSync(
+                FakeSalaryProfileRepository(profile),
+                plan,
+                counting,
+                labels,
+                RestoreGate(),
+                backgroundScope,
+            ).start()
             advanceUntilIdle()
 
             val byId = incomes.getAllIncome().getOrThrow().associate { it.id to it.source }
@@ -80,6 +89,42 @@ class ManagedIncomeSyncPaydayTest {
         }
 
     @Test
+    fun aFailingRepair_isSwallowed_andALaterDifferentSetOfLinesRepairsAgain() =
+        runTest(UnconfinedTestDispatcher()) {
+            val incomes = FakeIncomeRepository(listOf(income(netId, "Net salary")))
+            var failNext = true
+            val flaky =
+                object : IncomeRepository by incomes {
+                    override suspend fun getAllIncome(): Result<List<Income>> {
+                        if (!failNext) return incomes.getAllIncome()
+                        failNext = false
+                        return Result.failure(IllegalStateException("offline"))
+                    }
+                }
+            val plan = FakePlannedIncomeRepository(lines + own)
+            val labels = FakeSalaryLineLabelsProvider(FakeSalaryLineLabelsProvider.PORTUGUESE)
+
+            ManagedIncomeSync(
+                FakeSalaryProfileRepository(profile),
+                plan,
+                flaky,
+                labels,
+                RestoreGate(),
+                backgroundScope,
+            ).start()
+            advanceUntilIdle()
+            assertEquals("Net salary", incomes.getIncome(netId).getOrThrow()?.source)
+
+            val otherManagedId = lines.first { it.isManaged && it.id != MANAGED_NET_SALARY }.id
+
+            // The set of managed lines changes: the repair is attempted again and now goes through.
+            plan.deletePlannedIncome(otherManagedId)
+            advanceUntilIdle()
+
+            assertEquals("Salário líquido", incomes.getIncome(netId).getOrThrow()?.source)
+        }
+
+    @Test
     fun alreadyLocalized_writesNothing() =
         runTest(UnconfinedTestDispatcher()) {
             val incomes = FakeIncomeRepository(listOf(income(netId, "Salário líquido")))
@@ -91,6 +136,7 @@ class ManagedIncomeSyncPaydayTest {
                 FakePlannedIncomeRepository(lines + own),
                 counting,
                 labels,
+                RestoreGate(),
                 backgroundScope,
             ).start()
             advanceUntilIdle()
@@ -109,6 +155,7 @@ class ManagedIncomeSyncPaydayTest {
                 plan,
                 FakeIncomeRepository(),
                 labels,
+                RestoreGate(),
                 backgroundScope,
             ).start()
             advanceUntilIdle()

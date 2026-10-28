@@ -13,7 +13,7 @@ import org.robolectric.annotation.Config
 
 /**
  * [BuiltInCategories.FOOD] on the dashboard: it is a SPENDING category (never counted as saved).
- * Its category total and budget are covered by the Insights and Plan tests. See
+ * Its category total and budget are covered by the Activity and Plan tests. See
  * [DashboardViewModelTestBase] for shared fixtures/setup.
  */
 @OptIn(ExperimentalCoroutinesApi::class)

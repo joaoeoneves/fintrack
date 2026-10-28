@@ -29,80 +29,112 @@ class LocalAutomationSettingsRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun enable_withCursor_persists() =
+    fun updateLineCursors_setsAndPersists() =
         runStoreTest {
-            assertTrue(repo.setPaydayEnabled(true, sep).isSuccess)
+            assertTrue(repo.updateLineCursors(set = mapOf("a" to sep, "b" to YearMonth.of(2026, 8))).isSuccess)
 
-            assertEquals(AutomationSettings(true, sep), settings())
-            assertEquals(LocalAutomation(true, "2026-09"), diskDoc().automation)
+            assertEquals(mapOf("a" to sep, "b" to YearMonth.of(2026, 8)), settings().lineRecordedThrough)
+            assertEquals(mapOf("a" to "2026-09", "b" to "2026-08"), diskDoc().automation?.lineThrough)
         }
 
     @Test
-    fun disable_keepsTheStoredCursor() =
+    fun updateLineCursors_removesAndOverwrites() =
         runStoreTest {
-            repo.setPaydayEnabled(true, sep)
+            repo.updateLineCursors(set = mapOf("a" to sep, "b" to sep))
 
-            repo.setPaydayEnabled(false)
+            repo.updateLineCursors(set = mapOf("a" to YearMonth.of(2026, 10)), remove = setOf("b"))
+
+            assertEquals(mapOf("a" to YearMonth.of(2026, 10)), settings().lineRecordedThrough)
+        }
+
+    @Test
+    fun updateLineCursors_clearLegacyPayday_switchesTheFlagOffAndKeepsTheLegacyCursor() =
+        runStoreTest {
+            store.update { it.copy(automation = LocalAutomation(true, "2026-09")) to Unit }
+
+            repo.updateLineCursors(clearLegacyPayday = true)
 
             assertEquals(AutomationSettings(false, sep), settings())
         }
 
     @Test
-    fun enableWithoutCursor_keepsNullCursor() =
+    fun recordPayday_storesIncomes_andMovesTheCursorsAtomically() =
         runStoreTest {
-            repo.setPaydayEnabled(true)
+            repo.updateLineCursors(set = mapOf("a" to YearMonth.of(2026, 8), "c" to YearMonth.of(2026, 8)))
 
-            assertEquals(AutomationSettings(true, null), settings())
-        }
-
-    @Test
-    fun recordPayday_storesIncomes_andMovesTheCursorAtomically() =
-        runStoreTest {
-            repo.setPaydayEnabled(true, YearMonth.of(2026, 8))
-
-            assertTrue(repo.recordPayday(sep, listOf(income("pay_a_202609"), income("pay_b_202609", 5))).isSuccess)
+            val incomes = listOf(income("pay_a_202609"), income("pay_b_202609", 5))
+            assertTrue(repo.recordPayday(incomes, mapOf("a" to sep, "b" to sep)).isSuccess)
 
             assertEquals(listOf("pay_a_202609", "pay_b_202609"), diskDoc().income.map { it.id })
-            assertEquals(sep, settings().paydayRecordedThrough)
-            assertTrue(settings().paydayEnabled)
+            assertEquals(
+                mapOf("a" to sep, "b" to sep, "c" to YearMonth.of(2026, 8)),
+                settings().lineRecordedThrough,
+            )
         }
 
     @Test
     fun recordPayday_sameIdAgain_replacesInsteadOfDuplicating() =
         runStoreTest {
-            repo.recordPayday(sep, listOf(income("pay_a_202609", 1)))
-            repo.recordPayday(sep, listOf(income("pay_a_202609", 2)))
+            repo.recordPayday(listOf(income("pay_a_202609", 1)), mapOf("a" to sep))
+            repo.recordPayday(listOf(income("pay_a_202609", 2)), mapOf("a" to sep))
 
             assertEquals(listOf(2L), diskDoc().income.map { it.amountCents })
         }
 
     @Test
-    fun recordPayday_noIncomes_onlyMovesTheCursor() =
+    fun recordPayday_noIncomes_onlyMovesTheCursors() =
         runStoreTest {
-            assertTrue(repo.recordPayday(sep, emptyList()).isSuccess)
+            assertTrue(repo.recordPayday(emptyList(), mapOf("a" to sep)).isSuccess)
 
             assertTrue(diskDoc().income.isEmpty())
-            assertEquals(sep, settings().paydayRecordedThrough)
+            assertEquals(mapOf("a" to sep), settings().lineRecordedThrough)
         }
 
     @Test
     fun recordPayday_invalidIncome_failsAndChangesNothing() =
         runStoreTest {
-            repo.setPaydayEnabled(true, YearMonth.of(2026, 8))
+            repo.updateLineCursors(set = mapOf("a" to YearMonth.of(2026, 8)))
 
-            val result = repo.recordPayday(sep, listOf(income("pay_a_202609", -5)))
+            val result = repo.recordPayday(listOf(income("pay_a_202609", -5)), mapOf("a" to sep))
 
             assertTrue(result.isFailure)
             assertTrue(diskDoc().income.isEmpty())
-            assertEquals(YearMonth.of(2026, 8), settings().paydayRecordedThrough)
+            assertEquals(mapOf("a" to YearMonth.of(2026, 8)), settings().lineRecordedThrough)
         }
 
     @Test
-    fun unreadableStoredCursor_readsAsNever() =
+    fun unreadableStoredCursors_readAsNever() =
         runStoreTest {
-            store.update { it.copy(automation = LocalAutomation(true, "garbage")) to Unit }
+            store.update {
+                it.copy(automation = LocalAutomation(true, "garbage", mapOf("a" to "nope", "b" to "2026-09"))) to Unit
+            }
 
-            assertEquals(AutomationSettings(true, null), settings())
+            assertEquals(AutomationSettings(true, null, mapOf("b" to sep)), settings())
+        }
+
+    @Test
+    fun malformedLineThrough_isRejectedByValidation() {
+        val bad = LocalAutomation(lineThrough = mapOf("a" to "2026/09"))
+        val blank = LocalAutomation(lineThrough = mapOf(" " to "2026-09"))
+        val tooMany = LocalAutomation(lineThrough = (0..64).associate { "l$it" to "2026-09" })
+
+        assertNull(bad.validOrNull())
+        assertNull(blank.validOrNull())
+        assertNull(tooMany.validOrNull())
+        assertEquals(
+            LocalAutomation(lineThrough = mapOf("a" to "2026-09")),
+            LocalAutomation(lineThrough = mapOf("a" to "2026-09")).validOrNull(),
+        )
+    }
+
+    @Test
+    fun v15File_decodesWithoutLineThrough() =
+        runStoreTest {
+            val automation = """{"paydayEnabled":true,"paydayThrough":"2026-09"}"""
+            dataFile.writeText("""{"schemaVersion":15,"revision":3,"automation":$automation}""")
+
+            val loaded = LocalAutomationSettingsRepository(newStore()).observeAutomationSettings().first()
+            assertEquals(AutomationSettings(true, sep), loaded)
         }
 
     @Test

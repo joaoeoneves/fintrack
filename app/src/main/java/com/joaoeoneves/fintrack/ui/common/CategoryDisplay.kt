@@ -88,6 +88,12 @@ fun categoryColorFor(
     return if (isDarkTheme) color.dark else color.light
 }
 
+/** The palette color of the [index]th slice of a chart, cycling through the palette (slate last is skipped). */
+fun sliceColorFor(
+    index: Int,
+    isDarkTheme: Boolean,
+): Color = categoryColorFor(categoryColorKeys[index.mod(categoryColorKeys.size - 1)], isDarkTheme)
+
 /** [categoryColorFor] a [category]'s own color key. */
 fun categoryColorFor(
     category: Category,

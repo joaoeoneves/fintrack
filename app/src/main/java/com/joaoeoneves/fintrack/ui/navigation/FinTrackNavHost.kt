@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
 import com.joaoeoneves.fintrack.ui.activity.ActivityScreen
@@ -17,11 +18,17 @@ import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
-import com.joaoeoneves.fintrack.ui.insights.InsightsScreen
+import com.joaoeoneves.fintrack.ui.plan.IncomeScreen
+import com.joaoeoneves.fintrack.ui.plan.PlanNavigation
 import com.joaoeoneves.fintrack.ui.plan.PlanScreen
+import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeEditorScreen
+import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
+import com.joaoeoneves.fintrack.ui.plan.salary.setup.SalarySetupScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
+import com.joaoeoneves.fintrack.ui.savings.SavingsPlanEditorScreen
+import com.joaoeoneves.fintrack.ui.savings.SavingsScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
@@ -38,40 +45,18 @@ fun FinTrackNavHost(
         navController = navController,
         startDestination = HomeGraph,
         modifier = modifier,
-        enterTransition = {
-            if (isTabSwitch(initialState.destination, targetState.destination)) {
-                transitions.fadeEnter()
-            } else {
-                transitions.enter()
-            }
-        },
-        exitTransition = {
-            when {
-                isTabSwitch(initialState.destination, targetState.destination) -> transitions.fadeExit()
-                targetState.destination.isForm() -> transitions.exitUnderForm()
-                else -> transitions.exit()
-            }
-        },
-        popEnterTransition = {
-            when {
-                isTabSwitch(initialState.destination, targetState.destination) -> transitions.fadeEnter()
-                initialState.destination.isForm() -> transitions.popEnterUnderForm()
-                else -> transitions.popEnter()
-            }
-        },
-        popExitTransition = {
-            if (isTabSwitch(initialState.destination, targetState.destination)) {
-                transitions.fadeExit()
-            } else {
-                transitions.popExit()
-            }
-        },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         homeRoutes(navController)
         activityRoutes(navController)
         planRoutes(navController)
-        insightsRoutes(navController)
-        sharedRoutes(navController, transitions)
+        savingsRoutes(navController)
+        sharedRoutes(navController)
+        envelopeRoutes(navController)
+        formRoutes(navController, transitions)
     }
 }
 
@@ -89,11 +74,23 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
                         onOpenPlan = { navController.navigateToTab(TopLevelTab.PLAN) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
+                        onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
                     ),
             )
         }
     }
 }
+
+/** Where a "Get started" checklist step leads. */
+private fun routeForStartStep(step: StartStep): Any =
+    when (step) {
+        StartStep.SALARY -> SalarySetup
+        StartStep.ENVELOPES -> PlanEnvelopes
+        StartStep.BILLS -> RecurringList
+        StartStep.SAVINGS_PLAN -> EditSavingsPlan()
+        StartStep.PAYDAY -> PlanIncome()
+        StartStep.FIRST_EXPENSE -> AddEditExpense()
+    }
 
 private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
     navigation<ActivityGraph>(startDestination = Activity()) {
@@ -117,35 +114,59 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
         composable<PlanHome> {
             PlanScreen(
                 onOpenSettings = { navController.navigate(Settings) },
-                onOpenRecurring = { navController.navigate(RecurringList) },
-                onOpenSalaryProfile = { navController.navigate(EditSalaryProfile) },
+                navigation =
+                    PlanNavigation(
+                        onOpenIncome = { period -> navController.navigate(PlanIncome(month = period.encode())) },
+                        onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
+                        onOpenEnvelope = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
+                        onOpenRecurring = { navController.navigate(RecurringList) },
+                        onOpenCategories = { navController.navigate(Categories) },
+                    ),
+            )
+        }
+        composable<PlanIncome> {
+            IncomeScreen(
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onOpenSalaryProfile = { hasProfile ->
+                    navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
+                },
             )
         }
     }
 }
 
-private fun NavGraphBuilder.insightsRoutes(navController: NavHostController) {
-    navigation<InsightsGraph>(startDestination = Insights()) {
-        composable<Insights> {
-            InsightsScreen(
+private fun NavGraphBuilder.savingsRoutes(navController: NavHostController) {
+    navigation<SavingsGraph>(startDestination = SavingsHome) {
+        composable<SavingsHome> {
+            SavingsScreen(
                 onOpenSettings = { navController.navigate(Settings) },
-                onOpenActivity = { period, id -> navController.navigateToTabWith(activityRouteFor(period, id)) },
-                onAddExpense = { navController.navigate(AddEditExpense()) },
+                onOpenPlan = { id -> navController.navigate(EditSavingsPlan(id = id)) },
             )
         }
+    }
+}
+
+/** The envelope list and editor, pushed from the Plan tab. */
+private fun NavGraphBuilder.envelopeRoutes(navController: NavHostController) {
+    composable<PlanEnvelopes> {
+        EnvelopesScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onOpenEditor = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
+        )
+    }
+    composable<EditSavingsPlan> {
+        SavingsPlanEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
+    }
+    composable<EditEnvelope> {
+        EnvelopeEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
 }
 
 /** Screens pushed on top of whichever tab is current; the bottom bar is hidden on all of them. */
-private fun NavGraphBuilder.sharedRoutes(
-    navController: NavHostController,
-    transitions: NavTransitions,
-) {
+private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
     composable<Settings> {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
-            onOpenCategories = { navController.navigate(Categories) },
-            onOpenRecurring = { navController.navigate(RecurringList) },
             onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
         )
     }
@@ -156,14 +177,33 @@ private fun NavGraphBuilder.sharedRoutes(
         RecurringListScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenEditor = { id -> navController.navigate(AddEditRecurring(recurringId = id)) },
+            onOpenIncome = { navController.navigate(PlanIncome()) },
         )
     }
     composable<EditSalaryProfile> {
         SalaryProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
+    composable<SalarySetup> {
+        SalarySetupScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onDone = dropUnlessResumed { navController.popBackStack() },
+            onOpenAdvanced = {
+                navController.navigate(EditSalaryProfile) { popUpTo<SalarySetup> { inclusive = true } }
+            },
+        )
+    }
+}
+
+/** Add/edit forms: they enter from the bottom and leave downwards. */
+private fun NavGraphBuilder.formRoutes(
+    navController: NavHostController,
+    transitions: NavTransitions,
+) {
     composable<AddEditRecurring>(
-        enterTransition = { transitions.enterFromBottom() },
-        popExitTransition = { transitions.popExitToBottom() },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         AddEditRecurringScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },
@@ -171,8 +211,10 @@ private fun NavGraphBuilder.sharedRoutes(
         )
     }
     composable<AddEditExpense>(
-        enterTransition = { transitions.enterFromBottom() },
-        popExitTransition = { transitions.popExitToBottom() },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         AddEditExpenseScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },
@@ -181,8 +223,10 @@ private fun NavGraphBuilder.sharedRoutes(
         )
     }
     composable<AddEditIncome>(
-        enterTransition = { transitions.enterFromBottom() },
-        popExitTransition = { transitions.popExitToBottom() },
+        enterTransition = { transitions.enter(initialState.destination, targetState.destination) },
+        exitTransition = { transitions.exit(initialState.destination, targetState.destination) },
+        popEnterTransition = { transitions.popEnter(initialState.destination, targetState.destination) },
+        popExitTransition = { transitions.popExit(initialState.destination, targetState.destination) },
     ) {
         AddEditIncomeScreen(
             onSaved = dropUnlessResumed { navController.popBackStack() },

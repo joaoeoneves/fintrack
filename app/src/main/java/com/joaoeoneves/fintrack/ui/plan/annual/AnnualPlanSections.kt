@@ -15,12 +15,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.AnnualGroup
+import com.joaoeoneves.fintrack.domain.model.AnnualEnvelope
+import com.joaoeoneves.fintrack.domain.model.AnnualFunding
 import com.joaoeoneves.fintrack.domain.model.AnnualIncome
-import com.joaoeoneves.fintrack.domain.model.AnnualPot
 import com.joaoeoneves.fintrack.domain.model.AnnualSubscription
 import com.joaoeoneves.fintrack.ui.common.currentLocale
-import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
@@ -85,31 +84,31 @@ fun AnnualIncomeCard(
     }
 }
 
-/** Planned vs year-to-date actual per group, with a thin bar; groups with nothing at all are left out. */
+/** Planned vs year-to-date actual per envelope, with a thin bar; envelopes with nothing at all are left out. */
 @Composable
-fun AnnualGroupsCard(
-    groups: List<AnnualGroup>,
+fun AnnualEnvelopesCard(
+    envelopes: List<AnnualEnvelope>,
     modifier: Modifier = Modifier,
 ) {
-    val shown = groups.filter { it.plannedCents > 0 || it.actualCents > 0 }
+    val shown = envelopes.filter { it.plannedCents > 0 || it.actualCents > 0 }
     if (shown.isEmpty()) return
-    SettingsGroup(label = stringResource(R.string.plan_groups_title), modifier = modifier) {
+    SettingsGroup(label = stringResource(R.string.plan_envelopes_title), modifier = modifier) {
         shown.forEach { group ->
-            AnnualGroupRow(group)
+            AnnualEnvelopeRow(group)
             Hairline()
         }
     }
 }
 
 @Composable
-private fun AnnualGroupRow(group: AnnualGroup) {
+private fun AnnualEnvelopeRow(group: AnnualEnvelope) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space12)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = group.group?.name ?: stringResource(R.string.plan_group_other),
+                text = group.envelope?.name ?: stringResource(R.string.plan_group_other),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -134,28 +133,28 @@ private fun AnnualGroupRow(group: AnnualGroup) {
     }
 }
 
-private fun AnnualGroup.fraction(): Float {
+private fun AnnualEnvelope.fraction(): Float {
     if (plannedCents <= 0L) return 0f
     return (actualCents.toDouble() / plannedCents.toDouble()).toFloat().coerceIn(0f, 1f)
 }
 
-/** One line per earmark pot: what is left of its year income after its categories' planned amounts. */
+/** One line per funded envelope: what is left of its funding line's year income after what it plans. */
 @Composable
-fun AnnualPotsCard(
-    pots: List<AnnualPot>,
+fun AnnualFundingCard(
+    funding: List<AnnualFunding>,
     modifier: Modifier = Modifier,
 ) {
-    SettingsGroup(label = stringResource(R.string.annual_pots_title), modifier = modifier) {
-        pots.forEachIndexed { index, pot ->
+    SettingsGroup(label = stringResource(R.string.annual_funding_title), modifier = modifier) {
+        funding.forEachIndexed { index, pot ->
             if (index > 0) Hairline()
-            AnnualPotRow(pot)
+            AnnualFundingRow(pot)
         }
     }
 }
 
 @Composable
-private fun AnnualPotRow(pot: AnnualPot) {
-    val name = pot.group?.name ?: pot.category?.displayName ?: stringResource(R.string.plan_pot)
+private fun AnnualFundingRow(pot: AnnualFunding) {
+    val name = pot.envelope.name
     val left = pot.leftoverCents
     val text =
         stringResource(

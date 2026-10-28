@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ import javax.inject.Singleton
 private val themeKey = stringPreferencesKey(KEY_THEME)
 private val currencyKey = stringPreferencesKey(KEY_CURRENCY)
 private val languageKey = stringPreferencesKey(KEY_LANGUAGE)
+private val reducedMotionKey = stringPreferencesKey(KEY_REDUCED_MOTION)
 
 /**
  * Typed view over the single preferences [DataStore]. Missing or unrecognized stored values read
@@ -44,6 +46,7 @@ class UserPreferencesStore
                 prefs[themeKey] = result.theme.name
                 prefs[currencyKey] = result.currency.name
                 prefs[languageKey] = result.language.name
+                prefs[reducedMotionKey] = result.reducedMotion.name
             }
             return result
         }
@@ -54,6 +57,8 @@ class UserPreferencesStore
                 theme = ThemePreference.entries.find { it.name == this[themeKey] } ?: defaults.theme,
                 currency = CurrencyOption.entries.find { it.name == this[currencyKey] } ?: defaults.currency,
                 language = AppLanguage.entries.find { it.name == this[languageKey] } ?: defaults.language,
+                reducedMotion =
+                    MotionPreference.entries.find { it.name == this[reducedMotionKey] } ?: defaults.reducedMotion,
             )
         }
     }

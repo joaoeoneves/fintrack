@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.StartStep
 
 /**
  * Bundles Home's navigation callbacks so [DashboardScreen] and its internal `DashboardContent`
@@ -20,4 +21,6 @@ data class DashboardCallbacks(
     val onOpenPlan: () -> Unit,
     /** Opens the Plan tab with the recurring items list on top. */
     val onOpenRecurring: () -> Unit,
+    /** Opens the screen of a "Get started" checklist step. */
+    val onOpenStartStep: (StartStep) -> Unit,
 )

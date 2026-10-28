@@ -1,13 +1,11 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,12 +25,14 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.moneySymbolsFor
+import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /**
@@ -66,30 +66,31 @@ fun SalaryProfileScreen(
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
-        when (val current = state) {
-            SalaryProfileUiState.Loading ->
-                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        StateCrossfade(state) { current ->
+            when (current) {
+                SalaryProfileUiState.Loading -> CardsSkeleton(contentModifier)
 
-            is SalaryProfileUiState.Content ->
-                SalaryProfileContent(
-                    state = current,
-                    actions =
-                        SalaryProfileActions(
-                            onChange = viewModel::onFormChange,
-                            onSave = { viewModel.onSave(labels) },
-                            onDelete = viewModel::onDelete,
-                            extras =
-                                SalaryExtraActions(
-                                    onAdd = viewModel::onAddExtra,
-                                    onEdit = viewModel::onEditExtra,
-                                    onChange = viewModel::onExtraFormChange,
-                                    onSave = viewModel::onSaveExtra,
-                                    onDelete = viewModel::onDeleteExtra,
-                                    onDismiss = viewModel::onDismissExtra,
-                                ),
-                        ),
-                    modifier = contentModifier,
-                )
+                is SalaryProfileUiState.Content ->
+                    SalaryProfileContent(
+                        state = current,
+                        actions =
+                            SalaryProfileActions(
+                                onChange = viewModel::onFormChange,
+                                onSave = { viewModel.onSave(labels) },
+                                onDelete = viewModel::onDelete,
+                                extras =
+                                    SalaryExtraActions(
+                                        onAdd = viewModel::onAddExtra,
+                                        onEdit = viewModel::onEditExtra,
+                                        onChange = viewModel::onExtraFormChange,
+                                        onSave = viewModel::onSaveExtra,
+                                        onDelete = viewModel::onDeleteExtra,
+                                        onDismiss = viewModel::onDismissExtra,
+                                    ),
+                            ),
+                        modifier = contentModifier,
+                    )
+            }
         }
     }
     if (duplicates.isNotEmpty()) {

@@ -2,16 +2,17 @@ appId: com.joaoeoneves.fintrack
 tags:
   - release
 ---
-# Plan tab basics (release smoke): guest start -> Plan tab -> the sections are there in order
-# (summary, Expected income with "Salary profile", Limits, Groups, Goals, Recurring) -> open the Food
-# limit sheet and close it again. Starts from a fresh guest install (see _guest-start.yaml), so
-# nothing needs cleaning up afterwards.
+# Plan tab basics (release smoke): guest start -> Plan tab -> the month view is there (period selector,
+# Income/Bills/Savings/Envelopes/Free tiles, payday line, envelopes, "Set up" rows) -> open Set up ->
+# Income, check the salary profile row and that a new income line offers "Record automatically" with a
+# pay day (item C) -> close the sheet and return. Starts from a fresh guest install (see
+# _guest-start.yaml), so nothing needs cleaning up afterwards.
 
 - runFlow: _guest-start.yaml
 
-# Pin English (fresh installs default to Portuguese).
+# Pin English (fresh installs default to Portuguese). The account/settings entry point is the avatar.
 - tapOn:
-    text: "Settings|Definições"
+    id: "account_avatar"
 - tapOn: "Language|Idioma"
 # Index -1 = the open menu's option (the row's own value can also read "English").
 - tapOn:
@@ -23,33 +24,41 @@ tags:
 
 - tapOn:
     id: "nav_plan"
-- assertVisible: "Expected income"
 - assertVisible: "Previous month"
+- assertVisible: "Bills"
+- assertVisible: "Free"
+- assertVisible: "Payday.*"
 
-# Expected income starts with the salary profile row.
+# The envelopes section and the "Set up" group further down the tab.
 - scrollUntilVisible:
-    element: "Salary profile"
+    element: "Set up"
     direction: DOWN
+- assertVisible: "Categories"
 
-# Limits section lists the categories. (Not editing a limit here: with the soft keyboard up the
-# limit sheet's Save sits below the keyboard and the sheet doesn't scroll, and hideKeyboard is
-# unsafe on ATD images that have no IME.)
+# Set up -> Income. "Income" is also a tile label above, so take the last match (the Set up row).
+- tapOn:
+    text: "Income"
+    index: -1
+- extendedWaitUntil:
+    visible: "Salary profile"
+    timeout: 10000
+- assertVisible: "Payday.*"
+
+# A new income line carries "Record automatically" and a pay day. (Not typing anything: with the soft
+# keyboard up the sheet's Save sits below it, and hideKeyboard is unsafe on ATD images with no IME.)
 - scrollUntilVisible:
-    element: "Limits"
+    element: "Add income line"
     direction: DOWN
+- tapOn: "Add income line"
+- assertVisible: "New income line"
 - scrollUntilVisible:
-    element: "Food"
+    element: "Record automatically"
     direction: DOWN
-- tapOn: "Food"
-- assertVisible: "Set limit for Food"
-- assertVisible: "Monthly limit"
+- assertVisible: "Payday"
 - back
-- assertNotVisible: "Set limit for Food"
+- assertNotVisible: "New income line"
 
-# The remaining sections further down the tab.
-- scrollUntilVisible:
-    element: "Goals"
-    direction: DOWN
-- scrollUntilVisible:
-    element: "Recurring"
-    direction: DOWN
+# Back to the Plan tab.
+- back
+- assertVisible:
+    id: "nav_plan"

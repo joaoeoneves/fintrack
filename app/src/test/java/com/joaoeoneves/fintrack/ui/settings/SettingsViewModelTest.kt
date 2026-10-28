@@ -4,7 +4,9 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
+import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -329,6 +331,60 @@ class SettingsViewModelTest {
      * Minimal in-memory [ThemeRepository] fake, local to this test file since no fake exists under
      * `app/src/main` for this repository (same pattern as `ThemeViewModelTest.FakeThemeRepository`).
      */
+    @Test
+    fun motionPreference_reflectedAndSettable() =
+        runTest(testDispatcher) {
+            val motion = FakeMotionRepository(MotionPreference.ON)
+            val viewModel =
+                SettingsViewModel(
+                    FakeThemeRepository(ThemePreference.DARK),
+                    FakeCurrencyRepository(CurrencyOption.EUR),
+                    FakeSessionRepository(initialUser = user),
+                    motionRepository = motion,
+                )
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+            assertEquals(MotionPreference.ON, viewModel.uiState.value.motionPreference)
+
+            viewModel.setMotionPreference(MotionPreference.OFF)
+            advanceUntilIdle()
+
+            assertEquals(MotionPreference.OFF, motion.flow.value)
+            assertEquals(MotionPreference.OFF, viewModel.uiState.value.motionPreference)
+            job.cancel()
+        }
+
+    @Test
+    fun motionPreference_withoutRepository_isSystemAndSetIsNoOp() =
+        runTest(testDispatcher) {
+            val viewModel =
+                SettingsViewModel(
+                    FakeThemeRepository(ThemePreference.DARK),
+                    FakeCurrencyRepository(CurrencyOption.EUR),
+                    FakeSessionRepository(initialUser = user),
+                )
+            val job = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            viewModel.setMotionPreference(MotionPreference.ON)
+            advanceUntilIdle()
+
+            assertEquals(MotionPreference.SYSTEM, viewModel.uiState.value.motionPreference)
+            job.cancel()
+        }
+
+    private class FakeMotionRepository(
+        initial: MotionPreference,
+    ) : MotionRepository {
+        val flow = MutableStateFlow(initial)
+
+        override fun observeMotionPreference(): Flow<MotionPreference> = flow
+
+        override suspend fun setMotionPreference(preference: MotionPreference) {
+            flow.value = preference
+        }
+    }
+
     private class FakeThemeRepository(
         initial: ThemePreference = ThemePreference.SYSTEM,
     ) : ThemeRepository {

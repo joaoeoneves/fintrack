@@ -5,10 +5,13 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -41,6 +44,9 @@ open class MonthlyPlanViewModelTestBase {
     protected val budgetRepo = FakeBudgetRepository()
     protected val categoryRepo = FakeCategoryRepository()
     protected val expenseRepo = FakeExpenseRepository()
+    protected val envelopeRepo = FakeEnvelopeRepository()
+    protected val recurringRepo = FakeRecurringRepository()
+    protected val goalRepo = FakeGoalRepository()
     protected val clock = MutableClock(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
 
     @Before
@@ -54,13 +60,14 @@ open class MonthlyPlanViewModelTestBase {
     }
 
     protected val actualIncomeRepo = FakeIncomeRepository()
+    protected val automationRepo = FakeAutomationSettingsRepository()
 
     protected fun viewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         expenses: ExpenseRepository = expenseRepo,
         incomes: IncomeRepository = actualIncomeRepo,
     ) = MonthlyPlanViewModel(
-        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo),
+        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo, goalRepo, automationRepo),
         observePeriodOverviewOf(
             DashboardRepositories(
                 expenses,
@@ -69,13 +76,15 @@ open class MonthlyPlanViewModelTestBase {
                 categoryRepo,
                 incomeRepo,
                 monthSettingsRepo,
+                envelopeRepo,
+                recurringRepo,
             ),
         ),
         RecordPayday(
             incomeRepo,
             monthSettingsRepo,
             incomes,
-            FakeAutomationSettingsRepository(),
+            automationRepo,
             FakeSalaryLineLabelsProvider(),
         ),
         savedStateHandle,

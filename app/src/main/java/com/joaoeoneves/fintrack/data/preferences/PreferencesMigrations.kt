@@ -9,6 +9,7 @@ const val PREFERENCES_DATASTORE_NAME = "user_preferences"
 const val KEY_THEME = "theme_preference"
 const val KEY_CURRENCY = "currency"
 const val KEY_LANGUAGE = "language"
+const val KEY_REDUCED_MOTION = "reduced_motion"
 
 private const val LEGACY_THEME_FILE = "theme_prefs"
 private const val LEGACY_CURRENCY_FILE = "currency_prefs"

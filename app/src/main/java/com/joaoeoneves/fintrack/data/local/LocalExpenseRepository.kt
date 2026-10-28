@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -18,6 +19,7 @@ import javax.inject.Singleton
  * Writes are validated with the same rules firestore.rules enforces.
  */
 @Singleton
+@Suppress("TooManyFunctions") // One override per ExpenseRepository operation.
 class LocalExpenseRepository
     @Inject
     constructor(
@@ -34,6 +36,11 @@ class LocalExpenseRepository
                     .filter { it.date >= startInclusive && it.date < endExclusive }
                     .sortedBy { it.date }
             }
+
+        override fun observeHasAnyExpense(): Flow<Boolean> {
+            val hasAny = store.data.map { doc -> doc.expenses.isNotEmpty() }
+            return hasAny.distinctUntilChanged()
+        }
 
         override suspend fun addExpense(expense: Expense): Result<String> =
             store.update { doc ->

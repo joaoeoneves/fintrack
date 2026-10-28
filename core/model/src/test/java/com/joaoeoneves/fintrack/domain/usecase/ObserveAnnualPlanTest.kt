@@ -1,17 +1,17 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.InstantRange
@@ -56,7 +56,7 @@ class ObserveAnnualPlanTest {
         }
     }
 
-    private val food = CategoryGroup("food", "Food", 0)
+    private val food = Envelope("food", "Food", 0)
     private val dinners =
         Category(CategoryId("dinners"), "dinners", "i", "slate", CategoryKind.SPENDING, 0, false, false, "food")
 
@@ -72,7 +72,7 @@ class ObserveAnnualPlanTest {
             FakePlannedIncomeRepository(lines),
             FakeMonthSettingsRepository(),
             FakeCategoryRepository(listOf(dinners)),
-            FakeCategoryGroupRepository(listOf(food)),
+            FakeEnvelopeRepository(listOf(food)),
             FakeRecurringRepository(recurring),
         ),
         goalRepository,
@@ -148,7 +148,7 @@ class ObserveAnnualPlanTest {
 
             assertEquals(2026, plan.year)
             assertEquals(12_000L, plan.plannedCents)
-            assertEquals(700L, plan.groups.single().actualCents)
+            assertEquals(700L, plan.envelopes.single().actualCents)
         }
 
     @Test

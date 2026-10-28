@@ -1,13 +1,11 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -15,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
@@ -30,16 +27,22 @@ import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 
 @Composable
 fun RecurringListScreen(
     onBack: () -> Unit,
     onOpenEditor: (String?) -> Unit,
+    onOpenIncome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RecurringListViewModel = hiltViewModel(),
 ) {
@@ -61,6 +64,7 @@ fun RecurringListScreen(
                 onConfirmDelete = viewModel::onConfirmDelete,
                 onDismissDelete = viewModel::onDismissDelete,
                 onRetry = viewModel::onRetry,
+                onOpenIncome = onOpenIncome,
             ),
         onBack = onBack,
         snackbarHostState = snackbarHostState,
@@ -95,21 +99,26 @@ internal fun RecurringListContent(
         },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
-        when (state) {
-            RecurringListUiState.Loading ->
-                Box(contentModifier, contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        StateCrossfade(state) { state ->
+            when (state) {
+                RecurringListUiState.Loading -> ListSkeleton(contentModifier)
 
-            is RecurringListUiState.Error ->
-                ErrorState(message = state.message.asString(), onRetry = actions.onRetry, modifier = contentModifier)
-
-            is RecurringListUiState.Content -> {
-                RecurringItems(state, actions, contentModifier)
-                state.deleteTarget?.let { target ->
-                    RecurringDeleteDialog(
-                        name = target.name,
-                        onConfirm = actions.onConfirmDelete,
-                        onDismiss = actions.onDismissDelete,
+                is RecurringListUiState.Error ->
+                    ErrorState(
+                        message = state.message.asString(),
+                        onRetry = actions.onRetry,
+                        modifier = contentModifier,
                     )
+
+                is RecurringListUiState.Content -> {
+                    RecurringItems(state, actions, contentModifier)
+                    state.deleteTarget?.let { target ->
+                        RecurringDeleteDialog(
+                            name = target.name,
+                            onConfirm = actions.onConfirmDelete,
+                            onDismiss = actions.onDismissDelete,
+                        )
+                    }
                 }
             }
         }
@@ -124,6 +133,14 @@ private fun RecurringItems(
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding)) {
         item(key = "totals") { RecurringTotals(state) }
+        item(key = "income-hint") {
+            SettingsRow(
+                title = stringResource(R.string.recurring_income_hint),
+                onClick = actions.onOpenIncome,
+                showChevron = true,
+            )
+            Hairline()
+        }
         if (state.active.isEmpty() && state.inactive.isEmpty()) {
             item(key = "empty") {
                 Text(
@@ -136,11 +153,11 @@ private fun RecurringItems(
         }
         if (state.active.isNotEmpty()) {
             item(key = "active-header") { SectionHeader(R.string.recurring_section_active) }
-            items(state.active, key = { it.item.id }) { RecurringRowItem(it, actions) }
+            items(state.active, key = { it.item.id }) { RecurringRowItem(it, actions, motionAnimateItem()) }
         }
         if (state.inactive.isNotEmpty()) {
             item(key = "inactive-header") { SectionHeader(R.string.recurring_section_inactive) }
-            items(state.inactive, key = { it.item.id }) { RecurringRowItem(it, actions) }
+            items(state.inactive, key = { it.item.id }) { RecurringRowItem(it, actions, motionAnimateItem()) }
         }
     }
 }

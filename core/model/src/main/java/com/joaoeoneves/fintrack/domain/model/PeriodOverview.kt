@@ -5,9 +5,10 @@ import java.time.YearMonth
 /**
  * Everything the dashboard shows for a selected [Period]: its [transactions] and their [summary],
  * the [budgets] progress and monthly [plan] for [budgetMonth] (the anchor month for month periods, otherwise the
- * current month), the [groups] planned vs actual, the [recurring] items they were planned from and the [recent]
- * activity preview, the [pots] the month's money is split into (`null` when not computed) and the
- * [periodGroups]: spent per group over the whole period (not just [budgetMonth]; planned is not set).
+ * current month), the [envelopes] of [budgetMonth] (amounts, spend, funding and the free money), the [recurring]
+ * items they were planned from, the [recent] activity preview and the [periodEnvelopes]: spent per envelope over the
+ * whole
+ * period (not just [budgetMonth]; amounts and funding are not meaningful there).
  */
 data class PeriodOverview(
     val budgetMonth: YearMonth,
@@ -16,8 +17,7 @@ data class PeriodOverview(
     val budgets: List<CategoryBudget>,
     val plan: MonthlyPlanSummary,
     val recent: RecentActivity,
-    val groups: List<GroupProgress> = emptyList(),
+    val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
     val recurring: List<RecurringItem> = emptyList(),
-    val pots: PotsSummary? = null,
-    val periodGroups: List<GroupProgress> = emptyList(),
+    val periodEnvelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
 )

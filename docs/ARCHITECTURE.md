@@ -42,10 +42,10 @@ flowchart TB
 
 | Package | Responsibility |
 |---|---|
-| `ui/` | Compose screens per feature (`dashboard`, `expense`, `income`, `plan`, `recurring`, `settings`, `auth`, `backup`, `migration`, `importexport`), shared pieces (`common`), `navigation` (central graph with type-safe routes), `theme` |
-| `ui/designsystem/` | Reusable building blocks: buttons, text fields, amount input, animated amount text, segmented tabs, settings rows, transaction row, dialogs, snackbar, empty state, large-title scaffold |
+| `ui/` | Compose screens per feature (`dashboard`, `activity` (+ `analytics/` summary header), `expense`, `income`, `plan` (envelopes, income, salary profile and `salary/setup` wizard), `savings`, `recurring`, `settings`, `auth`, `backup`, `migration`, `importexport`), shared pieces (`common`, incl. the account avatar), `navigation` (central graph with type-safe routes, `NavMotion` transitions), `theme` |
+| `ui/designsystem/` | Reusable building blocks: buttons, text fields, amount input, animated amount text, progress bar and ring, skeletons, haptics, segmented tabs, settings rows, transaction row, dialogs, snackbar, empty state, large-title scaffold |
 | `domain/` | Models (`Expense`, `Income`, `Category`, `RecurringItem`, `MonthlyPlanSummary`, `Period`, ...), repository interfaces, and use cases such as `ObservePeriodOverview`, `ObserveUpcomingRecurring`, `HandleRecurringOccurrence` |
-| `data/` | Firestore repositories, `local/` guest store, `session/` switching, `backup/`, `migration/`, `preferences/`, `csv/` |
+| `data/` | Firestore repositories, `local/` guest store, `session/` switching, `backup/` (incl. signed-in restore and `RestoreGate`), `migration/` (guest → account copy and the 3.0 data migrations), `salary/`, `automation/`, `preferences/`, `csv/` |
 | `di/` | Hilt modules binding interfaces to implementations, dispatchers, the guest data file and the clock |
 
 State rules: UI state is a `StateFlow` in the ViewModel, collected with `collectAsStateWithLifecycle`;
@@ -88,13 +88,13 @@ All data lives under `users/{uid}/`. Money is stored as integer minor units (`am
 | `expenses/{id}` | `name`, `amountCents` (> 0), `category` (category id), `isRefund?`, `date`, `note?`, `createdAt`, `updatedAt` |
 | `income/{id}` | `source` (free text), `amountCents`, `date`, `note?`, timestamps |
 | `budgets/{categoryId}` | `limitCents` (the document id is the category id), `skipMonths?` (months 1..12 the limit does not apply to) |
-| `plannedIncome/{lineId}` | `label` (1..50), `amountCents` (the rate for per-working-day lines), `order`, `basis?` (`FIXED`/`PER_WORKING_DAY`), `frequency?` (`MONTHLY`/`YEARLY`/`ONCE`), `monthOfYear?` (yearly only), `yearMonth?` (`yyyy-MM`, one-off only), `skipMonths?` (list of months 1..12 a monthly line is not paid in), `earmarkType?` (`CATEGORY`/`GROUP`) + `earmarkId?` (both or neither: sets the line aside for that category/group as a pot), `managedKey?` (one of the `profile_*` keys: the line is generated from the salary profile, read-only except label/earmark); absent fields mean fixed/monthly; at most 20 lines (enforced client-side, rules cannot count documents) |
+| `plannedIncome/{lineId}` | `label` (1..50), `amountCents` (the rate for per-working-day lines), `order`, `basis?` (`FIXED`/`PER_WORKING_DAY`), `frequency?` (`MONTHLY`/`YEARLY`/`ONCE`), `monthOfYear?` (yearly only), `yearMonth?` (`yyyy-MM`, one-off only), `skipMonths?` (list of months 1..12 a monthly line is not paid in), `earmarkType?` + `earmarkId?` (legacy 2.x pot earmark, read only by the 3.0 migration), `autoRecord?` (record the line on its pay day), `payDay?` 1..31 (fixed pay day; absent = last working day), `managedKey?` (one of the `profile_*` keys: the line is generated from the salary profile, read-only except label/earmark); absent fields mean fixed/monthly; at most 20 lines (enforced client-side, rules cannot count documents) |
 | `plan/salaryProfile` | singleton: `inputMode` (`GROSS`/`NET`), rates as integer ppm (`subsidySpreadPpm` 0/500000/1000000, `irsBasePpm`, `irsSubsidiesPpm?`, `ssPpm`, `irsJovemExemptPpm`), amounts in cents (`baseGrossCents?`, `netMonthlyCents?`, `netHolidayLumpCents?`, `netChristmasLumpCents?`, `mealRatePerDayCents?`), months 1..12 (`holidaySubsidyMonth`, `christmasSubsidyMonth`), `mealSkipMonths`, `extras` (list of up to 10 `{id, name, amountType` FIXED_CENTS/MULTIPLE_OF_BASE_PPM/PERCENT_OF_ANNUAL_GROSS_PPM`, amount, months, deductions?, feePpm?, amountScope?` TOTAL/PER_PAYMENT, omitted = TOTAL`}`; the rules accept only those two scopes; absent = legacy `flex*`/`profitShare*`/`bonus*` fields migrated on read), `updatedAt`; saving it upserts the managed `plannedIncome` lines, deleting it removes them |
-| `plan/automation` | singleton: `paydayEnabled?` (record the planned income on payday), `paydayThrough?` (`yyyy-MM`, the last month already recorded), `updatedAt` |
-| `categoryGroups/{id}` | `name` (1..50), `order`, `updatedAt`; categories point at one with the optional `groupId` (shape-checked only, a dangling id means ungrouped); deleting a group clears `groupId` on its categories |
-| `goals/{id}` | `name` (1..50), `targetCents`, `targetType` (`ANNUAL`/`TOTAL`), `startDate`, `targetDate?` (not before `startDate`), `initialCents?` >= 0, `linkedRecurringIds?` (list, at most 20), `linkedCategoryId?` (shape-checked only), `archived`, `order`, `updatedAt`; progress is computed from the expenses of the linked recurring items (id prefix `rec_<itemId>_`) and category |
+| `plan/automation` | singleton: `lineThrough?` (map lineId → `yyyy-MM`, the last month each auto-record line was recorded, at most 64 entries), legacy `paydayEnabled?`/`paydayThrough?` (read once by the 3.0 migration), `updatedAt` |
+| `categoryGroups/{id}` | **envelopes**: `name` (1..50), `order`, `amountCents?` (a single monthly amount; absent = the sum of its categories' limits, or no budget when there are none), `fundedBy?` (an income line id), `updatedAt`; categories point at one with the optional `groupId` (a dangling id means no envelope); saving-kind categories are never part of an envelope |
+| `goals/{id}` | **savings plans**: `name` (1..50), `targetCents` (0 = no target), `recurringId?` (the hidden monthly SAVING recurring item the plan owns), `targetType` (`ANNUAL`/`TOTAL`), `startDate`, `targetDate?` (not before `startDate`), `initialCents?` >= 0, `linkedRecurringIds?` (list, at most 20), `linkedCategoryId?` (shape-checked only), `archived`, `order`, `updatedAt`; progress is computed from the expenses of the linked recurring items (id prefix `rec_<itemId>_`) and category; a plan's own item is hidden from Bills |
 | `monthSettings/{yyyy-MM}` | `workingDays?` 0..23 (manual working-days count replacing the Portuguese-holiday calendar count for that month), `daysOff?` 0..23 (vacation/days off taken; effective working days = override, else calendar count minus days off); the document is deleted when neither is set; `updatedAt` |
-| `recurring/{itemId}` | `type` (`EXPENSE`/`INCOME`), `name`, `amountCents`, `category?`, `note?`, `frequency` (`MONTHLY`/`YEARLY`), `dayOfMonth` 1..31, `monthOfYear?`, `startDate`, `endDate?`, `handledThrough?`, `active`, `autoPost?`, `updatedAt` (dates as `yyyy-MM-dd`) |
+| `recurring/{itemId}` | `type` (`EXPENSE`; legacy `INCOME` items are converted to income lines by the 3.0 migration and deleted), `name`, `amountCents`, `category?`, `note?`, `frequency` (`MONTHLY`/`YEARLY`), `dayOfMonth` 1..31, `monthOfYear?`, `startDate`, `endDate?`, `handledThrough?`, `active`, `autoPost?`, `updatedAt` (dates as `yyyy-MM-dd`) |
 | `categories/{id}` | `name?`, `iconKey`, `colorKey`, `kind` (`SPENDING`/`SAVING`), `order`, `archived`, `builtIn`, timestamps. User categories have generated ids; a built-in's override document reuses the built-in id with `name` null meaning the localized default |
 | `settings/preferences` | `theme` (`SYSTEM`/`LIGHT`/`DARK`), `currency` (`USD`/`EUR`/`GBP`/`JPY`/`CAD`/`AUD`), `language` (`SYSTEM`/`ENGLISH`/`PORTUGUESE`), `updatedAt` |
 
@@ -140,14 +140,19 @@ expenses, income, budgets, planned income, categories, recurring items, month se
 
 ## Backup format
 
-A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 12, "exportedAt",
+A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 16, "exportedAt",
 "appVersion", "preferences", ...records }` using the same record shapes as the guest store. Decoding:
 
 - a missing or invalid version is rejected; a version newer than the app supports is refused;
 - older versions are upgraded in memory to the current one;
 - records that fail validation are skipped and reported to the user on restore.
 
-Backups can be exported signed in or as a guest and restored as a guest.
+Backups can be exported and restored signed in or as a guest. A signed-in restore
+(`AccountBackupRestorer`) first reads every account collection from the server (nothing is written if
+that fails), then upserts the backup's records in batches of at most 450 in dependency order, and finally
+deletes the account documents that are not in the file. Ids are kept, so a retry after a partial failure
+converges without duplicates. `RestoreGate` pauses the app-start syncs during any restore; when it
+releases, they run on the restored data, which is also how a pre-3.0 backup gets converted.
 
 ## Guest to account migration
 
@@ -196,35 +201,39 @@ occurrence that is due, so the deterministic id keeps it safe if two devices do 
 
 ## Monthly plan
 
-The plan is global (one set of expected-income lines) and built on the category budgets. For a month
-(`monthlyPlanOf` in `domain/model/MonthlyPlan.kt`):
+The plan is global (one set of income lines) and built on **envelopes**. For a month:
 
-- `expectedIncome` = sum of planned income lines; `actualIncome` = income dated in that month.
-- `incomeBasis` = max(expected, actual).
-- `committed` = over all categories, the larger of its limit (or 0) and what was actually spent.
-- `safeToSpend` = `incomeBasis - committed`; negative means the plan is overrun.
-- Daily allowance = `safeToSpend / days left` (today included), shown only for the current month and only
-  while something is left.
+- `expectedIncome` = sum of the income lines active that month; `actualIncome` = income dated in it;
+  `incomeBasis` = max(expected, actual).
+- Each envelope commits max(its monthly amount, what was spent in its categories). Its amount is either a
+  single `amountCents` or the sum of its categories' limits (`budgets`, with `skipMonths`). A "no budget"
+  envelope only tracks spending.
+- Bills (active recurring expenses) and savings (saving-kind categories: max(planned, actual)) are
+  committed separately; savings categories are never part of an envelope.
+- **Free** = `incomeBasis - committed`; negative means the plan is overrun. The daily allowance is
+  `free / days left` (today included), shown only for the current month while something is left.
 
-Budgets of saving-kind categories count as committed money but not as spending budget.
-
-**Pots** (`potsOf` in `domain/model/Pots.kt`, optional): a monthly income line can be earmarked for a category
-or a group. Each target gets a pot whose income is the sum of its lines; its categories' committed money is
-charged to the pot (a category earmark beats a group earmark), everything else to the *base*. A pot's
-`free` = income - committed; a deficit spills into the base, a surplus stays in the pot. The base income is
-max(non-earmarked expected, actual month income - earmarked expected), and the daily allowance applies to the
-base. Without earmarks the base equals the safe-to-spend above. An earmark whose target no longer exists is
-ignored.
+**Savings plans** (`goalProgressOf`) count the expenses of the plan's own recurring item (id prefix
+`rec_<itemId>_`), its linked items and category, against a yearly or total target (`effectiveTargetCents`
+falls back to the yearly monthly amount when there is no target).
 
 ## App-start syncs
 
-Two singletons run when the app starts and follow the session. `ManagedIncomeSync` (`data/salary/`)
-re-generates the income lines managed by the salary profile, so a rule or holiday change shows up without
-re-saving the profile. `AutomationSync` (`data/automation/`) runs `AutoPostRecurring` and `RecordPayday`
-whenever the session, the data they read or the foreground state changes, which is how a new day is picked
-up without a background job. Payday is the last working day of the month (Portuguese holidays); the
-`paydayThrough` cursor in `plan/automation` stops a month being recorded twice, and the "Received" action
-on Plan and Home runs the same step early. A failing step is logged and not retried for the same inputs.
+`AppStartSyncs` starts these singletons when the app starts; each follows the session, waits for a stable
+session, runs off the main thread and attempts the same write only once:
+
+- `PreferencesSync` keeps theme, currency and language in step with `settings/preferences`.
+- `ManagedIncomeSync` (`data/salary/`) re-generates the income lines managed by the salary profile.
+- `EnvelopeMigrationSync`, `SavingsPlanMigrationSync` and `IncomeMigrationSync` (`data/migration/`)
+  convert 2.x data once (groups/limits/earmarks → envelopes, investment recurring items and goals →
+  savings plans, recurring income and the payday switch → auto-record income lines). They wait 2 s for
+  the cache to settle and never act on a partial cache; legacy documents are left in place until 3.1.
+- `AutomationSync` (`data/automation/`) runs `AutoPostRecurring` (bills and savings plans) and
+  `RecordPayday` (each auto-record income line on its pay day, with per-line `lineThrough` cursors and
+  deterministic `pay_<lineId>_<yyyyMM>` ids) whenever the session, its data or the foreground state
+  changes, which is how a new day is picked up without a background job.
+
+All of them are paused by `RestoreGate` while a backup is being restored.
 
 ## Localization
 
@@ -239,7 +248,9 @@ currency are kept in DataStore and, when signed in, synced through `settings/pre
 `FinTrackTheme` provides colours, typography (bundled Inter with tabular figures), shapes, dimensions and
 motion tokens. The look is dark-first with a gold accent, hairline dividers and colour reserved for
 meaning (gains, overspending, category data). Screens compose the in-house components from
-`ui/designsystem/` on top of Material 3; motion respects the system's reduced-motion setting.
+`ui/designsystem/` on top of Material 3. Motion uses shared tokens (`Motion`, `motionSpec`,
+`motionAnimateItem` in `ui/theme/`) and respects `LocalReducedMotion`, which combines the system animator
+scale with the device-only "Reduce animations" preference.
 
 ## Performance
 

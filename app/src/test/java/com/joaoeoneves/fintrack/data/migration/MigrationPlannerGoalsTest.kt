@@ -72,9 +72,9 @@ class MigrationPlannerGoalsTest {
 
     @Test
     fun invalidGoals_areSkippedAndCounted_idsInAccountNotCounted() {
-        val bad = localGoal("bad").copy(targetCents = 0)
+        val bad = localGoal("bad").copy(targetCents = -1)
         val reversed = localGoal("rev").copy(targetDate = "2025-01-01")
-        val haveBad = localGoal("have").copy(targetCents = 0)
+        val haveBad = localGoal("have").copy(targetCents = -1)
         val local = localDoc().copy(goals = listOf(localGoal("ok"), bad, reversed, haveBad))
 
         val plan = planMigration(local, remoteSnapshot().copy(goalIds = setOf("have")))

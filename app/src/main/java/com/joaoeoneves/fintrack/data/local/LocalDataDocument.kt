@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 13
+internal const val LOCAL_SCHEMA_VERSION = 16
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -96,6 +96,10 @@ data class LocalPlannedIncome(
     val earmarkId: String? = null,
     /** Set on lines generated from the salary profile (schema v8). */
     val managedKey: String? = null,
+    /** Record the line's income on its pay date (schema v16; absent = off). */
+    val autoRecord: Boolean = false,
+    /** Fixed pay day 1..31 (schema v16); absent = the month's last working day. */
+    val payDay: Int? = null,
 )
 
 /**
@@ -123,17 +127,23 @@ data class LocalCategory(
     val groupId: String? = null,
 )
 
-/** A named bucket of categories; [order] is its position in the list. */
+/**
+ * An envelope (kept under its pre-envelope name): a named bucket of categories; [order] is its position in the
+ * list. [amountCents] is its fixed monthly amount and [fundedByLineId] the income line paying for it (schema v14).
+ */
 @Serializable
 data class LocalCategoryGroup(
     val id: String,
     val name: String,
     val order: Int,
+    val amountCents: Long? = null,
+    val fundedByLineId: String? = null,
 )
 
 /**
  * A savings goal (schema v9): [targetType] is a [com.joaoeoneves.fintrack.domain.model.GoalTargetType] name, dates
- * are ISO `yyyy-MM-dd`, [linkedRecurringIds] the recurring items whose generated expenses count towards it.
+ * are ISO `yyyy-MM-dd`, [linkedRecurringIds] the recurring items whose generated expenses count towards it and
+ * [recurringId] (schema v15) the one a savings plan owns.
  */
 @Serializable
 data class LocalSavingsGoal(
@@ -148,13 +158,19 @@ data class LocalSavingsGoal(
     val linkedCategoryId: String? = null,
     val archived: Boolean = false,
     val order: Int = 0,
+    val recurringId: String? = null,
 )
 
-/** The automation settings (schema v12): [paydayThrough] is the ISO `yyyy-MM` cursor of the payday automation. */
+/**
+ * The automation settings (schema v12): [paydayEnabled] / [paydayThrough] (ISO `yyyy-MM`) are the legacy single
+ * payday switch, kept as migration input; [lineThrough] (schema v16) maps a planned income line id to the ISO
+ * `yyyy-MM` cursor of its automatic recording.
+ */
 @Serializable
 data class LocalAutomation(
     val paydayEnabled: Boolean = false,
     val paydayThrough: String? = null,
+    val lineThrough: Map<String, String> = emptyMap(),
 )
 
 /**

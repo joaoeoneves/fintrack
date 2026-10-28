@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
@@ -80,6 +81,17 @@ class SessionDataResetRepositoryGuestTest : LocalStoreTestBase() {
                 setOf(PreferenceField.THEME, PreferenceField.CURRENCY, PreferenceField.LANGUAGE),
                 sync.pushes.map { it.first }.toSet(),
             )
+        }
+
+    @Test
+    fun guest_motionReset_toSystem() =
+        runStoreTest {
+            val prefs = UserPreferencesRepository(prefsStore(), sync)
+            prefs.setMotionPreference(MotionPreference.ON)
+
+            assertTrue(repo(newStore(), prefs).deleteAllData().isSuccess)
+
+            assertEquals(MotionPreference.SYSTEM, prefs.observeMotionPreference().first())
         }
 
     @Test

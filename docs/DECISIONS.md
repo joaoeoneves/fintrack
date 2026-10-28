@@ -39,7 +39,7 @@ Short records of the main architectural choices: context, decision, consequences
 - **Consequences:** Idempotence comes for free from document identity, and transactions keep their
   plain shape (rules and CSV stay unchanged). The link to the template is implicit in the id.
 
-## 5. A global monthly plan built on category budgets
+## 5. A global monthly plan built on category budgets (superseded by 10 in 3.0)
 
 - **Context:** The goal is a "safe to spend" number like the original spreadsheet, without maintaining a
   separate plan per month.
@@ -59,21 +59,20 @@ Short records of the main architectural choices: context, decision, consequences
 ## 7. Tag-driven signed releases and Obtainium instead of Google Play
 
 - **Context:** This is a personal, open-source project; a store listing adds fees and review overhead.
-- **Decision:** Pushing a `vX.Y` tag runs the release workflow: tests, lint, a signed R8 build, signature
+- **Decision:** The release workflow (run from Actions with a version, or by pushing a `vX.Y` tag) runs: tests, lint, a signed R8 build, signature
   verification, then a GitHub release with the APK and mapping file. Users update through Obtainium.
 - **Consequences:** Releases are reproducible from CI and need no manual steps. There is no store
   distribution or staged rollout, and the signing key is held in repository secrets.
 
-## 8. End-to-end tests on CI emulators, only before a release
+## 8. Fast JVM screen tests on every PR; emulator E2E on demand
 
-- **Context:** Local emulators tie testing to one machine, and Google sign-in cannot be scripted. A full
-  emulator run is slow and was flaky enough on every push to cost more than it caught.
-- **Decision:** Maestro flows run on an emulator in GitHub Actions, written against guest mode. The Release
-  workflow calls the E2E workflow on a `vX.Y` tag and only publishes if the flows tagged `release` pass;
-  it can also be run by hand. The baseline profile is generated the same way.
-- **Consequences:** E2E coverage does not depend on a developer machine and a broken release is caught
-  before the APK is published. Ordinary PRs get unit tests, lint and builds only, so a UI regression can
-  sit on `main` until the next tag. Flows that need a Google account are not covered.
+- **Context:** Emulator runs on CI were slow and flaky, and on a private repository's small runners they
+  cost metered minutes and frequently failed to boot. Google sign-in cannot be scripted anyway.
+- **Decision:** The main flows run as Robolectric + Compose screen tests on the JVM in every PR. The
+  Maestro flows (guest mode) stay in `.maestro/` and run only from the manual E2E workflow or by hand,
+  for example as a final smoke test before a major release.
+- **Consequences:** PRs get UI coverage in minutes with no emulator. Device-only behaviour (real
+  rendering, system dialogs) is checked only when the E2E workflow is run.
 
 ## 9. Automation runs on app start, not in the background
 
@@ -81,6 +80,20 @@ Short records of the main architectural choices: context, decision, consequences
   a tap, but a background job (WorkManager) means scheduling, permissions and a second code path.
 - **Decision:** `AutomationSync` runs the steps when the app starts or returns to the foreground and
   whenever the data they read changes. Each step only fills what is already due and is idempotent, using
-  the deterministic recurring ids and a `paydayThrough` cursor.
+  the deterministic recurring ids and per-line `lineThrough` cursors.
 - **Consequences:** Nothing is posted while the app stays closed; the next time you open it, everything
   that fell due is caught up. It is simple, safe across two devices, and testable on the JVM.
+
+## 10. Envelopes, savings plans and one income mechanism (3.0)
+
+- **Context:** 2.x had groups, category limits, pots (earmarked income), goals linked to recurring items,
+  recurring income and a separate payday switch: several overlapping ways to say the same thing.
+- **Decision:** One concept per job. An **envelope** (stored in `categoryGroups`) holds categories and a
+  monthly amount. A **savings plan** is a goal that owns its monthly recurring item (a goal is a plan with
+  no monthly amount). **Income lines** are the only income mechanism, each with optional auto-record on
+  its pay day. Existing data is converted once, on both Firestore and the guest file, by app-start syncs
+  that wait for a settled cache and never act on a partial one.
+- **Consequences:** Fewer screens and words to learn, and the migrations are idempotent and testable.
+  Legacy fields and documents stay readable (and allowed by the rules) for one release and are removed
+  in 3.1. For 3.0 the migration syncs are not combined into one runner, and repositories do not share
+  Firestore listeners yet; both are simpler once the migrations are deleted.

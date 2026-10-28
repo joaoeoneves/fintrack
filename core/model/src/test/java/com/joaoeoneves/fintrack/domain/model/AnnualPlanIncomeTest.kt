@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AnnualPlanIncomeTest {
-    private val food = planGroup("food")
+    private val food = planEnvelope("food")
     private val dinners = planCategory("dinners", "food")
     private val other = planCategory("other", "gone")
 
@@ -13,6 +13,7 @@ class AnnualPlanIncomeTest {
         lines: List<PlannedIncome> = emptyList(),
         settings: List<MonthSettings> = emptyList(),
         budgets: List<Budget> = emptyList(),
+        envelope: Envelope = food,
         year: Int = PLAN_YEAR,
     ) = annualPlanOf(
         year,
@@ -21,7 +22,7 @@ class AnnualPlanIncomeTest {
             settings = settings,
             budgets = budgets,
             categories = listOf(dinners, other),
-            groups = listOf(food),
+            envelopes = listOf(envelope),
         ),
     )
 
@@ -131,33 +132,66 @@ class AnnualPlanIncomeTest {
     }
 
     @Test
-    fun potLeftover_earmarkedIncomeMinusGroupPlanned() {
-        val line = planFixed("meal", 20_000L, earmark = Earmark.Group("food"))
+    fun funding_fundingLineIncomeMinusEnvelopePlanned() {
+        val line = planFixed("meal", 20_000L)
         val budgets = listOf(Budget(dinners.id, 16_000L, skipMonths = setOf(8)))
+        val funded = food.copy(fundedByLineId = "meal")
 
-        val pot = plan(listOf(line, planFixed("salary", 99L, 1)), budgets = budgets).pots.single()
+        val lines = listOf(line, planFixed("salary", 99L, 1))
+        val funding = plan(lines, budgets = budgets, envelope = funded).funding.single()
 
-        assertEquals(Earmark.Group("food"), pot.target)
-        assertEquals(12 * 20_000L, pot.incomeCents)
-        assertEquals(11 * 16_000L, pot.plannedCents)
-        assertEquals(12 * 20_000L - 11 * 16_000L, pot.leftoverCents)
+        assertEquals(funded, funding.envelope)
+        assertEquals(line, funding.line)
+        assertEquals(12 * 20_000L, funding.incomeCents)
+        assertEquals(11 * 16_000L, funding.plannedCents)
+        assertEquals(12 * 20_000L - 11 * 16_000L, funding.leftoverCents)
     }
 
     @Test
-    fun pot_negativeLeftoverWhenPlanExceedsIncome() {
-        val line = planFixed("meal", 100L, earmark = Earmark.Group("food"))
+    fun funding_negativeLeftoverWhenPlanExceedsIncome() {
+        val line = planFixed("meal", 100L)
 
-        val pot = plan(listOf(line), budgets = listOf(Budget(dinners.id, 500L))).pots.single()
+        val funding =
+            plan(
+                listOf(line),
+                budgets = listOf(Budget(dinners.id, 500L)),
+                envelope = food.copy(fundedByLineId = "meal"),
+            ).funding
+                .single()
 
-        assertEquals(1_200L - 6_000L, pot.leftoverCents)
+        assertEquals(1_200L - 6_000L, funding.leftoverCents)
     }
 
     @Test
-    fun pot_withDanglingEarmark_orNoMoney_isDropped() {
-        val dangling = planFixed("x", 100L, earmark = Earmark.Group("missing"))
-        val unfunded = planFixed("y", 0L, order = 1, earmark = Earmark.Group("food"))
+    fun funding_fixedAmountEnvelope_plannedIsAmountTimesTwelve() {
+        val funded = food.copy(amountCents = 15_000L, fundedByLineId = "meal")
 
-        assertTrue(plan(listOf(dangling, unfunded)).pots.isEmpty())
+        val funding = plan(listOf(planFixed("meal", 20_000L)), envelope = funded).funding.single()
+
+        assertEquals(180_000L, funding.plannedCents)
+    }
+
+    @Test
+    fun funding_missingExtraOrMoneylessLine_isDropped() {
+        val extra = PlannedIncome("x", "x", 100L, 0, frequency = IncomeFrequency.YEARLY, monthOfYear = 6)
+        val empty = planFixed("y", 0L, order = 1)
+
+        assertTrue(plan(listOf(extra), envelope = food.copy(fundedByLineId = "x")).funding.isEmpty())
+        assertTrue(plan(listOf(empty), envelope = food.copy(fundedByLineId = "y")).funding.isEmpty())
+        assertTrue(plan(listOf(empty), envelope = food.copy(fundedByLineId = "missing")).funding.isEmpty())
+    }
+
+    @Test
+    fun funding_twoEnvelopesOnOneLine_firstByOrderOnly() {
+        val line = planFixed("meal", 100L)
+        val second = planEnvelope("second", order = 1).copy(fundedByLineId = "meal")
+        val result =
+            annualPlanOf(
+                PLAN_YEAR,
+                planInputs(lines = listOf(line), envelopes = listOf(second, food.copy(fundedByLineId = "meal"))),
+            )
+
+        assertEquals(listOf("food"), result.funding.map { it.envelope.id })
     }
 
     @Test
@@ -168,6 +202,6 @@ class AnnualPlanIncomeTest {
         assertEquals(0L, result.plannedCents)
         assertEquals(0L, result.leftoverCents)
         assertTrue(result.subscriptions.isEmpty())
-        assertTrue(result.pots.isEmpty())
+        assertTrue(result.funding.isEmpty())
     }
 }

@@ -13,9 +13,9 @@ import org.junit.Test
  */
 class TopLevelTabTest {
     @Test
-    fun tabs_areHomeActivityPlanInsights_inOrder() {
+    fun tabs_areHomeActivityPlanSavings_inOrder() {
         assertEquals(
-            listOf(TopLevelTab.HOME, TopLevelTab.ACTIVITY, TopLevelTab.PLAN, TopLevelTab.INSIGHTS),
+            listOf(TopLevelTab.HOME, TopLevelTab.ACTIVITY, TopLevelTab.PLAN, TopLevelTab.SAVINGS),
             TopLevelTab.entries,
         )
     }
@@ -33,7 +33,7 @@ class TopLevelTabTest {
         assertEquals(HomeGraph, TopLevelTab.HOME.graph)
         assertEquals(ActivityGraph, TopLevelTab.ACTIVITY.graph)
         assertEquals(PlanGraph, TopLevelTab.PLAN.graph)
-        assertEquals(InsightsGraph, TopLevelTab.INSIGHTS.graph)
+        assertEquals(SavingsGraph, TopLevelTab.SAVINGS.graph)
     }
 
     @Test

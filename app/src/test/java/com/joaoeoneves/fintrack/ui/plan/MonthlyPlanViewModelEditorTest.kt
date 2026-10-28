@@ -33,7 +33,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
             vm.onAddIncomeLine()
             advanceUntilIdle()
 
-            assertEquals(IncomeLineEditorState(null, "", null), vm.content().editor?.withoutOptions())
+            assertEquals(IncomeLineEditorState(null, "", null), vm.content().editor)
         }
 
     @Test
@@ -62,7 +62,7 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
 
             vm.onEditIncomeLine("a")
             advanceUntilIdle()
-            assertEquals(IncomeLineEditorState("a", "a", 55_000L), vm.content().editor?.withoutOptions())
+            assertEquals(IncomeLineEditorState("a", "a", 55_000L), vm.content().editor)
         }
 
     @Test
@@ -179,6 +179,4 @@ class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
             assertEquals(UiText.StringResource(R.string.error_plan_save_failed), vm.errorEvent.first())
             assertEquals(emptyList<Any>(), incomeRepo.lines)
         }
-
-    private fun IncomeLineEditorState.withoutOptions() = copy(earmarkOptions = EarmarkOptions())
 }

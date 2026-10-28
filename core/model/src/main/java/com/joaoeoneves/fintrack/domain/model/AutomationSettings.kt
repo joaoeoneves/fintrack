@@ -3,10 +3,12 @@ package com.joaoeoneves.fintrack.domain.model
 import java.time.YearMonth
 
 /**
- * The user's automation switches. [paydayRecordedThrough] is the cursor of the payday automation: the last month
- * whose income was recorded (or deliberately left alone when the switch was turned on); `null` while never enabled.
+ * The automation state. [lineRecordedThrough] holds, per planned income line with automatic recording on, the last
+ * month whose income was recorded (or deliberately left alone when it was switched on). The legacy fields are the
+ * old single switch of the payday automation, kept only as migration input (see [incomeMigrationOf]).
  */
 data class AutomationSettings(
-    val paydayEnabled: Boolean = false,
-    val paydayRecordedThrough: YearMonth? = null,
+    val legacyPaydayEnabled: Boolean = false,
+    val legacyPaydayRecordedThrough: YearMonth? = null,
+    val lineRecordedThrough: Map<String, YearMonth> = emptyMap(),
 )

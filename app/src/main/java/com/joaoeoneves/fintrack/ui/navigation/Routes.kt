@@ -1,8 +1,5 @@
 package com.joaoeoneves.fintrack.ui.navigation
 
-import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.domain.model.encode
 import kotlinx.serialization.Serializable
 
 /**
@@ -20,7 +17,7 @@ object ActivityGraph
 object PlanGraph
 
 @Serializable
-object InsightsGraph
+object SavingsGraph
 
 /** Start destination of [HomeGraph]. */
 @Serializable
@@ -28,29 +25,29 @@ object Home
 
 /**
  * Start destination of [ActivityGraph]. [period] is an encoded `Period` token, [type] is
- * `"EXPENSE"` or `"INCOME"` and [category] a category id; all are only initial values.
+ * `"EXPENSE"` or `"INCOME"`, [category] a category id and [envelope] an envelope id (`""` for no envelope); all
+ * are only initial values.
  */
 @Serializable
 data class Activity(
     val period: String? = null,
     val type: String? = null,
     val category: String? = null,
+    val envelope: String? = null,
 )
-
-/** The [Activity] route showing [category]'s transactions in [period] (a deep link from Insights). */
-fun activityRouteFor(
-    period: Period,
-    category: CategoryId,
-): Activity = Activity(period = period.encode(), category = category.value)
 
 /** Start destination of [PlanGraph]. */
 @Serializable
 object PlanHome
 
-/** Start destination of [InsightsGraph]; [period] is an encoded `Period` token. */
+/** Start destination of [SavingsGraph]. */
 @Serializable
-data class Insights(
-    val period: String? = null,
+object SavingsHome
+
+/** The savings plan editor, full screen; a null [id] creates a new plan. */
+@Serializable
+data class EditSavingsPlan(
+    val id: String? = null,
 )
 
 @Serializable
@@ -72,9 +69,29 @@ object Categories
 @Serializable
 object RecurringList
 
+/** The envelopes list, pushed from the Plan tab. */
+@Serializable
+object PlanEnvelopes
+
+/** The income screen, pushed from the Plan tab; [month] is an encoded `Period` token (null: the current month). */
+@Serializable
+data class PlanIncome(
+    val month: String? = null,
+)
+
+/** The envelope editor; a null [envelopeId] creates a new envelope. */
+@Serializable
+data class EditEnvelope(
+    val envelopeId: String? = null,
+)
+
 /** The salary profile editor, pushed from the Plan tab; it takes no arguments. */
 @Serializable
 object EditSalaryProfile
+
+/** The three-step salary set-up wizard; with a stored profile it forwards to [EditSalaryProfile]. */
+@Serializable
+object SalarySetup
 
 @Serializable
 data class AddEditRecurring(

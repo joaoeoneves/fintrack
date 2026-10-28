@@ -86,7 +86,8 @@ fun RecurringItem.lastOccurrenceBefore(today: LocalDate): LocalDate? {
 fun RecurringItem.isEnded(today: LocalDate): Boolean = endDate?.let { it < today } == true
 
 /**
- * One row per active item that has a pending occurrence within [windowDays] of [today], sorted by
+ * One row per active expense item (income lives in the planned income lines) that has a pending occurrence
+ * within [windowDays] of [today], sorted by
  * date then name. An item whose end date has passed still appears while occurrences on or before
  * the end date are unhandled (see [firstPendingOccurrence], which is `null` past the end date).
  */
@@ -97,7 +98,7 @@ fun upcomingOf(
 ): List<UpcomingOccurrence> {
     val horizon = today.plusDays(windowDays)
     return items
-        .filter { it.active }
+        .filter { it.active && it.type == RecurringType.EXPENSE }
         .mapNotNull { item ->
             item.firstPendingOccurrence()?.takeIf { it <= horizon }?.let { date ->
                 UpcomingOccurrence(item, date, item.overdueCount(today), isDue = date <= today)

@@ -2,8 +2,8 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -50,23 +50,23 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
     ) = LocalSavingsGoal(id, "Goal $id", targetCents, startDate = startDate, targetDate = targetDate)
 
     @Test
-    fun v8File_decodesUpgradedToV13_withNoGoals() {
+    fun v8File_decodesUpgradedToV14_withNoGoals() {
         val text = """{$header,"schemaVersion":8}"""
 
         val result = BackupCodec.decode(text).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(13, result.document.schemaVersion)
+        assertEquals(16, result.document.schemaVersion)
         assertTrue(result.document.goals.isEmpty())
         assertEquals(0, result.document.counts().goals)
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v14File_isUnsupported() {
+    fun v16File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(14),
-            BackupCodec.decode("""{$header,"schemaVersion":14}"""),
+            BackupDecodeResult.UnsupportedVersion(17),
+            BackupCodec.decode("""{$header,"schemaVersion":17}"""),
         )
     }
 
@@ -89,7 +89,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
                 goals =
                     listOf(
                         localGoal("ok"),
-                        localGoal("zero", targetCents = 0),
+                        localGoal("zero", targetCents = -1),
                         localGoal("reversed", startDate = "2026-05-01", targetDate = "2026-04-30"),
                         localGoal("dup"),
                         localGoal("dup"),
@@ -100,6 +100,40 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
 
         assertEquals(listOf("ok", "dup"), result.document.goals.map { it.id })
         assertEquals(3, result.skippedCount)
+    }
+
+    @Test
+    fun noTargetPlan_withRecurringId_roundTripsThroughBackup() {
+        val plan = goal.copy(id = "plan_r1", targetCents = 0, recurringId = "r1")
+        val doc = backupDoc().copy(goals = listOf(plan.toLocal()))
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(listOf(plan.toLocal()), result.document.goals)
+        assertEquals(
+            "r1",
+            result.document.goals
+                .single()
+                .recurringId,
+        )
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun v14GoalWithoutRecurringId_decodesWithNull() {
+        val v14 =
+            """{$header,"schemaVersion":14,
+            "goals":[{"id":"g1","name":"G","targetCents":100,"startDate":"2026-01-01"}]}"""
+
+        val result = BackupCodec.decode(v14).success()
+
+        assertEquals(16, result.document.schemaVersion)
+        assertEquals(
+            null,
+            result.document.goals
+                .single()
+                .recurringId,
+        )
     }
 
     @Test
@@ -162,7 +196,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
                         FakePlannedIncomeRepository(),
                         FakeRecurringRepository(),
                         FakeMonthSettingsRepository(),
-                        FakeCategoryGroupRepository(),
+                        FakeEnvelopeRepository(),
                         PlanSingletonSources(
                             FakeSalaryProfileRepository(),
                             FakeGoalRepository(nextObserveError = IllegalStateException("boom")),

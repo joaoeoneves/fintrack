@@ -40,6 +40,7 @@ import java.time.format.DateTimeFormatter
  * Bottom sheet to mark an income row as received: the day it arrived (today by default, never later) and, only
  * when the row is a single line ([editableAmountCents] set), the amount actually received.
  */
+@Suppress("LongParameterList") // the sheet's day, cap, amount and two callbacks are independent
 @Composable
 fun ReceivedIncomeSheet(
     title: String,
@@ -47,9 +48,10 @@ fun ReceivedIncomeSheet(
     editableAmountCents: Long?,
     onConfirm: (date: LocalDate, amountCents: Long?) -> Unit,
     onDismiss: () -> Unit,
+    initialDate: LocalDate = today,
 ) {
     val zone = ZoneId.systemDefault()
-    var date by remember { mutableStateOf(today) }
+    var date by remember { mutableStateOf(initialDate.coerceAtMost(today)) }
     var amountCents by remember { mutableLongStateOf(editableAmountCents ?: 0L) }
     var amountError by remember { mutableStateOf(false) }
     FinTrackBottomSheet(onDismissRequest = onDismiss) {

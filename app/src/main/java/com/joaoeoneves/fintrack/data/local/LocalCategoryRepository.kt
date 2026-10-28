@@ -85,11 +85,4 @@ class LocalCategoryRepository
                 require(!BuiltInCategories.isBuiltIn(id)) { "Built-in category ${id.value} can't be deleted" }
                 doc.copy(categories = doc.categories.filterNot { it.id == id.value }) to Unit
             }
-
-        /** This document with every one of [records] validated and upserted (all or nothing). */
-        private fun LocalDataDocument.withCategories(records: List<LocalCategory>): LocalDataDocument {
-            records.forEach(::validateCategory)
-            val merged = records.fold(categories) { acc, record -> acc.upserted(record) { it.id == record.id } }
-            return copy(categories = merged)
-        }
     }

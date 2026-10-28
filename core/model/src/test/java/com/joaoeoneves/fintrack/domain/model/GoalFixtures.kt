@@ -16,6 +16,7 @@ internal fun savingsGoal(
     linkedCategoryId: CategoryId? = null,
     archived: Boolean = false,
     order: Int = 0,
+    recurringId: String? = null,
 ) = SavingsGoal(
     id = id,
     name = name,
@@ -28,4 +29,5 @@ internal fun savingsGoal(
     linkedCategoryId = linkedCategoryId,
     archived = archived,
     order = order,
+    recurringId = recurringId,
 )

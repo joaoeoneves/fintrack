@@ -15,7 +15,6 @@ import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
 import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
-import com.joaoeoneves.fintrack.data.local.validOrNull
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
@@ -27,8 +26,9 @@ import com.joaoeoneves.fintrack.data.local.validateRecurring
 import com.joaoeoneves.fintrack.data.local.validateSalaryProfile
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.Envelope
+import com.joaoeoneves.fintrack.domain.model.LEGACY_RECURRING_LINE_PREFIX
 import com.joaoeoneves.fintrack.domain.model.effectiveName
 import com.joaoeoneves.fintrack.domain.model.mergeCategories
 
@@ -43,8 +43,8 @@ data class RemoteAccountSnapshot(
     val categories: List<Category>,
     /** Months (`yyyy-MM`) the account already has settings for. */
     val monthSettingsIds: Set<String> = emptySet(),
-    /** The account's category groups. */
-    val categoryGroups: List<CategoryGroup> = emptyList(),
+    /** The account's envelopes. */
+    val categoryGroups: List<Envelope> = emptyList(),
     /** Whether the account already has a salary profile (a singleton: the account wins). */
     val hasSalaryProfile: Boolean = false,
     /** Ids of the account's savings goals. */
@@ -97,12 +97,15 @@ private class CategoryResolution(
  * - custom categories: a local id already in the account is kept as is (nothing to write); else a
  *   category with the same trimmed, case-insensitive name is reused (local id remapped); else it is
  *   written under its own id, ordered after the account's categories;
- * - category groups: a local id already in the account is kept as is; else a group with the same trimmed,
- *   case-insensitive name is reused (the categories are remapped to it); else it is written under its own id,
- *   ordered after the account's groups. Categories are copied with their group remapped (none when unresolved);
+ * - envelopes (category groups): a local id already in the account is kept as is; else an envelope with the same
+ *   trimmed, case-insensitive name is reused (the account's amount and funding line win, the categories are
+ *   remapped to it); else it is written under its own id, ordered after the account's envelopes, keeping its
+ *   funding line only when the guest's income lines are copied too. Categories are copied with their group
+ *   remapped (none when unresolved);
  * - built-in overrides and budgets: what the account already has wins;
- * - planned income: if the account has any line, the account wins and none is copied; else every valid
- *   line is copied under its own id;
+ * - planned income: if the account has any line, the account wins and none is copied, except the lines migrated
+ *   from a recurring income (`rinc_` ids) it does not have yet; else every valid line is copied under its own id.
+ *   Copied automation cursors are limited to the copied lines;
  * - the salary profile is a singleton: if the account has one the guest's is not copied (and the guest's managed
  *   income lines lose their managed key); else it is copied when valid;
  * - savings goals keep their ids; ids already in the account are skipped, the linked category is remapped like an
@@ -152,6 +155,10 @@ fun planMigration(
     val plannedIncome =
         plannedIncomeToCopy(local.plannedIncome, remote, resolution, groups.idMap, keepManaged = salaryProfile != null)
     if (remote.plannedIncomeIds.isEmpty()) skipped += local.plannedIncome.size - plannedIncome.size
+    // An envelope's funding line only survives when the guest's lines are copied under the same ids.
+    val copiedLineIds = plannedIncome.mapTo(mutableSetOf()) { it.id }
+    val groupsToWrite =
+        groups.toWrite.map { it.copy(fundedByLineId = it.fundedByLineId?.takeIf { id -> id in copiedLineIds }) }
     val recurring = recurringToCopy(local.recurring, remote, resolution, known)
     skipped += local.recurring.count { it.id !in remote.recurringIds } - recurring.size
     val monthSettings = local.monthSettings.filter { it.month !in remote.monthSettingsIds }
@@ -168,10 +175,10 @@ fun planMigration(
         recurring,
         skipped,
         validMonthSettings,
-        groups.toWrite,
+        groupsToWrite,
         salaryProfile,
         goals,
-        local.automation.takeUnless { remote.hasAutomation }?.validOrNull(),
+        automationToCopy(local.automation, remote, copiedLineIds),
     )
 }
 
@@ -202,8 +209,14 @@ private fun plannedIncomeToCopy(
     groupIdMap: Map<String, String>,
     keepManaged: Boolean,
 ): List<LocalPlannedIncome> {
-    if (remote.plannedIncomeIds.isNotEmpty()) return emptyList()
-    return local
+    // The account's lines win, except lines migrated from a recurring income (`rinc_`) it does not have yet.
+    val candidates =
+        if (remote.plannedIncomeIds.isEmpty()) {
+            local
+        } else {
+            local.filter { it.id.startsWith(LEGACY_RECURRING_LINE_PREFIX) && it.id !in remote.plannedIncomeIds }
+        }
+    return candidates
         .map { it.withEarmarkRemapped(resolution, groupIdMap) }
         // Managed lines without a profile to follow would be read-only forever: they become plain lines.
         .map { if (keepManaged) it else it.copy(managedKey = null) }

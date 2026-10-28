@@ -15,6 +15,7 @@ import javax.inject.Singleton
 
 /** [ExpenseRepository] that talks to Firestore when signed in and to the local store as a guest. */
 @Singleton
+@Suppress("TooManyFunctions") // One override per ExpenseRepository operation.
 class SessionExpenseRepository
     @Inject
     constructor(
@@ -28,6 +29,8 @@ class SessionExpenseRepository
             startInclusive: Instant,
             endExclusive: Instant,
         ): Flow<List<Expense>> = switch.flow(emptyList()) { it.observeExpenses(startInclusive, endExclusive) }
+
+        override fun observeHasAnyExpense(): Flow<Boolean> = switch.flow(false) { it.observeHasAnyExpense() }
 
         override suspend fun addExpense(expense: Expense): Result<String> = switch.call { it.addExpense(expense) }
 

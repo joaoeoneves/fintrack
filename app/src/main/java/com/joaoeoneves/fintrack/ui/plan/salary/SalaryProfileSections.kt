@@ -128,7 +128,7 @@ internal fun GrossSections(
     }
 }
 
-private fun spreadLabel(spreadPpm: Int): Int =
+internal fun spreadLabel(spreadPpm: Int): Int =
     when (spreadPpm) {
         SPREAD_NONE_PPM -> R.string.salary_spread_none
         SPREAD_HALF_PPM -> R.string.salary_spread_half

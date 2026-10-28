@@ -11,22 +11,27 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.netCents
-import com.joaoeoneves.fintrack.domain.model.toInstantRange
+import com.joaoeoneves.fintrack.domain.model.plannedSlices
+import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
-import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
+import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
+import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeChip
+import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.groupByDay
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
-import com.joaoeoneves.fintrack.ui.common.period.asMonthPeriod
 import com.joaoeoneves.fintrack.ui.navigation.ACTIVITY_TYPE_INCOME
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -51,6 +56,7 @@ import javax.inject.Inject
 private const val ARG_PERIOD = "period"
 private const val ARG_TYPE = "type"
 private const val ARG_CATEGORY = "category"
+private const val ARG_ENVELOPE = "envelope"
 
 private const val ROUTE_TYPE_EXPENSE = "EXPENSE"
 
@@ -66,6 +72,7 @@ private sealed interface PeriodItems {
         val period: Period,
         val canGoToNextMonth: Boolean,
         val transactions: TransactionsInRange,
+        val overview: PeriodOverview,
     ) : PeriodItems
 
     data class Failed(
@@ -78,7 +85,7 @@ private sealed interface PeriodItems {
 class ActivityViewModel
     @Inject
     constructor(
-        transactionRepository: TransactionRepository,
+        private val observePeriodOverview: ObservePeriodOverview,
         categoryRepository: CategoryRepository,
         private val expenseRepository: ExpenseRepository,
         private val incomeRepository: IncomeRepository,
@@ -91,7 +98,7 @@ class ActivityViewModel
             PeriodSelection(
                 savedStateHandle = savedStateHandle,
                 key = KEY_SELECTED_PERIOD,
-                initialToken = initialPeriodToken(),
+                initialToken = savedStateHandle.get<String>(ARG_PERIOD) ?: Period.CurrentMonth.encode(),
                 clock = clock,
             )
 
@@ -122,6 +129,17 @@ class ActivityViewModel
             )
         val categoryFilter: StateFlow<CategoryId?> = selectedCategory.asStateFlow()
 
+        // The envelope id (NO_ENVELOPE for "no envelope"); like the category, a stored null means "cleared".
+        private val selectedEnvelope =
+            MutableStateFlow(
+                if (savedStateHandle.contains(KEY_SELECTED_ENVELOPE)) {
+                    savedStateHandle.get<String>(KEY_SELECTED_ENVELOPE)
+                } else {
+                    savedStateHandle.get<String>(ARG_ENVELOPE)
+                },
+            )
+        val envelopeFilter: StateFlow<String?> = selectedEnvelope.asStateFlow()
+
         private val undoEvents = Channel<Transaction>(Channel.BUFFERED)
         val undoEvent: Flow<Transaction> = undoEvents.receiveAsFlow()
 
@@ -145,32 +163,38 @@ class ActivityViewModel
                     val now = clock.instant()
                     val period = decodePeriod(token, now, clock.zone)
                     val canGoToNextMonth = period.canGoToNextMonth(now, clock.zone)
-                    transactionRepository
-                        .observeTransactions(period.toInstantRange(now, clock.zone))
-                        .map<TransactionsInRange, PeriodItems> { PeriodItems.Loaded(period, canGoToNextMonth, it) }
-                        .catch { e ->
+                    observePeriodOverview(period, now, clock.zone, recentLimit = 0)
+                        .map<PeriodOverview, PeriodItems> {
+                            PeriodItems.Loaded(period, canGoToNextMonth, it.transactions, it)
+                        }.catch { e ->
                             Log.w(TAG, "Activity flow failed", e)
                             emit(PeriodItems.Failed(UiText.StringResource(R.string.error_generic_fallback)))
                         }
                 }
 
         private val filters: Flow<ActivityFilters> =
-            combine(selectedType, selectedCategory, query, sortOption) { type, category, query, sort ->
-                ActivityFilters(type = type, category = category, query = query, sort = sort)
+            combine(
+                combine(selectedType, selectedCategory, selectedEnvelope) { type, category, envelope ->
+                    Triple(type, category, envelope)
+                },
+                query,
+                sortOption,
+            ) { (type, category, envelope), query, sort ->
+                ActivityFilters(type = type, category = category, envelope = envelope, query = query, sort = sort)
             }
 
-        /** Period navigation for the selector; the list is month-only, so any other period snaps to its month. */
+        /** Period navigation for the selector; any period kind (month, rolling, custom) is allowed. */
         val periodActions =
             PeriodActions(
                 onPrevious = selection::previous,
                 onNext = selection::next,
-                onSelect = { selection.select(it.asMonthPeriod()) },
+                onSelect = selection::select,
             )
 
         val uiState: StateFlow<ActivityUiState> =
-            combine(periodItems, filters, categoryLabels) { items, activeFilters, labels ->
+            combine(periodItems, filters, categoryLabels, categories) { items, activeFilters, labels, catalog ->
                 when (items) {
-                    is PeriodItems.Loaded -> items.toContent(activeFilters, labels, clock.zone)
+                    is PeriodItems.Loaded -> items.toContent(activeFilters, labels, catalog, clock.zone)
                     is PeriodItems.Failed -> ActivityUiState.Error(items.message)
                 }
             }.stateIn(
@@ -190,6 +214,17 @@ class ActivityViewModel
         fun onCategorySelected(id: CategoryId?) {
             savedStateHandle[KEY_SELECTED_CATEGORY] = id?.value
             selectedCategory.value = id
+        }
+
+        /** Selects an envelope (or [NO_ENVELOPE]; `null` clears); a selected category outside it is cleared too. */
+        fun onEnvelopeSelected(id: String?) {
+            savedStateHandle[KEY_SELECTED_ENVELOPE] = id
+            selectedEnvelope.value = id
+            val category = selectedCategory.value?.let { selected -> categories.value.find { it.id == selected } }
+            if (id != null && category != null) {
+                val envelopeIds = (uiState.value as? ActivityUiState.Content)?.analytics?.envelopeIds.orEmpty()
+                if ((envelopeIdOf(category, envelopeIds) ?: NO_ENVELOPE) != id) onCategorySelected(null)
+            }
         }
 
         fun onCategoryLabelsChanged(labels: Map<CategoryId, String>) {
@@ -230,18 +265,13 @@ class ActivityViewModel
             }
         }
 
-        private fun initialPeriodToken(): String {
-            val now = clock.instant()
-            val routePeriod = decodePeriod(savedStateHandle.get<String>(ARG_PERIOD), now, clock.zone)
-            return routePeriod.asMonthPeriod().encode()
-        }
-
         private companion object {
             private const val KEY_QUERY = "query"
             private const val KEY_SORT_OPTION = "sortOption"
             private const val KEY_SELECTED_CATEGORY = "selectedCategory"
             private const val KEY_SELECTED_TYPE = "selectedType"
             private const val KEY_SELECTED_PERIOD = "selectedPeriod"
+            private const val KEY_SELECTED_ENVELOPE = "selectedEnvelope"
         }
     }
 
@@ -252,11 +282,23 @@ private fun initialType(routeType: String?): ActivityType =
         else -> ActivityType.ALL
     }
 
+/** The envelope [category] belongs to, only when that envelope still exists in [envelopeIds]. */
+internal fun envelopeIdOf(
+    category: Category,
+    envelopeIds: Set<String>,
+): String? = category.groupId?.takeIf { it in envelopeIds }
+
 private fun PeriodItems.Loaded.toContent(
-    activeFilters: ActivityFilters,
+    requested: ActivityFilters,
     labels: Map<CategoryId, String>,
+    catalog: List<Category>,
     zone: ZoneId,
 ): ActivityUiState.Content {
+    val analytics = analyticsOf(requested.envelope)
+    // An envelope id that no longer exists filters nothing.
+    val envelope = requested.envelope?.takeIf { it == NO_ENVELOPE || it in analytics.envelopeIds }
+    val activeFilters = requested.copy(envelope = envelope)
+    val byId = catalog.associateBy { it.id }
     val filtered =
         filterTransactions(
             list = transactions.expenses + transactions.income,
@@ -264,6 +306,8 @@ private fun PeriodItems.Loaded.toContent(
             category = activeFilters.category,
             query = activeFilters.query,
             labels = labels,
+            envelope = envelope,
+            envelopeOf = { id -> byId[id]?.let { envelopeIdOf(it, analytics.envelopeIds) } },
         )
     val sorted = sortTransactions(filtered, activeFilters.sort)
     return ActivityUiState.Content(
@@ -277,5 +321,40 @@ private fun PeriodItems.Loaded.toContent(
                 outCents = transactions.expenses.netCents(),
             ),
         filters = activeFilters,
+        analytics = analytics,
+        categoryScope =
+            envelope?.let { selected ->
+                catalog
+                    .filter { (envelopeIdOf(it, analytics.envelopeIds) ?: NO_ENVELOPE) == selected }
+                    .map { it.id }
+                    .toSet()
+            },
+    )
+}
+
+/** The analytics header's numbers over the whole period (before the list filters). */
+private fun PeriodItems.Loaded.analyticsOf(selectedEnvelope: String?): ActivityAnalytics {
+    val split = spendingSplitOf(transactions.expenses)
+    val summary = overview.periodEnvelopes
+    val chips =
+        summary.envelopes
+            .filter { it.spentCents > 0 || it.envelope.id == selectedEnvelope }
+            .map { EnvelopeChip(it.envelope.id, it.envelope.name, it.spentCents) } +
+            listOfNotNull(
+                EnvelopeChip(NO_ENVELOPE, null, summary.unenvelopedSpentCents)
+                    .takeIf { it.spentCents > 0 || selectedEnvelope == NO_ENVELOPE },
+            )
+    return ActivityAnalytics(
+        spentCents = split.spendingCents,
+        split = split,
+        breakdown =
+            ActivityBreakdown(
+                categoryTotals = overview.summary.categoryTotals,
+                plannedSlices = overview.budgets.plannedSlices(),
+                hasExpenses = transactions.expenses.isNotEmpty(),
+                envelopes = summary,
+            ),
+        envelopeChips = chips,
+        envelopeIds = summary.envelopes.map { it.envelope.id }.toSet(),
     )
 }

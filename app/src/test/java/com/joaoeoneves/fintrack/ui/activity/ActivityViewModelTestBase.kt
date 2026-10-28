@@ -3,9 +3,18 @@ package com.joaoeoneves.fintrack.ui.activity
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
+import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
+import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
+import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
 import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
 import com.joaoeoneves.fintrack.testutil.testExpense
@@ -62,7 +71,8 @@ abstract class ActivityViewModelTestBase {
         amountCents: Long = 100L,
         date: Instant = now,
         isRefund: Boolean = false,
-    ): Expense = testExpense(id, amountCents, date, isRefund = isRefund)
+        category: Category = BuiltInCategories.SHOPPING,
+    ): Expense = testExpense(id, amountCents, date, category, isRefund)
 
     protected fun income(
         id: String,
@@ -78,30 +88,28 @@ abstract class ActivityViewModelTestBase {
         incomes: List<Income> = emptyList(),
         val handle: SavedStateHandle = SavedStateHandle(),
         val categories: FakeCategoryRepository = FakeCategoryRepository(),
-        viewModelClock: Clock = clock,
+        val budgets: FakeBudgetRepository = FakeBudgetRepository(),
+        val envelopes: FakeEnvelopeRepository = FakeEnvelopeRepository(),
     ) {
         val expenseRepo = CountingExpenseRepository(expenses)
         val incomeRepo = CountingIncomeRepository(incomes)
-        val vm =
-            ActivityViewModel(
-                CombinedTransactionRepository(expenseRepo, incomeRepo),
-                categories,
-                expenseRepo,
-                incomeRepo,
-                handle,
-                viewModelClock,
+        private val overview =
+            ObservePeriodOverview(
+                transactionRepository = CombinedTransactionRepository(expenseRepo, incomeRepo),
+                sources =
+                    PlanDataSources(
+                        budgets = budgets,
+                        plannedIncome = FakePlannedIncomeRepository(),
+                        monthSettings = FakeMonthSettingsRepository(),
+                        categories = categories,
+                        envelopes = envelopes,
+                        recurring = FakeRecurringRepository(),
+                    ),
             )
+        val vm = ActivityViewModel(overview, categories, expenseRepo, incomeRepo, handle, clock)
 
         /** A fresh ViewModel over the same repositories and [SavedStateHandle] (process-death restore). */
-        fun recreate() =
-            ActivityViewModel(
-                CombinedTransactionRepository(expenseRepo, incomeRepo),
-                categories,
-                expenseRepo,
-                incomeRepo,
-                handle,
-                clock,
-            )
+        fun recreate() = ActivityViewModel(overview, categories, expenseRepo, incomeRepo, handle, clock)
     }
 
     protected fun TestScope.content(vm: ActivityViewModel): ActivityUiState.Content {

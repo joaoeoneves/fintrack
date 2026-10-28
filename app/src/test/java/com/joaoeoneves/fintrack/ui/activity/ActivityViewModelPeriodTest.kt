@@ -13,7 +13,7 @@ import org.junit.Test
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** Month-only period behavior and the period totals of [ActivityViewModel]. */
+/** Period behavior (month, rolling and custom) and the period totals of [ActivityViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
     private val aug = expense("aug", 100L, noonOn(2026, 8, 15))
@@ -49,23 +49,31 @@ class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
         }
 
     @Test
-    fun routePeriod_rollingAndCustom_areCoercedToCurrentMonth() =
+    fun routePeriod_rollingAndCustom_areKept() =
         runTest(testDispatcher) {
-            val tokens =
-                listOf(
-                    Period.Rolling(TimeRange.THREE_MONTHS).encode(),
-                    Period.Custom(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 9, 1)).encode(),
-                    "nonsense",
-                )
-            for (token in tokens) {
-                val content = content(fixture("period" to token).vm)
-                assertEquals(token, Period.CurrentMonth, content.period)
-                assertEquals(token, setOf("oct", "octIncome"), content.ids())
-            }
+            val rolling = Period.Rolling(TimeRange.THREE_MONTHS)
+            val rollingContent = content(fixture("period" to rolling.encode()).vm)
+            assertEquals(rolling, rollingContent.period)
+            assertEquals(setOf("aug", "sep", "oct", "sepIncome", "octIncome"), rollingContent.ids())
+            assertFalse(rollingContent.canGoToNextMonth)
+
+            val custom = Period.Custom(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 9, 30))
+            val customContent = content(fixture("period" to custom.encode()).vm)
+            assertEquals(custom, customContent.period)
+            assertEquals(setOf("aug", "sep", "sepIncome"), customContent.ids())
         }
 
     @Test
-    fun onPeriodSelected_rolling_snapsToCurrentMonth() =
+    fun routePeriod_nonsense_fallsBackToCurrentMonth() =
+        runTest(testDispatcher) {
+            val content = content(fixture("period" to "nonsense").vm)
+
+            assertEquals(Period.CurrentMonth, content.period)
+            assertEquals(setOf("oct", "octIncome"), content.ids())
+        }
+
+    @Test
+    fun onPeriodSelected_rolling_isKept() =
         runTest(testDispatcher) {
             val vm = fixture().vm
             content(vm)
@@ -73,8 +81,22 @@ class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
             vm.periodActions.onSelect(Period.Rolling(TimeRange.ONE_YEAR))
             advanceUntilIdle()
 
-            assertEquals(Period.CurrentMonth, current(vm).period)
-            assertEquals(setOf("oct", "octIncome"), current(vm).ids())
+            assertEquals(Period.Rolling(TimeRange.ONE_YEAR), current(vm).period)
+            assertEquals(expenses.map { it.id }.toSet() + incomes.map { it.id }, current(vm).ids())
+        }
+
+    @Test
+    fun onPeriodSelected_custom_isInclusiveOfBothEnds() =
+        runTest(testDispatcher) {
+            val vm = fixture().vm
+            content(vm)
+            val custom = Period.Custom(LocalDate.of(2026, 9, 15), LocalDate.of(2026, 10, 15))
+
+            vm.periodActions.onSelect(custom)
+            advanceUntilIdle()
+
+            assertEquals(custom, current(vm).period)
+            assertEquals(setOf("sep", "oct", "octIncome"), current(vm).ids())
         }
 
     @Test

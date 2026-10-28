@@ -10,7 +10,7 @@ import java.time.YearMonth
 
 /**
  * In-memory [AutomationSettingsRepository] intended for tests. [recordPayday] stores the incomes in [incomeRepo]
- * (replacing any with the same id, like the real atomic write) and moves the cursor, so tests can assert both.
+ * (replacing any with the same id, like the real atomic write) and moves the cursors, so tests can assert both.
  */
 class FakeAutomationSettingsRepository(
     initial: AutomationSettings = AutomationSettings(),
@@ -28,36 +28,43 @@ class FakeAutomationSettingsRepository(
         settingsFlow.value = settings
     }
 
-    /** Every [recordPayday] call as (month, incomes), in order. */
-    val recorded = mutableListOf<Pair<YearMonth, List<Income>>>()
+    /** Every [recordPayday] call as (cursors, incomes), in order. */
+    val recorded = mutableListOf<Pair<Map<String, YearMonth>, List<Income>>>()
+
+    /** Every [updateLineCursors] call as (set, remove, clearLegacyPayday), in order. */
+    val cursorUpdates = mutableListOf<Triple<Map<String, YearMonth>, Set<String>, Boolean>>()
 
     override fun observeAutomationSettings(): Flow<AutomationSettings> {
         nextObserveError?.let { error -> return flow { throw error } }
         return settingsFlow
     }
 
-    override suspend fun setPaydayEnabled(
-        enabled: Boolean,
-        cursor: YearMonth?,
+    override suspend fun updateLineCursors(
+        set: Map<String, YearMonth>,
+        remove: Set<String>,
+        clearLegacyPayday: Boolean,
     ): Result<Unit> {
         failIfRequested()?.let { return Result.failure(it) }
+        cursorUpdates += Triple(set, remove, clearLegacyPayday)
+        val current = settingsFlow.value
         settingsFlow.value =
-            settingsFlow.value.copy(
-                paydayEnabled = enabled,
-                paydayRecordedThrough = cursor ?: settingsFlow.value.paydayRecordedThrough,
+            current.copy(
+                legacyPaydayEnabled = current.legacyPaydayEnabled && !clearLegacyPayday,
+                lineRecordedThrough = current.lineRecordedThrough - remove + set,
             )
         return Result.success(Unit)
     }
 
     override suspend fun recordPayday(
-        month: YearMonth,
         incomes: List<Income>,
+        cursors: Map<String, YearMonth>,
     ): Result<Unit> {
         failIfRequested()?.let { return Result.failure(it) }
-        recorded += month to incomes
+        recorded += cursors to incomes
         incomes.forEach { incomeRepo.deleteIncome(it.id) }
         incomes.forEach { incomeRepo.addIncome(it) }
-        settingsFlow.value = settingsFlow.value.copy(paydayRecordedThrough = month)
+        val current = settingsFlow.value
+        settingsFlow.value = current.copy(lineRecordedThrough = current.lineRecordedThrough + cursors)
         return Result.success(Unit)
     }
 

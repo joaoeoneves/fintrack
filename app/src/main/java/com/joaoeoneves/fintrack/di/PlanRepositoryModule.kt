@@ -1,14 +1,14 @@
 package com.joaoeoneves.fintrack.di
 
 import com.joaoeoneves.fintrack.data.session.SessionAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.session.SessionCategoryGroupRepository
+import com.joaoeoneves.fintrack.data.session.SessionEnvelopeRepository
 import com.joaoeoneves.fintrack.data.session.SessionGoalRepository
 import com.joaoeoneves.fintrack.data.session.SessionMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.session.SessionPlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.session.SessionRecurringRepository
 import com.joaoeoneves.fintrack.data.session.SessionSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
-import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
@@ -36,7 +36,7 @@ interface PlanRepositoryModule {
     fun bindRecurringRepository(impl: SessionRecurringRepository): RecurringRepository
 
     @Binds
-    fun bindCategoryGroupRepository(impl: SessionCategoryGroupRepository): CategoryGroupRepository
+    fun bindEnvelopeRepository(impl: SessionEnvelopeRepository): EnvelopeRepository
 
     @Binds
     fun bindSalaryProfileRepository(impl: SessionSalaryProfileRepository): SalaryProfileRepository

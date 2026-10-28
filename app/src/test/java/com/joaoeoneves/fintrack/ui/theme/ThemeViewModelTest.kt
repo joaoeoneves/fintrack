@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.ui.theme
 
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
+import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,7 +44,7 @@ class ThemeViewModelTest {
     fun themePreference_initialValue_isNull() =
         runTest(testDispatcher) {
             val repo = FakeThemeRepository(ThemePreference.LIGHT)
-            val viewModel = ThemeViewModel(repo)
+            val viewModel = ThemeViewModel(repo, FakeMotionRepository())
 
             // Before advanceUntilIdle/collection, the StateFlow built via stateIn(WhileSubscribed)
             // has not yet started collecting upstream, so it should still report its initialValue
@@ -54,7 +56,7 @@ class ThemeViewModelTest {
     fun themePreference_afterCollection_reflectsRepositoryValue() =
         runTest(testDispatcher) {
             val repo = FakeThemeRepository(ThemePreference.DARK)
-            val viewModel = ThemeViewModel(repo)
+            val viewModel = ThemeViewModel(repo, FakeMotionRepository())
 
             // stateIn(WhileSubscribed) only starts collecting the upstream flow once there is an
             // active subscriber -- reading `.value` alone never triggers that, so force one here.
@@ -69,7 +71,7 @@ class ThemeViewModelTest {
     fun toggleTheme_currentlyResolvedDark_setsPreferenceToLight() =
         runTest(testDispatcher) {
             val repo = FakeThemeRepository(ThemePreference.SYSTEM)
-            val viewModel = ThemeViewModel(repo)
+            val viewModel = ThemeViewModel(repo, FakeMotionRepository())
             advanceUntilIdle()
 
             viewModel.toggleTheme(currentlyResolvedDark = true)
@@ -82,7 +84,7 @@ class ThemeViewModelTest {
     fun toggleTheme_currentlyResolvedLight_setsPreferenceToDark() =
         runTest(testDispatcher) {
             val repo = FakeThemeRepository(ThemePreference.SYSTEM)
-            val viewModel = ThemeViewModel(repo)
+            val viewModel = ThemeViewModel(repo, FakeMotionRepository())
             advanceUntilIdle()
 
             viewModel.toggleTheme(currentlyResolvedDark = false)
@@ -99,7 +101,7 @@ class ThemeViewModelTest {
             // path) must still flip to LIGHT -- the method deliberately takes the caller's
             // resolved-state snapshot, not the stored preference, as its source of truth.
             val repo = FakeThemeRepository(ThemePreference.LIGHT)
-            val viewModel = ThemeViewModel(repo)
+            val viewModel = ThemeViewModel(repo, FakeMotionRepository())
             advanceUntilIdle()
 
             viewModel.toggleTheme(currentlyResolvedDark = true)
@@ -112,7 +114,7 @@ class ThemeViewModelTest {
     fun toggleTheme_calledTwice_toggledBackAndForthByCaller_endsAtSecondCallsTarget() =
         runTest(testDispatcher) {
             val repo = FakeThemeRepository(ThemePreference.SYSTEM)
-            val viewModel = ThemeViewModel(repo)
+            val viewModel = ThemeViewModel(repo, FakeMotionRepository())
             advanceUntilIdle()
 
             viewModel.toggleTheme(currentlyResolvedDark = false) // -> DARK
@@ -123,6 +125,41 @@ class ThemeViewModelTest {
             advanceUntilIdle()
             assertEquals(ThemePreference.LIGHT, repo.currentPreference())
         }
+
+    @Test
+    fun motionPreference_initialValue_isSystem() =
+        runTest(testDispatcher) {
+            val viewModel = ThemeViewModel(FakeThemeRepository(), FakeMotionRepository(MotionPreference.ON))
+
+            assertEquals(MotionPreference.SYSTEM, viewModel.motionPreference.value)
+        }
+
+    @Test
+    fun motionPreference_afterCollection_reflectsRepositoryAndUpdates() =
+        runTest(testDispatcher) {
+            val motion = FakeMotionRepository(MotionPreference.ON)
+            val viewModel = ThemeViewModel(FakeThemeRepository(), motion)
+            val job = launch { viewModel.motionPreference.collect {} }
+            advanceUntilIdle()
+            assertEquals(MotionPreference.ON, viewModel.motionPreference.value)
+
+            motion.setMotionPreference(MotionPreference.OFF)
+            advanceUntilIdle()
+            assertEquals(MotionPreference.OFF, viewModel.motionPreference.value)
+            job.cancel()
+        }
+
+    private class FakeMotionRepository(
+        initial: MotionPreference = MotionPreference.SYSTEM,
+    ) : MotionRepository {
+        private val flow = MutableStateFlow(initial)
+
+        override fun observeMotionPreference(): Flow<MotionPreference> = flow
+
+        override suspend fun setMotionPreference(preference: MotionPreference) {
+            flow.value = preference
+        }
+    }
 
     /**
      * Minimal in-memory [ThemeRepository] fake, local to this test file since no fake exists

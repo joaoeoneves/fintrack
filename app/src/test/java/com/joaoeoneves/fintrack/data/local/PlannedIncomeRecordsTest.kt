@@ -190,4 +190,42 @@ class PlannedIncomeRecordsTest {
 
         assertEquals(line, decoded)
     }
+
+    @Test
+    fun payDay_onlyOneToThirtyOne() {
+        validatePlannedIncome(record().copy(payDay = 1))
+        validatePlannedIncome(record().copy(payDay = 31))
+        invalid { validatePlannedIncome(record().copy(payDay = 0)) }
+        invalid { validatePlannedIncome(record().copy(payDay = 32)) }
+        invalid { validatePlannedIncome(record().copy(payDay = -1)) }
+    }
+
+    @Test
+    fun toDomain_outOfRangePayDay_becomesLastWorkingDay() {
+        assertNull(record().copy(payDay = 0).toDomain().payDay)
+        assertNull(record().copy(payDay = 40).toDomain().payDay)
+        assertEquals(31, record().copy(payDay = 31).toDomain().payDay)
+    }
+
+    @Test
+    fun autoRecordAndPayDay_roundTripLocal_andThroughJson() {
+        val line = PlannedIncome("p", "Rent", 5, 0, autoRecord = true, payDay = 5)
+        val json = Json { ignoreUnknownKeys = true }
+
+        assertEquals(line, line.toLocal().toDomain())
+        val text = json.encodeToString(LocalPlannedIncome.serializer(), line.toLocal())
+        assertEquals(line, json.decodeFromString(LocalPlannedIncome.serializer(), text).toDomain())
+    }
+
+    @Test
+    fun v15Document_decodesWithAutoRecordOffAndNoPayDay() {
+        val json = Json { ignoreUnknownKeys = true }
+        val raw = """{"id":"p","label":"Pay","amountCents":5,"order":0,"basis":"FIXED","frequency":"MONTHLY"}"""
+
+        val decoded = json.decodeFromString(LocalPlannedIncome.serializer(), raw)
+
+        assertEquals(false, decoded.autoRecord)
+        assertNull(decoded.payDay)
+        validatePlannedIncome(decoded)
+    }
 }

@@ -48,7 +48,7 @@ class GoalRecordsTest {
     fun targetBoundary() {
         validateGoal(valid.copy(targetCents = 1))
         validateGoal(valid.copy(targetCents = MAX_AMOUNT_CENTS))
-        invalid(valid.copy(targetCents = 0))
+        validateGoal(valid.copy(targetCents = 0)) // no target
         invalid(valid.copy(targetCents = -1))
         invalid(valid.copy(targetCents = MAX_AMOUNT_CENTS + 1))
     }
@@ -89,6 +89,23 @@ class GoalRecordsTest {
         validateGoal(valid.copy(linkedCategoryId = "custom_1"))
         invalid(valid.copy(linkedCategoryId = ""))
         invalid(valid.copy(linkedCategoryId = "bad id!"))
+    }
+
+    @Test
+    fun recurringId_shapeValidated_nullAllowed() {
+        validateGoal(valid.copy(recurringId = "r_1"))
+        validateGoal(valid.copy(recurringId = null))
+        invalid(valid.copy(recurringId = ""))
+        invalid(valid.copy(recurringId = "bad id!"))
+    }
+
+    @Test
+    fun recurringId_roundTripsThroughDomain_andNoTargetPlanMaps() {
+        val start = LocalDate.of(2026, 1, 1)
+        val plan = SavingsGoal("plan_r1", "Fund", 0L, GoalTargetType.ANNUAL, start, recurringId = "r1")
+
+        assertEquals("r1", plan.toLocal().recurringId)
+        assertEquals(plan, plan.toLocal().toDomainOrNull())
     }
 
     @Test

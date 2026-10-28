@@ -11,7 +11,7 @@ value class CategoryId(
  * user-defined one. [customName] is the user's own name (`null` for a built-in shown under its
  * localized default name); [iconKey]/[colorKey] are presentation keys resolved by the UI layer.
  * [archived] categories are hidden from pickers but still shown wherever they have data.
- * [groupId] is the id of the [CategoryGroup] the category is filed under, `null` when ungrouped (a
+ * [groupId] is the id of the [Envelope] the category is filed under, `null` when ungrouped (a
  * dangling id is treated the same way).
  */
 data class Category(

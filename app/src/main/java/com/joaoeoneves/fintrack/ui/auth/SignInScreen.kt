@@ -42,8 +42,8 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.InterFamily
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
+import com.joaoeoneves.fintrack.ui.theme.Motion
 
-private const val FADE_IN_MS = 400
 private val GoogleLogoSize = 20.dp
 
 @Composable
@@ -57,7 +57,7 @@ fun SignInScreen(
     val reducedMotion = LocalReducedMotion.current
     val alpha = remember { Animatable(if (reducedMotion) 1f else 0f) }
     LaunchedEffect(reducedMotion) {
-        if (reducedMotion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(FADE_IN_MS))
+        if (reducedMotion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(Motion.Emphasis, easing = Motion.Standard))
     }
 
     Column(

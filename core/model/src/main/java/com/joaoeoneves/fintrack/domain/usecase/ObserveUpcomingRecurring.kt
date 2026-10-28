@@ -17,7 +17,6 @@ const val UPCOMING_WINDOW_DAYS = 30L
 data class RecurringOverview(
     val upcoming: List<UpcomingOccurrence>,
     val annualExpenseCents: Long,
-    val annualIncomeCents: Long,
     val hasItems: Boolean,
 )
 
@@ -32,7 +31,6 @@ class ObserveUpcomingRecurring
                 RecurringOverview(
                     upcoming = upcomingOf(items, today, UPCOMING_WINDOW_DAYS),
                     annualExpenseCents = annualizedCents(items, RecurringType.EXPENSE, today),
-                    annualIncomeCents = annualizedCents(items, RecurringType.INCOME, today),
                     hasItems = items.isNotEmpty(),
                 )
             }

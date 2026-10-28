@@ -1,6 +1,9 @@
 package com.joaoeoneves.fintrack.data.automation
 
 import android.util.Log
+import com.joaoeoneves.fintrack.data.backup.RestoreGate
+import com.joaoeoneves.fintrack.data.backup.gatedBy
+import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -23,7 +26,6 @@ import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "AutomationSync"
 
@@ -34,6 +36,7 @@ class PaydayData
         val settings: AutomationSettingsRepository,
         val plannedIncome: PlannedIncomeRepository,
         val recurring: RecurringRepository,
+        val gate: RestoreGate,
     )
 
 /**
@@ -57,6 +60,7 @@ class AutomationSync
         private val started = AtomicBoolean(false)
         private val foregroundTicks = MutableStateFlow(0)
         private var lastAttempted: Attempt? = null
+        private var lastGeneration = 0
 
         /** What a pass was run for: the same value means nothing new to do. */
         private data class Attempt(
@@ -76,9 +80,8 @@ class AutomationSync
 
             fun paydayKey() =
                 listOf(
-                    settings.paydayEnabled,
-                    settings.paydayRecordedThrough,
-                    lines.map { it.id to it.amountCents },
+                    settings.lineRecordedThrough,
+                    lines.map { listOf(it.id, it.amountCents, it.autoRecord, it.payDay, it.frequency, it.monthOfYear) },
                 )
         }
 
@@ -93,7 +96,15 @@ class AutomationSync
                     paydayData.plannedIncome.observePlannedIncome(),
                 ) { current, _, recurring, settings, lines -> Inputs(current, recurring, settings, lines) }
                     .catch { Log.w(TAG, "Failed to observe the automation inputs", it) }
-                    .collectLatest { inputs ->
+                    .gatedBy(paydayData.gate)
+                    .collectLatest { gated ->
+                        // Paused while a backup is restored (a new emission cancels any pass in flight).
+                        if (gated.restoring) return@collectLatest
+                        if (gated.generation != lastGeneration) {
+                            lastGeneration = gated.generation
+                            lastAttempted = null
+                        }
+                        val inputs = gated.value
                         val current = inputs.session
                         if (current !is Session.SignedIn && current != Session.Guest) return@collectLatest
                         val today = LocalDate.now(clock)
@@ -116,16 +127,13 @@ class AutomationSync
             step("record payday") { recordPayday.runDue(today, clock.zone) }
         }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: automation must never crash the app.
         private suspend fun step(
             name: String,
             block: suspend () -> Unit,
         ) {
-            try {
+            runCatchingCancellable {
                 block()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 Log.w(TAG, "Automation step failed: $name", e)
             }
         }

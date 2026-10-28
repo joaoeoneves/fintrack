@@ -2,14 +2,14 @@ package com.joaoeoneves.fintrack.ui.dashboard
 
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
@@ -44,7 +44,7 @@ data class DashboardRepositories(
     val categoryRepository: CategoryRepository,
     val plannedIncomeRepository: PlannedIncomeRepository = FakePlannedIncomeRepository(),
     val monthSettingsRepository: MonthSettingsRepository = FakeMonthSettingsRepository(),
-    val categoryGroupRepository: CategoryGroupRepository = FakeCategoryGroupRepository(),
+    val envelopeRepository: EnvelopeRepository = FakeEnvelopeRepository(),
     val recurringRepository: RecurringRepository = FakeRecurringRepository(),
 )
 
@@ -71,7 +71,7 @@ fun observePeriodOverviewOf(repositories: DashboardRepositories): ObservePeriodO
                 plannedIncome = repositories.plannedIncomeRepository,
                 monthSettings = repositories.monthSettingsRepository,
                 categories = repositories.categoryRepository,
-                groups = repositories.categoryGroupRepository,
+                envelopes = repositories.envelopeRepository,
                 recurring = repositories.recurringRepository,
             ),
     )

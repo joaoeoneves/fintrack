@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,9 +16,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,12 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.StartStep
+import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
-import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
@@ -47,7 +44,9 @@ import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
+import com.joaoeoneves.fintrack.ui.designsystem.HeroListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
+import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.plan.ChangeSheet
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
@@ -58,6 +57,9 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.Motion
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
+import com.joaoeoneves.fintrack.ui.theme.motionSpec
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -68,9 +70,11 @@ fun DashboardScreen(
     callbacks: DashboardCallbacks,
     viewModel: DashboardViewModel = hiltViewModel(),
     upcomingViewModel: UpcomingRecurringViewModel = hiltViewModel(),
+    startViewModel: StartChecklistViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val upcomingState by upcomingViewModel.uiState.collectAsStateWithLifecycle()
+    val startState by startViewModel.uiState.collectAsStateWithLifecycle()
 
     OnResumeEffect(
         onResume = {
@@ -83,7 +87,8 @@ fun DashboardScreen(
     UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
-    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, callbacks)
+    val start = StartChecklistModel(startState, callbacks.onOpenStartStep, startViewModel::onDismiss)
+    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, start, callbacks)
 
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
@@ -131,15 +136,21 @@ private fun DashboardBody(
     scroll: DashboardScroll,
     contentPadding: PaddingValues,
 ) {
+    StateCrossfade(uiState) { current ->
+        DashboardBodyFor(current, actions, callbacks, scroll, contentPadding)
+    }
+}
+
+@Composable
+private fun DashboardBodyFor(
+    uiState: DashboardUiState,
+    actions: DashboardActions,
+    callbacks: DashboardCallbacks,
+    scroll: DashboardScroll,
+    contentPadding: PaddingValues,
+) {
     when (uiState) {
-        is DashboardUiState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(contentPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground)
-            }
-        }
+        is DashboardUiState.Loading -> HeroListSkeleton(Modifier.padding(contentPadding))
 
         is DashboardUiState.Content -> {
             DashboardContent(
@@ -162,7 +173,7 @@ private fun DashboardBody(
 }
 
 /**
- * Period selector on the left (once content is loaded), settings on the right; no title. Solid
+ * Account avatar on the left, then the period selector (once content is loaded); no title. Solid
  * background, with a hairline along its bottom edge that fades in once content is [scrolled] under it.
  */
 @Composable
@@ -172,7 +183,11 @@ private fun DashboardTopBar(
     onOpenSettings: () -> Unit,
     scrolled: Boolean,
 ) {
-    val separator by animateFloatAsState(if (scrolled) 1f else 0f, label = "topBarSeparator")
+    val separator by animateFloatAsState(
+        targetValue = if (scrolled) 1f else 0f,
+        animationSpec = motionSpec(tween(Motion.Short)),
+        label = "topBarSeparator",
+    )
     Box(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
         Row(
             modifier =
@@ -182,6 +197,7 @@ private fun DashboardTopBar(
                     .padding(horizontal = Dimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            AccountAvatar(onClick = onOpenSettings)
             Box(modifier = Modifier.weight(1f)) {
                 if (state != null) {
                     PeriodSelector(
@@ -193,12 +209,6 @@ private fun DashboardTopBar(
                     )
                 }
             }
-            LabeledIconButton(
-                icon = Icons.Default.Settings,
-                contentDescription = stringResource(R.string.cd_settings),
-                onClick = onOpenSettings,
-                modifier = Modifier.testTag(TestTags.DASHBOARD_SETTINGS),
-            )
         }
         Box(
             modifier =
@@ -222,6 +232,7 @@ private fun dashboardActions(
     viewModel: DashboardViewModel,
     upcomingViewModel: UpcomingRecurringViewModel,
     upcomingState: UpcomingRecurringUiState,
+    start: StartChecklistModel,
     callbacks: DashboardCallbacks,
 ) = DashboardActions(
     period =
@@ -238,6 +249,7 @@ private fun dashboardActions(
             onReceiveIncome = upcomingViewModel::onReceiveIncome,
             onManage = callbacks.onOpenRecurring,
         ),
+    start = start,
     onRetry = viewModel::onRetry,
 )
 
@@ -245,7 +257,15 @@ private fun dashboardActions(
 private data class DashboardActions(
     val period: PeriodActions,
     val upcoming: UpcomingRecurringModel,
+    val start: StartChecklistModel,
     val onRetry: () -> Unit,
+)
+
+/** The "Get started" card's state and callbacks. */
+private data class StartChecklistModel(
+    val state: StartChecklistUiState,
+    val onOpenStep: (StartStep) -> Unit,
+    val onDismiss: () -> Unit,
 )
 
 /** What the balance chart needs, plus the scrub position shared with the hero. */
@@ -295,7 +315,7 @@ private fun DashboardContent(
         contentPadding =
             PaddingValues(bottom = Dimens.FloatingBarBottomPadding + contentPadding.calculateBottomPadding()),
     ) {
-        balanceItems(state = state, chart = chart)
+        balanceItems(state = state, chart = chart, start = actions.start)
         planItems(state = state, actions = actions, callbacks = callbacks)
         activityItems(state = state, callbacks = callbacks)
     }
@@ -308,17 +328,14 @@ private fun LazyItemScope.ScreenItem(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier =
-            Modifier
-                .animateItem()
-                .padding(horizontal = Dimens.ScreenPadding)
-                .then(modifier),
+        modifier = motionAnimateItem(Modifier.padding(horizontal = Dimens.ScreenPadding).then(modifier)),
     ) { content() }
 }
 
 private fun LazyListScope.balanceItems(
     state: DashboardUiState.Content,
     chart: ChartModel,
+    start: StartChecklistModel,
 ) {
     item(key = "hero") {
         ScreenItem(Modifier.padding(top = Dimens.Space8)) {
@@ -329,13 +346,20 @@ private fun LazyListScope.balanceItems(
             )
         }
     }
+    if (start.state is StartChecklistUiState.Visible) {
+        item(key = "start_checklist") {
+            ScreenItem(Modifier.padding(top = Dimens.Space16)) {
+                StartChecklistCard(state = start.state, onOpenStep = start.onOpenStep, onDismiss = start.onDismiss)
+            }
+        }
+    }
     if (state.expenses.isNotEmpty() || state.income.isNotEmpty()) {
         item(key = "chart") {
             BalanceLineChart(
                 series = chart.series,
                 startDate = chart.startDate,
                 onScrub = chart.onScrub,
-                modifier = Modifier.animateItem().padding(top = Dimens.Space8),
+                modifier = motionAnimateItem(Modifier.padding(top = Dimens.Space8)),
             )
         }
     }

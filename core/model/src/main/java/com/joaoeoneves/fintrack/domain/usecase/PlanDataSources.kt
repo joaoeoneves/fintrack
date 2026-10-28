@@ -1,8 +1,8 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
-import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -16,6 +16,6 @@ class PlanDataSources
         val plannedIncome: PlannedIncomeRepository,
         val monthSettings: MonthSettingsRepository,
         val categories: CategoryRepository,
-        val groups: CategoryGroupRepository,
+        val envelopes: EnvelopeRepository,
         val recurring: RecurringRepository,
     )

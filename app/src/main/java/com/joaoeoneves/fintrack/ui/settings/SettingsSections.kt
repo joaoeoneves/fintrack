@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -36,6 +37,15 @@ private val ThemePreference.label: String
             ThemePreference.DARK -> stringResource(R.string.theme_dark)
         }
 
+private val MotionPreference.label: String
+    @Composable
+    get() =
+        when (this) {
+            MotionPreference.SYSTEM -> stringResource(R.string.motion_system)
+            MotionPreference.ON -> stringResource(R.string.motion_on)
+            MotionPreference.OFF -> stringResource(R.string.motion_off)
+        }
+
 /**
  * Human-readable label for an [AppLanguage]. [AppLanguage.PORTUGUESE]'s own label is always
  * rendered in Portuguese ("Português"), regardless of the currently active app language — the
@@ -50,13 +60,15 @@ private val AppLanguage.label: String
             AppLanguage.PORTUGUESE -> stringResource(R.string.language_portuguese)
         }
 
-/** Theme, language and display currency as three rows, each opening a menu of its options. */
+/** Theme, language, display currency and reduced motion as rows, each opening a menu of its options. */
+@Suppress("LongParameterList") // one callback per preference
 @Composable
 fun PreferencesSection(
     uiState: SettingsUiState,
     onThemeSelected: (ThemePreference) -> Unit,
     onLanguageSelected: (AppLanguage) -> Unit,
     onCurrencySelected: (CurrencyOption) -> Unit,
+    onMotionSelected: (MotionPreference) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val locale = currentLocale()
@@ -82,6 +94,13 @@ fun PreferencesSection(
             optionLabel = { "${it.displayName} (${it.symbol(locale)})" },
             onSelected = onCurrencySelected,
             supportingText = stringResource(R.string.settings_currency_hint),
+        )
+        SettingsPickerRow(
+            title = stringResource(R.string.settings_reduce_motion),
+            selected = uiState.motionPreference,
+            options = MotionPreference.entries,
+            optionLabel = { it.label },
+            onSelected = onMotionSelected,
         )
     }
 }

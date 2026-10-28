@@ -4,25 +4,31 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
 import com.joaoeoneves.fintrack.ui.common.amountMatchesQuery
 import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
 
 /**
- * Applies the type, category and search filters (all must match). The [category] only narrows
- * expenses: with [ActivityType.INCOME] it is ignored, and with [ActivityType.ALL] a selected
- * category hides income (income has no category). A blank [query] matches everything; [labels] are
- * the localized category names the query is also matched against.
+ * Applies the type, category, envelope and search filters (all must match). The [category] and [envelope] only
+ * narrow expenses: with [ActivityType.INCOME] they are ignored, and with [ActivityType.ALL] a selection hides
+ * income (income has neither). [envelope] is an envelope id or [NO_ENVELOPE]; [envelopeOf] maps a category to its
+ * existing envelope (`null`: none). A blank [query] matches everything; [labels] are the localized category names
+ * the query is also matched against.
  */
+@Suppress("LongParameterList") // one independent input per filter
 fun filterTransactions(
     list: List<Transaction>,
     type: ActivityType,
     category: CategoryId?,
     query: String,
     labels: Map<CategoryId, String>,
+    envelope: String? = null,
+    envelopeOf: (CategoryId) -> String? = { null },
 ): List<Transaction> =
     list.filter { transaction ->
         transaction.matchesType(type) &&
             transaction.matchesCategory(type, category) &&
+            transaction.matchesEnvelope(type, envelope, envelopeOf) &&
             (query.isBlank() || transaction.matchesActivityQuery(query, labels))
     }
 
@@ -92,6 +98,15 @@ private fun Transaction.matchesCategory(
     type: ActivityType,
     category: CategoryId?,
 ): Boolean = category == null || type == ActivityType.INCOME || (this is Expense && this.category.id == category)
+
+private fun Transaction.matchesEnvelope(
+    type: ActivityType,
+    envelope: String?,
+    envelopeOf: (CategoryId) -> String?,
+): Boolean =
+    envelope == null ||
+        type == ActivityType.INCOME ||
+        (this is Expense && (envelopeOf(category.id) ?: NO_ENVELOPE) == envelope)
 
 private fun Transaction.sortAmountCents(): Long =
     when (this) {

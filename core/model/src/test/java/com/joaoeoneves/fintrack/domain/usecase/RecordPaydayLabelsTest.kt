@@ -46,7 +46,7 @@ class RecordPaydayLabelsTest : RecordPaydayTestBase() {
         runTest {
             labels.language = pt
             lines().forEach { plan.savePlannedIncome(it) }
-            enabled(YearMonth.of(2026, 9))
+            cursors(*lines().map { it.id to YearMonth.of(2026, 9) }.toTypedArray())
 
             useCase.runDue(LocalDate.of(2026, 10, 30), utc)
 

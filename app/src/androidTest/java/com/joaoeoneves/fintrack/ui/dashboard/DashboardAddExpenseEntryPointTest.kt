@@ -81,6 +81,7 @@ class DashboardAddExpenseEntryPointTest {
                         onOpenActivity = onOpenActivity,
                         onOpenPlan = {},
                         onOpenRecurring = {},
+                        onOpenStartStep = {},
                     ),
                 viewModel = viewModel,
             )

@@ -11,6 +11,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +43,7 @@ import com.joaoeoneves.fintrack.ui.theme.CurrencyViewModel
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.NightModeSync
 import com.joaoeoneves.fintrack.ui.theme.ThemeViewModel
+import com.joaoeoneves.fintrack.ui.theme.rememberReducedMotion
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -99,7 +101,8 @@ class MainActivity : AppCompatActivity() {
                     enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
                     onDispose {}
                 }
-                FinTrackTheme(darkTheme = resolvedDarkTheme) {
+                val reducedMotion = themeViewModel.resolvedReducedMotion()
+                FinTrackTheme(darkTheme = resolvedDarkTheme, reducedMotion = reducedMotion) {
                     val viewModel: AuthViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     val context = LocalContext.current
@@ -167,3 +170,10 @@ class MainActivity : AppCompatActivity() {
 }
 
 private const val SPLASH_MAX_MS = 1_500L
+
+/** The stored motion preference resolved against the system animator setting. */
+@Composable
+private fun ThemeViewModel.resolvedReducedMotion(): Boolean {
+    val preference by motionPreference.collectAsStateWithLifecycle()
+    return preference.resolve(rememberReducedMotion())
+}

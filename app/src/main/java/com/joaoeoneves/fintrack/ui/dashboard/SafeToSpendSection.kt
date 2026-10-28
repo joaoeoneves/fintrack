@@ -22,9 +22,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
-import com.joaoeoneves.fintrack.domain.model.PotsSummary
-import com.joaoeoneves.fintrack.ui.common.PotOverflowRows
-import com.joaoeoneves.fintrack.ui.common.PotRow
+import com.joaoeoneves.fintrack.ui.common.EnvelopeOverflowRow
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
@@ -136,13 +134,7 @@ private fun PlanContent(
                 color = FinTrackTheme.colors.textSecondary,
             )
         }
-        state.pots?.takeIf { it.pots.isNotEmpty() }?.let { pots ->
-            PotsRows(
-                pots = pots,
-                onOpenMonthlyPlan = onOpenMonthlyPlan,
-                modifier = Modifier.padding(top = Dimens.Space12),
-            )
-        }
+        state.envelopes?.let { EnvelopeOverflowRow(summary = it, modifier = Modifier.padding(top = Dimens.Space8)) }
         PlanRows(plan = state.plan, modifier = Modifier.padding(top = Dimens.Space16))
         if (!state.budgetMonthIsCurrent) {
             Text(
@@ -151,22 +143,6 @@ private fun PlanContent(
                 color = FinTrackTheme.colors.textSecondary,
                 modifier = Modifier.padding(top = Dimens.Space12),
             )
-        }
-    }
-}
-
-/** The base's overflow lines and one compact row per pot; only composed when something is earmarked. */
-@Composable
-private fun PotsRows(
-    pots: PotsSummary,
-    onOpenMonthlyPlan: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier) {
-        PotOverflowRows(pots = pots.pots)
-        pots.pots.forEach { pot ->
-            Hairline()
-            PotRow(pot = pot, onClick = onOpenMonthlyPlan)
         }
     }
 }

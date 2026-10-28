@@ -2,7 +2,7 @@ package com.joaoeoneves.fintrack.data.migration
 
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.testutil.userCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -23,7 +23,7 @@ class MigrationPlannerGroupsTest {
 
     @Test
     fun newGroups_keepIdsAndAreOrderedAfterTheAccountsGroups() {
-        val remote = remoteSnapshot(categoryGroups = listOf(CategoryGroup("r1", "Rent", 4)))
+        val remote = remoteSnapshot(categoryGroups = listOf(Envelope("r1", "Rent", 4)))
 
         val plan = planMigration(docWith(listOf(leisure, food)), remote)
 
@@ -42,7 +42,7 @@ class MigrationPlannerGroupsTest {
 
     @Test
     fun nameCollision_reusesAccountGroup_andRemapsCategories() {
-        val remote = remoteSnapshot(categoryGroups = listOf(CategoryGroup("acct-food", "Food", 0)))
+        val remote = remoteSnapshot(categoryGroups = listOf(Envelope("acct-food", "Food", 0)))
         val local =
             docWith(
                 listOf(LocalCategoryGroup("g-food", "  fOOD ", 0), leisure),
@@ -59,7 +59,7 @@ class MigrationPlannerGroupsTest {
 
     @Test
     fun localGroupIdAlreadyInAccount_isKeptAndNotWritten() {
-        val remote = remoteSnapshot(categoryGroups = listOf(CategoryGroup("g-food", "Meals", 0)))
+        val remote = remoteSnapshot(categoryGroups = listOf(Envelope("g-food", "Meals", 0)))
 
         val plan = planMigration(docWith(listOf(food), "gym" to "g-food"), remote)
 
@@ -97,7 +97,7 @@ class MigrationPlannerGroupsTest {
         val remote =
             remoteSnapshot(
                 categories = listOf(userCategory("acct-gym", "Gym")),
-                categoryGroups = listOf(CategoryGroup("acct-food", "Food", 0)),
+                categoryGroups = listOf(Envelope("acct-food", "Food", 0)),
             )
         val local = localDoc(categories = listOf(localCategory("gym", "gym").copy(groupId = "g-food")))
 
@@ -109,7 +109,7 @@ class MigrationPlannerGroupsTest {
 
     @Test
     fun builtInOverrideGroup_isRemapped() {
-        val remote = remoteSnapshot(categoryGroups = listOf(CategoryGroup("acct-food", "food", 0)))
+        val remote = remoteSnapshot(categoryGroups = listOf(Envelope("acct-food", "food", 0)))
         val override = localCategory("FOOD", name = null).copy(groupId = "g-food")
         val local = localDoc(categories = listOf(override)).copy(categoryGroups = listOf(food))
 

@@ -26,7 +26,7 @@ class ObserveUpcomingRecurringTest {
 
     @Test
     fun noItems_emptyOverview() {
-        assertEquals(RecurringOverview(emptyList(), 0L, 0L, hasItems = false), overview())
+        assertEquals(RecurringOverview(emptyList(), 0L, hasItems = false), overview())
     }
 
     @Test
@@ -39,7 +39,7 @@ class ObserveUpcomingRecurringTest {
     }
 
     @Test
-    fun totalsAreSplitByType_andRowsListDueItems() {
+    fun onlyExpenses_areListedAndTotalled_incomeIsIgnored() {
         val rent = recurringItem(id = "rent", amountCents = 1_000, handledThrough = day(2026, 2, 15))
         val insurance =
             recurringItem(id = "ins", name = "Insurance", amountCents = 6_000, frequency = RecurringFrequency.YEARLY)
@@ -48,9 +48,8 @@ class ObserveUpcomingRecurringTest {
         val result = overview(rent, insurance, salary)
 
         assertEquals(18_000L, result.annualExpenseCents)
-        assertEquals(60_000L, result.annualIncomeCents)
         assertTrue(result.hasItems)
-        assertEquals(listOf("sal", "ins", "rent"), result.upcoming.map { it.item.id })
-        assertEquals(listOf(true, true, true), result.upcoming.map { it.isDue })
+        assertEquals(listOf("ins", "rent"), result.upcoming.map { it.item.id })
+        assertEquals(listOf(true, true), result.upcoming.map { it.isDue })
     }
 }

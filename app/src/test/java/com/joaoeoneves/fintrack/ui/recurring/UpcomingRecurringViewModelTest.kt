@@ -95,7 +95,6 @@ class UpcomingRecurringViewModelTest {
 
             assertEquals(day(2026, 3, 15), state.today)
             assertEquals(12_000L, state.overview.annualExpenseCents)
-            assertEquals(60_000L, state.overview.annualIncomeCents)
             assertTrue(state.overview.upcoming.any { it.item.id == "rent" && it.isDue })
         }
 
