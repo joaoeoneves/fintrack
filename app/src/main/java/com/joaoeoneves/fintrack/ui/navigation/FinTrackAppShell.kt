@@ -32,10 +32,13 @@ import com.joaoeoneves.fintrack.ui.designsystem.NavigationBarEntry
 import com.joaoeoneves.fintrack.ui.plan.envelopes.DeletedEnvelope
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeUndoViewModel
 import com.joaoeoneves.fintrack.ui.plan.envelopes.LocalEnvelopeDeleteUndo
+import com.joaoeoneves.fintrack.ui.savings.DeletedSavingsPlan
+import com.joaoeoneves.fintrack.ui.savings.LocalSavingsPlanDeleteUndo
+import com.joaoeoneves.fintrack.ui.savings.SavingsUndoViewModel
 import kotlinx.coroutines.launch
 
 /**
- * Hosts the nav graph under a bottom [FinTrackNavigationBar] that is shown on the four tab roots
+ * Hosts the nav graph under a bottom [FinTrackNavigationBar] that is shown on the tab roots
  * only (forms, Settings and other pushed screens hide it).
  */
 @Composable
@@ -71,6 +74,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
                 }
             }
         }
+    val showPlanDeleted = rememberSavingsPlanDeletedHandler(snackbarHostState, undoLabel)
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
@@ -87,6 +91,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
             LocalAppSnackbar provides showMessage,
             LocalDeleteUndo provides showDeleted,
             LocalEnvelopeDeleteUndo provides showEnvelopeDeleted,
+            LocalSavingsPlanDeleteUndo provides showPlanDeleted,
         ) {
             FinTrackNavHost(
                 navController = navController,
@@ -116,4 +121,22 @@ private fun TabBar(
         selectedIndex = selected?.ordinal,
         onSelect = { onSelect(TopLevelTab.entries[it]) },
     )
+}
+
+@Composable
+private fun rememberSavingsPlanDeletedHandler(
+    snackbarHostState: SnackbarHostState,
+    undoLabel: String,
+): (DeletedSavingsPlan) -> Unit {
+    val scope = rememberCoroutineScope()
+    val undoViewModel = hiltViewModel<SavingsUndoViewModel>()
+    val message = stringResource(R.string.savings_plan_deleted)
+    return remember(message, undoLabel) {
+        { deleted ->
+            scope.launch {
+                val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel)
+                if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
+            }
+        }
+    }
 }

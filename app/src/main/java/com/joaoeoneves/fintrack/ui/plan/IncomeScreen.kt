@@ -26,7 +26,6 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
-import com.joaoeoneves.fintrack.ui.plan.goals.CollectPlanErrors
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /**

@@ -22,6 +22,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
@@ -68,7 +69,8 @@ fun AddEditRecurringScreen(
             is AddEditRecurringUiState.Ready ->
                 RecurringFormContent(
                     state = state,
-                    categoryOptions = categoryOptions.optionsIncluding(state.form.category),
+                    categoryOptions =
+                        categoryOptions.optionsIncluding(state.form.category).forNewItem(!state.isEditMode),
                     onFormChanged = viewModel::onFormChanged,
                     onDelete = viewModel::onDelete,
                     modifier = contentModifier,
@@ -101,7 +103,7 @@ private fun RecurringFormContent(
     ) {
         RecurringTypeAndNameFields(form, errors, onFormChanged, autoFocusAmount = !state.isEditMode)
         if (form.type == RecurringType.EXPENSE) {
-            RecurringCategoryField(form, categoryOptions, errors, onFormChanged)
+            RecurringCategoryField(form, categoryOptions, errors, onFormChanged, showSavingsHint = !state.isEditMode)
         }
         RecurringScheduleFields(form, errors, onFormChanged)
         RecurringDateFields(form, errors, onFormChanged)
@@ -148,3 +150,6 @@ private fun RecurringFormContent(
         )
     }
 }
+
+/** New items cannot go to a SAVING-kind category (those belong to savings plans); existing items keep theirs. */
+private fun List<Category>.forNewItem(isNew: Boolean) = if (isNew) filter { it.kind != CategoryKind.SAVING } else this
