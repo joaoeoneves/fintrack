@@ -91,7 +91,7 @@ class AddEditExpenseViewModelTest {
             val state = viewModel.uiState.value as AddEditUiState.Ready
             assertFalse(state.form.isEditMode)
             assertEquals("", state.form.name)
-            assertEquals("", state.form.amountText)
+            assertEquals(0L, state.form.amountCents)
             assertEquals(BuiltInCategories.SHOPPING, state.form.category)
             assertEquals("", state.form.note)
             assertNull(state.form.nameError)
@@ -153,7 +153,7 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
 
-            viewModel.onAmountChanged("12.50")
+            viewModel.onAmountChanged(1250L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -175,7 +175,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("abc")
+            viewModel.onAmountChanged(0L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -192,7 +192,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("0")
+            viewModel.onAmountChanged(0L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -243,11 +243,11 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.amountError)
 
-            viewModel.onAmountChanged("5.00")
+            viewModel.onAmountChanged(500L)
 
             val state = viewModel.uiState.value as AddEditUiState.Ready
             assertNull(state.form.amountError)
-            assertEquals("5.00", state.form.amountText)
+            assertEquals(500L, state.form.amountCents)
         }
 
     // ---- form field updates ----
@@ -306,7 +306,7 @@ class AddEditExpenseViewModelTest {
             val collectJob = launch { viewModel.savedEvent.collect { events.add(it) } }
 
             viewModel.onNameChanged("  Coffee  ")
-            viewModel.onAmountChanged("4.995") // rounds HALF_UP to 500 cents
+            viewModel.onAmountChanged(500L)
             viewModel.onCategorySelected(BuiltInCategories.RECURRING)
             viewModel.onDateSelected(date)
             viewModel.onNoteChanged("  with milk  ")
@@ -341,7 +341,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onNoteChanged("   ")
             viewModel.onSave()
             advanceUntilIdle()
@@ -374,7 +374,7 @@ class AddEditExpenseViewModelTest {
             assertTrue(state.form.isEditMode)
             assertEquals("e1", state.form.expenseId)
             assertEquals("Netflix", state.form.name)
-            assertEquals("15.99", state.form.amountText)
+            assertEquals(1599L, state.form.amountCents)
             assertEquals(BuiltInCategories.RECURRING, state.form.category)
             assertEquals(existing.date, state.form.date)
             assertEquals("Monthly subscription", state.form.note)
@@ -396,7 +396,7 @@ class AddEditExpenseViewModelTest {
             assertTrue(state.form.isEditMode)
             assertEquals("does-not-exist", state.form.expenseId)
             assertEquals("", state.form.name)
-            assertEquals("", state.form.amountText)
+            assertEquals(0L, state.form.amountCents)
         }
 
     // ---- edit mode: load failure -> Error state (the data-loss bug fix) ----
@@ -466,7 +466,7 @@ class AddEditExpenseViewModelTest {
             assertTrue(state.form.isEditMode)
             assertEquals("e1", state.form.expenseId)
             assertEquals("Netflix", state.form.name)
-            assertEquals("15.99", state.form.amountText)
+            assertEquals(1599L, state.form.amountCents)
             assertEquals(BuiltInCategories.RECURRING, state.form.category)
             assertEquals("Monthly subscription", state.form.note)
         }
@@ -511,7 +511,7 @@ class AddEditExpenseViewModelTest {
             val collectJob = launch { viewModel.savedEvent.collect { events.add(it) } }
 
             viewModel.onNameChanged("Netflix Premium")
-            viewModel.onAmountChanged("19.99")
+            viewModel.onAmountChanged(1999L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -575,7 +575,7 @@ class AddEditExpenseViewModelTest {
             val collectJob = launch { viewModel.savedEvent.collect { events.add(it) } }
 
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -596,7 +596,7 @@ class AddEditExpenseViewModelTest {
             advanceUntilIdle()
 
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -638,7 +638,7 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
@@ -655,12 +655,12 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
 
-            viewModel.onAmountChanged("4.00")
+            viewModel.onAmountChanged(400L)
 
             assertNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
         }
@@ -672,7 +672,7 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
@@ -689,7 +689,7 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)
@@ -706,7 +706,7 @@ class AddEditExpenseViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onNameChanged("Coffee")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditUiState.Ready).form.saveError)

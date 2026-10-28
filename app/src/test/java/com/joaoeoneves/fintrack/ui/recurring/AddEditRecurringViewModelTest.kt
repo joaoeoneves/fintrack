@@ -82,7 +82,7 @@ class AddEditRecurringViewModelTest : AddEditRecurringViewModelTestBase() {
             assertEquals("Gym", state.form.name)
             assertEquals("memo", state.form.note)
             assertEquals(BuiltInCategories.FOOD.id, state.form.category?.id)
-            assertTrue(state.form.amountText.endsWith("20,50") || state.form.amountText.endsWith("20.50"))
+            assertEquals(2_050L, state.form.amountCents)
         }
 
     @Test
