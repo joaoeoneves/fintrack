@@ -61,8 +61,8 @@ internal fun RecurringTypeAndNameFields(
 ) {
     val affix = rememberCurrencyAffix()
     BorderlessAmountField(
-        value = form.amountText,
-        onValueChange = { onChange(form.copy(amountText = it)) },
+        cents = form.amountCents,
+        onCentsChange = { onChange(form.copy(amountCents = it)) },
         currencySymbol = affix.symbol,
         symbolLeads = affix.leads,
         label = stringResource(R.string.field_amount),

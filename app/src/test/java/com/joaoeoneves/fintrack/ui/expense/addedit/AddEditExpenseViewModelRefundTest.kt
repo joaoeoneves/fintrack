@@ -110,7 +110,7 @@ class AddEditExpenseViewModelRefundTest {
             val vm = viewModel(FailingAddRepository())
             advanceUntilIdle()
             vm.onNameChanged("Return")
-            vm.onAmountChanged("10")
+            vm.onAmountChanged(1000L)
             vm.onSave()
             advanceUntilIdle()
             assertNotNull(vm.form().saveError)
@@ -127,7 +127,7 @@ class AddEditExpenseViewModelRefundTest {
             val vm = viewModel(repo)
             advanceUntilIdle()
             vm.onNameChanged("Shoes return")
-            vm.onAmountChanged("49")
+            vm.onAmountChanged(4900L)
             vm.onRefundChanged(true)
 
             vm.onSave()
@@ -145,7 +145,7 @@ class AddEditExpenseViewModelRefundTest {
             val vm = viewModel(repo)
             advanceUntilIdle()
             vm.onNameChanged("Coffee")
-            vm.onAmountChanged("3")
+            vm.onAmountChanged(300L)
 
             vm.onSave()
             advanceUntilIdle()
@@ -166,7 +166,7 @@ class AddEditExpenseViewModelRefundTest {
             advanceUntilIdle()
 
             assertTrue(vm.form().isRefund)
-            assertEquals("49.99", vm.form().amountText)
+            assertEquals(4999L, vm.form().amountCents)
         }
 
     @Test

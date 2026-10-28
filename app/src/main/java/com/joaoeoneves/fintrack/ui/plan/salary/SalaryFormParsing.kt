@@ -90,13 +90,13 @@ internal fun SalaryForm.toResult(): SalaryFormResult {
 private fun SalaryForm.grossProfile(reader: FieldReader): SalaryProfile =
     SalaryProfile(
         inputMode = SalaryInputMode.GROSS,
-        baseGrossCents = reader.cents(SalaryField.BASE, base),
+        baseGrossCents = reader.cents(base),
         subsidySpreadPpm = spreadPpm,
         irsBasePpm = reader.percent(SalaryField.IRS_BASE, irsBase) ?: 0,
         irsSubsidiesPpm = reader.percent(SalaryField.IRS_SUBSIDIES, irsSubsidies),
         ssPpm = reader.percent(SalaryField.SS, ss) ?: DEFAULT_SS_PPM,
         irsJovemExemptPpm = reader.percent(SalaryField.EXEMPT, exempt) ?: 0,
-        mealRatePerDayCents = reader.cents(SalaryField.MEAL, meal),
+        mealRatePerDayCents = reader.cents(meal),
         holidaySubsidyMonth = subsidyMonthPair().first,
         christmasSubsidyMonth = subsidyMonthPair().second,
         extras = extras,
@@ -105,10 +105,10 @@ private fun SalaryForm.grossProfile(reader: FieldReader): SalaryProfile =
 private fun SalaryForm.netProfile(reader: FieldReader): SalaryProfile =
     SalaryProfile(
         inputMode = SalaryInputMode.NET,
-        netMonthlyCents = reader.cents(SalaryField.NET_MONTHLY, netMonthly),
-        netHolidayLumpCents = reader.cents(SalaryField.NET_HOLIDAY, netHoliday),
-        netChristmasLumpCents = reader.cents(SalaryField.NET_CHRISTMAS, netChristmas),
-        mealRatePerDayCents = reader.cents(SalaryField.MEAL, meal),
+        netMonthlyCents = reader.cents(netMonthly),
+        netHolidayLumpCents = reader.cents(netHoliday),
+        netChristmasLumpCents = reader.cents(netChristmas),
+        mealRatePerDayCents = reader.cents(meal),
         holidaySubsidyMonth = subsidyMonthPair().first,
         christmasSubsidyMonth = subsidyMonthPair().second,
         extras = extras,
@@ -130,10 +130,8 @@ internal fun SalaryForm.subsidyMonthPair(): Pair<Int, Int> {
 private class FieldReader {
     val invalid = mutableSetOf<SalaryField>()
 
-    fun cents(
-        field: SalaryField,
-        text: String,
-    ): Long? = parseCents(text).orNull(field)
+    /** Cents typed as digits can't be malformed; zero means "not set". */
+    fun cents(value: Long): Long? = value.takeIf { it > 0L }
 
     fun percent(
         field: SalaryField,

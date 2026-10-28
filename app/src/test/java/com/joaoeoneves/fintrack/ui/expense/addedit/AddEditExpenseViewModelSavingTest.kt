@@ -101,7 +101,7 @@ class AddEditExpenseViewModelSavingTest {
             val savedCount = countSavedEvents(vm)
             advanceUntilIdle()
             vm.onNameChanged("Coffee")
-            vm.onAmountChanged("3.50")
+            vm.onAmountChanged(350L)
 
             vm.onSave()
             vm.onSave()
@@ -132,7 +132,7 @@ class AddEditExpenseViewModelSavingTest {
             val vm = viewModel(repo)
             advanceUntilIdle()
             vm.onNameChanged("Coffee")
-            vm.onAmountChanged("3.50")
+            vm.onAmountChanged(350L)
             assertFalse(vm.form().isSaving)
 
             vm.onSave()
@@ -149,7 +149,7 @@ class AddEditExpenseViewModelSavingTest {
             val savedCount = countSavedEvents(vm)
             advanceUntilIdle()
             vm.onNameChanged("Coffee")
-            vm.onAmountChanged("3.50")
+            vm.onAmountChanged(350L)
 
             vm.onSave()
             advanceUntilIdle()
@@ -169,7 +169,7 @@ class AddEditExpenseViewModelSavingTest {
             val savedCount = countSavedEvents(vm)
             advanceUntilIdle()
             vm.onNameChanged("Coffee")
-            vm.onAmountChanged("3.50")
+            vm.onAmountChanged(350L)
 
             vm.onSave()
             advanceUntilIdle()
@@ -202,7 +202,7 @@ class AddEditExpenseViewModelSavingTest {
             val vm = viewModel(repo)
             advanceUntilIdle()
             vm.onNameChanged("Coffee")
-            vm.onAmountChanged("1.234,50")
+            vm.onAmountChanged(0L)
 
             vm.onSave()
             advanceUntilIdle()
@@ -231,34 +231,34 @@ class AddEditExpenseViewModelSavingTest {
     // ---- locale-aware prefill & parsing ----
 
     @Test
-    fun editPrefill_ptPtLocale_usesCommaSeparator() =
+    fun editPrefill_ptPtLocale_usesStoredCentsExactly() =
         runTest(testDispatcher) {
             useLocale("pt-PT")
             val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1")
             advanceUntilIdle()
 
-            assertEquals("12,50", vm.form().amountText)
+            assertEquals(1250L, vm.form().amountCents)
         }
 
     @Test
-    fun editPrefill_enUsLocale_usesDotSeparator() =
+    fun editPrefill_enUsLocale_usesStoredCentsExactly() =
         runTest(testDispatcher) {
             useLocale("en-US")
             val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1")
             advanceUntilIdle()
 
-            assertEquals("12.50", vm.form().amountText)
+            assertEquals(1250L, vm.form().amountCents)
         }
 
     @Test
-    fun editPrefill_followsFormatLocale_notDisplayLocale() =
+    fun editPrefill_ignoresFormatLocale_usesStoredCents() =
         runTest(testDispatcher) {
             Locale.setDefault(Locale.US)
             Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("pt-PT"))
             val vm = viewModel(FakeExpenseRepository(listOf(existing)), "e1")
             advanceUntilIdle()
 
-            assertEquals("12,50", vm.form().amountText)
+            assertEquals(1250L, vm.form().amountCents)
         }
 
     @Test
@@ -277,13 +277,13 @@ class AddEditExpenseViewModelSavingTest {
         }
 
     @Test
-    fun addMode_savingCommaAmount_stores1250Cents() =
+    fun addMode_typedCents_stores1250Cents() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
             val vm = viewModel(repo)
             advanceUntilIdle()
             vm.onNameChanged("Lunch")
-            vm.onAmountChanged("12,50")
+            vm.onAmountChanged(1_250L)
 
             vm.onSave()
             advanceUntilIdle()

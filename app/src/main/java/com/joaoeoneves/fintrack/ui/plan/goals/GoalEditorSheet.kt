@@ -19,11 +19,9 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
-import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
-import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import java.time.Clock
 import java.time.LocalDate
@@ -40,9 +38,8 @@ fun GoalEditorSheet(
     onDelete: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val decimalSeparator = decimalSeparatorFor(currentLocale())
     val today = remember { LocalDate.now(Clock.systemDefaultZone()) }
-    var draft by remember { mutableStateOf(draftOf(goal, decimalSeparator, today)) }
+    var draft by remember { mutableStateOf(draftOf(goal, today)) }
     var confirmingRemove by remember { mutableStateOf(false) }
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(

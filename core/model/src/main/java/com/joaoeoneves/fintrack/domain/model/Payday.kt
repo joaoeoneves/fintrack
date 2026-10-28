@@ -107,3 +107,24 @@ data class ExpectedIncome(
     val payday: LocalDate,
     val rows: List<IncomeRow>,
 )
+
+/**
+ * The payday incomes among [incomes] recorded from a generated salary line whose source is still a default label
+ * of some language ([knownDefaults]) but not the one in [labels], renamed to [labels]. Anything else (manual
+ * lines, extras, a source the user edited) is left alone, so the result is empty once everything is repaired.
+ */
+fun relabelPaydayIncomes(
+    incomes: Collection<Income>,
+    labels: SalaryLineLabels,
+    knownDefaults: List<SalaryLineLabels>,
+): List<Income> =
+    incomes.mapNotNull { income ->
+        val key = paydayLineId(income.id)?.takeIf { isPaydayIncomeId(income.id) }
+        val wanted = key?.let { labels.labelFor(it) }
+        val stale = wanted != null && income.source != wanted && knownDefaults.any { it.labelFor(key) == income.source }
+        if (stale) income.copy(source = wanted) else null
+    }
+
+// `pay_<lineId>_<yyyyMM>` back to the line id.
+private fun paydayLineId(id: String): String? =
+    id.removePrefix(PAYDAY_ID_PREFIX).substringBeforeLast('_', missingDelimiterValue = "").takeIf { it.isNotEmpty() }

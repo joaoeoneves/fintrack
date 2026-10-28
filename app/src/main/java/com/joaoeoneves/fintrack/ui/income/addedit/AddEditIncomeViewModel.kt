@@ -12,9 +12,6 @@ import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
-import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
-import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.navigation.AddEditIncome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +22,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
-import java.util.Locale
 import javax.inject.Inject
 
 private const val TAG = "AddEditIncomeViewModel"
@@ -67,16 +63,13 @@ class AddEditIncomeViewModel
                     incomeRepository
                         .getIncome(incomeId)
                         .onSuccess { existing ->
-                            // Prefill with the locale's own decimal separator, matching how amounts
-                            // are displayed (parseAmountCents accepts either '.' or ',').
-                            val separator = decimalSeparatorFor(Locale.getDefault(Locale.Category.FORMAT))
                             loaded = existing
                             _uiState.value =
                                 if (existing != null) {
                                     AddEditIncomeUiState.Ready(
                                         IncomeFormState(
                                             source = existing.source,
-                                            amountText = existing.amountCents.toAmountInputText(separator),
+                                            amountCents = existing.amountCents,
                                             date = existing.date,
                                             note = existing.note ?: "",
                                             isEditMode = true,
@@ -111,8 +104,8 @@ class AddEditIncomeViewModel
             }
         }
 
-        fun onAmountChanged(amountText: String) {
-            updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
+        fun onAmountChanged(amountCents: Long) {
+            updateForm { it.copy(amountCents = amountCents, amountError = null, saveError = null) }
         }
 
         fun onDateSelected(date: Instant) = updateForm { it.copy(date = date, saveError = null) }
@@ -127,8 +120,7 @@ class AddEditIncomeViewModel
             val form = current.form
 
             val sourceError = if (form.source.isBlank()) UiText.StringResource(R.string.error_source_required) else null
-            val amountResult = parseAmountCents(form.amountText)
-            val amountError = if (amountResult.isFailure) UiText.StringResource(R.string.error_invalid_amount) else null
+            val amountError = if (form.amountCents <= 0L) UiText.StringResource(R.string.error_invalid_amount) else null
 
             if (sourceError != null || amountError != null) {
                 _uiState.value =
@@ -136,7 +128,7 @@ class AddEditIncomeViewModel
                 return
             }
 
-            val amountCents = amountResult.getOrThrow()
+            val amountCents = form.amountCents
             _uiState.value = AddEditIncomeUiState.Ready(form.copy(isSaving = true))
             viewModelScope.launch {
                 val income =

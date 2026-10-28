@@ -34,6 +34,7 @@ class AppLegacyExtraNames
                 flex = localized.getString(R.string.salary_extra_default_flex),
                 profitShare = localized.getString(R.string.salary_extra_default_profit_share),
                 bonus = localized.getString(R.string.salary_extra_default_bonus),
+                deletedCategory = localized.getString(R.string.category_deleted_placeholder),
             )
         }
     }

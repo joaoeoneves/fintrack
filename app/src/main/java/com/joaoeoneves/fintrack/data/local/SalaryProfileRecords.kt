@@ -12,6 +12,7 @@ import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.SALARY_EXTRA_ID_PATTERN
 import com.joaoeoneves.fintrack.domain.model.SUBSIDY_SPREADS_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -64,8 +65,9 @@ internal fun LocalSalaryProfile.toDomain(legacyNames: LegacyExtraNames = LegacyE
 private fun LocalSalaryExtra.toDomainOrNull(): SalaryExtra? {
     val type = SalaryExtraAmountType.entries.find { it.name == amountType }
     val deduction = SalaryExtraDeductions.entries.find { it.name == deductions }
-    if (type == null || deduction == null) return null
-    return SalaryExtra(id, name, type, amount, months.toSet(), deduction, feePpm)
+    val scope = SalaryExtraAmountScope.entries.find { it.name == amountScope }
+    if (type == null || deduction == null || scope == null) return null
+    return SalaryExtra(id, name, type, amount, months.toSet(), deduction, feePpm, scope)
 }
 
 /** Writes the extras only; the legacy fields stay at their defaults (they are read-only for old files). */
@@ -95,6 +97,7 @@ internal fun SalaryProfile.toLocal(): LocalSalaryProfile =
                     months = it.months.sorted(),
                     deductions = it.deductions.name,
                     feePpm = it.feePpm,
+                    amountScope = it.amountScope.name,
                 )
             },
     )
@@ -167,6 +170,7 @@ private fun validateExtras(extras: List<LocalSalaryExtra>) {
             "Extra months must be distinct values of 1..12"
         }
         require(SalaryExtraDeductions.entries.any { it.name == extra.deductions }) { "Invalid extra deductions" }
+        require(SalaryExtraAmountScope.entries.any { it.name == extra.amountScope }) { "Invalid extra amount scope" }
         require(extra.feePpm in 0..PPM_SCALE) { "Extra fee must be 0..100%" }
     }
 }

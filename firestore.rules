@@ -263,7 +263,7 @@ service cloud.firestore {
     // amount is cents for FIXED_CENTS and ppm for the other two types.
     function isValidExtra(e) {
       return e is map
-        && e.keys().hasOnly(['id', 'name', 'amountType', 'amount', 'months', 'deductions', 'feePpm'])
+        && e.keys().hasOnly(['id', 'name', 'amountType', 'amount', 'months', 'deductions', 'feePpm', 'amountScope'])
         && e.keys().hasAll(['id', 'name', 'amountType', 'amount', 'months'])
         && e.id is string && e.id.matches('^[A-Za-z0-9]{1,20}$')
         && e.name is string && e.name.size() >= 1 && e.name.size() <= 50
@@ -274,7 +274,8 @@ service cloud.firestore {
         && e.months is list && e.months.size() >= 1 && e.months.size() <= 12
         && e.months.hasOnly([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
         && (!('deductions' in e) || e.deductions in ['NONE', 'IRS', 'IRS_SS'])
-        && (!('feePpm' in e) || (e.feePpm is int && e.feePpm >= 0 && e.feePpm <= 1000000));
+        && (!('feePpm' in e) || (e.feePpm is int && e.feePpm >= 0 && e.feePpm <= 1000000))
+        && (!('amountScope' in e) || e.amountScope in ['TOTAL', 'PER_PAYMENT']);
     }
 
     // Each user can only read/write their own per-month plan settings: the document id is the month

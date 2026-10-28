@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data
 
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
@@ -87,5 +88,17 @@ class FirestoreSalaryProfileMapTest {
         assertFalse(map.containsKey("irsSubsidiesPpm"))
         assertEquals(1L, map["baseGrossCents"])
         assertEquals("GROSS", map["inputMode"])
+    }
+
+    @Test
+    fun amountScope_isWrittenOnlyForPerPayment() {
+        fun extraMap(scope: SalaryExtraAmountScope): Map<*, *> {
+            val extra = SalaryExtra("a", "B", SalaryExtraAmountType.FIXED_CENTS, 5, setOf(1, 2), amountScope = scope)
+            val extras = SalaryProfile(baseGrossCents = 1, extras = listOf(extra)).toFirestoreMap()["extras"]
+            return (extras as List<*>).single() as Map<*, *>
+        }
+
+        assertEquals("PER_PAYMENT", extraMap(SalaryExtraAmountScope.PER_PAYMENT)["amountScope"])
+        assertFalse(extraMap(SalaryExtraAmountScope.TOTAL).containsKey("amountScope"))
     }
 }

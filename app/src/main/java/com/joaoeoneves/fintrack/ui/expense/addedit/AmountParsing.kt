@@ -3,8 +3,6 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.DecimalFormatSymbols
-import java.util.Locale
 
 /**
  * Plain decimal amount: optional sign, digits with an optional '.' or ',' fraction, or a bare
@@ -46,18 +44,3 @@ private fun parseValidatedAmountCents(normalized: String): Result<Long> =
     } catch (e: ArithmeticException) {
         Result.failure(e)
     }
-
-/**
- * Formats integer cents as an editable amount string with exactly two fraction digits (e.g.
- * 1250 -> "12.50"), using [decimalSeparator] so the prefilled text matches the user's locale (see
- * [decimalSeparatorFor]). The output always round-trips through [parseAmountCents].
- */
-fun Long.toAmountInputText(decimalSeparator: Char = '.'): String =
-    BigDecimal(this)
-        .movePointLeft(CENTS_SCALE)
-        .setScale(CENTS_SCALE)
-        .toPlainString()
-        .replace('.', decimalSeparator)
-
-/** The decimal separator [locale] formats numbers with, e.g. '.' for en-US and ',' for pt-PT. */
-fun decimalSeparatorFor(locale: Locale): Char = DecimalFormatSymbols.getInstance(locale).decimalSeparator

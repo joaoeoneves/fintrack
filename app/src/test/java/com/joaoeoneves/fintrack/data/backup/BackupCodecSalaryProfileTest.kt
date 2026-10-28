@@ -14,13 +14,13 @@ class BackupCodecSalaryProfileTest {
     private val managed = backupPlanned("profile_net_salary").copy(managedKey = MANAGED_NET_SALARY)
 
     @Test
-    fun v7File_decodesUpgradedToV12_withoutProfile() {
+    fun v7File_decodesUpgradedToV13_withoutProfile() {
         val planned = """[{"id":"p","label":"Pay","amountCents":50000,"order":0,"frequency":"MONTHLY"}]"""
         val text = """{$header,"schemaVersion":7,"plannedIncome":$planned}"""
 
         val result = BackupCodec.decode(text).success()
 
-        assertEquals(12, result.document.schemaVersion)
+        assertEquals(13, result.document.schemaVersion)
         assertNull(result.document.salaryProfile)
         assertNull(
             result.document.plannedIncome
@@ -90,7 +90,7 @@ class BackupCodecSalaryProfileTest {
         val result = BackupCodec.decode(text).success()
 
         val decoded = requireNotNull(result.document.salaryProfile)
-        assertEquals(12, result.document.schemaVersion)
+        assertEquals(13, result.document.schemaVersion)
         assertEquals(0, result.skippedCount)
         assertEquals(listOf("flex", "bonus"), decoded.toDomain().extras.map { it.id })
     }
@@ -131,5 +131,45 @@ class BackupCodecSalaryProfileTest {
                 .single()
                 .managedKey,
         )
+    }
+
+    @Test
+    fun extraScope_roundTrips_andV12FileWithoutItIsTotal() {
+        val perPayment =
+            LocalSalaryExtra("e1", "Prize", "FIXED_CENTS", 5_000, listOf(3, 9), amountScope = "PER_PAYMENT")
+        val doc = backupDoc().copy(salaryProfile = profile.copy(extras = listOf(perPayment)))
+
+        assertEquals(
+            listOf(perPayment),
+            BackupCodec
+                .decode(BackupCodec.encode(doc))
+                .success()
+                .document.salaryProfile
+                ?.extras,
+        )
+
+        val extra = """{"id":"e1","name":"Prize","amountType":"FIXED_CENTS","amount":5000,"months":[3]}"""
+        val old = """{$header,"schemaVersion":12,"salaryProfile":{"baseGrossCents":100000,"extras":[$extra]}}"""
+        val decoded = BackupCodec.decode(old).success()
+
+        assertEquals(
+            "TOTAL",
+            decoded.document.salaryProfile
+                ?.extras
+                ?.single()
+                ?.amountScope,
+        )
+        assertEquals(0, decoded.skippedCount)
+    }
+
+    @Test
+    fun extraWithUnknownScope_dropsTheProfile() {
+        val bad = LocalSalaryExtra("e1", "Prize", "FIXED_CENTS", 5_000, listOf(3), amountScope = "WEEKLY")
+        val doc = backupDoc().copy(salaryProfile = profile.copy(extras = listOf(bad)))
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertNull(result.document.salaryProfile)
+        assertEquals(1, result.skippedCount)
     }
 }

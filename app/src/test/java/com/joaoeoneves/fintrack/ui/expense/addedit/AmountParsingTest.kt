@@ -251,59 +251,6 @@ class AmountParsingTest {
         )
     }
 
-    // ---- toAmountInputText ----
-
-    @Test
-    fun toAmountInputText_commaSeparator() {
-        assertEquals("12,50", 1_250L.toAmountInputText(','))
-    }
-
-    @Test
-    fun toAmountInputText_subUnitAmount_hasLeadingZero() {
-        assertEquals("0,05", 5L.toAmountInputText(','))
-    }
-
-    @Test
-    fun toAmountInputText_dotSeparator() {
-        assertEquals("12.50", 1_250L.toAmountInputText('.'))
-    }
-
-    @Test
-    fun toAmountInputText_defaultsToDot() {
-        assertEquals("12.50", 1_250L.toAmountInputText())
-    }
-
-    @Test
-    fun toAmountInputText_wholeAmount_keepsTwoFractionDigits() {
-        assertEquals("12.00", 1_200L.toAmountInputText())
-    }
-
-    @Test
-    fun toAmountInputText_zero() {
-        assertEquals("0.00", 0L.toAmountInputText())
-    }
-
-    @Test
-    fun toAmountInputText_negative_keepsSign() {
-        assertEquals("-0.50", (-50L).toAmountInputText())
-    }
-
-    @Test
-    fun toAmountInputText_largeAmount_noGroupingOrExponent() {
-        assertEquals("1000000,99", 100_000_099L.toAmountInputText(','))
-    }
-
-    @Test
-    fun toAmountInputText_roundTripsThroughParse_forBothSeparators() {
-        val samples = listOf(1L, 5L, 10L, 99L, 100L, 1_250L, 123_456L, 100_000_099L)
-        for (separator in listOf('.', ',')) {
-            for (cents in samples) {
-                val text = cents.toAmountInputText(separator)
-                assertEquals("round trip of $cents via '$text'", cents, parseAmountCents(text).getOrThrow())
-            }
-        }
-    }
-
     @Test
     fun parse_maxAmount_accepted() {
         assertEquals(MAX_AMOUNT_CENTS, parseAmountCents("1000000000.00").getOrThrow())

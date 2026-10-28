@@ -1,12 +1,12 @@
 package com.joaoeoneves.fintrack.ui.income.addedit
 
+import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.ui.common.UiText
-import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import java.time.Instant
 
 data class IncomeFormState(
     val source: String = "",
-    val amountText: String = "",
+    val amountCents: Long = 0L,
     val date: Instant = Instant.now(),
     val note: String = "",
     val sourceError: UiText? = null,
@@ -18,7 +18,7 @@ data class IncomeFormState(
     val incomeId: String? = null,
 ) {
     val isValid: Boolean
-        get() = source.isNotBlank() && parseAmountCents(amountText).isSuccess
+        get() = source.isNotBlank() && amountCents in 1..MAX_AMOUNT_CENTS
 
     val isBusy: Boolean
         get() = isSaving || isDeleting

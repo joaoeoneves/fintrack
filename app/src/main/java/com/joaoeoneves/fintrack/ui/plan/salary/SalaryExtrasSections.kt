@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.ExtraBreakdown
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -18,15 +19,13 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 internal fun MealSection(
     form: SalaryForm,
-    invalid: Set<SalaryField>,
     onChange: (SalaryForm) -> Unit,
 ) {
     SalaryGroup(stringResource(R.string.salary_group_meal)) {
-        SalaryTextField(
+        SalaryMoneyField(
             label = stringResource(R.string.salary_field_meal),
-            value = form.meal,
+            cents = form.meal,
             onChange = { onChange(form.copy(meal = it)) },
-            invalid = SalaryField.MEAL in invalid,
             hint = stringResource(R.string.salary_meal_hint),
         )
     }
@@ -42,18 +41,17 @@ internal fun SalaryExtrasSection(
     val gross = state.form.mode == SalaryInputMode.GROSS
     SettingsGroup(label = stringResource(R.string.salary_group_extras)) {
         state.form.extras.forEach { extra ->
-            val perYear =
+            val paid =
                 state.breakdown
                     ?.extras
                     ?.find { it.extraId == extra.id }
-                    ?.totalCents
             SettingsRow(
                 title = extra.name,
                 value =
                     when {
                         !gross && extra.amountType != SalaryExtraAmountType.FIXED_CENTS ->
                             stringResource(R.string.salary_extra_gross_only)
-                        perYear != null -> formatAmountCents(perYear)
+                        paid != null -> extraAmountText(paid)
                         else -> null
                     },
                 onClick = { onEdit(extra.id) },
@@ -70,3 +68,16 @@ internal fun SalaryExtrasSection(
         }
     }
 }
+
+/** What an extra pays: its yearly total, or the amount of each payment and the total when it has several. */
+@Composable
+internal fun extraAmountText(breakdown: ExtraBreakdown): String =
+    if (breakdown.payments.size > 1) {
+        stringResource(
+            R.string.salary_extra_per_payment_and_year,
+            formatAmountCents(breakdown.payments.first().second),
+            formatAmountCents(breakdown.totalCents),
+        )
+    } else {
+        formatAmountCents(breakdown.totalCents)
+    }

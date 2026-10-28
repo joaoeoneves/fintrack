@@ -96,7 +96,7 @@ class SalaryProfileViewModelTest {
 
             val vm = started(viewModel())
 
-            assertEquals("1000.00", vm.content().form.base)
+            assertEquals(100_000L, vm.content().form.base)
             assertEquals("10", vm.content().form.irsBase)
             assertTrue(vm.content().hasSavedProfile)
             assertTrue(vm.content().canSave)
@@ -108,7 +108,7 @@ class SalaryProfileViewModelTest {
         runTest(dispatcher) {
             val vm = started(viewModel())
 
-            vm.onFormChange(SalaryForm(base = "1000", irsBase = "10", irsSubsidies = "5"))
+            vm.onFormChange(SalaryForm(base = 100_000L, irsBase = "10", irsSubsidies = "5"))
             advanceUntilIdle()
 
             assertTrue(vm.content().canSave)
@@ -120,7 +120,7 @@ class SalaryProfileViewModelTest {
         runTest(dispatcher) {
             val vm = started(viewModel())
 
-            vm.onFormChange(SalaryForm(base = "1000", irsBase = "abc"))
+            vm.onFormChange(SalaryForm(base = 100_000L, irsBase = "abc"))
             advanceUntilIdle()
             vm.onSave(labels)
             advanceUntilIdle()
@@ -135,7 +135,7 @@ class SalaryProfileViewModelTest {
     fun save_writesProfileAndLines_andEmitsDone() =
         runTest(dispatcher) {
             val vm = started(viewModel())
-            vm.onFormChange(SalaryForm(base = "1000", spreadPpm = SPREAD_FULL_PPM))
+            vm.onFormChange(SalaryForm(base = 100_000L, spreadPpm = SPREAD_FULL_PPM))
             advanceUntilIdle()
 
             vm.onSave(labels)
@@ -162,7 +162,7 @@ class SalaryProfileViewModelTest {
     fun save_failure_emitsFailed_andKeepsTheForm() =
         runTest(dispatcher) {
             val vm = started(viewModel())
-            vm.onFormChange(SalaryForm(base = "1000"))
+            vm.onFormChange(SalaryForm(base = 100_000L))
             advanceUntilIdle()
             profiles.nextSaveError = IllegalStateException("boom")
 
@@ -170,7 +170,7 @@ class SalaryProfileViewModelTest {
             advanceUntilIdle()
 
             assertEquals(SalaryProfileEvent.Failed, vm.eventFlow.first())
-            assertEquals("1000", vm.content().form.base)
+            assertEquals(100_000L, vm.content().form.base)
             assertTrue(vm.content().canSave)
         }
 
@@ -209,13 +209,13 @@ class SalaryProfileViewModelTest {
     fun start_isOnlyAppliedOnce() =
         runTest(dispatcher) {
             val vm = started(viewModel())
-            vm.onFormChange(SalaryForm(base = "5"))
+            vm.onFormChange(SalaryForm(base = 500L))
             advanceUntilIdle()
 
             vm.start(',')
             advanceUntilIdle()
 
-            assertEquals("5", vm.content().form.base)
+            assertEquals(500L, vm.content().form.base)
         }
 
     @Test
@@ -231,7 +231,7 @@ class SalaryProfileViewModelTest {
     private suspend fun TestScope.saveWith(vararg existing: PlannedIncome): SalaryProfileViewModel {
         existing.forEach { income.savePlannedIncome(it) }
         val vm = started(viewModel())
-        vm.onFormChange(SalaryForm(base = "1000", spreadPpm = SPREAD_FULL_PPM))
+        vm.onFormChange(SalaryForm(base = 100_000L, spreadPpm = SPREAD_FULL_PPM))
         advanceUntilIdle()
         vm.onSave(labels)
         advanceUntilIdle()

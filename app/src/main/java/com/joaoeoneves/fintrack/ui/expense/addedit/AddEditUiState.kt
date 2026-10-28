@@ -2,12 +2,13 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.Instant
 
 data class ExpenseFormState(
     val name: String = "",
-    val amountText: String = "",
+    val amountCents: Long = 0L,
     val category: Category = BuiltInCategories.SHOPPING,
     val date: Instant = Instant.now(),
     val note: String = "",
@@ -24,7 +25,7 @@ data class ExpenseFormState(
     val expenseId: String? = null,
 ) {
     val isValid: Boolean
-        get() = name.isNotBlank() && parseAmountCents(amountText).isSuccess
+        get() = name.isNotBlank() && amountCents in 1..MAX_AMOUNT_CENTS
 
     val isBusy: Boolean
         get() = isSaving || isDeleting

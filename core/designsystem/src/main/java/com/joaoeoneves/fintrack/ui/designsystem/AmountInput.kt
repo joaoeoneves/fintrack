@@ -22,11 +22,19 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.joaoeoneves.fintrack.ui.common.applyCentsEdit
+import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.formatCentsGrouped
+import com.joaoeoneves.fintrack.ui.common.moneySymbolsFor
+import com.joaoeoneves.fintrack.ui.common.toCentsRaw
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.InterFamily
 
@@ -51,8 +59,8 @@ private val AmountMinWidth = 40.dp
 @Suppress("LongParameterList") // mirrors the text-field parameters it wraps
 @Composable
 fun BorderlessAmountField(
-    value: String,
-    onValueChange: (String) -> Unit,
+    cents: Long,
+    onCentsChange: (Long) -> Unit,
     currencySymbol: String,
     symbolLeads: Boolean,
     label: String,
@@ -60,6 +68,10 @@ fun BorderlessAmountField(
     modifier: Modifier = Modifier,
     autoFocus: Boolean = false,
 ) {
+    val locale = currentLocale()
+    val symbols = remember(locale) { moneySymbolsFor(locale) }
+    val transformation = remember(symbols) { MoneyVisualTransformation(symbols) }
+    val raw = cents.toCentsRaw()
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(autoFocus) {
         if (autoFocus) focusRequester.requestFocus()
@@ -73,16 +85,21 @@ fun BorderlessAmountField(
     ) {
         if (symbolLeads) CurrencySymbolText(currencySymbol, Modifier.padding(end = 8.dp))
         BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
+            value = TextFieldValue(raw, selection = TextRange(raw.length)),
+            onValueChange = { onCentsChange(applyCentsEdit(cents, it.text)) },
+            visualTransformation = transformation,
             singleLine = true,
             textStyle = AmountTextStyle.copy(color = contentColor),
             cursorBrush = SolidColor(if (isError) contentColor else FinTrackTheme.colors.accentText),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             decorationBox = { innerTextField ->
                 Box {
-                    if (value.isEmpty()) {
-                        Text(text = "0", style = AmountTextStyle, color = FinTrackTheme.colors.textSecondary)
+                    if (raw.isEmpty()) {
+                        Text(
+                            text = formatCentsGrouped(0L, symbols),
+                            style = AmountTextStyle,
+                            color = FinTrackTheme.colors.textSecondary,
+                        )
                     }
                     innerTextField()
                 }
@@ -92,7 +109,10 @@ fun BorderlessAmountField(
                     .widthIn(min = AmountMinWidth)
                     .width(IntrinsicSize.Min)
                     .focusRequester(focusRequester)
-                    .semantics { contentDescription = label },
+                    .semantics {
+                        contentDescription = label
+                        stateDescription = formatCentsGrouped(cents, symbols)
+                    },
         )
         if (!symbolLeads) CurrencySymbolText(currencySymbol, Modifier.padding(start = 8.dp))
     }

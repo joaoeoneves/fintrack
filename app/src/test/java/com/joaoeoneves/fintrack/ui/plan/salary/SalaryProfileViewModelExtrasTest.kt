@@ -77,6 +77,7 @@ class SalaryProfileViewModelExtrasTest {
         vm: SalaryProfileViewModel,
         name: String = "Prize",
         amount: String = "100",
+        cents: Long = 10_000L,
     ) {
         advanceUntilIdle()
         vm.onExtraFormChange(
@@ -84,7 +85,7 @@ class SalaryProfileViewModelExtrasTest {
                 .content()
                 .extraEditor!!
                 .form
-                .copy(name = name, amountText = amount),
+                .copy(name = name, amountText = amount, amountCents = cents),
         )
         advanceUntilIdle()
     }
@@ -133,7 +134,7 @@ class SalaryProfileViewModelExtrasTest {
         runTest(dispatcher) {
             val vm = started()
             vm.onAddExtra()
-            fill(vm, name = " ", amount = "abc")
+            fill(vm, name = " ", amount = "abc", cents = 0L)
 
             vm.onSaveExtra()
             advanceUntilIdle()
@@ -263,7 +264,7 @@ class SalaryProfileViewModelExtrasTest {
             vm.onExtraFormChange(
                 form.copy(
                     name = "Prize",
-                    amountText = "50",
+                    amountCents = 5_000L,
                     amountType = SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM,
                     deductions = SalaryExtraDeductions.IRS_SS,
                     feeText = "5",

@@ -2,9 +2,11 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
+import com.joaoeoneves.fintrack.domain.model.labelFor
 import com.joaoeoneves.fintrack.domain.model.paydayIncome
 import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
 import com.joaoeoneves.fintrack.domain.model.paydayMonthsDue
@@ -13,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.SalaryLineLabelsProvider
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
@@ -44,6 +47,7 @@ class RecordPayday
         private val monthSettingsRepository: MonthSettingsRepository,
         private val incomeRepository: IncomeRepository,
         private val automationRepository: AutomationSettingsRepository,
+        private val labelsProvider: SalaryLineLabelsProvider,
     ) {
         /**
          * Records every active line of each month whose payday passed since the stored cursor, oldest first, and
@@ -79,10 +83,13 @@ class RecordPayday
             workingDays: Int,
             zone: ZoneId,
         ): Int? {
+            val labels = labelsProvider.current()
             val incomes =
                 lines
                     .filter { it.isActiveIn(month) }
-                    .mapNotNull { it.paydayIncome(month, workingDays, paydayOf(month), zone) }
+                    .mapNotNull {
+                        it.paydayIncome(month, workingDays, paydayOf(month), zone)?.named(it, labels)
+                    }
             val missing = mutableListOf<Income>()
             for (income in incomes) {
                 val existing = incomeRepository.getIncome(income.id)
@@ -101,10 +108,13 @@ class RecordPayday
             try {
                 with(request) {
                     require(date <= today) { "Date $date is in the future" }
+                    val labels = labelsProvider.current()
                     val incomes =
                         lines
                             .filter { it.isActiveIn(month) }
-                            .mapNotNull { it.paydayIncome(month, workingDays, date, zone, amountFor(it)) }
+                            .mapNotNull {
+                                it.paydayIncome(month, workingDays, date, zone, amountFor(it))?.named(it, labels)
+                            }
                     require(incomes.isNotEmpty()) { "Nothing to receive" }
                     require(amountOverrideCents == null || incomes.size == 1) { "Override needs a single line" }
                     incomes.forEach { income -> incomeRepository.addIncome(income).getOrThrow() }
@@ -131,6 +141,12 @@ class RecordPayday
             }
             return Result.success(Unit)
         }
+
+        // A generated line is named in the app language; a manual line (or an extra) keeps the user's own text.
+        private fun Income.named(
+            line: PlannedIncome,
+            labels: SalaryLineLabels,
+        ): Income = line.managedKey?.let { labels.labelFor(it) }?.let { copy(source = it) } ?: this
 
         private fun ReceiveRequest.amountFor(l: PlannedIncome) = amountOverrideCents ?: l.amountIn(month, workingDays)
     }

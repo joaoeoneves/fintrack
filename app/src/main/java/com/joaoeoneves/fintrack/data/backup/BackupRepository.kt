@@ -36,6 +36,7 @@ class BackupRepository
                 val budgets = plan.budgets
                 val categories = categoryRepository.observeCategories().first()
                 val prefs = preferencesStore.data.first()
+                val stored = categories.filter { it.needsStoring() }.map { it.toLocal() }
                 val localExpenses = expenses.map { it.toLocal() }
                 val localBudgets = budgets.map { it.toLocal() }
                 val localRecurring = plan.recurring.map { it.toLocal() }
@@ -61,12 +62,12 @@ class BackupRepository
                     automation = plan.automation.takeIf { it != AutomationSettings() }?.toLocal(),
                     categories =
                         withPlaceholderCategories(
-                            categories = categories.filter { it.needsStoring() }.map { it.toLocal() },
+                            categories = stored,
                             expenses = localExpenses,
                             budgets = localBudgets,
                             recurring = localRecurring,
                             maxOrder = maxOrder,
-                        ),
+                        ).namingPlaceholders(stored.size, plan.deletedCategoryName),
                 )
             }
 

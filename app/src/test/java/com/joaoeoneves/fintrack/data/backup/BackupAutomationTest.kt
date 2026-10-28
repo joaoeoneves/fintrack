@@ -45,7 +45,7 @@ class BackupAutomationTest : BackupRepositoryTestBase() {
 
     @Test
     fun invalidCursor_isDropped_andCountedAsSkipped() {
-        val text = """{$header,"schemaVersion":12,"automation":{"paydayEnabled":true,"paydayThrough":"soon"}}"""
+        val text = """{$header,"schemaVersion":13,"automation":{"paydayEnabled":true,"paydayThrough":"soon"}}"""
 
         val result = BackupCodec.decode(text).success()
 
@@ -55,7 +55,7 @@ class BackupAutomationTest : BackupRepositoryTestBase() {
 
     @Test
     fun decodedFile_withNewerUnknownKeys_stillWorks() {
-        val text = """{$header,"schemaVersion":12,"automation":{"paydayEnabled":false,"x":1}}"""
+        val text = """{$header,"schemaVersion":13,"automation":{"paydayEnabled":false,"x":1}}"""
 
         assertEquals(
             LocalAutomation(false),

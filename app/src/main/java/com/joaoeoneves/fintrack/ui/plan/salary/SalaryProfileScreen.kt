@@ -26,13 +26,13 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.moneySymbolsFor
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
-import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /**
@@ -48,7 +48,7 @@ fun SalaryProfileScreen(
     val duplicates by viewModel.duplicates.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val failedMessage = stringResource(R.string.error_plan_save_failed)
-    val separator = decimalSeparatorFor(currentLocale())
+    val separator = moneySymbolsFor(currentLocale()).decimal
     LaunchedEffect(separator) { viewModel.start(separator) }
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
@@ -145,10 +145,10 @@ private fun SalaryProfileContent(
         if (form.mode == SalaryInputMode.GROSS) {
             GrossSections(form, state.invalid, actions.onChange)
         } else {
-            NetSection(form, state.invalid, actions.onChange)
+            NetSection(form, actions.onChange)
         }
         SubsidyMonthsSection(form, actions.onChange)
-        MealSection(form, state.invalid, actions.onChange)
+        MealSection(form, actions.onChange)
         SalaryExtrasSection(state, actions.extras.onAdd, actions.extras.onEdit)
         PrimaryPillButton(
             text = stringResource(R.string.action_save),

@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
@@ -70,7 +71,13 @@ open class MonthlyPlanViewModelTestBase {
                 monthSettingsRepo,
             ),
         ),
-        RecordPayday(incomeRepo, monthSettingsRepo, incomes, FakeAutomationSettingsRepository()),
+        RecordPayday(
+            incomeRepo,
+            monthSettingsRepo,
+            incomes,
+            FakeAutomationSettingsRepository(),
+            FakeSalaryLineLabelsProvider(),
+        ),
         savedStateHandle,
         clock,
     )

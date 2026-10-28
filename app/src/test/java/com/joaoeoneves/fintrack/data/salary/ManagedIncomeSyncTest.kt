@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.data.salary
 
 import android.app.Application
+import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
@@ -36,7 +38,13 @@ class ManagedIncomeSyncTest {
     private fun TestScope.sync(
         profileRepo: FakeSalaryProfileRepository,
         incomeRepo: FakePlannedIncomeRepository,
-    ) = ManagedIncomeSync(profileRepo, incomeRepo, backgroundScope)
+    ) = ManagedIncomeSync(
+        profileRepo,
+        incomeRepo,
+        FakeIncomeRepository(),
+        FakeSalaryLineLabelsProvider(),
+        backgroundScope,
+    )
 
     @Test
     fun nullProfile_writesNothing() =
@@ -156,7 +164,14 @@ class ManagedIncomeSyncTest {
             val writes = mutableListOf<String>()
             val counting = RecordingIncome(income, writes)
 
-            val sync = ManagedIncomeSync(FakeSalaryProfileRepository(profile), counting, backgroundScope)
+            val sync =
+                ManagedIncomeSync(
+                    FakeSalaryProfileRepository(profile),
+                    counting,
+                    FakeIncomeRepository(),
+                    FakeSalaryLineLabelsProvider(),
+                    backgroundScope,
+                )
             sync.start()
             sync.start()
             advanceUntilIdle()

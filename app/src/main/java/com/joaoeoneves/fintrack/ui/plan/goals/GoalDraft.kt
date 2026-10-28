@@ -4,18 +4,16 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.MAX_GOAL_LINKED_RECURRING
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
-import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
-import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import java.time.LocalDate
 
-/** The editable state of the sheet; amounts stay text until saved. */
+/** The editable state of the sheet; amounts are cents, 0 meaning not typed. */
 internal data class GoalDraft(
     val name: String,
-    val targetText: String,
+    val targetCents: Long,
     val type: GoalTargetType,
     val startDate: LocalDate,
     val targetDate: LocalDate?,
-    val initialText: String,
+    val initialCents: Long,
     val linkedRecurringIds: Set<String>,
     val linkedCategoryId: String?,
     val showErrors: Boolean = false,
@@ -29,35 +27,24 @@ internal data class GoalDraft(
             else -> this
         }
 
-    val targetCents: Long? get() = parseAmountCents(targetText).getOrNull()
-
-    /** The initial amount: nothing typed is 0, a non-amount is `null`. */
-    val initialCents: Long? get() = if (initialText.isBlank()) 0L else parseAmountCents(initialText).getOrNull()
-
     val nameValid: Boolean get() = name.isNotBlank()
 
     val datesValid: Boolean get() = targetDate == null || targetDate >= startDate
 
-    val valid: Boolean get() = nameValid && targetCents != null && initialCents != null && datesValid
+    val valid: Boolean get() = nameValid && targetCents > 0L && datesValid
 }
 
 internal fun draftOf(
     goal: SavingsGoal?,
-    decimalSeparator: Char,
     today: LocalDate,
 ): GoalDraft =
     GoalDraft(
         name = goal?.name.orEmpty(),
-        targetText = goal?.targetCents?.toAmountInputText(decimalSeparator).orEmpty(),
+        targetCents = goal?.targetCents ?: 0L,
         type = goal?.targetType ?: GoalTargetType.ANNUAL,
         startDate = goal?.startDate ?: today,
         targetDate = goal?.targetDate,
-        initialText =
-            goal
-                ?.initialCents
-                ?.takeIf { it > 0 }
-                ?.toAmountInputText(decimalSeparator)
-                .orEmpty(),
+        initialCents = goal?.initialCents ?: 0L,
         linkedRecurringIds = goal?.linkedRecurringIds.orEmpty(),
         linkedCategoryId = goal?.linkedCategoryId?.value,
     )
@@ -67,11 +54,11 @@ internal fun GoalDraft.toGoal(existing: SavingsGoal?): SavingsGoal {
     return SavingsGoal(
         id = existing?.id.orEmpty(),
         name = name,
-        targetCents = checkNotNull(targetCents),
+        targetCents = targetCents,
         targetType = type,
         startDate = startDate,
         targetDate = targetDate.takeIf { total },
-        initialCents = if (total) checkNotNull(initialCents) else 0L,
+        initialCents = if (total) initialCents else 0L,
         linkedRecurringIds = linkedRecurringIds,
         linkedCategoryId = linkedCategoryId?.let(::CategoryId),
         archived = existing?.archived ?: false,

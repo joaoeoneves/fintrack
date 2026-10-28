@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -22,14 +23,15 @@ class SalaryExtraParsingTest {
         name: String = "Bonus",
         type: SalaryExtraAmountType = SalaryExtraAmountType.FIXED_CENTS,
         amount: String = "100",
+        cents: Long = 10_000L,
         months: List<Int> = listOf(5),
         deductions: SalaryExtraDeductions = SalaryExtraDeductions.NONE,
         fee: String = "",
-    ) = SalaryExtraForm(null, name, type, amount, months, deductions, fee)
+    ) = SalaryExtraForm(null, name, type, amount, cents, months, deductions, fee)
 
     @Test
     fun fixed_parsesCents() {
-        val (extra, invalid) = form(amount = "1234,56").toExtra("id1", gross)
+        val (extra, invalid) = form(cents = 123_456L).toExtra("id1", gross)
 
         assertTrue(invalid.isEmpty())
         assertEquals(SalaryExtra("id1", "Bonus", SalaryExtraAmountType.FIXED_CENTS, 123_456, setOf(5)), extra)
@@ -48,7 +50,7 @@ class SalaryExtraParsingTest {
     fun zeroBlankOrGarbageAmount_isFlaggedPerType() {
         SalaryExtraAmountType.entries.forEach { type ->
             listOf("", "0", "abc").forEach { text ->
-                val (extra, invalid) = form(type = type, amount = text).toExtra("a", gross)
+                val (extra, invalid) = form(type = type, amount = text, cents = 0L).toExtra("a", gross)
                 assertNull("$type $text", extra)
                 assertEquals(setOf(SalaryExtraField.AMOUNT), invalid)
             }
@@ -103,6 +105,7 @@ class SalaryExtraParsingTest {
             form(
                 type = SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM,
                 amount = "250",
+                cents = 25_000L,
                 deductions = SalaryExtraDeductions.IRS_SS,
                 fee = "50",
             )
@@ -143,8 +146,10 @@ class SalaryExtraParsingTest {
 
     @Test
     fun toExtraForm_formatsValuesForTheSeparator() {
-        assertEquals("1234,56", bonusExtra(cents = 123_456).toExtraForm(',').amountText)
+        assertEquals(123_456L, bonusExtra(cents = 123_456).toExtraForm(',').amountCents)
+        assertEquals("", bonusExtra(cents = 123_456).toExtraForm(',').amountText)
         assertEquals("7.05", flexExtra(ppm = 70_500).toExtraForm('.').amountText)
+        assertEquals(0L, flexExtra(ppm = 70_500).toExtraForm('.').amountCents)
         assertEquals("0,5", flexExtra(feePpm = 5_000).toExtraForm(',').feeText)
         assertEquals("", flexExtra().toExtraForm('.').feeText)
     }
@@ -152,8 +157,8 @@ class SalaryExtraParsingTest {
     @Test
     fun salaryForm_carriesExtrasBothWays_inGrossAndNet() {
         val extras = listOf(bonusExtra(), flexExtra())
-        val grossForm = SalaryForm(base = "1000", extras = extras)
-        val netForm = SalaryForm(mode = net, netMonthly = "1000", extras = extras)
+        val grossForm = SalaryForm(base = 100_000L, extras = extras)
+        val netForm = SalaryForm(mode = net, netMonthly = 100_000L, extras = extras)
 
         assertEquals(extras, grossForm.toResult().profile.extras)
         assertEquals(extras, netForm.toResult().profile.extras)
@@ -165,5 +170,25 @@ class SalaryExtraParsingTest {
                 .toForm('.')
                 .extras,
         )
+    }
+
+    @Test
+    fun perPaymentScope_isKeptOnlyWithSeveralMonths() {
+        val several = form(months = listOf(2, 8)).copy(amountScope = SalaryExtraAmountScope.PER_PAYMENT)
+        val single = form(months = listOf(2)).copy(amountScope = SalaryExtraAmountScope.PER_PAYMENT)
+
+        assertEquals(SalaryExtraAmountScope.PER_PAYMENT, several.toExtra("a", gross).first?.amountScope)
+        assertEquals(SalaryExtraAmountScope.TOTAL, single.toExtra("a", gross).first?.amountScope)
+        assertEquals(SalaryExtraAmountScope.PER_PAYMENT, several.toExtra("a", net).first?.amountScope)
+    }
+
+    @Test
+    fun scope_roundTripsThroughTheForm() {
+        val scope = SalaryExtraAmountScope.PER_PAYMENT
+        val extra =
+            SalaryExtra("a", "B", SalaryExtraAmountType.FIXED_CENTS, 500, setOf(1, 2), amountScope = scope)
+
+        assertEquals(SalaryExtraAmountScope.PER_PAYMENT, extra.toExtraForm(',').amountScope)
+        assertEquals(extra, extra.toExtraForm(',').toExtra("a", gross).first)
     }
 }

@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.SALARY_EXTRA_ID_PATTERN
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -123,7 +124,9 @@ private fun SalaryExtra.toFirestoreMap(): Map<String, Any> =
         "months" to months.sorted(),
         "deductions" to deductions.name,
         "feePpm" to feePpm,
-    )
+    ).let { map ->
+        if (amountScope == SalaryExtraAmountScope.PER_PAYMENT) map + ("amountScope" to amountScope.name) else map
+    }
 
 private fun MutableMap<String, Any?>.putIfSet(
     key: String,
@@ -210,9 +213,13 @@ private fun Map<*, *>.toSalaryExtraOrNull(): SalaryExtra? {
     val deductions =
         this["deductions"]?.let { value -> SalaryExtraDeductions.entries.find { it.name == value } }
             ?: SalaryExtraDeductions.NONE.takeIf { this["deductions"] == null }
+    val scope =
+        this["amountScope"]?.let { value -> SalaryExtraAmountScope.entries.find { it.name == value } }
+            ?: SalaryExtraAmountScope.TOTAL.takeIf { this["amountScope"] == null }
     val fee = ((this["feePpm"] as? Number)?.toInt() ?: 0).coerceIn(0, PPM_SCALE)
-    return if (id != null && name != null && type != null && amount != null && months != null && deductions != null) {
-        SalaryExtra(id, name, type, amount, months, deductions, fee)
+    val complete = id != null && name != null && type != null && amount != null && months != null
+    return if (complete && deductions != null && scope != null) {
+        SalaryExtra(id, name, type, amount, months, deductions, fee, scope)
     } else {
         null
     }

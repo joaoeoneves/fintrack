@@ -47,9 +47,11 @@ private fun BreakdownRows(
     if (breakdown.christmasLumpNetCents > 0) {
         rows += stringResource(R.string.salary_field_net_christmas) to breakdown.christmasLumpNetCents
     }
-    breakdown.extras.forEach { rows += it.name to it.totalCents }
-    rows.forEachIndexed { index, (label, cents) ->
+    val texts =
+        rows.map { (label, cents) -> label to formatAmountCents(cents) } +
+            breakdown.extras.map { it.name to extraAmountText(it) }
+    texts.forEachIndexed { index, (label, text) ->
         if (index > 0) Hairline()
-        SettingsRow(title = label, value = formatAmountCents(cents))
+        SettingsRow(title = label, value = text)
     }
 }

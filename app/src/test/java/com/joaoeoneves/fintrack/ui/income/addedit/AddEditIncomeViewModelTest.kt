@@ -77,7 +77,7 @@ class AddEditIncomeViewModelTest {
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
             assertFalse(state.form.isEditMode)
             assertEquals("", state.form.source)
-            assertEquals("", state.form.amountText)
+            assertEquals(0L, state.form.amountCents)
             assertEquals("", state.form.note)
             assertNull(state.form.sourceError)
             assertNull(state.form.amountError)
@@ -138,7 +138,7 @@ class AddEditIncomeViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
 
-            viewModel.onAmountChanged("12.50")
+            viewModel.onAmountChanged(1250L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -160,7 +160,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("abc")
+            viewModel.onAmountChanged(0L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -177,7 +177,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("0")
+            viewModel.onAmountChanged(0L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -228,11 +228,11 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditIncomeUiState.Ready).form.amountError)
 
-            viewModel.onAmountChanged("5.00")
+            viewModel.onAmountChanged(500L)
 
             val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
             assertNull(state.form.amountError)
-            assertEquals("5.00", state.form.amountText)
+            assertEquals(500L, state.form.amountCents)
         }
 
     // ---- form field updates ----
@@ -278,7 +278,7 @@ class AddEditIncomeViewModelTest {
             val collectJob = launch { viewModel.savedEvent.collect { events.add(it) } }
 
             viewModel.onSourceChanged("  Freelance  ")
-            viewModel.onAmountChanged("49.995") // rounds HALF_UP to 5000 cents
+            viewModel.onAmountChanged(5000L)
             viewModel.onDateSelected(date)
             viewModel.onNoteChanged("  contract work  ")
             viewModel.onSave()
@@ -311,7 +311,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("3000.00")
+            viewModel.onAmountChanged(300000L)
             viewModel.onNoteChanged("   ")
             viewModel.onSave()
             advanceUntilIdle()
@@ -343,7 +343,7 @@ class AddEditIncomeViewModelTest {
             assertTrue(state.form.isEditMode)
             assertEquals("i1", state.form.incomeId)
             assertEquals("Salary", state.form.source)
-            assertEquals("5000.00", state.form.amountText)
+            assertEquals(500000L, state.form.amountCents)
             assertEquals(existing.date, state.form.date)
             assertEquals("Monthly salary", state.form.note)
         }
@@ -364,7 +364,7 @@ class AddEditIncomeViewModelTest {
             assertTrue(state.form.isEditMode)
             assertEquals("does-not-exist", state.form.incomeId)
             assertEquals("", state.form.source)
-            assertEquals("", state.form.amountText)
+            assertEquals(0L, state.form.amountCents)
         }
 
     // ---- edit mode: load failure -> Error state (the data-loss bug fix) ----
@@ -433,7 +433,7 @@ class AddEditIncomeViewModelTest {
             assertTrue(state.form.isEditMode)
             assertEquals("i1", state.form.incomeId)
             assertEquals("Salary", state.form.source)
-            assertEquals("5000.00", state.form.amountText)
+            assertEquals(500000L, state.form.amountCents)
             assertEquals("Monthly salary", state.form.note)
         }
 
@@ -476,7 +476,7 @@ class AddEditIncomeViewModelTest {
             val collectJob = launch { viewModel.savedEvent.collect { events.add(it) } }
 
             viewModel.onSourceChanged("Salary (raise)")
-            viewModel.onAmountChanged("5500.00")
+            viewModel.onAmountChanged(550000L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -568,7 +568,7 @@ class AddEditIncomeViewModelTest {
             val collectJob = launch { viewModel.savedEvent.collect { events.add(it) } }
 
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -589,7 +589,7 @@ class AddEditIncomeViewModelTest {
             advanceUntilIdle()
 
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
 
@@ -604,7 +604,7 @@ class AddEditIncomeViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditIncomeUiState.Ready).form.saveError)
@@ -621,12 +621,12 @@ class AddEditIncomeViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditIncomeUiState.Ready).form.saveError)
 
-            viewModel.onAmountChanged("4.00")
+            viewModel.onAmountChanged(400L)
 
             assertNull((viewModel.uiState.value as AddEditIncomeUiState.Ready).form.saveError)
         }
@@ -638,7 +638,7 @@ class AddEditIncomeViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditIncomeUiState.Ready).form.saveError)
@@ -655,7 +655,7 @@ class AddEditIncomeViewModelTest {
             val viewModel = addModeViewModel(repo)
             advanceUntilIdle()
             viewModel.onSourceChanged("Paycheck")
-            viewModel.onAmountChanged("3.00")
+            viewModel.onAmountChanged(300L)
             viewModel.onSave()
             advanceUntilIdle()
             assertNotNull((viewModel.uiState.value as AddEditIncomeUiState.Ready).form.saveError)

@@ -10,7 +10,8 @@ fun testExtra(
     months: Set<Int> = setOf(1, 4, 7, 10),
     deductions: SalaryExtraDeductions = SalaryExtraDeductions.NONE,
     feePpm: Int = 0,
-) = SalaryExtra(id, name, type, amount, months, deductions, feePpm)
+    amountScope: SalaryExtraAmountScope = SalaryExtraAmountScope.TOTAL,
+) = SalaryExtra(id, name, type, amount, months, deductions, feePpm, amountScope)
 
 /** A fixed-cents extra paid once, in [month]. */
 fun fixedExtra(

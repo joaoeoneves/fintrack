@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
-import java.util.Locale
 import javax.inject.Inject
 
 private const val TAG = "AddEditExpenseViewModel"
@@ -95,16 +94,13 @@ class AddEditExpenseViewModel
                     expenseRepository
                         .getExpense(expenseId)
                         .onSuccess { existing ->
-                            // Prefill with the locale's own decimal separator, matching how amounts
-                            // are displayed (parseAmountCents accepts either '.' or ',').
-                            val separator = decimalSeparatorFor(Locale.getDefault(Locale.Category.FORMAT))
                             loaded = existing
                             _uiState.value =
                                 if (existing != null) {
                                     AddEditUiState.Ready(
                                         ExpenseFormState(
                                             name = existing.name,
-                                            amountText = existing.amountCents.toAmountInputText(separator),
+                                            amountCents = existing.amountCents,
                                             category = existing.category,
                                             date = existing.date,
                                             note = existing.note ?: "",
@@ -147,8 +143,8 @@ class AddEditExpenseViewModel
                 }
             }
 
-        fun onAmountChanged(amountText: String) {
-            updateForm { it.copy(amountText = amountText, amountError = null, saveError = null) }
+        fun onAmountChanged(amountCents: Long) {
+            updateForm { it.copy(amountCents = amountCents, amountError = null, saveError = null) }
         }
 
         fun onCategorySelected(category: Category) {
@@ -177,8 +173,7 @@ class AddEditExpenseViewModel
             val form = current.form
 
             val nameError = if (form.name.isBlank()) UiText.StringResource(R.string.error_name_required) else null
-            val amountResult = parseAmountCents(form.amountText)
-            val amountError = if (amountResult.isFailure) UiText.StringResource(R.string.error_invalid_amount) else null
+            val amountError = if (form.amountCents <= 0L) UiText.StringResource(R.string.error_invalid_amount) else null
             // An unknown category (e.g. deleted since the expense was saved) must be replaced first.
             val categoryError =
                 if (form.category.isUnknown) UiText.StringResource(R.string.error_category_required) else null
@@ -191,7 +186,7 @@ class AddEditExpenseViewModel
                 return
             }
 
-            val amountCents = amountResult.getOrThrow()
+            val amountCents = form.amountCents
             _uiState.value = AddEditUiState.Ready(form.copy(isSaving = true))
             viewModelScope.launch {
                 val expense =

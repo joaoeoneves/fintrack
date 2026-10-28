@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 12
+internal const val LOCAL_SCHEMA_VERSION = 13
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -201,4 +201,6 @@ data class LocalSalaryExtra(
     /** A `SalaryExtraDeductions` name. */
     val deductions: String = "NONE",
     val feePpm: Int = 0,
+    /** A `SalaryExtraAmountScope` name; absent before schema v13. */
+    val amountScope: String = "TOTAL",
 )

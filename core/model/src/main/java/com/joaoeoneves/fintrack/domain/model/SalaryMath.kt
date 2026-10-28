@@ -44,7 +44,10 @@ data class ExtraBreakdown(
     val extraId: String,
     val name: String,
     val totalCents: Long,
-    /** (month 1..12, cents) ascending; they add up to [totalCents], the rounding remainder on the last month. */
+    /**
+     * (month 1..12, cents) ascending; they add up to [totalCents]. For a yearly total the rounding remainder is on
+     * the last month; for a per-payment extra every payment is equal.
+     */
     val payments: List<Pair<Int, Long>>,
 )
 
@@ -130,21 +133,25 @@ private fun extraBreakdown(
     profile: SalaryProfile,
     base: Long?,
 ): ExtraBreakdown? {
-    val total = extraTotalCents(extra, profile, base)
+    val cents = extraCents(extra, profile, base)
     val months = extra.months.sorted()
-    if (total == 0L || months.isEmpty()) return null
-    val each = total / months.size
+    if (cents == 0L || months.isEmpty()) return null
+    val perPayment = extra.amountScope == SalaryExtraAmountScope.PER_PAYMENT
+    val each = if (perPayment) cents else cents / months.size
     val payments =
-        months.mapIndexed { index, month -> month to if (index == months.lastIndex) total - each * index else each }
-    return ExtraBreakdown(extra.id, extra.name, total, payments)
+        months.mapIndexed { index, month ->
+            month to if (!perPayment && index == months.lastIndex) cents - each * index else each
+        }
+    return ExtraBreakdown(extra.id, extra.name, if (perPayment) cents * months.size else cents, payments)
 }
 
 /**
- * The yearly total of [extra] in one exact computation, rounded HALF_UP once: FIXED is the amount, MULTIPLE is
+ * The amount of [extra] (the yearly total, or one payment when PER_PAYMENT) in one exact computation, rounded
+ * HALF_UP once: FIXED is the amount, MULTIPLE is
  * base x multiple, PERCENT is the annual gross (base x 14) x share; then x (1 - tax) x (1 - fee). [base] is `null`
  * in NET mode, where only FIXED extras count and are already net. 0 when it pays nothing.
  */
-private fun extraTotalCents(
+private fun extraCents(
     extra: SalaryExtra,
     profile: SalaryProfile,
     base: Long?,

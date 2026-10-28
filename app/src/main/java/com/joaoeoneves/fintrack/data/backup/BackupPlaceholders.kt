@@ -44,3 +44,9 @@ internal fun withPlaceholderCategories(
             }.filter { runCatching { validateCategory(it) }.isSuccess }
     return categories + placeholders
 }
+
+/** This list with the names of the placeholders [withPlaceholderCategories] appended after [stored] replaced. */
+internal fun List<LocalCategory>.namingPlaceholders(
+    stored: Int,
+    name: String,
+): List<LocalCategory> = mapIndexed { index, category -> if (index >= stored) category.copy(name = name) else category }

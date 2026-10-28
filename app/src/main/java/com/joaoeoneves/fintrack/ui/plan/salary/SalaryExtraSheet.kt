@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
@@ -61,20 +62,10 @@ internal fun SalaryExtraSheet(
                     options = SalaryExtraAmountType.entries,
                     selected = form.amountType,
                     label = { stringResource(typeLabel(it)) },
-                    onSelect = { onChange(form.copy(amountType = it, amountText = "")) },
+                    onSelect = { onChange(form.copy(amountType = it, amountText = "", amountCents = 0L)) },
                 )
             }
-            SalaryTextField(
-                label = stringResource(valueLabel(if (gross) form.amountType else SalaryExtraAmountType.FIXED_CENTS)),
-                value = form.amountText,
-                onChange = { onChange(form.copy(amountText = it)) },
-                invalid = SalaryExtraField.AMOUNT in editor.invalid && form.amountText.isNotBlank(),
-            )
-            SalaryMonthPicker(
-                title = stringResource(R.string.salary_extra_months),
-                selected = form.months,
-                onChange = { onChange(form.copy(months = it)) },
-            )
+            AmountAndMonthsFields(editor, onChange)
             if (gross) GrossOnlyFields(editor, onChange)
         }
         PrimaryPillButton(
@@ -90,6 +81,41 @@ internal fun SalaryExtraSheet(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
         }
+    }
+}
+
+@Composable
+private fun AmountAndMonthsFields(
+    editor: SalaryExtraEditorState,
+    onChange: (SalaryExtraForm) -> Unit,
+) {
+    val form = editor.form
+    val gross = editor.mode == SalaryInputMode.GROSS
+    val perPayment = form.months.size > 1 && form.amountScope == SalaryExtraAmountScope.PER_PAYMENT
+    val type = if (gross) form.amountType else SalaryExtraAmountType.FIXED_CENTS
+    val label = stringResource(valueLabel(type, perPayment))
+    if (type == SalaryExtraAmountType.FIXED_CENTS) {
+        SalaryMoneyField(label = label, cents = form.amountCents, onChange = { onChange(form.copy(amountCents = it)) })
+    } else {
+        SalaryTextField(
+            label = label,
+            value = form.amountText,
+            onChange = { onChange(form.copy(amountText = it)) },
+            invalid = SalaryExtraField.AMOUNT in editor.invalid && form.amountText.isNotBlank(),
+        )
+    }
+    SalaryMonthPicker(
+        title = stringResource(R.string.salary_extra_months),
+        selected = form.months,
+        onChange = { onChange(form.copy(months = it)) },
+    )
+    if (form.months.size > 1) {
+        SegmentedTextTabs(
+            options = SalaryExtraAmountScope.entries,
+            selected = form.amountScope,
+            label = { stringResource(scopeLabel(it)) },
+            onSelect = { onChange(form.copy(amountScope = it)) },
+        )
     }
 }
 
@@ -125,11 +151,23 @@ private fun typeLabel(type: SalaryExtraAmountType): Int =
         SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM -> R.string.salary_extra_type_percent
     }
 
-private fun valueLabel(type: SalaryExtraAmountType): Int =
+private fun scopeLabel(scope: SalaryExtraAmountScope): Int =
+    when (scope) {
+        SalaryExtraAmountScope.TOTAL -> R.string.salary_extra_scope_total
+        SalaryExtraAmountScope.PER_PAYMENT -> R.string.salary_extra_scope_per_payment
+    }
+
+private fun valueLabel(
+    type: SalaryExtraAmountType,
+    perPayment: Boolean,
+): Int =
     when (type) {
-        SalaryExtraAmountType.FIXED_CENTS -> R.string.salary_extra_value_fixed
-        SalaryExtraAmountType.MULTIPLE_OF_BASE_PPM -> R.string.salary_extra_value_multiple
-        SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM -> R.string.salary_extra_value_percent
+        SalaryExtraAmountType.FIXED_CENTS ->
+            if (perPayment) R.string.salary_extra_value_fixed_per_payment else R.string.salary_extra_value_fixed
+        SalaryExtraAmountType.MULTIPLE_OF_BASE_PPM ->
+            if (perPayment) R.string.salary_extra_value_multiple_per_payment else R.string.salary_extra_value_multiple
+        SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM ->
+            if (perPayment) R.string.salary_extra_value_percent_per_payment else R.string.salary_extra_value_percent
     }
 
 private fun deductionsLabel(deductions: SalaryExtraDeductions): Int =

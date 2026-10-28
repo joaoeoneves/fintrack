@@ -111,7 +111,7 @@ fun AddEditIncomeScreen(
 /** Bundles [IncomeForm]'s field-change callbacks to keep its own parameter list short. */
 private data class IncomeFormActions(
     val onSourceChanged: (String) -> Unit,
-    val onAmountChanged: (String) -> Unit,
+    val onAmountChanged: (Long) -> Unit,
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
     val onDelete: () -> Unit,
@@ -133,8 +133,8 @@ private fun IncomeForm(
     ) {
         val affix = rememberCurrencyAffix()
         BorderlessAmountField(
-            value = form.amountText,
-            onValueChange = actions.onAmountChanged,
+            cents = form.amountCents,
+            onCentsChange = actions.onAmountChanged,
             currencySymbol = affix.symbol,
             symbolLeads = affix.leads,
             label = stringResource(R.string.field_amount),
