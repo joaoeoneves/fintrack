@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -7,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
+import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryGroupRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
@@ -19,7 +21,7 @@ import javax.inject.Inject
 
 /**
  * The monthly-plan data of a backup: budgets, income lines, recurring, month settings, groups, salary profile
- * and goals.
+ * goals and automation settings.
  */
 data class PlanBackupData(
     val budgets: List<Budget>,
@@ -29,14 +31,16 @@ data class PlanBackupData(
     val categoryGroups: List<CategoryGroup> = emptyList(),
     val salaryProfile: SalaryProfile? = null,
     val goals: List<SavingsGoal> = emptyList(),
+    val automation: AutomationSettings = AutomationSettings(),
 )
 
-/** The salary profile and goal repositories, bundled for detekt's LongParameterList. */
+/** The salary profile, goal and automation repositories, bundled for detekt's LongParameterList. */
 class PlanSingletonSources
     @Inject
     constructor(
         val salaryProfile: SalaryProfileRepository,
         val goals: GoalRepository,
+        val automation: AutomationSettingsRepository,
     )
 
 /** Reads the plan data (budgets, planned income, recurring) of the current session for a backup. */
@@ -59,5 +63,6 @@ class PlanBackupSource
                 categoryGroups = categoryGroupRepository.observeGroups().first(),
                 salaryProfile = singletons.salaryProfile.observeSalaryProfile().first(),
                 goals = singletons.goals.observeGoals().first(),
+                automation = singletons.automation.observeAutomationSettings().first(),
             )
     }

@@ -227,6 +227,7 @@ private fun dashboardActions(
             state = upcomingState,
             onConfirm = upcomingViewModel::onConfirm,
             onSkip = upcomingViewModel::onSkip,
+            onReceiveIncome = upcomingViewModel::onReceiveIncome,
             onManage = callbacks.onOpenRecurring,
         ),
     onRetry = viewModel::onRetry,

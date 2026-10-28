@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
+import com.joaoeoneves.fintrack.data.local.validateAutomation
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
@@ -85,7 +86,8 @@ object BackupCodec {
         // (absent = empty / defaults) and 5 -> 6 the monthSettings daysOff field (absent = 0) and
         // 6 -> 7 the plannedIncome earmark fields (absent = none) and 7 -> 8 the salaryProfile and plannedIncome
         // managedKey (absent = none) and 8 -> 9 the goals (absent = empty) and
-        // 9 -> 10 salaryProfile extras (absent = migrated from the legacy fields on read).
+        // 9 -> 10 salaryProfile extras (absent = migrated from the legacy fields on read) and
+        // 11 -> 12 the automation settings (absent = none).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)
@@ -112,13 +114,15 @@ object BackupCodec {
         val monthSettings = keepValid(document.monthSettings, { it.month }) { validateMonthSettings(it) }
         val categoryGroups = keepValid(document.categoryGroups, { it.id }) { validateCategoryGroup(it) }
         val goals = keepValid(document.goals, { it.id }) { validateGoal(it) }
+        val automation = document.automation?.takeIf { runCatching { validateAutomation(it) }.isSuccess }
         val skipped =
             (document.categories.size - categories.size) + (document.budgets.size - budgets.size) +
                 (document.expenses.size - expenses.size) + (document.income.size - income.size) +
                 (document.plannedIncome.size - plannedIncome.size) + (document.recurring.size - recurring.size) +
                 (document.monthSettings.size - monthSettings.size) +
                 (document.categoryGroups.size - categoryGroups.size) + (document.goals.size - goals.size) +
-                (if (document.salaryProfile != null && salaryProfile == null) 1 else 0)
+                (if (document.salaryProfile != null && salaryProfile == null) 1 else 0) +
+                (if (document.automation != null && automation == null) 1 else 0)
         return BackupDecodeResult.Success(
             document.copy(
                 categories = categories,
@@ -131,6 +135,7 @@ object BackupCodec {
                 categoryGroups = categoryGroups,
                 salaryProfile = salaryProfile,
                 goals = goals,
+                automation = automation,
             ),
             skipped,
         )

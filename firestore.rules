@@ -202,6 +202,20 @@ service cloud.firestore {
       allow create, update: if isOwner(userId) && isValidSalaryProfile(request.resource.data);
     }
 
+    // The automation settings are a single document: the payday switch and the last month it recorded (yyyy-MM).
+    match /users/{userId}/plan/automation {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidAutomation(request.resource.data);
+    }
+
+    function isValidAutomation(data) {
+      return data.keys().hasOnly(['paydayEnabled', 'paydayThrough', 'updatedAt'])
+        && (!('paydayEnabled' in data) || data.paydayEnabled is bool)
+        && (!('paydayThrough' in data) || data.paydayThrough == null
+          || (data.paydayThrough is string && data.paydayThrough.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')))
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
     function isOptionalInt(data, key, min, max) {
       return !(key in data) || (data[key] is int && data[key] >= min && data[key] <= max);
     }
