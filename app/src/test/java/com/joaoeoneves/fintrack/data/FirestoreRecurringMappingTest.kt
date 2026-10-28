@@ -151,6 +151,7 @@ class FirestoreRecurringMappingTest {
                 "endDate",
                 "handledThrough",
                 "active",
+                "autoPost",
                 "updatedAt",
             ),
             map.keys,

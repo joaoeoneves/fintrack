@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
@@ -20,10 +21,17 @@ import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
+import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
 import com.joaoeoneves.fintrack.domain.model.isManaged
+import com.joaoeoneves.fintrack.domain.model.limitGroupsOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
+import com.joaoeoneves.fintrack.domain.model.paydayOf
+import com.joaoeoneves.fintrack.domain.model.receivedOn
+import com.joaoeoneves.fintrack.domain.model.salaryComponent
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
+import com.joaoeoneves.fintrack.domain.usecase.ReceiveRequest
+import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
@@ -43,7 +51,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import javax.inject.Inject
 
 private const val TAG = "MonthlyPlanViewModel"
@@ -51,6 +61,7 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val KEY_SELECTED_MONTH = "selectedMonth"
 
 /** Edits the global monthly plan: expected-income lines and the per-category planned allocations. */
+@Suppress("TooManyFunctions") // One handler per user action on the screen.
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class MonthlyPlanViewModel
@@ -58,6 +69,7 @@ class MonthlyPlanViewModel
     constructor(
         private val repositories: PlanRepositories,
         private val observePeriodOverview: ObservePeriodOverview,
+        private val recordPayday: RecordPayday,
         savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
@@ -83,7 +95,14 @@ class MonthlyPlanViewModel
                     val overview = observePeriodOverview(period, now, clock.zone, recentLimit = 0)
                     planFlow(
                         repositories = repositories,
-                        selected = SelectedMonth(period, period.canGoToNextMonth(now, clock.zone), overview),
+                        selected =
+                            SelectedMonth(
+                                period = period,
+                                canGoToNextMonth = period.canGoToNextMonth(now, clock.zone),
+                                overview = overview,
+                                today = LocalDate.now(clock),
+                                zone = clock.zone,
+                            ),
                         editor = editor,
                     )
                 }.stateIn(
@@ -106,7 +125,7 @@ class MonthlyPlanViewModel
 
         fun onAddIncomeLine() {
             viewModelScope.launch {
-                if (repositories.currentLines().size < MAX_PLANNED_INCOME_LINES) {
+                if (repositories.currentLines().count { !it.isManaged } < MAX_PLANNED_INCOME_LINES) {
                     editor.value = IncomeLineEditorState(editingId = null, initialLabel = "", initialAmountCents = null)
                 }
             }
@@ -121,6 +140,7 @@ class MonthlyPlanViewModel
                             initialLabel = line.label,
                             initialAmountCents = line.amountCents,
                             managed = line.isManaged,
+                            component = line.salaryComponent,
                             initialSchedule =
                                 IncomeSchedule(
                                     basis = line.basis,
@@ -132,6 +152,31 @@ class MonthlyPlanViewModel
                                 ),
                         )
                 }
+            }
+        }
+
+        /**
+         * Records [row] of the selected month as received on [date]; [amountCents] replaces the amount of a
+         * single-line row. A no-op until the plan has loaded.
+         */
+        fun onReceive(
+            row: IncomeRow,
+            date: LocalDate,
+            amountCents: Long?,
+        ) {
+            val content = uiState.value as? MonthlyPlanUiState.Content ?: return
+            viewModelScope.launch {
+                val request =
+                    ReceiveRequest(
+                        lines = row.lines,
+                        month = content.workingDays.month,
+                        workingDays = content.workingDays.days,
+                        date = date,
+                        today = content.receipts.today,
+                        zone = clock.zone,
+                        amountOverrideCents = amountCents,
+                    )
+                recordPayday.receive(request).onFailure { reportFailure(it) }
             }
         }
 
@@ -253,6 +298,8 @@ private class SelectedMonth(
     val period: Period,
     val canGoToNextMonth: Boolean,
     val overview: Flow<PeriodOverview>,
+    val today: LocalDate,
+    val zone: ZoneId,
 )
 
 private fun planFlow(
@@ -274,23 +321,45 @@ private fun planFlow(
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
                 incomeLines = lines,
+                incomeRows = incomeRowsIn(lines, overview.budgetMonth, workingDays.days),
                 allocations = allocations,
                 summary = monthlyPlanOf(allocations, lines, emptyList(), overview.budgetMonth, workingDays.days),
                 period = selected.period,
                 canGoToNextMonth = selected.canGoToNextMonth,
                 progress = overview.budgets,
                 fixedThisMonthCents = overview.summary.fixedSpendingCents,
-                canAddIncomeLine = lines.size < MAX_PLANNED_INCOME_LINES,
+                canAddIncomeLine = lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
                 editor = editorState?.copy(earmarkOptions = earmarkOptionsOf(overview, allocations)),
                 groups = overview.groups,
+                limitGroups = limitGroupsOf(allocations, overview.budgets, overview.groups),
                 pots = overview.pots,
+                receipts = receiptsOf(selected, overview, lines, workingDays.days),
             )
         content
     }.catch { e ->
         Log.w(TAG, "Failed to observe the monthly plan", e)
         emit(MonthlyPlanUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
     }
+
+private fun receiptsOf(
+    selected: SelectedMonth,
+    overview: PeriodOverview,
+    lines: List<PlannedIncome>,
+    workingDays: Int,
+): IncomeReceipts {
+    val month = overview.budgetMonth
+    val received =
+        incomeRowsIn(lines, month, workingDays).mapNotNull { row ->
+            row.receivedOn(month, workingDays, overview.transactions.income, selected.zone)?.let { row.key to it }
+        }
+    return IncomeReceipts(
+        payday = paydayOf(month),
+        today = selected.today,
+        canReceive = month <= YearMonth.from(selected.today),
+        receivedOn = received.toMap(),
+    )
+}
 
 private fun workingDaysOf(
     month: YearMonth,

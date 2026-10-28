@@ -11,35 +11,44 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
-import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.PlannedSource
+import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.amountIn
-import com.joaoeoneves.fintrack.domain.model.isActiveIn
-import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.time.LocalDate
 
+@Suppress("LongParameterList") // label/value and their colour, style and badge are independent row options
 @Composable
 private fun AmountRow(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    valueStyle: TextStyle = Amount,
     badge: String? = null,
 ) {
     Row(
@@ -57,7 +66,7 @@ private fun AmountRow(
                 )
             }
         }
-        Text(text = value, style = Amount, color = valueColor)
+        Text(text = value, style = valueStyle, color = valueColor)
     }
 }
 
@@ -97,28 +106,53 @@ data class ExpectedIncomeActions(
     val onAdd: () -> Unit,
     val onEdit: (String) -> Unit,
     val onEditWorkingDays: () -> Unit,
+    val onOpenSalaryProfile: () -> Unit,
+    val onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
+)
+
+/** What the expected-income card shows, bundled for detekt's LongParameterList. */
+data class ExpectedIncomeModel(
+    val rows: List<IncomeRow>,
+    val canAdd: Boolean,
+    val workingDays: WorkingDaysState,
+    val receipts: IncomeReceipts,
 )
 
 /**
- * The working-days row and the expected-income lines with what each pays in the selected month; tap a
- * line to edit it. The add button is hidden at the line cap.
+ * The salary-profile entry, the working-days row and the expected-income rows with what each pays in the
+ * selected month. A manual line, the salary and the meal allowance open their editor on tap; the other salary
+ * components (which sum several lines) open the salary profile. The add button is hidden at the line cap. Under the
+ * header sits the month's payday; a paying row of a past or current month can be marked "Received", after which it
+ * shows the day it was received.
  */
 @Composable
 fun ExpectedIncomeCard(
-    lines: List<PlannedIncome>,
-    canAdd: Boolean,
-    workingDays: WorkingDaysState,
+    model: ExpectedIncomeModel,
     actions: ExpectedIncomeActions,
     modifier: Modifier = Modifier,
 ) {
+    val (rows, canAdd, workingDays) = model
+    val receipts = model.receipts
+    var receiving by remember { mutableStateOf<IncomeRow?>(null) }
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
+        Text(
+            text = stringResource(R.string.plan_payday, rememberPaydayText(receipts.payday)),
+            style = MaterialTheme.typography.bodySmall,
+            color = FinTrackTheme.colors.textSecondary,
+        )
+        SettingsRow(
+            title = stringResource(R.string.plan_salary_profile_row),
+            onClick = actions.onOpenSalaryProfile,
+            showChevron = true,
+        )
+        Hairline()
         WorkingDaysRow(state = workingDays, onClick = actions.onEditWorkingDays)
         Hairline()
-        val (managed, manual) = lines.partition { it.isManaged }
+        val (managed, manual) = rows.partition { it.component != null }
         if (managed.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_from_salary_profile))
-        managed.forEach { IncomeLineRow(it, workingDays, actions) }
+        managed.forEach { IncomeRowItem(it, receipts, actions, onReceive = { receiving = it }) }
         if (managed.isNotEmpty() && manual.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_other_income))
-        manual.forEach { IncomeLineRow(it, workingDays, actions) }
+        manual.forEach { IncomeRowItem(it, receipts, actions, onReceive = { receiving = it }) }
         if (canAdd) {
             GhostButton(
                 text = stringResource(R.string.plan_add_income_line),
@@ -126,6 +160,19 @@ fun ExpectedIncomeCard(
                 modifier = Modifier.padding(top = Dimens.Space12),
             )
         }
+    }
+    receiving?.let { row ->
+        val paying = row.lines.filter { it.amountIn(workingDays.month, workingDays.days) > 0L }
+        ReceivedIncomeSheet(
+            title = row.displayLabel(),
+            today = receipts.today,
+            editableAmountCents = paying.singleOrNull()?.amountIn(workingDays.month, workingDays.days),
+            onConfirm = { date, cents ->
+                actions.onReceive(row, date, cents)
+                receiving = null
+            },
+            onDismiss = { receiving = null },
+        )
     }
 }
 
@@ -139,23 +186,35 @@ private fun IncomeGroupHeader(text: String) {
     )
 }
 
+/** Rows opening the line editor: a manual line (no component), the salary and the meal allowance. */
+private val EDITABLE_COMPONENTS = listOf(null, SalaryComponent.SALARY, SalaryComponent.MEAL)
+
 @Composable
-private fun IncomeLineRow(
-    line: PlannedIncome,
-    workingDays: WorkingDaysState,
+private fun IncomeRowItem(
+    row: IncomeRow,
+    receipts: IncomeReceipts,
     actions: ExpectedIncomeActions,
+    onReceive: (IncomeRow) -> Unit,
 ) {
-    val inMonth = line.isActiveIn(workingDays.month)
+    val line = row.lines.first()
+    val opensEditor = row.component in EDITABLE_COMPONENTS
+    val paysThisMonth = row.cents > 0L
+    val receivedOn = receipts.receivedOn[row.key]
     AmountRow(
-        label = line.label,
-        value =
-            if (inMonth) {
-                formatAmountCents(line.amountIn(workingDays.month, workingDays.days))
-            } else {
-                stringResource(R.string.plan_not_this_month)
-            },
-        modifier = Modifier.clickable { actions.onEdit(line.id) },
+        label = row.displayLabel(),
+        badge = receivedOn?.let { stringResource(R.string.plan_received_on, rememberReceivedText(it)) },
+        value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
+        valueColor = if (paysThisMonth) MaterialTheme.colorScheme.onSurface else FinTrackTheme.colors.textSecondary,
+        valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
+        modifier = Modifier.clickable { if (opensEditor) actions.onEdit(line.id) else actions.onOpenSalaryProfile() },
     )
+    if (receipts.canReceive && paysThisMonth && receivedOn == null) {
+        GhostButton(
+            text = stringResource(R.string.income_received),
+            onClick = { onReceive(row) },
+            modifier = Modifier.padding(bottom = Dimens.Space8),
+        )
+    }
     Hairline()
 }
 
@@ -220,9 +279,15 @@ private fun AllocationRow(
                 )
             }
         }
-        Text(
-            text = allocation.planned?.let { formatAmountCents(it) } ?: stringResource(R.string.plan_not_planned),
-            style = Amount,
-        )
+        val planned = allocation.planned
+        if (planned != null) {
+            Text(text = formatAmountCents(planned), style = Amount)
+        } else {
+            Text(
+                text = stringResource(R.string.plan_not_planned),
+                style = Amount.copy(fontWeight = FontWeight.Normal),
+                color = FinTrackTheme.colors.textSecondary,
+            )
+        }
     }
 }

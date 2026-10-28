@@ -3,8 +3,12 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.joaoeoneves.fintrack.data.local.IdGenerator
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
+import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
@@ -31,6 +35,7 @@ private const val TAG = "SalaryProfileViewModel"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 /** Edits the salary profile and keeps the plan's managed income lines in sync with it. */
+@Suppress("TooManyFunctions") // the screen's form actions plus the extra editor's
 @HiltViewModel
 class SalaryProfileViewModel
     @Inject
@@ -39,11 +44,14 @@ class SalaryProfileViewModel
         private val manageProfile: ManageSalaryProfile,
         private val plannedIncome: PlannedIncomeRepository,
         private val clock: Clock,
+        private val idGenerator: IdGenerator,
     ) : ViewModel() {
         // `null` until the stored profile has been read into the form.
         private val form = MutableStateFlow<SalaryForm?>(null)
         private val hasSavedProfile = MutableStateFlow(false)
         private val saving = MutableStateFlow(false)
+        private val extraForm = MutableStateFlow<SalaryExtraForm?>(null)
+        private var decimalSeparator = '.'
         private val events = Channel<SalaryProfileEvent>(Channel.BUFFERED)
 
         private val duplicateCandidates = MutableStateFlow<List<PlannedIncome>>(emptyList())
@@ -54,8 +62,8 @@ class SalaryProfileViewModel
         val eventFlow: Flow<SalaryProfileEvent> = events.receiveAsFlow()
 
         val uiState: StateFlow<SalaryProfileUiState> =
-            combine(form, hasSavedProfile, saving) { current, saved, busy ->
-                current?.let { contentOf(it, saved, busy) } ?: SalaryProfileUiState.Loading
+            combine(form, hasSavedProfile, saving, extraForm) { current, saved, busy, editing ->
+                current?.let { contentOf(it, saved, busy, editing) } ?: SalaryProfileUiState.Loading
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -65,6 +73,7 @@ class SalaryProfileViewModel
         /** Loads the stored profile into the form once; amounts are formatted with [decimalSeparator]. */
         fun start(decimalSeparator: Char) {
             if (form.value != null) return
+            this.decimalSeparator = decimalSeparator
             viewModelScope.launch {
                 val stored = profiles.observeSalaryProfile().first()
                 hasSavedProfile.value = stored != null
@@ -74,6 +83,56 @@ class SalaryProfileViewModel
 
         fun onFormChange(new: SalaryForm) {
             form.value = new
+        }
+
+        /** Opens the editor for a new extra, paid in the current month; a no-op at the cap. */
+        fun onAddExtra() {
+            val current = form.value ?: return
+            if (current.extras.size >= MAX_SALARY_EXTRAS) return
+            extraForm.value = SalaryExtraForm(months = listOf(YearMonth.now(clock).monthValue))
+        }
+
+        /** Opens the editor for extra [id]; in NET mode only a plain amount exists, so another type starts blank. */
+        fun onEditExtra(id: String) {
+            val current = form.value ?: return
+            val extra = current.extras.find { it.id == id } ?: return
+            val editing = extra.toExtraForm(decimalSeparator)
+            extraForm.value =
+                if (current.mode == SalaryInputMode.NET && extra.amountType != SalaryExtraAmountType.FIXED_CENTS) {
+                    editing.copy(amountType = SalaryExtraAmountType.FIXED_CENTS, amountText = "")
+                } else {
+                    editing
+                }
+        }
+
+        fun onExtraFormChange(new: SalaryExtraForm) {
+            extraForm.value = new
+        }
+
+        fun onDismissExtra() {
+            extraForm.value = null
+        }
+
+        /** Adds the extra being edited (or replaces it in place); it is stored with the screen's Save. */
+        fun onSaveExtra() {
+            val current = form.value
+            val editing = extraForm.value
+            val extra = editing?.toExtra(editing.editingId ?: idGenerator.newId(), current?.mode ?: return)?.first
+            if (current == null || editing == null || extra == null) return
+            val extras =
+                if (editing.editingId == null) {
+                    current.extras + extra
+                } else {
+                    current.extras.map { if (it.id == extra.id) extra else it }
+                }
+            form.value = current.copy(extras = extras)
+            extraForm.value = null
+        }
+
+        fun onDeleteExtra(id: String) {
+            val current = form.value ?: return
+            form.value = current.copy(extras = current.extras.filterNot { it.id == id })
+            extraForm.value = null
         }
 
         /** Stores the profile and regenerates the managed lines, naming new ones with [labels]. */
@@ -139,6 +198,7 @@ class SalaryProfileViewModel
             current: SalaryForm,
             saved: Boolean,
             busy: Boolean,
+            editing: SalaryExtraForm?,
         ): SalaryProfileUiState.Content {
             val result = current.toResult()
             val month = YearMonth.now(clock)
@@ -150,6 +210,16 @@ class SalaryProfileViewModel
                 hasSavedProfile = saved,
                 month = month,
                 workingDays = workingDaysIn(month),
+                extraEditor = editing?.let { editorStateOf(it, current.mode) },
+                canAddExtra = current.extras.size < MAX_SALARY_EXTRAS,
             )
+        }
+
+        private fun editorStateOf(
+            editing: SalaryExtraForm,
+            mode: SalaryInputMode,
+        ): SalaryExtraEditorState {
+            val (extra, invalid) = editing.toExtra(editing.editingId.orEmpty(), mode)
+            return SalaryExtraEditorState(editing, invalid, canSave = extra != null, mode = mode)
         }
     }

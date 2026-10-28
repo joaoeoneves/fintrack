@@ -16,6 +16,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -39,8 +40,10 @@ import java.time.ZoneId
 
 /**
  * A read-only date field that opens a [DatePickerDialog] when tapped anywhere on the field body,
- * not just on the trailing icon. Used by the Add/Edit Expense and Add/Edit Income date fields.
+ * not just on the trailing icon; [maxDate], when set, is the latest day that can be picked. Used by the Add/Edit
+ * Expense and Add/Edit Income date fields and the "Received" sheet.
  */
+@Suppress("LongParameterList") // independent optional field options (zone, label, latest pickable day)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReadOnlyDateField(
@@ -49,6 +52,7 @@ fun ReadOnlyDateField(
     modifier: Modifier = Modifier,
     zone: ZoneId = ZoneId.systemDefault(),
     @StringRes labelRes: Int = R.string.field_date,
+    maxDate: Instant? = null,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val displayDateFormatter = rememberLocaleAwareDateFormatter().withZone(zone)
@@ -86,32 +90,59 @@ fun ReadOnlyDateField(
     }
 
     if (showDatePicker) {
-        val datePickerState =
-            rememberDatePickerState(
-                initialSelectedDateMillis = date.toDatePickerMillis(zone),
-            )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            colors = finTrackDatePickerColors(),
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        onDateSelected(datePickerMillisToInstant(millis, date, zone))
-                    }
-                    showDatePicker = false
-                }) {
-                    Text(stringResource(R.string.action_ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        ) {
-            DatePicker(state = datePickerState, colors = finTrackDatePickerColors())
-        }
+        PickDateDialog(
+            date = date,
+            zone = zone,
+            maxDate = maxDate,
+            onDateSelected = onDateSelected,
+            onDismiss = { showDatePicker = false },
+        )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PickDateDialog(
+    date: Instant,
+    zone: ZoneId,
+    maxDate: Instant?,
+    onDateSelected: (Instant) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val datePickerState =
+        rememberDatePickerState(
+            initialSelectedDateMillis = date.toDatePickerMillis(zone),
+            selectableDates = maxDate?.let { NotAfter(it.toDatePickerMillis(zone)) } ?: DatePickerDefaults.AllDates,
+        )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        colors = finTrackDatePickerColors(),
+        confirmButton = {
+            TextButton(onClick = {
+                datePickerState.selectedDateMillis?.let { millis ->
+                    onDateSelected(datePickerMillisToInstant(millis, date, zone))
+                }
+                onDismiss()
+            }) {
+                Text(stringResource(R.string.action_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    ) {
+        DatePicker(state = datePickerState, colors = finTrackDatePickerColors())
+    }
+}
+
+/** Dates up to [maxMillis] (a picker UTC midnight) can be picked. */
+@OptIn(ExperimentalMaterial3Api::class)
+private class NotAfter(
+    private val maxMillis: Long,
+) : SelectableDates {
+    override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis <= maxMillis
 }
 
 /** Date-picker colours on the soft surface tone with the monochrome selection. */

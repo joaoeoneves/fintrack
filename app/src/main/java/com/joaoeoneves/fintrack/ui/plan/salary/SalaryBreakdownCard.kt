@@ -11,7 +11,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 
-/** The live result of the form: monthly gross, SS, IRS and net, plus the meal, lump sums, flex and profit share. */
+/** The live result of the form: monthly gross, SS, IRS and net, plus the meal, lump sums and each extra. */
 @Composable
 internal fun SalaryBreakdownCard(state: SalaryProfileUiState.Content) {
     val breakdown = state.breakdown ?: return
@@ -32,6 +32,10 @@ private fun BreakdownRows(
         rows += stringResource(R.string.salary_breakdown_irs) to -breakdown.irsCents
     }
     rows += stringResource(R.string.salary_breakdown_net) to breakdown.netMonthlyCents
+    if (breakdown.netDuoCents > 0) {
+        rows += stringResource(R.string.salary_breakdown_net_base) to breakdown.netBaseCents
+        rows += stringResource(R.string.salary_breakdown_net_duo) to breakdown.netDuoCents
+    }
     if (breakdown.mealRatePerDayCents > 0) {
         val monthName = formatShortMonthName(state.month, currentLocale())
         rows += stringResource(R.string.salary_breakdown_meal, monthName) to
@@ -43,12 +47,7 @@ private fun BreakdownRows(
     if (breakdown.christmasLumpNetCents > 0) {
         rows += stringResource(R.string.salary_field_net_christmas) to breakdown.christmasLumpNetCents
     }
-    if (breakdown.flexAnnualCents > 0) {
-        rows += stringResource(R.string.salary_breakdown_flex) to breakdown.flexQuarterlyCents.first()
-    }
-    if (breakdown.profitShareCents > 0) {
-        rows += stringResource(R.string.salary_breakdown_profit_share) to breakdown.profitShareCents
-    }
+    breakdown.extras.forEach { rows += it.name to it.totalCents }
     rows.forEachIndexed { index, (label, cents) ->
         if (index > 0) Hairline()
         SettingsRow(title = label, value = formatAmountCents(cents))

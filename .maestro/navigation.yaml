@@ -172,7 +172,6 @@ appId: com.joaoeoneves.fintrack
       ROW: "Nav Test Expense"
 - assertVisible: "Undo"
 - eraseText: 30
-- hideKeyboard
 - back
 - assertVisible:
     id: "dashboard_list"

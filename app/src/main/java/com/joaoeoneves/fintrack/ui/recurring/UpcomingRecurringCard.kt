@@ -21,7 +21,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -32,7 +35,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
+import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -41,6 +47,9 @@ import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.pressScale
+import com.joaoeoneves.fintrack.ui.plan.ReceivedIncomeSheet
+import com.joaoeoneves.fintrack.ui.plan.displayLabel
+import com.joaoeoneves.fintrack.ui.plan.rememberPaydayText
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -55,6 +64,7 @@ data class UpcomingRecurringModel(
     val onConfirm: (UpcomingOccurrence) -> Unit,
     val onSkip: (UpcomingOccurrence) -> Unit,
     val onManage: () -> Unit,
+    val onReceiveIncome: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
 )
 
 /** Shows the upcoming-recurring view model's failure and "Added ..." events in [snackbarHostState]. */
@@ -110,6 +120,59 @@ fun UpcomingRecurringCard(
             }
             Hairline()
         }
+        state.expectedIncome?.takeIf { it.rows.isNotEmpty() }?.let {
+            ExpectedIncomeGroup(expected = it, today = state.today, onReceive = model.onReceiveIncome)
+        }
+    }
+}
+
+/** The current month's income not yet received, offered from a week before payday: each row with "Received". */
+@Composable
+private fun ExpectedIncomeGroup(
+    expected: ExpectedIncome,
+    today: LocalDate,
+    onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
+) {
+    var receiving by remember { mutableStateOf<IncomeRow?>(null) }
+    val paydayText = rememberPaydayText(expected.payday)
+    SectionTitle(title = stringResource(R.string.plan_expected_income))
+    expected.rows.forEachIndexed { index, row ->
+        if (index > 0) Hairline()
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space12)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.Space12)) {
+                Text(
+                    text = row.displayLabel(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(text = formatAmountCents(row.cents), style = Amount, maxLines = 1)
+            }
+            Text(
+                text = stringResource(R.string.plan_payday, paydayText),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+            CompactPill(
+                text = stringResource(R.string.income_received),
+                onClick = { receiving = row },
+                modifier = Modifier.padding(top = Dimens.Space12),
+            )
+        }
+    }
+    receiving?.let { row ->
+        val paying = row.lines.filter { it.amountIn(expected.month, expected.workingDays) > 0L }
+        ReceivedIncomeSheet(
+            title = row.displayLabel(),
+            today = today,
+            editableAmountCents = paying.singleOrNull()?.amountIn(expected.month, expected.workingDays),
+            onConfirm = { date, cents ->
+                onReceive(row, date, cents)
+                receiving = null
+            },
+            onDismiss = { receiving = null },
+        )
     }
 }
 

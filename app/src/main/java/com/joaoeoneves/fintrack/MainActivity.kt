@@ -22,10 +22,13 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.joaoeoneves.fintrack.data.automation.AutomationSync
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.ui.auth.AuthUiState
@@ -54,6 +57,9 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var languageRepository: LanguageRepository
 
+    @Inject
+    lateinit var automationSync: AutomationSync
+
     // Shared with the hiltViewModel() lookups inside setContent (same activity store, same instances).
     private val themeViewModel: ThemeViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
@@ -65,6 +71,12 @@ class MainActivity : AppCompatActivity() {
         // is the real UI rather than a blank one.
         keepSplashUntilResolved(splash)
         observeAppLanguage()
+        // Each return to the foreground re-checks what is due (the day may have changed while backgrounded).
+        lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) = automationSync.onForeground()
+            },
+        )
         enableEdgeToEdge()
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()

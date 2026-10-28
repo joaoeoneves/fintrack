@@ -5,11 +5,15 @@ import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.GroupProgress
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
+import com.joaoeoneves.fintrack.domain.model.LimitGroup
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.PotsSummary
+import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.ui.common.UiText
+import java.time.LocalDate
 import java.time.YearMonth
 
 sealed interface MonthlyPlanUiState {
@@ -17,6 +21,7 @@ sealed interface MonthlyPlanUiState {
 
     /**
      * @property incomeLines the expected-income lines, in display order.
+     * @property incomeRows the same income as one row per salary component or manual line, for [period]'s month.
      * @property allocations one row per category with its planned limit (or none).
      * @property summary the plan's totals; it has no actual income or spend side, only planned amounts.
      * @property period the selected month (month periods only) the [progress] and fixed spending are measured on.
@@ -25,10 +30,13 @@ sealed interface MonthlyPlanUiState {
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
      * @property editor the income-line sheet, or `null` when it is closed.
      * @property groups planned vs actual per category group (and the implicit "Other") for [period]'s month.
+     * @property limitGroups every category with a limit, filed under its group, for the limits card.
      * @property pots the month's money split into earmarked pots and the base; `null` when not computed.
+     * @property receipts payday and which [incomeRows] were already received.
      */
     data class Content(
         val incomeLines: List<PlannedIncome>,
+        val incomeRows: List<IncomeRow>,
         val allocations: List<CategoryBudget>,
         val summary: MonthlyPlanSummary,
         val period: Period,
@@ -39,13 +47,29 @@ sealed interface MonthlyPlanUiState {
         val workingDays: WorkingDaysState,
         val editor: IncomeLineEditorState?,
         val groups: List<GroupProgress> = emptyList(),
+        val limitGroups: List<LimitGroup> = emptyList(),
         val pots: PotsSummary? = null,
+        val receipts: IncomeReceipts,
     ) : MonthlyPlanUiState
 
     data class Error(
         val message: UiText,
     ) : MonthlyPlanUiState
 }
+
+/**
+ * Payday and the receipts of [Content.period]'s month: [receivedOn] holds the day each fully received income row
+ * (keyed by [key]) was received; [canReceive] is false for future months; [today] caps the date of a receipt.
+ */
+data class IncomeReceipts(
+    val payday: LocalDate,
+    val today: LocalDate,
+    val canReceive: Boolean,
+    val receivedOn: Map<String, LocalDate> = emptyMap(),
+)
+
+/** The row's identity within a month's list: the id of its first line. */
+val IncomeRow.key: String get() = lines.first().id
 
 /**
  * The working days of [month]: [days] is what plans use (the override when [overridden], else the calendar
@@ -102,4 +126,6 @@ data class IncomeLineEditorState(
     val earmarkOptions: EarmarkOptions = EarmarkOptions(),
     /** A line generated from the salary profile: only its label and earmark can be changed here. */
     val managed: Boolean = false,
+    /** The salary component of a managed line, whose name replaces the label in the sheet. */
+    val component: SalaryComponent? = null,
 )

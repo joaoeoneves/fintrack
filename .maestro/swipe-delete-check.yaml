@@ -26,7 +26,7 @@ appId: com.joaoeoneves.fintrack
 # and before tapping "See all income" reliably brings it fully into view first.
 #
 # Assumes the app is already signed in, same as the other flows in this directory.
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin language to English before any of the (English) assertions below. Fresh installs now
 # default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer

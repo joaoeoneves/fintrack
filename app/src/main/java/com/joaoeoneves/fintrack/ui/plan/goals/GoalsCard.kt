@@ -18,17 +18,17 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.GoalProgress
 import com.joaoeoneves.fintrack.domain.model.GoalStatus
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
-import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /**
- * The "Goals" card: a progress bar and an on track / behind label per goal. Goals are optional: without any only
- * a light "Add a goal" entry shows (plus "Create from investments" when there are items to turn into goals).
+ * The "Goals" card: a progress bar and an on track / behind label per goal, then an "Add goal" row (plus "Create
+ * from investments" when there are items to turn into goals). Goals are optional, so without any only those rows show.
  */
 @Composable
 fun GoalsCard(
@@ -37,26 +37,24 @@ fun GoalsCard(
     modifier: Modifier = Modifier,
 ) {
     if (!state.loaded) return
-    val entryPoints: @Composable () -> Unit = {
-        GhostButton(text = stringResource(R.string.plan_goals_add), onClick = actions.onAdd)
-        if (state.investmentCandidates.isNotEmpty()) {
-            GhostButton(
-                text = stringResource(R.string.plan_goals_from_investments),
-                onClick = actions.onCreateFromInvestments,
-                modifier = Modifier.padding(top = Dimens.Space8),
-            )
-        }
-    }
-    if (state.goals.isEmpty()) {
-        Column(modifier = modifier.padding(top = Dimens.Space24)) { entryPoints() }
-        return
-    }
     SettingsGroup(label = stringResource(R.string.plan_goals_title), modifier = modifier) {
         state.goals.forEach { progress ->
             GoalRow(progress = progress, onClick = { actions.onEdit(progress.goal.id) })
             Hairline()
         }
-        Column(modifier = Modifier.padding(top = Dimens.Space12)) { entryPoints() }
+        SettingsRow(
+            title = stringResource(R.string.plan_goals_add),
+            onClick = actions.onAdd,
+            showChevron = true,
+        )
+        if (state.investmentCandidates.isNotEmpty()) {
+            Hairline()
+            SettingsRow(
+                title = stringResource(R.string.plan_goals_from_investments),
+                onClick = actions.onCreateFromInvestments,
+                showChevron = true,
+            )
+        }
     }
 }
 

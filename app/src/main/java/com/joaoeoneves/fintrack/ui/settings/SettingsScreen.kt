@@ -141,6 +141,7 @@ private fun SettingsScaffold(
             CurrencySection(selected = uiState.currency, onSelected = actions.onCurrencySelected)
             CategoriesSection(onOpen = actions.onOpenCategories)
             RecurringSection(onOpen = actions.onOpenRecurring)
+            AutomationSection()
             DataSection(onImportClick = actions.onImportClick, onExportClick = actions.onExportClick)
             BackupFlow { onExport, onRestore ->
                 DeleteAllDataFlow(

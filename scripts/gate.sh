@@ -15,10 +15,13 @@ case "$mode" in
   fast)
     filters=()
     for f in "$@"; do filters+=(--tests "$f"); done
-    ./gradlew --continue ktlintCheck detekt testDebugUnitTest "${filters[@]}"
+    # JVM-module tests only run unfiltered: a --tests filter matching nothing fails the task.
+    jvm_tests=()
+    [ ${#filters[@]} -eq 0 ] && jvm_tests+=(:core:model:test)
+    ./gradlew --continue ktlintCheck detekt testDebugUnitTest "${jvm_tests[@]}" "${filters[@]}"
     ;;
   full)
-    ./gradlew --continue ktlintCheck detekt testDebugUnitTest lintDebug \
+    ./gradlew --continue ktlintCheck detekt testDebugUnitTest :core:model:test lintDebug \
       assembleRelease compileDebugAndroidTestKotlin :baselineprofile:assemble
     ;;
   *)

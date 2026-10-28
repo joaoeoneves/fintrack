@@ -1,8 +1,11 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.MANAGED_KEYS
+import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
+import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
-import com.joaoeoneves.fintrack.domain.model.MAX_PROFIT_SHARE_PPM
+import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_MULTIPLE_PPM
+import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import kotlinx.serialization.json.Json
@@ -11,6 +14,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType.FIXED_CENTS as FIXED
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType.MULTIPLE_OF_BASE_PPM as MULTIPLE
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM as PERCENT
 
 /** The salary-profile record: validation mirroring `firestore.rules`, mapping, and the managed-key check. */
 class SalaryProfileRecordsTest {
@@ -31,7 +37,8 @@ class SalaryProfileRecordsTest {
         val decoded = Json.decodeFromString<LocalSalaryProfile>("""{"profitShareMonth":4}""")
 
         assertTrue(decoded.profitShareMonths.isEmpty())
-        assertEquals(listOf(4), decoded.toDomain().effectiveProfitShareMonths)
+        // A lone legacy month has no multiplier to migrate, so there is no extra.
+        assertEquals(emptyList<SalaryExtra>(), decoded.toDomain().extras)
         assertTrue(LocalSalaryProfile().mealSkipMonths.isEmpty())
     }
 
@@ -58,9 +65,9 @@ class SalaryProfileRecordsTest {
 
     @Test
     fun profitShareMultiplier_atMostTenTimes() {
-        validateSalaryProfile(valid.copy(profitShareMultiplierPpm = MAX_PROFIT_SHARE_PPM))
+        validateSalaryProfile(valid.copy(profitShareMultiplierPpm = MAX_EXTRA_MULTIPLE_PPM))
         validateSalaryProfile(valid.copy(profitShareMultiplierPpm = 0))
-        invalid(valid.copy(profitShareMultiplierPpm = MAX_PROFIT_SHARE_PPM + 1))
+        invalid(valid.copy(profitShareMultiplierPpm = MAX_EXTRA_MULTIPLE_PPM + 1))
         invalid(valid.copy(profitShareMultiplierPpm = -1))
     }
 
@@ -117,20 +124,27 @@ class SalaryProfileRecordsTest {
                 mealSkipMonths = setOf(3, 1),
                 holidaySubsidyMonth = 2,
                 christmasSubsidyMonth = 3,
-                flexPpm = 10,
-                flexAnnualCents = 11,
-                flexFirstMonth = 4,
-                flexWithdrawalFeePpm = 12,
-                profitShareMultiplierPpm = 13,
-                profitShareMonth = 5,
-                profitShareMonths = setOf(7, 2),
-                bonusCents = 14,
-                bonusMonth = 6,
+                extras =
+                    listOf(
+                        SalaryExtra("a1", "Flex", PERCENT, 10, setOf(4, 1), SalaryExtraDeductions.IRS, 12),
+                        SalaryExtra("b2", "Prize", FIXED, 14, setOf(6)),
+                        SalaryExtra("c3", "Profit", MULTIPLE, 13, setOf(7, 2), SalaryExtraDeductions.IRS_SS),
+                    ),
             )
 
         assertEquals(profile, profile.toLocal().toDomain())
         assertEquals(listOf(1, 3), profile.toLocal().mealSkipMonths)
-        assertEquals(listOf(2, 7), profile.toLocal().profitShareMonths)
+        assertEquals(
+            listOf(1, 4),
+            profile
+                .toLocal()
+                .extras
+                .first()
+                .months,
+        )
+        assertNull(profile.toLocal().flexPpm)
+        assertNull(profile.toLocal().bonusCents)
+        assertTrue(profile.toLocal().profitShareMonths.isEmpty())
     }
 
     @Test
@@ -147,26 +161,163 @@ class SalaryProfileRecordsTest {
 
     @Test
     fun managedKey_everyKnownKeyIsValid() {
-        MANAGED_KEYS.forEach { validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0, managedKey = it)) }
+        val keys =
+            listOf(MANAGED_NET_SALARY, "profile_duodecimos", "profile_meal", "profile_holiday", "profile_christmas") +
+                listOf("profile_bonus", "profile_profit_share", "profile_profit_share_3", "profile_flex_q2") +
+                listOf("profile_extra_abc_1", "profile_extra_Zz9_12")
+        keys.forEach { validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0, managedKey = it)) }
     }
 
     @Test
     fun managedKey_absentIsValid_unknownRejected() {
         validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0))
-        assertThrows(IllegalArgumentException::class.java) {
-            validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0, managedKey = "profile_other"))
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0, managedKey = ""))
+        listOf(
+            "profile_other",
+            "",
+            "profile_extra_abc_0",
+            "profile_extra_abc_13",
+            "profile_extra__1",
+            "profile_extra_a-b_1",
+        ).forEach {
+            assertThrows(IllegalArgumentException::class.java) {
+                validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0, managedKey = it))
+            }
         }
     }
 
     @Test
     fun managedKey_mapsBothWays() {
-        val local = LocalPlannedIncome("p", "Pay", 5, 0, managedKey = MANAGED_KEYS.first())
+        val local = LocalPlannedIncome("p", "Pay", 5, 0, managedKey = MANAGED_NET_SALARY)
 
-        assertEquals(MANAGED_KEYS.first(), local.toDomain().managedKey)
+        assertEquals(MANAGED_NET_SALARY, local.toDomain().managedKey)
         assertEquals(local, local.toDomain().toLocal())
         assertNull(LocalPlannedIncome("p", "Pay", 5, 0).toDomain().managedKey)
+    }
+
+    private val goodExtra = LocalSalaryExtra("e1", "Bonus", "FIXED_CENTS", 10_000, listOf(5))
+
+    private fun withExtras(vararg extras: LocalSalaryExtra) = valid.copy(extras = extras.toList())
+
+    @Test
+    fun extras_validOnesPass_atTheCapOfTen() {
+        validateSalaryProfile(withExtras(goodExtra))
+        validateSalaryProfile(valid.copy(extras = List(10) { goodExtra.copy(id = "e$it") }))
+        invalid(valid.copy(extras = List(11) { goodExtra.copy(id = "e$it") }))
+    }
+
+    @Test
+    fun extras_idsMustBeUniqueAndAlphanumericUpToTwenty() {
+        invalid(withExtras(goodExtra, goodExtra))
+        invalid(withExtras(goodExtra.copy(id = "")))
+        invalid(withExtras(goodExtra.copy(id = "a_b")))
+        invalid(withExtras(goodExtra.copy(id = "x".repeat(21))))
+        validateSalaryProfile(withExtras(goodExtra.copy(id = "x".repeat(20))))
+    }
+
+    @Test
+    fun extras_nameBetweenOneAndFiftyCodePoints() {
+        invalid(withExtras(goodExtra.copy(name = "")))
+        invalid(withExtras(goodExtra.copy(name = "   ")))
+        validateSalaryProfile(withExtras(goodExtra.copy(name = "x".repeat(50))))
+        invalid(withExtras(goodExtra.copy(name = "x".repeat(51))))
+        validateSalaryProfile(withExtras(goodExtra.copy(name = "\uD83D\uDE00".repeat(50))))
+    }
+
+    @Test
+    fun extras_monthsNonEmptyDistinctOneToTwelve() {
+        invalid(withExtras(goodExtra.copy(months = emptyList())))
+        invalid(withExtras(goodExtra.copy(months = listOf(0))))
+        invalid(withExtras(goodExtra.copy(months = listOf(13))))
+        invalid(withExtras(goodExtra.copy(months = listOf(3, 3))))
+        validateSalaryProfile(withExtras(goodExtra.copy(months = (1..12).toList())))
+    }
+
+    @Test
+    fun extras_amountBoundsPerType() {
+        val fixed = goodExtra
+        val multiple = goodExtra.copy(amountType = "MULTIPLE_OF_BASE_PPM")
+        val percent = goodExtra.copy(amountType = "PERCENT_OF_ANNUAL_GROSS_PPM")
+
+        validateSalaryProfile(withExtras(fixed.copy(amount = 1)))
+        validateSalaryProfile(withExtras(fixed.copy(amount = MAX_AMOUNT_CENTS)))
+        invalid(withExtras(fixed.copy(amount = 0)))
+        invalid(withExtras(fixed.copy(amount = MAX_AMOUNT_CENTS + 1)))
+        validateSalaryProfile(withExtras(multiple.copy(amount = MAX_EXTRA_MULTIPLE_PPM.toLong())))
+        invalid(withExtras(multiple.copy(amount = MAX_EXTRA_MULTIPLE_PPM + 1L)))
+        invalid(withExtras(multiple.copy(amount = 0)))
+        validateSalaryProfile(withExtras(percent.copy(amount = 1_000_000)))
+        invalid(withExtras(percent.copy(amount = 1_000_001)))
+        invalid(withExtras(percent.copy(amount = -1)))
+    }
+
+    @Test
+    fun extras_unknownTypeOrDeductions_andFeeOverHundredPercent_areRejected() {
+        invalid(withExtras(goodExtra.copy(amountType = "WEIRD")))
+        invalid(withExtras(goodExtra.copy(deductions = "WEIRD")))
+        validateSalaryProfile(withExtras(goodExtra.copy(deductions = "IRS_SS", feePpm = 1_000_000)))
+        invalid(withExtras(goodExtra.copy(feePpm = 1_000_001)))
+        invalid(withExtras(goodExtra.copy(feePpm = -1)))
+    }
+
+    @Test
+    fun toDomain_dropsExtrasWithUnknownEnums() {
+        val badType = goodExtra.copy(id = "e2", amountType = "WEIRD")
+        val badDeductions = goodExtra.copy(id = "e3", deductions = "X")
+        val local = withExtras(goodExtra, badType, badDeductions)
+
+        assertEquals(listOf("e1"), local.toDomain().extras.map { it.id })
+    }
+
+    @Test
+    fun v9Document_withLegacyFields_migratesToExtras_withTheGivenNames() {
+        val json =
+            """{"baseGrossCents":100000,"flexPpm":70000,"flexFirstMonth":2,"flexWithdrawalFeePpm":5000,""" +
+                """"profitShareMultiplierPpm":500000,"profitShareMonths":[4,10],"bonusCents":10000,"bonusMonth":5}"""
+        val decoded = Json.decodeFromString<LocalSalaryProfile>(json)
+
+        val extras = decoded.toDomain(LegacyExtraNames("F", "P", "B")).extras
+
+        assertEquals(listOf("flex", "profitshare", "bonus"), extras.map { it.id })
+        assertEquals(listOf("F", "P", "B"), extras.map { it.name })
+        assertEquals(setOf(2, 5, 8, 11), extras[0].months)
+        assertEquals(5_000, extras[0].feePpm)
+        assertEquals(setOf(4, 10), extras[1].months)
+        assertEquals(SalaryExtraDeductions.IRS_SS, extras[2].deductions)
+        assertEquals(10_000L, extras[2].amount)
+    }
+
+    @Test
+    fun v9Document_netMode_migratesFlexAsFixed() {
+        val json = """{"inputMode":"NET","netMonthlyCents":100000,"flexAnnualCents":100001,"bonusCents":5000}"""
+
+        val extras = Json.decodeFromString<LocalSalaryProfile>(json).toDomain().extras
+
+        assertEquals(listOf(100_001L, 5_000L), extras.map { it.amount })
+        assertEquals(SalaryExtraDeductions.NONE, extras[1].deductions)
+    }
+
+    @Test
+    fun explicitExtras_winOverLegacyFields() {
+        val local = valid.copy(extras = listOf(goodExtra), flexPpm = 70_000)
+
+        assertEquals(listOf("e1"), local.toDomain().extras.map { it.id })
+    }
+
+    @Test
+    fun v10_roundTrip_throughJson_keepsExtras_andLeavesLegacyFieldsOut() {
+        val extra = SalaryExtra("a", "Flex", PERCENT, 70_000, setOf(1, 4))
+        val profile = SalaryProfile(baseGrossCents = 100_000, extras = listOf(extra))
+        val local = profile.toLocal()
+
+        val text =
+            Json {
+                encodeDefaults = true
+                explicitNulls = false
+            }.encodeToString(LocalSalaryProfile.serializer(), local)
+        val back = Json.decodeFromString<LocalSalaryProfile>(text).toDomain()
+
+        assertEquals(profile, back)
+        assertTrue(!text.contains("flexPpm"))
+        validateSalaryProfile(local)
     }
 }

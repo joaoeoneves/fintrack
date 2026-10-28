@@ -8,11 +8,15 @@ import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.active
+import com.joaoeoneves.fintrack.domain.model.categorySuggestionIndex
 import com.joaoeoneves.fintrack.domain.model.defaultCategory
 import com.joaoeoneves.fintrack.domain.model.limitInput
+import com.joaoeoneves.fintrack.domain.model.normalizedMerchantName
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -30,6 +34,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.ZoneId
 import java.util.Locale
 import javax.inject.Inject
 
@@ -37,6 +42,10 @@ private const val TAG = "AddEditExpenseViewModel"
 
 // How long (in ms) the category listener is kept alive after the last collector disappears.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
+// How far back (in months) the category suggestions look.
+private const val SUGGESTION_HISTORY_MONTHS = 12L
+private const val DAY_SECONDS = 86_400L
 
 @HiltViewModel
 class AddEditExpenseViewModel
@@ -62,6 +71,8 @@ class AddEditExpenseViewModel
 
         private val savedEvents = Channel<Unit>(Channel.BUFFERED)
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
+
+        private var suggestionIndex: Map<String, CategoryId> = emptyMap()
 
         init {
             loadExpense()
@@ -108,6 +119,7 @@ class AddEditExpenseViewModel
                             categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first(),
                         )
                     _uiState.value = AddEditUiState.Ready(ExpenseFormState(category = category, date = Instant.now()))
+                    suggestionIndex = loadSuggestionIndex(expenseRepository)
                 }
             }
         }
@@ -116,7 +128,13 @@ class AddEditExpenseViewModel
 
         fun onNameChanged(name: String) =
             updateForm {
-                it.copy(name = limitInput(it.name, name, MAX_NAME_LENGTH), nameError = null, saveError = null)
+                val limited = limitInput(it.name, name, MAX_NAME_LENGTH)
+                val updated = it.copy(name = limited, nameError = null, saveError = null)
+                if (it.isEditMode || it.categoryTouched) {
+                    updated
+                } else {
+                    updated.withSuggestion(suggestionIndex, categoryOptions.value)
+                }
             }
 
         fun onAmountChanged(amountText: String) {
@@ -124,7 +142,15 @@ class AddEditExpenseViewModel
         }
 
         fun onCategorySelected(category: Category) {
-            updateForm { it.copy(category = category, categoryError = null, saveError = null) }
+            updateForm {
+                it.copy(
+                    category = category,
+                    categoryTouched = true,
+                    suggestedCategory = false,
+                    categoryError = null,
+                    saveError = null,
+                )
+            }
         }
 
         fun onDateSelected(date: Instant) = updateForm { it.copy(date = date, saveError = null) }
@@ -196,3 +222,26 @@ class AddEditExpenseViewModel
             }
         }
     }
+
+/** This form with the category last used for its name (see [categorySuggestionIndex]), if any. */
+private fun ExpenseFormState.withSuggestion(
+    index: Map<String, CategoryId>,
+    catalog: List<Category>,
+): ExpenseFormState {
+    val suggested = index[normalizedMerchantName(name)]?.let { id -> catalog.active().find { it.id == id } }
+    return when {
+        suggested != null -> copy(category = suggested, suggestedCategory = true)
+        suggestedCategory -> copy(category = defaultCategory(catalog), suggestedCategory = false)
+        else -> this
+    }
+}
+
+/** The category suggestions from the last year of expenses; any failure just means no suggestions. */
+private suspend fun loadSuggestionIndex(repository: ExpenseRepository): Map<String, CategoryId> =
+    runCatching {
+        val now = Instant.now()
+        val start = now.atZone(ZoneId.systemDefault()).minusMonths(SUGGESTION_HISTORY_MONTHS).toInstant()
+        val expenses = repository.observeExpenses(start, now.plusSeconds(DAY_SECONDS)).first()
+        categorySuggestionIndex(expenses)
+    }.onFailure { Log.w(TAG, "Failed to load category suggestions", it) }
+        .getOrDefault(emptyMap())

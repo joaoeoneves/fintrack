@@ -20,7 +20,7 @@ appId: com.joaoeoneves.fintrack
 # other flow's assertions/state are disrupted. Assumes the app is already signed in and lands on
 # the Dashboard, same assumption as golden-path.yaml -- see that flow's header comment for why.
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin language to English before the "OK" text assertions below, mirroring the exact
 # pattern (and reasoning) in golden-path.yaml's own step 0. action_ok ("OK") happens to have no

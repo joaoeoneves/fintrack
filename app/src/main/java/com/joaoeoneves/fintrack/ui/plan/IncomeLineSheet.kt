@@ -24,6 +24,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
+import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
@@ -102,7 +103,7 @@ fun IncomeLineSheet(
             onClick = {
                 submittedLabel = label.trim()
                 if (editor.managed) {
-                    onSave(label, editor.initialAmountCents ?: 0L, schedule)
+                    onSave(editor.initialLabel, editor.initialAmountCents ?: 0L, schedule)
                 } else {
                     parseAmountCents(amountText)
                         .onSuccess { cents -> onSave(label, cents, schedule) }
@@ -127,6 +128,13 @@ private fun ColumnScope.RemoveLineButton(
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
     }
+}
+
+/** The component name of a managed line (its stored label when it belongs to none). */
+@Composable
+private fun IncomeLineEditorState.managedName(): String {
+    val salaryComponent = component?.takeIf { it != SalaryComponent.EXTRA }
+    return salaryComponent?.label() ?: initialLabel
 }
 
 private fun incomeLineTitle(editingId: String?): Int =
@@ -155,7 +163,7 @@ private fun SheetFields(
 ) {
     if (editor.managed) {
         ManagedLineFields(
-            label = models.label,
+            name = editor.managedName(),
             amountCents = editor.initialAmountCents ?: 0L,
             schedule = schedule,
             onChange = onScheduleChange,
@@ -178,25 +186,18 @@ private fun SheetFields(
 }
 
 /**
- * The fields of a line generated from the salary profile: the label, the read-only amount and a hint to change
- * it in the profile, and (monthly lines only) the earmark.
+ * The fields of a line generated from the salary profile: its read-only component name and amount, a hint to
+ * change it in the profile, and (monthly lines only) the earmark.
  */
 @Composable
 private fun ManagedLineFields(
-    label: TextFieldModel,
+    name: String,
     amountCents: Long,
     schedule: IncomeSchedule,
     onChange: (IncomeSchedule) -> Unit,
     earmarkOptions: EarmarkOptions,
 ) {
-    MinimalTextField(
-        value = label.value,
-        onValueChange = label.onChange,
-        label = stringResource(R.string.plan_field_label),
-        isError = label.error != null,
-        supportingText = { label.error?.let { Text(it) } },
-        modifier = Modifier.fillMaxWidth(),
-    )
+    SettingsRow(title = stringResource(R.string.plan_field_label), value = name)
     SettingsRow(title = stringResource(R.string.plan_field_amount), value = formatAmountCents(amountCents))
     Text(
         text = stringResource(R.string.plan_managed_line_hint),

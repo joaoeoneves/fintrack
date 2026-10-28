@@ -38,6 +38,7 @@ class GuestBackupRestorer
                             categoryGroups = document.categoryGroups,
                             salaryProfile = document.salaryProfile,
                             goals = document.goals,
+                            automation = document.automation,
                         ),
                     ).getOrThrow()
                 document.preferences?.let { backup ->

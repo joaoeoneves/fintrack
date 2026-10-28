@@ -12,6 +12,8 @@ data class ExpenseFormState(
     val date: Instant = Instant.now(),
     val note: String = "",
     val isRefund: Boolean = false,
+    val categoryTouched: Boolean = false,
+    val suggestedCategory: Boolean = false,
     val nameError: UiText? = null,
     val amountError: UiText? = null,
     val categoryError: UiText? = null,

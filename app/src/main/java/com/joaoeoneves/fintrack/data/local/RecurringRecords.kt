@@ -38,6 +38,8 @@ data class LocalRecurringItem(
     val endDate: String? = null,
     val handledThrough: String? = null,
     val active: Boolean = true,
+    /** Added in schema version 11; absent (off) in older files. */
+    val autoPost: Boolean = false,
 )
 
 private fun parseLocalDate(raw: String): LocalDate? =
@@ -81,6 +83,7 @@ internal fun LocalRecurringItem.toDomainOrNull(): RecurringItem? {
                 endDate = end.getOrNull(),
                 handledThrough = handled.getOrNull(),
                 active = active,
+                autoPost = autoPost,
             )
         }
     return parsed?.takeIf { it.hasValidSchedule }.also {
@@ -103,6 +106,7 @@ internal fun RecurringItem.toLocal(): LocalRecurringItem =
         endDate = endDate?.toString(),
         handledThrough = handledThrough?.toString(),
         active = active,
+        autoPost = autoPost,
     )
 
 /** Mirror of the firestore.rules check (plus `endDate >= startDate`); throws [IllegalArgumentException]. */

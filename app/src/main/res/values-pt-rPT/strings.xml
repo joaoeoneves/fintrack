@@ -37,8 +37,6 @@
     <string name="error_generic_fallback">Ocorreu um erro</string>
     <string name="error_invalid_amount">Introduza um montante válido</string>
     <string name="error_sign_in_failed">Não foi possível iniciar sessão</string>
-    <string name="error_budget_save_failed">Não foi possível guardar o orçamento</string>
-    <string name="error_budget_remove_failed">Não foi possível remover o orçamento</string>
     <string name="error_sign_out_failed">Não foi possível terminar sessão</string>
 
     <!-- Autenticação -->
@@ -98,6 +96,7 @@
     <string name="expense_field_name">Nome</string>
     <string name="expense_field_category">Categoria</string>
     <string name="error_name_required">O nome é obrigatório</string>
+    <string name="expense_category_suggested">Igual à última vez</string>
     <string name="error_category_required">Escolha uma categoria</string>
     <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
 
@@ -335,7 +334,7 @@
     <string name="plan_over_by">Acima do plano em %1$s</string>
     <string name="plan_expected_income">Rendimento previsto</string>
     <string name="plan_received">recebido %1$s</string>
-    <string name="plan_planned_allocations">Afetações planeadas</string>
+    <string name="plan_planned_allocations">Planeado</string>
     <string name="plan_planned_spending">Gastos planeados</string>
     <string name="plan_planned_saving">Poupança planeada</string>
     <string name="plan_leftover">Restante</string>
@@ -349,7 +348,7 @@
     <string name="plan_edit">Editar plano</string>
     <string name="plan_setup_title">Planeie o seu mês</string>
     <string name="plan_setup_message">Adicione o rendimento previsto para ver quanto pode gastar.</string>
-    <string name="plan_allocations">Afetações</string>
+    <string name="plan_allocations">Limites</string>
     <string name="plan_not_planned">Sem plano</string>
     <string name="plan_add_income_line">Adicionar rendimento</string>
     <string name="plan_income_line_new">Novo rendimento</string>
@@ -407,6 +406,9 @@
     <string name="recurring_end_date">Data de fim</string>
     <string name="recurring_end_date_add">Adicionar data de fim</string>
     <string name="recurring_end_date_clear">Remover data de fim</string>
+    <string name="recurring_auto_post">Lançar automaticamente</string>
+    <string name="recurring_auto_post_hint">Registado na data, sem precisar de confirmar</string>
+    <string name="recurring_automatic">Automático</string>
     <string name="error_recurring_save_failed">Não foi possível guardar o item recorrente</string>
     <string name="error_recurring_not_found">Este item recorrente já não existe</string>
     <string name="error_recurring_end_before_start">A data de fim não pode ser anterior à data de início</string>
@@ -490,12 +492,12 @@
     <string name="cd_more_working_days">Mais dias úteis</string>
 
     <string name="plan_groups_title">Grupos</string>
-    <string name="plan_groups_empty">Agrupe as suas categorias (alimentação, investimentos, …) para ver o plano de cada grupo num relance.</string>
+    <string name="plan_groups_empty">Agrupe categorias para ver o plano por grupo</string>
     <string name="plan_groups_suggest">Criar grupos sugeridos</string>
+    <string name="plan_groups_create">Criar grupo</string>
     <string name="plan_groups_manage">Gerir grupos</string>
     <string name="plan_group_other">Outros</string>
     <string name="plan_from_recurring">a partir de recorrentes</string>
-    <string name="cd_group_toggle">Mostrar as categorias de %1$s</string>
     <string name="group_suggested_recurring">Recorrentes</string>
     <string name="group_suggested_investments">Investimentos</string>
     <string name="group_suggested_food">Alimentação</string>
@@ -513,7 +515,6 @@
     <string name="plan_not_in">Exceto em</string>
     <string name="plan_earmark_for">Reservar para</string>
     <string name="plan_earmark_none">Nenhum</string>
-    <string name="plan_earmark_categories">Categorias</string>
     <string name="plan_pot">Pote</string>
     <string name="plan_pots_title">Potes</string>
     <string name="plan_pot_base">Base</string>
@@ -523,7 +524,6 @@
     <string name="plan_pot_overflow_row">−%1$s · %2$s</string>
     <string name="cd_pot">Pote: %1$s</string>
 
-    <string name="plan_salary_section">Salário</string>
     <string name="plan_salary_profile_row">Perfil salarial</string>
     <string name="plan_from_salary_profile">Do perfil salarial</string>
     <string name="plan_managed_line_hint">Gerada a partir do perfil salarial. Altere o valor e o calendário aí.</string>
@@ -539,7 +539,7 @@
     <string name="salary_spread_full" formatted="false">100%</string>
     <string name="salary_group_taxes">Impostos</string>
     <string name="salary_field_irs_base" formatted="false">Taxa de retenção de IRS (%)</string>
-    <string name="salary_field_irs_subsidies" formatted="false">Taxa de IRS nos subsídios (%)</string>
+    <string name="salary_field_irs_subsidies" formatted="false">Taxa de IRS nos duodécimos (%)</string>
     <string name="salary_irs_subsidies_hint">Igual à taxa base se vazio</string>
     <string name="salary_field_irs_jovem" formatted="false">IRS Jovem (% isento)</string>
     <string name="salary_field_ss" formatted="false">Segurança Social (%)</string>
@@ -554,16 +554,28 @@
     <string name="salary_meal_hint">Pago por cada dia útil; marque as férias nos dias úteis do Plano.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
-    <string name="salary_group_flex">Benefícios flexíveis</string>
-    <string name="salary_field_flex_percent" formatted="false">Percentagem do bruto anual (%)</string>
-    <string name="salary_field_flex_annual">Valor anual</string>
-    <string name="salary_flex_first_month">Primeiro pagamento, depois de 3 em 3 meses</string>
-    <string name="salary_field_flex_fee" formatted="false">Taxa de resgate (%)</string>
+    <string name="salary_extras_add">Adicionar extra</string>
+    <string name="salary_extra_new">Novo extra</string>
+    <string name="salary_extra_edit">Editar extra</string>
+    <string name="salary_extra_name">Nome</string>
+    <string name="salary_extra_type_fixed">Valor</string>
+    <string name="salary_extra_type_multiple">× salário base</string>
+    <string name="salary_extra_type_percent" formatted="false">% do bruto anual</string>
+    <string name="salary_extra_value_fixed">Valor por ano</string>
+    <string name="salary_extra_value_multiple">Múltiplo do salário base</string>
+    <string name="salary_extra_value_percent" formatted="false">Percentagem do bruto anual (%)</string>
+    <string name="salary_extra_months">Pago em</string>
+    <string name="salary_extra_deductions">Descontos</string>
+    <string name="salary_extra_deductions_none">Nenhum</string>
+    <string name="salary_extra_deductions_irs">IRS</string>
+    <string name="salary_extra_deductions_irs_ss">IRS + SS</string>
+    <string name="salary_extra_fee" formatted="false">Taxa (%)</string>
+    <string name="salary_extra_delete">Eliminar extra</string>
+    <string name="salary_extra_gross_only">Só no modo bruto</string>
+    <string name="salary_extra_default_flex">Benefícios flexíveis</string>
+    <string name="salary_extra_default_profit_share">Distribuição de lucros</string>
+    <string name="salary_extra_default_bonus">Prémio</string>
     <string name="salary_group_extras">Extras</string>
-    <string name="salary_field_profit_share">Distribuição de lucros (× salário base)</string>
-    <string name="salary_profit_month">Distribuição de lucros paga em</string>
-    <string name="salary_field_bonus">Prémio</string>
-    <string name="salary_bonus_month">Prémio pago em</string>
     <string name="salary_error_invalid">Introduza um valor válido</string>
     <string name="salary_breakdown_title">Detalhe</string>
     <string name="salary_breakdown_gross">Bruto mensal</string>
@@ -571,8 +583,6 @@
     <string name="salary_breakdown_irs">IRS</string>
     <string name="salary_breakdown_net">Líquido mensal</string>
     <string name="salary_breakdown_meal">Subsídio de refeição em %1$s</string>
-    <string name="salary_breakdown_flex">Benefícios flexíveis por pagamento</string>
-    <string name="salary_breakdown_profit_share">Distribuição de lucros</string>
     <string name="salary_delete">Eliminar perfil salarial</string>
     <string name="salary_delete_title">Eliminar o perfil salarial?</string>
     <string name="salary_delete_message">As linhas de rendimento geradas por ele também são removidas. As suas linhas ficam.</string>
@@ -581,10 +591,7 @@
     <string name="plan_tab_month">Mês</string>
     <string name="plan_tab_year">Ano</string>
     <string name="annual_income_title">Rendimento do ano</string>
-    <string name="annual_income_regular">Rendimento regular</string>
-    <string name="annual_income_extras">Extras</string>
     <string name="annual_income_total">Rendimento total</string>
-    <string name="annual_extra_in_month">%1$s · %2$s</string>
     <string name="annual_actual_of_planned">%1$s de %2$s</string>
     <string name="annual_pots_title">Potes no ano</string>
     <string name="annual_subscriptions_title">Subscrições anuais</string>
@@ -592,10 +599,10 @@
     <string name="annual_leftover_title">Sobra deste ano</string>
     <string name="annual_leftover_caption">Rendimento menos despesa planeada, %1$s</string>
     <string name="annual_empty_title">Nada planeado para %1$s</string>
-    <string name="annual_empty_message">Adicione rendimento e dotações na vista Mês para ver o ano.</string>
+    <string name="annual_empty_message">Adicione rendimentos e limites na vista Mês para ver o ano.</string>
 
     <string name="plan_goals_title">Objetivos</string>
-    <string name="plan_goals_add">Adicionar um objetivo</string>
+    <string name="plan_goals_add">Adicionar objetivo</string>
     <string name="plan_goals_from_investments">Criar a partir dos investimentos</string>
     <string name="goal_new">Novo objetivo</string>
     <string name="goal_edit">Editar objetivo</string>
@@ -631,4 +638,18 @@
     <string name="salary_duplicates_message">Tem outras linhas de rendimento mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-las para não contar a dobrar?</string>
     <string name="salary_duplicates_remove">Remover selecionadas</string>
     <string name="salary_duplicates_keep">Manter</string>
+    <string name="plan_income_salary">Salário</string>
+    <string name="plan_income_meal">Subsídio de refeição</string>
+    <string name="plan_income_subsidies">Subsídios</string>
+    <string name="salary_breakdown_net_base">Salário base (líquido)</string>
+    <string name="salary_breakdown_net_duo">Duodécimos (líquido)</string>
+    <string name="salary_line_duodecimos">Subsídios (duodécimos)</string>
+    <string name="income_received">Recebido</string>
+    <string name="plan_received_on">Recebido a %1$s</string>
+    <string name="plan_payday">Dia de pagamento: %1$s</string>
+    <string name="plan_received_amount">Valor recebido</string>
+    <string name="settings_section_automation">Automação</string>
+    <string name="settings_payday_title">Registar rendimentos no dia de pagamento</string>
+    <string name="settings_payday_subtitle">Último dia útil do mês</string>
+    <string name="settings_payday_recurring_hint">Desative os itens recorrentes de salário para não o registar duas vezes</string>
 </resources>

@@ -160,13 +160,15 @@ private fun BudgetIcon(category: Category) {
 }
 
 @Composable
-private fun budgetStatus(budget: CategoryBudget): String =
-    if (budget.planned != null) {
+private fun budgetStatus(budget: CategoryBudget): String {
+    val planned = budget.planned
+    return if (planned != null) {
         stringResource(
             R.string.budget_spent_of_limit,
             formatAmountCents(budget.spentCents),
-            formatAmountCents(budget.planned),
+            formatAmountCents(planned),
         )
     } else {
         stringResource(R.string.budget_spent_no_limit, formatAmountCents(budget.spentCents))
     }
+}

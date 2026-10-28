@@ -4,6 +4,8 @@ import com.joaoeoneves.fintrack.domain.model.DEFAULT_SS_PPM
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.testutil.bonusExtra
+import com.joaoeoneves.fintrack.testutil.flexExtra
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -97,12 +99,7 @@ class SalaryFormParsingTest {
                 ss = "12.5",
                 exempt = "50",
                 meal = "9,00",
-                flexPercent = "7",
-                flexFee = "0.5",
-                profitMultiplier = "0.5",
-                profitMonths = listOf(4),
-                bonus = "100",
-                bonusMonth = 5,
+                extras = listOf(flexExtra(), bonusExtra()),
                 // NET-only fields must not leak into a GROSS profile.
                 netMonthly = "999",
             )
@@ -121,12 +118,7 @@ class SalaryFormParsingTest {
                 ssPpm = 125_000,
                 irsJovemExemptPpm = 500_000,
                 mealRatePerDayCents = 900,
-                flexPpm = 70_000,
-                flexWithdrawalFeePpm = 5_000,
-                profitShareMultiplierPpm = 500_000,
-                profitShareMonths = setOf(4),
-                bonusCents = 10_000,
-                bonusMonth = 5,
+                extras = listOf(flexExtra(), bonusExtra()),
             ),
             result.profile,
         )
@@ -139,11 +131,9 @@ class SalaryFormParsingTest {
                 mode = SalaryInputMode.NET,
                 netMonthly = "1200",
                 netHoliday = "600",
-                flexAnnual = "1000,01",
                 base = "5000",
                 irsBase = "10",
-                profitMultiplier = "1",
-                bonus = "50",
+                extras = listOf(bonusExtra(cents = 5_000)),
             )
 
         val result = form.toResult()
@@ -153,10 +143,8 @@ class SalaryFormParsingTest {
         assertEquals(SalaryInputMode.NET, profile.inputMode)
         assertEquals(120_000L, profile.netMonthlyCents)
         assertEquals(60_000L, profile.netHolidayLumpCents)
-        assertEquals(100_001L, profile.flexAnnualCents)
         assertNull(profile.baseGrossCents)
-        assertNull(profile.profitShareMultiplierPpm)
-        assertEquals(5_000L, profile.bonusCents)
+        assertEquals(listOf(bonusExtra(cents = 5_000)), profile.extras)
     }
 
     @Test
@@ -166,12 +154,12 @@ class SalaryFormParsingTest {
 
     @Test
     fun invalidFields_areReported() {
-        val form = SalaryForm(base = "abc", irsBase = "120", ss = "x", meal = "-1", profitMultiplier = "11")
+        val form = SalaryForm(base = "abc", irsBase = "120", ss = "x", meal = "-1")
 
         val result = form.toResult()
 
         assertEquals(
-            setOf(SalaryField.BASE, SalaryField.IRS_BASE, SalaryField.SS, SalaryField.MEAL, SalaryField.PROFIT_SHARE),
+            setOf(SalaryField.BASE, SalaryField.IRS_BASE, SalaryField.SS, SalaryField.MEAL),
             result.invalid,
         )
         assertFalse(result.hasRequiredAmount)
@@ -184,22 +172,12 @@ class SalaryFormParsingTest {
     }
 
     @Test
-    fun bonusMonthAndProfitMonth_onlyKeptWhenTheValueIsSet() {
-        val profile = SalaryForm(base = "10", bonusMonth = 7, profitMonths = listOf(8)).toResult().profile
-
-        assertNull(profile.bonusMonth)
-        assertTrue(profile.profitShareMonths.isEmpty())
-    }
-
-    @Test
     fun toForm_formatsForTheSeparator() {
         val profile =
             SalaryProfile(
                 baseGrossCents = 123_456,
                 irsBasePpm = 115_000,
                 ssPpm = 125_000,
-                flexPpm = 70_000,
-                profitShareMultiplierPpm = 1_500_000,
                 mealRatePerDayCents = 900,
             )
 
@@ -210,8 +188,6 @@ class SalaryFormParsingTest {
         assertEquals("1234.56", dot.base)
         assertEquals("11,5", comma.irsBase)
         assertEquals("12.5", dot.ss)
-        assertEquals("7", dot.flexPercent)
-        assertEquals("1,5", comma.profitMultiplier)
         assertEquals("9", dot.meal.substringBefore('.'))
     }
 
@@ -223,9 +199,7 @@ class SalaryFormParsingTest {
         assertEquals("", form.irsBase)
         assertEquals("", form.irsSubsidies)
         assertEquals("", form.exempt)
-        assertEquals("", form.flexFee)
-        assertEquals("", form.profitMultiplier)
-        assertEquals("", form.bonus)
+        assertTrue(form.extras.isEmpty())
     }
 
     @Test
@@ -240,13 +214,7 @@ class SalaryFormParsingTest {
                 irsJovemExemptPpm = 250_000,
                 mealRatePerDayCents = 905,
                 holidaySubsidyMonth = 7,
-                flexPpm = 70_000,
-                flexFirstMonth = 3,
-                flexWithdrawalFeePpm = 5_000,
-                profitShareMultiplierPpm = 1_500_000,
-                profitShareMonths = setOf(4, 9),
-                bonusCents = 10_000,
-                bonusMonth = 9,
+                extras = listOf(flexExtra(feePpm = 5_000), bonusExtra(month = 9)),
             )
 
         assertEquals(profile, profile.toForm(',').toResult().profile)
@@ -261,9 +229,7 @@ class SalaryFormParsingTest {
                 netMonthlyCents = 120_050,
                 netHolidayLumpCents = 60_000,
                 netChristmasLumpCents = 61_000,
-                flexAnnualCents = 100_001,
-                bonusCents = 5_000,
-                bonusMonth = 2,
+                extras = listOf(bonusExtra(cents = 5_000, month = 2)),
             )
 
         assertEquals(profile, profile.toForm(',').toResult().profile)
@@ -304,13 +270,6 @@ class SalaryFormParsingTest {
     }
 
     @Test
-    fun toForm_profitMonths_fallBackToLegacyThenDefault() {
-        assertEquals(listOf(2, 7), SalaryProfile(profitShareMonths = setOf(7, 2)).toForm('.').profitMonths)
-        assertEquals(listOf(5), SalaryProfile(profitShareMonth = 5).toForm('.').profitMonths)
-        assertEquals(listOf(3), SalaryProfile().toForm('.').profitMonths)
-    }
-
-    @Test
     fun toResult_ignoresMealSkipMonths() {
         assertTrue(
             SalaryForm(base = "10")
@@ -338,13 +297,5 @@ class SalaryFormParsingTest {
     fun toggleMonth_withoutMax_accumulates() {
         assertEquals(listOf(1, 2, 3, 4), toggleMonth(listOf(1, 2, 3), 4, null))
         assertEquals(listOf(1, 3), toggleMonth(listOf(1, 2, 3), 2, null))
-    }
-
-    @Test
-    fun profitMonths_reachTheProfile_onlyWithAMultiplier() {
-        val with = SalaryForm(base = "10", profitMultiplier = "1", profitMonths = listOf(6, 3)).toResult().profile
-
-        assertEquals(setOf(3, 6), with.profitShareMonths)
-        assertNull(with.profitShareMonth)
     }
 }

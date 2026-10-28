@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
@@ -54,7 +55,9 @@ class SalaryProfileViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = SalaryProfileViewModel(profiles, ManageSalaryProfile(profiles, income), income, clock)
+    private val manage get() = ManageSalaryProfile(profiles, income)
+
+    private fun viewModel() = SalaryProfileViewModel(profiles, manage, income, clock) { "id1" }
 
     private fun TestScope.started(vm: SalaryProfileViewModel): SalaryProfileViewModel {
         backgroundScope.launch { vm.uiState.collect {} }
@@ -139,7 +142,7 @@ class SalaryProfileViewModelTest {
             advanceUntilIdle()
 
             assertEquals(100_000L, profiles.profile?.baseGrossCents)
-            assertEquals(listOf(MANAGED_NET_SALARY), income.lines.map { it.id })
+            assertEquals(listOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS), income.lines.map { it.id })
             assertEquals(SalaryProfileEvent.Done, vm.eventFlow.first())
         }
 

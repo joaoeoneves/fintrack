@@ -14,7 +14,7 @@ appId: com.joaoeoneves.fintrack
 # golden-path.yaml. Assumes no existing recurring item is named "Maestro Rent"; everything this
 # flow adds is removed again at the end.
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English + EUR, mirroring monthly-plan.yaml ---
 - tapOn:

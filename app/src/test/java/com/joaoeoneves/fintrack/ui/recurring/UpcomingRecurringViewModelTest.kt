@@ -2,11 +2,17 @@ package com.joaoeoneves.fintrack.ui.recurring
 
 import android.app.Application
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
+import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
+import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
+import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
@@ -51,7 +57,14 @@ class UpcomingRecurringViewModelTest {
     private fun viewModel(repo: FakeRecurringRepository) =
         UpcomingRecurringViewModel(
             ObserveUpcomingRecurring(repo),
+            ObserveExpectedIncome(FakePlannedIncomeRepository(), FakeMonthSettingsRepository(), FakeIncomeRepository()),
             HandleRecurringOccurrence(repo, FakeCategoryRepository()),
+            RecordPayday(
+                FakePlannedIncomeRepository(),
+                FakeMonthSettingsRepository(),
+                FakeIncomeRepository(),
+                FakeAutomationSettingsRepository(),
+            ),
             clock,
         )
 

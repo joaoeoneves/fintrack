@@ -6,7 +6,7 @@
 # the persisted session was lost and this flow will fail fast at the "Net balance" assertion below.
 appId: com.joaoeoneves.fintrack
 ---
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin language to English before any of the (English) assertions below. Fresh installs now
 # default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer

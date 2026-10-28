@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>LongParameterList:ExpenseCsvWriterTest.kt$ExpenseCsvWriterTest$( id: String = "", name: String, amountCents: Long, category: Category, date: Instant, note: String?, )</ID>
-    <ID>LongParameterList:ExpenseListViewModelTest.kt$ExpenseListViewModelTest$( id: String, name: String = id, amountCents: Long, category: Category = BuiltInCategories.SHOPPING, date: Instant, note: String? = null, )</ID>
     <ID>LongParameterList:FakeExpenseRepositoryTest.kt$FakeExpenseRepositoryTest$( id: String = "", name: String = "expense", amountCents: Long = 1_000L, category: Category = BuiltInCategories.SHOPPING, date: Instant = day1, note: String? = null, )</ID>
     <ID>LongParameterList:ImportExportViewModelTest.kt$ImportExportViewModelTest$( id: String = "", name: String, amountCents: Long = 500L, category: Category = BuiltInCategories.SHOPPING, date: Instant = Instant.parse("2024-01-15T00:00:00Z"), note: String? = null, )</ID>
     <ID>SwallowedException:FakeExpenseRepositoryTest.kt$FakeExpenseRepositoryTest$e: RuntimeException</ID>

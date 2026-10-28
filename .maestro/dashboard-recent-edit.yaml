@@ -10,7 +10,7 @@ appId: com.joaoeoneves.fintrack
 # Creates "Maestro E2E Recent Expense" and "Maestro E2E Recent Income" and deletes each at the end
 # while its list is search-filtered to that name, so no pre-existing data is ever touched.
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b.
 - tapOn:

@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_SS_PPM
+import com.joaoeoneves.fintrack.domain.model.SalaryExtra
+import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import java.math.BigDecimal
@@ -23,17 +25,28 @@ internal fun SalaryProfile.toForm(decimalSeparator: Char): SalaryForm {
         netChristmas = cents(netChristmasLumpCents),
         meal = cents(mealRatePerDayCents),
         subsidyMonths = listOf(holidaySubsidyMonth, christmasSubsidyMonth).distinct().sorted(),
-        flexPercent = percent(flexPpm),
-        flexAnnual = cents(flexAnnualCents),
-        flexFirstMonth = flexFirstMonth,
-        flexFee = percent(flexWithdrawalFeePpm),
-        profitMultiplier =
-            profitShareMultiplierPpm?.let { formatScaled(it, MULTIPLIER_SCALE, decimalSeparator) }.orEmpty(),
-        profitMonths = effectiveProfitShareMonths,
-        bonus = cents(bonusCents),
-        bonusMonth = bonusMonth ?: SalaryForm().bonusMonth,
+        extras = extras,
     )
 }
+
+/** The editor form for [this] extra, with the value and fee formatted for [decimalSeparator]. */
+internal fun SalaryExtra.toExtraForm(decimalSeparator: Char): SalaryExtraForm =
+    SalaryExtraForm(
+        editingId = id,
+        name = name,
+        amountType = amountType,
+        amountText =
+            when (amountType) {
+                SalaryExtraAmountType.FIXED_CENTS -> amount.toAmountInputText(decimalSeparator)
+                SalaryExtraAmountType.MULTIPLE_OF_BASE_PPM ->
+                    formatScaled(amount.toInt(), MULTIPLIER_SCALE, decimalSeparator)
+                SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM ->
+                    formatScaled(amount.toInt(), PERCENT_SCALE, decimalSeparator)
+            },
+        months = months.sorted(),
+        deductions = deductions,
+        feeText = feePpm.takeIf { it > 0 }?.let { formatScaled(it, PERCENT_SCALE, decimalSeparator) }.orEmpty(),
+    )
 
 private fun formatScaled(
     ppm: Int,

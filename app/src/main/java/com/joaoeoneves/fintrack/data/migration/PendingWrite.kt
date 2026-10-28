@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.data.toFirestoreMap
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
 
 /** One document to create: `users/{uid}/[collection]/[id]` with [data]. */
 internal class PendingWrite(
@@ -17,12 +18,12 @@ internal class PendingWrite(
 /**
  * The planned writes grouped into batches, in commit order: category groups, categories, budgets, expenses, income,
  * planned income,
- * recurring items, month settings, salary profile, goals.
+ * recurring items, month settings, salary profile, automation settings, goals.
  * Every batch holds at most 400 writes; budget, expense and recurring batches also respect the rules' cap on
  * distinct custom categories. A planned record that cannot be mapped is a bug (the planner validates
  * everything) and throws instead of being silently dropped.
  */
-internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
+internal fun MigrationPlan.toBatches(legacyNames: LegacyExtraNames = LegacyExtraNames()): List<List<PendingWrite>> {
     val groupWrites = categoryGroups.map { PendingWrite("categoryGroups", it.id, it.toDomain().toFirestoreMap()) }
     val categoryWrites =
         categories.map { category ->
@@ -69,11 +70,13 @@ internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
     // The salary profile is a single document in the `plan` collection, committed after the lines it produced.
     val salaryProfileBatches =
         listOfNotNull(salaryProfile).map {
-            listOf(PendingWrite("plan", "salaryProfile", it.toDomain().toFirestoreMap()))
+            listOf(PendingWrite("plan", "salaryProfile", it.toDomain(legacyNames).toFirestoreMap()))
         }
+    val automationBatches =
+        listOfNotNull(automation).map { listOf(PendingWrite("plan", "automation", it.toDomain().toFirestoreMap())) }
     return groupWrites.chunked(BATCH_CHUNK_SIZE) + categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches +
         expenseBatches + incomeBatches + plannedIncomeBatches + recurringBatches + monthSettingsBatches +
-        salaryProfileBatches + goalBatches()
+        salaryProfileBatches + automationBatches + goalBatches()
 }
 
 // Goals reference categories and recurring items by id only (shape-checked in the rules), so they go last.

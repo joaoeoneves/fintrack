@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 9
+internal const val LOCAL_SCHEMA_VERSION = 12
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -30,6 +30,8 @@ data class LocalDataDocument(
     val salaryProfile: LocalSalaryProfile? = null,
     /** Savings goals (absent in schema v1 to v8 files). */
     val goals: List<LocalSavingsGoal> = emptyList(),
+    /** The automation settings singleton (absent in schema v1 to v11 files). */
+    val automation: LocalAutomation? = null,
 ) {
     /** Whether there is no user data at all. */
     val isEmpty: Boolean get() =
@@ -42,7 +44,8 @@ data class LocalDataDocument(
             monthSettings.isEmpty() &&
             categoryGroups.isEmpty() &&
             salaryProfile == null &&
-            goals.isEmpty()
+            goals.isEmpty() &&
+            automation == null
 }
 
 @Serializable
@@ -147,6 +150,13 @@ data class LocalSavingsGoal(
     val order: Int = 0,
 )
 
+/** The automation settings (schema v12): [paydayThrough] is the ISO `yyyy-MM` cursor of the payday automation. */
+@Serializable
+data class LocalAutomation(
+    val paydayEnabled: Boolean = false,
+    val paydayThrough: String? = null,
+)
+
 /**
  * The salary profile (schema v8): rates in ppm, amounts in cents, the input mode as a
  * [com.joaoeoneves.fintrack.domain.model.SalaryInputMode] name. Absent fields take the domain defaults.
@@ -176,4 +186,19 @@ data class LocalSalaryProfile(
     val profitShareMonths: List<Int> = emptyList(),
     val bonusCents: Long? = null,
     val bonusMonth: Int? = null,
+    /** The user-defined extras (absent in schema v1 to v9 files, which carry the legacy fields above instead). */
+    val extras: List<LocalSalaryExtra> = emptyList(),
+)
+
+@Serializable
+data class LocalSalaryExtra(
+    val id: String,
+    val name: String,
+    /** A `SalaryExtraAmountType` name. */
+    val amountType: String,
+    val amount: Long,
+    val months: List<Int>,
+    /** A `SalaryExtraDeductions` name. */
+    val deductions: String = "NONE",
+    val feePpm: Int = 0,
 )

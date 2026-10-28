@@ -23,6 +23,7 @@ fun recurringItem(
     endDate: LocalDate? = null,
     handledThrough: LocalDate? = null,
     active: Boolean = true,
+    autoPost: Boolean = false,
 ) = RecurringItem(
     id = id,
     type = type,
@@ -37,6 +38,7 @@ fun recurringItem(
     endDate = endDate,
     handledThrough = handledThrough,
     active = active,
+    autoPost = autoPost,
 )
 
 /** Shorthand for a date in tests. */

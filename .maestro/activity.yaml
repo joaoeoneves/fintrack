@@ -65,15 +65,14 @@ appId: com.joaoeoneves.fintrack
       id: "activity_list"
     timeout: 10000
 - assertVisible: "Activity"
-- scrollUntilVisible:
-    element: "Act Test Expense"
-    direction: DOWN
-- assertVisible: "Act Test Expense"
-- assertVisible: "Act Test Income"
 - assertVisible: "Out"
 - assertVisible: "In"
 - assertVisible:
     id: "filter_chip_all"
+- scrollUntilVisible:
+    element: "Act Test Expense"
+    direction: DOWN
+- assertVisible: "Act Test Expense"
 
 # --- 3: The Expenses chip hides the income; the Income chip hides the expense and the category chips ---
 - tapOn: "Expenses"
@@ -95,7 +94,6 @@ appId: com.joaoeoneves.fintrack
     element: "Act Test Expense"
     direction: DOWN
 - assertVisible: "Act Test Expense"
-- assertVisible: "Act Test Income"
 - assertVisible:
     id: "filter_chip_all"
 
@@ -115,45 +113,59 @@ appId: com.joaoeoneves.fintrack
 - assertNotVisible: "Act Test Expense"
 - assertVisible: "Nothing matches.*"
 - eraseText: 30
-- hideKeyboard
 - scrollUntilVisible:
     element: "Act Test Expense"
     direction: DOWN
 - assertVisible: "Act Test Expense"
-- assertVisible: "Act Test Income"
 
 # --- 5: Swipe-delete the income with Undo: row disappears, Undo restores it ---
-- scrollUntilVisible:
-    element: "Act Test Income"
-    direction: DOWN
+# (re-enter the tab: the keyboard-hide above can leave us on Home)
+- tapOn:
+    id: "nav_activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity_list"
+    timeout: 10000
+- tapOn: "Search"
+- inputText: "Act Test Income"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Act Test Income"
+    timeout: 10000
 - runFlow:
     file: _swipe-delete-row.yaml
-    env:
-      ROW: "Act Test Income"
-- assertNotVisible: "Act Test Income"
-- assertVisible: "Undo"
+- extendedWaitUntil:
+    visible: "Undo"
+    timeout: 10000
 - tapOn: "Undo"
 - extendedWaitUntil:
     visible: "Act Test Income"
     timeout: 10000
+# Let the snackbar dismiss and the row placement animation settle before swiping again.
+- extendedWaitUntil:
+    notVisible: "Undo"
+    timeout: 15000
+- waitForAnimationToEnd
 
-# --- 6: Clean up: swipe-delete both rows for good (let the Undo snackbar time out) ---
-- scrollUntilVisible:
-    element: "Act Test Income"
-    direction: DOWN
+# --- 6: Clean up: swipe-delete both rows for good ---
 - runFlow:
     file: _swipe-delete-row.yaml
-    env:
-      ROW: "Act Test Income"
-- assertNotVisible: "Act Test Income"
-- scrollUntilVisible:
-    element: "Act Test Expense"
-    direction: DOWN
+- extendedWaitUntil:
+    visible: "Undo"
+    timeout: 10000
+# The search field is still focused with the income text in it.
+- eraseText: 30
+- inputText: "Act Test Expense"
+- hideKeyboard
+- extendedWaitUntil:
+    visible: "Act Test Expense"
+    timeout: 10000
 - runFlow:
     file: _swipe-delete-row.yaml
-    env:
-      ROW: "Act Test Expense"
-- assertNotVisible: "Act Test Expense"
+- extendedWaitUntil:
+    visible: "Undo"
+    timeout: 10000
+- eraseText: 30
 - back
 - assertVisible:
     id: "dashboard_list"

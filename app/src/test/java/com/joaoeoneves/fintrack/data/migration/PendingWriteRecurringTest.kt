@@ -40,7 +40,7 @@ class PendingWriteRecurringTest {
         assertEquals("recurring", write.collection)
         assertEquals("r1", write.id)
         val keys = setOf("type", "name", "amountCents", "category", "note", "frequency", "dayOfMonth", "monthOfYear")
-        val dates = setOf("startDate", "endDate", "handledThrough", "active", "updatedAt")
+        val dates = setOf("startDate", "endDate", "handledThrough", "active", "autoPost", "updatedAt")
         assertEquals(keys + dates, write.data.keys)
         assertEquals("EXPENSE", write.data["type"])
         assertEquals("FOOD", write.data["category"])

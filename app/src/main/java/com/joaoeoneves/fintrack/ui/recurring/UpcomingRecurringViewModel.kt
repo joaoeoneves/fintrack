@@ -4,9 +4,14 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
+import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
+import com.joaoeoneves.fintrack.domain.usecase.ReceiveRequest
+import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.domain.usecase.RecurringOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -36,6 +42,8 @@ sealed interface UpcomingRecurringUiState {
     data class Content(
         val overview: RecurringOverview,
         val today: LocalDate,
+        /** The month's income still to be marked received; `null` when it could not be observed. */
+        val expectedIncome: ExpectedIncome? = null,
     ) : UpcomingRecurringUiState
 
     data class Error(
@@ -43,14 +51,16 @@ sealed interface UpcomingRecurringUiState {
     ) : UpcomingRecurringUiState
 }
 
-/** Drives the dashboard's upcoming-recurring card: what is due now and Confirm / Skip. */
+/** Drives the dashboard's upcoming-recurring card: what is due now (Confirm / Skip) and the income to mark received. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class UpcomingRecurringViewModel
     @Inject
     constructor(
         observeUpcomingRecurring: ObserveUpcomingRecurring,
+        observeExpectedIncome: ObserveExpectedIncome,
         private val handleRecurringOccurrence: HandleRecurringOccurrence,
+        private val recordPayday: RecordPayday,
         private val clock: Clock,
     ) : ViewModel() {
         private val retryTrigger = MutableStateFlow(0)
@@ -68,13 +78,20 @@ class UpcomingRecurringViewModel
                 .flatMapLatest {
                     // "Today" is read on every (re)subscription so a resume after midnight recomputes it.
                     val today = LocalDate.now(clock)
-                    observeUpcomingRecurring(today)
-                        .map<RecurringOverview, UpcomingRecurringUiState> {
-                            UpcomingRecurringUiState.Content(it, today)
-                        }.catch { e ->
-                            Log.w(TAG, "Failed to observe upcoming recurring items", e)
-                            emit(UpcomingRecurringUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
-                        }
+                    // The income group is optional: a failure there leaves the upcoming list intact.
+                    val expectedIncome =
+                        observeExpectedIncome(today, clock.zone)
+                            .map<ExpectedIncome, ExpectedIncome?> { it }
+                            .catch {
+                                Log.w(TAG, "Failed to observe the expected income", it)
+                                emit(null)
+                            }
+                    combine(observeUpcomingRecurring(today), expectedIncome) { overview, income ->
+                        UpcomingRecurringUiState.Content(overview, today, income) as UpcomingRecurringUiState
+                    }.catch { e ->
+                        Log.w(TAG, "Failed to observe upcoming recurring items", e)
+                        emit(UpcomingRecurringUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
+                    }
                 }.stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -91,6 +108,32 @@ class UpcomingRecurringViewModel
                     .confirm(row.item.id, row.date, LocalDate.now(clock), clock.zone)
                     .onSuccess { messages.send(row.item.name) }
                     .onFailure { reportFailure(it) }
+            }
+        }
+
+        /** Records [row] of the current month's expected income as received on [date]. */
+        fun onReceiveIncome(
+            row: IncomeRow,
+            date: LocalDate,
+            amountCents: Long?,
+        ) {
+            val content = uiState.value as? UpcomingRecurringUiState.Content ?: return
+            val expected = content.expectedIncome ?: return
+            viewModelScope.launch {
+                val request =
+                    ReceiveRequest(
+                        lines = row.lines,
+                        month = expected.month,
+                        workingDays = expected.workingDays,
+                        date = date,
+                        today = content.today,
+                        zone = clock.zone,
+                        amountOverrideCents = amountCents,
+                    )
+                recordPayday.receive(request).onFailure {
+                    Log.w(TAG, "Failed to record the received income", it)
+                    errors.send(UiText.StringResource(R.string.error_plan_save_failed))
+                }
             }
         }
 

@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import com.joaoeoneves.fintrack.data.backup.withPlaceholderCategories
+import com.joaoeoneves.fintrack.data.local.LocalAutomation
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
@@ -12,6 +13,7 @@ import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
 import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
+import com.joaoeoneves.fintrack.data.local.validOrNull
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
@@ -45,6 +47,8 @@ data class RemoteAccountSnapshot(
     val hasSalaryProfile: Boolean = false,
     /** Ids of the account's savings goals. */
     val goalIds: Set<String> = emptySet(),
+    /** Whether the account already has automation settings (a singleton: the account wins). */
+    val hasAutomation: Boolean = false,
 )
 
 /**
@@ -65,10 +69,13 @@ data class MigrationPlan(
     /** The guest's salary profile, only when the account has none. */
     val salaryProfile: LocalSalaryProfile? = null,
     val goals: List<LocalSavingsGoal> = emptyList(),
+    /** The guest's automation settings, only when the account has none. */
+    val automation: LocalAutomation? = null,
 ) {
     val total: Int get() =
         categories.size + budgets.size + expenses.size + income.size + plannedIncome.size + recurring.size +
-            monthSettings.size + categoryGroups.size + goals.size + (if (salaryProfile != null) 1 else 0)
+            monthSettings.size + categoryGroups.size + goals.size + (if (salaryProfile != null) 1 else 0) +
+            (if (automation != null) 1 else 0)
 }
 
 private fun String.nameKey(): String = trim().lowercase()
@@ -99,6 +106,7 @@ private class CategoryResolution(
  * - savings goals keep their ids; ids already in the account are skipped, the linked category is remapped like an
  *   expense's (an unresolvable one is dropped, the goal stays) and the linked recurring ids are kept as they are
  *   (recurring items keep their ids); invalid ones count as skipped;
+ * - the automation settings are a singleton too: copied only when the account has none and they are valid;
  * - month settings keep their month id; a month the account already has wins and is skipped silently;
  * - recurring items keep their ids; ids already in the account are skipped, an expense template's
  *   category is remapped like an expense's, and unresolvable or invalid ones count as skipped;
@@ -159,6 +167,7 @@ fun planMigration(
         groups.toWrite,
         salaryProfile,
         goals,
+        local.automation.takeUnless { remote.hasAutomation }?.validOrNull(),
     )
 }
 

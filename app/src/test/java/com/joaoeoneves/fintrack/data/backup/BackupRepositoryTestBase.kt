@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
@@ -14,6 +15,7 @@ import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
+import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryGroup
@@ -64,6 +66,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         groups: List<CategoryGroup> = emptyList(),
         salaryProfile: SalaryProfile? = null,
         goals: List<SavingsGoal> = emptyList(),
+        automation: AutomationSettings = AutomationSettings(),
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
@@ -73,7 +76,11 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
             FakeRecurringRepository(recurring),
             FakeMonthSettingsRepository(monthSettings),
             FakeCategoryGroupRepository(groups),
-            PlanSingletonSources(FakeSalaryProfileRepository(salaryProfile), FakeGoalRepository(goals)),
+            PlanSingletonSources(
+                FakeSalaryProfileRepository(salaryProfile),
+                FakeGoalRepository(goals),
+                FakeAutomationSettingsRepository(automation),
+            ),
         ),
         FakeCategoryRepository(categoryDocs),
         prefsStore,
