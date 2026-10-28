@@ -1,4 +1,6 @@
 appId: com.joaoeoneves.fintrack
+tags:
+  - release
 ---
 # Golden-path E2E flow for FinTrack.
 #
@@ -120,7 +122,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "Maestro E2E Test Expense"
 - tapOn: "Amount"
 - inputText: "12.34"
-- hideKeyboard
 - tapOn: "Save"
 
 # Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
@@ -143,12 +144,15 @@ appId: com.joaoeoneves.fintrack
 # In edit mode the amount is prefilled with the *locale's* decimal separator (no longer the
 # currency's) -- English (pinned in step 0) uses '.', so the field shows "12.34".
 - assertVisible: "12\\.34"
-- tapOn: "Amount"
-- eraseText
+# The amount is a custom field: tapping it puts the cursor where tapped (not at the end), so tap
+# its right edge to land the cursor after the last digit before erasing.
+- tapOn:
+    text: "Amount"
+    point: "99%,50%"
+- eraseText: 20
 # B4: the amount field still accepts ',' as the decimal separator even in English, proving comma
 # parsing keeps working regardless of the locale's own separator.
 - inputText: "56,78"
-- hideKeyboard
 - tapOn: "Save"
 
 # Back on the Dashboard, the recent row shows the updated amount.
@@ -177,24 +181,29 @@ appId: com.joaoeoneves.fintrack
 # --- 4: Delete it and confirm it's gone ---
 # Deletion is immediate via an end->start swipe on the row (the trash IconButton is gone) -- there
 # is no confirmation dialog. An undo snackbar ("Deleted "<name>"" / "Undo") appears.
-# Filter the list down to this flow's own row first so the swipe can never hit a
-# pre-existing real expense (e.g. another expense dated today sorting above it).
-- tapOn: "Search"
-- inputText: "Maestro E2E Test Expense"
-- hideKeyboard
+# The flow starts from a fresh guest install, so this is the only row: no search needed (and
+# no soft keyboard, which ATD images lack, so hideKeyboard would send BACK and leave the screen).
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
 - assertVisible: "[-−]€56\\.78"
 # coordinates, not from-element swipes, which don't pass the dismiss threshold -- see swipe-delete-check.yaml).
-- runFlow:
-    file: _swipe-delete-row.yaml
-    env:
-      ROW: "Maestro E2E Test Expense"
+# After the redesign the single filtered row sits at ~81% of the screen height (above the bottom
+# nav), not where _swipe-delete-row.yaml expects it, so swipe inline starting right of the
+# floating add pill.
+# The row's height depends on the screen: ~81% on a 720x1280 (320 dpi) device, ~57% on the CI Pixel 6
+# profile (1080x2400, 420 dpi), so swipe at both; the one that misses lands on empty space/filters.
+- swipe:
+    start: 90%, 57%
+    end: 25%, 57%
+    duration: 500
+- swipe:
+    start: 90%, 81%
+    end: 25%, 81%
+    duration: 500
 - assertNotVisible: "[-−]€56\\.78"
 - assertVisible: "Undo"
-# Let the undo snackbar time out on its own so the expense stays deleted, then clear the search.
-- eraseText: 30
+# Let the undo snackbar time out on its own so the expense stays deleted.
 
 # --- 5: Exercise the list's own period selector (ExpenseListScreen has the same PeriodSelector as
 # the Dashboard). Open the period menu via the label's dropdown icon (content description "Change
