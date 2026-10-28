@@ -49,23 +49,23 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
     ) = LocalSavingsGoal(id, "Goal $id", targetCents, startDate = startDate, targetDate = targetDate)
 
     @Test
-    fun v8File_decodesUpgradedToV12_withNoGoals() {
+    fun v8File_decodesUpgradedToV13_withNoGoals() {
         val text = """{$header,"schemaVersion":8}"""
 
         val result = BackupCodec.decode(text).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(12, result.document.schemaVersion)
+        assertEquals(13, result.document.schemaVersion)
         assertTrue(result.document.goals.isEmpty())
         assertEquals(0, result.document.counts().goals)
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v13File_isUnsupported() {
+    fun v14File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(13),
-            BackupCodec.decode("""{$header,"schemaVersion":13}"""),
+            BackupDecodeResult.UnsupportedVersion(14),
+            BackupCodec.decode("""{$header,"schemaVersion":14}"""),
         )
     }
 
