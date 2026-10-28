@@ -11,7 +11,7 @@ appId: com.joaoeoneves.fintrack
 # (Transfer) and deletes both while the list is search-filtered to "Maestro E2E Filter", so no
 # pre-existing data is ever touched. Ends with the search cleared and the chip reset to "All".
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b.
 - tapOn:
