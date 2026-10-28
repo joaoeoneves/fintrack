@@ -1,8 +1,11 @@
 package com.joaoeoneves.fintrack.ui.settings
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,12 +22,11 @@ import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.symbol
-import com.joaoeoneves.fintrack.ui.designsystem.SettingsChoiceRow
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
-/** The preference groups (appearance, language, currency) shown on [SettingsScreen]. */
+/** The preferences group (theme, language, currency) shown on [SettingsScreen]. */
 private val ThemePreference.label: String
     @Composable
     get() =
@@ -48,73 +50,83 @@ private val AppLanguage.label: String
             AppLanguage.PORTUGUESE -> stringResource(R.string.language_portuguese)
         }
 
+/** Theme, language and display currency as three rows, each opening a menu of its options. */
 @Composable
-fun AppearanceSection(
-    selected: ThemePreference,
-    onSelected: (ThemePreference) -> Unit,
+fun PreferencesSection(
+    uiState: SettingsUiState,
+    onThemeSelected: (ThemePreference) -> Unit,
+    onLanguageSelected: (AppLanguage) -> Unit,
+    onCurrencySelected: (CurrencyOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    SettingsGroup(label = stringResource(R.string.settings_section_appearance), modifier = modifier) {
-        ThemePreference.entries.forEach { preference ->
-            SettingsChoiceRow(
-                title = preference.label,
-                selected = selected == preference,
-                onClick = { onSelected(preference) },
-            )
-        }
+    val locale = currentLocale()
+    SettingsGroup(label = stringResource(R.string.settings_section_preferences), modifier = modifier) {
+        SettingsPickerRow(
+            title = stringResource(R.string.settings_theme),
+            selected = uiState.themePreference,
+            options = ThemePreference.entries,
+            optionLabel = { it.label },
+            onSelected = onThemeSelected,
+        )
+        SettingsPickerRow(
+            title = stringResource(R.string.settings_section_language),
+            selected = uiState.language,
+            options = AppLanguage.entries,
+            optionLabel = { it.label },
+            onSelected = onLanguageSelected,
+        )
+        SettingsPickerRow(
+            title = stringResource(R.string.settings_section_currency),
+            selected = uiState.currency,
+            options = CurrencyOption.entries,
+            optionLabel = { "${it.displayName} (${it.symbol(locale)})" },
+            onSelected = onCurrencySelected,
+            supportingText = stringResource(R.string.settings_currency_hint),
+        )
     }
 }
 
+/** A row showing the [selected] option's label that opens an anchored menu of [options], the current one checked. */
+@Suppress("LongParameterList") // title/current/options/label/callback/hint are independent
 @Composable
-fun LanguageSection(
-    selected: AppLanguage,
-    onSelected: (AppLanguage) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SettingsGroup(label = stringResource(R.string.settings_section_language), modifier = modifier) {
-        AppLanguage.entries.forEach { language ->
-            SettingsChoiceRow(
-                title = language.label,
-                selected = selected == language,
-                onClick = { onSelected(language) },
-            )
-        }
-    }
-}
-
-@Composable
-fun CurrencySection(
-    selected: CurrencyOption,
-    onSelected: (CurrencyOption) -> Unit,
-    modifier: Modifier = Modifier,
+private fun <T> SettingsPickerRow(
+    title: String,
+    selected: T,
+    options: List<T>,
+    optionLabel: @Composable (T) -> String,
+    onSelected: (T) -> Unit,
+    supportingText: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val locale = currentLocale()
-
-    SettingsGroup(label = stringResource(R.string.settings_section_currency), modifier = modifier) {
-        Box {
-            SettingsRow(
-                title = stringResource(R.string.settings_currency_label),
-                value = "${selected.displayName} (${selected.symbol(locale)})",
-                onClick = { expanded = true },
-                showChevron = true,
-            )
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                shape = MaterialTheme.shapes.medium,
-                containerColor = FinTrackTheme.colors.surface2,
-            ) {
-                CurrencyOption.entries.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text("${option.displayName} (${option.symbol(locale)})") },
-                        onClick = {
-                            onSelected(option)
-                            expanded = false
-                        },
-                    )
-                }
+    Box {
+        SettingsRow(
+            title = title,
+            value = optionLabel(selected),
+            onClick = { expanded = true },
+            showChevron = true,
+            supportingText = supportingText,
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = MaterialTheme.shapes.medium,
+            containerColor = FinTrackTheme.colors.surface2,
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(optionLabel(option)) },
+                    leadingIcon = if (option == selected) ({ CheckMark() }) else null,
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    },
+                )
             }
         }
     }
+}
+
+@Composable
+private fun CheckMark() {
+    Icon(Icons.Default.Check, contentDescription = null, tint = FinTrackTheme.colors.accentText)
 }

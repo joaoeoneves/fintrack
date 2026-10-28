@@ -217,17 +217,16 @@ class CategoryGroupsViewModelTest {
         }
 
     @Test
-    fun onCreateSuggested_whenEmpty_createsGroupsAndFilesBuiltIns() =
+    fun onCreateSuggested_whenEmpty_createsGroupsForActiveBuiltIns() =
         runTest(testDispatcher) {
             val viewModel = start()
 
             viewModel.onCreateSuggested(names)
             advanceUntilIdle()
 
-            assertEquals(listOf("Recurring", "Investments", "Food", "Other"), viewModel.names())
+            assertEquals(listOf("Investments", "Food", "Other"), viewModel.names())
             val idByName = groupRepo.groups.associate { it.name to it.id }
             val catalog = categories.observeCategories().first().associateBy { it.id }
-            assertEquals(idByName["Recurring"], catalog.getValue(BuiltInCategories.RECURRING.id).groupId)
             assertEquals(idByName["Investments"], catalog.getValue(BuiltInCategories.INVESTMENTS.id).groupId)
             assertEquals(idByName["Food"], catalog.getValue(BuiltInCategories.FOOD.id).groupId)
             assertEquals(idByName["Other"], catalog.getValue(BuiltInCategories.SHOPPING.id).groupId)
@@ -259,7 +258,7 @@ class CategoryGroupsViewModelTest {
             viewModel.onCreateSuggested(names)
             advanceUntilIdle()
 
-            assertEquals(SuggestedGroup.entries.size, groupRepo.groups.size)
+            assertEquals(3, groupRepo.groups.size) // built-in Recurring is archived, so it gets no group
         }
 
     @Test

@@ -19,7 +19,7 @@ tags:
 
 - tapOn:
     id: "nav_plan"
-- assertVisible: "Monthly plan"
+- assertVisible: "Expected income"
 - assertVisible: "Previous month"
 
 # Expected income starts with the salary profile row.

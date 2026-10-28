@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
+import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
@@ -42,6 +43,7 @@ fun GoalEditorSheet(
     val decimalSeparator = decimalSeparatorFor(currentLocale())
     val today = remember { LocalDate.now(Clock.systemDefaultZone()) }
     var draft by remember { mutableStateOf(draftOf(goal, decimalSeparator, today)) }
+    var confirmingRemove by remember { mutableStateOf(false) }
     FinTrackBottomSheet(onDismissRequest = onDismiss) {
         Text(
             text = stringResource(if (goal == null) R.string.goal_new else R.string.goal_edit),
@@ -66,9 +68,21 @@ fun GoalEditorSheet(
         if (goal != null) {
             DestructiveTextButton(
                 text = stringResource(R.string.action_remove),
-                onClick = { onDelete(goal.id) },
+                onClick = { confirmingRemove = true },
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
         }
+    }
+    if (confirmingRemove && goal != null) {
+        ConfirmRemoveDialog(
+            title = stringResource(R.string.confirm_remove_title, goal.name),
+            message = stringResource(R.string.goal_remove_message),
+            confirmLabel = stringResource(R.string.action_remove),
+            onConfirm = {
+                confirmingRemove = false
+                onDelete(goal.id)
+            },
+            onDismiss = { confirmingRemove = false },
+        )
     }
 }

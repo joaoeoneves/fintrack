@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -118,12 +120,14 @@ fun rankedBreakdown(slices: List<CategoryTotal>): List<BreakdownEntry> {
 
 /**
  * The Insights tab's breakdown block: total outflow (or the planned total), an "Actual | Planned"
- * switch when the plan has planned allocations, and the stateless [CategoryBreakdown] below it.
+ * switch when the plan has planned allocations, and the stateless [CategoryBreakdown] below it. When
+ * [onCategoryClick] is set, each category row is tappable.
  */
 @Composable
 fun CategoryBreakdownSection(
     breakdown: InsightsBreakdown,
     modifier: Modifier = Modifier,
+    onCategoryClick: ((Category) -> Unit)? = null,
 ) {
     val hasPlanned = breakdown.plannedSlices.isNotEmpty()
     var showPlanned by rememberSaveable { mutableStateOf(false) }
@@ -158,6 +162,7 @@ fun CategoryBreakdownSection(
             CategoryBreakdown(
                 slices = slices,
                 totalDescriptionRes = if (planned) R.string.cd_pie_chart_planned_total else R.string.cd_pie_chart_total,
+                onCategoryClick = onCategoryClick,
                 modifier = Modifier.padding(top = Dimens.Space16),
             )
         }
@@ -193,13 +198,15 @@ private fun BreakdownEmpty(modifier: Modifier = Modifier) {
 /**
  * Stateless breakdown: a segmented bar in the category colours with a ranked list underneath. The
  * bar is one accessibility node describing the total ([totalDescriptionRes]); each row is a single
- * merged node ("name, N percent, amount") so the bare category names stay unreachable.
+ * merged node ("name, N percent, amount") so the bare category names stay unreachable. A row is a button
+ * when [onCategoryClick] is set.
  */
 @Composable
 fun CategoryBreakdown(
     slices: List<CategoryTotal>,
     modifier: Modifier = Modifier,
     @StringRes totalDescriptionRes: Int = R.string.cd_pie_chart_total,
+    onCategoryClick: ((Category) -> Unit)? = null,
 ) {
     val chartSlices = slices.clampedForChart()
     val entries = rankedBreakdown(slices)
@@ -223,7 +230,7 @@ fun CategoryBreakdown(
                 },
         )
         Column(modifier = Modifier.padding(top = Dimens.Space8)) {
-            entries.forEach { entry -> key(entry.category.id) { BreakdownRow(entry) } }
+            entries.forEach { entry -> key(entry.category.id) { BreakdownRow(entry, onCategoryClick) } }
         }
     }
 }
@@ -278,17 +285,31 @@ private fun BarSegment(
 }
 
 @Composable
-private fun BreakdownRow(entry: BreakdownEntry) {
+private fun BreakdownRow(
+    entry: BreakdownEntry,
+    onClick: ((Category) -> Unit)?,
+) {
     val name = entry.category.displayName
     val amount = formatAmountCents(entry.cents)
     val spokenAmount = formatAmountCents(entry.cents, typographic = false)
     val description = stringResource(R.string.cd_pie_chart_category_item, name, entry.percent, spokenAmount)
+    val tap = if (onClick == null) Modifier else Modifier.clickable(role = Role.Button) { onClick(entry.category) }
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .then(tap)
                 .padding(vertical = Dimens.Space12)
-                .clearAndSetSemantics { contentDescription = description },
+                .clearAndSetSemantics {
+                    contentDescription = description
+                    if (onClick != null) {
+                        role = Role.Button
+                        onClick {
+                            onClick(entry.category)
+                            true
+                        }
+                    }
+                },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.size(DotSize).background(entry.category.color, CircleShape))

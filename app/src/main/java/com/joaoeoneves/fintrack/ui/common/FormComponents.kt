@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -27,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -140,5 +143,19 @@ fun FormSaveError(
         color = FinTrackTheme.colors.negative,
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier,
+    )
+}
+
+/** The centred "Delete" text button at the end of an edit form. */
+@Composable
+fun ColumnScope.FormDeleteButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+) {
+    DestructiveTextButton(
+        text = stringResource(R.string.action_delete),
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.align(Alignment.CenterHorizontally),
     )
 }

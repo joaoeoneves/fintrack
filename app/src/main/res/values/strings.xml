@@ -5,6 +5,7 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_remove">Remove</string>
+    <string name="action_delete">Delete</string>
     <string name="action_ok">OK</string>
     <string name="action_retry">Retry</string>
     <string name="action_undo">Undo</string>
@@ -99,6 +100,7 @@
     <string name="expense_category_suggested">Same as last time</string>
     <string name="error_category_required">Choose a category</string>
     <string name="error_failed_save_expense">Couldn\'t save the expense</string>
+    <string name="error_failed_delete_expense">Couldn\'t delete the expense</string>
 
     <string name="expense_field_refund">Refund</string>
     <string name="expense_field_refund_hint">Money returned to you; reduces this category\'s spending</string>
@@ -138,12 +140,12 @@
     <string name="error_import_read_file">Couldn\'t read the selected file</string>
     <string name="error_import_failed">Import failed</string>
     <string name="error_csv_empty">The file is empty</string>
-    <string name="error_csv_header">Unrecognized header — expected name,amountCents,category,date,note</string>
+    <string name="error_csv_header">This isn\'t a FinTrack CSV file (the column headings don\'t match)</string>
     <string name="error_csv_row_columns">Expected 5 columns, found %1$d</string>
     <string name="error_csv_row_name_required">Name is required</string>
     <string name="error_csv_row_name_too_long">Name is too long (maximum: %1$d)</string>
-    <string name="error_csv_row_amount_invalid">Invalid amountCents value: \'%1$s\'</string>
-    <string name="error_csv_row_amount_zero">amountCents must not be zero: \'%1$s\'</string>
+    <string name="error_csv_row_amount_invalid">Invalid amount: \'%1$s\'</string>
+    <string name="error_csv_row_amount_zero">The amount can\'t be zero: \'%1$s\'</string>
     <string name="error_csv_row_category_unknown">Unknown category: \'%1$s\'</string>
     <string name="error_csv_row_date_invalid">Invalid date: \'%1$s\'</string>
     <string name="error_csv_row_note_too_long">Note is too long (maximum: %1$d)</string>
@@ -155,17 +157,24 @@
     <string name="income_field_source">Source</string>
     <string name="error_source_required">Source is required</string>
     <string name="error_failed_save_income">Couldn\'t save the income</string>
+    <string name="error_failed_delete_income">Couldn\'t delete the income</string>
+    <string name="confirm_remove_title">Remove \"%1$s\"?</string>
+    <string name="goal_remove_message">The goal is removed. Expenses and recurring items are kept.</string>
+    <string name="income_line_remove_message">It stops counting as expected income. Income already recorded is kept.</string>
+    <string name="budget_remove_title">Remove the limit for %1$s?</string>
+    <string name="budget_remove_message">The limit is removed. Expenses in this category are kept.</string>
 
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_language">Language</string>
+    <string name="settings_section_preferences">Preferences</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_currency_hint">Display only — amounts aren\'t converted</string>
     <string name="settings_section_currency">Currency</string>
     <string name="settings_section_data">Data</string>
     <string name="settings_section_account">Account</string>
     <string name="settings_section_about">About</string>
-    <string name="settings_currency_label">Display currency</string>
     <string name="settings_import_csv">Import CSV (expenses)</string>
     <string name="settings_export_csv">Export CSV (expenses)</string>
     <string name="settings_signed_in_fallback">Signed in</string>
@@ -319,7 +328,6 @@
         <item quantity="other">%d records could not be copied and were skipped.</item>
     </plurals>
 
-    <string name="plan_title">Monthly plan</string>
     <string name="plan_safe_to_spend">Safe to spend</string>
     <string name="plan_safe_to_spend_month">Safe to spend (%1$s)</string>
     <string name="plan_over_by">Over plan by %1$s</string>
@@ -339,7 +347,7 @@
     <string name="plan_setup_title">Plan your month</string>
     <string name="plan_setup_message">Add your expected income to see what\'s free to spend.</string>
     <string name="plan_allocations">Limits</string>
-    <string name="plan_not_planned">Not planned</string>
+    <string name="plan_not_planned">No limit</string>
     <string name="plan_add_income_line">Add income line</string>
     <string name="plan_income_line_new">New income line</string>
     <string name="plan_income_line_edit">Edit income line</string>
@@ -355,11 +363,11 @@
 
     <!-- Recurring -->
     <string name="settings_section_recurring">Recurring</string>
-    <string name="settings_manage_recurring">Manage recurring bills &amp; income</string>
+    <string name="settings_manage_recurring">Manage recurring</string>
     <string name="recurring_title">Recurring</string>
     <string name="recurring_add">Add recurring</string>
     <string name="recurring_edit_title">Edit recurring</string>
-    <string name="recurring_upcoming_title">Upcoming bills &amp; income</string>
+    <string name="recurring_upcoming_title">Upcoming recurring</string>
     <string name="recurring_confirm">Confirm</string>
     <string name="recurring_skip">Skip</string>
     <string name="recurring_overdue">Overdue</string>
@@ -372,7 +380,7 @@
     <string name="recurring_annual_cost">Recurring expenses: %1$s/year (%2$s/month)</string>
     <string name="recurring_annual_income">Recurring income: %1$s/year</string>
     <string name="recurring_manage">Manage</string>
-    <string name="recurring_empty_cta">Set up recurring bills &amp; income</string>
+    <string name="recurring_empty_cta">Set up recurring</string>
     <string name="recurring_added">Added \'%1$s\'</string>
     <string name="recurring_per_month">%1$s / month</string>
     <string name="recurring_per_year">%1$s / year</string>
@@ -484,11 +492,13 @@
     <string name="group_suggested_recurring">Recurring</string>
     <string name="group_suggested_investments">Investments</string>
     <string name="group_suggested_food">Food</string>
-    <string name="group_suggested_other">Other</string>
+    <string name="group_suggested_other">Shopping &amp; transfers</string>
     <string name="groups_manage_title">Manage groups</string>
     <string name="groups_none_yet">No groups yet</string>
     <string name="groups_field_name">Group name</string>
     <string name="groups_add">Add group</string>
+    <string name="groups_name_taken">A group with this name already exists</string>
+    <string name="groups_suggested_none">No active categories to group</string>
     <string name="groups_rename">Rename</string>
     <string name="groups_delete_title">Delete \"%1$s\"?</string>
     <string name="groups_delete_message">Its categories stay, without a group.</string>

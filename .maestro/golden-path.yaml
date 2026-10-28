@@ -32,7 +32,7 @@ tags:
 # what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
 # so pin a known baseline here explicitly rather than assuming whatever currency another flow left
 # the device on. Mirrors the exact navigation pattern already used in settings.yaml's own
-# currency-switching steps: open Settings, tap "Display currency" (an inline exposed-dropdown on
+# currency-switching steps: open Settings, tap "Currency" (an inline exposed-dropdown on
 # the Settings screen itself, not a separate screen), tap the target currency option (selects it
 # and closes the dropdown, still on Settings), then tap "Back" (the top-app-bar back arrow,
 # content-desc "Back") to return directly to the Dashboard. No restore-to-original-currency step at
@@ -40,12 +40,12 @@ tags:
 - tapOn:
     text: "Settings|Definições"
 - extendedWaitUntil:
-    visible: "Appearance"
+    visible: "Preferences"
     timeout: 10000
 - scrollUntilVisible:
-    element: "Display currency"
+    element: "Currency"
     direction: DOWN
-- tapOn: "Display currency"
+- tapOn: "Currency"
 - tapOn: "Euro (€)"
 - tapOn: "Back"
 

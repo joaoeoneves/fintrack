@@ -21,8 +21,10 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.ui.common.DeletedEffect
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
+import com.joaoeoneves.fintrack.ui.common.FormDeleteButton
 import com.joaoeoneves.fintrack.ui.common.FormSaveError
 import com.joaoeoneves.fintrack.ui.common.FormScaffold
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
@@ -39,6 +41,7 @@ import java.time.Instant
 @Composable
 fun AddEditIncomeScreen(
     onSaved: () -> Unit,
+    onDeleted: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AddEditIncomeViewModel = hiltViewModel(),
@@ -49,11 +52,12 @@ fun AddEditIncomeScreen(
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collectLatest { onSaved() }
     }
+    DeletedEffect(viewModel.deletedEvent, onDeleted)
 
     FormScaffold(
         title = stringResource(if (viewModel.isEditRoute) R.string.income_edit_title else R.string.action_add_income),
         onCancel = onCancel,
-        saveEnabled = readyForm != null && readyForm.isValid && !readyForm.isSaving,
+        saveEnabled = readyForm != null && readyForm.isValid && !readyForm.isBusy,
         onSave = viewModel::onSave,
         showSave = readyForm != null,
         modifier = modifier,
@@ -81,6 +85,7 @@ fun AddEditIncomeScreen(
                             onAmountChanged = viewModel::onAmountChanged,
                             onDateSelected = viewModel::onDateSelected,
                             onNoteChanged = viewModel::onNoteChanged,
+                            onDelete = viewModel::onDelete,
                         ),
                     modifier =
                         Modifier
@@ -109,6 +114,7 @@ private data class IncomeFormActions(
     val onAmountChanged: (String) -> Unit,
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
+    val onDelete: () -> Unit,
 )
 
 @Composable
@@ -171,5 +177,6 @@ private fun IncomeForm(
         )
 
         form.saveError?.let { FormSaveError(it.asString()) }
+        if (form.canDelete) FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
     }
 }

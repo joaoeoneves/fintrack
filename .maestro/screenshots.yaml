@@ -14,13 +14,14 @@ appId: com.joaoeoneves.fintrack
     id: "dashboard_settings"
 - tapOn: "English"
 - extendedWaitUntil:
-    visible: "Appearance"
+    visible: "Preferences"
     timeout: 10000
+- tapOn: "Theme"
 - tapOn: "Dark"
 - scrollUntilVisible:
-    element: "Display currency"
+    element: "Currency"
     direction: DOWN
-- tapOn: "Display currency"
+- tapOn: "Currency"
 - tapOn: "Euro \\(€\\)"
 - back
 - extendedWaitUntil:
@@ -170,8 +171,8 @@ appId: com.joaoeoneves.fintrack
 
 # --- Recurring ---
 - scrollUntilVisible:
-    element: "Manage recurring bills & income"
-- tapOn: "Manage recurring bills & income"
+    element: "Manage recurring"
+- tapOn: "Manage recurring"
 - tapOn:
     id: "recurring_add"
 - tapOn: "Name"
@@ -207,7 +208,7 @@ appId: com.joaoeoneves.fintrack
 - waitForAnimationToEnd
 # The Plan tab keeps its scroll position: go back to the top for the first shot.
 - scrollUntilVisible:
-    element: "Monthly plan"
+    element: "Expected income"
     direction: UP
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/plan
