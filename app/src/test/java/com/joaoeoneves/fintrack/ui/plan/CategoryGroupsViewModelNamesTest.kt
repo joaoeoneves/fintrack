@@ -2,8 +2,8 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +34,7 @@ import org.robolectric.annotation.Config
 class CategoryGroupsViewModelNamesTest {
     private val testDispatcher = StandardTestDispatcher()
     private val categories = FakeCategoryRepository()
-    private val groupRepo = FakeCategoryGroupRepository(categories = categories)
+    private val groupRepo = FakeEnvelopeRepository(categories = categories)
     private val errors = mutableListOf<UiText>()
     private val taken = UiText.StringResource(R.string.groups_name_taken)
     private val none = UiText.StringResource(R.string.groups_suggested_none)
@@ -60,7 +60,7 @@ class CategoryGroupsViewModelNamesTest {
         return viewModel
     }
 
-    private fun groupNames() = groupRepo.groups.map { it.name }
+    private fun groupNames() = groupRepo.envelopes.map { it.name }
 
     @Test
     fun onAdd_duplicateName_isRejectedWithoutWrite() =
@@ -84,7 +84,7 @@ class CategoryGroupsViewModelNamesTest {
             viewModel.onAdd("Ungrouped", reserved = listOf("ungrouped"))
             advanceUntilIdle()
 
-            assertTrue(groupRepo.groups.isEmpty())
+            assertTrue(groupRepo.envelopes.isEmpty())
             assertEquals(listOf(taken), errors)
         }
 
@@ -96,7 +96,7 @@ class CategoryGroupsViewModelNamesTest {
             viewModel.onAdd("B")
             advanceUntilIdle()
 
-            viewModel.onRename(groupRepo.groups[0].id, "b")
+            viewModel.onRename(groupRepo.envelopes[0].id, "b")
             advanceUntilIdle()
 
             assertEquals(listOf("A", "B"), groupNames())
@@ -110,7 +110,7 @@ class CategoryGroupsViewModelNamesTest {
             viewModel.onAdd("food")
             advanceUntilIdle()
 
-            viewModel.onRename(groupRepo.groups.single().id, "Food")
+            viewModel.onRename(groupRepo.envelopes.single().id, "Food")
             advanceUntilIdle()
 
             assertEquals(listOf("Food"), groupNames())
@@ -124,7 +124,7 @@ class CategoryGroupsViewModelNamesTest {
             viewModel.onAdd("A")
             advanceUntilIdle()
 
-            viewModel.onRename(groupRepo.groups.single().id, "Ungrouped", reserved = listOf("Ungrouped"))
+            viewModel.onRename(groupRepo.envelopes.single().id, "Ungrouped", reserved = listOf("Ungrouped"))
             advanceUntilIdle()
 
             assertEquals(listOf("A"), groupNames())
@@ -155,7 +155,7 @@ class CategoryGroupsViewModelNamesTest {
             viewModel.onCreateSuggested(names)
             advanceUntilIdle()
 
-            assertTrue(groupRepo.groups.isEmpty())
+            assertTrue(groupRepo.envelopes.isEmpty())
             assertEquals(listOf(none), errors)
         }
 

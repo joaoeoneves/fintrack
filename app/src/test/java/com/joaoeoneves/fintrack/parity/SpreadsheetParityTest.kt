@@ -5,10 +5,9 @@ import com.joaoeoneves.fintrack.domain.model.AnnualPlanInputs
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
-import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
-import com.joaoeoneves.fintrack.domain.model.Earmark
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
@@ -21,7 +20,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualPlanOf
-import com.joaoeoneves.fintrack.domain.model.potsOf
+import com.joaoeoneves.fintrack.domain.model.envelopesOf
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.testutil.flexExtra
 import kotlinx.serialization.json.Json
@@ -82,14 +81,13 @@ class SpreadsheetParityTest {
 
     private val month = YearMonth.of(2026, 10)
 
-    private fun mealLine(earmark: Earmark? = null) =
+    private fun mealLine() =
         PlannedIncome(
             id = "meal",
             label = "Meal allowance",
             amountCents = long("mealRateCents"),
             order = 1,
             basis = IncomeBasis.PER_WORKING_DAY,
-            earmark = earmark,
         )
 
     @Test
@@ -100,9 +98,10 @@ class SpreadsheetParityTest {
     }
 
     @Test
-    fun pots_foodPotAndBase_matchSpreadsheet() {
+    fun envelopes_foodFundingAndLivre_matchSpreadsheet() {
         val food = section("food")
-        val group = CategoryGroup("g-food", "Food", 0)
+        val meal = mealLine()
+        val group = Envelope("g-food", "Food", 0, fundedByLineId = meal.id)
         val dinners = spendingCategory("dinners", group.id)
         val snacks = spendingCategory("snacks", group.id)
         val recurring = spendingCategory("recurring")
@@ -117,27 +116,23 @@ class SpreadsheetParityTest {
             )
         val salary =
             PlannedIncome("salary", "Salary", long(section("salary2026"), "expectedNetMonthlyCents"), 0)
-        val meal = mealLine(earmark = Earmark.Group(group.id))
 
         val summary =
-            potsOf(
+            envelopesOf(
                 buckets = buckets,
-                groups = listOf(group),
+                categories = listOf(dinners, snacks, recurring, investments),
+                envelopes = listOf(group),
                 plannedIncome = listOf(salary, meal),
                 monthIncome = emptyList(),
                 planMonth = PlanMonth(month, long("mealDaysPerMonth").toInt()),
             )
 
         val expected = section("expected")
-        assertEquals(
-            group.id,
-            summary.pots
-                .single()
-                .target
-                ?.id,
-        )
-        assertEquals(long(expected, "foodPotFreeCents"), summary.pots.single().freeCents)
-        assertEquals(long(expected, "baseFreeCents"), summary.base.freeCents)
+        val foodEnvelope = summary.envelopes.single()
+        assertEquals(group.id, foodEnvelope.envelope.id)
+        // Nothing is spent here, so what the funding leaves after the plan is funding minus the envelope's amount.
+        assertEquals(long(expected, "foodPotFreeCents"), foodEnvelope.fundingCents!! - foodEnvelope.amountCents!!)
+        assertEquals(long(expected, "baseFreeCents"), summary.freeCents)
     }
 
     private fun int(
@@ -223,9 +218,9 @@ class SpreadsheetParityTest {
         val skipMonth = int(food, "snacksSkipMonth")
         val groups =
             listOf(
-                CategoryGroup("g-recurring", "Recurring", 0),
-                CategoryGroup("g-invest", "Investments", 1),
-                CategoryGroup("g-food", "Food", 2),
+                Envelope("g-recurring", "Recurring", 0),
+                Envelope("g-invest", "Investments", 1),
+                Envelope("g-food", "Food", 2, fundedByLineId = "meal"),
             )
         val recurring = spendingCategory("recurring", "g-recurring")
         val investments = spendingCategory("investments", "g-invest")
@@ -238,7 +233,7 @@ class SpreadsheetParityTest {
                     recurringItem(k, investments, v.jsonPrimitive.content.toLong())
                 }
         val meal =
-            mealLine(earmark = Earmark.Group("g-food")).copy(skipMonths = setOf(skipMonth))
+            mealLine().copy(skipMonths = setOf(skipMonth))
         val overrides = (1..MONTHS).map { MonthSettings(YearMonth.of(YEAR, it), long("mealDaysPerMonth").toInt()) }
         return annualPlanOf(
             YEAR,
@@ -251,13 +246,13 @@ class SpreadsheetParityTest {
                     ),
                 recurring = items,
                 categories = listOf(recurring, investments, dinners, snacks),
-                groups = groups,
+                envelopes = groups,
                 monthSettings = overrides,
             ),
         )
     }
 
-    private fun AnnualPlan.planned(groupId: String) = groups.first { it.group?.id == groupId }.plannedCents
+    private fun AnnualPlan.planned(groupId: String) = envelopes.first { it.envelope?.id == groupId }.plannedCents
 
     @Test
     fun annual_recurringGroup_matchesSpreadsheet() {
@@ -276,10 +271,10 @@ class SpreadsheetParityTest {
 
     @Test
     fun annual_foodPotLeftover_matchesSpreadsheet() {
-        val pot = annualPlan().pots.single()
+        val funding = annualPlan().funding.single()
 
-        assertEquals(Earmark.Group("g-food"), pot.target)
-        assertEquals(long(section("expected"), "annualFoodLeftoverCents"), pot.leftoverCents)
+        assertEquals("g-food", funding.envelope.id)
+        assertEquals(long(section("expected"), "annualFoodLeftoverCents"), funding.leftoverCents)
     }
 
     // TODO(annual-plan): assert the annual IRS figures (expected.annualIrsCorrectCents, annualIrsSheetCents).

@@ -3,8 +3,8 @@ package com.joaoeoneves.fintrack.ui.plan.annual
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
@@ -76,7 +76,7 @@ class AnnualPlanViewModelTest {
                     lines,
                     FakeMonthSettingsRepository(),
                     FakeCategoryRepository(),
-                    FakeCategoryGroupRepository(),
+                    FakeEnvelopeRepository(),
                     FakeRecurringRepository(),
                 ),
                 FakeGoalRepository(),

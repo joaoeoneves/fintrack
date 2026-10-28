@@ -2,8 +2,8 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -49,23 +49,23 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
     ) = LocalSavingsGoal(id, "Goal $id", targetCents, startDate = startDate, targetDate = targetDate)
 
     @Test
-    fun v8File_decodesUpgradedToV13_withNoGoals() {
+    fun v8File_decodesUpgradedToV14_withNoGoals() {
         val text = """{$header,"schemaVersion":8}"""
 
         val result = BackupCodec.decode(text).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(13, result.document.schemaVersion)
+        assertEquals(14, result.document.schemaVersion)
         assertTrue(result.document.goals.isEmpty())
         assertEquals(0, result.document.counts().goals)
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v14File_isUnsupported() {
+    fun v15File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(14),
-            BackupCodec.decode("""{$header,"schemaVersion":14}"""),
+            BackupDecodeResult.UnsupportedVersion(15),
+            BackupCodec.decode("""{$header,"schemaVersion":15}"""),
         )
     }
 
@@ -161,7 +161,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
                         FakePlannedIncomeRepository(),
                         FakeRecurringRepository(),
                         FakeMonthSettingsRepository(),
-                        FakeCategoryGroupRepository(),
+                        FakeEnvelopeRepository(),
                         PlanSingletonSources(
                             FakeSalaryProfileRepository(),
                             FakeGoalRepository(nextObserveError = IllegalStateException("boom")),

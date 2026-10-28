@@ -1,8 +1,8 @@
 package com.joaoeoneves.fintrack.ui.insights
 
 import android.app.Application
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.SpendingSplit
@@ -10,27 +10,26 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** The fixed/variable [InsightsUiState.Content.split] and the per-group breakdown of [InsightsViewModel]. */
+/** The fixed/variable [InsightsUiState.Content.split] and the per-envelope breakdown of [InsightsViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class InsightsViewModelSplitTest : InsightsViewModelTestBase() {
     @Test
-    fun emptyRepositories_hasZeroSplit_andNoGroups() =
+    fun emptyRepositories_hasZeroSplit_andNoEnvelopes() =
         runTest(testDispatcher) {
             val vm = viewModel()
             collect(vm)
 
             val content = vm.content()
             assertEquals(SpendingSplit(0L, 0L, 0L), content.split)
-            assertFalse(content.breakdown.hasGroups)
+            assertFalse(content.breakdown.hasEnvelopes)
         }
 
     @Test
@@ -54,11 +53,11 @@ class InsightsViewModelSplitTest : InsightsViewModelTestBase() {
         }
 
     @Test
-    fun breakdownGroups_followCategoryAssignment() =
+    fun breakdownEnvelopes_followCategoryAssignment() =
         runTest(testDispatcher) {
             val categories = FakeCategoryRepository()
-            val groups = FakeCategoryGroupRepository()
-            val food = groups.addGroup("Food").getOrThrow()
+            val groups = FakeEnvelopeRepository()
+            val food = groups.addEnvelope("Food").getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, food)
             val repo =
                 FakeExpenseRepository(
@@ -71,11 +70,19 @@ class InsightsViewModelSplitTest : InsightsViewModelTestBase() {
             collect(vm)
 
             val result = vm.content().breakdown
-            assertTrue(result.hasGroups)
-            val firstGroup = result.groups.first().group
-            assertEquals("Food", firstGroup?.name)
-            assertEquals(800L, result.groups.first().spent)
-            assertNull(result.groups.last().group)
-            assertEquals(150L, result.groups.last().spent)
+            assertTrue(result.hasEnvelopes)
+            assertEquals(
+                "Food",
+                result.envelopes.envelopes
+                    .first()
+                    .envelope.name,
+            )
+            assertEquals(
+                800L,
+                result.envelopes.envelopes
+                    .first()
+                    .spentCents,
+            )
+            assertEquals(150L, result.envelopes.unenvelopedSpentCents)
         }
 }

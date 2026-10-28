@@ -7,10 +7,10 @@ import java.time.YearMonth
 
 internal const val PLAN_YEAR = 2026
 
-internal fun planGroup(
+internal fun planEnvelope(
     id: String,
     order: Int = 0,
-) = CategoryGroup(id = id, name = id, order = order)
+) = Envelope(id = id, name = id, order = order)
 
 internal fun planCategory(
     id: String,
@@ -78,11 +78,11 @@ internal fun planInputs(
     budgets: List<Budget> = emptyList(),
     recurring: List<RecurringItem> = emptyList(),
     categories: List<Category> = emptyList(),
-    groups: List<CategoryGroup> = emptyList(),
+    envelopes: List<Envelope> = emptyList(),
     settings: List<MonthSettings> = emptyList(),
     expenses: List<Expense> = emptyList(),
     goals: List<SavingsGoal> = emptyList(),
-) = AnnualPlanInputs(lines, budgets, recurring, categories, groups, settings, expenses, goals)
+) = AnnualPlanInputs(lines, budgets, recurring, categories, envelopes, settings, expenses, goals)
 
 internal fun planFixed(
     id: String,

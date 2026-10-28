@@ -11,11 +11,11 @@ class BackupCodecMonthSettingsTest {
     private val oldLine = """{"id":"p","label":"Pay","amountCents":5,"order":0}"""
 
     @Test
-    fun v3File_decodesToV13_withEmptyMonthSettings_andDefaultedLines() {
+    fun v3File_decodesToV14_withEmptyMonthSettings_andDefaultedLines() {
         val result = BackupCodec.decode("""{$header,"schemaVersion":3,"plannedIncome":[$oldLine]}""").success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(13, result.document.schemaVersion)
+        assertEquals(14, result.document.schemaVersion)
         assertTrue(result.document.monthSettings.isEmpty())
         val line = result.document.plannedIncome.single()
         assertEquals("FIXED", line.basis)
@@ -27,7 +27,7 @@ class BackupCodecMonthSettingsTest {
     fun v1AndV2Files_stillDecode() {
         listOf(1, 2).forEach { v ->
             val result = BackupCodec.decode("""{$header,"schemaVersion":$v}""").success()
-            assertEquals(13, result.document.schemaVersion)
+            assertEquals(14, result.document.schemaVersion)
         }
     }
 
@@ -91,13 +91,13 @@ class BackupCodecMonthSettingsTest {
     }
 
     @Test
-    fun v5File_decodesToV13_withDaysOffDefaultedToZero() {
+    fun v5File_decodesToV14_withDaysOffDefaultedToZero() {
         val v5 =
             """{$header,"schemaVersion":5,"monthSettings":[{"month":"2026-10","workingDays":15}]}"""
 
         val result = BackupCodec.decode(v5).success()
 
-        assertEquals(13, result.document.schemaVersion)
+        assertEquals(14, result.document.schemaVersion)
         assertEquals(listOf(LocalMonthSettings("2026-10", 15, 0)), result.document.monthSettings)
         assertEquals(0, result.skippedCount)
     }

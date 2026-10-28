@@ -3,8 +3,8 @@ package com.joaoeoneves.fintrack.data.backup
 import com.joaoeoneves.fintrack.BuildConfig
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -154,7 +154,7 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
                         FakePlannedIncomeRepository(),
                         FakeRecurringRepository(),
                         FakeMonthSettingsRepository(),
-                        FakeCategoryGroupRepository(),
+                        FakeEnvelopeRepository(),
                         PlanSingletonSources(
                             FakeSalaryProfileRepository(),
                             FakeGoalRepository(),
