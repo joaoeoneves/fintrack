@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 15
+internal const val LOCAL_SCHEMA_VERSION = 16
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -96,6 +96,10 @@ data class LocalPlannedIncome(
     val earmarkId: String? = null,
     /** Set on lines generated from the salary profile (schema v8). */
     val managedKey: String? = null,
+    /** Record the line's income on its pay date (schema v16; absent = off). */
+    val autoRecord: Boolean = false,
+    /** Fixed pay day 1..31 (schema v16); absent = the month's last working day. */
+    val payDay: Int? = null,
 )
 
 /**
@@ -157,11 +161,16 @@ data class LocalSavingsGoal(
     val recurringId: String? = null,
 )
 
-/** The automation settings (schema v12): [paydayThrough] is the ISO `yyyy-MM` cursor of the payday automation. */
+/**
+ * The automation settings (schema v12): [paydayEnabled] / [paydayThrough] (ISO `yyyy-MM`) are the legacy single
+ * payday switch, kept as migration input; [lineThrough] (schema v16) maps a planned income line id to the ISO
+ * `yyyy-MM` cursor of its automatic recording.
+ */
 @Serializable
 data class LocalAutomation(
     val paydayEnabled: Boolean = false,
     val paydayThrough: String? = null,
+    val lineThrough: Map<String, String> = emptyMap(),
 )
 
 /**

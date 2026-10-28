@@ -26,13 +26,14 @@ class SessionAutomationSettingsRepository
         override fun observeAutomationSettings(): Flow<AutomationSettings> =
             switch.flow(AutomationSettings()) { it.observeAutomationSettings() }
 
-        override suspend fun setPaydayEnabled(
-            enabled: Boolean,
-            cursor: YearMonth?,
-        ): Result<Unit> = switch.call { it.setPaydayEnabled(enabled, cursor) }
+        override suspend fun updateLineCursors(
+            set: Map<String, YearMonth>,
+            remove: Set<String>,
+            clearLegacyPayday: Boolean,
+        ): Result<Unit> = switch.call { it.updateLineCursors(set, remove, clearLegacyPayday) }
 
         override suspend fun recordPayday(
-            month: YearMonth,
             incomes: List<Income>,
-        ): Result<Unit> = switch.call { it.recordPayday(month, incomes) }
+            cursors: Map<String, YearMonth>,
+        ): Result<Unit> = switch.call { it.recordPayday(incomes, cursors) }
     }

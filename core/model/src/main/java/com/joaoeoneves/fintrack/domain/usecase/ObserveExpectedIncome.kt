@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.PAYDAY_LEAD_DAYS
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
+import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.paydayOf
 import com.joaoeoneves.fintrack.domain.model.receivedIncomes
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
@@ -32,7 +33,6 @@ class ObserveExpectedIncome
             zone: ZoneId,
         ): Flow<ExpectedIncome> {
             val month = YearMonth.from(today)
-            val payday = paydayOf(month)
             val start = month.atDay(1).atStartOfDay(zone).toInstant()
             val end =
                 month
@@ -47,15 +47,13 @@ class ObserveExpectedIncome
             ) { lines, monthSettings, incomes ->
                 val current = monthSettings.firstOrNull { it.month == month }
                 val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
-                val open = today >= payday.minusDays(PAYDAY_LEAD_DAYS)
                 val rows =
-                    if (open) {
-                        incomeRowsIn(lines, month, workingDays)
-                            .filter { it.cents > 0L && it.receivedIncomes(month, workingDays, incomes) == null }
-                    } else {
-                        emptyList()
+                    incomeRowsIn(lines, month, workingDays).filter {
+                        it.cents > 0L &&
+                            today >= it.payDateIn(month).minusDays(PAYDAY_LEAD_DAYS) &&
+                            it.receivedIncomes(month, workingDays, incomes) == null
                     }
-                ExpectedIncome(month, workingDays, payday, rows)
+                ExpectedIncome(month, workingDays, rows.minOfOrNull { it.payDateIn(month) } ?: paydayOf(month), rows)
             }
         }
     }

@@ -630,10 +630,6 @@
     <string name="income_undo_title">Anular recebido?</string>
     <string name="plan_payday">Dia de pagamento: %1$s</string>
     <string name="plan_received_amount">Valor recebido</string>
-    <string name="settings_section_automation">Automação</string>
-    <string name="settings_payday_title">Registar rendimentos no dia de pagamento</string>
-    <string name="settings_payday_subtitle">Último dia útil do mês</string>
-    <string name="settings_payday_recurring_hint">Desative os itens recorrentes de salário para não o registar duas vezes</string>
     <string name="envelopes_title">Envelopes</string>
     <string name="envelopes_new">Novo envelope</string>
     <string name="envelopes_empty">Ainda não há envelopes</string>

@@ -615,10 +615,6 @@
     <string name="income_undo_title">Undo received?</string>
     <string name="plan_payday">Payday: %1$s</string>
     <string name="plan_received_amount">Amount received</string>
-    <string name="settings_section_automation">Automation</string>
-    <string name="settings_payday_title">Record income on payday</string>
-    <string name="settings_payday_subtitle">Last working day of the month</string>
-    <string name="settings_payday_recurring_hint">Turn off recurring salary items to avoid recording it twice</string>
     <string name="envelopes_title">Envelopes</string>
     <string name="envelopes_new">New envelope</string>
     <string name="envelopes_empty">No envelopes yet</string>

@@ -87,7 +87,7 @@ service cloud.firestore {
 
     function isValidPlannedIncome(data) {
       return data.keys().hasOnly(['label', 'amountCents', 'order', 'basis', 'frequency', 'monthOfYear',
-          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'managedKey', 'updatedAt'])
+          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'managedKey', 'autoRecord', 'payDay', 'updatedAt'])
         && data.keys().hasAll(['label', 'amountCents', 'order'])
         && data.label is string && data.label.size() > 0 && data.label.size() <= 50
         && isValidAmountCents(data.amountCents)
@@ -96,6 +96,8 @@ service cloud.firestore {
         && isValidIncomeFrequency(data)
         && isValidEarmark(data)
         && (!('managedKey' in data) || data.managedKey.matches(managedKeyPattern()))
+        && (!('autoRecord' in data) || data.autoRecord is bool)
+        && (!('payDay' in data) || (data.payDay is int && data.payDay >= 1 && data.payDay <= 31))
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
     }
 
@@ -202,14 +204,16 @@ service cloud.firestore {
       allow create, update: if isOwner(userId) && isValidSalaryProfile(request.resource.data);
     }
 
-    // The automation settings are a single document: the payday switch and the last month it recorded (yyyy-MM).
+    // The automation settings are a single document: lineThrough maps a planned income line id to the last month
+    // (yyyy-MM) it recorded; the payday switch and its month are the legacy single switch, kept until 3.1.
     match /users/{userId}/plan/automation {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidAutomation(request.resource.data);
     }
 
     function isValidAutomation(data) {
-      return data.keys().hasOnly(['paydayEnabled', 'paydayThrough', 'updatedAt'])
+      return data.keys().hasOnly(['paydayEnabled', 'paydayThrough', 'lineThrough', 'updatedAt'])
+        && (!('lineThrough' in data) || (data.lineThrough is map && data.lineThrough.size() <= 64))
         && (!('paydayEnabled' in data) || data.paydayEnabled is bool)
         && (!('paydayThrough' in data) || data.paydayThrough == null
           || (data.paydayThrough is string && data.paydayThrough.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')))
