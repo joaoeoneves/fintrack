@@ -38,6 +38,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -118,7 +119,7 @@ fun LazyListScope.activityRowItems(
             val today = remember(state.items) { LocalDate.now(ZoneId.systemDefault()) }
             DaySectionHeader(
                 header = dayHeaderOf(section.date, today),
-                modifier = Modifier.animateItem().padding(horizontal = Dimens.ScreenPadding),
+                modifier = motionAnimateItem(Modifier.padding(horizontal = Dimens.ScreenPadding)),
             )
         }
         items(section.items, key = { it.rowKey() }) { transaction ->
@@ -198,7 +199,7 @@ private fun LazyItemScope.ActivityRow(
     SwipeToDeleteRow(
         onDelete = { actions.onDelete(transaction.id) },
         deleteLabel = stringResource(R.string.cd_delete),
-        modifier = Modifier.animateItem(),
+        modifier = motionAnimateItem(),
     ) {
         val rowModifier = Modifier.weight(1f).padding(horizontal = Dimens.ScreenPadding)
         when (transaction) {

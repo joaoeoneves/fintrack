@@ -47,6 +47,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.pressScale
+import com.joaoeoneves.fintrack.ui.designsystem.rememberFinTrackHaptics
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.ReceiveChange
 import com.joaoeoneves.fintrack.ui.plan.ReceivedCheckButton
@@ -140,6 +141,7 @@ private fun ExpectedIncomeGroup(
     onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
 ) {
     val feedback = LocalReceiveFeedback.current
+    val haptics = rememberFinTrackHaptics()
     val changeLabel = stringResource(R.string.action_change)
     SectionTitle(title = stringResource(R.string.plan_expected_income))
     expected.rows.forEachIndexed { index, row ->
@@ -165,6 +167,7 @@ private fun ExpectedIncomeGroup(
                     ReceivedCheckButton(
                         received = false,
                         onClick = {
+                            haptics.success()
                             onReceive(row, receiveDate, null)
                             val paying = row.lines.filter { it.amountIn(expected.month, expected.workingDays) > 0L }
                             feedback?.announce(
@@ -237,6 +240,7 @@ private fun UpcomingRow(
     today: LocalDate,
     model: UpcomingRecurringModel,
 ) {
+    val haptics = rememberFinTrackHaptics()
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space12)) {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.Space12)) {
             Text(
@@ -266,13 +270,19 @@ private fun UpcomingRow(
         ) {
             CompactPill(
                 text = stringResource(R.string.recurring_confirm),
-                onClick = { model.onConfirm(row) },
+                onClick = {
+                    haptics.confirm()
+                    model.onConfirm(row)
+                },
                 enabled = row.isDue,
                 modifier = Modifier.testTag(TestTags.RECURRING_CONFIRM),
             )
             CompactPill(
                 text = stringResource(R.string.recurring_skip),
-                onClick = { model.onSkip(row) },
+                onClick = {
+                    haptics.reject()
+                    model.onSkip(row)
+                },
                 modifier = Modifier.testTag(TestTags.RECURRING_SKIP),
             )
         }

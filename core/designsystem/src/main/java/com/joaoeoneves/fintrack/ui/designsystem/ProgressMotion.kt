@@ -67,3 +67,36 @@ fun rememberOverspendPulse(isOver: Boolean): State<Float> {
     }
     return scale.asState()
 }
+
+/**
+ * True when a goal just crossed from incomplete to complete. [previous] is null on first show, so a goal that is
+ * already complete when its card appears never celebrates.
+ */
+fun crossedGoal(
+    previous: Float?,
+    now: Float,
+): Boolean = previous != null && previous < 1f && now >= 1f
+
+/**
+ * Celebrates a goal being reached: a success haptic (always) and a ring scale pulse (not under reduced motion) the
+ * moment [fraction] crosses 1, never on first show. Returns the pulse scale (1 at rest).
+ */
+@Composable
+fun rememberGoalCelebration(fraction: Float): State<Float> {
+    val reduced = LocalReducedMotion.current
+    val haptics = rememberFinTrackHaptics()
+    val scale = remember { Animatable(1f) }
+    var previous by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(fraction) {
+        val before = previous
+        previous = fraction
+        if (crossedGoal(before, fraction)) {
+            haptics.success()
+            if (!reduced) {
+                scale.animateTo(PULSE_PEAK, tween(Motion.Short))
+                scale.animateTo(1f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium))
+            }
+        }
+    }
+    return scale.asState()
+}

@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.ui.plan
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,6 +30,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
+import com.joaoeoneves.fintrack.ui.designsystem.pressScale
 import com.joaoeoneves.fintrack.ui.designsystem.rememberAnimatedCents
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -126,12 +130,18 @@ private fun EnvelopeCard(
     card: EnvelopeCardUi,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(role = Role.Button, onClick = onClick)
-                .padding(vertical = Dimens.Space12),
+                .pressScale(interactionSource)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = LocalIndication.current,
+                    role = Role.Button,
+                    onClick = onClick,
+                ).padding(vertical = Dimens.Space12),
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),

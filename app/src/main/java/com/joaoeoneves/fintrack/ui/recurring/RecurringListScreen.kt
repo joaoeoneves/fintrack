@@ -37,6 +37,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 
 @Composable
 fun RecurringListScreen(
@@ -148,11 +149,11 @@ private fun RecurringItems(
         }
         if (state.active.isNotEmpty()) {
             item(key = "active-header") { SectionHeader(R.string.recurring_section_active) }
-            items(state.active, key = { it.item.id }) { RecurringRowItem(it, actions) }
+            items(state.active, key = { it.item.id }) { RecurringRowItem(it, actions, motionAnimateItem()) }
         }
         if (state.inactive.isNotEmpty()) {
             item(key = "inactive-header") { SectionHeader(R.string.recurring_section_inactive) }
-            items(state.inactive, key = { it.item.id }) { RecurringRowItem(it, actions) }
+            items(state.inactive, key = { it.item.id }) { RecurringRowItem(it, actions, motionAnimateItem()) }
         }
     }
 }

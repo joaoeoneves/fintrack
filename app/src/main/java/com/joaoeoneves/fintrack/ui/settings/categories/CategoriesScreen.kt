@@ -32,6 +32,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 
 /** Callbacks of a single category row. */
 internal data class CategoryRowActions(
@@ -174,6 +175,7 @@ private fun CategoryList(
                 canMoveUp = index > 0,
                 canMoveDown = index < state.active.lastIndex,
                 actions = actions,
+                modifier = motionAnimateItem(),
             )
         }
         if (state.archived.isNotEmpty()) {
@@ -189,7 +191,7 @@ private fun CategoryList(
                 )
             }
             itemsIndexed(state.archived, key = { _, category -> category.id.value }) { _, category ->
-                ArchivedCategoryRow(category = category, actions = actions)
+                ArchivedCategoryRow(category = category, actions = actions, modifier = motionAnimateItem())
             }
         }
     }

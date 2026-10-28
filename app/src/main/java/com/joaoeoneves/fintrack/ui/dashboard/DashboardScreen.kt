@@ -57,6 +57,7 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.Motion
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 import com.joaoeoneves.fintrack.ui.theme.motionSpec
 import java.time.LocalDate
 import java.time.ZoneId
@@ -320,11 +321,7 @@ private fun LazyItemScope.ScreenItem(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier =
-            Modifier
-                .animateItem()
-                .padding(horizontal = Dimens.ScreenPadding)
-                .then(modifier),
+        modifier = motionAnimateItem(Modifier.padding(horizontal = Dimens.ScreenPadding).then(modifier)),
     ) { content() }
 }
 
@@ -355,7 +352,7 @@ private fun LazyListScope.balanceItems(
                 series = chart.series,
                 startDate = chart.startDate,
                 onScrub = chart.onScrub,
-                modifier = Modifier.animateItem().padding(top = Dimens.Space8),
+                modifier = motionAnimateItem(Modifier.padding(top = Dimens.Space8)),
             )
         }
     }

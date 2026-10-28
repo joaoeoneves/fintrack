@@ -49,12 +49,13 @@ internal fun RecurringTotals(state: RecurringListUiState.Content) {
 internal fun RecurringRowItem(
     row: RecurringRow,
     actions: RecurringListActions,
+    modifier: Modifier = Modifier,
 ) {
     val item = row.item
     val amount = formatAmountCents(item.amountCents)
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .clickable { actions.onOpenEditor(item.id) }
                 .padding(vertical = Dimens.Space4),

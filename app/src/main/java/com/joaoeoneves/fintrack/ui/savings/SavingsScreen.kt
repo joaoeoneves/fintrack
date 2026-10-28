@@ -1,6 +1,12 @@
 package com.joaoeoneves.fintrack.ui.savings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,11 +14,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -45,14 +55,19 @@ import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ProgressRing
+import com.joaoeoneves.fintrack.ui.designsystem.pressScale
 import com.joaoeoneves.fintrack.ui.designsystem.rememberAnimatedCents
+import com.joaoeoneves.fintrack.ui.designsystem.rememberGoalCelebration
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
+import com.joaoeoneves.fintrack.ui.theme.motionSpec
 import java.util.Locale
 
 private val CardRadius = 16.dp
+private val CheckSize = 18.dp
 private val RingSize = 64.dp
 private const val BASIS_POINTS = 10_000f
 
@@ -106,7 +121,7 @@ private fun SavingsContent(
             }
         } else {
             items(state.cards, key = { it.id }) { card ->
-                SavingsPlanCard(card = card, onClick = { onOpenPlan(card.id) })
+                SavingsPlanCard(card = card, onClick = { onOpenPlan(card.id) }, modifier = motionAnimateItem())
             }
         }
     }
@@ -145,48 +160,94 @@ private fun SavingsHeader(
 private fun SavingsPlanCard(
     card: SavingsCardUi,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val progress = card.progress
     val locale = currentLocale()
+    val interactionSource = remember { MutableInteractionSource() }
+    val celebration by rememberGoalCelebration(progress.fraction)
     Surface(
         shape = RoundedCornerShape(CardRadius),
         color = FinTrackTheme.colors.surface1,
-        modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .pressScale(interactionSource)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = LocalIndication.current,
+                    role = Role.Button,
+                    onClick = onClick,
+                ),
     ) {
         Row(
             modifier = Modifier.padding(Dimens.Space16),
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space16),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ProgressRing(progress = progress.fraction, size = RingSize) {
+            ProgressRing(
+                progress = progress.fraction,
+                size = RingSize,
+                modifier =
+                    Modifier.graphicsLayer {
+                        scaleX = celebration
+                        scaleY = celebration
+                    },
+            ) {
                 AnimatedPercentText(fraction = progress.fraction, locale = locale)
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.Space4)) {
-                Text(
-                    text = progress.goal.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+            SavingsCardText(card = card, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun SavingsCardText(
+    card: SavingsCardUi,
+    modifier: Modifier = Modifier,
+) {
+    val progress = card.progress
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Dimens.Space4)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = progress.goal.name,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            AnimatedVisibility(
+                visible = progress.fraction >= 1f,
+                enter = scaleIn(motionSpec(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium))),
+            ) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = FinTrackTheme.colors.positive,
+                    modifier = Modifier.size(CheckSize),
                 )
-                Text(
-                    text = stringResource(progress.status.labelRes()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color =
-                        if (progress.status == GoalStatus.BEHIND) {
-                            FinTrackTheme.colors.negative
-                        } else {
-                            FinTrackTheme.colors.textSecondary
-                        },
-                )
-                targetLine(card)?.let { Text(text = it, style = Amount) }
-                scheduleLine(card)?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = FinTrackTheme.colors.textSecondary,
-                    )
-                }
             }
+        }
+        Text(
+            text = stringResource(progress.status.labelRes()),
+            style = MaterialTheme.typography.bodySmall,
+            color =
+                if (progress.status == GoalStatus.BEHIND) {
+                    FinTrackTheme.colors.negative
+                } else {
+                    FinTrackTheme.colors.textSecondary
+                },
+        )
+        targetLine(card)?.let { Text(text = it, style = Amount) }
+        scheduleLine(card)?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
         }
     }
 }
