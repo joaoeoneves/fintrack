@@ -539,7 +539,7 @@
     <string name="salary_spread_full" formatted="false">100%</string>
     <string name="salary_group_taxes">Impostos</string>
     <string name="salary_field_irs_base" formatted="false">Taxa de retenção de IRS (%)</string>
-    <string name="salary_field_irs_subsidies" formatted="false">Taxa de IRS nos subsídios (%)</string>
+    <string name="salary_field_irs_subsidies" formatted="false">Taxa de IRS nos duodécimos (%)</string>
     <string name="salary_irs_subsidies_hint">Igual à taxa base se vazio</string>
     <string name="salary_field_irs_jovem" formatted="false">IRS Jovem (% isento)</string>
     <string name="salary_field_ss" formatted="false">Segurança Social (%)</string>

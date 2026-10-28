@@ -186,11 +186,13 @@ class SpreadsheetParityTest {
         assertEquals(List(FLEX_QUARTERS) { long(expected, "flexQuarterCents") }, flex.payments.map { it.second })
     }
 
+    // The sheet taxes the lump at the subsidy rate; the payslips withhold it at the base rate,
+    // so this checks the payslip value.
     @Test
-    fun salary_holidayLumpNet_matchesSpreadsheet() {
+    fun salary_holidayLumpNet_matchesPayslip() {
         val result = breakdown(salaryProfile("salary2026"))
 
-        assertEquals(long(section("expected"), "lumpSumNetCents"), result.holidayLumpNetCents)
+        assertEquals(long(section("expected"), "lumpSumNetPayslipCents"), result.holidayLumpNetCents)
         assertEquals(result.holidayLumpNetCents, result.christmasLumpNetCents)
     }
 

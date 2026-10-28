@@ -76,7 +76,7 @@ class SalaryProfileLinesTest {
         assertEquals(IncomeFrequency.YEARLY, result.byKey(MANAGED_HOLIDAY).frequency)
         assertEquals(7, result.byKey(MANAGED_HOLIDAY).monthOfYear)
         assertEquals(11, result.byKey(MANAGED_CHRISTMAS).monthOfYear)
-        assertEquals(42_000, result.byKey(MANAGED_HOLIDAY).amountCents)
+        assertEquals(39_500, result.byKey(MANAGED_HOLIDAY).amountCents)
     }
 
     @Test

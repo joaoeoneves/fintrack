@@ -76,8 +76,8 @@ class IncomeComponentsTest {
     fun june_withHalfSpread_mergesDuoAndLumpIntoOneSubsidiesRow() {
         val rows = rowsIn(6)
 
-        // duo 7000 + lump 42000
-        assertEquals(49_000, rows.of(SalaryComponent.SUBSIDIES).cents)
+        // duo 7000 + lump 39500
+        assertEquals(46_500, rows.of(SalaryComponent.SUBSIDIES).cents)
         assertEquals(3, rows.of(SalaryComponent.SUBSIDIES).lines.size)
     }
 
@@ -180,7 +180,7 @@ class IncomeComponentsTest {
 
         assertEquals(12 * 79_000L, rows.of(SalaryComponent.SALARY).cents)
         assertEquals((1..12).toList(), rows.of(SalaryComponent.SALARY).months)
-        assertEquals(12 * 7_000L + 84_000, rows.of(SalaryComponent.SUBSIDIES).cents)
+        assertEquals(12 * 7_000L + 79_000, rows.of(SalaryComponent.SUBSIDIES).cents)
         assertEquals(12 * 900L * days, rows.of(SalaryComponent.MEAL).cents)
         assertEquals(listOf(1, 4, 7, 10), rows.extra("flex").months)
         assertEquals(listOf(4, 10), rows.extra("profit").months)

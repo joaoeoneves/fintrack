@@ -524,7 +524,7 @@
     <string name="salary_spread_full" formatted="false">100%</string>
     <string name="salary_group_taxes">Taxes</string>
     <string name="salary_field_irs_base" formatted="false">IRS withholding rate (%)</string>
-    <string name="salary_field_irs_subsidies" formatted="false">IRS rate on subsidies (%)</string>
+    <string name="salary_field_irs_subsidies" formatted="false">IRS rate on the twelfths (%)</string>
     <string name="salary_irs_subsidies_hint">Same as the base rate when empty</string>
     <string name="salary_field_irs_jovem" formatted="false">IRS Jovem (% exempt)</string>
     <string name="salary_field_ss" formatted="false">Social security (%)</string>
