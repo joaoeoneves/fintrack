@@ -191,6 +191,12 @@ tags:
 # After the redesign the single filtered row sits at ~81% of the screen height (above the bottom
 # nav), not where _swipe-delete-row.yaml expects it, so swipe inline starting right of the
 # floating add pill.
+# The row's height depends on the screen: ~81% on a 720x1280 (320 dpi) device, ~57% on the CI Pixel 6
+# profile (1080x2400, 420 dpi), so swipe at both; the one that misses lands on empty space/filters.
+- swipe:
+    start: 90%, 57%
+    end: 25%, 57%
+    duration: 500
 - swipe:
     start: 90%, 81%
     end: 25%, 81%
