@@ -22,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,9 +46,12 @@ import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.pressScale
-import com.joaoeoneves.fintrack.ui.plan.ReceivedIncomeSheet
+import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
+import com.joaoeoneves.fintrack.ui.plan.ReceiveChange
+import com.joaoeoneves.fintrack.ui.plan.ReceivedCheckButton
 import com.joaoeoneves.fintrack.ui.plan.displayLabel
 import com.joaoeoneves.fintrack.ui.plan.rememberPaydayText
+import com.joaoeoneves.fintrack.ui.plan.rememberReceivedText
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -126,53 +128,66 @@ fun UpcomingRecurringCard(
     }
 }
 
-/** The current month's income not yet received, offered from a week before payday: each row with "Received". */
+/**
+ * The current month's income not yet received, offered from a week before payday: each row with a check that
+ * records it as received today and offers to change the date or amount from the snackbar.
+ */
 @Composable
 private fun ExpectedIncomeGroup(
     expected: ExpectedIncome,
     today: LocalDate,
     onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
 ) {
-    var receiving by remember { mutableStateOf<IncomeRow?>(null) }
+    val feedback = LocalReceiveFeedback.current
     val paydayText = rememberPaydayText(expected.payday)
+    val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(today))
+    val changeLabel = stringResource(R.string.action_change)
     SectionTitle(title = stringResource(R.string.plan_expected_income))
     expected.rows.forEachIndexed { index, row ->
         if (index > 0) Hairline()
-        Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space12)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.Space12)) {
+        val title = row.displayLabel()
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space4)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = row.displayLabel(),
+                    text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Text(text = formatAmountCents(row.cents), style = Amount, maxLines = 1)
+                if (row.cents > 0L) {
+                    ReceivedCheckButton(
+                        received = false,
+                        onClick = {
+                            onReceive(row, today, null)
+                            val paying = row.lines.filter { it.amountIn(expected.month, expected.workingDays) > 0L }
+                            feedback?.announce(
+                                message = snackbarText,
+                                actionLabel = changeLabel,
+                                change =
+                                    ReceiveChange(
+                                        title = title,
+                                        today = today,
+                                        editableAmountCents =
+                                            paying.singleOrNull()?.amountIn(expected.month, expected.workingDays),
+                                        onConfirm = { date, cents -> onReceive(row, date, cents) },
+                                    ),
+                            )
+                        },
+                    )
+                }
             }
             Text(
                 text = stringResource(R.string.plan_payday, paydayText),
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
-            )
-            CompactPill(
-                text = stringResource(R.string.income_received),
-                onClick = { receiving = row },
-                modifier = Modifier.padding(top = Dimens.Space12),
+                modifier = Modifier.padding(bottom = Dimens.Space8),
             )
         }
-    }
-    receiving?.let { row ->
-        val paying = row.lines.filter { it.amountIn(expected.month, expected.workingDays) > 0L }
-        ReceivedIncomeSheet(
-            title = row.displayLabel(),
-            today = today,
-            editableAmountCents = paying.singleOrNull()?.amountIn(expected.month, expected.workingDays),
-            onConfirm = { date, cents ->
-                onReceive(row, date, cents)
-                receiving = null
-            },
-            onDismiss = { receiving = null },
-        )
     }
 }
 

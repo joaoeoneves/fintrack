@@ -8,6 +8,7 @@
     <string name="action_ok">OK</string>
     <string name="action_retry">Tentar novamente</string>
     <string name="action_undo">Anular</string>
+    <string name="action_change">Alterar</string>
     <string name="action_import">Importar</string>
     <string name="action_sign_out">Terminar sessão</string>
     <string name="action_add_expense">Adicionar despesa</string>
@@ -643,6 +644,9 @@
     <string name="salary_line_duodecimos">Subsídios (duodécimos)</string>
     <string name="income_received">Recebido</string>
     <string name="plan_received_on">Recebido a %1$s</string>
+    <string name="income_mark_received">Marcar como recebido</string>
+    <string name="income_undo_received">Anular recebido</string>
+    <string name="income_undo_title">Anular recebido?</string>
     <string name="plan_payday">Dia de pagamento: %1$s</string>
     <string name="plan_received_amount">Valor recebido</string>
     <string name="settings_section_automation">Automação</string>

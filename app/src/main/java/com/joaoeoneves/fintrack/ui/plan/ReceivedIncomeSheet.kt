@@ -7,8 +7,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
@@ -27,6 +34,7 @@ import com.joaoeoneves.fintrack.ui.expense.addedit.decimalSeparatorFor
 import com.joaoeoneves.fintrack.ui.expense.addedit.parseAmountCents
 import com.joaoeoneves.fintrack.ui.expense.addedit.toAmountInputText
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -108,4 +116,38 @@ fun rememberPaydayText(payday: LocalDate): String {
 fun rememberReceivedText(date: LocalDate): String {
     val locale = currentLocale()
     return remember(date, locale) { DateTimeFormatter.ofPattern("d MMM", locale).format(date) }
+}
+
+/**
+ * The discreet "mark as received" control of an income row: an outlined check that records the row on tap, or, once
+ * [received], a filled check in the positive colour that asks to undo.
+ */
+@Composable
+fun ReceivedCheckButton(
+    received: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val description = if (received) R.string.income_undo_received else R.string.income_mark_received
+    IconButton(onClick = onClick, modifier = modifier) {
+        Icon(
+            imageVector = if (received) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+            contentDescription = stringResource(description),
+            tint = if (received) FinTrackTheme.colors.positive else FinTrackTheme.colors.textSecondary,
+        )
+    }
+}
+
+/** Confirmation before taking a received row back to not received. */
+@Composable
+fun UndoReceivedDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    FinTrackAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.income_undo_title)) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_undo)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }

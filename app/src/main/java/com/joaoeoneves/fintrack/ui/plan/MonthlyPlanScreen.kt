@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +53,6 @@ fun PlanScreen(
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
     groupsViewModel: CategoryGroupsViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val goalsViewModel: GoalsViewModel = hiltViewModel()
     CollectPlanErrors(
@@ -60,6 +60,29 @@ fun PlanScreen(
         events = listOf(viewModel.errorEvent, groupsViewModel.errorEvent, goalsViewModel.errorEvent),
     )
 
+    val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
+    receiveFeedback.ChangeSheet()
+
+    CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
+        PlanScaffold(
+            onOpenSettings = onOpenSettings,
+            snackbarHostState = snackbarHostState,
+            viewModel = viewModel,
+            groupsViewModel = groupsViewModel,
+            navigation = PlanNavigation(onOpenRecurring, onOpenSalaryProfile),
+        )
+    }
+}
+
+@Composable
+private fun PlanScaffold(
+    onOpenSettings: () -> Unit,
+    snackbarHostState: SnackbarHostState,
+    viewModel: MonthlyPlanViewModel,
+    groupsViewModel: CategoryGroupsViewModel,
+    navigation: PlanNavigation,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LargeTitleScaffold(
         title = stringResource(R.string.nav_plan),
         actions = { SettingsIconButton(onClick = onOpenSettings) },
@@ -93,7 +116,7 @@ fun PlanScreen(
                     state = uiState,
                     viewModel = viewModel,
                     groupsViewModel = groupsViewModel,
-                    navigation = PlanNavigation(onOpenRecurring, onOpenSalaryProfile),
+                    navigation = navigation,
                     modifier = contentModifier,
                 )
             }
@@ -255,6 +278,7 @@ private fun LazyListScope.expectedIncomeItem(
                     onEditWorkingDays = onEditWorkingDays,
                     onOpenSalaryProfile = navigation.onOpenSalaryProfile,
                     onReceive = viewModel::onReceive,
+                    onUndoReceive = viewModel::onUndoReceive,
                 ),
             modifier = modifier,
         )
