@@ -12,17 +12,25 @@ appId: com.joaoeoneves.fintrack
 # --- Pin English + EUR + Dark ---
 - tapOn:
     id: "dashboard_settings"
-- tapOn: "English"
+- tapOn: "Language|Idioma"
+# Index -1 = the open menu's option (the row's own value can also read "English").
+- tapOn:
+    text: "English"
+    index: -1
 - extendedWaitUntil:
     visible: "Preferences"
     timeout: 10000
 - tapOn: "Theme"
-- tapOn: "Dark"
+- tapOn:
+    text: "Dark"
+    index: -1
 - scrollUntilVisible:
     element: "Currency"
     direction: DOWN
 - tapOn: "Currency"
-- tapOn: "Euro \\(€\\)"
+- tapOn:
+    text: "Euro \\(€\\)"
+    index: -1
 - back
 - extendedWaitUntil:
     visible:
