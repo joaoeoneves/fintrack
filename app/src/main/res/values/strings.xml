@@ -8,6 +8,7 @@
     <string name="action_ok">OK</string>
     <string name="action_retry">Retry</string>
     <string name="action_undo">Undo</string>
+    <string name="action_change">Change</string>
     <string name="action_import">Import</string>
     <string name="action_sign_out">Sign out</string>
     <string name="action_add_expense">Add expense</string>
@@ -628,6 +629,9 @@
     <string name="salary_line_duodecimos">Subsidies (twelfths)</string>
     <string name="income_received">Received</string>
     <string name="plan_received_on">Received on %1$s</string>
+    <string name="income_mark_received">Mark as received</string>
+    <string name="income_undo_received">Undo received</string>
+    <string name="income_undo_title">Undo received?</string>
     <string name="plan_payday">Payday: %1$s</string>
     <string name="plan_received_amount">Amount received</string>
     <string name="settings_section_automation">Automation</string>
