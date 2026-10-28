@@ -1,0 +1,50 @@
+name: Firestore rules
+
+# Checks firestore.rules on every PR that touches it and deploys it when it changes on main, so rules never
+# lag behind the app. Deploying needs the FIREBASE_SERVICE_ACCOUNT secret (a service account JSON with the
+# "Firebase Rules Admin" role on the project); without it the deploy step is skipped with a warning.
+on:
+  pull_request:
+    paths: [firestore.rules, firebase.json]
+  push:
+    branches: [main]
+    paths: [firestore.rules, firebase.json]
+  workflow_dispatch:
+
+concurrency:
+  group: firestore-rules
+  cancel-in-progress: false
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Write service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+            echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+            echo "HAS_SA=1" >> "$GITHUB_ENV"
+          else
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT is not set; rules are compiled by the emulator only and not deployed."
+          fi
+
+      # The emulator refuses to start when firestore.rules doesn't compile.
+      - name: Compile rules
+        run: npx -y firebase-tools@latest emulators:exec --only firestore --project demo-fintrack "true"
+
+      - name: Deploy rules
+        if: github.event_name != 'pull_request' && env.HAS_SA == '1'
+        run: npx -y firebase-tools@latest deploy --only firestore:rules --project agenticusage-d7ce3 --non-interactive
+
+      - name: Remove credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
