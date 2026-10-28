@@ -26,11 +26,11 @@ import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.plan.displayLabel
+import com.joaoeoneves.fintrack.ui.plan.fundingLabel
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.YearMonth
-import kotlin.math.abs
 
 private const val MONTHS_PER_YEAR = 12
 
@@ -156,17 +156,23 @@ fun AnnualFundingCard(
 private fun AnnualFundingRow(pot: AnnualFunding) {
     val name = pot.envelope.name
     val left = pot.leftoverCents
+    val line = pot.line.fundingLabel()
     val text =
-        stringResource(
-            if (left >= 0) R.string.plan_pot_left else R.string.plan_pot_over,
-            name,
-            formatAmountCents(abs(left)),
-            formatAmountCents(pot.incomeCents),
-        )
+        if (left >= 0) {
+            stringResource(R.string.plan_pot_left, name, line, formatAmountCents(left))
+        } else {
+            stringResource(
+                R.string.annual_funding_overflow,
+                name,
+                line,
+                formatAmountCents(pot.incomeCents),
+                formatAmountCents(-left),
+            )
+        }
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
-        color = if (left >= 0) FinTrackTheme.colors.textSecondary else FinTrackTheme.colors.negative,
+        color = FinTrackTheme.colors.textSecondary,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
         modifier =

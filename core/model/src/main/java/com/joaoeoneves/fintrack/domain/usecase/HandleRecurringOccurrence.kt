@@ -40,15 +40,15 @@ class HandleRecurringOccurrence
                     .getOrThrow()
             }
 
-        /** Moves the cursor to [occurrence] without creating a transaction. */
+        /** Records [occurrence] as skipped and moves the cursor to it, without creating a transaction. */
         suspend fun skip(
             itemId: String,
             occurrence: LocalDate,
         ): Result<Unit> =
             runNonCancelling {
                 val item = latest(itemId)
-                if (isHandled(item, occurrence)) return@runNonCancelling
-                recurringRepository.setHandledThrough(itemId, occurrence).getOrThrow()
+                if (isHandled(item, occurrence) || occurrence in item.skipped) return@runNonCancelling
+                recurringRepository.skipOccurrences(itemId, setOf(occurrence), advanceTo = occurrence).getOrThrow()
             }
 
         private suspend fun latest(itemId: String): RecurringItem =

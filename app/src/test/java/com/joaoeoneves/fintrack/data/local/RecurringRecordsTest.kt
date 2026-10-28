@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
@@ -104,5 +105,68 @@ class RecurringRecordsTest {
         }
         assertThrows(IllegalArgumentException::class.java) { validateRecurring(ok.copy(frequency = "DAILY"), known) }
         assertTrue(runCatching { validateRecurring(ok.copy(endDate = "2026-01-01"), known) }.isSuccess)
+    }
+
+    @Test
+    fun roundTrip_keepsSkippedAndPausedAt() {
+        val item = full.copy(skipped = setOf(day(2026, 3, 1), day(2026, 2, 1)), pausedAt = day(2026, 3, 5))
+
+        val local = item.toLocal()
+
+        assertEquals(listOf("2026-02-01", "2026-03-01"), local.skipped)
+        assertEquals("2026-03-05", local.pausedAt)
+        assertEquals(item, local.toDomainOrNull())
+    }
+
+    @Test
+    fun oldJsonWithoutTheNewFields_usesTheDefaults() {
+        val old =
+            """{"id":"k","type":"EXPENSE","name":"Rent","amountCents":100,"categoryId":"FOOD",""" +
+                """"frequency":"MONTHLY","dayOfMonth":15,"startDate":"2026-01-01"}"""
+
+        val local = Json { ignoreUnknownKeys = true }.decodeFromString(LocalRecurringItem.serializer(), old)
+
+        assertTrue(local.skipped.isEmpty())
+        assertNull(local.pausedAt)
+        val item = local.toDomainOrNull()
+        assertTrue(item?.skipped?.isEmpty() == true)
+        assertNull(item?.pausedAt)
+    }
+
+    @Test
+    fun badSkippedEntriesAndPausedAt_areLenientOnRead() {
+        val local = full.toLocal().copy(skipped = listOf("2026-02-01", "junk"), pausedAt = "junk")
+
+        val item = local.toDomainOrNull()
+
+        assertEquals(setOf(day(2026, 2, 1)), item?.skipped)
+        assertNull(item?.pausedAt)
+    }
+
+    @Test
+    fun validate_rejectsABadSkippedEntry() {
+        val ok = full.toLocal()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            validateRecurring(ok.copy(skipped = listOf("2026-02-01", "nope")), setOf("FOOD"))
+        }
+    }
+
+    @Test
+    fun validate_rejectsABadPausedAt() {
+        assertThrows(IllegalArgumentException::class.java) {
+            validateRecurring(full.toLocal().copy(pausedAt = "nope"), setOf("FOOD"))
+        }
+    }
+
+    @Test
+    fun validate_skippedListIsCappedAt600() {
+        val dates = generateSequence(day(2000, 1, 1)) { it.plusDays(1) }.map { it.toString() }
+        val ok = full.toLocal()
+
+        validateRecurring(ok.copy(skipped = dates.take(600).toList()), setOf("FOOD"))
+        assertThrows(IllegalArgumentException::class.java) {
+            validateRecurring(ok.copy(skipped = dates.take(601).toList()), setOf("FOOD"))
+        }
     }
 }

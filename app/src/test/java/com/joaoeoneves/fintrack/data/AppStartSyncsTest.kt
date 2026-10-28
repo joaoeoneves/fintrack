@@ -93,7 +93,12 @@ class AppStartSyncsTest {
             IncomeMigrationSync(sources, automation, session, clock, gate, backgroundScope),
             AutomationSync(
                 session,
-                AutoPostRecurring(recurring, HandleRecurringOccurrence(recurring, FakeCategoryRepository()), expenses),
+                AutoPostRecurring(
+                    recurring,
+                    HandleRecurringOccurrence(recurring, FakeCategoryRepository()),
+                    expenses,
+                    FakeCategoryRepository(),
+                ),
                 PaydayData(automation, plan, recurring, gate),
                 RecordPayday(
                     plan,

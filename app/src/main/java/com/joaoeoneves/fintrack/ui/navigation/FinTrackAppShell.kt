@@ -27,12 +27,10 @@ import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.ui.common.LocalDeleteUndo
 import com.joaoeoneves.fintrack.ui.common.TransactionUndoViewModel
-import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.rememberDeletedMessage
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackNavigationBar
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
@@ -60,16 +58,14 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
     val showMessage: (String) -> Unit =
         remember { { message -> scope.launch { snackbarHostState.showSnackbar(message) } } }
     val undoViewModel = hiltViewModel<TransactionUndoViewModel>()
-    val deletedTemplate = stringResource(R.string.activity_deleted_snackbar)
+    val deletedMessage = rememberDeletedMessage()
     val undoLabel = stringResource(R.string.action_undo)
-    val locale = currentLocale()
-    val showDeleted: (Transaction) -> Unit =
-        remember(deletedTemplate, undoLabel, locale) {
-            { transaction ->
+    val showDeleted: (DeletedTransaction) -> Unit =
+        remember(deletedMessage, undoLabel) {
+            { deleted ->
                 scope.launch {
-                    val message = String.format(locale, deletedTemplate, transaction.title())
-                    val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel)
-                    if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(transaction)
+                    val result = snackbarHostState.showSnackbar(deletedMessage(deleted), actionLabel = undoLabel)
+                    if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
                 }
             }
         }
@@ -137,12 +133,6 @@ private fun barExit(reduced: Boolean): ExitTransition =
     } else {
         slideOutVertically(tween(Motion.Medium, easing = Motion.EmphasizedAccelerate)) { it } +
             fadeOut(tween(Motion.Medium))
-    }
-
-private fun Transaction.title(): String =
-    when (this) {
-        is Expense -> name
-        is Income -> source
     }
 
 @Composable

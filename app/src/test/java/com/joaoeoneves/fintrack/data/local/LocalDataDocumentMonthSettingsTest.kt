@@ -39,7 +39,7 @@ class LocalDataDocumentMonthSettingsTest : LocalStoreTestBase() {
             newStore().update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", 15))) to Unit }
 
             val onDisk = diskDoc()
-            assertEquals(16, onDisk.schemaVersion)
+            assertEquals(17, onDisk.schemaVersion)
             assertEquals(listOf(LocalMonthSettings("2026-10", 15)), onDisk.monthSettings)
             assertEquals(1, onDisk.plannedIncome.size)
         }

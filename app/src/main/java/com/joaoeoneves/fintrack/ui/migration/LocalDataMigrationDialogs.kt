@@ -14,6 +14,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
+import com.joaoeoneves.fintrack.ui.backup.countsText
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
@@ -89,15 +90,7 @@ private fun OfferDialog(
             Text(
                 stringResource(
                     R.string.migration_offer_message,
-                    stringResource(
-                        R.string.backup_counts,
-                        counts.expenses,
-                        counts.income,
-                        counts.budgets,
-                        counts.categories,
-                        counts.plannedIncome,
-                        counts.recurring,
-                    ),
+                    countsText(counts),
                 ),
             )
         },

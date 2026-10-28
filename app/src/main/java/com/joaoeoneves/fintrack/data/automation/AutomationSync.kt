@@ -76,7 +76,10 @@ class AutomationSync
             val settings: AutomationSettings,
             val lines: List<PlannedIncome>,
         ) {
-            fun recurringKey() = recurring.map { listOf(it.id, it.handledThrough, it.active, it.autoPost, it.endDate) }
+            fun recurringKey() =
+                recurring.map {
+                    listOf(it.id, it.handledThrough, it.active, it.autoPost, it.endDate, it.skipped, it.pausedAt)
+                }
 
             fun paydayKey() =
                 listOf(

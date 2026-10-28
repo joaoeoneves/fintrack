@@ -38,8 +38,8 @@ data class CashFlowSummary(
     /** Everything that left, i.e. [spendingCents] + [savedCents]. */
     val outflowCents: Long get() = spendingCents + savedCents
 
-    /** Income minus all outflow (spending and saving alike). */
-    val netCents: Long get() = incomeCents - outflowCents
+    /** Income minus spending: what is left after what was spent (money set aside still counts as kept). */
+    val netCents: Long get() = incomeCents - spendingCents
 
     /** [savedCents] as a fraction of [incomeCents], `null` without income. */
     val savingsRate: Double? get() = savingsRate(savedCents = savedCents, incomeCents = incomeCents)

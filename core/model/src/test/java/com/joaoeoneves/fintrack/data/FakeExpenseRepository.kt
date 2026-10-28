@@ -30,6 +30,9 @@ class FakeExpenseRepository(
     var nextCountExpensesError: Throwable? = null
     var nextMoveExpensesError: Throwable? = null
 
+    /** Fails the next [expenseIdsBetween] call. */
+    var nextExpenseIdsError: Throwable? = null
+
     /** Resolves the [Category] an expense gets when moved to an id; defaults to built-ins, else unknown. */
     var categoryLookup: (CategoryId) -> Category = { id ->
         BuiltInCategories.all.find { it.id == id } ?: Category.unknown(id)
@@ -97,6 +100,22 @@ class FakeExpenseRepository(
             return Result.failure(error)
         }
         return Result.success(expensesFlow.value.any { it.category.id == categoryId })
+    }
+
+    override suspend fun expenseIdsBetween(
+        firstId: String,
+        lastId: String,
+    ): Result<Set<String>> {
+        nextExpenseIdsError?.let { error ->
+            nextExpenseIdsError = null
+            return Result.failure(error)
+        }
+        return Result.success(
+            expensesFlow.value
+                .map { it.id }
+                .filter { it in firstId..lastId }
+                .toSet(),
+        )
     }
 
     override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> {

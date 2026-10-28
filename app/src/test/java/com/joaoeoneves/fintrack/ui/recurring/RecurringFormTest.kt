@@ -162,6 +162,18 @@ class RecurringFormTest {
     }
 
     @Test
+    fun toItem_keepsSkippedAndPausedAt() {
+        val existing =
+            recurringItem(id = "r9", active = false, skipped = setOf(day(2026, 2, 15)), pausedAt = day(2026, 3, 1))
+
+        val item = validForm().toItem(existing)
+
+        assertEquals(setOf(day(2026, 2, 15)), item.skipped)
+        assertEquals(day(2026, 3, 1), item.pausedAt)
+        assertEquals(emptySet<java.time.LocalDate>(), validForm().toItem(null).skipped)
+    }
+
+    @Test
     fun toForm_prefillsStoredCentsExactly_andNewFormDefaultsToToday() {
         val item = recurringItem(amountCents = 1_205L, note = "memo", endDate = day(2027, 1, 1))
 

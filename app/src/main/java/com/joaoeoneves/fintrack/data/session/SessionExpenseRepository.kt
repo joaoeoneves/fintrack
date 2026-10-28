@@ -50,6 +50,11 @@ class SessionExpenseRepository
         override suspend fun hasExpenseWithCategory(categoryId: CategoryId): Result<Boolean> =
             switch.call { it.hasExpenseWithCategory(categoryId) }
 
+        override suspend fun expenseIdsBetween(
+            firstId: String,
+            lastId: String,
+        ): Result<Set<String>> = switch.call { it.expenseIdsBetween(firstId, lastId) }
+
         override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> =
             switch.call { it.countExpensesWithCategory(categoryId) }
 

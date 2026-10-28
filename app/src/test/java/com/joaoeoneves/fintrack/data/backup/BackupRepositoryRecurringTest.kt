@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data.backup
 import com.joaoeoneves.fintrack.data.local.toLocal
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.RecurringType
+import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
@@ -77,5 +78,22 @@ class BackupRepositoryRecurringTest : BackupRepositoryTestBase() {
             localStore.update { it.copy(recurring = listOf(backupRecurring())) to Unit }
 
             assertEquals(true, repository().localHasData())
+        }
+
+    @Test
+    fun export_keepsSkippedAndPausedAt() =
+        runStoreTest {
+            val item = recurringItem("r1", skipped = setOf(day(2026, 2, 15)), pausedAt = day(2026, 3, 1))
+
+            val doc = repository(recurring = listOf(item)).buildBackup(at).getOrThrow()
+            val decoded =
+                BackupCodec
+                    .decode(BackupCodec.encode(doc))
+                    .success()
+                    .document.recurring
+                    .single()
+
+            assertEquals(listOf("2026-02-15"), decoded.skipped)
+            assertEquals("2026-03-01", decoded.pausedAt)
         }
 }

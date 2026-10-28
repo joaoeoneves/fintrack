@@ -4,8 +4,9 @@ import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
-import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.testIncome
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
@@ -52,6 +53,7 @@ class AddEditIncomeViewModelDeleteTest {
         id: String? = "e1",
     ) = AddEditIncomeViewModel(
         repository,
+        deleteTransactionFor(incomes = repository),
         SavedStateHandle(if (id == null) emptyMap() else mapOf("incomeId" to id)),
     )
 
@@ -67,7 +69,7 @@ class AddEditIncomeViewModelDeleteTest {
         runTest(testDispatcher) {
             val repo = FakeIncomeRepository(listOf(income))
             val vm = viewModel(repo)
-            val emitted = mutableListOf<Income>()
+            val emitted = mutableListOf<DeletedTransaction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 vm.deletedEvent.collect { emitted += it }
             }
@@ -77,7 +79,7 @@ class AddEditIncomeViewModelDeleteTest {
             vm.onDelete()
             advanceUntilIdle()
 
-            assertEquals(listOf(income), emitted)
+            assertEquals(listOf(DeletedTransaction(income)), emitted)
             assertNull(repo.getIncome("e1").getOrThrow())
         }
 
@@ -119,7 +121,7 @@ class AddEditIncomeViewModelDeleteTest {
                     }
                 }
             val vm = viewModel(slow)
-            val emitted = mutableListOf<Income>()
+            val emitted = mutableListOf<DeletedTransaction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 vm.deletedEvent.collect { emitted += it }
             }
@@ -138,7 +140,7 @@ class AddEditIncomeViewModelDeleteTest {
     fun onDelete_failure_clearsIsDeleting_andSetsError_withoutEvent() =
         runTest(testDispatcher) {
             val vm = viewModel(failingDelete(FakeIncomeRepository(listOf(income))))
-            val emitted = mutableListOf<Income>()
+            val emitted = mutableListOf<DeletedTransaction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 vm.deletedEvent.collect { emitted += it }
             }

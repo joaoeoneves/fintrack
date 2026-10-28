@@ -15,8 +15,39 @@ fun RecurringItem.autoPostDueOccurrences(today: LocalDate): List<LocalDate> {
     val limit = endDate?.let { minOf(it, today) } ?: today
     val eligible = active && autoPost && first != null && first <= limit
     return if (eligible && first >= today.minusMonths(AUTO_POST_LOOKBACK_MONTHS)) {
-        (lastIndexOnOrBefore(first)..lastIndexOnOrBefore(limit)).map { occurrence(it) }
+        (lastIndexOnOrBefore(first)..lastIndexOnOrBefore(limit)).map { occurrence(it) }.filter { it !in skipped }
     } else {
         emptyList()
     }
+}
+
+/**
+ * Past occurrences an auto-post expense item should already have a transaction for: those up to its cursor
+ * ([RecurringItem.handledThrough]) within the lookback window, minus the periods the user skipped. Empty unless
+ * the item is an active auto-post expense with a cursor. Never moves past [today] or the end date.
+ */
+fun RecurringItem.selfHealCandidates(today: LocalDate): List<LocalDate> {
+    val cursor = handledThrough
+    val eligible = active && autoPost && type == RecurringType.EXPENSE
+    if (!eligible || cursor == null) return emptyList()
+    val from = maxOf(startDate, today.minusMonths(AUTO_POST_LOOKBACK_MONTHS))
+    val skippedPeriods = skipped.map { periodKey(it) }.toSet()
+    return occurrencesBetween(from, minOf(cursor, today)).filter { periodKey(it) !in skippedPeriods }
+}
+
+/**
+ * The [candidates] with no transaction among [existingIds] (matched by item and period, so a transaction
+ * kept after the billing day changed still counts).
+ */
+fun RecurringItem.missingOccurrences(
+    candidates: List<LocalDate>,
+    existingIds: Set<String>,
+): List<LocalDate> {
+    val present =
+        existingIds
+            .mapNotNull { parseOccurrenceId(it) }
+            .filter { it.itemId == id }
+            .map { periodKey(it.date) }
+            .toSet()
+    return candidates.filter { periodKey(it) !in present }
 }

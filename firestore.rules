@@ -137,7 +137,7 @@ service cloud.firestore {
 
     function isValidRecurring(userId, data) {
       return data.keys().hasOnly(['type', 'name', 'amountCents', 'category', 'note', 'frequency',
-          'dayOfMonth', 'monthOfYear', 'startDate', 'endDate', 'handledThrough', 'active', 'autoPost', 'updatedAt'])
+          'dayOfMonth', 'monthOfYear', 'startDate', 'endDate', 'handledThrough', 'active', 'autoPost', 'skipped', 'pausedAt', 'updatedAt'])
         && data.keys().hasAll(['type', 'name', 'amountCents', 'frequency', 'dayOfMonth', 'startDate', 'active'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
@@ -151,6 +151,8 @@ service cloud.firestore {
         && isOptionalDate(data, 'endDate') && isOptionalDate(data, 'handledThrough')
         && data.active is bool
         && (!('autoPost' in data) || data.autoPost is bool)
+        && (!('skipped' in data) || (data.skipped is list && data.skipped.size() <= 600))
+        && isOptionalDate(data, 'pausedAt')
         && isValidNote(data);
     }
 

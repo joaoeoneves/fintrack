@@ -185,6 +185,7 @@ private fun LocalDataDocument.counts() =
         recurring = recurring.size,
         monthSettings = monthSettings.size,
         categoryGroups = categoryGroups.size,
+        salaryProfile = if (salaryProfile != null) 1 else 0,
         goals = goals.size,
     )
 

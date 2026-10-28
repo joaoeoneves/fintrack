@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -31,7 +29,6 @@ import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
 import com.joaoeoneves.fintrack.ui.plan.annual.PlanTab
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /** The Plan tab: the month's tiles, its envelope cards, and the set-up section. */
 @Composable
@@ -148,14 +145,6 @@ private fun MonthlyPlanContent(
             )
         }
         item { PlanTilesRow(tiles = state.tiles, modifier = cardModifier) }
-        item {
-            Text(
-                text = stringResource(R.string.plan_payday, rememberPaydayText(state.receipts.payday)),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-                modifier = cardModifier.padding(top = Dimens.Space16),
-            )
-        }
         item {
             EnvelopeCardsSection(
                 cards = state.envelopeCards,

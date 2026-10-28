@@ -40,3 +40,14 @@ fun lineMonthsDue(
         .toList()
         .takeLast(cap)
 }
+
+/** The single day every paying row (cents > 0) of [rows] pays in [month]; `null` when they differ or none pays. */
+fun commonPayDateIn(
+    rows: List<IncomeRow>,
+    month: YearMonth,
+): LocalDate? =
+    rows
+        .filter { it.cents > 0L }
+        .map { it.payDateIn(month) }
+        .distinct()
+        .singleOrNull()

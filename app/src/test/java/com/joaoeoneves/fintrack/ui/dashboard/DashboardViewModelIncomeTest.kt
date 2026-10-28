@@ -53,11 +53,11 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             assertEquals(0L, content.incomeCents)
             assertTrue(content.recent.none { it is Income })
             assertNull(content.savingsRate)
-            assertEquals(-5_000L, content.netCents)
+            assertEquals(0L, content.netCents) // saving is not subtracted
         }
 
     @Test
-    fun netCents_isIncomeMinusSpendingMinusSaved_andSavingsRateIsSavedOverIncome() =
+    fun netCents_isIncomeMinusSpending_savingNotSubtracted_andSavingsRateIsSavedOverIncome() =
         runTest(testDispatcher) {
             val expenses =
                 listOf(
@@ -78,12 +78,15 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             assertEquals(92_000L, content.spendingCents)
             assertEquals(75_000L, content.savedCents)
             assertEquals(167_000L, content.outflowCents)
-            assertEquals(133_000L, content.netCents)
+            assertEquals(208_000L, content.netCents)
+            // The chart skips the saving-kind expense, so it ends at the hero net.
+            assertEquals(setOf("shop", "rent"), content.chartExpenses.map { it.id }.toSet())
+            assertEquals(3, content.expenses.size)
             assertEquals(0.25, content.savingsRate!!, delta)
         }
 
     @Test
-    fun netCents_negativeWhenOutflowExceedsIncome_savingsRateAboveOneWhenSavedExceedsIncome() =
+    fun netCents_unaffectedBySaving_savingsRateAboveOneWhenSavedExceedsIncome() =
         runTest(testDispatcher) {
             val etf = expense(id = "etf", amountCents = 50_000L, category = BuiltInCategories.INVESTMENTS, date = now)
             val small = income(id = "i1", amountCents = 10_000L, date = now)
@@ -95,7 +98,7 @@ class DashboardViewModelIncomeTest : DashboardViewModelTestBase() {
             collect(viewModel)
 
             val content = viewModel.content()
-            assertEquals(-40_000L, content.netCents)
+            assertEquals(10_000L, content.netCents)
             assertEquals(5.0, content.savingsRate!!, delta)
         }
 

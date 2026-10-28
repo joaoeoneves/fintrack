@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -76,6 +77,7 @@ class AddEditExpenseViewModelRefundTest {
     ) = AddEditExpenseViewModel(
         repository,
         FakeCategoryRepository(),
+        deleteTransactionFor(repository),
         SavedStateHandle(if (expenseId != null) mapOf("expenseId" to expenseId) else emptyMap()),
     )
 

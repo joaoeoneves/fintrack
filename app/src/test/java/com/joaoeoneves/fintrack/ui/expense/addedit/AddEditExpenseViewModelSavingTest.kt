@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -80,6 +81,7 @@ class AddEditExpenseViewModelSavingTest {
     ) = AddEditExpenseViewModel(
         repository,
         FakeCategoryRepository(),
+        deleteTransactionFor(repository),
         SavedStateHandle(if (expenseId != null) mapOf("expenseId" to expenseId) else emptyMap()),
     )
 

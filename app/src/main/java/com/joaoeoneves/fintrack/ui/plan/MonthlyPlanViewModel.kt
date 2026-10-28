@@ -22,6 +22,7 @@ import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
+import com.joaoeoneves.fintrack.domain.model.commonPayDateIn
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
@@ -31,7 +32,6 @@ import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.looksLikeSalary
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
-import com.joaoeoneves.fintrack.domain.model.paydayOf
 import com.joaoeoneves.fintrack.domain.model.receivedOn
 import com.joaoeoneves.fintrack.domain.model.salaryComponent
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
@@ -393,7 +393,7 @@ private fun receiptsOf(
             row.receivedOn(month, workingDays, overview.transactions.income, selected.zone)?.let { row.key to it }
         }
     return IncomeReceipts(
-        payday = paydayOf(month),
+        payday = commonPayDateIn(incomeRowsIn(lines, month, workingDays), month),
         today = selected.today,
         canReceive = month <= YearMonth.from(selected.today),
         receivedOn = received.toMap(),

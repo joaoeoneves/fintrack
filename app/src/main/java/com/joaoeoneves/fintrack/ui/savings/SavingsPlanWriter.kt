@@ -100,7 +100,7 @@ internal class SavingsPlanWriter(
         val owned = stored.item ?: return newItemOf(draft, name, today)
         val revived = !owned.active || owned.isEnded(today)
         val base =
-            if (revived) owned.copy(active = true, startDate = today, endDate = null) else owned
+            if (revived) owned.copy(active = true, startDate = today, endDate = null, pausedAt = null) else owned
         // A yearly item the user did not touch keeps its schedule instead of becoming monthly.
         val untouched =
             owned.frequency == RecurringFrequency.YEARLY &&

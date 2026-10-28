@@ -5,7 +5,7 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 /** Where a goal stands against its pace. */
-enum class GoalStatus { ON_TRACK, BEHIND, DONE, NO_MONTHLY }
+enum class GoalStatus { ON_TRACK, BEHIND, DONE, NO_MONTHLY, NOT_STARTED }
 
 /**
  * A goal's progress: [savedCents] so far against [targetCents]. [expectedCents] is what should have been saved by
@@ -33,13 +33,17 @@ data class GoalProgress(
                 (savedCents.toDouble() / effectiveTargetCents).toFloat().coerceIn(0f, 1f)
             }
 
-    /** DONE, then NO_MONTHLY (a plan whose monthly item is gone or inactive), then BEHIND, else ON_TRACK. */
+    /**
+     * DONE, then NO_MONTHLY (a plan whose monthly item is gone or inactive), then BEHIND; NOT_STARTED when nothing
+     * is saved and there is no pace to be behind of yet; else ON_TRACK.
+     */
     val status: GoalStatus
         get() =
             when {
                 effectiveTargetCents > 0L && savedCents >= effectiveTargetCents -> GoalStatus.DONE
                 goal.recurringId != null && plannedPerYearCents <= 0L -> GoalStatus.NO_MONTHLY
                 expectedCents != null && savedCents < expectedCents -> GoalStatus.BEHIND
+                savedCents <= 0L && (expectedCents ?: 0L) <= 0L -> GoalStatus.NOT_STARTED
                 else -> GoalStatus.ON_TRACK
             }
 
@@ -105,7 +109,9 @@ private fun counts(
     }
 
 /**
- * What should be saved by [today]: ANNUAL pro rata by the day of the year, TOTAL linear from the start date to the
+ * What should be saved by [today]: ANNUAL pro rata by the days elapsed since the pace start (January 1st, or the
+ * first of the plan's start month when it began this year; 0 during that first month), TOTAL linear from the start
+ * date to the
  * target date (`null` without a target date).
  */
 fun expectedByToday(
@@ -113,9 +119,22 @@ fun expectedByToday(
     today: LocalDate,
 ): Long? =
     when (goal.targetType) {
-        GoalTargetType.ANNUAL -> goal.targetCents * today.dayOfYear / today.lengthOfYear()
+        GoalTargetType.ANNUAL -> annualExpected(goal, today)
         GoalTargetType.TOTAL -> goal.targetDate?.let { linearExpected(goal, it, today) }
     }
+
+private fun annualExpected(
+    goal: SavingsGoal,
+    today: LocalDate,
+): Long {
+    val yearStart = LocalDate.of(today.year, 1, 1)
+    val startedThisYear = goal.startDate.year == today.year
+    val paceStart = if (startedThisYear) goal.startDate.withDayOfMonth(1) else yearStart
+    if (startedThisYear && goal.startDate.monthValue == today.monthValue) return 0L
+    val total = ChronoUnit.DAYS.between(paceStart, yearStart.plusYears(1))
+    val elapsed = ChronoUnit.DAYS.between(paceStart, today) + 1
+    return goal.targetCents * elapsed / total
+}
 
 private fun linearExpected(
     goal: SavingsGoal,

@@ -55,6 +55,36 @@ class LocalRecurringRepository
                 doc.copy(recurring = doc.recurring.withCursor(id, date)) to Unit
             }
 
+        override suspend fun skipOccurrences(
+            itemId: String,
+            dates: Set<LocalDate>,
+            advanceTo: LocalDate?,
+        ): Result<Unit> =
+            store.update { doc ->
+                doc.copy(
+                    recurring =
+                        doc.recurring.withSkipped(itemId) { item ->
+                            item.copy(
+                                skipped = (item.skipped + dates.map { it.toString() }).distinct().sorted(),
+                                handledThrough = advanceTo?.toString() ?: item.handledThrough,
+                            )
+                        },
+                ) to Unit
+            }
+
+        override suspend fun unskipOccurrences(
+            itemId: String,
+            dates: Set<LocalDate>,
+        ): Result<Unit> =
+            store.update { doc ->
+                doc.copy(
+                    recurring =
+                        doc.recurring.withSkipped(itemId) { item ->
+                            item.copy(skipped = item.skipped - dates.map { it.toString() }.toSet())
+                        },
+                ) to Unit
+            }
+
         override suspend fun confirmOccurrence(
             itemId: String,
             occurrence: LocalDate,
@@ -77,6 +107,14 @@ class LocalRecurringRepository
                     }
                 withTransaction.copy(recurring = doc.recurring.withCursor(itemId, occurrence)) to transaction.id
             }
+
+        private fun List<LocalRecurringItem>.withSkipped(
+            id: String,
+            change: (LocalRecurringItem) -> LocalRecurringItem,
+        ): List<LocalRecurringItem> {
+            require(any { it.id == id }) { "Recurring item $id not found" }
+            return map { if (it.id == id) change(it) else it }
+        }
 
         private fun List<LocalRecurringItem>.withCursor(
             id: String,

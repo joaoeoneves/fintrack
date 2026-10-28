@@ -56,11 +56,15 @@ internal fun RecurringItem.lastIndexOnOrBefore(date: LocalDate): Int {
     }
 }
 
-/** The oldest occurrence after [RecurringItem.handledThrough] (or the first), `null` past the end date. */
+/**
+ * The oldest occurrence after [RecurringItem.handledThrough] (or the first) that is not in
+ * [RecurringItem.skipped], `null` past the end date.
+ */
 fun RecurringItem.firstPendingOccurrence(): LocalDate? {
     val cursor = handledThrough
-    val index = if (cursor == null) 0 else lastIndexOnOrBefore(cursor) + 1
-    val date = occurrence(index)
+    var index = if (cursor == null) 0 else lastIndexOnOrBefore(cursor) + 1
+    var date = occurrence(index)
+    while (date in skipped) date = occurrence(++index)
     return date.takeUnless { endDate != null && it > endDate }
 }
 
@@ -72,7 +76,7 @@ fun RecurringItem.overdueCount(today: LocalDate): Int {
     val first = firstPendingOccurrence()?.takeIf { it <= today } ?: return 0
     val limit = endDate?.let { minOf(it, today) } ?: today
     val firstIndex = lastIndexOnOrBefore(first)
-    return (lastIndexOnOrBefore(limit) - firstIndex).coerceAtLeast(0)
+    return ((firstIndex + 1)..lastIndexOnOrBefore(limit)).count { occurrence(it) !in skipped }
 }
 
 /** The last occurrence strictly before [today] (and not after the end date), or `null`. */

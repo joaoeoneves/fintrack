@@ -76,16 +76,19 @@ fun BackupDialogs(
     }
 }
 
+/** The per-kind record counts as the multi-line summary shared by the backup and migration dialogs. */
 @Composable
-private fun countsText(counts: BackupCounts): String =
+internal fun countsText(counts: BackupCounts): String =
     stringResource(
         R.string.backup_counts,
         counts.expenses,
         counts.income,
-        counts.budgets,
+        counts.categoryGroups,
         counts.categories,
         counts.plannedIncome,
         counts.recurring,
+        counts.goals,
+        stringResource(if (counts.salaryProfile > 0) R.string.backup_salary_yes else R.string.backup_salary_no),
     )
 
 @Composable

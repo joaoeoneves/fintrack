@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +76,7 @@ class AddEditIncomeViewModelSavingTest {
         incomeId: String? = null,
     ) = AddEditIncomeViewModel(
         repository,
+        deleteTransactionFor(incomes = repository),
         SavedStateHandle(if (incomeId != null) mapOf("incomeId" to incomeId) else emptyMap()),
     )
 

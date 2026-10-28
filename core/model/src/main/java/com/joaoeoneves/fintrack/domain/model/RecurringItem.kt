@@ -16,6 +16,9 @@ const val MAX_DAY_OF_MONTH = 31
 const val MIN_MONTH_OF_YEAR = 1
 const val MAX_MONTH_OF_YEAR = 12
 
+/** Upper bound on [RecurringItem.skipped] (50 years of a monthly item). */
+const val MAX_SKIPPED_OCCURRENCES = 600
+
 /**
  * A template for a bill or income that repeats (rent, a subscription, salary). The billing day is
  * explicit: [dayOfMonth] (clamped to the month's length, so 31 means "the last day" in short
@@ -24,6 +27,10 @@ const val MAX_MONTH_OF_YEAR = 12
  * ordinary transactions; [handledThrough] is the latest occurrence confirmed or skipped. A blank
  * [id] means "not saved yet". With [autoPost] on, due occurrences are confirmed by the app itself (see
  * [autoPostDueOccurrences]) instead of waiting in the upcoming list.
+ *
+ * [skipped] is the set of occurrences the user ignored or deleted: they are never pending and never
+ * re-created. [pausedAt] is the day the item was paused (`null` when active or paused before it was
+ * recorded); resuming uses it to tell which occurrences fell inside the pause.
  *
  * [categoryId] is required for [RecurringType.EXPENSE] and `null` for [RecurringType.INCOME];
  * [monthOfYear] is non-null exactly when [frequency] is yearly.
@@ -43,6 +50,8 @@ data class RecurringItem(
     val handledThrough: LocalDate?,
     val active: Boolean,
     val autoPost: Boolean = false,
+    val skipped: Set<LocalDate> = emptySet(),
+    val pausedAt: LocalDate? = null,
 ) {
     /** Whether the day/month combination is within range and consistent with [frequency]. */
     val hasValidSchedule: Boolean

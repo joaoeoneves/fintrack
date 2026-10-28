@@ -181,7 +181,7 @@ class SavingsPlanEditorViewModel
                     }.onSuccess { deleted.send(it) }
                     .onFailure {
                         Log.w(TAG, "Failed to delete the savings plan", it)
-                        errors.send(UiText.StringResource(R.string.error_goal_save_failed))
+                        errors.send(UiText.StringResource(R.string.error_goal_delete_failed))
                     }
             }
         }

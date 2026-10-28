@@ -10,8 +10,9 @@ import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.firstPendingOccurrence
 import com.joaoeoneves.fintrack.domain.model.isEnded
-import com.joaoeoneves.fintrack.domain.model.lastOccurrenceBefore
+import com.joaoeoneves.fintrack.domain.model.paused
 import com.joaoeoneves.fintrack.domain.model.resolve
+import com.joaoeoneves.fintrack.domain.model.resumed
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -86,18 +87,14 @@ class RecurringListViewModel
         }
 
         /**
-         * Pauses an active item; resuming one moves its cursor to the last occurrence before today
-         * so the paused period is skipped rather than offered as overdue.
+         * Pauses an active item (see [paused]); resuming one (see [resumed]) skips the occurrences of the
+         * paused period rather than offering them as overdue.
          */
         fun onTogglePaused(id: String) {
             viewModelScope.launch {
                 val item = latest(id) ?: return@launch
-                val updated =
-                    if (item.active) {
-                        item.copy(active = false)
-                    } else {
-                        item.copy(active = true, handledThrough = item.lastOccurrenceBefore(LocalDate.now(clock)))
-                    }
+                val today = LocalDate.now(clock)
+                val updated = if (item.active) item.paused(today) else item.resumed(today)
                 recurringRepository.saveRecurring(updated).onFailure { reportFailure(it) }
             }
         }

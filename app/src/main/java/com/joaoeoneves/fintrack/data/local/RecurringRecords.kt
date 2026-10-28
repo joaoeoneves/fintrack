@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_DAY_OF_MONTH
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_SKIPPED_OCCURRENCES
 import com.joaoeoneves.fintrack.domain.model.MIN_DAY_OF_MONTH
 import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
@@ -40,6 +41,10 @@ data class LocalRecurringItem(
     val active: Boolean = true,
     /** Added in schema version 11; absent (off) in older files. */
     val autoPost: Boolean = false,
+    /** Added in schema version 17: ISO dates of the skipped occurrences; absent (empty) in older files. */
+    val skipped: List<String> = emptyList(),
+    /** Added in schema version 17: ISO date the item was paused; absent in older files. */
+    val pausedAt: String? = null,
 )
 
 private fun parseLocalDate(raw: String): LocalDate? =
@@ -84,6 +89,8 @@ internal fun LocalRecurringItem.toDomainOrNull(): RecurringItem? {
                 handledThrough = handled.getOrNull(),
                 active = active,
                 autoPost = autoPost,
+                skipped = skipped.mapNotNull(::parseLocalDate).toSet(),
+                pausedAt = pausedAt?.let(::parseLocalDate),
             )
         }
     return parsed?.takeIf { it.hasValidSchedule }.also {
@@ -107,6 +114,8 @@ internal fun RecurringItem.toLocal(): LocalRecurringItem =
         handledThrough = handledThrough?.toString(),
         active = active,
         autoPost = autoPost,
+        skipped = skipped.sorted().map { it.toString() },
+        pausedAt = pausedAt?.toString(),
     )
 
 /** Mirror of the firestore.rules check (plus `endDate >= startDate`); throws [IllegalArgumentException]. */
@@ -148,6 +157,9 @@ private fun validateRecurringDates(item: LocalRecurringItem) {
     val start = requireDate(item.startDate)
     val end = item.endDate?.let(::requireDate)
     item.handledThrough?.let(::requireDate)
+    item.pausedAt?.let(::requireDate)
+    require(item.skipped.size <= MAX_SKIPPED_OCCURRENCES) { "Too many skipped occurrences" }
+    item.skipped.forEach(::requireDate)
     require(end == null || end >= start) { "End date is before start date" }
 }
 

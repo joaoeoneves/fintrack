@@ -99,6 +99,19 @@ class LocalExpenseRepository
                     .any { it.categoryId == categoryId.value }
             }
 
+        override suspend fun expenseIdsBetween(
+            firstId: String,
+            lastId: String,
+        ): Result<Set<String>> =
+            runCatchingCancellable {
+                store.data
+                    .first()
+                    .expenses
+                    .map { it.id }
+                    .filter { it >= firstId && it <= lastId }
+                    .toSet()
+            }
+
         override suspend fun countExpensesWithCategory(categoryId: CategoryId): Result<Int> =
             runCatchingCancellable {
                 store.data

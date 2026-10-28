@@ -8,8 +8,10 @@ import com.joaoeoneves.fintrack.domain.model.StartStep
  * composable stay under detekt's LongParameterList threshold.
  */
 data class DashboardCallbacks(
-    val onAddExpense: () -> Unit,
-    val onAddIncome: () -> Unit,
+    /** Opens the new-expense form from the given viewed period. */
+    val onAddExpense: (Period) -> Unit,
+    /** Opens the new-income form from the given viewed period. */
+    val onAddIncome: (Period) -> Unit,
     val onOpenSettings: () -> Unit,
     /** Opens the given expense (by id) for editing; used by the recent-activity rows. */
     val onOpenExpense: (String) -> Unit,
@@ -17,8 +19,8 @@ data class DashboardCallbacks(
     val onOpenIncome: (String) -> Unit,
     /** Opens the Activity tab on the given period ("See all"). */
     val onOpenActivity: (Period) -> Unit,
-    /** Opens the Plan tab. */
-    val onOpenPlan: () -> Unit,
+    /** Opens the Plan tab on the given period's month. */
+    val onOpenPlan: (Period) -> Unit,
     /** Opens the Plan tab with the recurring items list on top. */
     val onOpenRecurring: () -> Unit,
     /** Opens the screen of a "Get started" checklist step. */

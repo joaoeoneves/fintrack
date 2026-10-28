@@ -53,8 +53,8 @@ import com.joaoeoneves.fintrack.ui.theme.Motion
 
 private const val SCROLL_THRESHOLD_PX = 6f
 private val PillShadow = 8.dp
-private val PillInnerMinHeight = 48.dp
 private val CapsulePadding = 4.dp
+private val PillInnerMinHeight = Dimens.AddPillHeight - CapsulePadding * 2
 private val PlusIconSize = 18.dp
 
 /**

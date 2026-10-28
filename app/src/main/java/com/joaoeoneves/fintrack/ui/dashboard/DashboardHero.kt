@@ -89,13 +89,9 @@ private fun SavingsRateText(
     savingsRate: Double?,
     modifier: Modifier = Modifier,
 ) {
+    if (savingsRate == null) return
     val locale = currentLocale()
-    val rateText =
-        if (savingsRate != null) {
-            remember(savingsRate, locale) { formatSavingsRate(savingsRate, locale) }
-        } else {
-            stringResource(R.string.dashboard_savings_rate_unavailable)
-        }
+    val rateText = remember(savingsRate, locale) { formatSavingsRate(savingsRate, locale) }
     Text(
         text = stringResource(R.string.dashboard_savings_rate, rateText),
         style = MaterialTheme.typography.bodyMedium,

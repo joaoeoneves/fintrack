@@ -27,6 +27,15 @@ class FakeRecurringRepository(
     private val itemsFlow = MutableStateFlow(initialItems)
 
     var nextMoveCategoryError: Throwable? = null
+
+    /** Fails the next [skipOccurrences] call. */
+    var nextSkipError: Throwable? = null
+
+    /** Fails the next [unskipOccurrences] call. */
+    var nextUnskipError: Throwable? = null
+
+    /** Names of the mutating calls made so far (`skip`, `unskip`), in order, for call-order assertions. */
+    val calls: MutableList<String> = mutableListOf()
     private val confirmed = mutableListOf<Transaction>()
     private var nextId = 1
 
@@ -93,6 +102,43 @@ class FakeRecurringRepository(
             return Result.failure(error)
         }
         return withCursor(id, date).map { }
+    }
+
+    override suspend fun skipOccurrences(
+        itemId: String,
+        dates: Set<LocalDate>,
+        advanceTo: LocalDate?,
+    ): Result<Unit> {
+        calls += "skip"
+        nextSkipError?.let { error ->
+            nextSkipError = null
+            return Result.failure(error)
+        }
+        return update(itemId) {
+            it.copy(skipped = it.skipped + dates, handledThrough = advanceTo ?: it.handledThrough)
+        }
+    }
+
+    override suspend fun unskipOccurrences(
+        itemId: String,
+        dates: Set<LocalDate>,
+    ): Result<Unit> {
+        calls += "unskip"
+        nextUnskipError?.let { error ->
+            nextUnskipError = null
+            return Result.failure(error)
+        }
+        return update(itemId) { it.copy(skipped = it.skipped - dates) }
+    }
+
+    private fun update(
+        id: String,
+        change: (RecurringItem) -> RecurringItem,
+    ): Result<Unit> {
+        val current = itemsFlow.value
+        if (current.none { it.id == id }) return Result.failure(NoSuchElementException("Recurring item $id not found"))
+        itemsFlow.value = current.map { if (it.id == id) change(it) else it }
+        return Result.success(Unit)
     }
 
     override suspend fun confirmOccurrence(

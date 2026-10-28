@@ -191,16 +191,18 @@ private fun SavingsPlanCard(
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space16),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ProgressRing(
-                progress = progress.fraction,
-                size = RingSize,
-                modifier =
-                    Modifier.graphicsLayer {
-                        scaleX = celebration
-                        scaleY = celebration
-                    },
-            ) {
-                AnimatedPercentText(fraction = progress.fraction, locale = locale)
+            if (progress.effectiveTargetCents > 0L) {
+                ProgressRing(
+                    progress = progress.fraction,
+                    size = RingSize,
+                    modifier =
+                        Modifier.graphicsLayer {
+                            scaleX = celebration
+                            scaleY = celebration
+                        },
+                ) {
+                    AnimatedPercentText(fraction = progress.fraction, locale = locale)
+                }
             }
             SavingsCardText(card = card, modifier = Modifier.weight(1f))
         }
@@ -247,7 +249,7 @@ private fun SavingsCardText(
                     FinTrackTheme.colors.textSecondary
                 },
         )
-        targetLine(card)?.let { Text(text = it, style = Amount) }
+        Text(text = targetLine(card), style = Amount)
         scheduleLine(card)?.let {
             Text(
                 text = it,
@@ -274,10 +276,10 @@ private fun AnimatedPercentText(
 }
 
 @Composable
-private fun targetLine(card: SavingsCardUi): String? {
+private fun targetLine(card: SavingsCardUi): String {
     val progress = card.progress
     val target = progress.targetCents
-    if (target <= 0L) return null
+    if (target <= 0L) return formatAmountCents(progress.savedCents)
     val saved = formatAmountCents(progress.savedCents)
     val goal = formatAmountCents(target)
     val date = progress.goal.targetDate
@@ -313,4 +315,5 @@ private fun GoalStatus.labelRes(): Int =
         GoalStatus.BEHIND -> R.string.goal_status_behind
         GoalStatus.DONE -> R.string.goal_status_done
         GoalStatus.NO_MONTHLY -> R.string.goal_status_no_monthly
+        GoalStatus.NOT_STARTED -> R.string.goal_status_not_started
     }

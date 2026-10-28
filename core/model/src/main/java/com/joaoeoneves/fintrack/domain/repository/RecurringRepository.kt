@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
 interface RecurringRepository {
@@ -21,6 +22,37 @@ interface RecurringRepository {
         id: String,
         date: LocalDate?,
     ): Result<Unit>
+
+    /**
+     * Adds [dates] to the item's skipped occurrences and, when [advanceTo] is not `null`, moves the cursor
+     * there in the same atomic write. Fails when the item does not exist. The default is a read-modify-write
+     * through [saveRecurring]; real repositories override it with an atomic update.
+     */
+    suspend fun skipOccurrences(
+        itemId: String,
+        dates: Set<LocalDate>,
+        advanceTo: LocalDate?,
+    ): Result<Unit> =
+        runCatching {
+            val item =
+                observeRecurring().first().firstOrNull { it.id == itemId }
+                    ?: throw NoSuchElementException("Recurring item $itemId not found")
+            saveRecurring(
+                item.copy(skipped = item.skipped + dates, handledThrough = advanceTo ?: item.handledThrough),
+            ).getOrThrow()
+        }
+
+    /** Removes [dates] from the item's skipped occurrences; fails when the item does not exist. */
+    suspend fun unskipOccurrences(
+        itemId: String,
+        dates: Set<LocalDate>,
+    ): Result<Unit> =
+        runCatching {
+            val item =
+                observeRecurring().first().firstOrNull { it.id == itemId }
+                    ?: throw NoSuchElementException("Recurring item $itemId not found")
+            saveRecurring(item.copy(skipped = item.skipped - dates)).getOrThrow()
+        }
 
     /**
      * Points every recurring item of [source] at [target]; returns how many were changed. Awaited when

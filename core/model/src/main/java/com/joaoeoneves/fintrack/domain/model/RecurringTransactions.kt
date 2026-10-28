@@ -24,6 +24,20 @@ private const val OCCURRENCE_ID_PREFIX = "rec_"
 /** Whether [id] is the id of a transaction generated from a recurring item (see [occurrenceTransactionId]). */
 fun isRecurringOccurrenceId(id: String): Boolean = id.startsWith(OCCURRENCE_ID_PREFIX)
 
+/** The recurring item and scheduled date an occurrence transaction id points to. */
+data class OccurrenceRef(
+    val itemId: String,
+    val date: LocalDate,
+)
+
+/** Inverse of [occurrenceTransactionId]; `null` when [id] is not a well-formed occurrence id. */
+fun parseOccurrenceId(id: String): OccurrenceRef? {
+    if (!isRecurringOccurrenceId(id)) return null
+    val itemId = id.removePrefix(OCCURRENCE_ID_PREFIX).substringBeforeLast('_')
+    val date = runCatching { LocalDate.parse(id.substringAfterLast('_'), ID_DATE_FORMAT) }.getOrNull()
+    return if (itemId.isBlank() || date == null) null else OccurrenceRef(itemId, date)
+}
+
 /**
  * The ordinary transaction for [occurrence] of this item, dated at noon in [zone] so the local day
  * is stable across zones. An expense resolves its category in [catalog]; an income uses the item's

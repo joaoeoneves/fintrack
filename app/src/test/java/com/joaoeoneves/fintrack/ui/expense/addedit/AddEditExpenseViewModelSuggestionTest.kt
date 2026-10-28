@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.userCategory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -61,6 +62,7 @@ class AddEditExpenseViewModelSuggestionTest {
             AddEditExpenseViewModel(
                 expenses,
                 FakeCategoryRepository(listOf(groceries, leisure, old)),
+                deleteTransactionFor(expenses),
                 SavedStateHandle(if (editId == null) emptyMap() else mapOf("expenseId" to editId)),
             )
         backgroundScope.launch { vm.categoryOptions.collect {} }

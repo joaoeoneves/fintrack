@@ -120,7 +120,7 @@ class CashFlowSummaryTest {
 
         assertEquals(100_000L, summary.incomeCents)
         assertEquals(70_000L, summary.outflowCents)
-        assertEquals(30_000L, summary.netCents)
+        assertEquals(50_000L, summary.netCents) // savings are not subtracted
         assertEquals(0.2, summary.savingsRate!!, 1e-9)
     }
 

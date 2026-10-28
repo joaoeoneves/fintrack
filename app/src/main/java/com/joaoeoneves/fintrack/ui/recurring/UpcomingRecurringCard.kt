@@ -143,7 +143,7 @@ private fun ExpectedIncomeGroup(
     val feedback = LocalReceiveFeedback.current
     val haptics = rememberFinTrackHaptics()
     val changeLabel = stringResource(R.string.action_change)
-    SectionTitle(title = stringResource(R.string.plan_expected_income))
+    SectionTitle(title = stringResource(R.string.home_to_receive_title))
     expected.rows.forEachIndexed { index, row ->
         if (index > 0) Hairline()
         val title = row.displayLabel()
