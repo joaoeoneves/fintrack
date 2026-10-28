@@ -38,6 +38,10 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
+      # Private-repo runners have little free disk; the AVD's userdata partition didn't fit.
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost "$AGENT_TOOLSDIRECTORY/CodeQL" && df -h /
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -51,6 +55,11 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          # Private-repo runners have 2 vCPUs (public ones have 4), so the emulator boots much slower.
+          cores: 2
+          ram-size: 4096M
+          emulator-boot-timeout: 1500
+          disk-size: 4096M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
