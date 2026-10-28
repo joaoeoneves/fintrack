@@ -28,7 +28,7 @@ import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.Session
-import com.joaoeoneves.fintrack.testutil.inertAccountRestorer
+import com.joaoeoneves.fintrack.testutil.FakeAccountRestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -51,10 +51,9 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
     protected val localStore by lazy { newStore() }
     protected val gate = RestoreGate()
 
-    /** Guest-only tests never reach the account side, so by default it is an inert instance (no Firebase). */
-    protected open val accountRestorer: AccountBackupRestorer by lazy { inertAccountRestorer() }
+    protected val account = FakeAccountRestore()
     protected val restorer by lazy {
-        BackupRestorer(GuestBackupRestorer(localStore, prefsStore, sessions), accountRestorer, sessions, gate)
+        BackupRestorer(GuestBackupRestorer(localStore, prefsStore, sessions), account, sessions, gate)
     }
 
     @After

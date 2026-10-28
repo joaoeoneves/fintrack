@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.backup
 
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.backup.AccountRestoreResult
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
 import com.joaoeoneves.fintrack.data.backup.backupDoc
 import com.joaoeoneves.fintrack.data.backup.backupExpense
@@ -15,11 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * The signed-in restore flow of [BackupViewModel]: warning, export first, picker, confirm. The account restorer is
- * final and unmockable here, so it is a real one with nobody signed in: it can only end in `Failed`. The `Success`,
- * `Offline` and `Partial` outcomes (and retry) need a fake account restorer and are not covered.
- */
+/** The signed-in restore flow of [BackupViewModel], with a [FakeAccountRestore] standing in for the account. */
 class BackupViewModelAccountRestoreTest : BackupViewModelTestBase() {
     private val doc = backupDoc(expenses = listOf(backupExpense("e1")))
 
@@ -199,35 +196,109 @@ class BackupViewModelAccountRestoreTest : BackupViewModelTestBase() {
             assertEquals(false, (vm.importState.value as BackupImportState.Confirm).account)
         }
 
-    @Test
-    fun signedIn_confirm_showsRestoring_thenTheFailureWhenTheAccountCannotBeReached() =
-        runStoreTest {
-            val vm = stagedAccountRestore()
-            val states = mutableListOf<BackupImportState>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.importState.toList(states) }
-
-            vm.onConfirmImport()
-            settle()
-
-            assertEquals(BackupImportState.Restoring(), states[states.size - 2])
-            val last = vm.importState.value as BackupImportState.Error
-            assertError(R.string.backup_error_restore_failed, last.message)
-        }
+    private suspend fun TestScope.confirmed(vm: BackupViewModel): MutableList<BackupImportState> {
+        val states = mutableListOf<BackupImportState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.importState.toList(states) }
+        vm.onConfirmImport()
+        settle()
+        return states
+    }
 
     @Test
-    fun signedIn_failedRestore_dropsTheFile_soNothingCanBeRetried() =
+    fun success_reportsProgress_thenDone_andDropsTheFile() =
         runStoreTest {
+            account.progress = listOf(0 to 4, 4 to 4)
             val vm = stagedAccountRestore()
-            vm.onConfirmImport()
-            settle()
 
+            val states = confirmed(vm)
+
+            assertTrue(BackupImportState.Restoring() in states)
+            assertTrue(BackupImportState.Restoring(4, 4) in states)
+            assertEquals(BackupImportState.Done(BackupCounts(1, 0, 0, 0, 0, 0)), vm.importState.value)
+            assertEquals(listOf(doc), account.calls)
             vm.onConfirmImport()
             vm.onRetryRestore()
             settle()
+            assertEquals(1, account.calls.size)
+        }
 
-            assertTrue(vm.importState.value is BackupImportState.Error)
+    @Test
+    fun offline_showsTheOfflineMessage_andDropsTheFile() =
+        runStoreTest {
+            account.answer(AccountRestoreResult.Offline)
+            val vm = stagedAccountRestore()
+
+            confirmed(vm)
+
+            val error = vm.importState.value as BackupImportState.Error
+            assertError(R.string.backup_error_restore_offline, error.message)
+            vm.onRetryRestore()
+            settle()
+            assertEquals(1, account.calls.size)
+        }
+
+    @Test
+    fun failed_showsTheFailureMessage_andDropsTheFile() =
+        runStoreTest {
+            account.answer(AccountRestoreResult.Failed(IllegalStateException("x")))
+            val vm = stagedAccountRestore()
+
+            confirmed(vm)
+
+            val error = vm.importState.value as BackupImportState.Error
+            assertError(R.string.backup_error_restore_failed, error.message)
+            vm.onConfirmImport()
+            settle()
+            assertEquals(1, account.calls.size)
+        }
+
+    @Test
+    fun partial_keepsThePendingFile_andRetryRestoresAgain() =
+        runStoreTest {
+            val partial = AccountRestoreResult.Partial(3, 10, IllegalStateException("x"))
+            account.answer(partial, AccountRestoreResult.Success)
+            val vm = stagedAccountRestore()
+
+            confirmed(vm)
+
+            assertEquals(BackupImportState.Partial(3, 10), vm.importState.value)
+            vm.onRetryRestore()
+            settle()
+
+            assertEquals(BackupImportState.Done(BackupCounts(1, 0, 0, 0, 0, 0)), vm.importState.value)
+            assertEquals(listOf(doc, doc), account.calls)
+        }
+
+    @Test
+    fun partial_retryCanPartiallyFailAgain_thenDismissDropsTheFile() =
+        runStoreTest {
+            account.answer(AccountRestoreResult.Partial(3, 10, IllegalStateException("x")))
+            val vm = stagedAccountRestore()
+            confirmed(vm)
+
+            vm.onRetryRestore()
+            settle()
+            assertEquals(BackupImportState.Partial(3, 10), vm.importState.value)
+
             vm.onDismissImport()
+            vm.onRetryRestore()
+            settle()
+
             assertEquals(BackupImportState.Idle, vm.importState.value)
+            assertEquals(2, account.calls.size)
+        }
+
+    @Test
+    fun partial_cannotBeConfirmedAsANewRestore() =
+        runStoreTest {
+            account.answer(AccountRestoreResult.Partial(1, 2, IllegalStateException("x")))
+            val vm = stagedAccountRestore()
+            confirmed(vm)
+
+            vm.onConfirmImport()
+            settle()
+
+            assertEquals(1, account.calls.size)
         }
 
     @Test
@@ -239,16 +310,16 @@ class BackupViewModelAccountRestoreTest : BackupViewModelTestBase() {
             settle()
 
             assertTrue(vm.importState.value is BackupImportState.Confirm)
+            assertTrue(account.calls.isEmpty())
         }
 
     @Test
-    fun signedIn_failedRestore_leavesTheGuestStoreUntouched() =
+    fun signedIn_restore_leavesTheGuestStoreUntouched() =
         runStoreTest {
             localStore.seedCategory("guest-data")
             val vm = stagedAccountRestore()
 
-            vm.onConfirmImport()
-            settle()
+            confirmed(vm)
 
             assertEquals(
                 listOf("guest-data"),
