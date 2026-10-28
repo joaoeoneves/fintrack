@@ -31,9 +31,9 @@ private val SERVER_TIMEOUT = 30.seconds
 
 /**
  * Deletes everything under `users/{uid}`: each collection is paged through the server and removed in
- * batches of at most [PAGE_SIZE] deletes, then the `plan/salaryProfile` singleton. The `settings/preferences`
- * document is left to the preferences sync, which overwrites it with the defaults. Calls are awaited (unlike
- * the normal repositories) so a failure surfaces and a retry resumes where the first run stopped.
+ * batches of at most [PAGE_SIZE] deletes, then the `plan/salaryProfile` and `plan/automation` singletons. The
+ * `settings/preferences` document is left to the preferences sync, which overwrites it with the defaults. Calls are
+ * awaited (unlike the normal repositories) so a failure surfaces and a retry resumes where the first run stopped.
  */
 class FirestoreDataResetRepository
     @Inject
@@ -46,7 +46,12 @@ class FirestoreDataResetRepository
                 val uid = firebaseAuth.currentUser?.uid ?: error("Not signed in")
                 val user = firestore.collection("users").document(uid)
                 WIPED_COLLECTIONS.forEach { wipe(user.collection(it)) }
-                deleteDocuments(listOf(user.collection("plan").document("salaryProfile")))
+                deleteDocuments(
+                    listOf(
+                        user.collection("plan").document("salaryProfile"),
+                        user.collection("plan").document("automation"),
+                    ),
+                )
             }
 
         private suspend fun wipe(collection: CollectionReference) {

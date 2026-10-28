@@ -241,15 +241,20 @@ private fun LazyListScope.expectedIncomeItem(
 ) {
     item {
         ExpectedIncomeCard(
-            rows = state.incomeRows,
-            canAdd = state.canAddIncomeLine,
-            workingDays = state.workingDays,
+            model =
+                ExpectedIncomeModel(
+                    rows = state.incomeRows,
+                    canAdd = state.canAddIncomeLine,
+                    workingDays = state.workingDays,
+                    receipts = state.receipts,
+                ),
             actions =
                 ExpectedIncomeActions(
                     onAdd = viewModel::onAddIncomeLine,
                     onEdit = viewModel::onEditIncomeLine,
                     onEditWorkingDays = onEditWorkingDays,
                     onOpenSalaryProfile = navigation.onOpenSalaryProfile,
+                    onReceive = viewModel::onReceive,
                 ),
             modifier = modifier,
         )

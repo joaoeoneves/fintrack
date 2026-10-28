@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryGroupRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
@@ -48,23 +49,23 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
     ) = LocalSavingsGoal(id, "Goal $id", targetCents, startDate = startDate, targetDate = targetDate)
 
     @Test
-    fun v8File_decodesUpgradedToV10_withNoGoals() {
+    fun v8File_decodesUpgradedToV12_withNoGoals() {
         val text = """{$header,"schemaVersion":8}"""
 
         val result = BackupCodec.decode(text).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(11, result.document.schemaVersion)
+        assertEquals(12, result.document.schemaVersion)
         assertTrue(result.document.goals.isEmpty())
         assertEquals(0, result.document.counts().goals)
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v12File_isUnsupported() {
+    fun v13File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(12),
-            BackupCodec.decode("""{$header,"schemaVersion":12}"""),
+            BackupDecodeResult.UnsupportedVersion(13),
+            BackupCodec.decode("""{$header,"schemaVersion":13}"""),
         )
     }
 
@@ -164,6 +165,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
                         PlanSingletonSources(
                             FakeSalaryProfileRepository(),
                             FakeGoalRepository(nextObserveError = IllegalStateException("boom")),
+                            FakeAutomationSettingsRepository(),
                         ),
                     ),
                     FakeCategoryRepository(),

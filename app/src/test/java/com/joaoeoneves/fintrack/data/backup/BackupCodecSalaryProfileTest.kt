@@ -14,13 +14,13 @@ class BackupCodecSalaryProfileTest {
     private val managed = backupPlanned("profile_net_salary").copy(managedKey = MANAGED_NET_SALARY)
 
     @Test
-    fun v7File_decodesUpgradedToV10_withoutProfile() {
+    fun v7File_decodesUpgradedToV12_withoutProfile() {
         val planned = """[{"id":"p","label":"Pay","amountCents":50000,"order":0,"frequency":"MONTHLY"}]"""
         val text = """{$header,"schemaVersion":7,"plannedIncome":$planned}"""
 
         val result = BackupCodec.decode(text).success()
 
-        assertEquals(11, result.document.schemaVersion)
+        assertEquals(12, result.document.schemaVersion)
         assertNull(result.document.salaryProfile)
         assertNull(
             result.document.plannedIncome
@@ -90,7 +90,7 @@ class BackupCodecSalaryProfileTest {
         val result = BackupCodec.decode(text).success()
 
         val decoded = requireNotNull(result.document.salaryProfile)
-        assertEquals(11, result.document.schemaVersion)
+        assertEquals(12, result.document.schemaVersion)
         assertEquals(0, result.skippedCount)
         assertEquals(listOf("flex", "bonus"), decoded.toDomain().extras.map { it.id })
     }

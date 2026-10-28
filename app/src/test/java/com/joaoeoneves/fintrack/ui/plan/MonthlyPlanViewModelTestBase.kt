@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
@@ -10,6 +11,7 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardRepositories
 import com.joaoeoneves.fintrack.ui.dashboard.observePeriodOverviewOf
@@ -66,6 +68,7 @@ open class MonthlyPlanViewModelTestBase {
                 monthSettingsRepo,
             ),
         ),
+        RecordPayday(incomeRepo, monthSettingsRepo, actualIncomeRepo, FakeAutomationSettingsRepository()),
         savedStateHandle,
         clock,
     )

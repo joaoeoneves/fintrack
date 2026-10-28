@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.PotsSummary
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.ui.common.UiText
+import java.time.LocalDate
 import java.time.YearMonth
 
 sealed interface MonthlyPlanUiState {
@@ -31,6 +32,7 @@ sealed interface MonthlyPlanUiState {
      * @property groups planned vs actual per category group (and the implicit "Other") for [period]'s month.
      * @property limitGroups every category with a limit, filed under its group, for the limits card.
      * @property pots the month's money split into earmarked pots and the base; `null` when not computed.
+     * @property receipts payday and which [incomeRows] were already received.
      */
     data class Content(
         val incomeLines: List<PlannedIncome>,
@@ -47,12 +49,27 @@ sealed interface MonthlyPlanUiState {
         val groups: List<GroupProgress> = emptyList(),
         val limitGroups: List<LimitGroup> = emptyList(),
         val pots: PotsSummary? = null,
+        val receipts: IncomeReceipts,
     ) : MonthlyPlanUiState
 
     data class Error(
         val message: UiText,
     ) : MonthlyPlanUiState
 }
+
+/**
+ * Payday and the receipts of [Content.period]'s month: [receivedOn] holds the day each fully received income row
+ * (keyed by [key]) was received; [canReceive] is false for future months; [today] caps the date of a receipt.
+ */
+data class IncomeReceipts(
+    val payday: LocalDate,
+    val today: LocalDate,
+    val canReceive: Boolean,
+    val receivedOn: Map<String, LocalDate> = emptyMap(),
+)
+
+/** The row's identity within a month's list: the id of its first line. */
+val IncomeRow.key: String get() = lines.first().id
 
 /**
  * The working days of [month]: [days] is what plans use (the override when [overridden], else the calendar

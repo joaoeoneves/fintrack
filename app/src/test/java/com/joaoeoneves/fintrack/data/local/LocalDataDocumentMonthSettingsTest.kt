@@ -32,14 +32,14 @@ class LocalDataDocumentMonthSettingsTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun v3File_isRewrittenAsV11_onNextWrite_keepingMonthSettings() =
+    fun v3File_isRewrittenAsV12_onNextWrite_keepingMonthSettings() =
         runStoreTest {
             dataFile.writeText(v3File)
 
             newStore().update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", 15))) to Unit }
 
             val onDisk = diskDoc()
-            assertEquals(11, onDisk.schemaVersion)
+            assertEquals(12, onDisk.schemaVersion)
             assertEquals(listOf(LocalMonthSettings("2026-10", 15)), onDisk.monthSettings)
             assertEquals(1, onDisk.plannedIncome.size)
         }

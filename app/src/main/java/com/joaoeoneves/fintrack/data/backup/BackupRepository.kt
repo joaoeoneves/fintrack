@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.BuildConfig
 import com.joaoeoneves.fintrack.data.local.toLocal
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
+import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
@@ -57,6 +58,7 @@ class BackupRepository
                     categoryGroups = plan.categoryGroups.map { it.toLocal() },
                     salaryProfile = plan.salaryProfile?.toLocal(),
                     goals = plan.goals.map { it.toLocal() },
+                    automation = plan.automation.takeIf { it != AutomationSettings() }?.toLocal(),
                     categories =
                         withPlaceholderCategories(
                             categories = categories.filter { it.needsStoring() }.map { it.toLocal() },
