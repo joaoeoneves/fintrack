@@ -8,7 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -16,6 +18,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
@@ -117,8 +120,9 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         val state = uiState
                         if (state is AuthUiState.Starting) {
-                            // Session still resolving: render nothing rather than flash the sign-in screen.
-                            Unit
+                            // Session still resolving: never the sign-in screen, and not a bare black
+                            // surface either (the splash gives up after SPLASH_MAX_MS on a slow cold start).
+                            SessionStartingIndicator()
                         } else if (state is AuthUiState.SignedIn || state is AuthUiState.Guest) {
                             val currencyViewModel: CurrencyViewModel = hiltViewModel()
                             val currency by currencyViewModel.currency.collectAsStateWithLifecycle()
@@ -176,4 +180,11 @@ private const val SPLASH_MAX_MS = 1_500L
 private fun ThemeViewModel.resolvedReducedMotion(): Boolean {
     val preference by motionPreference.collectAsStateWithLifecycle()
     return preference.resolve(rememberReducedMotion())
+}
+
+@Composable
+private fun SessionStartingIndicator() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground)
+    }
 }
