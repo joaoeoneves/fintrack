@@ -25,5 +25,6 @@ dependencyResolutionManagement {
 rootProject.name = "FinTrack"
 include(":app")
 include(":core:model")
+include(":core:designsystem")
 include(":baselineprofile")
  

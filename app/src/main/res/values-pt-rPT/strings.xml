@@ -14,7 +14,6 @@
     <string name="action_add_income">Adicionar rendimento</string>
 
     <!-- Descrições de conteúdo partilhadas -->
-    <string name="cd_back">Voltar</string>
     <string name="cd_cancel">Cancelar</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_change_date">Alterar data</string>
@@ -422,8 +421,6 @@
 
     <!-- Redesenho do painel -->
     <string name="action_see_all">Ver tudo</string>
-    <string name="dashboard_add_expense_short">Despesa</string>
-    <string name="dashboard_add_income_short">Rendimento</string>
     <string name="cd_balance_chart">Saldo ao longo do período, de %1$s a %2$s</string>
     <string name="period_tab_1m">1M</string>
     <string name="period_tab_3m">3M</string>
