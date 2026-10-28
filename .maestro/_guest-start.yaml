@@ -4,10 +4,24 @@ appId: com.joaoeoneves.fintrack
 # on a signed-in account or on data left by another flow (CI has no Google account).
 - clearState
 - launchApp
-- extendedWaitUntil:
-    visible:
-      id: "continue_as_guest"
-    timeout: 25000
+# The CI emulator's launcher sometimes ANRs on boot and its dialog covers the app: keep dismissing
+# it ("Wait") until the sign-in screen is reachable.
+- repeat:
+    while:
+      notVisible:
+        id: "continue_as_guest"
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            visible: ".*isn't responding"
+          commands:
+            - tapOn: "Wait"
+      - extendedWaitUntil:
+          visible:
+            id: "continue_as_guest"
+          timeout: 5000
+          optional: true
 - tapOn:
     id: "continue_as_guest"
 - extendedWaitUntil:
