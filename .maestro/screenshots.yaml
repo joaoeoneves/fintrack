@@ -1,11 +1,12 @@
 appId: com.joaoeoneves.fintrack
 ---
-# README screenshots flow (guest mode, English, EUR, dark, demo data only). NOT a regression gate.
+# README screenshots flow for 3.0 (guest mode, English, EUR, dark, demo data only). NOT a regression gate.
 # Run locally on a ~1080x2400 emulator with SystemUI demo mode on (clock 12:00, full battery, wifi,
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
-# Captures: home, activity, plan, plan-income, activity-summary, add-expense.
-# Soft keyboards: `back` closes only the IME when it is up; Save is tapped directly in sheets.
+# Captures: home, activity (summary expanded), plan, plan-income, savings, add-expense.
+# Money inputs are cash-register style: digits only ("6420" = 64.20). `back` closes only the IME when
+# it is up; Save is tapped directly.
 
 - runFlow: _guest-start.yaml
 
@@ -37,37 +38,178 @@ appId: com.joaoeoneves.fintrack
       id: "dashboard_list"
     timeout: 10000
 
-# --- Expenses (Food, Shopping, Transfer, Investments) ---
-- repeat:
-    times: 1
-    commands:
-      - tapOn:
-          id: "dashboard_add_expense"
-      - inputText: "64.20"
-      - tapOn: "Name"
-      - inputText: "Groceries"
-      - back
-      - tapOn: "Food"
-      - tapOn: "Save"
-      - extendedWaitUntil:
-          visible:
-            id: "dashboard_list"
-          timeout: 10000
+# --- Plan > Set up > Income: the salary wizard (1500 gross, 15% IRS, 50% subsidies, meal allowance) ---
 - tapOn:
-    id: "dashboard_add_expense"
-- inputText: "750"
+    id: "nav_plan"
+- scrollUntilVisible:
+    element: "Set up"
+- scroll
+- tapOn:
+    text: "Income"
+    index: -1
+- extendedWaitUntil:
+    visible: "Salary profile"
+    timeout: 10000
+- tapOn: "Salary profile"
+- tapOn: "Gross base salary \\(monthly\\)"
+- inputText: "150000"
+- back
+- tapOn: "IRS withholding rate \\(%\\)"
+- inputText: "15"
+- back
+- tapOn: "Next"
+- scrollUntilVisible:
+    element: "Next"
+    centerElement: true
+- tapOn: "Next"
+- tapOn: "Meal allowance per working day"
+- inputText: "763"
+- back
+- tapOn: "Next"
+- tapOn: "Save"
+# Back on the Income screen: one row per salary component.
+- extendedWaitUntil:
+    visible: "From salary profile"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/plan-income
+- back
+
+# --- Plan > Set up > Envelopes: Food 300, Shopping 150, Rent 750 ---
+- scrollUntilVisible:
+    element: "Set up"
+- scroll
+- tapOn:
+    text: "Envelopes"
+    index: -1
+- tapOn: "New envelope"
+- tapOn: "Name"
+- inputText: "Food"
+- back
+- tapOn: "Monthly amount"
+- inputText: "30000"
+- back
+- tapOn: "Add category"
+- tapOn:
+    text: "Food"
+    index: -1
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "New envelope"
+    timeout: 10000
+- tapOn: "New envelope"
+- tapOn: "Name"
+- inputText: "Shopping"
+- back
+- tapOn: "Monthly amount"
+- inputText: "15000"
+- back
+- tapOn: "Add category"
+- tapOn:
+    text: "Shopping"
+    index: -1
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "New envelope"
+    timeout: 10000
+- tapOn: "New envelope"
+- tapOn: "Name"
+- inputText: "Rent"
+- back
+- tapOn: "Monthly amount"
+- inputText: "75000"
+- back
+- tapOn: "Add category"
+- tapOn:
+    text: "Transfer"
+    index: -1
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "New envelope"
+    timeout: 10000
+- back
+
+# --- Plan > Set up > Bills: Rent and Internet ---
+- scrollUntilVisible:
+    element: "Set up"
+- scroll
+- tapOn:
+    text: "Bills"
+    index: -1
+- tapOn: "Add recurring"
+- inputText: "75000"
 - tapOn: "Name"
 - inputText: "Rent"
 - back
 - tapOn: "Transfer"
 - tapOn: "Save"
 - extendedWaitUntil:
+    visible: "Add recurring"
+    timeout: 10000
+- tapOn: "Add recurring"
+- inputText: "3999"
+- tapOn: "Name"
+- inputText: "Internet"
+- back
+- tapOn: "Shopping"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "Internet"
+    timeout: 10000
+- back
+
+# --- Savings: one plan with a target ---
+- tapOn:
+    id: "nav_savings"
+- tapOn: "New plan"
+- tapOn: "Name"
+- inputText: "Holiday fund"
+- back
+- tapOn: "Monthly amount"
+- inputText: "10000"
+- back
+- scrollUntilVisible:
+    element: "Target"
+    centerElement: true
+- tapOn: "Target"
+- inputText: "120000"
+- back
+- tapOn: "Total"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "Holiday fund"
+    timeout: 10000
+
+# --- Income + expenses (Home's floating add pill) ---
+- tapOn:
+    id: "nav_home"
+- extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
-- tapOn:
-    id: "dashboard_add_expense"
-- inputText: "18.50"
+- tapOn: "Add income"
+- inputText: "140000"
+- tapOn: "Source"
+- inputText: "Freelance"
+- back
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+- tapOn: "Add expense"
+- inputText: "6420"
+- tapOn: "Name"
+- inputText: "Groceries"
+- back
+- tapOn: "Food"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+- tapOn: "Add expense"
+- inputText: "1850"
 - tapOn: "Name"
 - inputText: "Cinema"
 - back
@@ -77,130 +219,23 @@ appId: com.joaoeoneves.fintrack
     visible:
       id: "dashboard_list"
     timeout: 10000
-- tapOn:
-    id: "dashboard_add_expense"
-- inputText: "200"
+- tapOn: "Add expense"
+- inputText: "1280"
 - tapOn: "Name"
-- inputText: "Savings"
+- inputText: "Lunch"
 - back
-- tapOn: "Investments"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-
-# --- Income ---
-- tapOn: "Add income"
-- inputText: "1400"
-- tapOn: "Source"
-- inputText: "Freelance"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-
-# --- Plan: salary profile (1500 base, 15% IRS, meal allowance, one extra) ---
-- tapOn:
-    id: "nav_plan"
-- scrollUntilVisible:
-    element: "Salary profile"
-- tapOn: "Salary profile"
-- scroll
-- tapOn: "Gross base salary \\(monthly\\)"
-- inputText: "1500.00"
-- back
-- scroll
-- tapOn: "IRS withholding rate \\(%\\)"
-- inputText: "15"
-- back
-- scrollUntilVisible:
-    element: "Meal allowance per working day"
-- tapOn: "Meal allowance per working day"
-- inputText: "7.63"
-- back
-- scrollUntilVisible:
-    element: "Add extra"
-- tapOn: "Add extra"
-- tapOn: "Name"
-- inputText: "Bonus"
-- back
-- tapOn: "Amount per year"
-- inputText: "600"
-- back
-- tapOn: "Dec"
-- tapOn: "Save"
-- waitForAnimationToEnd
-# Persist the profile itself (its own Save at the bottom of the screen).
-- scrollUntilVisible:
-    element: "Save"
-- tapOn: "Save"
-- waitForAnimationToEnd
-- runFlow:
-    when:
-      notVisible:
-        id: "nav_plan"
-    commands:
-      - back
-
-# --- Limits ---
-- scrollUntilVisible:
-    element: "Food"
 - tapOn: "Food"
-- tapOn: "Monthly limit"
-- inputText: "300"
 - tapOn: "Save"
-- waitForAnimationToEnd
-- tapOn: "Shopping"
-- tapOn: "Monthly limit"
-- inputText: "150"
-- tapOn: "Save"
-- waitForAnimationToEnd
-- tapOn: "Transfer"
-- tapOn: "Monthly limit"
-- inputText: "750"
-- tapOn: "Save"
-- waitForAnimationToEnd
-
-# --- Goal (linked to Investments) ---
-- scrollUntilVisible:
-    element: "Add goal"
-- tapOn: "Add goal"
-- tapOn: "Name"
-- inputText: "Holiday fund"
-- back
-- tapOn: "Target"
-- inputText: "1200"
-- back
-- tapOn: "Investments"
-- tapOn: "Save"
-- waitForAnimationToEnd
-
-# --- Recurring ---
-- scrollUntilVisible:
-    element: "Manage recurring"
-- tapOn: "Manage recurring"
-- tapOn:
-    id: "recurring_add"
-- tapOn: "Name"
-- inputText: "Internet"
-- back
-- tapOn: "Amount"
-- inputText: "39.99"
-- back
-- tapOn: "Shopping"
-- tapOn: "Save"
-- assertVisible: "Internet"
-- back
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
 
 # --- Screenshots ---
-- tapOn:
-    id: "nav_home"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
+- tapOn: "Dismiss"
+- scrollUntilVisible:
+    element: "Net balance"
+    direction: UP
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/home
 - tapOn:
@@ -209,41 +244,38 @@ appId: com.joaoeoneves.fintrack
     visible:
       id: "activity_list"
     timeout: 10000
+- scrollUntilVisible:
+    element: "Show breakdown"
+- tapOn: "Show breakdown"
+- scrollUntilVisible:
+    element: "Spent"
+    direction: UP
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/activity
 - tapOn:
     id: "nav_plan"
 - waitForAnimationToEnd
-# The Plan tab keeps its scroll position: go back to the top for the first shot.
-- scrollUntilVisible:
-    element: "Expected income"
-    direction: UP
+# The Plan tab keeps its scroll position: swipe back to the top.
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          direction: DOWN
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/plan
-- scrollUntilVisible:
-    element: "Meal allowance"
-    centerElement: true
-- waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/plan-income
 - tapOn:
-    id: "nav_activity"
+    id: "nav_savings"
 - waitForAnimationToEnd
-- scrollUntilVisible:
-    element: "Spent"
-    direction: UP
-- tapOn: "Show breakdown"
-- waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/activity-summary
+- takeScreenshot: maestro-out/screens/savings
 - tapOn:
     id: "nav_home"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
-- tapOn:
-    id: "dashboard_add_expense"
+- tapOn: "Add expense"
 - waitForAnimationToEnd
-- inputText: "42.00"
+- inputText: "4200"
 - tapOn: "Name"
 - inputText: "Dinner"
 - back
