@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
@@ -85,6 +86,42 @@ class ManagedIncomeSyncPaydayTest {
 
             assertEquals(1, counting.updates)
             assertEquals("Net salary", incomes.getIncome(netId).getOrThrow()?.source)
+        }
+
+    @Test
+    fun aFailingRepair_isSwallowed_andALaterDifferentSetOfLinesRepairsAgain() =
+        runTest(UnconfinedTestDispatcher()) {
+            val incomes = FakeIncomeRepository(listOf(income(netId, "Net salary")))
+            var failNext = true
+            val flaky =
+                object : IncomeRepository by incomes {
+                    override suspend fun getAllIncome(): Result<List<Income>> {
+                        if (!failNext) return incomes.getAllIncome()
+                        failNext = false
+                        return Result.failure(IllegalStateException("offline"))
+                    }
+                }
+            val plan = FakePlannedIncomeRepository(lines + own)
+            val labels = FakeSalaryLineLabelsProvider(FakeSalaryLineLabelsProvider.PORTUGUESE)
+
+            ManagedIncomeSync(
+                FakeSalaryProfileRepository(profile),
+                plan,
+                flaky,
+                labels,
+                RestoreGate(),
+                backgroundScope,
+            ).start()
+            advanceUntilIdle()
+            assertEquals("Net salary", incomes.getIncome(netId).getOrThrow()?.source)
+
+            val otherManagedId = lines.first { it.isManaged && it.id != MANAGED_NET_SALARY }.id
+
+            // The set of managed lines changes: the repair is attempted again and now goes through.
+            plan.deletePlannedIncome(otherManagedId)
+            advanceUntilIdle()
+
+            assertEquals("Salário líquido", incomes.getIncome(netId).getOrThrow()?.source)
         }
 
     @Test

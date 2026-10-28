@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
@@ -38,10 +39,15 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.time.Instant
 import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class StartChecklistViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val settleMillis = 2_000L
@@ -237,6 +243,27 @@ class StartChecklistViewModelTest {
 
             assertEquals(StartChecklistState.DISMISSED, store.state.first())
             assertEquals(StartChecklistUiState.Hidden, vm.uiState.value)
+        }
+
+    @Test
+    fun aFailingDecision_isSwallowed_andALaterClearDecidesAgain() =
+        runTest(dispatcher) {
+            goals.nextObserveError = IllegalStateException("offline")
+            val vm = started(viewModel())
+            advanceUntilIdle()
+
+            // The failure was logged, not thrown: nothing decided and the card stays hidden.
+            assertNull(store.state.first())
+            assertEquals(StartChecklistUiState.Hidden, vm.uiState.value)
+
+            // The collector is still alive: a later undecided state (after a store change) decides again.
+            goals.nextObserveError = null
+            store.set(StartChecklistState.DISMISSED)
+            advanceUntilIdle()
+            store.clear()
+            advanceUntilIdle()
+
+            assertEquals(StartChecklistState.ACTIVE, store.state.first())
         }
 
     @Test

@@ -200,6 +200,24 @@ class IncomeMigrationSyncTest {
         }
 
     @Test
+    fun afterAFailedWrite_aLaterDifferentRecurringItem_isStillMigrated() =
+        runTest {
+            automation.nextWriteError = IllegalStateException("offline")
+            sync().start()
+            settle()
+            assertEquals(1, log.size)
+
+            val bonus =
+                recurringItem("i2", type = RecurringType.INCOME, name = "Bonus", autoPost = true)
+                    .copy(handledThrough = day(2026, 8, 5))
+            recurring.saveRecurring(bonus)
+            settle()
+
+            assertTrue(log.size > 1)
+            assertTrue(recurring.items.none { it.id == "i1" })
+        }
+
+    @Test
     fun whileRestoring_writesNothing_thenMigratesAfterRelease() =
         runTest {
             val release = CompletableDeferred<Unit>()

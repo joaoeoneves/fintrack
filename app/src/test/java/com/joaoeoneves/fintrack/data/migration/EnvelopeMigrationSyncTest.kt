@@ -187,6 +187,22 @@ class EnvelopeMigrationSyncTest {
             assertEquals("meal", envelopes.savedEdits.single().fundedByLineId)
         }
 
+    @Test
+    fun afterAFailedWrite_aLaterDifferentPlan_isStillMigrated() =
+        runTest {
+            envelopes.nextWriteError = IllegalStateException("offline")
+            sync().start()
+            settle()
+            assertTrue(envelopes.savedEdits.isEmpty())
+
+            val book = userCategory("book", "Book")
+            categories.setDocs(listOf(gym, book))
+            budgets.setBudget(book.id, 2_000)
+            settle()
+
+            assertTrue(envelopes.savedEdits.any { it.id == "env_book" })
+        }
+
     private suspend fun TestScope.settle() {
         advanceTimeBy(10_000)
         runCurrent()

@@ -175,6 +175,20 @@ class SavingsPlanMigrationSyncTest {
         }
 
     @Test
+    fun afterAFailedWrite_aLaterDifferentRecurringItem_isStillMigrated() =
+        runTest {
+            goals.nextSaveError = IllegalStateException("offline")
+            sync().start()
+            settle()
+            assertTrue(goals.goals.isEmpty())
+
+            recurring.saveRecurring(recurringItem("r2", name = "Bond", categoryId = invest))
+            settle()
+
+            assertTrue(goals.goals.any { it.id == "plan_r2" })
+        }
+
+    @Test
     fun whileRestoring_writesNothing_thenCreatesThePlanAfterRelease() =
         runTest {
             val release = CompletableDeferred<Unit>()

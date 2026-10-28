@@ -163,6 +163,25 @@ class ManagedIncomeSyncTest {
         }
 
     @Test
+    fun afterAFailedWrite_aLaterDifferentProfile_isStillSynced() =
+        runTest(UnconfinedTestDispatcher()) {
+            val income =
+                FakePlannedIncomeRepository(
+                    listOf(own) + full.filter { it.id != MANAGED_DUODECIMOS },
+                    nextSaveError = IllegalStateException("boom"),
+                )
+            val profiles = FakeSalaryProfileRepository(profile)
+            sync(profiles, income).start()
+            advanceUntilIdle()
+            assertTrue(income.lines.none { it.id == MANAGED_DUODECIMOS })
+
+            profiles.saveSalaryProfile(profile.copy(baseGrossCents = 120_000))
+            advanceUntilIdle()
+
+            assertTrue(income.lines.any { it.id == MANAGED_DUODECIMOS })
+        }
+
+    @Test
     fun startTwice_runsOneCollector() =
         runTest(UnconfinedTestDispatcher()) {
             val income = FakePlannedIncomeRepository(listOf(own) + full.filter { it.id != MANAGED_DUODECIMOS })
