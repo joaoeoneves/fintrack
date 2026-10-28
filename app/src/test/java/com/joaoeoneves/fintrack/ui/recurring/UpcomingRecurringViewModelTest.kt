@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
@@ -64,6 +65,7 @@ class UpcomingRecurringViewModelTest {
                 FakeMonthSettingsRepository(),
                 FakeIncomeRepository(),
                 FakeAutomationSettingsRepository(),
+                FakeSalaryLineLabelsProvider(),
             ),
             clock,
         )
