@@ -50,13 +50,16 @@ class AutomationSyncTest {
             repo,
             HandleRecurringOccurrence(repo, FakeCategoryRepository()),
             FakeExpenseRepository(),
-            FakeIncomeRepository(),
         ),
         PaydayData(automation, plan, repo),
         RecordPayday(plan, FakeMonthSettingsRepository(), income, automation, FakeSalaryLineLabelsProvider()),
         clock,
         backgroundScope,
     )
+
+    private val jan = YearMonth.of(2026, 1)
+
+    private fun autoLine() = PlannedIncome("p1", "Salary", 100_000L, 0, autoRecord = true)
 
     private fun guest() = FakeSessionRepository(initialSession = Session.Guest)
 
@@ -146,9 +149,9 @@ class AutomationSyncTest {
         }
 
     @Test
-    fun payday_notRun_whileDisabled() =
+    fun payday_notRun_whileNoLineRecordsItself() =
         runTest(UnconfinedTestDispatcher()) {
-            val disabled = FakeAutomationSettingsRepository(AutomationSettings(false, YearMonth.of(2026, 1)))
+            val manual = FakeAutomationSettingsRepository(AutomationSettings(lineRecordedThrough = mapOf("p1" to jan)))
             val repo = FakeRecurringRepository()
             val plain =
                 AutomationSync(
@@ -157,10 +160,9 @@ class AutomationSyncTest {
                         repo,
                         HandleRecurringOccurrence(repo, FakeCategoryRepository()),
                         FakeExpenseRepository(),
-                        FakeIncomeRepository(),
                     ),
-                    PaydayData(disabled, plan, repo),
-                    RecordPayday(plan, FakeMonthSettingsRepository(), income, disabled, FakeSalaryLineLabelsProvider()),
+                    PaydayData(manual, plan, repo),
+                    RecordPayday(plan, FakeMonthSettingsRepository(), income, manual, FakeSalaryLineLabelsProvider()),
                     clock,
                     backgroundScope,
                 )
@@ -168,14 +170,14 @@ class AutomationSyncTest {
             plain.start()
             advanceUntilIdle()
 
-            assertTrue(disabled.recorded.isEmpty())
-            assertEquals(YearMonth.of(2026, 1), disabled.settings.paydayRecordedThrough)
+            assertTrue(manual.recorded.isEmpty())
         }
 
     @Test
-    fun payday_runsWhenEnabled_andNotRepeatedOnForeground() =
+    fun payday_runsForAutoRecordLines_andNotRepeatedOnForeground() =
         runTest(UnconfinedTestDispatcher()) {
-            automation.setPaydayEnabled(true, YearMonth.of(2026, 1))
+            plan.savePlannedIncome(autoLine())
+            automation.updateLineCursors(set = mapOf("p1" to jan))
             val sync = sync(guest(), FakeRecurringRepository())
 
             sync.start()
@@ -184,7 +186,7 @@ class AutomationSyncTest {
             advanceUntilIdle()
 
             // February's payday (Fri 27th) has passed; March's (Tue 31st) has not.
-            assertEquals(listOf(YearMonth.of(2026, 2)), automation.recorded.map { it.first })
+            assertEquals(listOf(mapOf("p1" to YearMonth.of(2026, 2))), automation.recorded.map { it.first })
             assertEquals(
                 listOf("pay_p1_202602"),
                 automation.recorded
@@ -192,19 +194,42 @@ class AutomationSyncTest {
                     .second
                     .map { it.id },
             )
-            assertEquals(YearMonth.of(2026, 2), automation.settings.paydayRecordedThrough)
+            assertEquals(YearMonth.of(2026, 2), automation.settings.lineRecordedThrough["p1"])
         }
 
     @Test
-    fun payday_enablingWhileRunning_triggersAPass() =
+    fun payday_switchingALineOnWhileRunning_triggersAPass_thatOnlyCreatesTheCursor() =
         runTest(UnconfinedTestDispatcher()) {
             sync(guest(), FakeRecurringRepository()).start()
             advanceUntilIdle()
             assertTrue(automation.recorded.isEmpty())
 
-            automation.setPaydayEnabled(true, YearMonth.of(2026, 1))
+            plan.savePlannedIncome(autoLine())
             advanceUntilIdle()
 
-            assertEquals(1, automation.recorded.size)
+            assertTrue(automation.recorded.isEmpty())
+            assertEquals(YearMonth.of(2026, 2), automation.settings.lineRecordedThrough["p1"])
+        }
+
+    @Test
+    fun payday_changingALinesPayDay_triggersANewPass() =
+        runTest(UnconfinedTestDispatcher()) {
+            plan.savePlannedIncome(autoLine())
+            automation.updateLineCursors(set = mapOf("p1" to YearMonth.of(2026, 2)))
+            sync(guest(), FakeRecurringRepository()).start()
+            advanceUntilIdle()
+            assertTrue(automation.recorded.isEmpty())
+
+            // Day 5 of March has passed on the 20th.
+            plan.savePlannedIncome(autoLine().copy(payDay = 5))
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("pay_p1_202603"),
+                automation.recorded
+                    .single()
+                    .second
+                    .map { it.id },
+            )
         }
 }
