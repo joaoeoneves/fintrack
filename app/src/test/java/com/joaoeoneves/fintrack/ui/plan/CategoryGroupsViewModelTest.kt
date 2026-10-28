@@ -27,7 +27,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -146,9 +145,6 @@ class CategoryGroupsViewModelTest {
             assertEquals(listOf("Meals"), viewModel.names())
         }
 
-    // Production bug: onRename does groups.value.first { it.id == id } outside runCatching, so an unknown id throws
-    // out of the viewModelScope coroutine instead of reporting error_group_save_failed (coder's lane).
-    @Ignore("CategoryGroupsViewModel.onRename throws NoSuchElementException for an unknown id")
     @Test
     fun onRename_unknownId_reportsError() =
         runTest(testDispatcher) {

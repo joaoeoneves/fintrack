@@ -13,7 +13,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
@@ -150,9 +149,6 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
             assertEquals(revisionBefore + 1, store.data.first().revision)
         }
 
-    // Production bug: LocalEnvelopeRepository.saveEnvelope maps doc.categories, so a built-in category with no
-    // stored override record is silently not filed (Firestore's merged catalog does file it). Fix in coder's lane.
-    @Ignore("LocalEnvelopeRepository.saveEnvelope does not file built-in categories without a stored record")
     @Test
     fun save_filesABuiltInCategoryWithoutAStoredRecord() =
         runStoreTest {
@@ -269,6 +265,33 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
             assertTrue(groups.deleteEnvelope(food).isSuccess)
 
             assertEquals(listOf(BuiltInCategories.SHOPPING.id), budgets.observeBudgets().first().map { it.categoryId })
+        }
+
+    @Test
+    fun delete_unfilesABuiltInMember_andDropsItsBudget() =
+        runStoreTest {
+            val food = BuiltInCategories.FOOD.id
+            val limits = mapOf(food to Budget(food, 300))
+            val id = groups.saveEnvelope(edit(null, "Mix", members = setOf(food), limits = limits)).getOrThrow()
+            assertEquals(
+                id,
+                categories
+                    .observeCategories()
+                    .first()
+                    .single { it.id == food }
+                    .groupId,
+            )
+
+            assertTrue(groups.deleteEnvelope(id).isSuccess)
+
+            assertNull(
+                categories
+                    .observeCategories()
+                    .first()
+                    .single { it.id == food }
+                    .groupId,
+            )
+            assertEquals(emptyList<Budget>(), budgets.observeBudgets().first())
         }
 
     @Test
