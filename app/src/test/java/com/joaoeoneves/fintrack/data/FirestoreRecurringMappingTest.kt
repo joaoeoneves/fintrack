@@ -152,6 +152,8 @@ class FirestoreRecurringMappingTest {
                 "handledThrough",
                 "active",
                 "autoPost",
+                "skipped",
+                "pausedAt",
                 "updatedAt",
             ),
             map.keys,
@@ -174,5 +176,62 @@ class FirestoreRecurringMappingTest {
         assertNull(map["category"])
         assertEquals(11, map["monthOfYear"])
         assertEquals("YEARLY", map["frequency"])
+    }
+
+    @Test
+    fun skippedAndPausedAt_roundTripThroughTheMap() {
+        val item =
+            recurringItem(
+                id = "doc1",
+                skipped = setOf(day(2026, 3, 15), day(2026, 2, 15)),
+                pausedAt = day(2026, 3, 1),
+            )
+        val map = item.toFirestoreMap()
+
+        assertEquals(listOf("2026-02-15", "2026-03-15"), map["skipped"])
+        assertEquals("2026-03-01", map["pausedAt"])
+
+        val parsed =
+            map(
+                "skipped" to TestDocumentSnapshots.arrayValue("2026-02-15", "2026-03-15"),
+                "pausedAt" to str("2026-03-01"),
+            )
+
+        assertEquals(item.skipped, parsed?.skipped)
+        assertEquals(item.pausedAt, parsed?.pausedAt)
+    }
+
+    @Test
+    fun missingSkippedAndPausedAt_giveEmptyAndNull() {
+        val item = map()
+
+        assertTrue(item?.skipped?.isEmpty() == true)
+        assertNull(item?.pausedAt)
+        assertNull(recurringItem().toFirestoreMap()["pausedAt"])
+        assertEquals(emptyList<String>(), recurringItem().toFirestoreMap()["skipped"])
+    }
+
+    @Test
+    fun badSkippedEntries_areDropped_butTheItemIsKept() {
+        val item =
+            map("skipped" to TestDocumentSnapshots.arrayValue("2026-02-15", 5L, "not-a-date", "2026-02-30", "2026-03-15"))
+
+        assertEquals(setOf(day(2026, 2, 15), day(2026, 3, 15)), item?.skipped)
+    }
+
+    @Test
+    fun aSkippedFieldThatIsNotAnArray_isIgnored() {
+        val item = map("skipped" to str("2026-02-15"))
+
+        assertTrue(item != null)
+        assertTrue(item?.skipped?.isEmpty() == true)
+    }
+
+    @Test
+    fun unparsablePausedAt_becomesNull_andTheItemIsKept() {
+        val item = map("pausedAt" to str("yesterday"))
+
+        assertTrue(item != null)
+        assertNull(item?.pausedAt)
     }
 }

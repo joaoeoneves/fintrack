@@ -2,6 +2,9 @@ package com.joaoeoneves.fintrack.ui.common
 
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
+import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +25,7 @@ class TransactionUndoViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val expenses = FakeExpenseRepository()
     private val incomes = FakeIncomeRepository()
+    private val recurring = FakeRecurringRepository()
     private val date = Instant.parse("2026-10-10T10:00:00Z")
 
     @Before
@@ -35,7 +39,7 @@ class TransactionUndoViewModelTest {
         runTest(dispatcher) {
             val expense = testExpense("e1", 500L, date, isRefund = true)
 
-            TransactionUndoViewModel(expenses, incomes).restore(expense)
+            TransactionUndoViewModel(DeleteTransaction(expenses, incomes, recurring)).restore(DeletedTransaction(expense))
             advanceUntilIdle()
 
             assertEquals(expense, expenses.getExpense("e1").getOrThrow())
@@ -46,7 +50,7 @@ class TransactionUndoViewModelTest {
         runTest(dispatcher) {
             val income = testIncome("i1", 90_000L, date)
 
-            TransactionUndoViewModel(expenses, incomes).restore(income)
+            TransactionUndoViewModel(DeleteTransaction(expenses, incomes, recurring)).restore(DeletedTransaction(income))
             advanceUntilIdle()
 
             assertEquals(income, incomes.getIncome("i1").getOrThrow())

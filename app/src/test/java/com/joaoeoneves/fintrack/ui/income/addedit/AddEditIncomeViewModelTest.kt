@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.BulkAddResult
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.genericErrorText
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
@@ -57,12 +58,16 @@ class AddEditIncomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun addModeViewModel(repository: IncomeRepository) = AddEditIncomeViewModel(repository, SavedStateHandle())
+    private fun addModeViewModel(repository: IncomeRepository) = AddEditIncomeViewModel(repository, deleteTransactionFor(incomes = repository), SavedStateHandle())
 
     private fun editModeViewModel(
         repository: IncomeRepository,
         incomeId: String,
-    ) = AddEditIncomeViewModel(repository, SavedStateHandle(mapOf("incomeId" to incomeId)))
+    ) = AddEditIncomeViewModel(
+        repository,
+        deleteTransactionFor(incomes = repository),
+        SavedStateHandle(mapOf("incomeId" to incomeId)),
+    )
 
     // ---- add mode: initial state ----
 

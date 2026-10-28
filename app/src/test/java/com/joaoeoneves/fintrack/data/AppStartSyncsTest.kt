@@ -21,6 +21,7 @@ import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -93,7 +94,12 @@ class AppStartSyncsTest {
             IncomeMigrationSync(sources, automation, session, clock, gate, backgroundScope),
             AutomationSync(
                 session,
-                AutoPostRecurring(recurring, HandleRecurringOccurrence(recurring, FakeCategoryRepository()), expenses),
+                AutoPostRecurring(
+                    recurring,
+                    HandleRecurringOccurrence(recurring, FakeCategoryRepository()),
+                    expenses,
+                    FakeCategoryRepository(),
+                ),
                 PaydayData(automation, plan, recurring, gate),
                 RecordPayday(
                     plan,

@@ -7,6 +7,8 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.CompletableDeferred
@@ -54,6 +56,7 @@ class AddEditExpenseViewModelDeleteTest {
     ) = AddEditExpenseViewModel(
         repository,
         FakeCategoryRepository(),
+        deleteTransactionFor(repository),
         SavedStateHandle(if (id == null) emptyMap() else mapOf("expenseId" to id)),
     )
 
@@ -69,7 +72,7 @@ class AddEditExpenseViewModelDeleteTest {
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository(listOf(expense))
             val vm = viewModel(repo)
-            val emitted = mutableListOf<Expense>()
+            val emitted = mutableListOf<DeletedTransaction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 vm.deletedEvent.collect { emitted += it }
             }
@@ -79,7 +82,7 @@ class AddEditExpenseViewModelDeleteTest {
             vm.onDelete()
             advanceUntilIdle()
 
-            assertEquals(listOf(expense), emitted)
+            assertEquals(listOf(DeletedTransaction(expense)), emitted)
             assertNull(repo.getExpense("e1").getOrThrow())
         }
 
@@ -121,7 +124,7 @@ class AddEditExpenseViewModelDeleteTest {
                     }
                 }
             val vm = viewModel(slow)
-            val emitted = mutableListOf<Expense>()
+            val emitted = mutableListOf<DeletedTransaction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 vm.deletedEvent.collect { emitted += it }
             }
@@ -140,7 +143,7 @@ class AddEditExpenseViewModelDeleteTest {
     fun onDelete_failure_clearsIsDeleting_andSetsError_withoutEvent() =
         runTest(testDispatcher) {
             val vm = viewModel(failingDelete(FakeExpenseRepository(listOf(expense))))
-            val emitted = mutableListOf<Expense>()
+            val emitted = mutableListOf<DeletedTransaction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 vm.deletedEvent.collect { emitted += it }
             }

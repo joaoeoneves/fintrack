@@ -38,6 +38,8 @@ internal fun backupRecurring(
     amountCents: Long = 5000,
     endDate: String? = null,
     handledThrough: String? = null,
+    skipped: List<String> = emptyList(),
+    pausedAt: String? = null,
 ) = LocalRecurringItem(
     id = id,
     type = type,
@@ -49,6 +51,8 @@ internal fun backupRecurring(
     startDate = "2026-01-01",
     endDate = endDate,
     handledThrough = handledThrough,
+    skipped = skipped,
+    pausedAt = pausedAt,
 )
 
 internal fun backupCategory(

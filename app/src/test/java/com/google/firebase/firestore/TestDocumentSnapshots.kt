@@ -81,4 +81,7 @@ object TestDocumentSnapshots {
     fun timestampValue(timestamp: Timestamp): Value = parseScalarValue(timestamp)
 
     fun booleanValue(value: Boolean): Value = parseScalarValue(value)
+
+    /** An array [Value] of the given scalar [items] (strings, longs, booleans), in order. */
+    fun arrayValue(vararg items: Any): Value = userDataReader.parseQueryValue(items.toList())
 }

@@ -28,7 +28,7 @@ class BackupCodecRecurringTest {
     fun v1File_decodesWithEmptyRecurringAndCurrentSchemaVersion() {
         val result = BackupCodec.decode("""{$header,"schemaVersion":1}""").success()
 
-        assertEquals(16, result.document.schemaVersion)
+        assertEquals(17, result.document.schemaVersion)
         assertTrue(result.document.recurring.isEmpty())
     }
 
@@ -46,7 +46,7 @@ class BackupCodecRecurringTest {
 
     @Test
     fun v16File_isUnsupported() {
-        assertEquals(BackupDecodeResult.UnsupportedVersion(17), BackupCodec.decode("""{$header,"schemaVersion":17}"""))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(18), BackupCodec.decode("""{$header,"schemaVersion":18}"""))
     }
 
     @Test
@@ -99,5 +99,31 @@ class BackupCodecRecurringTest {
     fun countsTotal_includesRecurring() {
         assertEquals(21, BackupCounts(1, 2, 3, 4, 5, 6).total)
         assertEquals(1, backupDoc().copy(recurring = listOf(backupRecurring())).counts().total)
+    }
+
+    @Test
+    fun v17RoundTrip_keepsSkippedAndPausedAt() {
+        val doc =
+            backupDoc().copy(
+                recurring = listOf(backupRecurring("r1", skipped = listOf("2026-02-15", "2026-03-15"), pausedAt = "2026-03-01")),
+            )
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(doc, result.document)
+        assertEquals(17, BACKUP_SCHEMA_VERSION)
+    }
+
+    @Test
+    fun v16File_decodesWithDefaultsForTheNewFields() {
+        val recurring =
+            """[{"id":"r1","type":"EXPENSE","name":"Rent","amountCents":5000,"categoryId":"FOOD",""" +
+                """"frequency":"MONTHLY","dayOfMonth":15,"startDate":"2026-01-01"}]"""
+
+        val result = BackupCodec.decode("""{$header,"schemaVersion":16,"recurring":$recurring}""").success()
+
+        assertEquals(17, result.document.schemaVersion)
+        assertTrue(result.document.recurring.single().skipped.isEmpty())
+        assertEquals(null, result.document.recurring.single().pausedAt)
     }
 }

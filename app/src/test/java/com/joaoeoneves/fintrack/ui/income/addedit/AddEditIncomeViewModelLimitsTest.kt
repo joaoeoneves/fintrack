@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -39,7 +40,7 @@ class AddEditIncomeViewModelLimitsTest {
 
     private val emoji = "😀"
 
-    private fun viewModel() = AddEditIncomeViewModel(FakeIncomeRepository(), SavedStateHandle())
+    private fun viewModel() = AddEditIncomeViewModel(FakeIncomeRepository(), deleteTransactionFor(), SavedStateHandle())
 
     private fun AddEditIncomeViewModel.form() = (uiState.value as AddEditIncomeUiState.Ready).form
 

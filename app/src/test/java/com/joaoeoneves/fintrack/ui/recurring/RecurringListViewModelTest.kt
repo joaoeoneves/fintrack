@@ -162,6 +162,52 @@ class RecurringListViewModelTest {
         }
 
     @Test
+    fun pause_recordsTheDay() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository(listOf(recurringItem(handledThrough = day(2026, 2, 15))))
+            val vm = viewModel(repo)
+            started(vm)
+
+            vm.onTogglePaused("r1")
+            advanceUntilIdle()
+
+            assertEquals(day(2026, 3, 15), repo.items.single().pausedAt)
+        }
+
+    @Test
+    fun resume_withPausedAt_recordsThePausedGapAsSkipped_andClearsPausedAt() =
+        runTest(testDispatcher) {
+            val paused =
+                recurringItem(handledThrough = day(2026, 1, 15), active = false, pausedAt = day(2026, 2, 20))
+            val repo = FakeRecurringRepository(listOf(paused))
+            val vm = viewModel(repo)
+            started(vm)
+
+            vm.onTogglePaused("r1")
+            advanceUntilIdle()
+
+            val item = repo.items.single()
+            assertEquals(true, item.active)
+            assertEquals(null, item.pausedAt)
+            // Feb 15 was pending before the pause: stays pending. Nothing fell inside the gap before today.
+            assertEquals(day(2026, 1, 15), item.handledThrough)
+            assertEquals(emptySet<java.time.LocalDate>(), item.skipped)
+        }
+
+    @Test
+    fun resume_legacyItem_skipsEarlierOccurrences() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository(listOf(recurringItem(active = false, handledThrough = day(2026, 1, 15))))
+            val vm = viewModel(repo)
+            started(vm)
+
+            vm.onTogglePaused("r1")
+            advanceUntilIdle()
+
+            assertEquals(setOf(day(2026, 2, 15)), repo.items.single().skipped)
+        }
+
+    @Test
     fun toggleUnknownId_isNoOp() =
         runTest(testDispatcher) {
             val repo = FakeRecurringRepository(listOf(recurringItem()))

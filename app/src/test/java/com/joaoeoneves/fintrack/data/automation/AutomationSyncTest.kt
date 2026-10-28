@@ -54,6 +54,7 @@ class AutomationSyncTest {
             repo,
             HandleRecurringOccurrence(repo, FakeCategoryRepository()),
             FakeExpenseRepository(),
+            FakeCategoryRepository(),
         ),
         PaydayData(automation, plan, repo, gate),
         RecordPayday(plan, FakeMonthSettingsRepository(), income, automation, FakeSalaryLineLabelsProvider()),
@@ -149,7 +150,23 @@ class AutomationSyncTest {
             repo.setItems(listOf(due().copy(handledThrough = day(2026, 1, 15))))
             advanceUntilIdle()
 
-            assertEquals(2, repo.confirmedTransactions.size)
+            // The first attempt healed Jan/Feb 15 into the expense store, so only Mar 15 is posted now.
+            assertEquals(1, repo.confirmedTransactions.size)
+        }
+
+    @Test
+    fun changedSkippedSet_triggersANewAttempt() =
+        runTest(UnconfinedTestDispatcher()) {
+            val repo = FakeRecurringRepository(listOf(due()), nextConfirmError = IllegalStateException("down"))
+            sync(guest(), repo).start()
+            advanceUntilIdle()
+            assertTrue(repo.confirmedTransactions.isEmpty())
+
+            // Same cursor, only `skipped` differs: a different key, so the pass runs again and now succeeds.
+            repo.setItems(listOf(due().copy(skipped = setOf(day(2025, 12, 15)))))
+            advanceUntilIdle()
+
+            assertEquals(1, repo.confirmedTransactions.size)
         }
 
     @Test
@@ -164,6 +181,7 @@ class AutomationSyncTest {
                         repo,
                         HandleRecurringOccurrence(repo, FakeCategoryRepository()),
                         FakeExpenseRepository(),
+                        FakeCategoryRepository(),
                     ),
                     PaydayData(manual, plan, repo, RestoreGate()),
                     RecordPayday(plan, FakeMonthSettingsRepository(), income, manual, FakeSalaryLineLabelsProvider()),

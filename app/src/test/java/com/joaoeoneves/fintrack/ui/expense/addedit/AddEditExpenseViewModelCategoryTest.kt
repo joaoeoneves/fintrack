@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.testutil.deleteTransactionFor
 import com.joaoeoneves.fintrack.testutil.userCategory
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +61,7 @@ class AddEditExpenseViewModelCategoryTest {
     ) = AddEditExpenseViewModel(
         expenses,
         categories,
+        deleteTransactionFor(expenses),
         SavedStateHandle(if (editId != null) mapOf("expenseId" to editId) else emptyMap()),
     )
 
