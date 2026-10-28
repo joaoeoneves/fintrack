@@ -75,7 +75,7 @@ class GoalProgressPlanTest {
     fun noTarget_neverBehind_evenWithNothingSaved() {
         val result = progress(savingsGoal(targetCents = 0, recurringId = "r1"), recurring = listOf(monthly100))
 
-        assertEquals(GoalStatus.ON_TRACK, result.status)
+        assertEquals(GoalStatus.NOT_STARTED, result.status)
     }
 
     @Test
@@ -115,7 +115,7 @@ class GoalProgressPlanTest {
     @Test
     fun goalWithoutOwnedItem_isNeverNoMonthly() {
         assertEquals(GoalStatus.BEHIND, progress(savingsGoal(targetCents = 100_000)).status)
-        assertEquals(GoalStatus.ON_TRACK, progress(savingsGoal(targetCents = 0)).status)
+        assertEquals(GoalStatus.NOT_STARTED, progress(savingsGoal(targetCents = 0)).status)
     }
 
     @Test

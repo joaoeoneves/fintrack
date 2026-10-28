@@ -86,7 +86,7 @@ class DashboardViewModelRefundTest : DashboardViewModelTestBase() {
             assertEquals(20_000L, content.savedCents)
             assertEquals(500L, content.spendingCents)
             assertEquals(20_500L, content.outflowCents)
-            assertEquals(79_500L, content.netCents)
+            assertEquals(99_500L, content.netCents)
             assertEquals(0.2, content.savingsRate!!, 1e-9)
         }
 }

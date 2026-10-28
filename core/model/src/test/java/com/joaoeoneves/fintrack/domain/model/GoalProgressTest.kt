@@ -160,7 +160,7 @@ class GoalProgressTest {
 
     @Test
     fun expected_annual_isProRataByDayOfYear() {
-        val goal = savingsGoal(targetCents = 36_500)
+        val goal = savingsGoal(targetCents = 36_500, startDate = LocalDate.of(2025, 1, 1))
 
         assertEquals(18_300L, expectedByToday(goal, today))
         assertEquals(100L, expectedByToday(goal, LocalDate.of(2026, 1, 1)))
@@ -169,7 +169,7 @@ class GoalProgressTest {
 
     @Test
     fun expected_annual_leapYearUses366() {
-        val goal = savingsGoal(targetCents = 36_600)
+        val goal = savingsGoal(targetCents = 36_600, startDate = LocalDate.of(2027, 1, 1))
 
         assertEquals(36_600L, expectedByToday(goal, LocalDate.of(2028, 12, 31)))
         assertEquals(100L, expectedByToday(goal, LocalDate.of(2028, 1, 1)))
@@ -229,7 +229,8 @@ class GoalProgressTest {
     fun status_total_withoutPace_isOnTrackUntilDone() {
         val goal = savingsGoal(targetType = GoalTargetType.TOTAL, targetCents = 1_000)
 
-        assertEquals(GoalStatus.ON_TRACK, progress(goal).status)
+        assertEquals(GoalStatus.NOT_STARTED, progress(goal).status)
+        assertEquals(GoalStatus.ON_TRACK, progress(goal.copy(initialCents = 100)).status)
         assertEquals(GoalStatus.DONE, progress(goal.copy(initialCents = 1_000)).status)
     }
 
@@ -271,5 +272,38 @@ class GoalProgressTest {
     @Test
     fun plannedPerYear_noLinks_isZero() {
         assertEquals(0L, plannedPerYear(savingsGoal(), listOf(recurringItem("a")), today))
+    }
+
+    @Test
+    fun status_notStarted_whenNothingSavedAndNoPaceYet() {
+        // Annual plan started this month: expected pace is 0, nothing saved.
+        val goal = savingsGoal(targetCents = 36_500, startDate = LocalDate.of(2026, 7, 1))
+
+        assertEquals(GoalStatus.NOT_STARTED, progress(goal).status)
+    }
+
+    @Test
+    fun status_savedSomething_isNotNotStarted() {
+        val goal = savingsGoal(targetCents = 36_500, startDate = LocalDate.of(2026, 7, 1), linkedCategoryId = linkedCategory)
+        val result = progress(goal, listOf(expense("e", 100, date = LocalDate.of(2026, 7, 1), category = savings)))
+
+        assertEquals(GoalStatus.ON_TRACK, result.status)
+    }
+
+    @Test
+    fun expected_annual_startedThisYear_countsFromFirstOfStartMonth() {
+        val goal = savingsGoal(targetCents = 36_500, startDate = LocalDate.of(2026, 7, 20))
+
+        assertEquals(0L, expectedByToday(goal, LocalDate.of(2026, 7, 31))) // first month
+        // From Jul 1 to Dec 31 = 184 days; Aug 1 is the 32nd day.
+        assertEquals(36_500L * 32 / 184, expectedByToday(goal, LocalDate.of(2026, 8, 1)))
+        assertEquals(36_500L, expectedByToday(goal, LocalDate.of(2026, 12, 31)))
+    }
+
+    @Test
+    fun expected_annual_startedLastYear_countsFromJanFirst() {
+        val goal = savingsGoal(targetCents = 36_500, startDate = LocalDate.of(2025, 7, 20))
+
+        assertEquals(100L, expectedByToday(goal, LocalDate.of(2026, 1, 1)))
     }
 }

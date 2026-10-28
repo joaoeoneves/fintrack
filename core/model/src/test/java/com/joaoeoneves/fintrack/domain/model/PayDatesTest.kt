@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.domain.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -122,5 +123,42 @@ class PayDatesTest {
         val due = lineMonthsDue(line(), YearMonth.of(2026, 11), LocalDate.of(2027, 1, 29))
 
         assertEquals(listOf(YearMonth.of(2026, 12), YearMonth.of(2027, 1)), due)
+    }
+
+    // --- commonPayDateIn ---
+
+    private fun rowsOf(vararg lines: PlannedIncome) = incomeRowsIn(lines.toList(), oct, 21)
+
+    @Test
+    fun commonPayDate_sameDayAcrossRows_isThatDay() {
+        val rows = rowsOf(line("a", payDay = 15), line("b", payDay = 15))
+
+        assertEquals(LocalDate.of(2026, 10, 15), commonPayDateIn(rows, oct))
+    }
+
+    @Test
+    fun commonPayDate_singleRow_isItsDay() {
+        assertEquals(LocalDate.of(2026, 10, 30), commonPayDateIn(rowsOf(line("a")), oct))
+    }
+
+    @Test
+    fun commonPayDate_differentDays_isNull() {
+        val rows = rowsOf(line("a", payDay = 5), line("b", payDay = 20))
+
+        assertNull(commonPayDateIn(rows, oct))
+    }
+
+    @Test
+    fun commonPayDate_noRows_isNull() {
+        assertNull(commonPayDateIn(emptyList(), oct))
+    }
+
+    @Test
+    fun commonPayDate_ignoresRowsThatPayNothing() {
+        val zero = PlannedIncome("z", "Zero", 0L, 0, payDay = 3)
+        val rows = rowsOf(line("a", payDay = 15), zero)
+
+        assertEquals(LocalDate.of(2026, 10, 15), commonPayDateIn(rows, oct))
+        assertNull(commonPayDateIn(rowsOf(zero), oct))
     }
 }

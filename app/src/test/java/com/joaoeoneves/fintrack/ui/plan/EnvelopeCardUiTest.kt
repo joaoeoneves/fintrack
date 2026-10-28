@@ -125,6 +125,34 @@ class EnvelopeCardUiTest {
     }
 
     @Test
+    fun fundingCents_isCarriedOnEveryCardKind_andZeroWhenUnfunded() {
+        val salary = PlannedIncome(id = "s", label = "Salary", amountCents = 25_000L, order = 0)
+        val bills = listOf(row(10_000L, PlannedSource.RECURRING))
+
+        val budgeted = envelopeCardOf(progress(30_000L, 0L, emptyList(), own = 30_000L, line = salary))
+        val billsOnly = envelopeCardOf(progress(10_000L, 0L, bills, line = salary))
+        val tracking = envelopeCardOf(progress(null, 500L, emptyList(), line = salary))
+        val unfunded = envelopeCardOf(progress(30_000L, 0L, emptyList(), own = 30_000L))
+
+        assertTrue(budgeted is EnvelopeCardUi.Budgeted)
+        assertTrue(billsOnly is EnvelopeCardUi.BillsOnly)
+        assertTrue(tracking is EnvelopeCardUi.Tracking)
+        assertEquals(25_000L, budgeted.fundingCents)
+        assertEquals(25_000L, billsOnly.fundingCents)
+        assertEquals(25_000L, tracking.fundingCents)
+        assertEquals(0L, unfunded.fundingCents)
+    }
+
+    @Test
+    fun cardsDifferingOnlyByFundingCents_areNotEqual() {
+        val a = EnvelopeCardUi.Budgeted("e1", "Home", 100L, 0L, fundingCents = 50L)
+        val b = a.copy(fundingCents = 60L)
+
+        assertEquals(a, a.copy())
+        assertFalse(a == b)
+    }
+
+    @Test
     fun unfunded_hasNoFundingAndNoOverflow() {
         val card = envelopeCardOf(progress(30_000L, 0L, emptyList(), own = 30_000L))
 
