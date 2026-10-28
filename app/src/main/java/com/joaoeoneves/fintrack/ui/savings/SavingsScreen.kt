@@ -23,6 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -37,17 +40,21 @@ import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
+import com.joaoeoneves.fintrack.ui.designsystem.AnimatedAmountText
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ProgressRing
+import com.joaoeoneves.fintrack.ui.designsystem.rememberAnimatedCents
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.util.Locale
 
 private val CardRadius = 16.dp
 private val RingSize = 64.dp
+private const val BASIS_POINTS = 10_000f
 
 /** The Savings tab: the year's saved total and rate, then a ring card per savings plan; "+" adds a plan. */
 @Composable
@@ -117,8 +124,8 @@ private fun SavingsHeader(
             style = MaterialTheme.typography.labelLarge,
             color = FinTrackTheme.colors.textSecondary,
         )
-        Text(
-            text = formatAmountCents(state.savedCents),
+        AnimatedAmountText(
+            cents = state.savedCents,
             style = AmountLarge,
             modifier = Modifier.padding(top = Dimens.Space4),
         )
@@ -152,10 +159,7 @@ private fun SavingsPlanCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ProgressRing(progress = progress.fraction, size = RingSize) {
-                Text(
-                    text = remember(progress.fraction, locale) { formatPercent(progress.fraction.toDouble(), locale) },
-                    style = MaterialTheme.typography.labelMedium,
-                )
+                AnimatedPercentText(fraction = progress.fraction, locale = locale)
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.Space4)) {
                 Text(
@@ -185,6 +189,21 @@ private fun SavingsPlanCard(
             }
         }
     }
+}
+
+/** Ring centre label: counts in basis points so the text follows the draw-in; semantics hold the final percent. */
+@Composable
+private fun AnimatedPercentText(
+    fraction: Float,
+    locale: Locale,
+) {
+    val basisPoints by rememberAnimatedCents(Math.round(fraction * BASIS_POINTS).toLong())
+    val finalText = remember(fraction, locale) { formatPercent(fraction.toDouble(), locale) }
+    Text(
+        text = formatPercent(basisPoints / BASIS_POINTS.toDouble(), locale),
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(finalText) },
+    )
 }
 
 @Composable

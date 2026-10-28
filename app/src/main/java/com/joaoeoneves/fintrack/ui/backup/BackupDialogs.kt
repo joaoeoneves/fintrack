@@ -181,11 +181,12 @@ private fun RestoringDialog(state: BackupImportState.Restoring) {
                     Text(stringResource(R.string.backup_restoring_progress, state.written, state.total))
                     ThinProgressBar(
                         progress = state.written.toFloat() / state.total,
+                        drawIn = false,
                         modifier = Modifier.padding(top = Dimens.Space12),
                     )
                 } else {
                     Text(stringResource(R.string.backup_restoring_preparing))
-                    ThinProgressBar(progress = 0f, modifier = Modifier.padding(top = Dimens.Space12))
+                    ThinProgressBar(progress = 0f, drawIn = false, modifier = Modifier.padding(top = Dimens.Space12))
                 }
             }
         },

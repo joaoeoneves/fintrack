@@ -1,11 +1,12 @@
 package com.joaoeoneves.fintrack.ui.designsystem
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,11 +16,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
-import com.joaoeoneves.fintrack.ui.theme.indicatorSpring
+import com.joaoeoneves.fintrack.ui.theme.Motion
+import com.joaoeoneves.fintrack.ui.theme.motionSpec
 
 private val DefaultRingSize = 56.dp
 private val DefaultRingStroke = 5.dp
@@ -27,8 +29,8 @@ private const val FULL_CIRCLE_DEGREES = 360f
 private const val START_ANGLE = -90f
 
 /**
- * A circular progress ring on a hairline track. [progress] is clamped to 0..1 and animated; the arc turns red when
- * [isOver]. [content] is centred inside the ring.
+ * A circular progress ring on a hairline track. [progress] is clamped to 0..1 and draws in on first show; the arc
+ * turns red when [isOver]. [content] is centred inside the ring.
  */
 @Suppress("LongParameterList") // size, stroke and content slot are independently optional
 @Composable
@@ -36,18 +38,32 @@ fun ProgressRing(
     progress: Float,
     modifier: Modifier = Modifier,
     isOver: Boolean = false,
+    drawIn: Boolean = true,
     size: Dp = DefaultRingSize,
     strokeWidth: Dp = DefaultRingStroke,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
-    val animated by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = if (LocalReducedMotion.current) snap() else indicatorSpring(),
-        label = "progressRing",
-    )
+    val target = progress.coerceIn(0f, 1f)
+    val animatedState = rememberDrawnProgress(target, drawIn)
+    val pulse by rememberOverspendPulse(isOver)
     val track = FinTrackTheme.colors.hairline
-    val fill = if (isOver) FinTrackTheme.colors.negative else MaterialTheme.colorScheme.onSurface
-    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
+    val negative = FinTrackTheme.colors.negative
+    val neutral = MaterialTheme.colorScheme.onSurface
+    val fill by animateColorAsState(
+        targetValue = if (isOver) negative else neutral,
+        animationSpec = motionSpec(tween(Motion.Medium)),
+        label = "progressRingColor",
+    )
+    Box(
+        modifier =
+            modifier
+                .size(size)
+                .graphicsLayer {
+                    scaleX = pulse
+                    scaleY = pulse
+                }.progressSemantics(target),
+        contentAlignment = Alignment.Center,
+    ) {
         Canvas(modifier = Modifier.size(size)) {
             val stroke = strokeWidth.toPx()
             val inset = stroke / 2f
@@ -62,6 +78,7 @@ fun ProgressRing(
                 size = arcSize,
                 style = Stroke(width = stroke),
             )
+            val animated = animatedState.value.coerceIn(0f, 1f)
             if (animated > 0f) {
                 drawArc(
                     color = fill,

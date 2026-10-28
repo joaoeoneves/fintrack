@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.designsystem.AnimatedAmountText
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -78,10 +79,9 @@ private fun Stat(
             color = FinTrackTheme.colors.textSecondary,
             maxLines = 2,
         )
-        Text(
-            text = formatAmountCents(cents),
+        AnimatedAmountText(
+            cents = cents,
             style = Amount,
-            maxLines = 1,
             autoSize = TextAutoSize.StepBased(minFontSize = MIN_AMOUNT_SP.sp, maxFontSize = MAX_AMOUNT_SP.sp),
             modifier = Modifier.padding(top = Dimens.Space4),
         )
