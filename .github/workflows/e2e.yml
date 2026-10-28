@@ -57,13 +57,17 @@ jobs:
       - name: Run flows on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
-          target: google_apis
+          # ATD ("automated test device") images drop the heavyweight launcher/background apps whose ANR
+          # dialog used to cover the app on boot.
+          api-level: 33
+          target: google_atd
           arch: x86_64
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
+            adb wait-for-device && adb shell 'while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 2; done'
+            sleep 20 && adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS && adb shell input keyevent KEYCODE_HOME
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             mkdir -p maestro-out/screens && for f in $FLOWS; do maestro test ".maestro/$f" --format junit --output "maestro-out/${f%.yaml}.xml" --debug-output "maestro-out/${f%.yaml}" || touch maestro-out/FAILED; done; true
 
