@@ -23,10 +23,14 @@ data class AnnualExtra(
     val cents: Long,
 )
 
-/** The year's expected income: [regularCents] from the monthly lines, plus the [extras] that land in the year. */
+/**
+ * The year's expected income: [regularCents] from the monthly lines, plus the [extras] that land in the year;
+ * [rows] is the same income grouped one row per component.
+ */
 data class AnnualIncome(
     val regularCents: Long,
     val extras: List<AnnualExtra>,
+    val rows: List<IncomeRow> = emptyList(),
 ) {
     val extrasCents: Long get() = extras.sumOf { it.cents }
     val totalCents: Long get() = regularCents + extrasCents
@@ -148,7 +152,7 @@ private fun annualIncomeOf(
                     line.amountIn(month, days).takeIf { it > 0 }?.let { AnnualExtra(line, month.monthValue, it) }
                 }
             }.sortedWith(compareBy({ it.month }, { it.line.order }, { it.line.id }))
-    return AnnualIncome(regular, extras)
+    return AnnualIncome(regular, extras, annualIncomeRowsOf(lines, workingDays))
 }
 
 /** Planned cents per category id over the year, only for categories with something planned. */

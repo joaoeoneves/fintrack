@@ -1,8 +1,10 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
+import com.joaoeoneves.fintrack.domain.model.ManagedLinesSync
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
-import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
+import com.joaoeoneves.fintrack.domain.model.isManaged
+import com.joaoeoneves.fintrack.domain.model.managedLinesSync
 import com.joaoeoneves.fintrack.domain.model.staleManagedIds
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
@@ -34,15 +36,32 @@ class ManageSalaryProfile
                 syncLines(null, SalaryLineLabels())
             }
 
+        /**
+         * Re-applies the stored profile to the plan's managed lines (e.g. after the line layout changed). Does
+         * nothing without a profile or before its lines were first generated.
+         */
+        suspend fun resync(labels: SalaryLineLabels = SalaryLineLabels()): Result<Unit> =
+            attempt {
+                val profile = profiles.observeSalaryProfile().first() ?: return@attempt
+                val existing = plannedIncome.observePlannedIncome().first()
+                if (existing.any { it.isManaged }) applySync(managedLinesSync(profile, existing, labels))
+            }
+
         private suspend fun syncLines(
             profile: SalaryProfile?,
             labels: SalaryLineLabels,
         ) {
             val existing = plannedIncome.observePlannedIncome().first()
-            profile?.let { salaryProfileLines(it, existing, labels) }.orEmpty().forEach {
-                plannedIncome.savePlannedIncome(it).getOrThrow()
+            if (profile == null) {
+                staleManagedIds(null, existing).forEach { plannedIncome.deletePlannedIncome(it).getOrThrow() }
+            } else {
+                applySync(managedLinesSync(profile, existing, labels))
             }
-            staleManagedIds(profile, existing).forEach { plannedIncome.deletePlannedIncome(it).getOrThrow() }
+        }
+
+        private suspend fun applySync(sync: ManagedLinesSync) {
+            sync.upserts.forEach { plannedIncome.savePlannedIncome(it).getOrThrow() }
+            sync.deletes.forEach { plannedIncome.deletePlannedIncome(it).getOrThrow() }
         }
 
         // Like runCatching, but a cancellation is rethrown instead of becoming a failure.

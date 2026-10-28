@@ -11,25 +11,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
-import com.joaoeoneves.fintrack.domain.model.GroupProgress
+import com.joaoeoneves.fintrack.domain.model.LimitGroup
 import com.joaoeoneves.fintrack.domain.model.PlannedSource
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
-import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
@@ -39,120 +32,99 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /**
- * The "Groups" card: planned vs actual per group with a thin progress bar, each expandable to its categories.
- * [hasGroups] is whether any group is defined (`null` while loading: nothing shows); without one only the suggested
- * starter set and "Manage groups" are offered.
+ * The "Limits" card once groups exist: per group a header (spent of planned, thin progress bar) with its category
+ * rows under it, each opening the limit editor; ends with the "Manage groups" row.
  */
 @Composable
-fun GroupsCard(
-    groups: List<GroupProgress>,
-    hasGroups: Boolean?,
+fun LimitsByGroupCard(
+    groups: List<LimitGroup>,
+    onEdit: (CategoryBudget) -> Unit,
+    onManage: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsGroup(label = stringResource(R.string.plan_allocations), modifier = modifier) {
+        groups.forEach { group ->
+            LimitGroupHeader(group)
+            group.rows.forEach { LimitCategoryRow(it, onClick = { onEdit(it) }) }
+            Hairline()
+        }
+        SettingsRow(title = stringResource(R.string.plan_groups_manage), onClick = onManage, showChevron = true)
+    }
+}
+
+/** The "Groups" card while no group is defined: the starter set and "Create group" entry points. */
+@Composable
+fun GroupsEmptyCard(
     actions: GroupsActions,
     modifier: Modifier = Modifier,
 ) {
-    // Groups are optional: until one is defined (or while loading) only a light entry point shows.
-    if (hasGroups == null) return
     SettingsGroup(label = stringResource(R.string.plan_groups_title), modifier = modifier) {
-        if (hasGroups) {
-            groups.forEach { progress ->
-                GroupProgressRow(progress)
-                Hairline()
-            }
-            GhostButton(
-                text = stringResource(R.string.plan_groups_manage),
-                onClick = actions.onManage,
-                modifier = Modifier.padding(top = Dimens.Space12),
-            )
-        } else {
-            Text(
-                text = stringResource(R.string.plan_groups_empty),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-                modifier = Modifier.padding(bottom = Dimens.Space8),
-            )
-            SettingsRow(
-                title = stringResource(R.string.plan_groups_suggest),
-                onClick = actions.onCreateSuggested,
-                showChevron = true,
-            )
-            Hairline()
-            SettingsRow(
-                title = stringResource(R.string.plan_groups_create),
-                onClick = actions.onManage,
-                showChevron = true,
-            )
-        }
+        Text(
+            text = stringResource(R.string.plan_groups_empty),
+            style = MaterialTheme.typography.bodySmall,
+            color = FinTrackTheme.colors.textSecondary,
+            modifier = Modifier.padding(bottom = Dimens.Space8),
+        )
+        SettingsRow(
+            title = stringResource(R.string.plan_groups_suggest),
+            onClick = actions.onCreateSuggested,
+            showChevron = true,
+        )
+        Hairline()
+        SettingsRow(
+            title = stringResource(R.string.plan_groups_create),
+            onClick = actions.onManage,
+            titleColor = FinTrackTheme.colors.textSecondary,
+        )
     }
 }
 
 @Composable
-private fun groupName(progress: GroupProgress) = progress.group?.name ?: stringResource(R.string.plan_group_other)
-
-@Composable
-private fun GroupProgressRow(progress: GroupProgress) {
-    var expanded by rememberSaveable(progress.group?.id) { mutableStateOf(false) }
-    val name = groupName(progress)
-    val toggleDescription = stringResource(R.string.cd_group_toggle, name)
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(role = Role.Button) { expanded = !expanded }
-                .semantics { contentDescription = toggleDescription }
-                .padding(vertical = Dimens.Space12),
-    ) {
+private fun LimitGroupHeader(group: LimitGroup) {
+    val isOver = group.plannedCents > 0 && group.spentCents > group.plannedCents
+    Column(modifier = Modifier.fillMaxWidth().padding(top = Dimens.Space12)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = name,
+                text = group.group?.name ?: stringResource(R.string.plan_group_other),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            AmountsText(spent = progress.spent, planned = progress.planned, isOver = progress.isOver)
+            Text(
+                text =
+                    stringResource(
+                        R.string.budget_spent_of_limit,
+                        formatAmountCents(group.spentCents),
+                        formatAmountCents(group.plannedCents),
+                    ),
+                style = Amount,
+                color = if (isOver) FinTrackTheme.colors.negative else MaterialTheme.colorScheme.onSurface,
+            )
         }
         ThinProgressBar(
-            progress = progress.fraction(),
-            isOver = progress.isOver,
+            progress = group.fraction(),
+            isOver = isOver,
             modifier = Modifier.padding(top = Dimens.Space8),
         )
-        if (progress.hasRecurringPlanned) FromRecurringHint()
-        if (expanded) {
-            progress.categories.forEach { CategoryProgressRow(it) }
-        }
     }
 }
 
 @Composable
-private fun AmountsText(
-    spent: Long,
-    planned: Long,
-    isOver: Boolean,
+private fun LimitCategoryRow(
+    row: CategoryBudget,
+    onClick: () -> Unit,
 ) {
-    Text(
-        text = stringResource(R.string.budget_spent_of_limit, formatAmountCents(spent), formatAmountCents(planned)),
-        style = Amount,
-        color = if (isOver) FinTrackTheme.colors.negative else MaterialTheme.colorScheme.onSurface,
-    )
-}
-
-@Composable
-private fun FromRecurringHint() {
-    Text(
-        text = stringResource(R.string.plan_from_recurring),
-        style = MaterialTheme.typography.bodySmall,
-        color = FinTrackTheme.colors.textSecondary,
-        modifier = Modifier.padding(top = Dimens.Space4),
-    )
-}
-
-@Composable
-private fun CategoryProgressRow(row: CategoryBudget) {
     Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight).padding(top = Dimens.Space8),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = Dimens.SettingsRowMinHeight)
+                .clickable(onClick = onClick)
+                .padding(top = Dimens.Space8),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -167,12 +139,30 @@ private fun CategoryProgressRow(row: CategoryBudget) {
                 )
             }
         }
-        AmountsText(spent = row.spentCents, planned = row.planned ?: 0L, isOver = row.isOverBudget)
+        val planned = row.planned
+        if (planned != null) {
+            Text(
+                text =
+                    stringResource(
+                        R.string.budget_spent_of_limit,
+                        formatAmountCents(row.spentCents),
+                        formatAmountCents(planned),
+                    ),
+                style = Amount,
+                color = if (row.isOverBudget) FinTrackTheme.colors.negative else MaterialTheme.colorScheme.onSurface,
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.plan_not_planned),
+                style = Amount.copy(fontWeight = FontWeight.Normal),
+                color = FinTrackTheme.colors.textSecondary,
+            )
+        }
     }
 }
 
 /** How much of the group's planned amount is used, as a 0..1 bar fill: 0 without a planned amount. */
-private fun GroupProgress.fraction(): Float {
-    if (planned <= 0L) return 0f
-    return (spent.toDouble() / planned.toDouble()).toFloat().coerceIn(0f, 1f)
+private fun LimitGroup.fraction(): Float {
+    if (plannedCents <= 0L) return 0f
+    return (spentCents.toDouble() / plannedCents.toDouble()).toFloat().coerceIn(0f, 1f)
 }

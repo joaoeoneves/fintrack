@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.plan.annual
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,15 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AnnualGroup
@@ -32,11 +26,14 @@ import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
+import com.joaoeoneves.fintrack.ui.plan.label
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.YearMonth
 import kotlin.math.abs
+
+private const val MONTHS_PER_YEAR = 12
 
 @Composable
 private fun LabelAmountRow(
@@ -61,57 +58,30 @@ private fun LabelAmountRow(
     }
 }
 
-/** Regular income, the extras (tap to expand the list with each one's month) and the total. */
+/** One row per income component or manual line with the months it pays when not every month, and the total. */
 @Composable
 fun AnnualIncomeCard(
     income: AnnualIncome,
     year: Int,
     modifier: Modifier = Modifier,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    val locale = currentLocale()
     SettingsGroup(label = stringResource(R.string.annual_income_title), modifier = modifier) {
-        LabelAmountRow(stringResource(R.string.annual_income_regular), formatAmountCents(income.regularCents))
-        if (income.extras.isNotEmpty()) {
-            Hairline()
-            LabelAmountRow(
-                label = stringResource(R.string.annual_income_extras),
-                value = formatAmountCents(income.extrasCents),
-                modifier = Modifier.clickable(role = Role.Button) { expanded = !expanded },
-            )
-            if (expanded) {
-                val locale = currentLocale()
-                income.extras.forEach { extra ->
-                    val month = formatShortMonthName(YearMonth.of(year, extra.month), locale)
-                    SubRow(
-                        label = stringResource(R.string.annual_extra_in_month, extra.line.label, month),
-                        value = formatAmountCents(extra.cents),
+        income.rows.forEach { row ->
+            Column {
+                LabelAmountRow(row.component?.label() ?: row.lines.first().label, formatAmountCents(row.cents))
+                if (row.months.size < MONTHS_PER_YEAR) {
+                    Text(
+                        text = row.months.joinToString { formatShortMonthName(YearMonth.of(year, it), locale) },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = FinTrackTheme.colors.textSecondary,
+                        modifier = Modifier.padding(bottom = Dimens.Space8),
                     )
                 }
             }
+            Hairline()
         }
-        Hairline()
         LabelAmountRow(stringResource(R.string.annual_income_total), formatAmountCents(income.totalCents))
-    }
-}
-
-@Composable
-private fun SubRow(
-    label: String,
-    value: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space4),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = FinTrackTheme.colors.textSecondary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Text(text = value, style = Amount, color = FinTrackTheme.colors.textSecondary)
     }
 }
 

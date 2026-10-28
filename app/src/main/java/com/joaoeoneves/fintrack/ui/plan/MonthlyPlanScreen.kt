@@ -159,8 +159,6 @@ private fun MonthlyPlanContent(
                 monthOnly = true,
             )
         }
-        item { SalaryProfileSection(onOpen = navigation.onOpenSalaryProfile, modifier = cardModifier) }
-        potsItem(state.pots, cardModifier)
         item {
             PlanSummaryCard(
                 summary = state.summary,
@@ -168,17 +166,16 @@ private fun MonthlyPlanContent(
                 fixedThisMonthCents = state.fixedThisMonthCents,
             )
         }
-        expectedIncomeItem(state, viewModel, onEditWorkingDays = { editingWorkingDays = true }, modifier = cardModifier)
-        item {
-            AllocationsCard(
-                allocations = state.allocations,
-                onEdit = { editingAllocation = it },
-                modifier = cardModifier,
-            )
-        }
-        groupsItem(state, groupsViewModel, onManage = { managingGroups = true }, modifier = cardModifier)
+        potsItem(state.pots, cardModifier)
+        expectedIncomeItem(state, viewModel, navigation, { editingWorkingDays = true }, cardModifier)
+        limitsItems(
+            state = state,
+            groupsViewModel = groupsViewModel,
+            viewModel = viewModel,
+            actions = LimitsActions(onEdit = { editingAllocation = it }, onManage = { managingGroups = true }),
+            modifier = cardModifier,
+        )
         item { GoalsSection(modifier = cardModifier) }
-        plannedVsActualItem(state.progress, viewModel, cardModifier)
         item { RecurringSection(onOpen = navigation.onOpenRecurring, modifier = cardModifier) }
     }
 
@@ -238,12 +235,13 @@ private fun PlanDialogs(
 private fun LazyListScope.expectedIncomeItem(
     state: MonthlyPlanUiState.Content,
     viewModel: MonthlyPlanViewModel,
+    navigation: PlanNavigation,
     onEditWorkingDays: () -> Unit,
     modifier: Modifier,
 ) {
     item {
         ExpectedIncomeCard(
-            lines = state.incomeLines,
+            rows = state.incomeRows,
             canAdd = state.canAddIncomeLine,
             workingDays = state.workingDays,
             actions =
@@ -251,6 +249,7 @@ private fun LazyListScope.expectedIncomeItem(
                     onAdd = viewModel::onAddIncomeLine,
                     onEdit = viewModel::onEditIncomeLine,
                     onEditWorkingDays = onEditWorkingDays,
+                    onOpenSalaryProfile = navigation.onOpenSalaryProfile,
                 ),
             modifier = modifier,
         )
@@ -285,15 +284,37 @@ private fun LazyListScope.plannedVsActualItem(
     }
 }
 
-/** The "Groups" card; the suggested starter set is created with the names in the current language. */
-private fun LazyListScope.groupsItem(
+/** What the limits cards can trigger, bundled for detekt's LongParameterList. */
+private class LimitsActions(
+    val onEdit: (CategoryBudget) -> Unit,
+    val onManage: () -> Unit,
+)
+
+/**
+ * Without groups: the flat "Limits" card, "Planned vs actual" and the groups empty state (the suggested starter
+ * set is created with the names in the current language). With groups: the single "Limits" card by group.
+ */
+private fun LazyListScope.limitsItems(
     state: MonthlyPlanUiState.Content,
     groupsViewModel: CategoryGroupsViewModel,
-    onManage: () -> Unit,
+    viewModel: MonthlyPlanViewModel,
+    actions: LimitsActions,
     modifier: Modifier,
 ) {
+    if (state.groups.any { it.group != null }) {
+        item {
+            LimitsByGroupCard(
+                groups = state.limitGroups,
+                onEdit = actions.onEdit,
+                onManage = actions.onManage,
+                modifier = modifier,
+            )
+        }
+        return
+    }
+    item { AllocationsCard(allocations = state.allocations, onEdit = actions.onEdit, modifier = modifier) }
+    plannedVsActualItem(state.progress, viewModel, modifier)
     item {
-        val defined by groupsViewModel.groups.collectAsStateWithLifecycle()
         val names =
             SuggestedGroupNames(
                 recurring = stringResource(R.string.group_suggested_recurring),
@@ -301,13 +322,11 @@ private fun LazyListScope.groupsItem(
                 food = stringResource(R.string.group_suggested_food),
                 other = stringResource(R.string.group_suggested_other),
             )
-        GroupsCard(
-            groups = state.groups,
-            hasGroups = defined?.isNotEmpty(),
+        GroupsEmptyCard(
             actions =
                 GroupsActions(
                     onCreateSuggested = { groupsViewModel.onCreateSuggested(names) },
-                    onManage = onManage,
+                    onManage = actions.onManage,
                 ),
             modifier = modifier,
         )

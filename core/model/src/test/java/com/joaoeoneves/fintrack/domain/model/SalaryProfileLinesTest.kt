@@ -28,7 +28,7 @@ class SalaryProfileLinesTest {
 
     @Test
     fun managedKeys_listsEveryKey() {
-        assertEquals(22, MANAGED_KEYS.size)
+        assertEquals(23, MANAGED_KEYS.size)
         assertEquals(MANAGED_KEYS.size, MANAGED_KEYS.toSet().size)
         assertEquals("profile_flex_q1", managedFlexKey(0))
         assertEquals("profile_flex_q4", managedFlexKey(3))
@@ -51,7 +51,7 @@ class SalaryProfileLinesTest {
     fun netSalaryLine_isMonthlyAndFixed() {
         val net = lines().byKey(MANAGED_NET_SALARY)
 
-        assertEquals(86_000, net.amountCents)
+        assertEquals(79_000, net.amountCents)
         assertEquals(IncomeFrequency.MONTHLY, net.frequency)
         assertEquals(IncomeBasis.FIXED, net.basis)
         assertEquals("Net salary", net.label)
@@ -106,14 +106,14 @@ class SalaryProfileLinesTest {
         val amounts = List(FLEX_PAYMENTS) { result.byKey(managedFlexKey(it)).amountCents }
 
         assertEquals(listOf(24_500L, 24_500L, 24_500L, 24_500L), amounts)
-        assertEquals("Flexible benefits 1/4", result.byKey("profile_flex_q1").label)
+        assertEquals("Flexible benefits", result.byKey("profile_flex_q1").label)
     }
 
     @Test
     fun zeroInputs_omitTheirLines() {
         val minimal = lines(SalaryProfile(baseGrossCents = 100_000, subsidySpreadPpm = SPREAD_FULL_PPM))
 
-        assertEquals(listOf(MANAGED_NET_SALARY), minimal.map { it.managedKey })
+        assertEquals(listOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS), minimal.map { it.managedKey })
     }
 
     @Test
@@ -154,7 +154,7 @@ class SalaryProfileLinesTest {
         assertEquals("My pay", net.label)
         assertEquals(Earmark.Group("g1"), net.earmark)
         assertEquals(7, net.order)
-        assertEquals(86_000, net.amountCents)
+        assertEquals(79_000, net.amountCents)
     }
 
     @Test
@@ -184,7 +184,7 @@ class SalaryProfileLinesTest {
         val result = salaryProfileLines(full, emptyList(), labels)
 
         assertEquals("Liquido", result.byKey(MANAGED_NET_SALARY).label)
-        assertEquals("Flex 2/4", result.byKey("profile_flex_q2").label)
+        assertEquals("Flex", result.byKey("profile_flex_q2").label)
     }
 
     @Test

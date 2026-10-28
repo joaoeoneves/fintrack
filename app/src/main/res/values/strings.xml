@@ -37,8 +37,6 @@
     <string name="error_generic_fallback">Something went wrong</string>
     <string name="error_invalid_amount">Enter a valid amount</string>
     <string name="error_sign_in_failed">Couldn\'t sign in</string>
-    <string name="error_budget_save_failed">Couldn\'t save the budget</string>
-    <string name="error_budget_remove_failed">Couldn\'t remove the budget</string>
     <string name="error_sign_out_failed">Couldn\'t sign out</string>
 
     <!-- Auth -->
@@ -481,7 +479,6 @@
     <string name="plan_groups_manage">Manage groups</string>
     <string name="plan_group_other">Other</string>
     <string name="plan_from_recurring">from recurring</string>
-    <string name="cd_group_toggle">Show categories of %1$s</string>
     <string name="group_suggested_recurring">Recurring</string>
     <string name="group_suggested_investments">Investments</string>
     <string name="group_suggested_food">Food</string>
@@ -499,7 +496,6 @@
     <string name="plan_not_in">Not in</string>
     <string name="plan_earmark_for">Earmark for</string>
     <string name="plan_earmark_none">None</string>
-    <string name="plan_earmark_categories">Categories</string>
     <string name="plan_pot">Pot</string>
     <string name="plan_pots_title">Pots</string>
     <string name="plan_pot_base">Base</string>
@@ -509,7 +505,6 @@
     <string name="plan_pot_overflow_row">−%1$s · %2$s</string>
     <string name="cd_pot">Pot: %1$s</string>
 
-    <string name="plan_salary_section">Salary</string>
     <string name="plan_salary_profile_row">Salary profile</string>
     <string name="plan_from_salary_profile">From salary profile</string>
     <string name="plan_managed_line_hint">Generated from your salary profile. Change the amount and schedule there.</string>
@@ -567,10 +562,7 @@
     <string name="plan_tab_month">Month</string>
     <string name="plan_tab_year">Year</string>
     <string name="annual_income_title">Income for the year</string>
-    <string name="annual_income_regular">Regular income</string>
-    <string name="annual_income_extras">Extras</string>
     <string name="annual_income_total">Total income</string>
-    <string name="annual_extra_in_month">%1$s · %2$s</string>
     <string name="annual_actual_of_planned">%1$s of %2$s</string>
     <string name="annual_pots_title">Pots over the year</string>
     <string name="annual_subscriptions_title">Yearly subscriptions</string>
@@ -581,7 +573,7 @@
     <string name="annual_empty_message">Add income and limits in the Month view to see the year.</string>
 
     <string name="plan_goals_title">Goals</string>
-    <string name="plan_goals_add">Add a goal</string>
+    <string name="plan_goals_add">Add goal</string>
     <string name="plan_goals_from_investments">Create from investments</string>
     <string name="goal_new">New goal</string>
     <string name="goal_edit">Edit goal</string>
@@ -617,4 +609,13 @@
     <string name="salary_duplicates_message">You have other monthly income lines. The salary profile now covers salary and meal allowance — remove these to avoid counting them twice?</string>
     <string name="salary_duplicates_remove">Remove selected</string>
     <string name="salary_duplicates_keep">Keep</string>
+    <string name="plan_income_salary">Salary</string>
+    <string name="plan_income_meal">Meal allowance</string>
+    <string name="plan_income_subsidies">Subsidies</string>
+    <string name="plan_income_flex">Flexible benefits</string>
+    <string name="plan_income_profit_share">Profit share</string>
+    <string name="plan_income_bonus">Bonus</string>
+    <string name="salary_breakdown_net_base">Base salary (net)</string>
+    <string name="salary_breakdown_net_duo">Twelfths (net)</string>
+    <string name="salary_line_duodecimos">Subsidies (twelfths)</string>
 </resources>

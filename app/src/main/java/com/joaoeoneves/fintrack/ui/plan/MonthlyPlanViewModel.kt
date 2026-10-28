@@ -20,8 +20,11 @@ import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
+import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
 import com.joaoeoneves.fintrack.domain.model.isManaged
+import com.joaoeoneves.fintrack.domain.model.limitGroupsOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
+import com.joaoeoneves.fintrack.domain.model.salaryComponent
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -106,7 +109,7 @@ class MonthlyPlanViewModel
 
         fun onAddIncomeLine() {
             viewModelScope.launch {
-                if (repositories.currentLines().size < MAX_PLANNED_INCOME_LINES) {
+                if (repositories.currentLines().count { !it.isManaged } < MAX_PLANNED_INCOME_LINES) {
                     editor.value = IncomeLineEditorState(editingId = null, initialLabel = "", initialAmountCents = null)
                 }
             }
@@ -121,6 +124,7 @@ class MonthlyPlanViewModel
                             initialLabel = line.label,
                             initialAmountCents = line.amountCents,
                             managed = line.isManaged,
+                            component = line.salaryComponent,
                             initialSchedule =
                                 IncomeSchedule(
                                     basis = line.basis,
@@ -274,16 +278,18 @@ private fun planFlow(
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
                 incomeLines = lines,
+                incomeRows = incomeRowsIn(lines, overview.budgetMonth, workingDays.days),
                 allocations = allocations,
                 summary = monthlyPlanOf(allocations, lines, emptyList(), overview.budgetMonth, workingDays.days),
                 period = selected.period,
                 canGoToNextMonth = selected.canGoToNextMonth,
                 progress = overview.budgets,
                 fixedThisMonthCents = overview.summary.fixedSpendingCents,
-                canAddIncomeLine = lines.size < MAX_PLANNED_INCOME_LINES,
+                canAddIncomeLine = lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
                 editor = editorState?.copy(earmarkOptions = earmarkOptionsOf(overview, allocations)),
                 groups = overview.groups,
+                limitGroups = limitGroupsOf(allocations, overview.budgets, overview.groups),
                 pots = overview.pots,
             )
         content

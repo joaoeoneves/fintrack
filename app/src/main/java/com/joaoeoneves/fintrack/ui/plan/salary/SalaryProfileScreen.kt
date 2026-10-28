@@ -61,6 +61,7 @@ fun SalaryProfileScreen(
     val labels =
         SalaryLineLabels(
             netSalary = stringResource(R.string.salary_line_net),
+            duodecimos = stringResource(R.string.salary_line_duodecimos),
             meal = stringResource(R.string.salary_group_meal),
             subsidy = stringResource(R.string.salary_line_subsidy),
             flex = stringResource(R.string.salary_group_flex),
