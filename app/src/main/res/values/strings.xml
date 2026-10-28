@@ -19,7 +19,7 @@
     <string name="cd_cancel">Cancel</string>
     <string name="cd_delete">Delete</string>
     <string name="cd_change_date">Change date</string>
-    <string name="cd_settings">Settings</string>
+    <string name="cd_account_avatar">Account and settings</string>
     <string name="cd_previous_month">Previous month</string>
     <string name="cd_next_month">Next month</string>
     <string name="cd_previous_year">Previous year</string>
@@ -160,11 +160,15 @@
 
 
     <!-- Settings -->
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">Account &amp; settings</string>
     <string name="settings_section_language">Language</string>
     <string name="settings_section_preferences">Preferences</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_currency_hint">Display only — amounts aren\'t converted</string>
+    <string name="settings_reduce_motion">Reduce animations</string>
+    <string name="motion_system">System</string>
+    <string name="motion_on">On</string>
+    <string name="motion_off">Off</string>
     <string name="settings_section_currency">Currency</string>
     <string name="settings_section_data">Data</string>
     <string name="settings_section_account">Account</string>
@@ -262,11 +266,8 @@
     <string name="dashboard_fixed_variable">Fixed %1$s\nVariable %2$s</string>
 
     <!-- Backup -->
-    <string name="settings_section_backup">Backup</string>
     <string name="settings_export_backup">Export backup (JSON)</string>
     <string name="settings_restore_backup">Restore backup (JSON)</string>
-    <string name="settings_backup_guest_hint">Export a backup to move your data to another device</string>
-    <string name="settings_backup_signed_in_hint">Save a copy of your data as a JSON file</string>
     <string name="action_restore">Restore</string>
     <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nLimits: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring items: %6$d</string>
     <string name="backup_export_done_title">Backup exported</string>

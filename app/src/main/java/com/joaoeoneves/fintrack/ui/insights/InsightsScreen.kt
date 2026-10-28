@@ -21,9 +21,9 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
-import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
@@ -50,7 +50,7 @@ fun InsightsScreen(
 
     LargeTitleScaffold(
         title = stringResource(R.string.insights_title),
-        actions = { SettingsIconButton(onClick = onOpenSettings) },
+        navigationIcon = { AccountAvatar(onClick = onOpenSettings) },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (val state = uiState) {

@@ -20,8 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
-import com.joaoeoneves.fintrack.ui.common.SettingsIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
@@ -64,7 +64,7 @@ private fun PlanScaffold(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LargeTitleScaffold(
         title = stringResource(R.string.nav_plan),
-        actions = { SettingsIconButton(onClick = onOpenSettings) },
+        navigationIcon = { AccountAvatar(onClick = onOpenSettings) },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val annualViewModel: AnnualPlanViewModel = hiltViewModel()

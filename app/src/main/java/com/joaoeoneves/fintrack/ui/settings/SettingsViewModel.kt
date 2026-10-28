@@ -6,11 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
+import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
+import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -40,23 +42,32 @@ class SettingsViewModel
         // always supplies it in production. When null (test-only), the language always reads as
         // AppLanguage.SYSTEM, matching SettingsUiState()'s own default.
         private val languageRepository: LanguageRepository? = null,
+        // Same test-only nullable default; reads as MotionPreference.SYSTEM when absent.
+        private val motionRepository: MotionRepository? = null,
     ) : ViewModel() {
         private val signOutError = MutableStateFlow<UiText?>(null)
         private val signInError = MutableStateFlow<UiText?>(null)
         private val errors = combine(signOutError, signInError) { signOut, signIn -> signOut to signIn }
 
+        private val languageAndMotion =
+            combine(
+                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.SYSTEM),
+                motionRepository?.observeMotionPreference() ?: flowOf(MotionPreference.SYSTEM),
+            ) { language, motion -> language to motion }
+
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 themeRepository.observeThemePreference(),
                 currencyRepository.observeCurrency(),
-                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.SYSTEM),
+                languageAndMotion,
                 sessionRepository.session,
                 errors,
-            ) { themePreference, currency, language, session, (signOut, signIn) ->
+            ) { themePreference, currency, (language, motion), session, (signOut, signIn) ->
                 SettingsUiState(
                     themePreference = themePreference,
                     currency = currency,
                     language = language,
+                    motionPreference = motion,
                     currentUser = (session as? Session.SignedIn)?.user,
                     signOutError = signOut,
                     isGuest = session is Session.Guest,
@@ -78,6 +89,10 @@ class SettingsViewModel
 
         fun setLanguage(language: AppLanguage) {
             viewModelScope.launch { languageRepository?.setLanguage(language) }
+        }
+
+        fun setMotionPreference(preference: MotionPreference) {
+            viewModelScope.launch { motionRepository?.setMotionPreference(preference) }
         }
 
         fun signOut() {

@@ -20,7 +20,8 @@ import com.joaoeoneves.fintrack.core.designsystem.R
 
 /**
  * Scaffold with a collapsing large title (iOS-style) on the app background colour. [onBack], when
- * given, adds a back arrow with the standard "Back" description.
+ * given, adds a back arrow with the standard "Back" description;
+ * otherwise [navigationIcon] (e.g. an account avatar) is shown in that slot.
  */
 @Suppress("LongParameterList") // scaffold slots; each one is independently optional
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,6 +30,7 @@ fun LargeTitleScaffold(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    navigationIcon: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
@@ -49,6 +51,8 @@ fun LargeTitleScaffold(
                                 contentDescription = stringResource(R.string.cd_back),
                             )
                         }
+                    } else {
+                        navigationIcon?.invoke()
                     }
                 },
                 actions = actions,

@@ -9,7 +9,7 @@ object TestTags {
     const val CONTINUE_AS_GUEST = "continue_as_guest"
     const val DASHBOARD_LIST = "dashboard_list"
     const val DASHBOARD_ADD_EXPENSE = "dashboard_add_expense"
-    const val DASHBOARD_SETTINGS = "dashboard_settings"
+    const val ACCOUNT_AVATAR = "account_avatar"
     const val SEE_ALL_ACTIVITY = "see_all_activity"
     const val ACTIVITY_LIST = "activity_list"
     const val NAV_HOME = "nav_home"

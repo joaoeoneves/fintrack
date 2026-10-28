@@ -19,7 +19,7 @@
     <string name="cd_cancel">Cancelar</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_change_date">Alterar data</string>
-    <string name="cd_settings">Definições</string>
+    <string name="cd_account_avatar">Conta e definições</string>
     <string name="cd_previous_month">Mês anterior</string>
     <string name="cd_next_month">Mês seguinte</string>
     <string name="cd_previous_year">Ano anterior</string>
@@ -161,11 +161,15 @@
 
 
     <!-- Definições -->
-    <string name="settings_title">Definições</string>
+    <string name="settings_title">Conta e definições</string>
     <string name="settings_section_language">Idioma</string>
     <string name="settings_section_preferences">Preferências</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_currency_hint">Só visual — os valores não são convertidos</string>
+    <string name="settings_reduce_motion">Reduzir animações</string>
+    <string name="motion_system">Sistema</string>
+    <string name="motion_on">Ativado</string>
+    <string name="motion_off">Desativado</string>
     <string name="settings_section_currency">Moeda</string>
     <string name="settings_section_data">Dados</string>
     <string name="settings_section_account">Conta</string>
@@ -267,11 +271,8 @@
     <string name="dashboard_fixed_variable">Fixas %1$s\nVariáveis %2$s</string>
 
     <!-- Cópia de segurança -->
-    <string name="settings_section_backup">Cópia de segurança</string>
     <string name="settings_export_backup">Exportar cópia (JSON)</string>
     <string name="settings_restore_backup">Restaurar cópia (JSON)</string>
-    <string name="settings_backup_guest_hint">Exporte uma cópia de segurança para mover os seus dados para outro dispositivo</string>
-    <string name="settings_backup_signed_in_hint">Guarde uma cópia dos seus dados num ficheiro JSON</string>
     <string name="action_restore">Restaurar</string>
     <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nLimites: %3$d\nCategorias: %4$d\nRendimentos previstos: %5$d\nItens recorrentes: %6$d</string>
     <string name="backup_export_done_title">Cópia de segurança exportada</string>
