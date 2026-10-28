@@ -37,8 +37,9 @@ class SalaryMathTest {
         // Exact: 108333.33 - 11916.67 - 10416.67 = 86000.00; deriving it from the rounded parts would give 85999.
         assertEquals(86_000, b.netMonthlyCents)
         assertEquals(50_000, b.lumpGrossCents)
-        assertEquals(42_000, b.holidayLumpNetCents)
-        assertEquals(42_000, b.christmasLumpNetCents)
+        // The lump is taxed at the base rate: 50000 * (1 - 0.11 - 0.10).
+        assertEquals(39_500, b.holidayLumpNetCents)
+        assertEquals(39_500, b.christmasLumpNetCents)
     }
 
     @Test
@@ -60,7 +61,7 @@ class SalaryMathTest {
         assertEquals(10_000, b.irsCents)
         assertEquals(79_000, b.netMonthlyCents)
         assertEquals(100_000, b.lumpGrossCents)
-        assertEquals(84_000, b.holidayLumpNetCents)
+        assertEquals(79_000, b.holidayLumpNetCents)
     }
 
     @Test
@@ -84,7 +85,7 @@ class SalaryMathTest {
         assertEquals(91_208, half.netMonthlyCents)
         assertEquals(0, full.irsCents)
         assertEquals(96_417, full.netMonthlyCents)
-        // The lump's subsidy IRS is exempt too: 50000 * (1 - 0.11).
+        // The lump's IRS is exempt too: 50000 * (1 - 0.11).
         assertEquals(44_500, full.holidayLumpNetCents)
     }
 

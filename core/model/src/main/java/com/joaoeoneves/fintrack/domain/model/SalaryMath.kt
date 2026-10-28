@@ -114,11 +114,13 @@ private fun netBreakdown(
         mealRatePerDayCents = profile.mealRatePerDayCents ?: 0L,
     )
 
-/** A subsidy lump after SS and the subsidy IRS: lump x (1 - ss - irsSub x (1 - exempt)), rounded once. */
+/**
+ * A subsidy lump after SS and IRS: lump x (1 - ss - irsBase x (1 - exempt)), rounded once. The lump is withheld at
+ * about the base rate, not the much lower rate that only fits the small monthly twelfths.
+ */
 private fun Long.lumpNet(profile: SalaryProfile): Long {
-    val irsSubsPaid =
-        BigDecimal(profile.effectiveIrsSubsidiesPpm).multiply(BigDecimal(PPM_SCALE - profile.irsJovemExemptPpm))
-    val factor = PPM.multiply(PPM).subtract(BigDecimal(profile.ssPpm).multiply(PPM)).subtract(irsSubsPaid)
+    val irsPaid = BigDecimal(profile.irsBasePpm).multiply(BigDecimal(PPM_SCALE - profile.irsJovemExemptPpm))
+    val factor = PPM.multiply(PPM).subtract(BigDecimal(profile.ssPpm).multiply(PPM)).subtract(irsPaid)
     return BigDecimal(this).multiply(factor).divide(PPM.multiply(PPM), 0, RoundingMode.HALF_UP).toLong()
 }
 

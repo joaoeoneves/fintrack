@@ -66,7 +66,8 @@ data class SalaryLineLabels(
  *
  * GROSS mode: [subsidySpreadPpm] is the share of the holiday and Christmas subsidies paid in twelfths with the
  * monthly salary (0, 50% or 100%); [irsBasePpm] / [irsSubsidiesPpm] (default: the base rate) are the withholding
- * rates; [irsJovemExemptPpm] is the exempt share of the IRS (IRS paid = rate x (1 - exempt)).
+ * rates, the subsidy one for the monthly twelfths only (the lump sums use the base rate);
+ * [irsJovemExemptPpm] is the exempt share of the IRS (IRS paid = rate x (1 - exempt)).
  * NET mode: the net amounts as received, no tax fields. [extras] are the user-defined yearly extras.
  */
 data class SalaryProfile(
