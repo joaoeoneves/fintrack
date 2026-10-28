@@ -1,0 +1,10 @@
+com.joaoeoneves.fintrack.core.designsystem
+font inter_bold
+font inter_medium
+font inter_regular
+font inter_semibold
+string action_add_expense
+string action_add_income
+string cd_back
+string dashboard_add_expense_short
+string dashboard_add_income_short

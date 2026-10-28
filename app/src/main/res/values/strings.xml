@@ -14,7 +14,6 @@
     <string name="action_add_income">Add income</string>
 
     <!-- Shared content descriptions -->
-    <string name="cd_back">Back</string>
     <string name="cd_cancel">Cancel</string>
     <string name="cd_delete">Delete</string>
     <string name="cd_change_date">Change date</string>
@@ -411,8 +410,6 @@
 
     <!-- Dashboard redesign -->
     <string name="action_see_all">See all</string>
-    <string name="dashboard_add_expense_short">Expense</string>
-    <string name="dashboard_add_income_short">Income</string>
     <string name="cd_balance_chart">Balance over the period, from %1$s to %2$s</string>
     <string name="period_tab_1m">1M</string>
     <string name="period_tab_3m">3M</string>
