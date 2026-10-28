@@ -17,7 +17,7 @@ onFlowComplete:
 # Delete buttons are targeted with a search filter first, so "Delete" index 0 can only ever be
 # this flow's own row, never real data.
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English, mirroring golden-path.yaml's step 0 ---
 - tapOn:

@@ -35,7 +35,7 @@
 # preferences repository unit tests for the corresponding unit-level regression coverage.
 appId: com.joaoeoneves.fintrack
 ---
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English first (the app follows the system language, English on the CI emulator but
 # possibly Português elsewhere, so the Settings entry label is matched in either language).

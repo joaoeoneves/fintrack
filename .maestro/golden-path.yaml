@@ -8,7 +8,7 @@ appId: com.joaoeoneves.fintrack
 # lost and this flow will fail fast at the "Total:" assertion below rather than silently
 # continuing on the wrong screen.
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin language to English before any of the (English) assertions below. Fresh installs now
 # default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer

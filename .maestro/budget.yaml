@@ -14,7 +14,7 @@ appId: com.joaoeoneves.fintrack
 # "No limit" is asserted via the Allocations row's "Not planned" label (the "Planned vs actual"
 # card only lists categories that have a limit).
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b. Money now follows the app
 # locale via NumberFormat, so English + EUR renders the limit as "€100.50" and the dialog prefill

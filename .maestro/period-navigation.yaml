@@ -15,7 +15,7 @@ appId: com.joaoeoneves.fintrack
 # (list screen label, budgets title), the label is captured with copyTextFrom and reused through
 # ${maestro.copiedText}.
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b.
 - tapOn:

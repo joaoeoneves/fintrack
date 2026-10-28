@@ -9,7 +9,7 @@ appId: com.joaoeoneves.fintrack
 # Creates exactly one row, "Maestro E2E Refund", and deletes it at the end while the expense list is
 # search-filtered to that name, so no pre-existing data is ever touched.
 
-- launchApp
+- runFlow: _guest-start.yaml
 
 # --- 0: Pin English + EUR, mirroring golden-path.yaml's steps 0/0b.
 - tapOn:
