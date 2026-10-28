@@ -22,9 +22,7 @@ import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.domain.model.SalaryComponent
-import com.joaoeoneves.fintrack.domain.model.salaryComponent
+import com.joaoeoneves.fintrack.ui.common.FundedEnvelopeNote
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
@@ -253,25 +251,10 @@ private fun CardCaptions(card: EnvelopeCardUi) {
             )
     }
     val line = card.fundingLine ?: return
-    val label = line.fundingLabel()
-    Text(
-        text = stringResource(R.string.envelope_card_funded, label),
-        style = style,
-        color = secondary,
+    FundedEnvelopeNote(
+        lineLabel = line.fundingLabel(),
+        coveredCents = card.fundingCents,
+        overflowCents = card.overflowCents,
         modifier = Modifier.padding(top = Dimens.Space4),
     )
-    if (card.overflowCents > 0L) {
-        Text(
-            text = stringResource(R.string.envelope_card_overflow, formatAmountCents(card.overflowCents), label),
-            style = style,
-            color = FinTrackTheme.colors.negative,
-        )
-    }
-}
-
-/** The funding line's name: a salary component's localized name, else the line's own label. */
-@Composable
-private fun PlannedIncome.fundingLabel(): String {
-    val component = salaryComponent?.takeIf { it != SalaryComponent.EXTRA }
-    return component?.label() ?: label
 }

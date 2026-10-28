@@ -20,6 +20,7 @@ import com.joaoeoneves.fintrack.domain.model.normalizedMerchantName
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.defaultNewTransactionDate
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -124,7 +125,13 @@ class AddEditExpenseViewModel
                         defaultCategory(
                             categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first(),
                         )
-                    _uiState.value = AddEditUiState.Ready(ExpenseFormState(category = category, date = Instant.now()))
+                    _uiState.value =
+                        AddEditUiState.Ready(
+                            ExpenseFormState(
+                                category = category,
+                                date = defaultNewTransactionDate(route.period, Instant.now(), ZoneId.systemDefault()),
+                            ),
+                        )
                     suggestionIndex = loadSuggestionIndex(expenseRepository)
                 }
             }

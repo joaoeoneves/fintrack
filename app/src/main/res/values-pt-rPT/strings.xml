@@ -19,7 +19,7 @@
     <string name="action_delete">Eliminar</string>
     <string name="action_ok">OK</string>
     <string name="action_retry">Tentar novamente</string>
-    <string name="action_undo">Anular</string>
+    <string name="action_undo">Desfazer</string>
     <string name="action_change">Alterar</string>
     <string name="action_import">Importar</string>
     <string name="action_sign_out">Terminar sessão</string>
@@ -40,26 +40,26 @@
     <string name="cd_pie_chart_category_item">%1$s, %2$d por cento, %3$s</string>
 
     <!-- Rótulos de campos partilhados -->
-    <string name="field_amount">Montante</string>
+    <string name="field_amount">Valor</string>
     <string name="field_date">Data</string>
     <string name="field_note_optional">Nota (opcional)</string>
 
     <!-- Erros/estados partilhados -->
     <string name="error_state_title">Ocorreu um erro</string>
     <string name="error_generic_fallback">Ocorreu um erro</string>
-    <string name="error_invalid_amount">Introduza um montante válido</string>
+    <string name="error_invalid_amount">Indica um valor válido</string>
     <string name="error_sign_in_failed">Não foi possível iniciar sessão</string>
     <string name="error_sign_out_failed">Não foi possível terminar sessão</string>
 
     <!-- Autenticação -->
-    <string name="auth_subtitle">Inicie sessão para acompanhar as suas despesas</string>
+    <string name="auth_subtitle">Inicia sessão para acompanhar as tuas despesas</string>
     <string name="auth_sign_in_with_google">Iniciar sessão com o Google</string>
     <string name="auth_continue_as_guest">Continuar como convidado</string>
-    <string name="auth_guest_hint">Os seus dados ficam apenas neste dispositivo</string>
+    <string name="auth_guest_hint">Os teus dados ficam apenas neste dispositivo</string>
     <string name="error_guest_start_failed">Não foi possível iniciar o modo convidado</string>
 
     <!-- Linha de despesa/rendimento partilhada -->
-    <string name="row_category_date">%1$s • %2$s</string>
+    <string name="row_category_date">%1$s · %2$s</string>
 
     <!-- Categorias -->
     <string name="category_transfer">Transferência</string>
@@ -94,8 +94,7 @@
     <string name="dashboard_no_expenses">Ainda não há despesas neste período.</string>
     <string name="dashboard_total_outflow">Total de saídas</string>
     <string name="dashboard_saved_label">Poupado e investido</string>
-    <string name="dashboard_savings_rate">Taxa de poupança: %1$s</string>
-    <string name="dashboard_savings_rate_unavailable">—</string>
+    <string name="dashboard_savings_rate">Taxa de poupança do mês: %1$s</string>
 
     <!-- Limites -->
     <string name="budget_spent_of_limit">%1$s / %2$s</string>
@@ -106,7 +105,7 @@
     <string name="expense_field_category">Categoria</string>
     <string name="error_name_required">O nome é obrigatório</string>
     <string name="expense_category_suggested">Igual à última vez</string>
-    <string name="error_category_required">Escolha uma categoria</string>
+    <string name="error_category_required">Escolhe uma categoria</string>
     <string name="error_failed_save_expense">Não foi possível guardar a despesa</string>
     <string name="error_failed_delete_expense">Não foi possível eliminar a despesa</string>
 
@@ -120,14 +119,14 @@
     <string name="activity_title">Movimentos</string>
     <string name="activity_type_all">Tudo</string>
     <string name="activity_search_label">Pesquisar</string>
-    <string name="activity_deleted_snackbar">Eliminado \"%1$s\"</string>
-    <string name="activity_no_match">Nada corresponde a \"%1$s\".</string>
+    <string name="activity_deleted_snackbar">Eliminado “%1$s”</string>
+    <string name="activity_no_match">Nada corresponde a “%1$s”.</string>
     <string name="activity_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
     <string name="activity_empty">Ainda não há movimentos neste período.</string>
     <string name="activity_total_in">Entradas</string>
     <string name="activity_total_out">Saídas</string>
     <string name="activity_spent_total">Gasto</string>
-    <string name="activity_show_breakdown">Mostrar detalhe</string>
+    <string name="activity_show_breakdown">Por categoria</string>
     <string name="activity_hide_breakdown">Ocultar detalhe</string>
     <string name="activity_envelope_all">Todos</string>
     <string name="cd_envelope_bar">Gastos por envelope: %1$s</string>
@@ -136,8 +135,8 @@
     <!-- Opções de ordenação -->
     <string name="sort_newest_first">Mais recentes primeiro</string>
     <string name="sort_oldest_first">Mais antigas primeiro</string>
-    <string name="sort_highest_amount">Montante mais alto</string>
-    <string name="sort_lowest_amount">Montante mais baixo</string>
+    <string name="sort_highest_amount">Valor mais alto</string>
+    <string name="sort_lowest_amount">Valor mais baixo</string>
 
     <!-- Importar/exportar -->
     <string name="import_preview_title">Pré-visualização da importação</string>
@@ -169,11 +168,11 @@
 
     <!-- Adicionar/editar rendimento -->
     <string name="income_edit_title">Editar rendimento</string>
-    <string name="income_field_source">Origem</string>
-    <string name="error_source_required">A origem é obrigatória</string>
+    <string name="income_field_source">Nome</string>
+    <string name="error_source_required">O nome é obrigatório</string>
     <string name="error_failed_save_income">Não foi possível guardar o rendimento</string>
     <string name="error_failed_delete_income">Não foi possível eliminar o rendimento</string>
-    <string name="confirm_remove_title">Remover \"%1$s\"?</string>
+    <string name="confirm_remove_title">Remover “%1$s”?</string>
     <string name="income_line_remove_message">Deixa de contar como rendimento previsto. Os rendimentos já registados mantêm-se.</string>
 
 
@@ -191,15 +190,15 @@
     <string name="settings_section_data">Dados</string>
     <string name="settings_section_account">Conta</string>
     <string name="settings_section_about">Acerca de</string>
-    <string name="settings_import_csv">Importar CSV (despesas)</string>
-    <string name="settings_export_csv">Exportar CSV (despesas)</string>
+    <string name="settings_import_csv">Importar despesas (CSV)</string>
+    <string name="settings_export_csv">Exportar despesas (CSV)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
     <string name="label_sign_out_failed">Não foi possível terminar sessão</string>
     <string name="settings_guest_account">Convidado — os dados ficam guardados apenas neste dispositivo</string>
     <string name="action_sign_in_to_sync">Iniciar sessão para sincronizar</string>
     <string name="action_leave_guest_mode">Sair do modo convidado</string>
     <string name="leave_guest_confirm_title">Sair do modo convidado?</string>
-    <string name="leave_guest_confirm_message">Os seus dados ficam neste dispositivo; escolha Continuar como convidado para os voltar a ver.</string>
+    <string name="leave_guest_confirm_message">Os teus dados ficam neste dispositivo; escolhe Continuar como convidado para os voltares a ver.</string>
     <string name="label_sign_in_failed">Não foi possível iniciar sessão</string>
     <string name="about_version">Versão %1$s</string>
     <string name="about_font_license">Licença da fonte Inter (SIL OFL 1.1)</string>
@@ -252,62 +251,64 @@
     <string name="cd_category_more_actions">Mais ações para %1$s</string>
     <string name="cd_category_icon_option">Ícone %1$d</string>
     <string name="cd_category_color_option">Cor %1$d</string>
-    <string name="category_delete_confirm">Eliminar \"%1$s\"?</string>
-    <string name="category_in_use_message">\"%1$s\" é usada por despesas, limites ou itens recorrentes. Arquivar em vez disso?</string>
-    <string name="category_in_use_archived_message">\"%1$s\" é usada por despesas, limites ou itens recorrentes e não pode ser eliminada.</string>
+    <string name="category_delete_confirm">Eliminar “%1$s”?</string>
+    <string name="category_in_use_message">“%1$s” é usada por despesas, envelopes ou recorrentes. Arquivar em vez disso?</string>
+    <string name="category_in_use_archived_message">“%1$s” é usada por despesas, envelopes ou recorrentes e não pode ser eliminada.</string>
     <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação à internet. Arquivar em vez disso?</string>
-    <string name="category_cannot_verify_archived_message">Não é possível verificar a utilização sem ligação à internet. Tente novamente quando estiver ligado.</string>
-    <string name="error_category_name_required">Introduza um nome</string>
+    <string name="category_cannot_verify_archived_message">Não é possível verificar a utilização sem ligação à internet. Tenta novamente quando estiveres ligado.</string>
+    <string name="error_category_name_required">Indica um nome</string>
     <string name="error_category_name_too_long">Máximo de 50 caracteres</string>
     <string name="error_category_name_duplicate">Já existe uma categoria com este nome</string>
     <string name="error_category_last_active">Pelo menos uma categoria tem de ficar ativa</string>
     <string name="error_category_save_failed">Não foi possível guardar a categoria</string>
     <string name="category_action_move_items">Mover tudo para…</string>
-    <string name="category_move_checking_title">A verificar \"%1$s\"…</string>
-    <string name="category_move_nothing">Nada usa \"%1$s\", por isso não há nada para mover.</string>
-    <string name="category_move_cannot_verify">Não é possível verificar o que usa \"%1$s\" sem ligação à internet. Tente novamente quando estiver ligado.</string>
-    <string name="category_move_pick_title">Mover tudo de \"%1$s\" para</string>
-    <string name="category_move_confirm_title">Mover para \"%1$s\"?</string>
-    <string name="category_move_confirm_intro">De \"%1$s\":</string>
+    <string name="category_move_checking_title">A verificar “%1$s”…</string>
+    <string name="category_move_nothing">Nada usa “%1$s”, por isso não há nada para mover.</string>
+    <string name="category_move_cannot_verify">Não é possível verificar o que usa “%1$s” sem ligação à internet. Tenta novamente quando estiveres ligado.</string>
+    <string name="category_move_pick_title">Mover tudo de “%1$s” para</string>
+    <string name="category_move_confirm_title">Mover para “%1$s”?</string>
+    <string name="category_move_confirm_intro">De “%1$s”:</string>
     <plurals name="category_move_expenses">
         <item quantity="one">%1$d despesa</item>
         <item quantity="many">%1$d despesas</item>
         <item quantity="other">%1$d despesas</item>
     </plurals>
     <plurals name="category_move_recurring">
-        <item quantity="one">%1$d item recorrente</item>
-        <item quantity="many">%1$d itens recorrentes</item>
-        <item quantity="other">%1$d itens recorrentes</item>
+        <item quantity="one">%1$d recorrente</item>
+        <item quantity="many">%1$d recorrentes</item>
+        <item quantity="other">%1$d recorrentes</item>
     </plurals>
     <string name="category_move_budget">O respetivo limite</string>
-    <string name="category_move_budget_merge">O respetivo limite (\"%1$s\" já tem um, que se mantém; este é descartado)</string>
+    <string name="category_move_budget_merge">O respetivo limite (“%1$s” já tem um, que se mantém; este é descartado)</string>
     <string name="category_action_move">Mover</string>
     <string name="category_move_moving">A mover…</string>
     <string name="category_move_done">Itens movidos</string>
-    <string name="error_category_move_failed">Não foi possível mover todos os itens. Verifique a ligação e tente novamente.</string>
-    <string name="dashboard_fixed_variable">Fixas %1$s\nVariáveis %2$s</string>
+    <string name="error_category_move_failed">Não foi possível mover todos os itens. Verifica a ligação e tenta novamente.</string>
+    <string name="dashboard_fixed_variable">Fixo %1$s\nVariável %2$s</string>
 
     <!-- Cópia de segurança -->
     <string name="settings_export_backup">Exportar cópia (JSON)</string>
     <string name="settings_restore_backup">Restaurar cópia (JSON)</string>
     <string name="action_restore">Restaurar</string>
-    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nLimites: %3$d\nCategorias: %4$d\nRendimentos previstos: %5$d\nItens recorrentes: %6$d</string>
+    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nEnvelopes: %3$d\nCategorias: %4$d\nRendimento previsto: %5$d\nRecorrentes: %6$d\nPlanos de poupança: %7$d\nPerfil salarial: %8$s</string>
+    <string name="backup_salary_no">Não</string>
+    <string name="backup_salary_yes">Sim</string>
     <string name="backup_export_done_title">Cópia de segurança exportada</string>
     <string name="backup_export_done_message">A cópia de segurança foi guardada.\n\n%1$s</string>
     <string name="backup_export_failed_title">Falha na exportação</string>
     <string name="backup_restore_confirm_title">Restaurar esta cópia de segurança?</string>
     <string name="backup_restore_confirm_message">O ficheiro contém:\n\n%1$s</string>
-    <string name="backup_restore_replace_warning">Os dados atualmente neste dispositivo serão substituídos. Exporte primeiro uma cópia de segurança se os quiser manter.</string>
+    <string name="backup_restore_replace_warning">Os dados atualmente neste dispositivo serão substituídos. Exporta primeiro uma cópia de segurança se os quiseres manter.</string>
     <string name="backup_restore_done_title">Cópia de segurança restaurada</string>
     <string name="backup_restore_done_message">Restaurado:\n\n%1$s</string>
     <string name="backup_restore_failed_title">Falha ao restaurar</string>
     <string name="backup_error_invalid">Este ficheiro não é uma cópia de segurança válida do FinTrack</string>
-    <string name="backup_error_unsupported_version">Esta cópia de segurança foi criada por uma versão mais recente do FinTrack. Atualize a aplicação para a restaurar.</string>
+    <string name="backup_error_unsupported_version">Esta cópia de segurança foi criada por uma versão mais recente do FinTrack. Atualiza a aplicação para a restaurar.</string>
     <string name="backup_error_too_large">Este ficheiro é demasiado grande para ser uma cópia de segurança do FinTrack</string>
     <string name="backup_error_read">Não foi possível ler o ficheiro selecionado</string>
     <string name="backup_error_write">Não foi possível escrever o ficheiro da cópia de segurança</string>
     <string name="backup_error_export_failed">Não foi possível criar a cópia de segurança</string>
-    <string name="backup_error_restore_failed">Não foi possível restaurar a cópia de segurança. Os seus dados atuais não foram alterados.</string>
+    <string name="backup_error_restore_failed">Não foi possível restaurar a cópia de segurança. Os teus dados atuais não foram alterados.</string>
     <plurals name="backup_restore_skipped">
         <item quantity="one">%d registo inválido no ficheiro será ignorado.</item>
         <item quantity="many">%d de registos inválidos no ficheiro serão ignorados.</item>
@@ -315,11 +316,11 @@
     </plurals>
 
     <!-- Migrar dados locais para a conta -->
-    <string name="migration_offer_title">Copiar os dados deste dispositivo para a sua conta?</string>
-    <string name="migration_offer_message">Tem dados guardados apenas neste dispositivo:\n\n%1$s\n\nCopiá-los para a sua conta, para os sincronizar em todos os dispositivos? Nada é removido deste dispositivo, a menos que o decida.</string>
+    <string name="migration_offer_title">Copiar os dados deste dispositivo para a tua conta?</string>
+    <string name="migration_offer_message">Tens dados guardados apenas neste dispositivo:\n\n%1$s\n\nCopiá-los para a tua conta, para os sincronizar em todos os dispositivos? Nada é removido deste dispositivo, a menos que o decidas.</string>
     <string name="migration_action_copy">Copiar</string>
-    <string name="migration_action_not_now">Agora não</string>
-    <string name="migration_running_title">A copiar os seus dados</string>
+    <string name="migration_action_not_now">Não copiar</string>
+    <string name="migration_running_title">A copiar os teus dados</string>
     <string name="migration_preparing">A preparar…</string>
     <string name="migration_progress">Copiados %1$d de %2$d</string>
     <plurals name="migration_partial_progress">
@@ -328,14 +329,14 @@
         <item quantity="other">Copiados %1$d de %2$d registos.</item>
     </plurals>
     <string name="migration_error_title">Não foi possível copiar os dados</string>
-    <string name="migration_error_offline">Parece estar sem ligação. Ligue-se à internet e tente novamente.</string>
+    <string name="migration_error_offline">Parece que estás sem ligação. Liga-te à internet e tenta novamente.</string>
     <string name="migration_error_failed">Algo correu mal ao copiar. Os dados neste dispositivo não foram alterados.</string>
     <string name="migration_error_remove_failed">Os dados foram copiados, mas não foi possível removê-los deste dispositivo.</string>
     <string name="migration_done_title">Dados copiados</string>
     <plurals name="migration_done_message">
-        <item quantity="one">Foi copiado %1$d registo para a sua conta. Remover a cópia neste dispositivo?</item>
-        <item quantity="many">Foram copiados %1$d de registos para a sua conta. Remover a cópia neste dispositivo?</item>
-        <item quantity="other">Foram copiados %1$d registos para a sua conta. Remover a cópia neste dispositivo?</item>
+        <item quantity="one">Foi copiado %1$d registo para a tua conta. Remover a cópia neste dispositivo?</item>
+        <item quantity="many">Foram copiados %1$d de registos para a tua conta. Remover a cópia neste dispositivo?</item>
+        <item quantity="other">Foram copiados %1$d registos para a tua conta. Remover a cópia neste dispositivo?</item>
     </plurals>
     <string name="migration_action_remove_local">Remover deste dispositivo</string>
     <string name="migration_action_keep">Manter</string>
@@ -349,24 +350,25 @@
     <string name="plan_safe_to_spend_month">Disponível para gastar (%1$s)</string>
     <string name="plan_over_by">Acima do plano em %1$s</string>
     <string name="plan_expected_income">Rendimento previsto</string>
+    <string name="home_to_receive_title">A receber</string>
     <string name="plan_received">recebido %1$s</string>
     <string name="plan_planned_allocations">Planeado</string>
-    <string name="plan_left_in_budgets">Restante nos limites de gastos</string>
+    <string name="plan_left_in_budgets">Restante nos envelopes</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/dia durante %2$d dia</item>
         <item quantity="many">≈ %1$s/dia durante %2$d dias</item>
         <item quantity="other">≈ %1$s/dia durante %2$d dias</item>
     </plurals>
     <string name="plan_current_plan_caption">Com base no plano atual</string>
-    <string name="plan_edit">Editar plano</string>
-    <string name="plan_setup_title">Planeie o seu mês</string>
-    <string name="plan_setup_message">Adicione o rendimento previsto para ver quanto pode gastar.</string>
+    <string name="plan_edit">Ver plano</string>
+    <string name="plan_setup_title">Planeia o teu mês</string>
+    <string name="plan_setup_message">Adiciona o rendimento previsto para ver quanto podes gastar.</string>
     <string name="plan_add_income_line">Adicionar rendimento</string>
     <string name="plan_income_line_new">Novo rendimento</string>
     <string name="plan_income_line_edit">Editar rendimento</string>
-    <string name="plan_field_label">Descrição</string>
-    <string name="plan_field_amount">Montante</string>
-    <string name="error_plan_label_required">Introduza uma descrição</string>
+    <string name="plan_field_label">Nome</string>
+    <string name="plan_field_amount">Valor</string>
+    <string name="error_plan_label_required">Indica um nome</string>
     <string name="error_plan_label_too_long">Máximo de 50 caracteres</string>
     <string name="error_plan_save_failed">Não foi possível guardar o plano</string>
     <string name="dashboard_breakdown_actual">Real</string>
@@ -389,21 +391,21 @@
         <item quantity="other">+%d em atraso</item>
     </plurals>
     <string name="recurring_nothing_due">Nada a vencer em breve</string>
-    <string name="recurring_annual_cost">Despesas recorrentes: %1$s/ano (%2$s/mês)</string>
+    <string name="recurring_annual_cost">Recorrentes: %1$s/ano (%2$s/mês)</string>
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar recorrentes</string>
-    <string name="recurring_added">Adicionado: \'%1$s\'</string>
+    <string name="recurring_added">Adicionado: “%1$s”</string>
     <string name="recurring_per_month">%1$s / mês</string>
     <string name="recurring_per_year">%1$s / ano</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
     <string name="recurring_section_active">Ativos</string>
     <string name="recurring_section_inactive">Em pausa e terminados</string>
-    <string name="recurring_list_empty">Ainda não há itens recorrentes</string>
+    <string name="recurring_list_empty">Ainda não há recorrentes</string>
     <string name="recurring_paused">Em pausa</string>
     <string name="recurring_ended">Terminado</string>
     <string name="recurring_pause">Pausar</string>
     <string name="recurring_resume">Retomar</string>
-    <string name="recurring_delete_confirm">Eliminar \"%1$s\"? As transações já criadas são mantidas.</string>
+    <string name="recurring_delete_confirm">Eliminar “%1$s”? Os movimentos já criados mantêm-se.</string>
     <string name="recurring_frequency_monthly">Mensal</string>
     <string name="recurring_frequency_yearly">Anual</string>
     <string name="recurring_day_of_month">Dia do mês</string>
@@ -412,14 +414,14 @@
     <string name="recurring_end_date">Data de fim</string>
     <string name="recurring_end_date_add">Adicionar data de fim</string>
     <string name="recurring_end_date_clear">Remover data de fim</string>
-    <string name="recurring_auto_post">Lançar automaticamente</string>
+    <string name="recurring_auto_post">Registar automaticamente</string>
     <string name="recurring_auto_post_hint">Registado na data, sem precisar de confirmar</string>
     <string name="recurring_automatic">Automático</string>
-    <string name="error_recurring_save_failed">Não foi possível guardar o item recorrente</string>
-    <string name="error_recurring_not_found">Este item recorrente já não existe</string>
+    <string name="error_recurring_save_failed">Não foi possível guardar o recorrente</string>
+    <string name="error_recurring_not_found">Este recorrente já não existe</string>
     <string name="error_recurring_end_before_start">A data de fim não pode ser anterior à data de início</string>
-    <string name="error_recurring_day_invalid">Introduza um dia entre 1 e 31</string>
-    <string name="error_recurring_month_required">Escolha um mês</string>
+    <string name="error_recurring_day_invalid">Indica um dia entre 1 e 31</string>
+    <string name="error_recurring_month_required">Escolhe um mês</string>
     <string name="error_recurring_too_long">Este texto é demasiado longo</string>
 
     <!-- Cabeçalhos de dia nas listas de transações -->
@@ -447,10 +449,10 @@
     <string name="insights_by_group">Por envelope</string>
     <string name="cd_insights_split">Divisão da despesa: %1$s fixo, %2$s variável</string>
     <string name="home_recent_title">Movimentos recentes</string>
-    <string name="home_recent_empty">Ainda sem movimentos</string>
+    <string name="home_recent_empty">Ainda não há movimentos</string>
     <string name="dashboard_see_all_activity">Ver todos os movimentos</string>
     <string name="plan_basis_fixed">Fixo</string>
-    <string name="plan_basis_per_day">Pago por dia útil</string>
+    <string name="plan_basis_per_day">Por dia útil</string>
     <string name="plan_frequency_monthly">Mensal</string>
     <string name="plan_frequency_yearly">Anual</string>
     <string name="plan_frequency_once">Pontual</string>
@@ -460,8 +462,8 @@
         <item quantity="many">× %1$d dias úteis = %2$s este mês</item>
         <item quantity="other">× %1$d dias úteis = %2$s este mês</item>
     </plurals>
-    <string name="plan_not_paid_in">Não pago em</string>
-    <string name="plan_pay_month">Pago em</string>
+    <string name="plan_not_paid_in">Sem pagamento em</string>
+    <string name="plan_pay_month">Mês de pagamento</string>
     <string name="plan_not_this_month">Não este mês</string>
     <string name="plan_working_days_title">Dias úteis em %1$s</string>
     <plurals name="plan_working_days_value">
@@ -490,16 +492,15 @@
     <string name="cd_fewer_working_days">Menos dias úteis</string>
     <string name="cd_more_working_days">Mais dias úteis</string>
 
-    <string name="plan_envelope_overflow">%1$s acima do envelope %2$s</string>
     <string name="plan_envelopes_title">Envelopes</string>
     <string name="plan_group_other">Sem envelope</string>
     <string name="error_group_save_failed">Não foi possível guardar o envelope</string>
-    <string name="plan_pot_left">%1$s · restam %2$s de %3$s</string>
-    <string name="plan_pot_over">%1$s · %2$s acima (de %3$s)</string>
+    <string name="plan_pot_left">%1$s · financiado por %2$s; sobram %3$s</string>
+    <string name="annual_funding_overflow">%1$s · %2$s cobre %3$s; %4$s vêm de outro rendimento</string>
 
     <string name="plan_salary_profile_row">Perfil salarial</string>
     <string name="plan_from_salary_profile">Do perfil salarial</string>
-    <string name="plan_managed_line_hint">Gerada a partir do perfil salarial. Altere o valor e o calendário aí.</string>
+    <string name="plan_managed_line_hint">Gerado a partir do perfil salarial. Altera o valor e o calendário aí.</string>
     <string name="salary_profile_title">Perfil salarial</string>
     <string name="salary_mode_gross">Bruto + taxas</string>
     <string name="salary_mode_net">Valores líquidos</string>
@@ -519,12 +520,12 @@
     <string name="salary_ss_hint">11 se vazio</string>
     <string name="salary_group_net">Valores líquidos</string>
     <string name="salary_field_net_monthly">Salário líquido mensal</string>
-    <string name="salary_net_monthly_hint">Tal como recebe, com duodécimos</string>
+    <string name="salary_net_monthly_hint">Tal como recebes, com duodécimos</string>
     <string name="salary_field_net_holiday">Subsídio de férias (líquido)</string>
     <string name="salary_field_net_christmas">Subsídio de Natal (líquido)</string>
     <string name="salary_group_subsidy_months">Meses dos subsídios</string>
     <string name="salary_subsidy_months">Subsídios pagos em</string>
-    <string name="salary_meal_hint">Pago por cada dia útil; marque as férias nos dias úteis do Plano.</string>
+    <string name="salary_meal_hint">Pago por cada dia útil; marca as férias nos dias úteis do Plano.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
     <string name="salary_extras_add">Adicionar extra</string>
@@ -543,7 +544,7 @@
     <string name="salary_extra_value_multiple_per_payment">Múltiplo do salário base por pagamento</string>
     <string name="salary_extra_value_percent_per_payment" formatted="false">Percentagem do bruto anual por pagamento (%)</string>
     <string name="salary_extra_per_payment_and_year">%1$s por pagamento · %2$s/ano</string>
-    <string name="salary_extra_months">Pago em</string>
+    <string name="salary_extra_months">Mês de pagamento</string>
     <string name="salary_extra_deductions">Descontos</string>
     <string name="salary_extra_deductions_none">Nenhum</string>
     <string name="salary_extra_deductions_irs">IRS</string>
@@ -556,7 +557,7 @@
     <string name="salary_extra_default_bonus">Prémio</string>
     <string name="category_deleted_placeholder">Categoria eliminada</string>
     <string name="salary_group_extras">Extras</string>
-    <string name="salary_error_invalid">Introduza um valor válido</string>
+    <string name="salary_error_invalid">Indica um valor válido</string>
     <string name="salary_breakdown_title">Detalhe</string>
     <string name="salary_breakdown_gross">Bruto mensal</string>
     <string name="salary_breakdown_ss">Segurança Social</string>
@@ -565,7 +566,7 @@
     <string name="salary_breakdown_meal">Subsídio de refeição em %1$s</string>
     <string name="salary_delete">Eliminar perfil salarial</string>
     <string name="salary_delete_title">Eliminar o perfil salarial?</string>
-    <string name="salary_delete_message">As linhas de rendimento geradas por ele também são removidas. As suas linhas ficam.</string>
+    <string name="salary_delete_message">O rendimento previsto gerado por ele também é removido. O que adicionaste à mão fica.</string>
     <string name="salary_line_net">Salário líquido</string>
     <string name="salary_line_subsidy">Subsídio</string>
     <string name="plan_tab_month">Mês</string>
@@ -574,12 +575,12 @@
     <string name="annual_income_total">Rendimento total</string>
     <string name="annual_actual_of_planned">%1$s de %2$s</string>
     <string name="annual_funding_title">Envelopes financiados no ano</string>
-    <string name="annual_subscriptions_title">Subscrições anuais</string>
+    <string name="annual_subscriptions_title">Recorrentes anuais</string>
     <string name="annual_subscription_row">%1$s · %2$s</string>
     <string name="annual_leftover_title">Sobra deste ano</string>
     <string name="annual_leftover_caption">Rendimento menos despesa planeada, %1$s</string>
     <string name="annual_empty_title">Nada planeado para %1$s</string>
-    <string name="annual_empty_message">Adicione rendimentos e limites na vista Mês para ver o ano.</string>
+    <string name="annual_empty_message">Adiciona rendimento e envelopes na vista Mês para veres o ano.</string>
 
     <string name="goal_field_name">Nome</string>
     <string name="goal_field_target_date">Data-alvo</string>
@@ -588,13 +589,15 @@
     <string name="goal_target_date_clear">Remover data-alvo</string>
     <string name="goal_error_dates">A data-alvo é anterior à data de início</string>
     <string name="goal_status_on_track">Em linha</string>
+    <string name="goal_status_not_started">A começar</string>
     <string name="goal_status_behind">Atrasado</string>
     <string name="goal_status_done">Concluído</string>
     <string name="goal_status_no_monthly">Sem valor mensal</string>
-    <string name="error_goal_save_failed">Não foi possível guardar o objetivo</string>
+    <string name="error_goal_save_failed">Não foi possível guardar o plano de poupança</string>
+    <string name="error_goal_delete_failed">Não foi possível eliminar o plano de poupança</string>
     <string name="nav_savings">Poupança</string>
     <string name="savings_saved_in_year">Poupado em %1$d</string>
-    <string name="savings_rate_of_income">Taxa de poupança: %1$s do rendimento</string>
+    <string name="savings_rate_of_income">Taxa de poupança no ano: %1$s do rendimento</string>
     <string name="savings_target_year">%1$s / %2$s este ano</string>
     <string name="savings_target_by">%1$s / %2$s até %3$s</string>
     <string name="savings_schedule">%1$s · %2$s/mês · dia %3$d</string>
@@ -602,30 +605,31 @@
     <string name="savings_new_plan">Novo plano</string>
     <string name="savings_edit_plan">Editar plano</string>
     <string name="savings_monthly_amount">Valor mensal</string>
-    <string name="savings_day">Dia</string>
+    <string name="savings_day">Dia do mês</string>
     <string name="savings_target">Meta</string>
     <string name="savings_auto_post">Registar automaticamente</string>
     <string name="savings_per_year">Por ano</string>
     <string name="savings_total">Total</string>
-    <string name="savings_empty">Ainda sem planos de poupança</string>
+    <string name="savings_empty">Ainda não há planos de poupança</string>
     <string name="savings_delete_plan">Eliminar plano</string>
     <string name="savings_delete_message">“%1$s” e o seu valor mensal são removidos. As despesas já registadas mantêm-se.</string>
-    <string name="savings_plan_deleted">Plano eliminado</string>
+    <string name="savings_plan_deleted">Plano de poupança eliminado</string>
     <string name="recurring_no_saving_hint">Para poupança usa o separador Poupança</string>
-    <string name="annual_goals_title">Objetivos</string>
+    <string name="annual_goals_title">Planos de poupança</string>
     <string name="annual_goal_planned_of_target">%1$s planeados de %2$s</string>
+    <string name="annual_goal_planned">%1$s planeados</string>
     <string name="settings_delete_all_data">Apagar todos os dados</string>
     <string name="delete_all_data_title">Apagar todos os dados?</string>
-    <string name="delete_all_data_message_account">Isto apaga permanentemente todas as suas despesas, rendimentos, plano, categorias, itens recorrentes e objetivos da sua conta. Exporte primeiro uma cópia de segurança se puder vir a precisar deles.</string>
-    <string name="delete_all_data_message_device">Isto apaga permanentemente todas as suas despesas, rendimentos, plano, categorias, itens recorrentes e objetivos neste dispositivo. Exporte primeiro uma cópia de segurança se puder vir a precisar deles.</string>
+    <string name="delete_all_data_message_account">Isto apaga permanentemente todas as tuas despesas, rendimentos, plano, categorias, envelopes, recorrentes e planos de poupança da tua conta, em todos os teus dispositivos. Exporta primeiro uma cópia de segurança se puderes vir a precisar deles.</string>
+    <string name="delete_all_data_message_device">Isto apaga permanentemente todas as tuas despesas, rendimentos, plano, categorias, envelopes, recorrentes e planos de poupança neste dispositivo. Exporta primeiro uma cópia de segurança se puderes vir a precisar deles.</string>
     <string name="delete_all_data_export_backup">Exportar cópia de segurança</string>
     <string name="delete_all_data_confirm">Apagar tudo</string>
-    <string name="delete_all_data_progress">A apagar os seus dados…</string>
+    <string name="delete_all_data_progress">A apagar os teus dados…</string>
     <string name="delete_all_data_done">Todos os dados foram apagados</string>
     <string name="delete_all_data_error_title">Falha ao apagar</string>
-    <string name="delete_all_data_error">Não foi possível apagar todos os seus dados. Alguns podem já ter sido apagados. Verifique a ligação e tente novamente.</string>
+    <string name="delete_all_data_error">Não foi possível apagar todos os teus dados. Alguns podem já ter sido apagados. Verifica a ligação e tenta novamente.</string>
     <string name="plan_other_income">Outro rendimento</string>
-    <string name="salary_duplicates_message">Tem outras linhas de rendimento mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-las para não contar a dobrar?</string>
+    <string name="salary_duplicates_message">Tens outros rendimentos mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-los para não contar a dobrar?</string>
     <string name="salary_duplicates_remove">Remover selecionadas</string>
     <string name="salary_duplicates_keep">Manter</string>
     <string name="plan_income_salary">Salário</string>
@@ -637,8 +641,8 @@
     <string name="income_received">Recebido</string>
     <string name="plan_received_on">Recebido a %1$s</string>
     <string name="income_mark_received">Marcar como recebido</string>
-    <string name="income_undo_received">Anular recebido</string>
-    <string name="income_undo_title">Anular recebido?</string>
+    <string name="income_undo_received">Desfazer recebido</string>
+    <string name="income_undo_title">Desfazer recebido?</string>
     <string name="plan_payday">Dia de pagamento: %1$s</string>
     <string name="plan_received_amount">Valor recebido</string>
     <string name="envelopes_title">Envelopes</string>
@@ -649,16 +653,16 @@
     <string name="envelope_name">Nome</string>
     <string name="envelope_mode_single">Valor único</string>
     <string name="envelope_mode_per_category">Por categoria</string>
-    <string name="envelope_mode_none">Sem orçamento</string>
+    <string name="envelope_mode_none">Sem limite</string>
     <string name="envelope_mode_none_hint">Só regista o que gastas</string>
     <string name="envelope_amount">Valor por mês</string>
     <string name="envelope_categories">Categorias</string>
     <string name="envelope_add_category">Adicionar categoria</string>
     <string name="envelope_in_other">em %1$s</string>
-    <string name="envelope_paid_by">Pago por</string>
+    <string name="envelope_paid_by">Financiado por</string>
     <string name="envelope_paid_by_none">Nenhum</string>
     <string name="envelope_delete">Eliminar envelope</string>
-    <string name="envelope_delete_confirm">Eliminar \"%1$s\"? As categorias ficam, os limites são removidos.</string>
+    <string name="envelope_delete_confirm">Eliminar “%1$s”? As categorias ficam; o envelope e o seu valor são removidos.</string>
     <string name="envelope_deleted">Envelope eliminado</string>
     <string name="envelope_error_name_blank">Escreve um nome</string>
     <string name="envelope_error_name_duplicate">Já existe um envelope com este nome</string>
@@ -670,32 +674,32 @@
     <string name="envelope_card_over">Excedido em %1$s</string>
     <string name="envelope_card_paid">%1$s de %2$s pagos</string>
     <string name="envelope_card_spent">Gasto este mês: %1$s</string>
-    <string name="envelope_card_funded">Pago por %1$s</string>
-    <string name="envelope_card_overflow">%1$s acima de %2$s</string>
+    <string name="envelope_card_funded">Financiado por %1$s</string>
+    <string name="envelope_funded_overflow">%1$s cobre %2$s; %3$s vêm de outro rendimento.</string>
     <plurals name="envelopes_status">
         <item quantity="one">%d envelope</item>
         <item quantity="many">%d de envelopes</item>
         <item quantity="other">%d envelopes</item>
     </plurals>
     <string name="plan_tile_income">Rendimento</string>
-    <string name="plan_tile_bills">Contas</string>
+    <string name="plan_tile_bills">Recorrentes</string>
     <string name="plan_tile_saving">Poupança</string>
     <string name="plan_tile_envelopes">Envelopes</string>
-    <string name="plan_tile_free">Livre</string>
+    <string name="plan_tile_free">Disponível para gastar</string>
     <string name="plan_configure">Configurar</string>
     <string name="plan_configure_income">Rendimento</string>
     <string name="plan_configure_envelopes">Envelopes</string>
-    <string name="plan_configure_bills">Contas</string>
+    <string name="plan_configure_bills">Recorrentes</string>
     <string name="plan_configure_categories">Categorias</string>
-    <string name="plan_configure_income_status">%1$s por mês · %2$d linhas</string>
-    <string name="plan_configure_bills_status">%1$d contas · %2$s/mês</string>
+    <string name="plan_configure_income_status">%1$s por mês · %2$d rendimentos</string>
+    <string name="plan_configure_bills_status">%1$d recorrentes · %2$s/mês</string>
     <plurals name="plan_configure_categories_status">
         <item quantity="one">%d categoria</item>
         <item quantity="many">%d de categorias</item>
         <item quantity="other">%d categorias</item>
     </plurals>
     <string name="plan_configure_not_set">Por definir</string>
-    <string name="plan_configure_none_yet">Ainda nenhum</string>
+    <string name="plan_configure_none_yet">Ainda não há nenhum</string>
     <string name="plan_envelopes_empty_cta">Cria envelopes para dividir o teu dinheiro</string>
     <string name="income_title">Rendimento</string>
     <string name="home_start_title">Começar</string>
@@ -704,10 +708,10 @@
     <string name="home_start_done">Feito</string>
     <string name="home_start_step_salary">Definir o salário ou rendimento</string>
     <string name="home_start_step_envelopes">Criar envelopes</string>
-    <string name="home_start_step_bills">Adicionar contas</string>
+    <string name="home_start_step_bills">Adicionar recorrentes</string>
     <string name="home_start_step_savings">Criar um plano de poupança</string>
     <string name="home_start_step_payday">Escolher o dia de pagamento</string>
-    <string name="home_start_step_payday_hint">Registo automático numa linha de rendimento</string>
+    <string name="home_start_step_payday_hint">Registar automaticamente o rendimento</string>
     <string name="home_start_step_expense">Registar o primeiro gasto</string>
     <string name="salary_setup_title">Configurar salário</string>
     <string name="salary_setup_step">Passo %1$d de %2$d</string>
@@ -725,7 +729,7 @@
     <string name="salary_setup_advanced">Avançado</string>
     <string name="salary_setup_next">Seguinte</string>
     <string name="backup_account_warning_title">Substituir os dados da conta?</string>
-    <string name="backup_account_warning_message">Restaurar substitui tudo na tua conta, em todos os teus dispositivos, pelo conteúdo do ficheiro. Não é possível anular.</string>
+    <string name="backup_account_warning_message">Restaurar substitui tudo na tua conta, em todos os teus dispositivos, pelo conteúdo do ficheiro. Não é possível desfazer.</string>
     <string name="backup_action_export_first">Exportar cópia primeiro</string>
     <string name="backup_action_continue">Continuar</string>
     <string name="backup_action_replace">Substituir</string>

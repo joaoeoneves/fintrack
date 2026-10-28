@@ -9,7 +9,8 @@ import com.joaoeoneves.fintrack.domain.model.PlannedSource
  * One envelope card of the Plan tab. [id] is `null` for the card of the categories without an envelope. A card
  * is [Budgeted] when the envelope has its own amount or a budget row, [BillsOnly] when only recurring bills plan
  * anything, and [Tracking] when nothing is planned. [fundingLine] is what pays for the envelope (if anything) and
- * [overflowCents] how much the envelope takes beyond that funding.
+ * [overflowCents] how much the envelope takes beyond that funding
+ * (of [fundingCents]).
  */
 sealed interface EnvelopeCardUi {
     val id: String?
@@ -17,6 +18,7 @@ sealed interface EnvelopeCardUi {
     val spentCents: Long
     val fundingLine: PlannedIncome?
     val overflowCents: Long
+    val fundingCents: Long
 
     data class Budgeted(
         override val id: String?,
@@ -25,6 +27,7 @@ sealed interface EnvelopeCardUi {
         override val spentCents: Long,
         override val fundingLine: PlannedIncome? = null,
         override val overflowCents: Long = 0L,
+        override val fundingCents: Long = 0L,
     ) : EnvelopeCardUi {
         val isOver: Boolean get() = spentCents > amountCents
         val remainingCents: Long get() = amountCents - spentCents
@@ -38,6 +41,7 @@ sealed interface EnvelopeCardUi {
         override val spentCents: Long,
         override val fundingLine: PlannedIncome? = null,
         override val overflowCents: Long = 0L,
+        override val fundingCents: Long = 0L,
     ) : EnvelopeCardUi {
         val paidCents: Long get() = spentCents
     }
@@ -48,6 +52,7 @@ sealed interface EnvelopeCardUi {
         override val spentCents: Long,
         override val fundingLine: PlannedIncome? = null,
         override val overflowCents: Long = 0L,
+        override val fundingCents: Long = 0L,
     ) : EnvelopeCardUi
 }
 
@@ -65,6 +70,7 @@ fun envelopeCardOf(progress: EnvelopeProgress): EnvelopeCardUi {
                 spentCents = progress.spentCents,
                 fundingLine = progress.fundingLine,
                 overflowCents = progress.overflowCents,
+                fundingCents = progress.fundingCents ?: 0L,
             )
         amount != null && progress.rows.any { it.plannedSource == PlannedSource.RECURRING } ->
             EnvelopeCardUi.BillsOnly(
@@ -74,6 +80,7 @@ fun envelopeCardOf(progress: EnvelopeProgress): EnvelopeCardUi {
                 spentCents = progress.spentCents,
                 fundingLine = progress.fundingLine,
                 overflowCents = progress.overflowCents,
+                fundingCents = progress.fundingCents ?: 0L,
             )
         else ->
             EnvelopeCardUi.Tracking(
@@ -82,6 +89,7 @@ fun envelopeCardOf(progress: EnvelopeProgress): EnvelopeCardUi {
                 spentCents = progress.spentCents,
                 fundingLine = progress.fundingLine,
                 overflowCents = progress.overflowCents,
+                fundingCents = progress.fundingCents ?: 0L,
             )
     }
 }

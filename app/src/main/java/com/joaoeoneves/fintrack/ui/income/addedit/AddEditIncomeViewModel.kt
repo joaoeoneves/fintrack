@@ -12,6 +12,7 @@ import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.defaultNewTransactionDate
 import com.joaoeoneves.fintrack.ui.navigation.AddEditIncome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 
 private const val TAG = "AddEditIncomeViewModel"
@@ -87,7 +89,12 @@ class AddEditIncomeViewModel
                                 AddEditIncomeUiState.Error(UiText.StringResource(R.string.error_generic_fallback))
                         }
                 } else {
-                    _uiState.value = AddEditIncomeUiState.Ready(IncomeFormState(date = Instant.now()))
+                    _uiState.value =
+                        AddEditIncomeUiState.Ready(
+                            IncomeFormState(
+                                date = defaultNewTransactionDate(route.period, Instant.now(), ZoneId.systemDefault()),
+                            ),
+                        )
                 }
             }
         }

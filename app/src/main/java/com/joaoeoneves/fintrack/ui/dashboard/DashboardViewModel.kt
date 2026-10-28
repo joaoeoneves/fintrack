@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
@@ -97,12 +98,18 @@ class DashboardViewModel
             zone: ZoneId,
         ): DashboardUiState.Content {
             val isCurrentMonth = budgetMonth == currentYearMonth(now, zone)
+            val savingIds =
+                summary.categoryTotals
+                    .filter { it.category.kind == CategoryKind.SAVING }
+                    .map { it.category.id }
+                    .toSet()
             return DashboardUiState.Content(
                 period = period,
                 canGoToNextMonth = period.canGoToNextMonth(now, zone),
                 budgetMonth = budgetMonth,
                 budgetMonthIsCurrent = isCurrentMonth,
                 expenses = transactions.expenses,
+                chartExpenses = transactions.expenses.filter { it.category.id !in savingIds },
                 income = transactions.income,
                 range = transactions.range,
                 outflowCents = summary.outflowCents,

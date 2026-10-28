@@ -54,7 +54,7 @@ fun AddEditIncomeScreen(
     FormScaffold(
         title = stringResource(if (viewModel.isEditRoute) R.string.income_edit_title else R.string.action_add_income),
         onCancel = onCancel,
-        saveEnabled = readyForm != null && readyForm.isValid && !readyForm.isBusy,
+        saveEnabled = readyForm != null && !readyForm.isBusy,
         onSave = viewModel::onSave,
         showSave = readyForm != null,
         modifier = modifier,

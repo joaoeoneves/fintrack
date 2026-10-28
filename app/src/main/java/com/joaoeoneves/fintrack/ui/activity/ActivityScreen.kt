@@ -23,6 +23,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
@@ -77,7 +78,7 @@ fun ActivityScreen(
                         state = state,
                         query = query,
                         categories = categories,
-                        actions = viewModel.activityActions(callbacks),
+                        actions = viewModel.activityActions(callbacks, state.period),
                         contentPadding = innerPadding,
                     )
                 }
@@ -122,7 +123,10 @@ private fun Transaction.title(): String =
         is Income -> source
     }
 
-private fun ActivityViewModel.activityActions(callbacks: ActivityCallbacks): ActivityActions =
+private fun ActivityViewModel.activityActions(
+    callbacks: ActivityCallbacks,
+    period: Period,
+): ActivityActions =
     ActivityActions(
         period = periodActions,
         onTypeSelected = ::onTypeSelected,
@@ -137,8 +141,8 @@ private fun ActivityViewModel.activityActions(callbacks: ActivityCallbacks): Act
             }
         },
         onDelete = ::onDelete,
-        onAddExpense = callbacks.onAddExpense,
-        onAddIncome = callbacks.onAddIncome,
+        onAddExpense = { callbacks.onAddExpense(period) },
+        onAddIncome = { callbacks.onAddIncome(period) },
     )
 
 @Composable

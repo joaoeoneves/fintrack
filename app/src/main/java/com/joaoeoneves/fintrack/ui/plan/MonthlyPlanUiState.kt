@@ -73,11 +73,12 @@ data class ConfigureStatus(
 )
 
 /**
- * Payday and the receipts of [Content.period]'s month: [receivedOn] holds the day each fully received income row
+ * The common payday (`null` when rows pay on different days) and the receipts of [Content.period]'s month:
+ * [receivedOn] holds the day each fully received income row
  * (keyed by [key]) was received; [canReceive] is false for future months; [today] caps the date of a receipt.
  */
 data class IncomeReceipts(
-    val payday: LocalDate,
+    val payday: LocalDate?,
     val today: LocalDate,
     val canReceive: Boolean,
     val receivedOn: Map<String, LocalDate> = emptyMap(),

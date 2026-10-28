@@ -36,9 +36,11 @@ data class Activity(
     val envelope: String? = null,
 )
 
-/** Start destination of [PlanGraph]. */
+/** Start destination of [PlanGraph]; [month] is an encoded `Period` token (null: the current month). */
 @Serializable
-object PlanHome
+data class PlanHome(
+    val month: String? = null,
+)
 
 /** Start destination of [SavingsGraph]. */
 @Serializable
@@ -50,14 +52,18 @@ data class EditSavingsPlan(
     val id: String? = null,
 )
 
+/** The expense form; [period] is the encoded past month it was opened from (a new expense then defaults to it). */
 @Serializable
 data class AddEditExpense(
     val expenseId: String? = null,
+    val period: String? = null,
 )
 
+/** The income form; [period] is the encoded past month it was opened from (a new income then defaults to it). */
 @Serializable
 data class AddEditIncome(
     val incomeId: String? = null,
+    val period: String? = null,
 )
 
 @Serializable
