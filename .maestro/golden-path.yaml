@@ -14,15 +14,14 @@ tags:
 
 # --- 0: Pin language to English before any of the (English) assertions below. Fresh installs now
 # default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer
-# assume the app renders in English out of the box. The Settings entry point's label is itself
-# locale-dependent ("Settings" vs. "Definições"), so match either via regex alternation since we
-# don't yet know which is currently in effect. "English" is always labeled "English" regardless
+# assume the app renders in English out of the box. The account/settings entry point is the avatar
+# in the top bar (testTag account_avatar, locale-independent). "English" is always labeled "English" regardless
 # of the active app language (see settings.yaml's currency-pinning header comment for the general
 # "pin a known baseline" pattern this mirrors). No restore-to-original-language step at the end of
 # this flow is needed: golden-path.yaml doesn't restore any other global setting either (unlike
 # settings.yaml, which restores theme/currency because other flows depend on those defaults).
 - tapOn:
-    text: "Settings|Definições"
+    id: "account_avatar"
 - tapOn: "Language|Idioma"
 # Index -1 = the open menu's option (the row's own value can also read "English").
 - tapOn:
@@ -36,13 +35,13 @@ tags:
 # what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
 # so pin a known baseline here explicitly rather than assuming whatever currency another flow left
 # the device on. Mirrors the exact navigation pattern already used in settings.yaml's own
-# currency-switching steps: open Settings, tap "Currency" (an anchored dropdown menu on
+# currency-switching steps: open the avatar (Account & settings), tap "Currency" (an anchored dropdown menu on
 # the Settings screen itself, not a separate screen), tap the target currency option (selects it
 # and closes the dropdown, still on Settings), then tap "Back" (the top-app-bar back arrow,
 # content-desc "Back") to return directly to the Dashboard. No restore-to-original-currency step at
 # the end of this flow is needed, same reasoning as the language pin above.
 - tapOn:
-    text: "Settings|Definições"
+    id: "account_avatar"
 - extendedWaitUntil:
     visible: "Preferences"
     timeout: 10000
@@ -87,7 +86,7 @@ tags:
 - assertVisible: "Expenses"
 - assertVisible: "Saved & invested"
 - assertVisible: "Savings rate.*"
-# The bottom navigation bar shows its four tabs on Home.
+# The bottom navigation bar shows its four tabs on Home (Home, Activity, Plan, Savings).
 - assertVisible:
     id: "nav_home"
 - assertVisible:
@@ -95,12 +94,13 @@ tags:
 - assertVisible:
     id: "nav_plan"
 - assertVisible:
-    id: "nav_insights"
-# The category breakdown moved to the Insights tab: check it there, then return to Home.
+    id: "nav_savings"
+# The Insights tab is gone (its content moved into Activity): check the Savings tab opens, then return to Home.
 - tapOn:
-    id: "nav_insights"
-- assertVisible: "Insights"
-# "Recurring" is archived by default, so it is no longer asserted in the breakdown.
+    id: "nav_savings"
+- assertVisible: "Savings"
+- assertVisible:
+    id: "account_avatar"
 - tapOn:
     id: "nav_home"
 - assertVisible:
@@ -181,44 +181,47 @@ tags:
     id: "see_all_activity"
 - assertVisible:
     id: "activity_list"
+# Activity's header: period tabs, the big "Spent" total and the "Fixed vs variable" card (shown only
+# when there is spending, which the expense above guarantees). The breakdown starts collapsed.
+- assertVisible: "Spent"
+- assertVisible: "Fixed vs variable"
+- assertVisible: "Show breakdown"
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
 
 # --- 4: Delete it and confirm it's gone ---
-# Deletion is immediate via an end->start swipe on the row (the trash IconButton is gone) -- there
-# is no confirmation dialog. An undo snackbar ("Deleted "<name>"" / "Undo") appears.
-# The flow starts from a fresh guest install, so this is the only row: no search needed (and
-# no soft keyboard, which ATD images lack, so hideKeyboard would send BACK and leave the screen).
+# Deleting happens from the expense's edit screen: tap the row, scroll to the "Delete" button and tap
+# it (no confirmation dialog). The app pops back to Activity and shows an undo snackbar
+# ("Deleted "<name>"" / "Undo"). The flow starts from a fresh guest install, so this is the only row.
+- assertVisible: "[-−]€56\\.78"
+- tapOn: "Maestro E2E Test Expense"
+- assertVisible: "Edit expense"
+- scrollUntilVisible:
+    element: "Delete"
+    direction: DOWN
+- tapOn: "Delete"
+- assertVisible:
+    id: "activity_list"
+- assertVisible: "Undo"
+- assertNotVisible: "[-−]€56\\.78"
+# Undo restores the expense.
+- tapOn: "Undo"
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
 - assertVisible: "[-−]€56\\.78"
-# coordinates, not from-element swipes, which don't pass the dismiss threshold -- see swipe-delete-check.yaml).
-# After the redesign the single filtered row sits at ~81% of the screen height (above the bottom
-# nav), not where _swipe-delete-row.yaml expects it, so swipe inline starting right of the
-# floating add pill.
-# The row's height depends on the screen: ~81% on a 720x1280 (320 dpi) device, ~57% on the CI Pixel 6
-# profile (1080x2400, 420 dpi), so swipe at both; the one that misses lands on empty space/filters.
-- swipe:
-    start: 90%, 57%
-    end: 25%, 57%
-    duration: 500
-- swipe:
-    start: 90%, 81%
-    end: 25%, 81%
-    duration: 500
-- assertNotVisible: "[-−]€56\\.78"
-- assertVisible: "Undo"
-# Let the undo snackbar time out on its own so the expense stays deleted.
 
-# --- 5: Exercise the list's own period selector (ExpenseListScreen has the same PeriodSelector as
-# the Dashboard). Open the period menu via the label's dropdown icon (content description "Change
-# period"), pick a rolling window, and check the label reflects it; then restore "This month".
+# --- 5: Exercise Activity's period selector (period tabs plus the full period menu). Open the menu via
+# the label's dropdown icon (content description "Change period"), pick a rolling window, check the
+# label reflects it; then restore "This month".
 - tapOn: "Change period"
 - assertVisible: "This month"
 - assertVisible: "Choose month.*"
-# (Rolling windows such as "Last 3 months" now live only in the Insights tab's period picker.)
+- assertVisible: "Last 3 months"
+- tapOn: "Last 3 months"
+- assertVisible: "Last 3 months"
+- tapOn: "Change period"
 - tapOn: "This month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
 - assertVisible: "Previous month"

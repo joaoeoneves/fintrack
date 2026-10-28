@@ -4,14 +4,14 @@ appId: com.joaoeoneves.fintrack
 # Run locally on a ~1080x2400 emulator with SystemUI demo mode on (clock 12:00, full battery, wifi,
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
-# Captures: home, activity, plan, plan-income, insights, add-expense.
+# Captures: home, activity, plan, plan-income, activity-summary, add-expense.
 # Soft keyboards: `back` closes only the IME when it is up; Save is tapped directly in sheets.
 
 - runFlow: _guest-start.yaml
 
 # --- Pin English + EUR + Dark ---
 - tapOn:
-    id: "dashboard_settings"
+    id: "account_avatar"
 - tapOn: "Language|Idioma"
 # Index -1 = the open menu's option (the row's own value can also read "English").
 - tapOn:
@@ -226,9 +226,14 @@ appId: com.joaoeoneves.fintrack
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/plan-income
 - tapOn:
-    id: "nav_insights"
+    id: "nav_activity"
 - waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/insights
+- scrollUntilVisible:
+    element: "Spent"
+    direction: UP
+- tapOn: "Show breakdown"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/activity-summary
 - tapOn:
     id: "nav_home"
 - extendedWaitUntil:
