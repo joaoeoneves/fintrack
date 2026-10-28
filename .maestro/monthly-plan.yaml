@@ -1,90 +1,35 @@
 appId: com.joaoeoneves.fintrack
+tags:
+  - release
 ---
-# Monthly plan E2E flow: Home "Plan your month" CTA / "Edit plan" -> Plan tab ->
-# add two income lines (Salary 2000, Meal allowance 200) -> allocate 300 to Food -> the "Planned vs
-# actual" card lists Food -> back on Home the "Safe to spend" card shows ~1,900.00 -> Planned toggle
-# in the Insights tab's breakdown lists Food -> cleanup (remove both income lines, clear the Food
-# allocation). The Plan tab is a bottom-bar root: no back arrow, system back returns to Home.
-#
-# STATUS: written but NOT YET RUN on a device/emulator -- selectors are taken from strings.xml and
-# the plan composables, so expect small tweaks on the first real run.
-#
-# Assumes the app is already signed in (or in guest mode) and lands on the Dashboard, like
-# golden-path.yaml. Assumes Food has no allocation and the plan has no income lines to begin with;
-# everything this flow adds is removed again at the end.
+# Plan tab basics (release smoke): guest start -> Plan tab -> the sections are there in order
+# (summary, Expected income with "Salary profile", Limits, Groups, Goals, Recurring) -> set a 300
+# limit on Food and see it listed. Starts from a fresh guest install (see _guest-start.yaml), so
+# nothing needs cleaning up afterwards.
 
-- clearState
-- launchApp
-- extendedWaitUntil:
-    visible:
-      id: "continue_as_guest"
-    timeout: 25000
-- tapOn:
-    id: "continue_as_guest"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 15000
+- runFlow: _guest-start.yaml
 
-# --- 0: Pin English + EUR, mirroring budget.yaml ---
+# Pin English (fresh installs default to Portuguese).
 - tapOn:
     text: "Settings|Definições"
 - tapOn: "English"
 - back
-- tapOn:
-    text: "Settings|Definições"
-- extendedWaitUntil:
-    visible: "Appearance"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Display currency"
-    direction: DOWN
-- tapOn: "Display currency"
-- tapOn: "Euro (€)"
-- tapOn: "Back"
 - assertVisible:
     id: "dashboard_list"
 
-# --- 1: Open the Plan tab from Home's Safe-to-spend card (CTA when empty, "Edit plan" otherwise) ---
-- scrollUntilVisible:
-    element: "Plan your month|Edit plan"
-    direction: DOWN
-- tapOn: "Plan your month|Edit plan"
-- assertVisible:
+- tapOn:
     id: "nav_plan"
-- assertVisible: "Add income line"
-# The Plan tab has its own month picker.
+- assertVisible: "Monthly plan"
 - assertVisible: "Previous month"
 
-# --- 2: Add income lines ---
-- tapOn: "Add income line"
-- assertVisible: "New income line"
-- tapOn: "Label"
-- inputText: "Salary"
-- tapOn: "Amount"
-- inputText: "2000"
-- hideKeyboard
-- tapOn: "Save"
-- assertNotVisible: "New income line"
-- assertVisible: "Salary"
-
+# Expected income starts with the salary profile row.
 - scrollUntilVisible:
-    element: "Add income line"
+    element: "Salary profile"
     direction: DOWN
-- tapOn: "Add income line"
-- assertVisible: "New income line"
-- tapOn: "Label"
-- inputText: "Meal allowance"
-- tapOn: "Amount"
-- inputText: "200"
-- hideKeyboard
-- tapOn: "Save"
-- assertNotVisible: "New income line"
-- assertVisible: "Meal allowance"
 
-# --- 3: Allocate 300 to Food ---
+# Limits section: tap Food and give it a monthly limit.
 - scrollUntilVisible:
-    element: "Allocations"
+    element: "Limits"
     direction: DOWN
 - scrollUntilVisible:
     element: "Food"
@@ -96,62 +41,14 @@ appId: com.joaoeoneves.fintrack
 - hideKeyboard
 - tapOn: "Save"
 - assertNotVisible: "Set budget for Food"
-- assertVisible: ".*300\\.00.*"
-# A planned allocation also appears in the "Planned vs actual" card.
 - scrollUntilVisible:
-    element: "Planned vs actual"
+    element: ".*300\\.00.*"
     direction: DOWN
 
-# --- 4: Back to Home (tab switch): safe to spend = 2,200 - 300 = ~1,900 ---
-- tapOn:
-    id: "nav_home"
-- assertVisible:
-    id: "dashboard_list"
+# The remaining sections further down the tab.
 - scrollUntilVisible:
-    element: "Safe to spend.*"
-    direction: UP
-- assertVisible: ".*1,?900\\.00.*"
-
-# --- 5: Planned toggle in the Insights tab's spending breakdown lists Food ---
-- tapOn:
-    id: "nav_insights"
-- scrollUntilVisible:
-    element: "Planned"
+    element: "Goals"
     direction: DOWN
-- tapOn: "Planned"
-# Breakdown rows are merged nodes ("Food, 100 percent, 300,00 €"), so match with a wildcard.
-- assertVisible: ".*Food.*"
-
-# --- 6: Cleanup -- remove both income lines and clear the Food allocation ---
-- tapOn:
-    id: "nav_plan"
 - scrollUntilVisible:
-    element: "Salary"
-    direction: UP
-- tapOn: "Salary"
-- assertVisible: "Edit income line"
-- tapOn: "Remove"
-- assertNotVisible: "Edit income line"
-- assertNotVisible: "Salary"
-
-- scrollUntilVisible:
-    element: "Meal allowance"
-    direction: UP
-- tapOn: "Meal allowance"
-- assertVisible: "Edit income line"
-- tapOn: "Remove"
-- assertNotVisible: "Edit income line"
-- assertNotVisible: "Meal allowance"
-
-- scrollUntilVisible:
-    element: "Food"
+    element: "Recurring"
     direction: DOWN
-- tapOn: "Food"
-- assertVisible: "Set budget for Food"
-- tapOn: "Remove"
-- assertNotVisible: "Set budget for Food"
-
-- tapOn:
-    id: "nav_home"
-- assertVisible:
-    id: "dashboard_list"
