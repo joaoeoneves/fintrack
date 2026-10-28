@@ -2,6 +2,17 @@
     <string name="app_name">FinTrack</string>
 
     <!-- Shared actions -->
+    <string name="action_save_anyway">Save anyway</string>
+    <string name="plan_auto_record">Record automatically</string>
+    <string name="plan_auto_record_hint">On payday</string>
+    <string name="plan_payday_label">Payday</string>
+    <string name="plan_payday_last_working_day">Last working day</string>
+    <string name="plan_payday_fixed">Fixed day</string>
+    <string name="plan_auto_day">Automatic · day %d</string>
+    <string name="plan_auto_last_working_day">Automatic · last working day</string>
+    <string name="plan_looks_like_salary_warning">This looks like your salary, which already comes from the salary profile.</string>
+    <string name="plan_looks_like_salary">Looks like the salary again</string>
+    <string name="recurring_income_hint">Recurring income? It\'s in Income.</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_remove">Remove</string>
@@ -362,7 +373,6 @@
     </plurals>
     <string name="recurring_nothing_due">Nothing due soon</string>
     <string name="recurring_annual_cost">Recurring expenses: %1$s/year (%2$s/month)</string>
-    <string name="recurring_annual_income">Recurring income: %1$s/year</string>
     <string name="recurring_manage">Manage</string>
     <string name="recurring_empty_cta">Set up recurring</string>
     <string name="recurring_added">Added \'%1$s\'</string>
@@ -377,8 +387,6 @@
     <string name="recurring_pause">Pause</string>
     <string name="recurring_resume">Resume</string>
     <string name="recurring_delete_confirm">Delete \"%1$s\"? Transactions already created are kept.</string>
-    <string name="recurring_type_expense">Expense</string>
-    <string name="recurring_type_income">Income</string>
     <string name="recurring_frequency_monthly">Monthly</string>
     <string name="recurring_frequency_yearly">Yearly</string>
     <string name="recurring_day_of_month">Day of month</string>
@@ -616,10 +624,6 @@
     <string name="income_undo_title">Undo received?</string>
     <string name="plan_payday">Payday: %1$s</string>
     <string name="plan_received_amount">Amount received</string>
-    <string name="settings_section_automation">Automation</string>
-    <string name="settings_payday_title">Record income on payday</string>
-    <string name="settings_payday_subtitle">Last working day of the month</string>
-    <string name="settings_payday_recurring_hint">Turn off recurring salary items to avoid recording it twice</string>
     <string name="envelopes_title">Envelopes</string>
     <string name="envelopes_new">New envelope</string>
     <string name="envelopes_empty">No envelopes yet</string>

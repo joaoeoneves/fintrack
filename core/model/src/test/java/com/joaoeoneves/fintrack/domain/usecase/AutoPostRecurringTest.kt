@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
@@ -35,7 +34,6 @@ class AutoPostRecurringTest {
         repo,
         HandleRecurringOccurrence(repo, FakeCategoryRepository()),
         expenses,
-        FakeIncomeRepository(),
     )
 
     @Test
@@ -113,12 +111,13 @@ class AutoPostRecurringTest {
         }
 
     @Test
-    fun income_isPosted() =
+    fun income_isSkipped_itsLineRecordsIt() =
         runBlocking {
             val salary =
                 recurringItem(id = "s", type = RecurringType.INCOME, handledThrough = day(2026, 2, 15), autoPost = true)
             val repo = FakeRecurringRepository(listOf(salary))
 
-            assertEquals(1, build(repo)(today, zone))
+            assertEquals(0, build(repo)(today, zone))
+            assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
         }
 }

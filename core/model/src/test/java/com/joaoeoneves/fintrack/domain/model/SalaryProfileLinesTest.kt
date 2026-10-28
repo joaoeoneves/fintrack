@@ -335,3 +335,42 @@ class SalaryProfileLinesTest {
         assertNull(parseManagedExtraKey("other_abc_3"))
     }
 }
+
+class SalaryProfileLinesAutoRecordTest {
+    private val profile = SalaryProfile(baseGrossCents = 100_000, irsBasePpm = 100_000, mealRatePerDayCents = 900)
+
+    private fun List<PlannedIncome>.byKey(key: String) = single { it.managedKey == key }
+
+    @Test
+    fun existingManagedLines_keepTheirAutoRecordAndPayDay() {
+        val net =
+            salaryProfileLines(profile, emptyList()).byKey(MANAGED_NET_SALARY).copy(autoRecord = true, payDay = 25)
+        val meal = salaryProfileLines(profile, emptyList()).byKey(MANAGED_MEAL).copy(autoRecord = false, payDay = 3)
+
+        val result = salaryProfileLines(profile, listOf(net, meal))
+
+        assertTrue(result.byKey(MANAGED_NET_SALARY).autoRecord)
+        assertEquals(25, result.byKey(MANAGED_NET_SALARY).payDay)
+        assertEquals(false, result.byKey(MANAGED_MEAL).autoRecord)
+        assertEquals(3, result.byKey(MANAGED_MEAL).payDay)
+    }
+
+    @Test
+    fun newManagedLines_inheritFromTheNetSalaryLine() {
+        val net =
+            salaryProfileLines(profile, emptyList()).byKey(MANAGED_NET_SALARY).copy(autoRecord = true, payDay = 25)
+
+        val result = salaryProfileLines(profile, listOf(net))
+
+        assertTrue(result.byKey(MANAGED_MEAL).autoRecord)
+        assertEquals(25, result.byKey(MANAGED_MEAL).payDay)
+    }
+
+    @Test
+    fun withoutANetSalaryLine_newLinesDefaultOff() {
+        val result = salaryProfileLines(profile, emptyList())
+
+        assertTrue(result.none { it.autoRecord })
+        assertTrue(result.all { it.payDay == null })
+    }
+}

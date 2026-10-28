@@ -19,6 +19,8 @@ data class ReceiveChange(
     val today: LocalDate,
     val editableAmountCents: Long?,
     val onConfirm: (date: LocalDate, amountCents: Long?) -> Unit,
+    /** The day the sheet starts on: the row's pay date, never after [today]. */
+    val date: LocalDate = today,
 )
 
 /**
@@ -67,6 +69,7 @@ fun ReceiveFeedback.ChangeSheet() {
         ReceivedIncomeSheet(
             title = current.title,
             today = current.today,
+            initialDate = current.date,
             editableAmountCents = current.editableAmountCents,
             onConfirm = { date, cents ->
                 current.onConfirm(date, cents)

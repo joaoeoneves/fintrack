@@ -73,10 +73,9 @@ class RecurringListViewModelTest {
 
             val state = content(vm)
 
-            assertEquals(setOf("a", "i"), state.active.map { it.item.id }.toSet())
+            assertEquals(setOf("a"), state.active.map { it.item.id }.toSet())
             assertEquals(setOf("p", "e"), state.inactive.map { it.item.id }.toSet())
             assertEquals(12_000L, state.annualExpenseCents)
-            assertEquals(24_000L, state.annualIncomeCents)
             assertTrue(state.inactive.first { it.item.id == "e" }.isEnded)
             assertNull(state.inactive.first { it.item.id == "p" }.nextDue)
             assertEquals(

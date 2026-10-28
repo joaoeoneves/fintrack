@@ -8,8 +8,6 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
-import com.joaoeoneves.fintrack.domain.model.Earmark
-import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -31,6 +29,7 @@ import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
 import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
 import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.model.isManaged
+import com.joaoeoneves.fintrack.domain.model.looksLikeSalary
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.paydayOf
 import com.joaoeoneves.fintrack.domain.model.receivedOn
@@ -164,6 +163,8 @@ class MonthlyPlanViewModel
                                     yearMonth = line.yearMonth,
                                     skipMonths = line.skipMonths,
                                     earmark = line.earmark,
+                                    autoRecord = line.autoRecord,
+                                    payDay = line.payDay,
                                 ),
                         )
                 }
@@ -199,7 +200,7 @@ class MonthlyPlanViewModel
         fun onUndoReceive(row: IncomeRow) {
             val content = uiState.value as? MonthlyPlanUiState.Content ?: return
             viewModelScope.launch {
-                recordPayday.unreceive(row.lines, content.workingDays.month).onFailure { reportFailure(it) }
+                recordPayday.unreceive(row.lines, content.workingDays.month, clock.zone).onFailure { reportFailure(it) }
             }
         }
 
@@ -228,10 +229,17 @@ class MonthlyPlanViewModel
                 val lines = repositories.currentLines()
                 val existing = lines.firstOrNull { it.id == current.editingId }
                 val line = incomeLineOf(existing, lines, trimmed, amountCents, schedule.normalized(month))
+                if (!current.looksLikeSalary && line.looksLikeSalary(lines)) {
+                    // A warning, not an error: the next tap on the sheet's button saves anyway.
+                    editor.value = current.copy(looksLikeSalary = true)
+                    return@launch
+                }
                 repositories.plannedIncome
                     .savePlannedIncome(line)
-                    .onSuccess { editor.value = null }
-                    .onFailure { reportFailure(it) }
+                    .onSuccess {
+                        if (existing != null && existing.paysDifferently(line)) dropCursor(existing.id)
+                        editor.value = null
+                    }.onFailure { reportFailure(it) }
             }
         }
 
@@ -241,8 +249,10 @@ class MonthlyPlanViewModel
                 if (repositories.currentLines().firstOrNull { it.id == id }?.isManaged == true) return@launch
                 repositories.plannedIncome
                     .deletePlannedIncome(id)
-                    .onSuccess { editor.value = null }
-                    .onFailure { reportFailure(it) }
+                    .onSuccess {
+                        dropCursor(id)
+                        editor.value = null
+                    }.onFailure { reportFailure(it) }
             }
         }
 
@@ -261,42 +271,16 @@ class MonthlyPlanViewModel
             }
         }
 
+        // A line's automation restarts (no backfill) when its pay day or switch changes, or it goes away.
+        private suspend fun dropCursor(id: String) {
+            repositories.automation.updateLineCursors(remove = setOf(id)).onFailure { reportFailure(it) }
+        }
+
         private suspend fun reportFailure(error: Throwable) {
             Log.w(TAG, "Failed to save the monthly plan", error)
             errors.send(UiText.StringResource(R.string.error_plan_save_failed))
         }
     }
-
-/** The line to save: a managed one keeps the profile's amount and schedule, any other takes the editor's. */
-private fun incomeLineOf(
-    existing: PlannedIncome?,
-    lines: List<PlannedIncome>,
-    label: String,
-    amountCents: Long,
-    schedule: IncomeSchedule,
-): PlannedIncome =
-    if (existing != null && existing.isManaged) {
-        existing.withUserEdits(label, schedule.earmark)
-    } else {
-        PlannedIncome(
-            id = existing?.id.orEmpty(),
-            label = label,
-            amountCents = amountCents,
-            order = existing?.order ?: ((lines.maxOfOrNull { it.order } ?: -1) + 1),
-            basis = schedule.basis,
-            frequency = schedule.frequency,
-            monthOfYear = schedule.monthOfYear,
-            yearMonth = schedule.yearMonth,
-            skipMonths = schedule.skipMonths,
-            earmark = schedule.earmark,
-        )
-    }
-
-/** A managed line keeps the profile's amount and schedule; only the label and (monthly lines') earmark change. */
-private fun PlannedIncome.withUserEdits(
-    label: String,
-    earmark: Earmark?,
-): PlannedIncome = copy(label = label, earmark = if (frequency == IncomeFrequency.MONTHLY) earmark else this.earmark)
 
 private suspend fun PlanRepositories.currentLines(): List<PlannedIncome> = plannedIncome.observePlannedIncome().first()
 
@@ -349,6 +333,7 @@ private fun planFlow(
                 envelopeCards = envelopeCardsOf(overview.envelopes),
                 configure = configureOf(lines, categories, overview, workingDays.days, goals),
                 receipts = receiptsOf(selected, overview, lines, workingDays.days),
+                duplicateKeys = duplicateKeysOf(lines, overview.budgetMonth, workingDays.days),
             )
         content
     }.catch { e ->
@@ -414,6 +399,15 @@ private fun receiptsOf(
         receivedOn = received.toMap(),
     )
 }
+
+private fun duplicateKeysOf(
+    lines: List<PlannedIncome>,
+    month: YearMonth,
+    workingDays: Int,
+): Set<String> =
+    incomeRowsIn(lines, month, workingDays)
+        .filter { row -> row.component == null && row.lines.any { it.looksLikeSalary(lines) } }
+        .mapTo(mutableSetOf()) { it.key }
 
 private fun workingDaysOf(
     month: YearMonth,

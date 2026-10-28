@@ -93,7 +93,7 @@ fun IncomeLineSheet(
             )
         }
         PrimaryPillButton(
-            text = stringResource(R.string.action_save),
+            text = stringResource(if (editor.looksLikeSalary) R.string.action_save_anyway else R.string.action_save),
             onClick = {
                 submittedLabel = label.trim()
                 if (editor.managed) {
@@ -179,6 +179,7 @@ private fun SheetFields(
             name = editor.managedName(),
             amountCents = editor.initialAmountCents ?: 0L,
         )
+        IncomePayFields(schedule = schedule, onChange = onScheduleChange)
     } else {
         IncomeLineFields(
             perDay = schedule.basis == IncomeBasis.PER_WORKING_DAY,
@@ -191,6 +192,14 @@ private fun SheetFields(
             fallbackMonth = fallbackMonth,
             preview = models.preview,
         )
+        IncomePayFields(schedule = schedule, onChange = onScheduleChange)
+        if (editor.looksLikeSalary) {
+            Text(
+                text = stringResource(R.string.plan_looks_like_salary_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.negative,
+            )
+        }
     }
 }
 

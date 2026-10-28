@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack
 import android.app.Application
 import com.joaoeoneves.fintrack.data.automation.AutomationSync
 import com.joaoeoneves.fintrack.data.migration.EnvelopeMigrationSync
+import com.joaoeoneves.fintrack.data.migration.IncomeMigrationSync
 import com.joaoeoneves.fintrack.data.migration.SavingsPlanMigrationSync
 import com.joaoeoneves.fintrack.data.preferences.PreferencesSync
 import com.joaoeoneves.fintrack.data.salary.ManagedIncomeSync
@@ -25,6 +26,9 @@ class FinTrackApp : Application() {
     lateinit var savingsPlanMigrationSync: SavingsPlanMigrationSync
 
     @Inject
+    lateinit var incomeMigrationSync: IncomeMigrationSync
+
+    @Inject
     lateinit var automationSync: AutomationSync
 
     override fun onCreate() {
@@ -34,6 +38,7 @@ class FinTrackApp : Application() {
         managedIncomeSync.start()
         envelopeMigrationSync.start()
         savingsPlanMigrationSync.start()
+        incomeMigrationSync.start()
         automationSync.start()
     }
 }

@@ -76,9 +76,8 @@ class AutomationSync
 
             fun paydayKey() =
                 listOf(
-                    settings.paydayEnabled,
-                    settings.paydayRecordedThrough,
-                    lines.map { it.id to it.amountCents },
+                    settings.lineRecordedThrough,
+                    lines.map { listOf(it.id, it.amountCents, it.autoRecord, it.payDay, it.frequency, it.monthOfYear) },
                 )
         }
 

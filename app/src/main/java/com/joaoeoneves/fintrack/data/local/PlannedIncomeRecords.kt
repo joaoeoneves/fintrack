@@ -4,8 +4,10 @@ import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
+import com.joaoeoneves.fintrack.domain.model.MAX_DAY_OF_MONTH
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MIN_DAY_OF_MONTH
 import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.codePointLength
@@ -27,6 +29,8 @@ internal fun LocalPlannedIncome.toDomain(): PlannedIncome =
         skipMonths = skipMonths.toSet(),
         earmark = earmarkOrNull(earmarkType, earmarkId),
         managedKey = managedKey,
+        autoRecord = autoRecord,
+        payDay = payDay?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
     )
 
 internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
@@ -43,6 +47,8 @@ internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
         earmarkType = earmark?.typeName,
         earmarkId = earmark?.id,
         managedKey = managedKey,
+        autoRecord = autoRecord,
+        payDay = payDay,
     )
 
 /** The stored name of an earmark's kind (`CATEGORY` / `GROUP`), as persisted in `earmarkType`. */
@@ -92,6 +98,7 @@ internal fun validatePlannedIncome(line: LocalPlannedIncome) {
         "Skipped months must be at most 12 values of 1..12"
     }
     validateEarmark(line)
+    require(line.payDay == null || line.payDay in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH) { "Pay day must be 1..31" }
     require(line.managedKey == null || isValidManagedKey(line.managedKey)) { "Invalid managed key ${line.managedKey}" }
     when (frequency) {
         IncomeFrequency.MONTHLY ->

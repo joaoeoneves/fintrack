@@ -68,7 +68,9 @@ class RecurringListViewModel
                     ) { items, catalog, target, goals ->
                         // A savings plan's monthly item lives in the plan, not in Contas.
                         val planOwned = goals.mapNotNullTo(mutableSetOf()) { it.recurringId }
-                        contentOf(items.filter { it.id !in planOwned }, catalog, target, today)
+                        // Recurring income lives in the income lines; a stray INCOME item is not a bill.
+                        val bills = items.filter { it.id !in planOwned && it.type == RecurringType.EXPENSE }
+                        contentOf(bills, catalog, target, today)
                     }.catch { e ->
                         Log.w(TAG, "Failed to observe recurring items", e)
                         emit(RecurringListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
@@ -148,7 +150,6 @@ private fun contentOf(
         active = active,
         inactive = inactive,
         annualExpenseCents = annualizedCents(items, RecurringType.EXPENSE, today),
-        annualIncomeCents = annualizedCents(items, RecurringType.INCOME, today),
         deleteTarget = deleteTarget,
     )
 }

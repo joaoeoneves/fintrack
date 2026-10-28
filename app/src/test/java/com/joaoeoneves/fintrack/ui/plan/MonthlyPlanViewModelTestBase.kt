@@ -60,13 +60,14 @@ open class MonthlyPlanViewModelTestBase {
     }
 
     protected val actualIncomeRepo = FakeIncomeRepository()
+    protected val automationRepo = FakeAutomationSettingsRepository()
 
     protected fun viewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         expenses: ExpenseRepository = expenseRepo,
         incomes: IncomeRepository = actualIncomeRepo,
     ) = MonthlyPlanViewModel(
-        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo, goalRepo),
+        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo, goalRepo, automationRepo),
         observePeriodOverviewOf(
             DashboardRepositories(
                 expenses,
@@ -83,7 +84,7 @@ open class MonthlyPlanViewModelTestBase {
             incomeRepo,
             monthSettingsRepo,
             incomes,
-            FakeAutomationSettingsRepository(),
+            automationRepo,
             FakeSalaryLineLabelsProvider(),
         ),
         savedStateHandle,

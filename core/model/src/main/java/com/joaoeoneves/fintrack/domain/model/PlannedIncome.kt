@@ -40,6 +40,10 @@ sealed interface Earmark {
  * [IncomeFrequency.MONTHLY] lines. A monthly line with an [earmark] feeds a pot (see [potsOf]) instead of the
  * shared base. A non-null [managedKey] marks a line generated from the salary profile: its amount, basis and
  * schedule follow the profile, only the label and earmark are the user's.
+ *
+ * With [autoRecord] on, the line's income is recorded by the app itself on its pay date (see `RecordPayday`);
+ * [payDay] is that day of the month (1..31, clamped to the month's length, not moved off weekends) or `null` for
+ * the month's last working day.
  */
 data class PlannedIncome(
     val id: String,
@@ -53,4 +57,19 @@ data class PlannedIncome(
     val skipMonths: Set<Int> = emptySet(),
     val earmark: Earmark? = null,
     val managedKey: String? = null,
+    val autoRecord: Boolean = false,
+    val payDay: Int? = null,
 )
+
+/** Prefix of the id of a line migrated from a recurring income item: `rinc_<recurringItemId>`. */
+const val LEGACY_RECURRING_LINE_PREFIX = "rinc_"
+
+/** The id of the planned line that replaces recurring income item [itemId]. */
+fun recurringIncomeLineId(itemId: String): String = "$LEGACY_RECURRING_LINE_PREFIX$itemId"
+
+/** The recurring income item this line was migrated from, or `null` for any other line. */
+fun PlannedIncome.legacyRecurringItemId(): String? =
+    id
+        .takeIf { it.startsWith(LEGACY_RECURRING_LINE_PREFIX) }
+        ?.removePrefix(LEGACY_RECURRING_LINE_PREFIX)
+        ?.ifEmpty { null }

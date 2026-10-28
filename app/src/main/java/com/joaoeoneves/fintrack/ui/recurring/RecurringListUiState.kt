@@ -33,7 +33,6 @@ sealed interface RecurringListUiState {
         val active: List<RecurringRow>,
         val inactive: List<RecurringRow>,
         val annualExpenseCents: Long,
-        val annualIncomeCents: Long,
         val deleteTarget: RecurringItem? = null,
     ) : RecurringListUiState
 
@@ -50,4 +49,5 @@ internal data class RecurringListActions(
     val onConfirmDelete: () -> Unit,
     val onDismissDelete: () -> Unit,
     val onRetry: () -> Unit,
+    val onOpenIncome: () -> Unit = {},
 )

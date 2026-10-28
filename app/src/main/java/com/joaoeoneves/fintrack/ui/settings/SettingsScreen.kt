@@ -141,7 +141,6 @@ private fun SettingsScaffold(
                 onCurrencySelected = actions.onCurrencySelected,
                 onMotionSelected = actions.onMotionSelected,
             )
-            AutomationSection()
             BackupFlow { onExport, onRestore ->
                 DeleteAllDataFlow(
                     isGuest = uiState.isGuest,
