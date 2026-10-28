@@ -84,7 +84,8 @@ object BackupCodec {
         // income-line basis/frequency fields and 4 -> 5 categoryGroups, category groupId and budget skipMonths
         // (absent = empty / defaults) and 5 -> 6 the monthSettings daysOff field (absent = 0) and
         // 6 -> 7 the plannedIncome earmark fields (absent = none) and 7 -> 8 the salaryProfile and plannedIncome
-        // managedKey (absent = none) and 8 -> 9 the goals (absent = empty).
+        // managedKey (absent = none) and 8 -> 9 the goals (absent = empty) and
+        // 9 -> 10 salaryProfile extras (absent = migrated from the legacy fields on read).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
             BACKUP_SCHEMA_VERSION -> sanitize(document)

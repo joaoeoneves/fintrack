@@ -1,6 +1,8 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.joaoeoneves.fintrack.data.local.LocalSalaryExtra
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
+import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -12,13 +14,13 @@ class BackupCodecSalaryProfileTest {
     private val managed = backupPlanned("profile_net_salary").copy(managedKey = MANAGED_NET_SALARY)
 
     @Test
-    fun v7File_decodesUpgradedToV9_withoutProfile() {
+    fun v7File_decodesUpgradedToV10_withoutProfile() {
         val planned = """[{"id":"p","label":"Pay","amountCents":50000,"order":0,"frequency":"MONTHLY"}]"""
         val text = """{$header,"schemaVersion":7,"plannedIncome":$planned}"""
 
         val result = BackupCodec.decode(text).success()
 
-        assertEquals(9, result.document.schemaVersion)
+        assertEquals(10, result.document.schemaVersion)
         assertNull(result.document.salaryProfile)
         assertNull(
             result.document.plannedIncome
@@ -78,5 +80,56 @@ class BackupCodecSalaryProfileTest {
 
         assertEquals(listOf("profile_net_salary"), result.document.plannedIncome.map { it.id })
         assertEquals(1, result.skippedCount)
+    }
+
+    @Test
+    fun v9File_withLegacyProfileFields_stillDecodes_andMigratesOnToDomain() {
+        val profileJson = """{"baseGrossCents":100000,"flexPpm":70000,"bonusCents":10000,"bonusMonth":5}"""
+        val text = """{$header,"schemaVersion":9,"salaryProfile":$profileJson}"""
+
+        val result = BackupCodec.decode(text).success()
+
+        val decoded = requireNotNull(result.document.salaryProfile)
+        assertEquals(10, result.document.schemaVersion)
+        assertEquals(0, result.skippedCount)
+        assertEquals(listOf("flex", "bonus"), decoded.toDomain().extras.map { it.id })
+    }
+
+    @Test
+    fun v10RoundTrip_keepsExtras() {
+        val extra = LocalSalaryExtra("e1", "Prize", "MULTIPLE_OF_BASE_PPM", 500_000, listOf(3, 9), "IRS", 2_000)
+        val doc = backupDoc().copy(salaryProfile = profile.copy(extras = listOf(extra)))
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(listOf(extra), result.document.salaryProfile?.extras)
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
+    fun profileWithInvalidExtras_isDropped_andCountedAsSkipped() {
+        val bad = LocalSalaryExtra("e1", "Prize", "FIXED_CENTS", 0, listOf(13))
+        val doc = backupDoc().copy(salaryProfile = profile.copy(extras = listOf(bad)), plannedIncome = listOf(managed))
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertNull(result.document.salaryProfile)
+        assertEquals(1, result.skippedCount)
+    }
+
+    @Test
+    fun extraManagedLines_surviveWhenTheProfileIsValid() {
+        val line = backupPlanned("profile_extra_e1_3").copy(managedKey = "profile_extra_e1_3")
+        val extra = LocalSalaryExtra("e1", "Prize", "FIXED_CENTS", 5_000, listOf(3))
+        val doc = backupDoc().copy(salaryProfile = profile.copy(extras = listOf(extra)), plannedIncome = listOf(line))
+
+        val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
+
+        assertEquals(
+            "profile_extra_e1_3",
+            result.document.plannedIncome
+                .single()
+                .managedKey,
+        )
     }
 }

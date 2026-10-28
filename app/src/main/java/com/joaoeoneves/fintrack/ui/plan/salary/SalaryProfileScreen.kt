@@ -58,16 +58,7 @@ fun SalaryProfileScreen(
             }
         }
     }
-    val labels =
-        SalaryLineLabels(
-            netSalary = stringResource(R.string.salary_line_net),
-            duodecimos = stringResource(R.string.salary_line_duodecimos),
-            meal = stringResource(R.string.salary_group_meal),
-            subsidy = stringResource(R.string.salary_line_subsidy),
-            flex = stringResource(R.string.salary_group_flex),
-            profitShare = stringResource(R.string.salary_breakdown_profit_share),
-            bonus = stringResource(R.string.salary_field_bonus),
-        )
+    val labels = salaryLineLabels()
 
     LargeTitleScaffold(
         title = stringResource(R.string.salary_profile_title),
@@ -87,6 +78,15 @@ fun SalaryProfileScreen(
                             onChange = viewModel::onFormChange,
                             onSave = { viewModel.onSave(labels) },
                             onDelete = viewModel::onDelete,
+                            extras =
+                                SalaryExtraActions(
+                                    onAdd = viewModel::onAddExtra,
+                                    onEdit = viewModel::onEditExtra,
+                                    onChange = viewModel::onExtraFormChange,
+                                    onSave = viewModel::onSaveExtra,
+                                    onDelete = viewModel::onDeleteExtra,
+                                    onDismiss = viewModel::onDismissExtra,
+                                ),
                         ),
                     modifier = contentModifier,
                 )
@@ -101,11 +101,22 @@ fun SalaryProfileScreen(
     }
 }
 
+/** What the extra editor can trigger, bundled for detekt's LongParameterList. */
+internal data class SalaryExtraActions(
+    val onAdd: () -> Unit,
+    val onEdit: (String) -> Unit,
+    val onChange: (SalaryExtraForm) -> Unit,
+    val onSave: () -> Unit,
+    val onDelete: (String) -> Unit,
+    val onDismiss: () -> Unit,
+)
+
 /** What the salary screen can trigger, bundled for detekt's LongParameterList. */
 internal data class SalaryProfileActions(
     val onChange: (SalaryForm) -> Unit,
     val onSave: () -> Unit,
     val onDelete: () -> Unit,
+    val extras: SalaryExtraActions,
 )
 
 @Composable
@@ -138,8 +149,7 @@ private fun SalaryProfileContent(
         }
         SubsidyMonthsSection(form, actions.onChange)
         MealSection(form, state.invalid, actions.onChange)
-        FlexSection(form, state.invalid, actions.onChange)
-        ExtrasSection(form, state.invalid, actions.onChange)
+        SalaryExtrasSection(state, actions.extras.onAdd, actions.extras.onEdit)
         PrimaryPillButton(
             text = stringResource(R.string.action_save),
             onClick = actions.onSave,
@@ -154,6 +164,7 @@ private fun SalaryProfileContent(
             )
         }
     }
+    state.extraEditor?.let { SalaryExtraSheet(it, actions.extras) }
     if (confirmingDelete) {
         DeleteSalaryProfileDialog(
             onConfirm = {
@@ -181,3 +192,12 @@ private fun DeleteSalaryProfileDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
+
+@Composable
+private fun salaryLineLabels() =
+    SalaryLineLabels(
+        netSalary = stringResource(R.string.salary_line_net),
+        duodecimos = stringResource(R.string.salary_line_duodecimos),
+        meal = stringResource(R.string.salary_group_meal),
+        subsidy = stringResource(R.string.salary_line_subsidy),
+    )

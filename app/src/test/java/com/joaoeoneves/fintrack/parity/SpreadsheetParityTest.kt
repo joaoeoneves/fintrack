@@ -9,7 +9,6 @@ import com.joaoeoneves.fintrack.domain.model.CategoryGroup
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Earmark
-import com.joaoeoneves.fintrack.domain.model.FLEX_PAYMENTS
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
@@ -24,6 +23,7 @@ import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualPlanOf
 import com.joaoeoneves.fintrack.domain.model.potsOf
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
+import com.joaoeoneves.fintrack.testutil.flexExtra
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -159,7 +159,7 @@ class SpreadsheetParityTest {
             irsSubsidiesPpm = int(salary, "irsSubsidiesPpm"),
             ssPpm = int(salary, "ssPpm"),
             irsJovemExemptPpm = PPM_SCALE - int(salary, "irsPaidFractionPpm"),
-            flexPpm = flexPpm,
+            extras = listOfNotNull(flexPpm?.let { flexExtra(ppm = it.toLong()) }),
         )
     }
 
@@ -181,8 +181,9 @@ class SpreadsheetParityTest {
         val expected = section("expected")
         val result = breakdown(salaryProfile("salary2026", flexPpm = FLEX_PPM))
 
-        assertEquals(long(expected, "flexAnnualCents"), result.flexAnnualCents)
-        assertEquals(List(FLEX_PAYMENTS) { long(expected, "flexQuarterCents") }, result.flexQuarterlyCents)
+        val flex = result.extras.single()
+        assertEquals(long(expected, "flexAnnualCents"), flex.totalCents)
+        assertEquals(List(FLEX_QUARTERS) { long(expected, "flexQuarterCents") }, flex.payments.map { it.second })
     }
 
     @Test
@@ -284,6 +285,7 @@ class SpreadsheetParityTest {
     private companion object {
         const val RESOURCE = "private/spreadsheet.json"
         const val FLEX_PPM = 70_000
+        const val FLEX_QUARTERS = 4
         const val YEAR = 2026
         const val MONTHS = 12
         const val YEARLY_ITEM_MONTH = 3

@@ -2,13 +2,16 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
-import com.joaoeoneves.fintrack.domain.model.MANAGED_BONUS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.managedExtraKey
+import com.joaoeoneves.fintrack.domain.model.managedFlexKey
+import com.joaoeoneves.fintrack.testutil.bonusExtra
+import com.joaoeoneves.fintrack.testutil.flexExtra
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -18,8 +21,13 @@ import org.junit.Test
 class ManageSalaryProfileTest {
     private val labels = SalaryLineLabels()
     private val profile =
-        SalaryProfile(baseGrossCents = 100_000, subsidySpreadPpm = SPREAD_FULL_PPM, bonusCents = 5_000)
+        SalaryProfile(
+            baseGrossCents = 100_000,
+            subsidySpreadPpm = SPREAD_FULL_PPM,
+            extras = listOf(bonusExtra(cents = 5_000)),
+        )
     private val own = PlannedIncome("own", "Own", 123, order = 0)
+    private val bonusKey = managedExtraKey("bonus", 5)
 
     private val profiles = FakeSalaryProfileRepository()
     private val income = FakePlannedIncomeRepository(listOf(own))
@@ -31,8 +39,34 @@ class ManageSalaryProfileTest {
             assertTrue(useCase.save(profile, labels).isSuccess)
 
             assertEquals(profile, profiles.profile)
-            val expected = setOf("own", MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_BONUS)
+            val expected = setOf("own", MANAGED_NET_SALARY, MANAGED_DUODECIMOS, bonusKey)
             assertEquals(expected, income.lines.map { it.id }.toSet())
+        }
+
+    @Test
+    fun save_withLegacyLines_upsertsTheExtraLines_andDeletesTheLegacyOnes() =
+        runTest {
+            val legacyKeys = listOf(managedFlexKey(0), managedFlexKey(2), "profile_bonus")
+            legacyKeys.forEach { income.savePlannedIncome(PlannedIncome(it, "old", 5, 50, managedKey = it)) }
+
+            assertTrue(useCase.save(profile.copy(extras = listOf(flexExtra(), bonusExtra())), labels).isSuccess)
+
+            val ids = income.lines.map { it.id }.toSet()
+            assertTrue(legacyKeys.none { it in ids })
+            assertTrue(bonusKey in ids)
+            assertTrue(managedExtraKey("flex", 7) in ids)
+        }
+
+    @Test
+    fun save_deletingAnExtra_deletesItsLines() =
+        runTest {
+            useCase.save(profile.copy(extras = listOf(flexExtra(), bonusExtra())), labels)
+
+            useCase.save(profile.copy(extras = listOf(bonusExtra())), labels)
+
+            val ids = income.lines.map { it.id }
+            assertTrue(ids.none { it.startsWith("profile_extra_flex_") })
+            assertTrue(bonusKey in ids)
         }
 
     @Test
@@ -51,7 +85,7 @@ class ManageSalaryProfileTest {
         runTest {
             useCase.save(profile, labels)
 
-            useCase.save(profile.copy(bonusCents = null), labels)
+            useCase.save(profile.copy(extras = emptyList()), labels)
 
             assertEquals(setOf("own", MANAGED_NET_SALARY, MANAGED_DUODECIMOS), income.lines.map { it.id }.toSet())
         }
@@ -170,11 +204,11 @@ class ManageSalaryProfileTest {
         runTest {
             useCase.save(profile, labels)
             income.deletePlannedIncome(MANAGED_DUODECIMOS)
-            income.deletePlannedIncome(MANAGED_BONUS)
+            income.deletePlannedIncome(bonusKey)
             income.nextSaveError = IllegalStateException("boom")
 
             assertTrue(useCase.resync().isFailure)
 
-            assertTrue(income.lines.none { it.id == MANAGED_DUODECIMOS || it.id == MANAGED_BONUS })
+            assertTrue(income.lines.none { it.id == MANAGED_DUODECIMOS || it.id == bonusKey })
         }
 }

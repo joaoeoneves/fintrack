@@ -3,13 +3,16 @@ package com.joaoeoneves.fintrack.data.salary
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
-import com.joaoeoneves.fintrack.domain.model.MANAGED_BONUS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.MANAGED_PROFIT_SHARE
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.managedExtraKey
+import com.joaoeoneves.fintrack.domain.model.managedFlexKey
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
+import com.joaoeoneves.fintrack.testutil.bonusExtra
+import com.joaoeoneves.fintrack.testutil.flexExtra
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -26,7 +29,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class ManagedIncomeSyncTest {
-    private val profile = SalaryProfile(baseGrossCents = 100_000, irsBasePpm = 100_000, bonusCents = 10_000)
+    private val profile = SalaryProfile(baseGrossCents = 100_000, irsBasePpm = 100_000, extras = listOf(bonusExtra()))
     private val own = PlannedIncome("own", "Own", 123, order = 0)
     private val full = salaryProfileLines(profile, listOf(own))
 
@@ -91,7 +94,25 @@ class ManagedIncomeSyncTest {
             assertEquals(wantedDuo, byId.getValue(MANAGED_DUODECIMOS).amountCents)
             assertTrue(MANAGED_PROFIT_SHARE !in byId)
             assertTrue("own" in byId)
-            assertTrue(MANAGED_BONUS in byId)
+            assertTrue(managedExtraKey("bonus", 5) in byId)
+        }
+
+    @Test
+    fun legacyFlexAndBonusLines_areReplacedByTheExtraLines() =
+        runTest(UnconfinedTestDispatcher()) {
+            val legacyKeys = listOf(managedFlexKey(0), managedFlexKey(1), "profile_bonus")
+            val legacy = legacyKeys.mapIndexed { i, k -> PlannedIncome(k, "old", 5, 90 + i, managedKey = k) }
+            val migrated = profile.copy(extras = listOf(flexExtra(), bonusExtra()))
+            val income = FakePlannedIncomeRepository(listOf(own) + legacy)
+
+            sync(FakeSalaryProfileRepository(migrated), income).start()
+            advanceUntilIdle()
+
+            val ids = income.lines.map { it.id }.toSet()
+            assertTrue(legacyKeys.none { it in ids })
+            assertTrue(managedExtraKey("bonus", 5) in ids)
+            assertTrue(listOf(1, 4, 7, 10).all { managedExtraKey("flex", it) in ids })
+            assertTrue("own" in ids)
         }
 
     @Test

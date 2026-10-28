@@ -33,7 +33,7 @@ fun salaryProfileLines(
         val current = byKey[wanted.key]
         PlannedIncome(
             id = wanted.key,
-            label = current?.label ?: wanted.label,
+            label = wanted.label.takeIf { parseManagedExtraKey(wanted.key) != null } ?: current?.label ?: wanted.label,
             amountCents = wanted.amountCents,
             order = current?.order ?: nextOrder++,
             basis = wanted.basis,
@@ -116,43 +116,13 @@ private fun wantedLines(
             breakdown.christmasLumpNetCents,
             monthOfYear = secondSubsidyMonth,
         ),
-    ) + flexLines(profile, breakdown, labels) + profitShareLines(profile, breakdown, labels) +
-        WantedLine(
-            MANAGED_BONUS,
-            labels.bonus,
-            breakdown.bonusCents,
-            monthOfYear = profile.bonusMonth ?: DEFAULT_EXTRA_PAY_MONTH,
-        )
+    ) + extraLines(breakdown)
 }
 
-/** One profit-share line per month, the total split equally (floored) with the remainder on the last month. */
-private fun profitShareLines(
-    profile: SalaryProfile,
-    breakdown: SalaryBreakdown,
-    labels: SalaryLineLabels,
-): List<WantedLine> {
-    val months = profile.effectiveProfitShareMonths
-    val share = breakdown.profitShareCents / months.size
-    return months.mapIndexed { index, month ->
-        val remainder = if (index == months.lastIndex) breakdown.profitShareCents - share * months.size else 0L
-        WantedLine(managedProfitShareKey(month), labels.profitShare, share + remainder, monthOfYear = month)
+/** One line per payment of each extra, named after the extra so a rename follows through. */
+private fun extraLines(breakdown: SalaryBreakdown): List<WantedLine> =
+    breakdown.extras.flatMap { extra ->
+        extra.payments.map { (month, cents) ->
+            WantedLine(managedExtraKey(extra.extraId, month), extra.name, cents, monthOfYear = month)
+        }
     }
-}
-
-/** The four quarterly flexible-benefit lines, paid in the first month, +3, +6 and +9 (wrapping past December). */
-private fun flexLines(
-    profile: SalaryProfile,
-    breakdown: SalaryBreakdown,
-    labels: SalaryLineLabels,
-): List<WantedLine> =
-    breakdown.flexQuarterlyCents.mapIndexed { index, cents ->
-        WantedLine(
-            managedFlexKey(index),
-            labels.flex,
-            cents,
-            monthOfYear = (profile.flexFirstMonth - 1 + index * FLEX_MONTH_STEP) % MONTHS_IN_YEAR + 1,
-        )
-    }
-
-private const val FLEX_MONTH_STEP = 3
-private const val MONTHS_IN_YEAR = 12

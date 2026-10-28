@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.domain.model
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Gross-mode salary math with neutral figures: base 1000.00, SS 11%, IRS 10% on the base and 5% on subsidies. */
@@ -119,19 +120,16 @@ class SalaryMathTest {
     }
 
     @Test
-    fun profitShare_isBaseTimesMultiplier() {
-        val b = breakdown(gross().copy(profitShareMultiplierPpm = 1_500_000))
+    fun multipleExtra_isBaseTimesMultiplier() {
+        val b = breakdown(gross().copy(extras = listOf(multipleExtra(ppm = 1_500_000, months = setOf(3)))))
 
-        assertEquals(150_000, b.profitShareCents)
-        assertEquals(0, breakdown(gross()).profitShareCents)
+        assertEquals(150_000, b.extras.single().totalCents)
+        assertTrue(breakdown(gross()).extras.isEmpty())
     }
 
     @Test
-    fun bonusAndMeal_passThrough() {
-        val b = breakdown(gross().copy(bonusCents = 25_000, mealRatePerDayCents = 900))
-
-        assertEquals(25_000, b.bonusCents)
-        assertEquals(900, b.mealRatePerDayCents)
+    fun meal_passesThrough() {
+        assertEquals(900, breakdown(gross().copy(mealRatePerDayCents = 900)).mealRatePerDayCents)
     }
 
     @Test
@@ -142,11 +140,9 @@ class SalaryMathTest {
                 netMonthlyCents = 120_000,
                 netHolidayLumpCents = 60_000,
                 netChristmasLumpCents = 61_000,
-                flexAnnualCents = 100_001,
-                bonusCents = 5_000,
+                extras = listOf(testExtra(type = SalaryExtraAmountType.FIXED_CENTS, amount = 100_001)),
                 // Gross-only fields are ignored in NET mode.
                 baseGrossCents = 999_999,
-                profitShareMultiplierPpm = 1_000_000,
             )
 
         val b = breakdown(profile)
@@ -154,11 +150,14 @@ class SalaryMathTest {
         assertEquals(120_000, b.netMonthlyCents)
         assertEquals(60_000, b.holidayLumpNetCents)
         assertEquals(61_000, b.christmasLumpNetCents)
-        assertEquals(100_001, b.flexAnnualCents)
-        assertEquals(listOf(25_000L, 25_000L, 25_000L, 25_001L), b.flexQuarterlyCents)
-        assertEquals(0, b.profitShareCents)
+        assertEquals(
+            listOf(25_000L, 25_000L, 25_000L, 25_001L),
+            b.extras
+                .single()
+                .payments
+                .map { it.second },
+        )
         assertEquals(0, b.grossCents)
-        assertEquals(5_000, b.bonusCents)
     }
 
     @Test
@@ -173,7 +172,6 @@ class SalaryMathTest {
         val b = breakdown(SalaryProfile(inputMode = SalaryInputMode.NET, netMonthlyCents = 50_000))
 
         assertEquals(0, b.holidayLumpNetCents)
-        assertEquals(0, b.flexAnnualCents)
-        assertEquals(listOf(0L, 0L, 0L, 0L), b.flexQuarterlyCents)
+        assertTrue(b.extras.isEmpty())
     }
 }

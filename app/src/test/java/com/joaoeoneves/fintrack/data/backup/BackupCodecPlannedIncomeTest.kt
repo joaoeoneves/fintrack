@@ -32,10 +32,10 @@ class BackupCodecPlannedIncomeTest {
     }
 
     @Test
-    fun v10File_isUnsupported() {
-        val text = """{$header,"schemaVersion":10}"""
+    fun v11File_isUnsupported() {
+        val text = """{$header,"schemaVersion":11}"""
 
-        assertEquals(BackupDecodeResult.UnsupportedVersion(10), BackupCodec.decode(text))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(11), BackupCodec.decode(text))
     }
 
     @Test
@@ -92,13 +92,13 @@ class BackupCodecPlannedIncomeTest {
     }
 
     @Test
-    fun v6File_decodesUpgradedToV9_withoutEarmarks() {
+    fun v6File_decodesUpgradedToV10_withoutEarmarks() {
         val planned = """[{"id":"p","label":"Pay","amountCents":50000,"order":0,"frequency":"MONTHLY"}]"""
         val text = """{$header,"schemaVersion":6,"plannedIncome":$planned}"""
 
         val result = BackupCodec.decode(text).success()
 
-        assertEquals(9, result.document.schemaVersion)
+        assertEquals(10, result.document.schemaVersion)
         assertEquals(1, result.document.plannedIncome.size)
         assertEquals(
             null,

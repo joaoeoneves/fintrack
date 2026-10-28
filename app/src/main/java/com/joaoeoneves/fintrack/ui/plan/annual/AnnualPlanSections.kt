@@ -26,7 +26,7 @@ import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
-import com.joaoeoneves.fintrack.ui.plan.label
+import com.joaoeoneves.fintrack.ui.plan.displayLabel
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -69,7 +69,7 @@ fun AnnualIncomeCard(
     SettingsGroup(label = stringResource(R.string.annual_income_title), modifier = modifier) {
         income.rows.forEach { row ->
             Column {
-                LabelAmountRow(row.component?.label() ?: row.lines.first().label, formatAmountCents(row.cents))
+                LabelAmountRow(row.displayLabel(), formatAmountCents(row.cents))
                 if (row.months.size < MONTHS_PER_YEAR) {
                     Text(
                         text = row.months.joinToString { formatShortMonthName(YearMonth.of(year, it), locale) },

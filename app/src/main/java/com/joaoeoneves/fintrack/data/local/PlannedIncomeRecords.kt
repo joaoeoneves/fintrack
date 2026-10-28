@@ -3,13 +3,13 @@ package com.joaoeoneves.fintrack.data.local
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
-import com.joaoeoneves.fintrack.domain.model.MANAGED_KEYS
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.domain.model.isValidManagedKey
 import java.time.DateTimeException
 import java.time.YearMonth
 
@@ -92,7 +92,7 @@ internal fun validatePlannedIncome(line: LocalPlannedIncome) {
         "Skipped months must be at most 12 values of 1..12"
     }
     validateEarmark(line)
-    require(line.managedKey == null || line.managedKey in MANAGED_KEYS) { "Invalid managed key ${line.managedKey}" }
+    require(line.managedKey == null || isValidManagedKey(line.managedKey)) { "Invalid managed key ${line.managedKey}" }
     when (frequency) {
         IncomeFrequency.MONTHLY ->
             require(line.monthOfYear == null && line.yearMonth == null) {

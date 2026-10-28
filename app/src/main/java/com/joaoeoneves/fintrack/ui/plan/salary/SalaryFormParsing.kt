@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_CHRISTMAS_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_HOLIDAY_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_SS_PPM
-import com.joaoeoneves.fintrack.domain.model.MAX_PROFIT_SHARE_PPM
+import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_MULTIPLE_PPM
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
@@ -59,7 +59,7 @@ internal fun parsePercentPpm(
 
 /** A multiplier of 0..10 with up to six decimals as ppm ("0.5" is 500000); blank and zero mean "not set". */
 internal fun parseMultiplierPpm(text: String): Parsed<Int> {
-    val max = MAX_PROFIT_SHARE_PPM
+    val max = MAX_EXTRA_MULTIPLE_PPM
     return parseScaled(text, MULTIPLIER_SCALE, max, zeroIsEmpty = true)
 }
 
@@ -99,11 +99,8 @@ private fun SalaryForm.grossProfile(reader: FieldReader): SalaryProfile =
         mealRatePerDayCents = reader.cents(SalaryField.MEAL, meal),
         holidaySubsidyMonth = subsidyMonthPair().first,
         christmasSubsidyMonth = subsidyMonthPair().second,
-        flexPpm = reader.percent(SalaryField.FLEX_PERCENT, flexPercent),
-        flexFirstMonth = flexFirstMonth,
-        flexWithdrawalFeePpm = reader.percent(SalaryField.FLEX_FEE, flexFee) ?: 0,
-        bonusCents = reader.cents(SalaryField.BONUS, bonus),
-    ).withExtras(this, reader, gross = true)
+        extras = extras,
+    )
 
 private fun SalaryForm.netProfile(reader: FieldReader): SalaryProfile =
     SalaryProfile(
@@ -114,23 +111,8 @@ private fun SalaryForm.netProfile(reader: FieldReader): SalaryProfile =
         mealRatePerDayCents = reader.cents(SalaryField.MEAL, meal),
         holidaySubsidyMonth = subsidyMonthPair().first,
         christmasSubsidyMonth = subsidyMonthPair().second,
-        flexAnnualCents = reader.cents(SalaryField.FLEX_ANNUAL, flexAnnual),
-        flexFirstMonth = flexFirstMonth,
-        bonusCents = reader.cents(SalaryField.BONUS, bonus),
-    ).withExtras(this, reader, gross = false)
-
-private fun SalaryProfile.withExtras(
-    form: SalaryForm,
-    reader: FieldReader,
-    gross: Boolean,
-): SalaryProfile {
-    val multiplier = if (gross) reader.multiplier(SalaryField.PROFIT_SHARE, form.profitMultiplier) else null
-    return copy(
-        profitShareMultiplierPpm = multiplier,
-        profitShareMonths = if (multiplier != null) form.profitMonths.toSet() else emptySet(),
-        bonusMonth = form.bonusMonth.takeIf { bonusCents != null },
+        extras = extras,
     )
-}
 
 /**
  * The (earlier, later) subsidy months: the two picked ones in order, both the same month when only one is
@@ -157,11 +139,6 @@ private class FieldReader {
         field: SalaryField,
         text: String,
     ): Int? = parsePercentPpm(text).orNull(field)
-
-    fun multiplier(
-        field: SalaryField,
-        text: String,
-    ): Int? = parseMultiplierPpm(text).orNull(field)
 
     private fun <T> Parsed<T>.orNull(field: SalaryField): T? =
         when (this) {

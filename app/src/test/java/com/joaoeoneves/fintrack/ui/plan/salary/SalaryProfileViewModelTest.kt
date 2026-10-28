@@ -55,7 +55,9 @@ class SalaryProfileViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = SalaryProfileViewModel(profiles, ManageSalaryProfile(profiles, income), income, clock)
+    private val manage get() = ManageSalaryProfile(profiles, income)
+
+    private fun viewModel() = SalaryProfileViewModel(profiles, manage, income, clock) { "id1" }
 
     private fun TestScope.started(vm: SalaryProfileViewModel): SalaryProfileViewModel {
         backgroundScope.launch { vm.uiState.collect {} }

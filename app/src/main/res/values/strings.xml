@@ -536,16 +536,28 @@
     <string name="salary_meal_hint">Paid for each working day; mark vacation days in the Plan\'s working-days.</string>
     <string name="salary_group_meal">Meal allowance</string>
     <string name="salary_field_meal">Meal allowance per working day</string>
-    <string name="salary_group_flex">Flexible benefits</string>
-    <string name="salary_field_flex_percent" formatted="false">Share of annual gross (%)</string>
-    <string name="salary_field_flex_annual">Yearly amount</string>
-    <string name="salary_flex_first_month">First payment, then every 3 months</string>
-    <string name="salary_field_flex_fee" formatted="false">Withdrawal fee (%)</string>
+    <string name="salary_extras_add">Add extra</string>
+    <string name="salary_extra_new">New extra</string>
+    <string name="salary_extra_edit">Edit extra</string>
+    <string name="salary_extra_name">Name</string>
+    <string name="salary_extra_type_fixed">Amount</string>
+    <string name="salary_extra_type_multiple">× base salary</string>
+    <string name="salary_extra_type_percent" formatted="false">% of annual gross</string>
+    <string name="salary_extra_value_fixed">Amount per year</string>
+    <string name="salary_extra_value_multiple">Multiple of base salary</string>
+    <string name="salary_extra_value_percent" formatted="false">Share of annual gross (%)</string>
+    <string name="salary_extra_months">Paid in</string>
+    <string name="salary_extra_deductions">Deductions</string>
+    <string name="salary_extra_deductions_none">None</string>
+    <string name="salary_extra_deductions_irs">IRS</string>
+    <string name="salary_extra_deductions_irs_ss">IRS + SS</string>
+    <string name="salary_extra_fee" formatted="false">Fee (%)</string>
+    <string name="salary_extra_delete">Delete extra</string>
+    <string name="salary_extra_gross_only">Gross mode only</string>
+    <string name="salary_extra_default_flex">Flexible benefits</string>
+    <string name="salary_extra_default_profit_share">Profit share</string>
+    <string name="salary_extra_default_bonus">Bonus</string>
     <string name="salary_group_extras">Extras</string>
-    <string name="salary_field_profit_share">Profit share (× base salary)</string>
-    <string name="salary_profit_month">Profit share paid in</string>
-    <string name="salary_field_bonus">Bonus</string>
-    <string name="salary_bonus_month">Bonus paid in</string>
     <string name="salary_error_invalid">Enter a valid value</string>
     <string name="salary_breakdown_title">Breakdown</string>
     <string name="salary_breakdown_gross">Gross monthly</string>
@@ -553,8 +565,6 @@
     <string name="salary_breakdown_irs">IRS</string>
     <string name="salary_breakdown_net">Net monthly</string>
     <string name="salary_breakdown_meal">Meal allowance in %1$s</string>
-    <string name="salary_breakdown_flex">Flexible benefits per payment</string>
-    <string name="salary_breakdown_profit_share">Profit share</string>
     <string name="salary_delete">Delete salary profile</string>
     <string name="salary_delete_title">Delete the salary profile?</string>
     <string name="salary_delete_message">The income lines generated from it are removed too. Your own lines stay.</string>
@@ -613,9 +623,6 @@
     <string name="plan_income_salary">Salary</string>
     <string name="plan_income_meal">Meal allowance</string>
     <string name="plan_income_subsidies">Subsidies</string>
-    <string name="plan_income_flex">Flexible benefits</string>
-    <string name="plan_income_profit_share">Profit share</string>
-    <string name="plan_income_bonus">Bonus</string>
     <string name="salary_breakdown_net_base">Base salary (net)</string>
     <string name="salary_breakdown_net_duo">Twelfths (net)</string>
     <string name="salary_line_duodecimos">Subsidies (twelfths)</string>

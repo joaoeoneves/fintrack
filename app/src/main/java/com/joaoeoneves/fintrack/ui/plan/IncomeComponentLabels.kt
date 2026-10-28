@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.plan
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 
 /** The localized name of a salary component as shown in the income lists. */
@@ -13,8 +14,10 @@ fun SalaryComponent.label(): String =
             SalaryComponent.SALARY -> R.string.plan_income_salary
             SalaryComponent.MEAL -> R.string.plan_income_meal
             SalaryComponent.SUBSIDIES -> R.string.plan_income_subsidies
-            SalaryComponent.FLEX -> R.string.plan_income_flex
-            SalaryComponent.PROFIT_SHARE -> R.string.plan_income_profit_share
-            SalaryComponent.BONUS -> R.string.plan_income_bonus
+            SalaryComponent.EXTRA -> R.string.salary_group_extras
         },
     )
+
+/** The row's name: an extra's own name (renames follow), the component name of a salary row, else the line's label. */
+@Composable
+fun IncomeRow.displayLabel(): String = component?.takeIf { it != SalaryComponent.EXTRA }?.label() ?: lines.first().label

@@ -162,7 +162,7 @@ private fun IncomeRowItem(
     val opensEditor = row.component in EDITABLE_COMPONENTS
     val paysThisMonth = row.cents > 0L
     AmountRow(
-        label = row.component?.label() ?: line.label,
+        label = row.displayLabel(),
         value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
         valueColor = if (paysThisMonth) MaterialTheme.colorScheme.onSurface else FinTrackTheme.colors.textSecondary,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),

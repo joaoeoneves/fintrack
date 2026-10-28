@@ -12,11 +12,7 @@ class SalaryProfileLinesTest {
             irsBasePpm = 100_000,
             irsSubsidiesPpm = 50_000,
             mealRatePerDayCents = 900,
-            flexPpm = 70_000,
-            profitShareMultiplierPpm = 500_000,
-            profitShareMonths = setOf(4),
-            bonusCents = 10_000,
-            bonusMonth = 5,
+            extras = listOf(testExtra(), multipleExtra(), fixedExtra()),
         )
 
     private fun lines(
@@ -27,13 +23,11 @@ class SalaryProfileLinesTest {
     private fun List<PlannedIncome>.byKey(key: String) = single { it.managedKey == key }
 
     @Test
-    fun managedKeys_listsEveryKey() {
-        assertEquals(23, MANAGED_KEYS.size)
-        assertEquals(MANAGED_KEYS.size, MANAGED_KEYS.toSet().size)
+    fun managedKeys_helpers() {
         assertEquals("profile_flex_q1", managedFlexKey(0))
         assertEquals("profile_flex_q4", managedFlexKey(3))
         assertEquals("profile_profit_share_4", managedProfitShareKey(4))
-        assertTrue(MANAGED_PROFIT_SHARE in MANAGED_KEYS)
+        assertEquals("profile_extra_abc_7", managedExtraKey("abc", 7))
     }
 
     @Test
@@ -41,8 +35,9 @@ class SalaryProfileLinesTest {
         val result = lines()
 
         val expected =
-            MANAGED_KEYS.toSet() - MANAGED_PROFIT_SHARE - (1..12).map(::managedProfitShareKey).toSet() +
-                managedProfitShareKey(4)
+            setOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS) +
+                listOf(1, 4, 7, 10).map { managedExtraKey("flex", it) } +
+                managedExtraKey("profit", 4) + managedExtraKey("bonus", 5)
         assertEquals(expected, result.map { it.managedKey }.toSet())
         assertTrue(result.all { it.id == it.managedKey })
     }
@@ -85,28 +80,24 @@ class SalaryProfileLinesTest {
     }
 
     @Test
-    fun profitShareAndBonus_useTheirMonths_orTheDefault() {
+    fun extraLines_areYearlyInTheirMonths_namedAfterTheExtra() {
         val result = lines()
-        val defaulted = lines(full.copy(profitShareMonths = emptySet(), bonusMonth = null))
 
-        assertEquals(50_000, result.byKey(managedProfitShareKey(4)).amountCents)
-        assertEquals(4, result.byKey(managedProfitShareKey(4)).monthOfYear)
-        assertEquals(10_000, result.byKey(MANAGED_BONUS).amountCents)
-        assertEquals(5, result.byKey(MANAGED_BONUS).monthOfYear)
-        assertEquals(
-            DEFAULT_EXTRA_PAY_MONTH,
-            defaulted.byKey(managedProfitShareKey(DEFAULT_EXTRA_PAY_MONTH)).monthOfYear,
-        )
-        assertEquals(DEFAULT_EXTRA_PAY_MONTH, defaulted.byKey(MANAGED_BONUS).monthOfYear)
+        val profit = result.byKey(managedExtraKey("profit", 4))
+        assertEquals(50_000, profit.amountCents)
+        assertEquals(4, profit.monthOfYear)
+        assertEquals(IncomeFrequency.YEARLY, profit.frequency)
+        assertEquals("Profit share", profit.label)
+        assertEquals(10_000, result.byKey(managedExtraKey("bonus", 5)).amountCents)
     }
 
     @Test
     fun flexLines_splitTheAnnual() {
         val result = lines()
-        val amounts = List(FLEX_PAYMENTS) { result.byKey(managedFlexKey(it)).amountCents }
+        val amounts = listOf(1, 4, 7, 10).map { result.byKey(managedExtraKey("flex", it)).amountCents }
 
         assertEquals(listOf(24_500L, 24_500L, 24_500L, 24_500L), amounts)
-        assertEquals("Flexible benefits", result.byKey("profile_flex_q1").label)
+        assertEquals("Flexible benefits", result.byKey("profile_extra_flex_1").label)
     }
 
     @Test
@@ -179,12 +170,12 @@ class SalaryProfileLinesTest {
 
     @Test
     fun labels_areUsedForNewLines() {
-        val labels = SalaryLineLabels(netSalary = "Liquido", flex = "Flex")
+        val labels = SalaryLineLabels(netSalary = "Liquido")
 
         val result = salaryProfileLines(full, emptyList(), labels)
 
         assertEquals("Liquido", result.byKey(MANAGED_NET_SALARY).label)
-        assertEquals("Flex", result.byKey("profile_flex_q2").label)
+        assertEquals("Flexible benefits", result.byKey("profile_extra_flex_4").label)
     }
 
     @Test
@@ -196,10 +187,10 @@ class SalaryProfileLinesTest {
     fun stale_listsManagedLinesTheProfileNoLongerProduces() {
         val existing = lines()
 
-        val stale = staleManagedIds(full.copy(bonusCents = null, flexPpm = null), existing)
+        val stale = staleManagedIds(full.copy(extras = listOf(multipleExtra())), existing)
 
         assertEquals(
-            (listOf(MANAGED_BONUS) + List(FLEX_PAYMENTS, ::managedFlexKey)).toSet(),
+            (listOf(1, 4, 7, 10).map { managedExtraKey("flex", it) } + managedExtraKey("bonus", 5)).toSet(),
             stale.toSet(),
         )
     }
@@ -238,65 +229,109 @@ class SalaryProfileLinesTest {
         assertEquals(7, result.byKey(MANAGED_CHRISTMAS).monthOfYear)
     }
 
-    private fun profitLines(profile: SalaryProfile) = lines(profile).filter { it.id.startsWith(MANAGED_PROFIT_SHARE) }
+    private fun profitLines(months: Set<Int>) =
+        lines(full.copy(extras = listOf(multipleExtra(months = months))))
+            .filter { it.id.startsWith("profile_extra_profit_") }
 
     @Test
-    fun profitShare_oneMonth_getsTheWholeAmount() {
-        val result = profitLines(full.copy(profitShareMonths = setOf(6)))
+    fun extra_oneMonth_getsTheWholeAmount() {
+        val result = profitLines(setOf(6))
 
-        assertEquals(listOf("profile_profit_share_6"), result.map { it.managedKey })
+        assertEquals(listOf("profile_extra_profit_6"), result.map { it.managedKey })
         assertEquals(listOf(50_000L), result.map { it.amountCents })
     }
 
     @Test
-    fun profitShare_twoMonths_splitEvenly() {
-        val result = profitLines(full.copy(profitShareMonths = setOf(9, 3)))
+    fun extra_twoMonths_splitEvenly() {
+        val result = profitLines(setOf(9, 3))
 
         assertEquals(listOf(3, 9), result.map { it.monthOfYear })
         assertEquals(listOf(25_000L, 25_000L), result.map { it.amountCents })
     }
 
     @Test
-    fun profitShare_threeMonths_remainderOnTheLast() {
-        val total = lines(full).byKey(managedProfitShareKey(4)).amountCents
-        val result = profitLines(full.copy(profitShareMonths = setOf(3, 6, 9)))
+    fun extra_threeMonths_remainderOnTheLast() {
+        val result = profitLines(setOf(3, 6, 9))
 
         assertEquals(listOf(3, 6, 9), result.map { it.monthOfYear })
         assertEquals(listOf(16_666L, 16_666L, 16_668L), result.map { it.amountCents })
-        assertEquals(total, result.sumOf { it.amountCents })
+        assertEquals(50_000L, result.sumOf { it.amountCents })
     }
 
     @Test
-    fun profitShare_legacySingleMonth_isUsedWhenNoMonthsAreSet() {
-        val legacy = full.copy(profitShareMonths = emptySet(), profitShareMonth = 8)
-
-        assertEquals(listOf(8), legacy.effectiveProfitShareMonths)
-        assertEquals(listOf("profile_profit_share_8"), profitLines(legacy).map { it.managedKey })
-    }
-
-    @Test
-    fun profitShare_monthsWinOverLegacy_andDefaultIsMarch() {
-        val both = SalaryProfile(profitShareMonths = setOf(5, 2), profitShareMonth = 8)
-
-        assertEquals(listOf(2, 5), both.effectiveProfitShareMonths)
-        assertEquals(listOf(DEFAULT_EXTRA_PAY_MONTH), SalaryProfile().effectiveProfitShareMonths)
-        assertEquals(3, DEFAULT_EXTRA_PAY_MONTH)
-    }
-
-    @Test
-    fun stale_legacyProfitShareKey_isRemoved() {
+    fun stale_legacyKeys_areRemoved() {
         val legacy =
-            PlannedIncome(MANAGED_PROFIT_SHARE, "Profit share", 1, 0, managedKey = MANAGED_PROFIT_SHARE)
+            listOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS, managedFlexKey(1)).map {
+                PlannedIncome(it, "old", 1, 0, managedKey = it)
+            }
 
-        assertEquals(listOf(MANAGED_PROFIT_SHARE), staleManagedIds(full, listOf(legacy) + lines()))
+        assertEquals(
+            listOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS, managedFlexKey(1)),
+            staleManagedIds(full, legacy + lines()),
+        )
     }
 
     @Test
-    fun stale_profitShareMonthsDropped_areRemoved() {
-        val existing = lines(full.copy(profitShareMonths = setOf(3, 6)))
+    fun stale_extraMonthsDropped_areRemoved() {
+        val existing = lines(full.copy(extras = listOf(multipleExtra(months = setOf(3, 6)))))
 
-        val stale = staleManagedIds(full.copy(profitShareMonths = setOf(3)), existing)
+        val stale = staleManagedIds(full.copy(extras = listOf(multipleExtra(months = setOf(3)))), existing)
 
-        assertEquals(listOf(managedProfitShareKey(6)), stale)
+        assertEquals(listOf(managedExtraKey("profit", 6)), stale)
+    }
+
+    @Test
+    fun extraLines_relabelOnRename_keepingEarmarkAndOrder() {
+        val first =
+            lines().map {
+                if (it.id == "profile_extra_profit_4") it.copy(earmark = Earmark.Group("g"), order = 55) else it
+            }
+        val renamed = full.copy(extras = listOf(testExtra(), multipleExtra(name = "Dividends"), fixedExtra()))
+
+        val line = lines(renamed, first).byKey("profile_extra_profit_4")
+
+        assertEquals("Dividends", line.label)
+        assertEquals(Earmark.Group("g"), line.earmark)
+        assertEquals(55, line.order)
+    }
+
+    @Test
+    fun isValidManagedKey_acceptsFixedLegacyAndExtraKeys() {
+        val ok =
+            listOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS) +
+                listOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS, managedFlexKey(0), managedFlexKey(3)) +
+                managedProfitShareKey(12) + "profile_extra_abc123_1" + "profile_extra_a_12"
+        assertTrue(ok.all(::isValidManagedKey))
+    }
+
+    @Test
+    fun isValidManagedKey_rejectsBadKeys() {
+        val bad =
+            listOf(
+                "",
+                "profile_unknown",
+                "profile_extra_",
+                "profile_extra__3",
+                "profile_extra_abc_0",
+                "profile_extra_abc_13",
+                "profile_extra_abc",
+                "profile_extra_a-b_3",
+                "profile_extra_${"x".repeat(21)}_3",
+                "profile_flex_q5",
+                "profile_extra_abc_x",
+            )
+        assertTrue(bad.none(::isValidManagedKey))
+    }
+
+    @Test
+    fun parseManagedExtraKey_roundTripsAndRejects() {
+        assertEquals("abc" to 7, parseManagedExtraKey(managedExtraKey("abc", 7)))
+        assertEquals("a1" to 12, parseManagedExtraKey("profile_extra_a1_12"))
+        assertNull(parseManagedExtraKey("profile_extra_abc_0"))
+        assertNull(parseManagedExtraKey("profile_extra_abc_13"))
+        assertNull(parseManagedExtraKey("profile_extra_a_b_3"))
+        assertNull(parseManagedExtraKey("profile_extra_3"))
+        assertNull(parseManagedExtraKey(MANAGED_BONUS))
+        assertNull(parseManagedExtraKey("other_abc_3"))
     }
 }
