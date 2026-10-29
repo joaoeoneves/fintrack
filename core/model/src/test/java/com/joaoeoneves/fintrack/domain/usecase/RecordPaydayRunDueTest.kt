@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
-import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -28,18 +27,6 @@ class RecordPaydayRunDueTest : RecordPaydayTestBase() {
             assertTrue(stored().isEmpty())
             // A cursor of a line that no longer records itself is pruned.
             assertEquals(null, cursor())
-        }
-
-    @Test
-    fun legacyPaydayFlag_isIgnored() =
-        runTest {
-            plan.savePlannedIncome(line("p1", autoRecord = false))
-            automation.replaceSettings(
-                AutomationSettings(legacyPaydayEnabled = true, legacyPaydayRecordedThrough = sep),
-            )
-
-            assertEquals(0, useCase.runDue(payday, utc))
-            assertTrue(stored().isEmpty())
         }
 
     @Test
@@ -212,20 +199,6 @@ class RecordPaydayRunDueTest : RecordPaydayTestBase() {
             assertEquals(listOf("pay_p1_202610", "pay_p2_202610"), rows.map { it.id })
             assertEquals(1L, rows.first().amountCents)
             assertEquals(oct, cursor("p1"))
-        }
-
-    @Test
-    fun legacyRecIncomeInTheMonth_suppressesTheRincLine_butNotOthers() =
-        runTest {
-            plan.savePlannedIncome(line("rinc_abc"))
-            plan.savePlannedIncome(line("p2"))
-            incomes.addIncome(Income("rec_abc_20261005", "Old", 500L, at("2026-10-05T12:00:00Z"), null))
-            cursors("rinc_abc" to sep, "p2" to sep)
-
-            assertEquals(1, useCase.runDue(payday, utc))
-
-            assertEquals(listOf("pay_p2_202610", "rec_abc_20261005"), stored().map { it.id })
-            assertEquals(oct, cursor("rinc_abc"))
         }
 
     @Test
