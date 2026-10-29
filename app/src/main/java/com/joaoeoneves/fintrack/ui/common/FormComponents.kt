@@ -31,6 +31,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChipIcon
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -128,7 +129,7 @@ fun CategoryChipFlow(
             }
         }
         if (error != null) {
-            Text(text = error, style = MaterialTheme.typography.bodySmall, color = FinTrackTheme.colors.negative)
+            FieldErrorText(text = error)
         }
     }
 }

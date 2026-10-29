@@ -27,6 +27,7 @@ import com.joaoeoneves.fintrack.domain.model.MAX_WORKING_DAYS
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Amount
@@ -120,7 +121,7 @@ fun WorkingDaysDialog(
                 },
             ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }
 

@@ -8,7 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +26,7 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.moneySymbolsFor
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
@@ -190,7 +190,7 @@ private fun DeleteSalaryProfileDialog(
         title = { Text(stringResource(R.string.salary_delete_title)) },
         text = { Text(stringResource(R.string.salary_delete_message)) },
         confirmButton = { DestructiveTextButton(text = stringResource(R.string.salary_delete), onClick = onConfirm) },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }
 

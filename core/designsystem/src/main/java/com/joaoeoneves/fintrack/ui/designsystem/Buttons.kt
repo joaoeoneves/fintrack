@@ -124,3 +124,16 @@ fun DestructiveTextButton(
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
+
+/** The standard text button of dialogs (confirm, cancel, retry): labelLarge, neutral colour. */
+@Composable
+fun DialogTextButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    TextButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+        Text(text = text, style = MaterialTheme.typography.labelLarge)
+    }
+}

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -76,7 +76,7 @@ fun DeleteAllDataFlow(
                     )
                 },
                 dismissButton = {
-                    TextButton(onClick = viewModel::onDismiss) { Text(stringResource(R.string.action_cancel)) }
+                    DialogTextButton(text = stringResource(R.string.action_cancel), onClick = viewModel::onDismiss)
                 },
             )
     }
@@ -103,13 +103,16 @@ private fun ConfirmDeleteDialog(
                         },
                     ),
                 )
-                TextButton(onClick = onExportBackup) { Text(stringResource(R.string.delete_all_data_export_backup)) }
+                DialogTextButton(
+                    text = stringResource(R.string.delete_all_data_export_backup),
+                    onClick = onExportBackup,
+                )
             }
         },
         confirmButton = {
             DestructiveTextButton(text = stringResource(R.string.delete_all_data_confirm), onClick = onConfirm)
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }
 

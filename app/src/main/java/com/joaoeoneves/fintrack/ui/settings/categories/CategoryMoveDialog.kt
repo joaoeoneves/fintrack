@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
 import com.joaoeoneves.fintrack.ui.common.displayName
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 
 /**
@@ -124,10 +124,10 @@ private fun MoveAlert(
         title = { Text(title) },
         text = body,
         confirmButton = {
-            confirm?.let { (label, onClick) -> TextButton(onClick = onClick) { Text(stringResource(label)) } }
+            confirm?.let { (label, onClick) -> DialogTextButton(text = stringResource(label), onClick = onClick) }
         },
         dismissButton = {
-            dismissLabel?.let { TextButton(onClick = onDismiss) { Text(stringResource(it)) } }
+            dismissLabel?.let { DialogTextButton(text = stringResource(it), onClick = onDismiss) }
         },
     )
 }

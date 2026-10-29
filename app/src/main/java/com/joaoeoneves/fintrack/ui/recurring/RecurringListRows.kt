@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +22,7 @@ import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
@@ -107,6 +107,6 @@ internal fun RecurringDeleteDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.recurring_delete_confirm, name)) },
         confirmButton = { DestructiveTextButton(text = stringResource(R.string.cd_delete), onClick = onConfirm) },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }

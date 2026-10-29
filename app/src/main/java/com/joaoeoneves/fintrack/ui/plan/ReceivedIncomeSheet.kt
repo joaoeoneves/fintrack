@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -25,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.rememberDayMonthText
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
@@ -134,7 +134,7 @@ fun UndoReceivedDialog(
     FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.income_undo_title)) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_undo)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        confirmButton = { DialogTextButton(text = stringResource(R.string.action_undo), onClick = onConfirm) },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }
