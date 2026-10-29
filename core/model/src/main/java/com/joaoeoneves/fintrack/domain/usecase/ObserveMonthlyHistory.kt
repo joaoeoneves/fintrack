@@ -10,7 +10,6 @@ import com.joaoeoneves.fintrack.domain.model.MonthTotals
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.YearToDate
 import com.joaoeoneves.fintrack.domain.model.categoryMonthlyOf
-import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.incomeHistoryOf
 import com.joaoeoneves.fintrack.domain.model.leftoverOf
 import com.joaoeoneves.fintrack.domain.model.monthlyTotalsOf
@@ -19,7 +18,6 @@ import com.joaoeoneves.fintrack.domain.model.yearToDateOf
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
 import javax.inject.Inject
@@ -50,8 +48,8 @@ class ObserveMonthlyHistory
         operator fun invoke(
             endMonth: YearMonth,
             months: Int = DEFAULT_HISTORY_MONTHS,
-            zone: ZoneId = ZoneId.systemDefault(),
-            today: YearMonth = currentYearMonth(Instant.now(), zone),
+            zone: ZoneId,
+            today: YearMonth,
         ): Flow<MonthlyHistory> {
             val window = (months - 1 downTo 0).map { endMonth.minusMonths(it.toLong()) }
             val range =

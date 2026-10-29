@@ -45,7 +45,8 @@ class IncomeLineVersionedFromTest {
     fun earlierMonth_movesTheStartBack() {
         val result = line(1_500).versionedFrom(line(1_000, start = mar), jan)
         assertEquals(jan, result.startMonth)
-        assertEquals(AmountVersion(jan, 1_500L), result.versions.last())
+        // The later version is kept: the new amount applies from January, the old one still from March.
+        assertEquals(listOf(AmountVersion(jan, 1_500L), AmountVersion(mar, 1_000L)), result.versions)
     }
 
     @Test

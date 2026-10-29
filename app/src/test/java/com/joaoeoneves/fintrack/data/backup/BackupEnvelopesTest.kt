@@ -21,7 +21,7 @@ class BackupEnvelopesTest : BackupRepositoryTestBase() {
 
         val result = BackupCodec.decode(v13).success()
 
-        assertEquals(19, result.document.schemaVersion)
+        assertEquals(20, result.document.schemaVersion)
         assertEquals(
             LocalCategoryGroup("g-food", "Food", 0, null, null),
             result.document.categoryGroups

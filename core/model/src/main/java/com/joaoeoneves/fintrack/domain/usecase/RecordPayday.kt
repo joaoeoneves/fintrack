@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.asOf
+import com.joaoeoneves.fintrack.domain.model.attributeIncomes
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.initialLineCursor
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
@@ -92,7 +93,8 @@ class RecordPayday
                 val current = monthSettings.firstOrNull { it.month == month }
                 val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
                 val monthLines = due.filterValues { month in it }.keys.toList()
-                recorded += recordMonth(month, monthLines, IncomeMonth.forMonth(month, workingDays), zone) ?: break
+                val incomeMonth = IncomeMonth.forMonth(month, workingDays)
+                recorded += recordMonth(month, monthLines, incomeMonth, zone, cursors) ?: break
             }
             return recorded
         }
@@ -103,20 +105,47 @@ class RecordPayday
             lines: List<PlannedIncome>,
             incomeMonth: IncomeMonth,
             zone: ZoneId,
+            stored: Map<String, YearMonth>,
         ): Int? {
-            val labels = labelsProvider.current()
-            val existing = existingIncomes(month, zone) ?: return null
-            val missing =
-                lines
-                    .filter { it.isActiveIn(month) && it.asOf(month) != null }
-                    .filter { line -> existing.none { it.id == paydayIncomeId(line.id, month) } }
-                    .mapNotNull {
-                        val amount = incomeMonth.amountIn(it, month)
-                        val days = incomeMonth.workingDays(month)
-                        it.paydayIncome(month, days, it.payDateIn(month), zone, amount)?.named(it, labels)
-                    }
-            val cursors = lines.associate { it.id to month }
+            val missing = missingIncomes(month, lines, incomeMonth, zone) ?: return null
+            // Cursors only move forward: never below what is stored (a cache-only snapshot may be behind).
+            val cursors = lines.associate { it.id to maxOf(month, stored[it.id] ?: month) }
             return missing.size.takeIf { automationRepository.recordPayday(missing, cursors).isSuccess }
+        }
+
+        /** The incomes of [lines] not recorded yet in [month]; `null` when that could not be read. */
+        private suspend fun missingIncomes(
+            month: YearMonth,
+            lines: List<PlannedIncome>,
+            incomeMonth: IncomeMonth,
+            zone: ZoneId,
+        ): List<Income>? {
+            val labels = labelsProvider.current()
+            val absent =
+                existingIncomes(month, zone)
+                    ?.let { existing -> unreceived(month, lines, existing) }
+                    ?.let { candidates -> absentById(candidates, month) }
+                    ?: return null
+            return absent.mapNotNull {
+                val amount = incomeMonth.amountIn(it, month)
+                val days = incomeMonth.workingDays(month)
+                it.paydayIncome(month, days, it.payDateIn(month), zone, amount)?.named(it, labels)
+            }
+        }
+
+        // A payday income is looked up by its id too: a receipt whose date fell outside the month must not be
+        // overwritten (amount and date wiped) by the automatic one. `null` when a lookup failed.
+        private suspend fun absentById(
+            candidates: List<PlannedIncome>,
+            month: YearMonth,
+        ): List<PlannedIncome>? {
+            val absent = mutableListOf<PlannedIncome>()
+            for (line in candidates) {
+                val found = incomeRepository.getIncome(paydayIncomeId(line.id, month))
+                if (found.isFailure) return null
+                if (found.getOrNull() == null) absent += line
+            }
+            return absent
         }
 
         private suspend fun existingIncomes(
@@ -188,3 +217,15 @@ class RecordPayday
             return amountOverrideCents ?: planned
         }
     }
+
+/** The lines of [month] that pay and have no income attributed to them in [existing]. */
+private fun unreceived(
+    month: YearMonth,
+    lines: List<PlannedIncome>,
+    existing: List<Income>,
+): List<PlannedIncome> {
+    val received = attributeIncomes(month, existing, lines)
+    return lines
+        .filter { it.isActiveIn(month) && it.asOf(month) != null }
+        .filter { line -> received[line.id].isNullOrEmpty() }
+}

@@ -359,7 +359,14 @@ private fun PeriodItems.Loaded.toContent(
         filters = activeFilters.copy(incomeSource = incomeSource),
         analytics = analytics.following(sorted.filterIsInstance<Expense>(), catalog),
         incomeSources = sources,
-        summary = activitySummaryOf(activeFilters, incomeSource, period, overview, totals),
+        summary =
+            activitySummaryOf(
+                activeFilters,
+                incomeSource.takeIf { activeFilters.type == ActivityType.INCOME },
+                period,
+                overview,
+                totals,
+            ),
         categoryScope =
             envelope?.let { selected ->
                 catalog
@@ -393,7 +400,8 @@ private fun ActivityAnalytics.following(
 }
 
 /**
- * The one-line summary: money out of the visible list ([ActivityTotals.outCents], savings included) and money in. For a
+ * The one-line summary: spending of the visible list ([ActivityTotals.spendingCents], investments apart) and money
+ * in. For a
  * month period with no search or source filter the money in is the month's income ([PeriodOverview.monthIncome]);
  * otherwise it is the visible list's income by date.
  */
@@ -407,7 +415,7 @@ internal fun activitySummaryOf(
     val byFundingMonth =
         (period is Period.CurrentMonth || period is Period.Month) && filters.query.isBlank() && incomeSource == null
     return ActivitySummary(
-        spentCents = totals.outCents,
+        spentCents = totals.spendingCents,
         savedCents = totals.savedCents,
         receivedCents = if (byFundingMonth) overview.monthIncome.sumOf { it.amountCents } else totals.inCents,
     )

@@ -4,6 +4,7 @@ import android.util.Log
 import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.data.backup.gatedBy
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
+import com.joaoeoneves.fintrack.data.session.resubscribeOnError
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.ManagedLinesSync
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -15,7 +16,6 @@ import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -51,7 +51,7 @@ class ManagedIncomeSync
             if (!started.compareAndSet(false, true)) return
             scope.launch {
                 combine(profiles.observeSalaryProfile(), plannedIncome.observePlannedIncome(), ::Pair)
-                    .catch { Log.w(TAG, "Failed to observe the salary profile", it) }
+                    .resubscribeOnError(TAG)
                     .gatedBy(gate)
                     .collectLatest { gated ->
                         // Paused while a backup is restored (a new emission cancels any pass in flight).

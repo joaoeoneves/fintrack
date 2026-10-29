@@ -37,7 +37,8 @@ class RecordValidationAmountCapTest {
     fun plannedIncome_cap() {
         validatePlannedIncome(LocalPlannedIncome("p", "Salary", MAX_AMOUNT_CENTS, 0))
         invalid { validatePlannedIncome(LocalPlannedIncome("p", "Salary", over, 0)) }
-        invalid { validatePlannedIncome(LocalPlannedIncome("p", "Salary", 0, 0)) }
+        validatePlannedIncome(LocalPlannedIncome("p", "Salary", 0, 0))
+        invalid { validatePlannedIncome(LocalPlannedIncome("p", "Salary", -1, 0)) }
     }
 
     @Test

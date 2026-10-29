@@ -17,14 +17,22 @@ class MigrationPlannerPlannedIncomeTest {
     }
 
     @Test
-    fun accountWithAnyLine_copiesNoneAndSkipsNone() {
-        val remote = remoteSnapshot(plannedIncomeIds = setOf("other"))
+    fun accountLineWithTheSameNormalisedLabel_isNotCopiedAndCountsAsSkipped() {
+        val remote = remoteSnapshot(plannedIncomeIds = setOf("other"), plannedIncomeLabels = setOf("  SALARY  p1 "))
+        val extra = localPlanned("p3", label = "Bonus")
 
-        val plan = planMigration(localDoc().copy(plannedIncome = lines + localPlanned("bad", amountCents = 0)), remote)
+        val plan = planMigration(localDoc().copy(plannedIncome = lines + extra), remote)
 
-        assertTrue(plan.plannedIncome.isEmpty())
-        assertEquals(0, plan.skipped)
-        assertEquals(0, plan.total)
+        assertEquals(listOf("p2", "p3"), plan.plannedIncome.map { it.id })
+        assertEquals(1, plan.skipped)
+    }
+
+    @Test
+    fun accountLineWithTheSameId_isNotCopiedAndCountsAsSkipped() {
+        val plan = planMigration(localDoc().copy(plannedIncome = lines), remoteSnapshot(plannedIncomeIds = setOf("p1")))
+
+        assertEquals(listOf("p2"), plan.plannedIncome.map { it.id })
+        assertEquals(1, plan.skipped)
     }
 
     @Test
@@ -43,8 +51,9 @@ class MigrationPlannerPlannedIncomeTest {
 
         val plan = planMigration(local, remoteSnapshot())
 
-        assertEquals(listOf("ok"), plan.plannedIncome.map { it.id })
-        assertEquals(4, plan.skipped)
+        // Zero is a valid amount now; only negative, blank and over-long labels are dropped.
+        assertEquals(listOf("ok", "zero"), plan.plannedIncome.map { it.id })
+        assertEquals(3, plan.skipped)
     }
 
     @Test
@@ -63,7 +72,8 @@ class MigrationPlannerPlannedIncomeTest {
         val second = planMigration(local, remote.after(first))
 
         assertTrue(second.plannedIncome.isEmpty())
-        assertEquals(0, second.skipped)
+        // The lines the account now has are duplicates, so they count as skipped.
+        assertEquals(2, second.skipped)
     }
 
     @Test

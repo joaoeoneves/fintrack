@@ -6,8 +6,10 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
+import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.SALARY_EXTRA_ID_PATTERN
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
@@ -59,7 +61,7 @@ class FirestoreSalaryProfileRepository
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when online.
                 docRef(uid)
                     .set(profile.toFirestoreMap())
-                    .addOnFailureListener { Log.w(TAG, "Save salary profile failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Save salary profile failed"))
                 Unit
             }
         }
@@ -67,7 +69,7 @@ class FirestoreSalaryProfileRepository
         override suspend fun deleteSalaryProfile(): Result<Unit> {
             val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
             return runCatchingCancellable {
-                docRef(uid).delete().addOnFailureListener { Log.w(TAG, "Delete salary profile failed", it) }
+                docRef(uid).delete().addOnFailureListener(onFail(TAG, "Delete salary profile failed"))
                 Unit
             }
         }
@@ -107,6 +109,9 @@ internal fun SalaryProfile.toFirestoreMap(): Map<String, Any?> =
         putIfSet("netHolidayLumpCents", netHolidayLumpCents)
         putIfSet("netChristmasLumpCents", netChristmasLumpCents)
         putIfSet("mealRatePerDayCents", mealRatePerDayCents)
+        putIfSet("sector", sector?.name)
+        if (mealPayment != MealPayment.CARD) put("mealPayment", mealPayment.name)
+        if (otherDeductionsPpm != 0) put("otherDeductionsPpm", otherDeductionsPpm)
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
@@ -159,8 +164,17 @@ private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
         holidaySubsidyMonth = int("holidaySubsidyMonth") ?: defaults.holidaySubsidyMonth,
         christmasSubsidyMonth = int("christmasSubsidyMonth") ?: defaults.christmasSubsidyMonth,
         extras = parseExtras(),
+        sector = parseSector(),
+        mealPayment = parseMealPayment(),
+        otherDeductionsPpm = int("otherDeductionsPpm") ?: defaults.otherDeductionsPpm,
     )
 }
+
+private fun DocumentSnapshot.parseSector(): EmploymentSector? =
+    getString("sector")?.let { name -> EmploymentSector.entries.find { it.name == name } }
+
+private fun DocumentSnapshot.parseMealPayment(): MealPayment =
+    getString("mealPayment")?.let { name -> MealPayment.entries.find { it.name == name } } ?: MealPayment.CARD
 
 /** The `extras` list (malformed ones dropped, at most [MAX_SALARY_EXTRAS]); empty when absent. */
 private fun DocumentSnapshot.parseExtras(): List<SalaryExtra> =

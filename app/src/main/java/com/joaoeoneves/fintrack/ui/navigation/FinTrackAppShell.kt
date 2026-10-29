@@ -17,6 +17,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,6 +28,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.WriteErrors
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.ui.common.LocalDeleteUndo
@@ -82,6 +84,10 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
             }
         }
     val showRecurringDeleted = rememberRecurringDeletedHandler(snackbarHostState, undoLabel)
+    val writeFailedFormat = stringResource(R.string.error_write_rejected)
+    LaunchedEffect(writeFailedFormat) {
+        WriteErrors.events.collect { reason -> snackbarHostState.showSnackbar(writeFailedFormat.format(reason)) }
+    }
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,

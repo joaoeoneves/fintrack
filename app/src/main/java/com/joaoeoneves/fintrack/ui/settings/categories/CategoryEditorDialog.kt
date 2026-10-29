@@ -51,6 +51,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
@@ -90,6 +91,13 @@ internal fun CategoryEditorDialog(
             IconPicker(draft.iconKey, onSelected = { draft = draft.copy(iconKey = it) })
             ColorPicker(draft.colorKey, onSelected = { draft = draft.copy(colorKey = it) })
             KindPicker(draft.kind, onSelected = { draft = draft.copy(kind = it) })
+            if (state.mealCardAvailable && draft.kind == CategoryKind.SPENDING) {
+                SettingsSwitchRow(
+                    title = stringResource(R.string.category_field_meal_card),
+                    checked = draft.mealCardByDefault,
+                    onCheckedChange = { draft = draft.copy(mealCardByDefault = it) },
+                )
+            }
         }
         PrimaryPillButton(
             text = stringResource(R.string.action_save),

@@ -82,7 +82,8 @@ class MigrationPlannerRecordsTest {
         val plan = planMigration(local, remoteSnapshot())
 
         assertEquals(listOf(LocalBudget("a", 100)), plan.budgets)
-        assertEquals(0, plan.skipped)
+        // The dropped duplicate counts as skipped.
+        assertEquals(1, plan.skipped)
     }
 
     @Test

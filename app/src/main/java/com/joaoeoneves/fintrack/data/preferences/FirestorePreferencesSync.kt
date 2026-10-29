@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.SetOptions
+import com.joaoeoneves.fintrack.data.onFail
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
@@ -116,7 +117,7 @@ class FirestorePreferencesSync
         ) {
             doc
                 .set(fields + (UPDATED_AT to FieldValue.serverTimestamp()), SetOptions.merge())
-                .addOnFailureListener { Log.w(TAG, "Preferences upload failed", it) }
+                .addOnFailureListener(onFail(TAG, "Preferences upload failed"))
         }
 
         private fun prefsDoc(uid: String): DocumentReference =

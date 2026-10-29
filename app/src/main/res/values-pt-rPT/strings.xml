@@ -12,7 +12,7 @@
     <string name="plan_auto_last_working_day">Automático · último dia útil</string>
     <string name="plan_looks_like_salary_warning">Isto parece ser o teu salário, que já vem do perfil salarial.</string>
     <string name="plan_looks_like_salary">Parece repetir o salário</string>
-    <string name="recurring_income_hint">Rendimento recorrente? Está em Rendimento.</string>
+    <string name="recurring_income_hint">Rendimentos recorrentes? Estão em Rendimentos.</string>
     <string name="action_save">Guardar</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_remove">Remover</string>
@@ -35,7 +35,7 @@
     <string name="cd_previous_year">Ano anterior</string>
     <string name="cd_next_year">Ano seguinte</string>
     <string name="cd_change_period">Alterar período</string>
-    <string name="cd_pie_chart_total">Resumo de saídas. Total de saídas: %1$s (gastos %2$s, poupado ou investido %3$s).</string>
+    <string name="cd_pie_chart_total">Resumo de saídas. Total de saídas: %1$s (gastos %2$s, investido %3$s).</string>
     <string name="cd_pie_chart_category_item">%1$s, %2$d por cento, %3$s</string>
 
     <!-- Rótulos de campos partilhados -->
@@ -119,7 +119,7 @@
     <string name="activity_deleted_snackbar">Eliminado “%1$s”</string>
     <string name="activity_deleted_occurrence_snackbar">Eliminado. “%1$s” de %2$s fica ignorado.</string>
     <string name="activity_no_match">Nada corresponde a “%1$s”.</string>
-    <string name="activity_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
+    <string name="activity_no_match_filter">Nada corresponde ao filtro selecionado.</string>
     <string name="activity_empty">Ainda não há movimentos neste período.</string>
     <string name="activity_spent_total">Gasto</string>
     <string name="activity_envelope_all">Todos</string>
@@ -232,7 +232,7 @@
     <string name="category_field_color">Cor</string>
     <string name="category_field_kind">Tipo</string>
     <string name="category_kind_spending">Gastos</string>
-    <string name="category_kind_saving">Poupança</string>
+    <string name="category_kind_saving">Investimento</string>
     <string name="category_action_edit">Editar</string>
     <string name="category_action_archive">Arquivar</string>
     <string name="category_action_unarchive">Desarquivar</string>
@@ -270,8 +270,6 @@
         <item quantity="many">%1$d recorrentes</item>
         <item quantity="other">%1$d recorrentes</item>
     </plurals>
-    <string name="category_move_budget">O respetivo limite</string>
-    <string name="category_move_budget_merge">O respetivo limite (“%1$s” já tem um, que se mantém; este é descartado)</string>
     <string name="category_action_move">Mover</string>
     <string name="category_move_moving">A mover…</string>
     <string name="category_move_done">Itens movidos</string>
@@ -281,7 +279,7 @@
     <string name="settings_export_backup">Exportar cópia (JSON)</string>
     <string name="settings_restore_backup">Restaurar cópia (JSON)</string>
     <string name="action_restore">Restaurar</string>
-    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nGrupos: %3$d\nCategorias: %4$d\nRendimento previsto: %5$d\nRecorrentes: %6$d\nPlanos de poupança: %7$d\nPerfil salarial: %8$s</string>
+    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nGrupos: %3$d\nCategorias: %4$d\nRendimento previsto: %5$d\nRecorrentes: %6$d\nObjetivos: %7$d\nPerfil salarial: %8$s</string>
     <string name="backup_salary_no">Não</string>
     <string name="backup_salary_yes">Sim</string>
     <string name="backup_export_done_title">Cópia de segurança exportada</string>
@@ -299,6 +297,7 @@
     <string name="backup_error_read">Não foi possível ler o ficheiro selecionado</string>
     <string name="backup_error_write">Não foi possível escrever o ficheiro da cópia de segurança</string>
     <string name="backup_error_export_failed">Não foi possível criar a cópia de segurança</string>
+    <string name="backup_error_export_offline">Não foi possível ligar ao servidor. Liga-te e tenta de novo; nada foi exportado.</string>
     <string name="backup_error_restore_failed">Não foi possível restaurar a cópia de segurança. Os teus dados atuais não foram alterados.</string>
     <plurals name="backup_restore_skipped">
         <item quantity="one">%d registo inválido no ficheiro será ignorado.</item>
@@ -339,18 +338,15 @@
 
     <string name="plan_expected_income">Rendimento previsto</string>
     <string name="home_to_receive_title">A receber</string>
-    <string name="plan_add_income_line">Adicionar rendimento</string>
-    <string name="plan_income_line_new">Novo rendimento</string>
-    <string name="plan_income_line_edit">Editar rendimento</string>
+    <string name="plan_add_income_line">Adicionar rendimento previsto</string>
+    <string name="plan_income_line_new">Novo rendimento previsto</string>
+    <string name="plan_income_line_edit">Editar rendimento previsto</string>
     <string name="plan_field_label">Nome</string>
     <string name="plan_field_amount">Valor</string>
     <string name="error_plan_label_required">Indica um nome</string>
     <string name="error_plan_label_too_long">Máximo de 50 caracteres</string>
-    <string name="error_plan_save_failed">Não foi possível guardar o plano</string>
-    <string name="dashboard_breakdown_actual">Real</string>
-    <string name="dashboard_breakdown_planned">Planeado</string>
-    <string name="dashboard_planned_per_month">Planeado / mês</string>
-    <string name="cd_pie_chart_planned_total">Alocação planeada. Total: %1$s (gastos %2$s, poupança %3$s).</string>
+    <string name="error_plan_save_failed">Não foi possível guardar</string>
+    <string name="cd_pie_chart_spending_total">Gastos por categoria. Total: %1$s.</string>
 
     <!-- Recorrentes -->
     <string name="recurring_title">Recorrentes</string>
@@ -406,7 +402,7 @@
     <string name="nav_activity">Movimentos</string>
     <string name="nav_income">Rendimentos</string>
     <string name="nav_spending">Gastos</string>
-    <string name="tab_configure">Configurar</string>
+    <string name="tab_configure">Ajustes</string>
     <string name="spending_new_group">Novo grupo</string>
     <string name="insights_split_title">Fixo vs. variável</string>
     <string name="insights_split_fixed">Fixo</string>
@@ -470,7 +466,7 @@
     <string name="salary_mode_net">Valores líquidos</string>
     <string name="salary_group_salary">Salário</string>
     <string name="salary_field_base">Salário base bruto (mensal)</string>
-    <string name="salary_group_duo">Duodécimos</string>
+    <string name="salary_group_duo">Subsídios em duodécimos</string>
     <string name="salary_duo_hint">Parte dos subsídios de férias e de Natal paga todos os meses</string>
     <string name="salary_spread_none">Sem</string>
     <string name="salary_spread_half" formatted="false">50%</string>
@@ -484,12 +480,12 @@
     <string name="salary_ss_hint">11 se vazio</string>
     <string name="salary_group_net">Valores líquidos</string>
     <string name="salary_field_net_monthly">Salário líquido mensal</string>
-    <string name="salary_net_monthly_hint">Tal como recebes, com duodécimos</string>
+    <string name="salary_net_monthly_hint">Tal como recebes todos os meses</string>
     <string name="salary_field_net_holiday">Subsídio de férias (líquido)</string>
     <string name="salary_field_net_christmas">Subsídio de Natal (líquido)</string>
     <string name="salary_group_subsidy_months">Meses dos subsídios</string>
     <string name="salary_subsidy_months">Subsídios pagos em</string>
-    <string name="salary_meal_hint">Pago por cada dia útil; marca as férias nos dias úteis do Plano.</string>
+    <string name="salary_meal_hint">Pago por cada dia útil; define as férias e os dias sem trabalho nos dias úteis do separador Rendimentos.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
     <string name="salary_extras_add">Adicionar extra</string>
@@ -507,7 +503,19 @@
     <string name="salary_extra_value_fixed_per_payment">Valor por pagamento</string>
     <string name="salary_extra_value_multiple_per_payment">Múltiplo do salário base por pagamento</string>
     <string name="salary_extra_value_percent_per_payment" formatted="false">Percentagem do bruto anual por pagamento (%)</string>
-    <string name="salary_extra_per_payment_and_year">%1$s por pagamento · %2$s/ano</string>
+    <string name="salary_extra_per_payment">%1$s por pagamento</string>
+    <string name="salary_extra_payments_total">%1$d pagamentos · total %2$s por ano</string>
+    <string name="salary_year_payments_title">Pagamentos ao longo do ano</string>
+    <string name="salary_year_each">%1$s cada</string>
+    <string name="salary_year_meal">Subsídio de refeição</string>
+    <string name="salary_year_meal_day">%1$s por dia útil</string>
+    <string name="salary_year_meal_year">≈ %1$s por ano</string>
+    <string name="salary_year_title">No ano</string>
+    <string name="salary_year_net">Total anual líquido estimado</string>
+    <string name="salary_year_gross">Bruto no ano</string>
+    <string name="salary_year_ss">Segurança Social no ano</string>
+    <string name="salary_year_other_deductions">ADSE / outros descontos no ano</string>
+    <string name="salary_year_irs">IRS no ano</string>
     <string name="salary_extra_months">Mês de pagamento</string>
     <string name="salary_extra_deductions">Descontos</string>
     <string name="salary_extra_deductions_none">Nenhum</string>
@@ -520,9 +528,10 @@
     <string name="category_deleted_placeholder">Categoria eliminada</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Indica um valor válido</string>
-    <string name="salary_breakdown_title">Detalhe</string>
+    <string name="salary_breakdown_title">Por mês (salário + duodécimos)</string>
     <string name="salary_breakdown_gross">Bruto mensal</string>
     <string name="salary_breakdown_ss">Segurança Social</string>
+    <string name="salary_breakdown_other_deductions">ADSE / outros descontos</string>
     <string name="salary_breakdown_irs">IRS</string>
     <string name="salary_breakdown_net">Líquido mensal</string>
     <string name="salary_breakdown_meal">Subsídio de refeição em %1$s</string>
@@ -535,8 +544,8 @@
 
     <string name="settings_delete_all_data">Apagar todos os dados</string>
     <string name="delete_all_data_title">Apagar todos os dados?</string>
-    <string name="delete_all_data_message_account">Isto apaga permanentemente todas as tuas despesas, rendimentos, plano, categorias, grupos, recorrentes e planos de poupança da tua conta, em todos os teus dispositivos. Exporta primeiro uma cópia de segurança se puderes vir a precisar deles.</string>
-    <string name="delete_all_data_message_device">Isto apaga permanentemente todas as tuas despesas, rendimentos, plano, categorias, grupos, recorrentes e planos de poupança neste dispositivo. Exporta primeiro uma cópia de segurança se puderes vir a precisar deles.</string>
+    <string name="delete_all_data_message_account">Isto apaga permanentemente todas as tuas despesas, rendimentos, plano, categorias, grupos, recorrentes e objetivos da tua conta, em todos os teus dispositivos. Exporta primeiro uma cópia de segurança se puderes vir a precisar deles.</string>
+    <string name="delete_all_data_message_device">Isto apaga permanentemente todas as tuas despesas, rendimentos, plano, categorias, grupos, recorrentes e objetivos neste dispositivo. Exporta primeiro uma cópia de segurança se puderes vir a precisar deles.</string>
     <string name="delete_all_data_export_backup">Exportar cópia de segurança</string>
     <string name="delete_all_data_confirm">Apagar tudo</string>
     <string name="delete_all_data_progress">A apagar os teus dados…</string>
@@ -544,22 +553,23 @@
     <string name="delete_all_data_error_title">Falha ao apagar</string>
     <string name="delete_all_data_error">Não foi possível apagar todos os teus dados. Alguns podem já ter sido apagados. Verifica a ligação e tenta novamente.</string>
     <string name="plan_other_income">Outro rendimento</string>
-    <string name="salary_duplicates_message">Tens outros rendimentos mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-los para não contar a dobrar?</string>
+    <string name="salary_duplicates_message">Tens outros rendimentos mensais. O perfil salarial já inclui o salário — removê-los para não contar a dobrar?</string>
+    <string name="salary_duplicates_message_meal">Tens outros rendimentos mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-los para não contar a dobrar?</string>
     <string name="salary_duplicates_remove">Remover selecionadas</string>
     <string name="salary_duplicates_keep">Manter</string>
     <string name="plan_income_salary">Salário</string>
     <string name="plan_income_meal">Subsídio de refeição</string>
-    <string name="plan_income_subsidies">Subsídios</string>
+    <string name="plan_income_subsidies">Subsídios em duodécimos</string>
     <string name="salary_breakdown_net_base">Salário base (líquido)</string>
-    <string name="salary_breakdown_net_duo">Duodécimos (líquido)</string>
-    <string name="salary_line_duodecimos">Subsídios (duodécimos)</string>
+    <string name="salary_breakdown_net_duo">Subsídios em duodécimos (líquido)</string>
+    <string name="salary_line_duodecimos">Subsídios em duodécimos</string>
     <string name="income_received">Recebido</string>
     <string name="plan_received_on">Recebido a %1$s</string>
     <string name="income_mark_received">Marcar como recebido</string>
     <string name="income_undo_received">Desfazer recebido</string>
     <string name="income_undo_title">Desfazer recebido?</string>
     <string name="plan_payday">Dia de pagamento: %1$s</string>
-    <string name="plan_payday_received">Salário recebido a %1$s</string>
+    <string name="plan_payday_received">Recebido a %1$s</string>
     <string name="plan_payday_upcoming">Recebes a %1$s</string>
     <string name="plan_received_amount">Valor recebido</string>
     <string name="envelope_edit_title">Editar grupo</string>
@@ -567,14 +577,12 @@
     <string name="envelope_name">Nome</string>
     <string name="envelope_categories">Categorias</string>
     <string name="envelope_add_category">Adicionar categoria</string>
-    <string name="envelope_saving_hidden_hint">As categorias de poupança pertencem ao plano de poupança, por isso não aparecem aqui.</string>
+    <string name="envelope_saving_hidden_hint">As categorias de investimento não têm limite, por isso não aparecem aqui.</string>
     <string name="envelope_leaves_other">Sai de %1$s</string>
     <string name="envelope_delete">Eliminar grupo</string>
     <string name="envelope_deleted">Grupo eliminado</string>
     <string name="envelope_error_name_blank">Escreve um nome</string>
     <string name="envelope_error_name_duplicate">Já existe um grupo com este nome</string>
-    <string name="envelope_card_funded">Financiado por %1$s</string>
-    <string name="envelope_funded_overflow">%1$s cobre %2$s; %3$s vêm de outro rendimento.</string>
     <string name="salary_setup_done">Salário guardado</string>
     <string name="plan_configure_bills">Recorrentes</string>
     <string name="plan_configure_categories">Categorias</string>
@@ -615,7 +623,7 @@
     <string name="backup_restore_partial_title">Restauro incompleto</string>
     <string name="backup_restore_partial_message">Alguns dados já foram substituídos. Tenta novamente para terminar — repetir não duplica nada.</string>
     <string name="backup_error_restore_offline">Sem ligação. Nada foi alterado.</string>
-    <string name="activity_total_out_includes_saving">inclui %1$s poupados</string>
+    <string name="activity_total_out_includes_saving">Investido %1$s</string>
     <string name="pending_more_options">Mais opções</string>
     <string name="pending_change_amount">Alterar valor</string>
     <string name="pending_automatic">Automático · %1$s</string>
@@ -638,9 +646,6 @@
     <string name="activity_since_january">Desde janeiro</string>
     <string name="activity_ytd_spent">Gasto</string>
     <string name="activity_ytd_received">Recebido</string>
-    <string name="activity_ytd_saved">Poupado</string>
-    <string name="activity_ytd_leftover">Sobrou até %1$s</string>
-    <string name="activity_leftover_average">Média por mês: %1$s</string>
     <string name="activity_evolution">Evolução</string>
     <string name="activity_received_total">Recebido</string>
     <string name="activity_expected_difference">Esperado %1$s · Diferença %2$s</string>
@@ -662,14 +667,13 @@
     <string name="detail_not_found">Este item já não existe.</string>
     <string name="detail_context_envelope">Em: %1$s</string>
     <string name="detail_context_no_envelope">Sem grupo</string>
-    <string name="detail_context_limit">Limite %1$s</string>
     <string name="detail_context_expected">Esperado %1$s</string>
     <string name="detail_source_unknown">Rendimento</string>
-    <string name="detail_salary_vs_spent">Recebido no fim de %1$s: %2$s · Gasto em %3$s: %4$s</string>
-    <string name="detail_salary_vs_spent_partial">Recebido no fim de %1$s: %2$s · Gasto até agora em %3$s: %4$s</string>
-    <string name="home_income_title">Rendimentos</string>
+    <string name="detail_salary_vs_spent">Recebido em %1$s: %2$s · Gasto em %3$s: %4$s</string>
+    <string name="detail_salary_vs_spent_partial">Recebido em %1$s: %2$s · Gasto até agora em %3$s: %4$s</string>
+    <string name="home_income_title">Recebido</string>
     <string name="home_income_of_expected">de %1$s esperado</string>
-    <string name="home_spending_title">Gastos</string>
+    <string name="home_spending_title">Gasto</string>
     <string name="home_invested_month">Investido: %1$s este mês · %2$s em %3$s</string>
     <string name="home_invested_other_month">Investido: %1$s em %2$s · %3$s em %4$s</string>
     <string name="home_invested_year">Investido em %1$s: %2$s</string>
@@ -680,4 +684,35 @@
     <string name="investments_by_instrument">Por instrumento</string>
     <string name="investments_movements">Movimentos</string>
     <string name="investments_no_movements">Sem investimentos neste mês</string>
+    <string name="plan_payday_earlier_if_closed">Se calhar ao fim de semana ou feriado, recebo no dia útil anterior</string>
+    <string name="salary_group_sector">Onde trabalhas</string>
+    <string name="salary_sector_private">Setor privado</string>
+    <string name="salary_sector_public">Função pública</string>
+    <string name="salary_field_ss_public" formatted="false">SS/CGA (%)</string>
+    <string name="salary_ss_hint_public">11 se vazio</string>
+    <string name="salary_breakdown_ss_public">SS/CGA</string>
+    <string name="salary_field_other_deductions" formatted="false">ADSE / outros descontos (%)</string>
+    <string name="salary_meal_payment">O subsídio de refeição é pago</string>
+    <string name="salary_meal_payment_card">Em cartão refeição</string>
+    <string name="salary_meal_payment_salary">Com o salário</string>
+    <string name="salary_setup_sector_question">Onde trabalhas?</string>
+    <string name="salary_setup_irs_hint_public">Opcional. A SS/CGA usa 11%.</string>
+    <string name="salary_setup_adse">Tenho ADSE</string>
+    <string name="salary_setup_adse_hint">Desconta 3,5% do bruto.</string>
+    <string name="salary_setup_irs_jovem">Tenho IRS Jovem</string>
+    <string name="salary_setup_meal_question">Recebes subsídio de refeição?</string>
+    <string name="salary_setup_meal_no">Não</string>
+    <string name="salary_setup_meal_card">Sim, em cartão</string>
+    <string name="salary_setup_meal_salary">Sim, com o salário</string>
+    <string name="expense_field_meal_card">Pago com cartão refeição</string>
+    <string name="category_field_meal_card">Normalmente pago com cartão refeição</string>
+    <string name="income_meal_card">Cartão refeição</string>
+    <string name="income_meal_card_balance">Saldo</string>
+    <string name="income_meal_card_detail">Recebido %1$s · gasto %2$s</string>
+    <string name="income_outlook">Rendimentos por mês</string>
+    <string name="income_outlook_received">Recebido</string>
+    <string name="income_outlook_expected">Previsto</string>
+    <string name="income_outlook_total">Total do ano</string>
+    <string name="income_outlook_total_detail">Recebido %1$s · previsto %2$s</string>
+    <string name="error_write_rejected">Não foi possível guardar no servidor: %1$s</string>
 </resources>

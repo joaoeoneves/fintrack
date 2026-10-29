@@ -3,6 +3,12 @@ package com.joaoeoneves.fintrack.domain.model
 /** Whether the salary profile is typed as a gross salary with tax rates or as the net amounts received. */
 enum class SalaryInputMode { GROSS, NET }
 
+/** Where the user works; only wording and set-up presets depend on it, never the math. */
+enum class EmploymentSector { PRIVATE, PUBLIC }
+
+/** How the meal allowance is paid: loaded on a meal card, or added to the salary. */
+enum class MealPayment { CARD, WITH_SALARY }
+
 /** Highest value of a rate in parts per million (100%). */
 const val PPM_SCALE = 1_000_000
 
@@ -51,6 +57,7 @@ data class SalaryLineLabels(
  * monthly salary (0, 50% or 100%); [irsBasePpm] / [irsSubsidiesPpm] (default: the base rate) are the withholding
  * rates, the subsidy one for the monthly twelfths only (the lump sums use the base rate);
  * [irsJovemExemptPpm] is the exempt share of the IRS (IRS paid = rate x (1 - exempt)).
+ * [otherDeductionsPpm] is a further flat rate taken from the gross like SS.
  * NET mode: the net amounts as received, no tax fields. [extras] are the user-defined yearly extras.
  */
 data class SalaryProfile(
@@ -70,6 +77,11 @@ data class SalaryProfile(
     val holidaySubsidyMonth: Int = DEFAULT_HOLIDAY_SUBSIDY_MONTH,
     val christmasSubsidyMonth: Int = DEFAULT_CHRISTMAS_SUBSIDY_MONTH,
     val extras: List<SalaryExtra> = emptyList(),
+    /** `null` means [EmploymentSector.PRIVATE]. */
+    val sector: EmploymentSector? = null,
+    val mealPayment: MealPayment = MealPayment.CARD,
+    /** ADSE, SAMS, union dues and similar, withheld like SS (monthly pay and subsidy lumps, not extras). */
+    val otherDeductionsPpm: Int = 0,
 ) {
     /** The subsidy IRS rate actually used: the explicit one or the base rate. */
     val effectiveIrsSubsidiesPpm: Int get() = irsSubsidiesPpm ?: irsBasePpm

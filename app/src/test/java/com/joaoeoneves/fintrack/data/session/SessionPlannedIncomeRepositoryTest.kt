@@ -48,6 +48,6 @@ class SessionPlannedIncomeRepositoryTest : LocalStoreTestBase() {
     @Test
     fun guest_invalidLine_failsThroughTheLocalValidation() =
         runStoreTest {
-            assertTrue(repo.savePlannedIncome(line.copy(amountCents = 0)).isFailure)
+            assertTrue(repo.savePlannedIncome(line.copy(amountCents = -1)).isFailure)
         }
 }

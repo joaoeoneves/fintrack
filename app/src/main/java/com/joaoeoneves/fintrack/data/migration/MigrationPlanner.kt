@@ -50,6 +50,8 @@ data class RemoteAccountSnapshot(
     val goalIds: Set<String> = emptySet(),
     /** Whether the account already has automation settings (a singleton: the account wins). */
     val hasAutomation: Boolean = false,
+    /** Labels of the account's income lines; a guest line with the same normalised label is not copied. */
+    val plannedIncomeLabels: Set<String> = emptySet(),
 )
 
 /**
@@ -79,8 +81,6 @@ data class MigrationPlan(
             (if (automation != null) 1 else 0)
 }
 
-private fun String.nameKey(): String = trim().lowercase()
-
 private class CategoryResolution(
     /** Local category id to the account category id it ends up as. */
     val idMap: Map<String, String>,
@@ -94,17 +94,18 @@ private class CategoryResolution(
 /**
  * Decides what to copy from [local] into the account described by [remote], without touching either:
  * - custom categories: a local id already in the account is kept as is (nothing to write); else a
- *   category with the same trimmed, case-insensitive name is reused (local id remapped); else it is
+ *   category with the same trimmed, case-insensitive name and the same kind is reused (local id remapped); else it is
  *   written under its own id, ordered after the account's categories;
  * - envelopes (category groups): a local id already in the account is kept as is; else an envelope with the same
  *   trimmed, case-insensitive name is reused (the account's amount and funding line win, the categories are
  *   remapped to it); else it is written under its own id, ordered after the account's envelopes, keeping its
  *   funding line only when the guest's income lines are copied too. Categories are copied with their group
  *   remapped (none when unresolved);
- * - built-in overrides and budgets: what the account already has wins;
- * - planned income: if the account has any line, the account wins and none is copied, except the lines migrated
- *   from a recurring income (`rinc_` ids) it does not have yet; else every valid line is copied under its own id.
- *   Copied automation cursors are limited to the copied lines;
+ * - built-in overrides and budgets: what the account already has wins silently; a second guest budget that merges
+ *   into the same account category as an earlier one is dropped and counted as skipped;
+ * - planned income: a valid line is copied under its own id unless the account already has that id or a line with
+ *   the same normalised label (case, accents and spacing ignored); the ones not copied count as skipped, invalid
+ *   ones too. Copied automation cursors are limited to the copied lines;
  * - the salary profile is a singleton: if the account has one the guest's is not copied (and the guest's managed
  *   income lines lose their managed key); else it is copied when valid;
  * - savings goals keep their ids; ids already in the account are skipped, the linked category is remapped like an
@@ -132,12 +133,12 @@ fun planMigration(
 
     var skipped = resolution.skipped + groups.skipped
     val budgets = mutableListOf<LocalBudget>()
-    val seenBudgets = remote.budgetCategoryIds.toMutableSet()
+    val seenBudgets = mutableSetOf<String>()
     for (budget in local.budgets) {
         val mapped = resolution.targetOf(budget.categoryId)?.let { budget.copy(categoryId = it) }
-        if (mapped == null || !isValid { mapped.validated(known) }) {
+        if (mapped == null || !isValid { mapped.validated(known) } || !seenBudgets.add(mapped.categoryId)) {
             skipped++
-        } else if (seenBudgets.add(mapped.categoryId)) {
+        } else if (mapped.categoryId !in remote.budgetCategoryIds) {
             budgets += mapped
         }
     }
@@ -153,7 +154,7 @@ fun planMigration(
     val salaryProfile = profileToCopy(local, remote)
     val plannedIncome =
         plannedIncomeToCopy(local.plannedIncome, remote, keepManaged = salaryProfile != null)
-    if (remote.plannedIncomeIds.isEmpty()) skipped += local.plannedIncome.size - plannedIncome.size
+    skipped += local.plannedIncome.size - plannedIncome.size
     // An envelope's funding line only survives when the guest's lines are copied under the same ids.
     val copiedLineIds = plannedIncome.mapTo(mutableSetOf()) { it.id }
     val groupsToWrite =
@@ -200,14 +201,15 @@ private fun recurringToCopy(
             mapped?.takeIf { isValid { validateRecurring(it, known) } }
         }
 
-/** Valid local lines to copy; none when the account already has any line (the account wins). */
+/** Valid local lines to copy, except the ones whose id or normalised label the account already has. */
 private fun plannedIncomeToCopy(
     local: List<LocalPlannedIncome>,
     remote: RemoteAccountSnapshot,
     keepManaged: Boolean,
 ): List<LocalPlannedIncome> {
-    if (remote.plannedIncomeIds.isNotEmpty()) return emptyList()
+    val remoteLabels = remote.plannedIncomeLabels.mapTo(mutableSetOf()) { it.labelKey() }
     return local
+        .filter { it.id !in remote.plannedIncomeIds && it.label.labelKey() !in remoteLabels }
         // Managed lines without a profile to follow would be read-only forever: they become plain lines.
         .map { if (keepManaged) it else it.copy(managedKey = null) }
         .filter { isValid { validatePlannedIncome(it) } }
@@ -240,7 +242,7 @@ private class CategoryResolver(
     init {
         remote.categories
             .filterNot { it.builtIn }
-            .forEach { nameToId.putIfAbsent(it.effectiveName().nameKey(), it.id.value) }
+            .forEach { nameToId.putIfAbsent(nameKindKey(it.effectiveName(), it.kind.name), it.id.value) }
         val accountMax = mergeCategories(remote.categories).map { it.order }.filter { it != Int.MAX_VALUE }.maxOrNull()
         nextOrder = (accountMax ?: -1) + 1
     }
@@ -259,7 +261,7 @@ private class CategoryResolver(
     private fun LocalCategory.withGroupRemapped(): LocalCategory = copy(groupId = groupId?.let { groupIdMap[it] })
 
     private fun resolveCustom(category: LocalCategory) {
-        val existing = category.name?.nameKey()?.let { nameToId[it] }
+        val existing = category.name?.let { nameToId[nameKindKey(it, category.kind)] }
         val ready = category.withGroupRemapped().copy(order = nextOrder)
         when {
             category.id in remoteIds -> idMap[category.id] = category.id
@@ -268,7 +270,7 @@ private class CategoryResolver(
                 nextOrder++
                 idMap[category.id] = category.id
                 toWrite += ready
-                category.name?.let { nameToId[it.nameKey()] = category.id }
+                category.name?.let { nameToId[nameKindKey(it, category.kind)] = category.id }
             }
             else -> skipped++
         }

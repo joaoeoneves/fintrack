@@ -97,6 +97,7 @@ fun SalaryProfileScreen(
     if (duplicates.isNotEmpty()) {
         SalaryDuplicatesDialog(
             lines = duplicates,
+            hasMeal = viewModel.hasMeal,
             onRemove = viewModel::onRemoveDuplicates,
             onKeep = viewModel::onKeepDuplicates,
         )
@@ -167,6 +168,7 @@ private fun SalaryProfileContent(
             label = { stringResource(modeLabel(it)) },
             onSelect = { actions.onChange(form.copy(mode = it)) },
         )
+        SectorSection(form, actions.onChange)
         SalaryBreakdownCard(state)
         if (form.mode == SalaryInputMode.GROSS) {
             GrossSections(form, state.invalid, actions.onChange)

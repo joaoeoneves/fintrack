@@ -93,18 +93,19 @@ fun IncomeRow.payingLinesByPayMonth(
 }
 
 /**
- * The incomes already recorded for every paying line of this row for [month], or `null` when the row pays
- * nothing or any paying line is missing one. Each line is looked up in its own pay month.
+ * The incomes already recorded for every paying line of this row for [month] (attributed with the one rule of
+ * [lineOfIncome] against [allLines]), or `null` when the row pays nothing or any paying line has none.
  */
 fun IncomeRow.receivedIncomes(
     month: YearMonth,
     income: IncomeMonth,
     incomes: Collection<Income>,
+    allLines: List<PlannedIncome> = lines,
 ): List<Income>? {
-    val byId = incomes.associateBy { it.id }
+    val attributed = attributeIncomes(month, incomes, allLines)
     val paying = payingLines(month, income)
-    val found = paying.mapNotNull { byId[paydayIncomeId(it.id, month)] }
-    return found.takeIf { paying.isNotEmpty() && found.size == paying.size }
+    val found = paying.map { attributed[it.id].orEmpty() }
+    return found.takeIf { paying.isNotEmpty() && found.all { it.isNotEmpty() } }?.flatten()
 }
 
 /** The day this row was received (the latest of its incomes' local days), or `null` when not received. */
@@ -113,7 +114,8 @@ fun IncomeRow.receivedOn(
     income: IncomeMonth,
     incomes: Collection<Income>,
     zone: ZoneId,
-): LocalDate? = receivedIncomes(month, income, incomes)?.maxOf { it.date }?.atZone(zone)?.toLocalDate()
+    allLines: List<PlannedIncome> = lines,
+): LocalDate? = receivedIncomes(month, income, incomes, allLines)?.maxOf { it.date }?.atZone(zone)?.toLocalDate()
 
 /** The line id and pay month a payday income id (`pay_<lineId>_<yyyyMM>`) stands for; `null` for any other id. */
 fun parsePaydayIncomeId(id: String): Pair<String, YearMonth>? {

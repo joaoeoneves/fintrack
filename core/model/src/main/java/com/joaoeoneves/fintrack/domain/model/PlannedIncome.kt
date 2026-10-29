@@ -25,8 +25,8 @@ enum class IncomeFrequency { MONTHLY, YEARLY, ONCE }
  * amount, basis and schedule follow the profile, only the label is the user's.
  *
  * With [autoRecord] on, the line's income is recorded by the app itself on its pay date (see `RecordPayday`);
- * [payDay] is that day of the month (1..31, clamped to the month's length, not moved off weekends) or `null` for
- * the month's last working day.
+ * [payDay] is that day of the month (1..31, clamped to the month's length; with [payDayEarlierIfClosed] a
+ * weekend or holiday moves it to the previous working day) or `null` for the month's last working day.
  *
  * [startMonth] is the first plan month the line applies in (null = always); [versions] hold the amount history
  * ([amountCents] is the latest); see [asOf].
@@ -44,6 +44,7 @@ data class PlannedIncome(
     val managedKey: String? = null,
     val autoRecord: Boolean = false,
     val payDay: Int? = null,
+    val payDayEarlierIfClosed: Boolean = false,
     val startMonth: YearMonth? = null,
     val versions: List<AmountVersion> = emptyList(),
 )

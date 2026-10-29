@@ -106,6 +106,7 @@ private data class ExpenseFormActions(
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
     val onRefundChanged: (Boolean) -> Unit,
+    val onMealCardChanged: (Boolean) -> Unit,
     val onDelete: () -> Unit,
 )
 
@@ -117,6 +118,7 @@ private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
         onDateSelected = ::onDateSelected,
         onNoteChanged = ::onNoteChanged,
         onRefundChanged = ::onRefundChanged,
+        onMealCardChanged = ::onMealCardChanged,
         onDelete = ::onDelete,
     )
 
@@ -177,17 +179,32 @@ private fun ExpenseForm(
             )
         }
 
-        SettingsSwitchRow(
-            title = stringResource(R.string.expense_field_refund),
-            checked = form.isRefund,
-            onCheckedChange = actions.onRefundChanged,
-            supportingText = stringResource(R.string.expense_field_refund_hint),
-        )
+        RefundAndMealCardSwitches(form = form, actions = actions)
 
         ExpenseDateAndNoteFields(form = form, actions = actions)
 
         form.saveError?.let { FormSaveError(it.asString()) }
         if (form.canDelete) FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
+    }
+}
+
+@Composable
+private fun RefundAndMealCardSwitches(
+    form: ExpenseFormState,
+    actions: ExpenseFormActions,
+) {
+    SettingsSwitchRow(
+        title = stringResource(R.string.expense_field_refund),
+        checked = form.isRefund,
+        onCheckedChange = actions.onRefundChanged,
+        supportingText = stringResource(R.string.expense_field_refund_hint),
+    )
+    if (form.mealCardAvailable) {
+        SettingsSwitchRow(
+            title = stringResource(R.string.expense_field_meal_card),
+            checked = form.paidWithMealCard,
+            onCheckedChange = actions.onMealCardChanged,
+        )
     }
 }
 

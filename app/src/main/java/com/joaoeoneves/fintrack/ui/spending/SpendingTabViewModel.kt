@@ -12,6 +12,7 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
+import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
@@ -119,7 +120,7 @@ class SpendingTabViewModel
 
         private val history: Flow<MonthlyHistory?> =
             historyWindow.flatMapLatest { (end, months) ->
-                observeMonthlyHistory(end, months, clock.zone)
+                observeMonthlyHistory(end, months, clock.zone, currentYearMonth(clock.instant(), clock.zone))
                     .map<MonthlyHistory, MonthlyHistory?> { it }
                     .catch { e ->
                         Log.w(TAG, "History flow failed", e)
@@ -169,14 +170,13 @@ class SpendingTabViewModel
         }
     }
 
-/** The analytics of spending only: SAVING-kind categories leave the category list; planned slices are not shown. */
+/** The analytics of spending only: SAVING-kind categories leave the category list. */
 private fun ActivityAnalytics.withoutSaving(): ActivityAnalytics =
     copy(
         split = split.copy(savingCents = 0L),
         breakdown =
             breakdown.copy(
                 categoryTotals = breakdown.categoryTotals.filter { it.category.kind != CategoryKind.SAVING },
-                plannedSlices = emptyList(),
                 hasExpenses = breakdown.categoryTotals.any { it.category.kind != CategoryKind.SAVING },
             ),
     )

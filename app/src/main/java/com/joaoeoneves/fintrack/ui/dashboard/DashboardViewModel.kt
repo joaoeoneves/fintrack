@@ -165,6 +165,7 @@ class DashboardViewModel
                 leftover =
                     history.leftover.averageCents?.let { LeftoverFigure(it, minOf(endMonth, today.minusMonths(1))) },
                 recent = mergeRecent(overview.recent.expenses, overview.recent.income),
+                spendingAverageMonths = comparison.averageMonths,
             )
         }
     }

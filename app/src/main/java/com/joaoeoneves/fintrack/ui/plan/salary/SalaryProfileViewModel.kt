@@ -12,7 +12,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
-import com.joaoeoneves.fintrack.domain.model.workingDaysIn
+import com.joaoeoneves.fintrack.domain.model.salaryYearSummaryOf
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
@@ -69,6 +69,9 @@ class SalaryProfileViewModel
 
         /** The user's own monthly lines found after a save, to offer removing; empty = no dialog. */
         val duplicates: StateFlow<List<PlannedIncome>> = duplicateCandidates
+
+        /** Whether the form being saved has a meal allowance (the duplicates dialog mentions it only then). */
+        val hasMeal: Boolean get() = (form.value?.meal ?: 0L) > 0L
 
         val eventFlow: Flow<SalaryProfileEvent> = events.receiveAsFlow()
 
@@ -232,14 +235,15 @@ class SalaryProfileViewModel
             val result = current.toResult()
             val month = YearMonth.now(clock)
             val effective = from ?: month
+            val breakdown = salaryBreakdownOf(result.profile).takeIf { result.invalid.isEmpty() }
             return SalaryProfileUiState.Content(
                 form = current,
                 invalid = result.invalid,
-                breakdown = salaryBreakdownOf(result.profile).takeIf { result.invalid.isEmpty() },
+                breakdown = breakdown,
                 canSave = result.hasRequiredAmount && result.invalid.isEmpty() && !busy,
                 hasSavedProfile = saved,
                 month = month,
-                workingDays = workingDaysIn(month),
+                yearSummary = breakdown?.let { salaryYearSummaryOf(result.profile, it, month.year) },
                 extraEditor = editing?.let { editorStateOf(it, current.mode) },
                 canAddExtra = current.extras.size < MAX_SALARY_EXTRAS,
                 effectiveFrom = effective,

@@ -91,15 +91,6 @@ private fun confirmMessage(
                         ),
                 )
             }
-            if (preview.hasBudget) {
-                val budget =
-                    if (preview.targetHasBudget) {
-                        stringResource(R.string.category_move_budget_merge, state.target.displayName)
-                    } else {
-                        stringResource(R.string.category_move_budget)
-                    }
-                add("• $budget")
-            }
         }
     return lines.joinToString("\n")
 }

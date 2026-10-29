@@ -74,7 +74,8 @@ class PlannedIncomeRecordsTest {
     @Test
     fun amountAndLabel_stillValidatedForAllShapes() {
         validatePlannedIncome(record(amount = MAX_AMOUNT_CENTS, basis = "PER_WORKING_DAY"))
-        invalid { validatePlannedIncome(record(amount = 0, basis = "PER_WORKING_DAY")) }
+        validatePlannedIncome(record(amount = 0, basis = "PER_WORKING_DAY"))
+        invalid { validatePlannedIncome(record(amount = -1, basis = "PER_WORKING_DAY")) }
         invalid { validatePlannedIncome(record(amount = MAX_AMOUNT_CENTS + 1)) }
         invalid { validatePlannedIncome(record(label = " ")) }
     }

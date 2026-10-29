@@ -51,6 +51,7 @@ class AddEditIncomeViewModelDefaultDateTest {
         repository,
         deleteTransactionFor(incomes = repository),
         SavedStateHandle(mapOf(*args)),
+        java.time.Clock.systemDefaultZone(),
     )
 
     private fun AddEditIncomeViewModel.date(): Instant = (uiState.value as AddEditIncomeUiState.Ready).form.date

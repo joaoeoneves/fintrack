@@ -44,12 +44,29 @@ class CurrencyFormatTest {
     }
 
     @Test
-    fun ptPt_eur_fourDigitAmount_keepsDecimalsAndSymbol() {
-        // Don't pin 4-digit grouping: JDK and ICU differ on pt-PT's minimum grouping digits.
-        val formatted = format(123_456L, CurrencyOption.EUR, ptPt)
+    fun ptPt_eur_groupsFromFourDigits_onEveryPlatform() {
+        assertEquals("1 234,56 €", format(123_456L, CurrencyOption.EUR, ptPt))
+        assertEquals("12 345,67 €", format(1_234_567L, CurrencyOption.EUR, ptPt))
+        assertEquals("-1 234,56 €", format(-123_456L, CurrencyOption.EUR, ptPt))
+        // Three digits stay ungrouped.
+        assertEquals("999,99 €", format(99_999L, CurrencyOption.EUR, ptPt))
+    }
 
-        assertEquals(true, formatted.endsWith(",56 €"))
-        assertEquals("123456", formatted.filter { it.isDigit() }.take(6))
+    @Test
+    fun ptPt_eur_fourDigitGroupingSeparator_isTheLocalesOwn() {
+        val raw = formatAmount(123_456L, CurrencyOption.EUR, ptPt)
+
+        assertEquals(
+            java.text.DecimalFormatSymbols
+                .getInstance(ptPt)
+                .groupingSeparator,
+            raw[1],
+        )
+    }
+
+    @Test
+    fun enUs_fourDigitGrouping_isUnchanged() {
+        assertEquals("€1,234.56", format(123_456L, CurrencyOption.EUR, enUs))
     }
 
     @Test

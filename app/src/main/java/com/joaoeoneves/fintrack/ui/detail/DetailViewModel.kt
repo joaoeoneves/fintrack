@@ -33,6 +33,7 @@ import com.joaoeoneves.fintrack.ui.common.period.asMonthOrYearPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -101,6 +102,13 @@ class DetailViewModel
         private val selection =
             PeriodSelection(savedStateHandle, KEY_SELECTED_PERIOD, routePeriod.encode(), clock)
 
+        private val retryTrigger = MutableStateFlow(0)
+
+        /** Collects the sources again after a failure. */
+        fun onRetry() {
+            retryTrigger.value++
+        }
+
         /** The period selector's callbacks (month and year scales). */
         val periodActions: PeriodActions =
             PeriodActions(
@@ -114,9 +122,13 @@ class DetailViewModel
             if (categoryId == null && sourceKey == null) {
                 flowOf<DetailUiState>(DetailUiState.NotFound)
             } else {
-                selection.token
-                    .flatMapLatest { token -> sourcesOf(token).map(::contentOf) }
-                    .catch { emit(DetailUiState.NotFound) }
+                retryTrigger
+                    .flatMapLatest { selection.token }
+                    .flatMapLatest { token ->
+                        sourcesOf(token)
+                            .map(::contentOf)
+                            .catch { emit(DetailUiState.Error) }
+                    }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), DetailUiState.Loading)
 
         /** Selects [month] on the month scale (one of the chart's months; anything else is ignored). */
@@ -139,7 +151,7 @@ class DetailViewModel
                     period.canGoToNextMonth(now, clock.zone)
                 }
             return combine(
-                observeMonthlyHistory(months.last(), months.size, clock.zone),
+                observeMonthlyHistory(months.last(), months.size, clock.zone, currentYearMonth(now, clock.zone)),
                 observePeriodOverview(period, now, clock.zone, recentLimit = 0),
                 categoryRepository.observeCategories(),
                 nextMonthSpendingOf(period, now),

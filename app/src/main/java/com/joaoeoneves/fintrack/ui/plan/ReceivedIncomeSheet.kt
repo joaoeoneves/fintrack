@@ -32,7 +32,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
+import java.time.ZoneOffset
 
 /**
  * Bottom sheet to mark an income row as received: the day it arrived (today by default, never later) and, only
@@ -48,7 +48,8 @@ fun ReceivedIncomeSheet(
     onDismiss: () -> Unit,
     initialDate: LocalDate = today,
 ) {
-    val zone = ZoneId.systemDefault()
+    // Only a calendar day is picked: UTC round-trips it exactly, whatever the device zone.
+    val zone = ZoneOffset.UTC
     var date by remember { mutableStateOf(initialDate.coerceAtMost(today)) }
     var amountCents by remember { mutableLongStateOf(editableAmountCents ?: 0L) }
     var amountError by remember { mutableStateOf(false) }

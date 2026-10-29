@@ -1,10 +1,8 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
-import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.EnvelopeProgress
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
-import com.joaoeoneves.fintrack.ui.dashboard.CategoryTotal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,7 +10,7 @@ import org.junit.Test
 
 /** [ActivityBreakdown.hasEnvelopes] and [ActivityBreakdown.isEmpty]. */
 class ActivityBreakdownTest {
-    private fun breakdown(envelopes: EnvelopesSummary) = ActivityBreakdown(emptyList(), emptyList(), false, envelopes)
+    private fun breakdown(envelopes: EnvelopesSummary) = ActivityBreakdown(emptyList(), false, envelopes)
 
     private fun progress() =
         EnvelopeProgress(
@@ -29,7 +27,7 @@ class ActivityBreakdownTest {
 
     @Test
     fun default_hasNoEnvelopes() {
-        assertFalse(ActivityBreakdown(emptyList(), emptyList(), hasExpenses = false).hasEnvelopes)
+        assertFalse(ActivityBreakdown(emptyList(), hasExpenses = false).hasEnvelopes)
     }
 
     @Test
@@ -43,11 +41,8 @@ class ActivityBreakdownTest {
     }
 
     @Test
-    fun isEmpty_onlyWithoutSpendingAndWithoutPlan() {
-        val slice = CategoryTotal(BuiltInCategories.FOOD, 100L)
-
-        assertTrue(ActivityBreakdown(emptyList(), emptyList(), hasExpenses = false).isEmpty)
-        assertFalse(ActivityBreakdown(emptyList(), emptyList(), hasExpenses = true).isEmpty)
-        assertFalse(ActivityBreakdown(emptyList(), listOf(slice), hasExpenses = false).isEmpty)
+    fun isEmpty_onlyWithoutSpending() {
+        assertTrue(ActivityBreakdown(emptyList(), hasExpenses = false).isEmpty)
+        assertFalse(ActivityBreakdown(emptyList(), hasExpenses = true).isEmpty)
     }
 }

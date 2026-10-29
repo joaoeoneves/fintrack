@@ -39,7 +39,6 @@ import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.rememberDayMonthText
-import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
@@ -249,7 +248,7 @@ private fun UpcomingRow(
                 stringResource(R.string.pending_automatic, rememberDayMonthText(row.date))
             row.date < today -> stringResource(R.string.recurring_overdue)
             row.date == today -> stringResource(R.string.recurring_due_today)
-            else -> rememberLocaleAwareDateFormatter().format(row.date)
+            else -> rememberDayMonthText(row.date)
         }
     PendingOccurrenceRow(
         title = row.item.name,

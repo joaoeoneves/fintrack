@@ -17,11 +17,11 @@ class MigrationPlannerIncomeLinesTest {
     }
 
     @Test
-    fun accountWithLines_copiesNoLinesAndNoCursors() {
+    fun accountWithTheSameLine_copiesNoLineAndNoCursor() {
         val automation = LocalAutomation(lineThrough = mapOf("p1" to "2026-09"))
         val local = localDoc().copy(plannedIncome = listOf(localPlanned("p1")), automation = automation)
 
-        val plan = planMigration(local, remoteSnapshot(plannedIncomeIds = setOf("other")))
+        val plan = planMigration(local, remoteSnapshot(plannedIncomeIds = setOf("p1")))
 
         assertTrue(plan.plannedIncome.isEmpty())
         assertTrue(

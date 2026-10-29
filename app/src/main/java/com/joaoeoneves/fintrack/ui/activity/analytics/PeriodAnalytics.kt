@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.ui.activity.analytics
 
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
-import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 
 /** The analytics numbers over the whole period (before any list filter), shared by Activity and Evolution. */
@@ -31,7 +30,6 @@ internal fun PeriodOverview.analyticsOf(
         breakdown =
             ActivityBreakdown(
                 categoryTotals = summary.categoryTotals,
-                plannedSlices = budgets.plannedSlices(),
                 hasExpenses = transactions.expenses.isNotEmpty(),
                 envelopes = envelopeSummary,
             ),
