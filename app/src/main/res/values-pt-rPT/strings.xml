@@ -299,6 +299,7 @@
     <string name="backup_error_read">Não foi possível ler o ficheiro selecionado</string>
     <string name="backup_error_write">Não foi possível escrever o ficheiro da cópia de segurança</string>
     <string name="backup_error_export_failed">Não foi possível criar a cópia de segurança</string>
+    <string name="backup_error_export_offline">Não foi possível ligar ao servidor. Liga-te e tenta de novo; nada foi exportado.</string>
     <string name="backup_error_restore_failed">Não foi possível restaurar a cópia de segurança. Os teus dados atuais não foram alterados.</string>
     <plurals name="backup_restore_skipped">
         <item quantity="one">%d registo inválido no ficheiro será ignorado.</item>
