@@ -8,7 +8,7 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
-import com.joaoeoneves.fintrack.data.FakeLegacyNames
+import com.joaoeoneves.fintrack.data.FakePlaceholderNames
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
@@ -160,7 +160,7 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
                             FakeSalaryProfileRepository(),
                             FakeGoalRepository(),
                             FakeAutomationSettingsRepository(),
-                            FakeLegacyNames(),
+                            FakePlaceholderNames(),
                         ),
                     ),
                     FakeCategoryRepository(),

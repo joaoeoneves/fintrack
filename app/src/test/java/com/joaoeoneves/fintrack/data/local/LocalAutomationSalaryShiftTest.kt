@@ -40,7 +40,7 @@ class LocalAutomationSalaryShiftTest : LocalStoreTestBase() {
             val settings = repo.observeAutomationSettings().first()
 
             assertNull(settings.salaryPaysNextMonth)
-            assertEquals(AutomationSettings(legacyPaydayEnabled = true), settings)
+            assertEquals(AutomationSettings(), settings)
         }
 
     @Test
