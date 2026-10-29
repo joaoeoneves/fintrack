@@ -10,7 +10,6 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
-import com.joaoeoneves.fintrack.domain.model.dailyAllowanceOf
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
@@ -122,14 +121,6 @@ class DashboardViewModel
                 netCents = summary.netCents,
                 plan = plan,
                 envelopes = envelopes,
-                figures = figures,
-                dailyAllowance =
-                    if (isCurrentMonth) {
-                        val safe = figures.availableCents
-                        dailyAllowanceOf(safe, budgetMonth, now.atZone(zone).toLocalDate())
-                    } else {
-                        null
-                    },
             )
         }
     }

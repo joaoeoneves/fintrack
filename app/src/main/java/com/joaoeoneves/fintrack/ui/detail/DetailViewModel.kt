@@ -10,7 +10,6 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
-import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
@@ -23,7 +22,6 @@ import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
-import com.joaoeoneves.fintrack.ui.activity.shiftedIncomesOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -148,7 +146,6 @@ class DetailViewModel
                     selectedIndex = index,
                     delta = deltaOf(values, index),
                     movements = movements.sortedByDescending { it.date },
-                    shiftedIncomes = emptyMap(),
                     editTarget =
                         DetailEditTarget
                             .CategoryEditor(id.value)
@@ -171,16 +168,12 @@ class DetailViewModel
                 overview.monthIncome
                     .filter { incomeSourceOf(it, overview.plannedIncome) == key }
                     .sortedByDescending { it.date }
-            val shifted = shiftedIncomesOf(movements, overview.plannedIncome, overview.funding, clock.zone)
             val component = (key as? IncomeSourceKey.Row)?.component
-            val salaryShifted =
-                overview.funding.shift && (component == SalaryComponent.SALARY || component == SalaryComponent.MEAL)
             return DetailUiState.Content(
                 subject =
                     DetailSubject.OfSource(
                         component = component,
                         label = source?.label ?: (key as? IncomeSourceKey.Named)?.normalised,
-                        shifted = shifted.isNotEmpty() || salaryShifted,
                         expectedCents =
                             source
                                 ?.months
@@ -192,7 +185,6 @@ class DetailViewModel
                 selectedIndex = index,
                 delta = deltaOf(values, index),
                 movements = movements,
-                shiftedIncomes = shifted,
                 editTarget = editTargetOf(key),
             )
         }

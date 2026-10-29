@@ -41,7 +41,6 @@ sealed interface DetailSubject {
     data class OfSource(
         val component: SalaryComponent?,
         val label: String?,
-        val shifted: Boolean,
         val expectedCents: Long?,
     ) : DetailSubject
 }
@@ -58,7 +57,6 @@ sealed interface DetailUiState {
         val selectedIndex: Int,
         val delta: DetailDeltaFigure?,
         val movements: List<Transaction>,
-        val shiftedIncomes: Map<String, YearMonth>,
         val editTarget: DetailEditTarget?,
     ) : DetailUiState {
         val selected: DetailMonth get() = months[selectedIndex]

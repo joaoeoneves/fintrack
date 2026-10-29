@@ -177,7 +177,7 @@ private fun SalaryProfileContent(
         MealSection(form, actions.onChange)
         SalaryExtrasSection(state, actions.extras.onAdd, actions.extras.onEdit)
         if (state.showEffectiveFrom) {
-            SalaryEffectiveFrom(state.effectiveFrom, state.shiftSource, actions.onEffectiveFromChange)
+            SalaryEffectiveFrom(state.effectiveFrom, actions.onEffectiveFromChange)
         }
         if (state.hasSavedProfile) {
             DestructiveTextButton(

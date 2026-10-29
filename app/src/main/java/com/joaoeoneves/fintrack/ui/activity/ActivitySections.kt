@@ -48,7 +48,6 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.ZoneId
 
 /** Period selector, one summary line, type tabs, chips (envelope/category or source), then the search and sort row. */
@@ -151,7 +150,7 @@ fun LazyListScope.activityRowItems(
     }
     if (state.days.isEmpty()) {
         items(state.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = true, actions = actions, shiftedIncomes = state.shiftedIncomes)
+            ActivityRow(transaction, showDate = true, actions = actions)
         }
         return
     }
@@ -164,7 +163,7 @@ fun LazyListScope.activityRowItems(
             )
         }
         items(section.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = false, actions = actions, shiftedIncomes = state.shiftedIncomes)
+            ActivityRow(transaction, showDate = false, actions = actions)
         }
     }
 }
@@ -240,7 +239,6 @@ private fun LazyItemScope.ActivityRow(
     transaction: Transaction,
     showDate: Boolean,
     actions: ActivityActions,
-    shiftedIncomes: Map<String, YearMonth> = emptyMap(),
 ) {
     SwipeToDeleteRow(
         onDelete = { actions.onDelete(transaction.id) },
@@ -260,7 +258,6 @@ private fun LazyItemScope.ActivityRow(
                 IncomeRow(
                     income = transaction,
                     showDate = showDate,
-                    countsFor = shiftedIncomes[transaction.id],
                     onClick = { actions.onOpen(transaction) },
                     modifier = rowModifier,
                 )

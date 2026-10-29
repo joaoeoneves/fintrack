@@ -11,16 +11,12 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
-import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
-import com.joaoeoneves.fintrack.domain.model.fundingMonthOf
 import com.joaoeoneves.fintrack.domain.model.incomeSourceOf
 import com.joaoeoneves.fintrack.domain.model.netCents
 import com.joaoeoneves.fintrack.domain.model.resolve
@@ -363,7 +359,6 @@ private fun PeriodItems.Loaded.toContent(
         analytics = analytics.following(sorted.filterIsInstance<Expense>(), catalog),
         incomeSources = sources,
         summary = activitySummaryOf(activeFilters, incomeSource, period, overview, totals),
-        shiftedIncomes = shiftedIncomesOf(sorted, lines, overview.funding, zone),
         categoryScope =
             envelope?.let { selected ->
                 catalog
@@ -396,24 +391,10 @@ private fun ActivityAnalytics.following(
     )
 }
 
-/** The listed incomes whose funding month differs from their date's month (a shifted salary), by id. */
-internal fun shiftedIncomesOf(
-    items: List<Transaction>,
-    lines: List<PlannedIncome>,
-    funding: IncomeFunding,
-    zone: ZoneId,
-): Map<String, YearMonth> =
-    items
-        .filterIsInstance<Income>()
-        .mapNotNull { income ->
-            val month = fundingMonthOf(income, lines, funding, zone)
-            (income.id to month).takeIf { month != YearMonth.from(income.date.atZone(zone)) }
-        }.toMap()
-
 /**
  * The one-line summary: money out of the visible list ([ActivityTotals.outCents], savings included) and money in. For a
- * month period with no search or source filter the money in is what funds the month ([PeriodOverview.monthIncome], a
- * shifted salary counts for the month it funds); otherwise it is the visible list's income by date.
+ * month period with no search or source filter the money in is the month's income ([PeriodOverview.monthIncome]);
+ * otherwise it is the visible list's income by date.
  */
 internal fun activitySummaryOf(
     filters: ActivityFilters,

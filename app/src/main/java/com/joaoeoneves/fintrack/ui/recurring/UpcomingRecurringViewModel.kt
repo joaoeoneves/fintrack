@@ -153,22 +153,20 @@ class UpcomingRecurringViewModel
             val content = uiState.value as? UpcomingRecurringUiState.Content
             val expected = content?.expectedIncome
             if (content == null || expected == null) return {}
-            // The row may fund a later plan month with what is paid this month (or last): each part is
-            // recorded under the month it is paid in.
-            val planMonth = expected.entries.firstOrNull { it.row == row }?.planMonth ?: expected.month
-            val byPayMonth = row.payingLinesByPayMonth(planMonth, expected.funding)
+            // The row is paid this month or last: it is recorded under the month it is paid in.
+            val payMonth = expected.entries.firstOrNull { it.row == row }?.month ?: expected.month
+            val byPayMonth = row.payingLinesByPayMonth(payMonth, expected.incomeMonth)
             viewModelScope.launch {
-                for ((payMonth, lines) in byPayMonth) {
+                for ((month, lines) in byPayMonth) {
                     val request =
                         ReceiveRequest(
                             lines = lines,
-                            month = payMonth,
-                            workingDays = expected.funding.workingDays(payMonth),
+                            month = month,
+                            workingDays = expected.incomeMonth.workingDays(month),
                             date = date,
                             today = content.today,
                             zone = clock.zone,
                             amountOverrideCents = amountCents,
-                            planMonth = planMonth,
                         )
                     val failure = recordPayday.receive(request).exceptionOrNull()
                     if (failure != null) {
@@ -180,8 +178,8 @@ class UpcomingRecurringViewModel
             }
             return {
                 viewModelScope.launch {
-                    for ((payMonth, lines) in byPayMonth) {
-                        val failure = recordPayday.unreceive(lines, payMonth, clock.zone).exceptionOrNull()
+                    for ((month, lines) in byPayMonth) {
+                        val failure = recordPayday.unreceive(lines, month, clock.zone).exceptionOrNull()
                         if (failure != null) {
                             Log.w(TAG, "Failed to undo the received income", failure)
                             errors.send(UiText.StringResource(R.string.error_plan_save_failed))

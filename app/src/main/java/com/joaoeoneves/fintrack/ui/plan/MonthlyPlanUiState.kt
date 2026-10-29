@@ -4,9 +4,8 @@ import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
-import com.joaoeoneves.fintrack.domain.model.IncomeFunding
+import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -25,13 +24,9 @@ sealed interface MonthlyPlanUiState {
      * @property period the selected month (month periods only) the envelope cards are measured on.
      * @property canAddIncomeLine whether the line cap has not been reached yet.
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
-     * @property payWorkingDays the working days of the month that pays [period]'s salary: [period]'s own, or the
-     *   month before when the salary shift is on and a profile line pays for the next month.
-     * @property editor the income-line sheet, or `null` when it is closed.
      * @property envelopes the month's envelopes (amounts, spend, funding) and free money.
-     * @property figures the month's subtraction (income - recurring - envelopes - savings = available).
      * @property extraIncomeCents yearly and one-off income planned this month, not counted until received.
-     * @property funding how income is attributed to months (salary paying the next month).
+     * @property incomeMonth what each income line pays in a month.
      * @property envelopeCards one card per envelope of the month, then the one for the unenveloped categories.
      * @property configure what the "Set up" section says about each part of the plan.
      * @property receipts payday and which [incomeRows] were already received.
@@ -45,16 +40,14 @@ sealed interface MonthlyPlanUiState {
         val canGoToNextMonth: Boolean,
         val canAddIncomeLine: Boolean,
         val workingDays: WorkingDaysState,
-        val payWorkingDays: WorkingDaysState = workingDays,
         val editor: IncomeLineEditorState?,
         val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
-        val figures: MonthFigures,
         val extraIncomeCents: Long = 0L,
         val envelopeCards: List<EnvelopeCardUi> = emptyList(),
         val configure: ConfigureStatus,
         val receipts: IncomeReceipts,
         val duplicateKeys: Set<String> = emptySet(),
-        val funding: IncomeFunding = IncomeFunding.unshifted(YearMonth.now(), 0),
+        val incomeMonth: IncomeMonth = IncomeMonth.forMonth(YearMonth.now(), 0),
     ) : MonthlyPlanUiState
 
     data class Error(

@@ -280,7 +280,7 @@ private fun SummaryStep(
             }
         }
     }
-    SalaryEffectiveFrom(state.effectiveFrom, state.shiftSource, onEffectiveFromChange)
+    SalaryEffectiveFrom(state.effectiveFrom, onEffectiveFromChange)
     Text(
         text = stringResource(R.string.salary_setup_later_hint),
         style = MaterialTheme.typography.bodySmall,

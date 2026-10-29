@@ -10,8 +10,6 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
-import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
-import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
@@ -63,8 +61,6 @@ data class SalarySetupUiState(
     val saving: Boolean,
     /** The plan month the new salary lines start in (default: the current month). */
     val effectiveFrom: YearMonth = month,
-    /** With the salary shift on, the month before [effectiveFrom] (the one the salary is received in). */
-    val shiftSource: YearMonth? = null,
 ) {
     val stepNumber: Int get() = step.ordinal + 1
     val stepCount: Int get() = SalarySetupStep.entries.size
@@ -91,14 +87,12 @@ class SalarySetupViewModel
         private val manageProfile: ManageSalaryProfile,
         private val plannedIncome: PlannedIncomeRepository,
         private val clock: Clock,
-        private val planSettings: PlanSettingsRepository = NoPlanSettings,
     ) : ViewModel() {
         private val step = MutableStateFlow(storedStep(savedState))
         private val form = MutableStateFlow(SalaryForm())
         private val netLumps = MutableStateFlow(savedState.get<Boolean>(KEY_LUMPS) ?: false)
         private val saving = MutableStateFlow(false)
         private val effectiveFrom = MutableStateFlow<YearMonth?>(null)
-        private val shiftEnabled = MutableStateFlow(false)
         private val duplicateCandidates = MutableStateFlow<List<PlannedIncome>>(emptyList())
         private val events = Channel<SalarySetupEvent>(Channel.BUFFERED)
 
@@ -111,20 +105,17 @@ class SalarySetupViewModel
             combine(
                 combine(step, form, netLumps, saving, ::SetupInputs),
                 effectiveFrom,
-                shiftEnabled,
-            ) { inputs, from, shift ->
-                stateOf(inputs, from, shift)
+            ) { inputs, from ->
+                stateOf(inputs, from)
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
-                initialValue = stateOf(SetupInputs(step.value, form.value, netLumps.value, saving.value), null, false),
+                initialValue = stateOf(SetupInputs(step.value, form.value, netLumps.value, saving.value), null),
             )
 
         init {
             viewModelScope.launch {
                 if (profiles.observeSalaryProfile().first() != null) events.send(SalarySetupEvent.OpenAdvanced)
-                // The shift follows the user's choice, else it is on as soon as a salary profile exists.
-                shiftEnabled.value = planSettings.observeSalaryPaysNextMonth().first() != false
             }
         }
 
@@ -201,7 +192,6 @@ class SalarySetupViewModel
         private fun stateOf(
             inputs: SetupInputs,
             from: YearMonth?,
-            shift: Boolean,
         ): SalarySetupUiState {
             val current = inputs.step
             val typed = inputs.form
@@ -222,7 +212,6 @@ class SalarySetupViewModel
                 canContinue = valid && !busy && (current != SalarySetupStep.PAY || result.hasRequiredAmount),
                 saving = busy,
                 effectiveFrom = effective,
-                shiftSource = effective.minusMonths(1).takeIf { shift },
             )
         }
     }

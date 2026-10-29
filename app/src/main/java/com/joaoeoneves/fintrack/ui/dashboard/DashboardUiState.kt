@@ -1,11 +1,9 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import com.joaoeoneves.fintrack.domain.model.DailyAllowance
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.InstantRange
-import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
@@ -27,7 +25,6 @@ sealed interface DashboardUiState {
      * @property netCents income minus spending (saving is not subtracted).
      * @property plan the monthly plan evaluated for [budgetMonth].
      * @property recent the latest expenses and income merged, newest first, at most [RECENT_ITEMS_LIMIT].
-     * @property dailyAllowance what can be spent per remaining day; only for the current month.
      * @property chartExpenses [expenses] without the saving-kind ones: the balance chart ends at [netCents].
      * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
      * @property envelopes the month's envelopes and free money; `null` falls back to the plain plan.
@@ -50,14 +47,12 @@ sealed interface DashboardUiState {
         val incomeCents: Long,
         val netCents: Long,
         val plan: MonthlyPlanSummary,
-        val dailyAllowance: DailyAllowance?,
         val fixedSpendingCents: Long = 0L,
         val chartExpenses: List<Expense> = expenses,
         val envelopes: EnvelopesSummary? = null,
-        val figures: MonthFigures? = null,
     ) : DashboardUiState {
         /** What is available to spend: the month figures' total (else the envelopes' free money, else the plan's). */
-        val safeToSpendCents: Long get() = figures?.availableCents ?: envelopes?.freeCents ?: plan.safeToSpendCents
+        val safeToSpendCents: Long get() = plan.safeToSpendCents
     }
 
     data class Error(

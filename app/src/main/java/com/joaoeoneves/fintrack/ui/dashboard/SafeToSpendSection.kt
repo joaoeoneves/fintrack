@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
@@ -27,8 +26,6 @@ import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
-import com.joaoeoneves.fintrack.ui.plan.MonthSummaryActions
-import com.joaoeoneves.fintrack.ui.plan.MonthSummarySection
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -121,34 +118,7 @@ private fun PlanContent(
             autoSize = TextAutoSize.StepBased(minFontSize = MIN_SAFE_SP.sp, maxFontSize = MAX_SAFE_SP.sp),
             modifier = Modifier.padding(top = Dimens.Space4),
         )
-        state.dailyAllowance?.let { allowance ->
-            Text(
-                text =
-                    pluralStringResource(
-                        R.plurals.plan_daily_allowance,
-                        allowance.daysLeft,
-                        formatAmountCents(allowance.cents),
-                        allowance.daysLeft,
-                    ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-        }
         state.envelopes?.let { EnvelopeOverflowRow(summary = it, modifier = Modifier.padding(top = Dimens.Space8)) }
-        state.figures?.let {
-            MonthSummarySection(
-                figures = it,
-                actions =
-                    MonthSummaryActions(
-                        onOpenIncome = onOpenMonthlyPlan,
-                        onOpenRecurring = onOpenMonthlyPlan,
-                        onOpenEnvelopes = onOpenMonthlyPlan,
-                        onOpenSavings = onOpenMonthlyPlan,
-                    ),
-                extraIncomeCents = state.plan.extrasExpectedCents,
-                modifier = Modifier.padding(top = Dimens.Space16),
-            )
-        }
         if (!state.budgetMonthIsCurrent) {
             Text(
                 text = stringResource(R.string.plan_current_plan_caption),

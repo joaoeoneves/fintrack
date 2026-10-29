@@ -119,7 +119,6 @@ private fun DetailContent(
                 is Income ->
                     IncomeRow(
                         transaction,
-                        countsFor = state.shiftedIncomes[transaction.id],
                         onClick = { actions.onOpenIncome(transaction.id) },
                     )
             }
@@ -149,7 +148,6 @@ private fun contextOf(subject: DetailSubject): String? =
             ).joinToString(CONTEXT_SEPARATOR)
         is DetailSubject.OfSource ->
             listOfNotNull(
-                stringResource(R.string.detail_context_next_month).takeIf { subject.shifted },
                 subject.expectedCents?.let { stringResource(R.string.detail_context_expected, formatAmountCents(it)) },
             ).takeIf { it.isNotEmpty() }?.joinToString(CONTEXT_SEPARATOR)
     }

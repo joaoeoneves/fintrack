@@ -21,20 +21,11 @@ import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
-import com.joaoeoneves.fintrack.ui.common.period.PeriodHeader
-import com.joaoeoneves.fintrack.ui.common.period.PeriodHeaderText
-import com.joaoeoneves.fintrack.ui.common.period.PeriodNavigation
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
-import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
-import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanActions
-import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanUiState
-import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
-import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
-import com.joaoeoneves.fintrack.ui.plan.annual.PlanTab
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /** The Plan tab: the month's tiles, its envelope cards, and the set-up section. */
@@ -81,56 +72,10 @@ private fun PlanScaffold(
         },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        val annualViewModel: AnnualPlanViewModel = hiltViewModel()
-        val tab by annualViewModel.selectedTab.collectAsStateWithLifecycle()
         Column(Modifier.fillMaxSize().padding(innerPadding)) {
-            SegmentedTextTabs(
-                options = PlanTab.entries,
-                selected = tab,
-                label = { stringResource(it.labelRes) },
-                onSelect = annualViewModel::onSelectTab,
-                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-            )
-            if (tab == PlanTab.YEAR) {
-                PlanYearView(annualViewModel, navigation)
-            } else {
-                PlanMonthView(uiState, viewModel, navigation)
-            }
+            PlanMonthView(uiState, viewModel, navigation)
         }
     }
-}
-
-/** The sticky year header and the Year view. */
-@Composable
-private fun PlanYearView(
-    annualViewModel: AnnualPlanViewModel,
-    navigation: PlanNavigation,
-) {
-    val annualState by annualViewModel.uiState.collectAsStateWithLifecycle()
-    (annualState as? AnnualPlanUiState.Content)?.let { content ->
-        PeriodHeader(
-            navigation =
-                PeriodNavigation(
-                    onPrevious = annualViewModel::onPreviousYear,
-                    onNext = annualViewModel::onNextYear,
-                    canGoPrevious = content.canGoPrevious,
-                    canGoNext = content.canGoNext,
-                    isYear = true,
-                ),
-            modifier = Modifier.padding(horizontal = Dimens.Space8),
-        ) { PeriodHeaderText(content.year.toString()) }
-    }
-    AnnualPlanView(
-        state = annualState,
-        actions =
-            AnnualPlanActions(
-                onPreviousYear = annualViewModel::onPreviousYear,
-                onNextYear = annualViewModel::onNextYear,
-                onRetry = annualViewModel::onRetry,
-                onOpenEnvelope = navigation.onOpenEnvelope,
-            ),
-        modifier = Modifier.fillMaxSize(),
-    )
 }
 
 /** The sticky month header and the Month view. */
@@ -194,20 +139,6 @@ private fun MonthlyPlanContent(
         contentPadding =
             PaddingValues(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.Space32),
     ) {
-        item {
-            MonthSummarySection(
-                figures = state.figures,
-                extraIncomeCents = state.extraIncomeCents,
-                actions =
-                    MonthSummaryActions(
-                        onOpenIncome = { navigation.onOpenIncome(state.period) },
-                        onOpenRecurring = navigation.onOpenRecurring,
-                        onOpenEnvelopes = navigation.onOpenEnvelopes,
-                        onOpenSavings = navigation.onOpenSavings,
-                    ),
-                modifier = cardModifier.padding(top = Dimens.Space16),
-            )
-        }
         item {
             EnvelopeCardsSection(
                 cards = state.envelopeCards,

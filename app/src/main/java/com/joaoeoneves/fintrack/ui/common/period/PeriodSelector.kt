@@ -52,7 +52,7 @@ private enum class PeriodDialog { NONE, MONTH, DATE_RANGE }
 private fun Period.menuOption(): PeriodMenuOption =
     when (this) {
         Period.CurrentMonth -> PeriodMenuOption.THIS_MONTH
-        is Period.Month -> PeriodMenuOption.CHOOSE_MONTH
+        is Period.Month, is Period.Year -> PeriodMenuOption.CHOOSE_MONTH
         is Period.Custom -> PeriodMenuOption.CUSTOM_RANGE
         is Period.Rolling ->
             when (range) {
