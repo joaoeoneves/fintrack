@@ -1,8 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan
 
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,26 +11,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.text
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.ui.common.FundedEnvelopeNote
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
+import com.joaoeoneves.fintrack.ui.designsystem.EnvelopeRow
+import com.joaoeoneves.fintrack.ui.designsystem.EnvelopeRowData
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
-import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
-import com.joaoeoneves.fintrack.ui.designsystem.pressScale
 import com.joaoeoneves.fintrack.ui.designsystem.rememberAnimatedCents
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -182,138 +176,66 @@ private fun EnvelopeCard(
     card: EnvelopeCardUi,
     onClick: (() -> Unit)?,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .then(
-                    if (onClick == null) {
-                        Modifier
-                    } else {
-                        Modifier.pressScale(interactionSource).clickable(
-                            interactionSource = interactionSource,
-                            indication = LocalIndication.current,
-                            role = Role.Button,
-                            onClick = onClick,
-                        )
-                    },
-                ).padding(vertical = Dimens.Space12),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = card.name ?: stringResource(R.string.plan_group_other),
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            val headline = card.headline()
-            if (headline != null) {
-                Text(
-                    text = headline.shown,
-                    style = Amount,
-                    color =
-                        if (card is EnvelopeCardUi.Budgeted && card.isOver) {
-                            FinTrackTheme.colors.negative
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                    modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(headline.final) },
-                )
-            }
-        }
-        CardProgress(card)
-        CardCaptions(card)
-    }
-}
-
-/** Shown (counting) and final text of an envelope card headline. */
-private data class Headline(
-    val shown: String,
-    val final: String,
-)
-
-@Composable
-private fun EnvelopeCardUi.headline(): Headline? =
-    when (this) {
-        is EnvelopeCardUi.Budgeted -> {
-            val spent by rememberAnimatedCents(spentCents)
-            val budget by rememberAnimatedCents(amountCents)
-            Headline(
-                shown = stringResource(R.string.envelope_card_of, formatAmountCents(spent), formatAmountCents(budget)),
-                final =
-                    stringResource(
-                        R.string.envelope_card_of,
-                        formatAmountCents(spentCents),
-                        formatAmountCents(amountCents),
-                    ),
-            )
-        }
-        is EnvelopeCardUi.BillsOnly -> {
-            val paid by rememberAnimatedCents(paidCents)
-            val planned by rememberAnimatedCents(plannedCents)
-            Headline(
-                shown =
-                    stringResource(R.string.envelope_card_paid, formatAmountCents(paid), formatAmountCents(planned)),
-                final =
-                    stringResource(
-                        R.string.envelope_card_paid,
-                        formatAmountCents(paidCents),
-                        formatAmountCents(plannedCents),
-                    ),
-            )
-        }
-        is EnvelopeCardUi.Tracking -> null
-    }
-
-@Composable
-private fun CardProgress(card: EnvelopeCardUi) {
-    val (spent, total, over) =
-        when (card) {
-            is EnvelopeCardUi.Budgeted -> Triple(card.spentCents, card.amountCents, card.isOver)
-            is EnvelopeCardUi.BillsOnly -> Triple(card.paidCents, card.plannedCents, false)
-            is EnvelopeCardUi.Tracking -> return
-        }
-    val fraction = if (total > 0L) (spent.toDouble() / total.toDouble()).toFloat() else 0f
-    ThinProgressBar(progress = fraction, isOver = over, modifier = Modifier.padding(top = Dimens.Space8))
-}
-
-@Composable
-private fun CardCaptions(card: EnvelopeCardUi) {
-    val secondary = FinTrackTheme.colors.textSecondary
-    val style = MaterialTheme.typography.bodySmall
-    when (card) {
-        is EnvelopeCardUi.Budgeted ->
-            if (card.isOver) {
-                val over by rememberAnimatedCents(-card.remainingCents)
-                val finalText = stringResource(R.string.envelope_card_over, formatAmountCents(-card.remainingCents))
-                Text(
-                    text = stringResource(R.string.envelope_card_over, formatAmountCents(over)),
-                    style = style,
-                    color = FinTrackTheme.colors.negative,
-                    modifier =
-                        Modifier
-                            .padding(top = Dimens.Space4)
-                            .clearAndSetSemantics { text = AnnotatedString(finalText) },
-                )
-            }
-        is EnvelopeCardUi.BillsOnly -> Unit
-        is EnvelopeCardUi.Tracking ->
-            Text(
-                text = stringResource(R.string.envelope_card_spent, formatAmountCents(card.spentCents)),
-                style = style,
-                color = secondary,
-            )
-    }
-    val line = card.fundingLine ?: return
-    FundedEnvelopeNote(
-        lineLabel = line.fundingLabel(),
-        coveredCents = card.fundingCents,
-        overflowCents = card.overflowCents,
-        modifier = Modifier.padding(top = Dimens.Space4),
+    val line = card.fundingLine
+    EnvelopeRow(
+        data = card.toRowData(),
+        onClick = onClick,
+        footer =
+            line?.let {
+                {
+                    FundedEnvelopeNote(
+                        lineLabel = it.fundingLabel(),
+                        coveredCents = card.fundingCents,
+                        overflowCents = card.overflowCents,
+                        modifier = Modifier.padding(top = Dimens.Space4),
+                    )
+                }
+            },
     )
 }
+
+@Composable
+private fun EnvelopeCardUi.toRowData(): EnvelopeRowData {
+    val name = name ?: stringResource(R.string.plan_group_other)
+    return when (this) {
+        is EnvelopeCardUi.Budgeted -> {
+            val animatedSpent by rememberAnimatedCents(spentCents)
+            val animatedBudget by rememberAnimatedCents(amountCents)
+            val of = R.string.envelope_card_of
+            EnvelopeRowData(
+                name = name,
+                amountText = stringResource(of, formatAmountCents(animatedSpent), formatAmountCents(animatedBudget)),
+                amountSemantics = stringResource(of, formatAmountCents(spentCents), formatAmountCents(amountCents)),
+                isOver = isOver,
+                progress = fraction(),
+                overText =
+                    if (isOver) {
+                        stringResource(R.string.envelope_card_over, formatAmountCents(-remainingCents))
+                    } else {
+                        null
+                    },
+            )
+        }
+        is EnvelopeCardUi.BillsOnly ->
+            EnvelopeRowData(
+                name = name,
+                progress = fraction(),
+                caption = billsCaption(),
+            )
+        is EnvelopeCardUi.Tracking ->
+            EnvelopeRowData(
+                name = name,
+                caption = stringResource(R.string.envelope_card_spent, formatAmountCents(spentCents)),
+            )
+    }
+}
+
+private fun EnvelopeCardUi.Budgeted.fraction(): Float =
+    if (amountCents > 0L) (spentCents.toDouble() / amountCents.toDouble()).toFloat() else 0f
+
+private fun EnvelopeCardUi.BillsOnly.fraction(): Float =
+    if (plannedCents > 0L) (paidCents.toDouble() / plannedCents.toDouble()).toFloat() else 0f
+
+@Composable
+private fun EnvelopeCardUi.BillsOnly.billsCaption(): String =
+    stringResource(R.string.envelope_card_paid, formatAmountCents(paidCents), formatAmountCents(plannedCents))

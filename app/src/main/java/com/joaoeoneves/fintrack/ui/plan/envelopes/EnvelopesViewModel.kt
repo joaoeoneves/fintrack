@@ -122,7 +122,7 @@ internal fun rowsOf(
         val amount = envelope.amountCents
         val status =
             when {
-                amount != null -> EnvelopeRowStatus.Budgeted(amount)
+                amount != null && amount > 0L -> EnvelopeRowStatus.Budgeted(amount)
                 limitSum > 0L -> EnvelopeRowStatus.Budgeted(limitSum)
                 members.isEmpty() -> EnvelopeRowStatus.Empty
                 else -> EnvelopeRowStatus.Tracking

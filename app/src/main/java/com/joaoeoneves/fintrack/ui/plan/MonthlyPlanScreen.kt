@@ -96,6 +96,7 @@ private fun PlanScaffold(
                             onPreviousYear = annualViewModel::onPreviousYear,
                             onNextYear = annualViewModel::onNextYear,
                             onRetry = annualViewModel::onRetry,
+                            onOpenEnvelope = navigation.onOpenEnvelope,
                         ),
                     modifier = contentModifier,
                 )

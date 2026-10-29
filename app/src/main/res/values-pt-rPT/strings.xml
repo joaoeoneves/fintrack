@@ -680,8 +680,9 @@
     <string name="envelope_row_empty">Sem categorias</string>
     <string name="envelope_card_of">%1$s de %2$s</string>
     <string name="envelope_card_over">Excedido em %1$s</string>
-    <string name="envelope_card_paid">%1$s de %2$s pagos</string>
+    <string name="envelope_card_paid">Recorrentes: %1$s pagos de %2$s</string>
     <string name="envelope_card_spent">Gasto este mês: %1$s</string>
+    <string name="annual_envelope_spent">Gasto: %1$s</string>
     <string name="envelope_card_funded">Financiado por %1$s</string>
     <string name="envelope_funded_overflow">%1$s cobre %2$s; %3$s vêm de outro rendimento.</string>
     <plurals name="envelopes_status">
