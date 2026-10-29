@@ -89,7 +89,7 @@ fun ExpensesEvolution(
                 )
             }
         }
-        figures.yearToDate?.let { YearToDateRow(it, padding) }
+        figures.yearToDate?.let { YearToDateRow(it, padding, figures.leftover) }
     }
 }
 
@@ -128,7 +128,7 @@ fun IncomeEvolution(
         }
         figures.evolution?.let { EvolutionSection(it, padding) }
         analytics?.sources?.takeIf { it.isNotEmpty() }?.let { SourceRows(it, onSourceClick, padding) }
-        figures.yearToDate?.let { YearToDateRow(it, padding) }
+        figures.yearToDate?.let { YearToDateRow(it, padding, figures.leftover) }
     }
 }
 

@@ -757,6 +757,8 @@
     <string name="activity_ytd_spent">Gasto</string>
     <string name="activity_ytd_received">Recebido</string>
     <string name="activity_ytd_saved">Poupado</string>
+    <string name="activity_ytd_leftover">Sobrou até %1$s</string>
+    <string name="activity_leftover_average">Média por mês: %1$s</string>
     <string name="activity_evolution">Evolução</string>
     <string name="activity_received_total">Recebido</string>
     <string name="activity_expected_difference">Esperado %1$s · Diferença %2$s</string>

@@ -740,6 +740,8 @@
     <string name="activity_ytd_spent">Spent</string>
     <string name="activity_ytd_received">Received</string>
     <string name="activity_ytd_saved">Saved</string>
+    <string name="activity_ytd_leftover">Left over until %1$s</string>
+    <string name="activity_leftover_average">Average per month: %1$s</string>
     <string name="activity_evolution">Evolution</string>
     <string name="activity_received_total">Received</string>
     <string name="activity_expected_difference">Expected %1$s · Difference %2$s</string>
