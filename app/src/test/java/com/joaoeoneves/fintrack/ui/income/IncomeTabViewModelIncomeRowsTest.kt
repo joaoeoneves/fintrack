@@ -43,7 +43,7 @@ class IncomeTabViewModelIncomeRowsTest : IncomeTabViewModelTestBase() {
                 listOf(SalaryComponent.SALARY, SalaryComponent.MEAL, SalaryComponent.SUBSIDIES, null),
                 rows.map { it.component },
             )
-            assertEquals(managed.size + 1, vm.content().incomeLines.size)
+            assertEquals(managed.size + 1, incomeRepo.lines.size)
             assertEquals(5_000L, rows.last().cents)
             assertEquals(79_000L, rows.first().cents)
         }

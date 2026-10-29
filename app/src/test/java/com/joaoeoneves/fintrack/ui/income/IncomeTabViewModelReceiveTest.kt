@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.income
 
+import com.joaoeoneves.fintrack.ui.plan.key
 import com.joaoeoneves.fintrack.ui.plan.IncomeReceipts
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository

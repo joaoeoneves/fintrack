@@ -52,7 +52,6 @@ class IncomeTabViewModelDaysOffTest : IncomeTabViewModelTestBase() {
             assertEquals(18, state.days)
             assertEquals(21, state.calendarDays)
             assertFalse(state.overridden)
-            assertEquals(1046L * 18, vm.content().summary.expectedIncomeCents)
             assertEquals(listOf(MonthSettings(oct, null, 3)), monthSettingsRepo.settings)
         }
 

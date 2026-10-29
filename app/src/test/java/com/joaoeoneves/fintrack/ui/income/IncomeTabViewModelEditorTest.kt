@@ -112,7 +112,7 @@ class IncomeTabViewModelEditorTest : IncomeTabViewModelTestBase() {
             vm.onSaveIncomeLine("Meal", 20_000L, IncomeSchedule(), month)
             advanceUntilIdle()
             assertEquals(listOf(0, 1), incomeRepo.lines.map { it.order })
-            assertEquals(listOf("Salary", "Meal"), vm.content().incomeLines.map { it.label })
+            assertEquals(listOf("Salary", "Meal"), incomeRepo.lines.map { it.label })
         }
 
     @Test

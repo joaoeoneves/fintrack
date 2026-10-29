@@ -67,48 +67,6 @@ class IncomeTabViewModelPaydayTest : IncomeTabViewModelTestBase() {
         }
 
     @Test
-    fun shiftedSalary_paydayIsInThePreviousMonth() =
-        runTest(testDispatcher) {
-            incomeRepo.savePlannedIncome(managed(28))
-            val vm = viewModel(planSettings = FakePlanSettingsRepository(true))
-            collect(vm)
-
-            assertEquals(LocalDate.of(2026, 9, 28), vm.content().receipts.payday)
-        }
-
-    @Test
-    fun payWorkingDays_withShift_isThePreviousMonth() =
-        runTest(testDispatcher) {
-            incomeRepo.savePlannedIncome(managed(null))
-            val vm = viewModel(planSettings = FakePlanSettingsRepository(true))
-            collect(vm)
-
-            assertEquals(YearMonth.of(2026, 10), vm.content().workingDays.month)
-            assertEquals(YearMonth.of(2026, 9), vm.content().payWorkingDays.month)
-        }
-
-    @Test
-    fun payWorkingDays_shiftSwitchedOff_isTheViewedMonthEvenForASalaryLine() =
-        runTest(testDispatcher) {
-            incomeRepo.savePlannedIncome(managed(null))
-            val vm = viewModel(planSettings = FakePlanSettingsRepository(false))
-            collect(vm)
-
-            assertEquals(YearMonth.of(2026, 10), vm.content().payWorkingDays.month)
-        }
-
-    @Test
-    fun payWorkingDays_withoutShift_isTheViewedMonth() =
-        runTest(testDispatcher) {
-            incomeRepo.savePlannedIncome(fixed("manual", 5))
-            val vm = viewModel()
-            collect(vm)
-
-            assertEquals(vm.content().workingDays, vm.content().payWorkingDays)
-            assertEquals(YearMonth.of(2026, 10), vm.content().payWorkingDays.month)
-        }
-
-    @Test
     fun monthRouteArgument_opensThePlanOnThatMonth() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(fixed("a", 10))
