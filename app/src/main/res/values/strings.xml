@@ -693,4 +693,9 @@
     <string name="income_meal_card">Meal card</string>
     <string name="income_meal_card_balance">Balance</string>
     <string name="income_meal_card_detail">Received %1$s · spent %2$s</string>
+    <string name="income_outlook">Income by month</string>
+    <string name="income_outlook_received">Received</string>
+    <string name="income_outlook_expected">Expected</string>
+    <string name="income_outlook_total">Total for the year</string>
+    <string name="income_outlook_total_detail">Received %1$s · expected %2$s</string>
 </resources>

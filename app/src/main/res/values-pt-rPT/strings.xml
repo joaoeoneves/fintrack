@@ -707,4 +707,9 @@
     <string name="income_meal_card">Cartão refeição</string>
     <string name="income_meal_card_balance">Saldo</string>
     <string name="income_meal_card_detail">Recebido %1$s · gasto %2$s</string>
+    <string name="income_outlook">Rendimentos por mês</string>
+    <string name="income_outlook_received">Recebido</string>
+    <string name="income_outlook_expected">Previsto</string>
+    <string name="income_outlook_total">Total do ano</string>
+    <string name="income_outlook_total_detail">Recebido %1$s · previsto %2$s</string>
 </resources>

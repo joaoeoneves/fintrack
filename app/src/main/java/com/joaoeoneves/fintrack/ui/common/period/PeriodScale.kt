@@ -36,7 +36,7 @@ fun Period.switchedTo(
         PeriodScale.MONTH -> {
             val year = (this as Period.Year).year
             val current = currentYearMonth(now, zone)
-            if (year >= current.year) {
+            if (year == current.year) {
                 Period.CurrentMonth
             } else {
                 Period.ofMonth(YearMonth.of(year, 1), now, zone, monthsAhead)

@@ -21,13 +21,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MealCardBalance
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.YearIncomeOutlook
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.TabScaffold
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.history.IncomeHeadline
 import com.joaoeoneves.fintrack.ui.common.history.IncomeHistory
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
@@ -48,6 +51,9 @@ import com.joaoeoneves.fintrack.ui.plan.WorkingDaysDialog
 import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import java.time.YearMonth
+
+// How many months past the current one the tab can show (kept in step with the ViewModel's limit).
+private const val INCOME_MONTHS_AHEAD = 120
 
 /**
  * The Income tab. Month scale: the month's expected vs received income per line (receive/undo, working days, salary
@@ -116,6 +122,7 @@ private fun IncomeContent(
             canGoToNextMonth = state.canGoToNextMonth,
             actions = viewModel.periodActions,
             monthOnly = true,
+            monthsAhead = INCOME_MONTHS_AHEAD,
             showScaleSwitch = true,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
         )
@@ -125,6 +132,7 @@ private fun IncomeContent(
             MonthCard(state, month, viewModel, onOpenSalaryProfile) { editingWorkingDays = true }
         }
         state.mealCard?.let { MealCardRow(it) }
+        state.outlook?.let { YearOutlook(it) }
         IncomeHistory(
             history = state.history,
             onSourceClick = { onOpenSource(it, state.period) },
@@ -197,6 +205,37 @@ private fun MonthCard(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding),
     )
 }
+
+/** A current or future year: each month's income, received or expected, and the year's total. */
+@Composable
+private fun YearOutlook(outlook: YearIncomeOutlook) {
+    val locale = currentLocale()
+    SettingsGroup(
+        label = stringResource(R.string.income_outlook),
+        modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(top = Dimens.Space16),
+    ) {
+        outlook.months.forEach { entry ->
+            SettingsRow(
+                title = formatShortMonthName(entry.month, locale),
+                supportingText = stringResource(outlookLabel(entry.received)),
+                value = formatAmountCents(entry.cents),
+            )
+            Hairline()
+        }
+        SettingsRow(
+            title = stringResource(R.string.income_outlook_total),
+            supportingText =
+                stringResource(
+                    R.string.income_outlook_total_detail,
+                    formatAmountCents(outlook.receivedCents),
+                    formatAmountCents(outlook.expectedCents),
+                ),
+            value = formatAmountCents(outlook.totalCents),
+        )
+    }
+}
+
+private fun outlookLabel(received: Boolean): Int = if (received) R.string.income_outlook_received else R.string.income_outlook_expected
 
 /** The meal card: what it received and what was paid with it in the period, and what is left (may be negative). */
 @Composable

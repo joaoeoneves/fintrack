@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MealCardBalance
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.YearIncomeOutlook
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.plan.IncomeLineEditorState
@@ -31,6 +32,8 @@ sealed interface IncomeTabUiState {
         val canAddIncomeLine: Boolean,
         /** The meal card's received, spent and balance over [period]; `null` when the meal card does not apply. */
         val mealCard: MealCardBalance? = null,
+        /** On a current or future Year: each month received or expected, and the totals. */
+        val outlook: YearIncomeOutlook? = null,
     ) : IncomeTabUiState
 
     data class Error(
