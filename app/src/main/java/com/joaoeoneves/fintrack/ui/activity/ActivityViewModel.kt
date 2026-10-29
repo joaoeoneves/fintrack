@@ -16,6 +16,7 @@ import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.domain.model.netCents
 import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
@@ -329,14 +330,26 @@ private fun PeriodItems.Loaded.toContent(
     )
 }
 
-/** The header's "Spent" and fixed/variable split follow the visible [expenses] (the breakdown stays whole-period). */
+/**
+ * The header's "Spent", fixed/variable split and per-category breakdown totals follow the visible [expenses]
+ * (the planned slices and the per-envelope view stay whole-period).
+ */
 private fun ActivityAnalytics.following(
     expenses: List<Expense>,
     catalog: List<Category>,
 ): ActivityAnalytics {
     val spending = expenses.filter { catalog.resolve(it.category.id).kind == CategoryKind.SPENDING }
     val visibleSplit = spendingSplitOf(spending)
-    return copy(spentCents = visibleSplit.spendingCents, split = visibleSplit)
+    val visibleByCategory = expenses.groupBy { it.category.id }
+    val visibleTotals =
+        breakdown.categoryTotals.map { total ->
+            total.copy(totalCents = visibleByCategory[total.category.id].orEmpty().netCents())
+        }
+    return copy(
+        spentCents = visibleSplit.spendingCents,
+        split = visibleSplit,
+        breakdown = breakdown.copy(categoryTotals = visibleTotals),
+    )
 }
 
 /** The analytics header's numbers over the whole period (before the list filters). */

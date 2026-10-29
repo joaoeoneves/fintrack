@@ -131,23 +131,22 @@ private fun EnvelopeFilterSection(
     val spoken = chips.map { "${it.name ?: noEnvelope} ${formatAmountCents(it.spentCents, false)}" }.joinToString("; ")
     val description = stringResource(R.string.cd_envelope_bar, spoken)
     val colors = chips.indices.map { sliceColorFor(it, dark) }
-    val selectedIndex = chips.indexOfFirst { it.id == selected }.takeIf { it >= 0 }
+    // Tapping a bar segment only highlights it (and names it below); the chips are what filter.
+    var highlightedRaw by rememberSaveable { mutableStateOf<Int?>(null) }
+    val highlighted = highlightedRaw?.takeIf { it in chips.indices }
     EnvelopeSpendBar(
         segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, colors[index]) },
         description = description,
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
-        selectedIndex = selectedIndex,
-        onSegmentClick = { index ->
-            val id = chips[index].id
-            onSelected(if (id == selected) null else id)
-        },
+        selectedIndex = highlighted,
+        onSegmentClick = { index -> highlightedRaw = if (highlighted == index) null else index },
     )
-    val shown = selectedIndex?.let { chips[it] }
+    val shown = highlighted?.let { chips.getOrNull(it) }
     if (shown != null) {
         Text(
             text = "${shown.name ?: noEnvelope} · ${formatAmountCents(shown.spentCents)}",
             style = MaterialTheme.typography.labelMedium,
-            color = colors[selectedIndex],
+            color = colors[highlighted ?: 0],
             modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(bottom = Dimens.Space8),
         )
     }
