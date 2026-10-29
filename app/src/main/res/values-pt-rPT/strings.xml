@@ -391,8 +391,6 @@
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar recorrentes</string>
     <string name="recurring_added">Adicionado: “%1$s”</string>
-    <string name="recurring_per_month">%1$s / mês</string>
-    <string name="recurring_per_year">%1$s / ano</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
     <string name="recurring_section_active">Ativos</string>
     <string name="recurring_section_inactive">Em pausa e terminados</string>

@@ -380,8 +380,6 @@
     <string name="recurring_manage">Manage</string>
     <string name="recurring_empty_cta">Set up recurring</string>
     <string name="recurring_added">Added “%1$s”</string>
-    <string name="recurring_per_month">%1$s / month</string>
-    <string name="recurring_per_year">%1$s / year</string>
     <string name="recurring_next_due">Next: %1$s</string>
     <string name="recurring_section_active">Active</string>
     <string name="recurring_section_inactive">Paused and ended</string>
