@@ -91,9 +91,8 @@ Short records of the main architectural choices: context, decision, consequences
 - **Decision:** One concept per job. An **envelope** (stored in `categoryGroups`) holds categories and a
   monthly amount. A **savings plan** is a goal that owns its monthly recurring item (a goal is a plan with
   no monthly amount). **Income lines** are the only income mechanism, each with optional auto-record on
-  its pay day. Existing data is converted once, on both Firestore and the guest file, by app-start syncs
-  that wait for a settled cache and never act on a partial one.
-- **Consequences:** Fewer screens and words to learn, and the migrations are idempotent and testable.
-  Legacy fields and documents stay readable (and allowed by the rules) for one release and are removed
-  in 3.1. For 3.0 the migration syncs are not combined into one runner, and repositories do not share
-  Firestore listeners yet; both are simpler once the migrations are deleted.
+  its pay day. Existing data was converted once, on both Firestore and the guest file, by app-start syncs
+  that waited for a settled cache and never acted on a partial one; the syncs were removed in 5.1.
+- **Consequences:** Fewer screens and words to learn. The legacy fields, documents and the migration syncs were removed
+  in 5.1 (rules and app); pre-3.0 backups still restore, but earmarks and the payday switch are ignored and
+  recurring income items are skipped.
