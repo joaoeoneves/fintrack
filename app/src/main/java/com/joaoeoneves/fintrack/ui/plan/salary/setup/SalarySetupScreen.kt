@@ -37,6 +37,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.plan.salary.MealSection
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryDuplicatesDialog
+import com.joaoeoneves.fintrack.ui.plan.salary.SalaryEffectiveFrom
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryField
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryForm
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryGroup
@@ -87,6 +88,7 @@ fun SalarySetupScreen(
                 SalarySetupActions(
                     onChange = viewModel::onFormChange,
                     onNetLumpsChange = viewModel::onNetLumpsChange,
+                    onEffectiveFromChange = viewModel::onEffectiveFromChange,
                     onPrimary = {
                         if (state.step == SalarySetupStep.SUMMARY) viewModel.onSave(labels) else viewModel.onNext()
                     },
@@ -108,6 +110,7 @@ fun SalarySetupScreen(
 private data class SalarySetupActions(
     val onChange: (SalaryForm) -> Unit,
     val onNetLumpsChange: (Boolean) -> Unit,
+    val onEffectiveFromChange: (YearMonth) -> Unit,
     val onPrimary: () -> Unit,
     val onOpenAdvanced: () -> Unit,
 )
@@ -135,7 +138,7 @@ private fun SalarySetupContent(
             SalarySetupStep.PAY -> PayStep(state, actions.onChange, actions.onOpenAdvanced)
             SalarySetupStep.SUBSIDIES -> SubsidiesStep(state, actions.onChange, actions.onNetLumpsChange)
             SalarySetupStep.MEAL -> MealSection(state.form, actions.onChange)
-            SalarySetupStep.SUMMARY -> SummaryStep(state)
+            SalarySetupStep.SUMMARY -> SummaryStep(state, actions.onEffectiveFromChange)
         }
         PrimaryPillButton(
             text =
@@ -247,7 +250,10 @@ private fun SubsidiesStep(
 }
 
 @Composable
-private fun SummaryStep(state: SalarySetupUiState) {
+private fun SummaryStep(
+    state: SalarySetupUiState,
+    onEffectiveFromChange: (YearMonth) -> Unit,
+) {
     val breakdown = state.breakdown
     SettingsGroup(label = stringResource(R.string.salary_setup_summary)) {
         if (breakdown != null) {
@@ -274,6 +280,7 @@ private fun SummaryStep(state: SalarySetupUiState) {
             }
         }
     }
+    SalaryEffectiveFrom(state.effectiveFrom, state.shiftSource, onEffectiveFromChange)
     Text(
         text = stringResource(R.string.salary_setup_later_hint),
         style = MaterialTheme.typography.bodySmall,

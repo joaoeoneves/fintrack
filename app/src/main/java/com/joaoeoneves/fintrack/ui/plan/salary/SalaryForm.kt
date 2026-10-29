@@ -94,6 +94,12 @@ sealed interface SalaryProfileUiState {
         val workingDays: Int,
         val extraEditor: SalaryExtraEditorState? = null,
         val canAddExtra: Boolean = true,
+        /** The plan month the changed amounts apply from (default: the current month). */
+        val effectiveFrom: YearMonth = month,
+        /** Whether the "Valid from" row shows: always for a new profile, once the profile changed otherwise. */
+        val showEffectiveFrom: Boolean = false,
+        /** With the salary shift on, the month before [effectiveFrom] (the one the salary is received in). */
+        val shiftSource: YearMonth? = null,
     ) : SalaryProfileUiState
 }
 
