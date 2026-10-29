@@ -29,10 +29,14 @@ tags:
     element: "Salary profile"
 - assertVisible: "Working days in.*"
 - scrollUntilVisible:
-    element: "Add income"
+    element: "Add expected income"
     direction: UP
-- tapOn: "Add income"
-- assertVisible: "New income"
+    centerElement: true
+- tapOn: "Add expected income"
+- assertVisible: "New expected income"
+# A fixed pay day of the 1st is never after today, so the row is receivable on any date the flow runs. Picked
+# before typing, while no keyboard covers the chips (and without needing `back` to close one).
+- tapOn: "Fixed day"
 - tapOn: "Name"
 - inputText: "Freelance"
 - tapOn: "Amount"
@@ -50,7 +54,7 @@ tags:
     timeout: 10000
 - assertVisible: "Expected .* Difference .*"
 
-# --- Working days / days off (Configure group at the bottom of the tab) ---
+# --- Working days / days off (Adjustments group at the bottom of the tab) ---
 - scrollUntilVisible:
     element: "Working days in.*"
 - tapOn: "Working days in.*"
