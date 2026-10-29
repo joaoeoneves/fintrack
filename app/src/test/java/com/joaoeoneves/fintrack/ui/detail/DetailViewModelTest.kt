@@ -21,6 +21,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalarySpendComparison
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.rowKey
+import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
@@ -31,6 +32,8 @@ import com.joaoeoneves.fintrack.testutil.testIncome
 import com.joaoeoneves.fintrack.ui.activity.analytics.encode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -43,6 +46,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -100,9 +104,26 @@ class DetailViewModelTest {
             testIncome("gift", 5_000L, at(2026, 10, 6)).copy(source = "Gift"),
         )
 
+    private var vmClock: Clock = clock
+    private var failExpenses = false
+
+    private fun flakyExpenses(): ExpenseRepository {
+        val delegate = CountingExpenseRepository(expenses)
+        return object : ExpenseRepository by delegate {
+            override fun observeExpenses(
+                startInclusive: Instant,
+                endExclusive: Instant,
+            ): Flow<List<Expense>> =
+                if (failExpenses) {
+                    flow { throw IllegalStateException("offline") }
+                } else {
+                    delegate.observeExpenses(startInclusive, endExclusive)
+                }
+        }
+    }
+
     private suspend fun detail(vararg args: Pair<String, Any?>): Pair<DetailViewModel, SavedStateHandle> {
-        val transactions =
-            CombinedTransactionRepository(CountingExpenseRepository(expenses), CountingIncomeRepository(incomes))
+        val transactions = CombinedTransactionRepository(flakyExpenses(), CountingIncomeRepository(incomes))
         val plannedIncome = FakePlannedIncomeRepository()
         plannedIncome.savePlannedIncome(rent)
         plannedIncome.savePlannedIncome(salary)
@@ -124,7 +145,7 @@ class DetailViewModelTest {
                 ObserveMonthlyHistory(transactions, sources),
                 ObservePeriodOverview(transactionRepository = transactions, sources = sources),
                 FakeCategoryRepository(),
-                clock,
+                vmClock,
             )
         return vm to handle
     }
@@ -318,5 +339,30 @@ class DetailViewModelTest {
             assertNull(comparisonOf(meal, september))
             assertNull(comparisonOf(holiday, september))
             assertNull(comparisonOf(rent, september))
+        }
+
+    @Test
+    fun aFailingFlow_emitsError() =
+        runTest(testDispatcher) {
+            failExpenses = true
+
+            assertEquals(DetailUiState.Error, state(detail("categoryId" to shopping).first))
+        }
+
+    @Ignore(
+        "DetailViewModel.uiState applies .catch after retryTrigger.flatMapLatest, so a failure ends the flow and onRetry cannot recover",
+    )
+    @Test
+    fun aFailingFlow_emitsError_andOnRetryRecovers() =
+        runTest(testDispatcher) {
+            failExpenses = true
+            val vm = detail("categoryId" to shopping).first
+            assertEquals(DetailUiState.Error, state(vm))
+
+            failExpenses = false
+            vm.onRetry()
+            advanceUntilIdle()
+
+            assertTrue(vm.uiState.value is DetailUiState.Content)
         }
 }

@@ -69,6 +69,7 @@ class SpendingTabViewModelTest {
     private fun setup(
         vararg args: Pair<String, Any?>,
         expenseRepo: ExpenseRepository? = null,
+        vmClock: Clock = clock,
     ): Setup {
         val counting = CountingExpenseRepository(listOf<Expense>(testExpense("e", 100L, clock.instant())))
         val transactions = CombinedTransactionRepository(expenseRepo ?: counting, CountingIncomeRepository(emptyList()))
@@ -87,7 +88,7 @@ class SpendingTabViewModelTest {
                 ObserveMonthlyHistory(transactions, sources),
                 FakeCategoryRepository(),
                 SavedStateHandle(mapOf(*args)),
-                clock,
+                vmClock,
             )
         return Setup(vm, counting)
     }
@@ -97,6 +98,19 @@ class SpendingTabViewModelTest {
         advanceUntilIdle()
         return vm.uiState.value as SpendingTabUiState.Content
     }
+
+    @Test
+    fun history_isGivenToday_soTheLeftoverCountsTheClosedMonthsUpToIt() =
+        runTest(testDispatcher) {
+            // Today is February 2027: November and December 2026 are closed months with data.
+            val later = Clock.fixed(Instant.parse("2027-02-10T12:00:00Z"), ZoneOffset.UTC)
+            val repo = CountingExpenseRepository(listOf<Expense>(testExpense("nov", 100L, Instant.parse("2026-11-05T12:00:00Z"))))
+            val c = content(setup("period" to Period.Month(YearMonth.of(2026, 12)).encode(), expenseRepo = repo, vmClock = later).vm)
+
+            val leftover = c.history!!.monthly.leftover
+            assertEquals(2, leftover.months)
+            assertEquals(YearMonth.of(2026, 12), leftover.until)
+        }
 
     @Test
     fun seededFromRoute_period() =
