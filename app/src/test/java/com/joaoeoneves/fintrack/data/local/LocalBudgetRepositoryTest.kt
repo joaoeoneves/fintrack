@@ -27,7 +27,7 @@ class LocalBudgetRepositoryTest : LocalStoreTestBase() {
             assertTrue(repo.setBudget(food, 200).isSuccess)
             assertEquals(
                 listOf(Budget(food, 200), Budget(CategoryId("SHOPPING"), 50)),
-                repo.observeBudgets().first(),
+                repo.observeBudgets().first().untimed(),
             )
         }
 
@@ -73,6 +73,7 @@ class LocalBudgetRepositoryTest : LocalStoreTestBase() {
     fun budgets_persistAcrossInstances() =
         runStoreTest {
             repo.setBudget(food, 123)
-            assertEquals(listOf(Budget(food, 123)), LocalBudgetRepository(newStore()).observeBudgets().first())
+            val reloaded = LocalBudgetRepository(newStore()).observeBudgets().first().untimed()
+            assertEquals(listOf(Budget(food, 123)), reloaded)
         }
 }

@@ -137,7 +137,12 @@ class LocalCategoryMoveTest : LocalStoreTestBase() {
             assertTrue(budgets.moveBudget(food, shopping).getOrThrow())
 
             assertEquals(before + 1, revision())
-            val result = budgets.observeBudgets().first().toSet()
+            val result =
+                budgets
+                    .observeBudgets()
+                    .first()
+                    .untimed()
+                    .toSet()
             assertEquals(setOf(Budget(shopping, 5_000), Budget(CategoryId("TRANSFER"), 1_000)), result)
         }
 
@@ -149,7 +154,7 @@ class LocalCategoryMoveTest : LocalStoreTestBase() {
 
             assertTrue(budgets.moveBudget(food, shopping).getOrThrow())
 
-            assertEquals(listOf(Budget(shopping, 800)), budgets.observeBudgets().first())
+            assertEquals(listOf(Budget(shopping, 800)), budgets.observeBudgets().first().untimed())
         }
 
     @Test
@@ -160,7 +165,7 @@ class LocalCategoryMoveTest : LocalStoreTestBase() {
 
             assertFalse(budgets.moveBudget(food, shopping).getOrThrow())
             assertEquals(before, revision())
-            assertEquals(listOf(Budget(shopping, 800)), budgets.observeBudgets().first())
+            assertEquals(listOf(Budget(shopping, 800)), budgets.observeBudgets().first().untimed())
         }
 
     @Test
@@ -169,6 +174,6 @@ class LocalCategoryMoveTest : LocalStoreTestBase() {
             budgets.setBudget(food, 5_000)
 
             assertTrue(budgets.moveBudget(food, ghost).isFailure)
-            assertEquals(listOf(Budget(food, 5_000)), budgets.observeBudgets().first())
+            assertEquals(listOf(Budget(food, 5_000)), budgets.observeBudgets().first().untimed())
         }
 }
