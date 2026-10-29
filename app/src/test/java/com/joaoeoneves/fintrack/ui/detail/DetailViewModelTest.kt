@@ -182,6 +182,25 @@ class DetailViewModelTest {
         }
 
     @Test
+    fun yearScale_sumsTheYear_hasNoSelectionAndNoDelta_andPersistsThePeriod() =
+        runTest(testDispatcher) {
+            val (vm, handle) = detail("categoryId" to shopping, "period" to "year:2026")
+            val c = state(vm) as DetailUiState.Content
+
+            assertEquals(9_000L, c.amountCents)
+            assertEquals(NO_SELECTION, c.selectedIndex)
+            assertNull(c.delta)
+            assertEquals(listOf("oct", "sep", "aug"), c.movements.map { it.id })
+
+            vm.periodActions.onPrevious()
+            advanceUntilIdle()
+            val previous = vm.uiState.value as DetailUiState.Content
+            assertEquals(Period.Year(2025), previous.period)
+            assertEquals(0L, previous.amountCents)
+            assertEquals("year:2025", handle.get<String>("selectedPeriod"))
+        }
+
+    @Test
     fun routePeriod_endsTheWindowAtThatMonth() =
         runTest(testDispatcher) {
             val period = Period.Month(YearMonth.of(2026, 9)).encode()
