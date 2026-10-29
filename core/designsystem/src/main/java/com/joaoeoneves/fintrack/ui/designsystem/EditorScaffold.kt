@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,15 +45,16 @@ fun rememberLeaveGuard(
             title = { Text(stringResource(R.string.discard_changes_title)) },
             text = { Text(stringResource(R.string.discard_changes_message)) },
             confirmButton = {
-                TextButton(
+                DestructiveTextButton(
+                    text = stringResource(R.string.discard_changes_confirm),
                     onClick = {
                         asking = false
                         onLeave()
                     },
-                ) { Text(stringResource(R.string.discard_changes_confirm)) }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { asking = false }) { Text(stringResource(R.string.discard_changes_keep)) }
+                DialogTextButton(text = stringResource(R.string.discard_changes_keep), onClick = { asking = false })
             },
         )
     }

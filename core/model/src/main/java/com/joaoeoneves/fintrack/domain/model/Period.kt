@@ -42,7 +42,15 @@ sealed interface Period {
             yearMonth: YearMonth,
             now: Instant,
             zone: ZoneId,
-        ): Period = if (yearMonth >= currentYearMonth(now, zone)) CurrentMonth else Month(yearMonth)
+            monthsAhead: Int = 0,
+        ): Period {
+            val current = currentYearMonth(now, zone)
+            return when {
+                yearMonth > current && yearMonth <= current.plusMonths(monthsAhead.toLong()) -> Month(yearMonth)
+                yearMonth >= current -> CurrentMonth
+                else -> Month(yearMonth)
+            }
+        }
     }
 }
 
@@ -105,10 +113,19 @@ fun Period.previousMonth(
 fun Period.nextMonth(
     now: Instant,
     zone: ZoneId,
-): Period = anchorMonth(now, zone)?.let { Period.ofMonth(it.plusMonths(1), now, zone) } ?: this
+    monthsAhead: Int = 0,
+): Period =
+    anchorMonth(now, zone)
+        ?.takeIf { it < currentYearMonth(now, zone).plusMonths(monthsAhead.toLong()) }
+        ?.let { Period.ofMonth(it.plusMonths(1), now, zone, monthsAhead) }
+        ?: this
 
-/** Whether [nextMonth] would move forward, i.e. this is a month strictly before the current one. */
+/**
+ * Whether [nextMonth] would move forward, i.e. this is a month strictly before the current one (or before
+ * [monthsAhead] months after it, for planning screens).
+ */
 fun Period.canGoToNextMonth(
     now: Instant,
     zone: ZoneId,
-): Boolean = this is Period.Month && yearMonth < currentYearMonth(now, zone)
+    monthsAhead: Int = 0,
+): Boolean = anchorMonth(now, zone)?.let { it < currentYearMonth(now, zone).plusMonths(monthsAhead.toLong()) } == true

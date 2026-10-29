@@ -9,8 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +25,7 @@ import com.joaoeoneves.fintrack.ui.common.rememberDayMonthText
 import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackIconButton
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -116,13 +115,13 @@ fun ReceivedCheckButton(
     modifier: Modifier = Modifier,
 ) {
     val description = if (received) R.string.income_undo_received else R.string.income_mark_received
-    IconButton(onClick = onClick, modifier = modifier) {
-        Icon(
-            imageVector = if (received) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
-            contentDescription = stringResource(description),
-            tint = if (received) FinTrackTheme.colors.positive else FinTrackTheme.colors.textSecondary,
-        )
-    }
+    FinTrackIconButton(
+        icon = if (received) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+        contentDescription = stringResource(description),
+        onClick = onClick,
+        modifier = modifier,
+        tint = if (received) FinTrackTheme.colors.positive else FinTrackTheme.colors.textSecondary,
+    )
 }
 
 /** Confirmation before taking a received row back to not received. */

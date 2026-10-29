@@ -206,7 +206,8 @@ service cloud.firestore {
       allow create, update: if isOwner(userId) && isValidSalaryProfile(request.resource.data);
     }
 
-    // The automation settings are a single document: lineThrough maps a planned income line id to the last month
+    // The automation settings are a single document (also holding the salary-shift choice): lineThrough maps a
+    // planned income line id to the last month
     // (yyyy-MM) it recorded; the payday switch and its month are the legacy single switch, kept until 3.1.
     match /users/{userId}/plan/automation {
       allow read, delete: if isOwner(userId);
@@ -214,7 +215,8 @@ service cloud.firestore {
     }
 
     function isValidAutomation(data) {
-      return data.keys().hasOnly(['paydayEnabled', 'paydayThrough', 'lineThrough', 'updatedAt'])
+      return data.keys().hasOnly(['paydayEnabled', 'paydayThrough', 'lineThrough', 'salaryPaysNextMonth', 'updatedAt'])
+        && (!('salaryPaysNextMonth' in data) || data.salaryPaysNextMonth is bool)
         && (!('lineThrough' in data) || (data.lineThrough is map && data.lineThrough.size() <= 64))
         && (!('paydayEnabled' in data) || data.paydayEnabled is bool)
         && (!('paydayThrough' in data) || data.paydayThrough == null

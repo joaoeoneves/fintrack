@@ -18,9 +18,9 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
     private val v1File = """{"schemaVersion":1,"revision":7,"budgets":[{"categoryId":"FOOD","limitCents":5}]}"""
 
     @Test
-    fun currentSchemaVersion_isFifteen() {
-        assertEquals(17, LOCAL_SCHEMA_VERSION)
-        assertEquals(17, LocalDataDocument().schemaVersion)
+    fun currentSchemaVersion_isEighteen() {
+        assertEquals(18, LOCAL_SCHEMA_VERSION)
+        assertEquals(18, LocalDataDocument().schemaVersion)
     }
 
     @Test
@@ -56,16 +56,16 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
             assertTrue(store.update { it.copy(plannedIncome = listOf(line)) to Unit }.isSuccess)
 
             val onDisk = diskDoc()
-            assertEquals(17, onDisk.schemaVersion)
+            assertEquals(18, onDisk.schemaVersion)
             assertEquals(8L, onDisk.revision)
             assertEquals(listOf(line), onDisk.plannedIncome)
             assertEquals(listOf(LocalBudget("FOOD", 5)), onDisk.budgets)
         }
 
     @Test
-    fun v16File_isMovedAside_andStoreStartsEmpty() =
+    fun v19File_isMovedAside_andStoreStartsEmpty() =
         runStoreTest {
-            val content = """{"schemaVersion":18,"revision":5,"plannedIncome":[]}"""
+            val content = """{"schemaVersion":19,"revision":5,"plannedIncome":[]}"""
             dataFile.writeText(content)
 
             assertEquals(LocalDataDocument(), newStore().data.first())

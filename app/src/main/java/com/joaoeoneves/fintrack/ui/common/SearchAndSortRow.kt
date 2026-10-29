@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +27,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackMenuItem
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 private val SortButtonSize = 56.dp
@@ -102,18 +101,11 @@ fun <T> SortDropdown(
                 tint = FinTrackTheme.colors.textSecondary,
             )
         }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            shape = MaterialTheme.shapes.medium,
-            containerColor = FinTrackTheme.colors.surface2,
-        ) {
+        FinTrackDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(optionLabel(option)) },
-                    trailingIcon = {
-                        if (option == selected) Icon(Icons.Default.Check, contentDescription = null)
-                    },
+                FinTrackMenuItem(
+                    text = optionLabel(option),
+                    selected = option == selected,
                     onClick = {
                         onSelected(option)
                         expanded = false

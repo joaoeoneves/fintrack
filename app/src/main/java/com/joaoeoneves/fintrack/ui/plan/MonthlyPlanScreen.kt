@@ -146,6 +146,7 @@ private fun PlanMonthView(
             canGoToNextMonth = content.canGoToNextMonth,
             actions = viewModel.periodActions,
             monthOnly = true,
+            monthsAhead = PLAN_MONTHS_AHEAD,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
         )
     }

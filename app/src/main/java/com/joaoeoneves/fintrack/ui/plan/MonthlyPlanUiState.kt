@@ -25,6 +25,8 @@ sealed interface MonthlyPlanUiState {
      * @property period the selected month (month periods only) the envelope cards are measured on.
      * @property canAddIncomeLine whether the line cap has not been reached yet.
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
+     * @property payWorkingDays the working days of the month that pays [period]'s salary: [period]'s own, or the
+     *   month before when the salary shift is on and a profile line pays for the next month.
      * @property editor the income-line sheet, or `null` when it is closed.
      * @property envelopes the month's envelopes (amounts, spend, funding) and free money.
      * @property figures the month's subtraction (income - recurring - envelopes - savings = available).
@@ -43,6 +45,7 @@ sealed interface MonthlyPlanUiState {
         val canGoToNextMonth: Boolean,
         val canAddIncomeLine: Boolean,
         val workingDays: WorkingDaysState,
+        val payWorkingDays: WorkingDaysState = workingDays,
         val editor: IncomeLineEditorState?,
         val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
         val figures: MonthFigures,

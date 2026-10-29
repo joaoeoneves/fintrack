@@ -16,6 +16,8 @@ import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
+import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardRepositories
@@ -66,6 +68,7 @@ open class MonthlyPlanViewModelTestBase {
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         expenses: ExpenseRepository = expenseRepo,
         incomes: IncomeRepository = actualIncomeRepo,
+        planSettings: PlanSettingsRepository = NoPlanSettings,
     ) = MonthlyPlanViewModel(
         PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo, goalRepo, automationRepo),
         observePeriodOverviewOf(
@@ -78,6 +81,7 @@ open class MonthlyPlanViewModelTestBase {
                 monthSettingsRepo,
                 envelopeRepo,
                 recurringRepo,
+                planSettings,
             ),
         ),
         RecordPayday(

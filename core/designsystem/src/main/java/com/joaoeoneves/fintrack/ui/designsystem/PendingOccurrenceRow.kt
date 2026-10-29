@@ -9,10 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -92,17 +88,14 @@ fun PendingOccurrenceRow(
         }
         Text(text = amountText, style = Amount, maxLines = 1)
         if (onConfirm != null) {
-            IconButton(
+            FinTrackIconButton(
+                icon = Icons.Outlined.CheckCircle,
+                contentDescription = labels.confirm,
                 onClick = onConfirm,
                 enabled = confirmEnabled,
                 modifier = Modifier.testTag(TestTags.RECURRING_CONFIRM),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.CheckCircle,
-                    contentDescription = labels.confirm,
-                    tint = colors.textSecondary.copy(alpha = if (confirmEnabled) 1f else DISABLED_ALPHA),
-                )
-            }
+                tint = colors.textSecondary,
+            )
             PendingOverflow(labels, onSkip, onChangeAmount)
         }
     }
@@ -118,17 +111,17 @@ private fun PendingOverflow(
     var expanded by remember { mutableStateOf(false) }
     // The menu is anchored to the Box (not nested in the button) so it opens under this row's button.
     Box {
-        IconButton(onClick = { expanded = true }, modifier = Modifier.testTag(TestTags.RECURRING_MORE)) {
-            Icon(
-                imageVector = Icons.Filled.MoreVert,
-                contentDescription = labels.more,
-                tint = FinTrackTheme.colors.textSecondary,
-            )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        FinTrackIconButton(
+            icon = Icons.Filled.MoreVert,
+            contentDescription = labels.more,
+            onClick = { expanded = true },
+            modifier = Modifier.testTag(TestTags.RECURRING_MORE),
+            tint = FinTrackTheme.colors.textSecondary,
+        )
+        FinTrackDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (onChangeAmount != null) {
-                DropdownMenuItem(
-                    text = { Text(labels.changeAmount) },
+                FinTrackMenuItem(
+                    text = labels.changeAmount,
                     onClick = {
                         expanded = false
                         onChangeAmount()
@@ -137,8 +130,8 @@ private fun PendingOverflow(
                 )
             }
             if (onSkip != null) {
-                DropdownMenuItem(
-                    text = { Text(labels.skip) },
+                FinTrackMenuItem(
+                    text = labels.skip,
                     onClick = {
                         expanded = false
                         onSkip()
@@ -149,5 +142,3 @@ private fun PendingOverflow(
         }
     }
 }
-
-private const val DISABLED_ALPHA = 0.5f

@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.di
 
+import com.joaoeoneves.fintrack.data.preferences.AccountPlanSettingsRepository
 import com.joaoeoneves.fintrack.data.preferences.FirestorePreferencesSync
 import com.joaoeoneves.fintrack.data.preferences.PreferencesSync
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository
@@ -27,7 +28,7 @@ interface PreferencesModule {
 
     @Binds
     @Singleton
-    fun bindPlanSettingsRepository(impl: UserPreferencesRepository): PlanSettingsRepository
+    fun bindPlanSettingsRepository(impl: AccountPlanSettingsRepository): PlanSettingsRepository
 
     @Binds
     @Singleton

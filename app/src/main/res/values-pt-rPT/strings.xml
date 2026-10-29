@@ -637,6 +637,8 @@
     <string name="income_undo_received">Desfazer recebido</string>
     <string name="income_undo_title">Desfazer recebido?</string>
     <string name="plan_payday">Dia de pagamento: %1$s</string>
+    <string name="plan_payday_received">Salário recebido a %1$s</string>
+    <string name="plan_payday_upcoming">Recebes a %1$s</string>
     <string name="plan_received_amount">Valor recebido</string>
     <string name="envelopes_title">Envelopes</string>
     <string name="envelopes_new">Novo envelope</string>

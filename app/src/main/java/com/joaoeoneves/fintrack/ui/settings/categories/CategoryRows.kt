@@ -15,10 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +29,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
@@ -41,6 +37,9 @@ import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.icon
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackIconButton
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackMenuItem
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
@@ -114,15 +113,8 @@ private fun CategoryOverflowMenu(
     var expanded by remember { mutableStateOf(false) }
     val description = stringResource(R.string.cd_category_more_actions, category.displayName)
     val close = { expanded = false }
-    IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = description }) {
-        Icon(Icons.Filled.MoreVert, contentDescription = null)
-    }
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = close,
-        shape = MaterialTheme.shapes.medium,
-        containerColor = FinTrackTheme.colors.surface2,
-    ) {
+    FinTrackIconButton(Icons.Filled.MoreVert, contentDescription = description, onClick = { expanded = true })
+    FinTrackDropdownMenu(expanded = expanded, onDismissRequest = close) {
         if (!archived) {
             CategoryMenuItem(R.string.category_action_edit, close) { actions.onEdit(category.id) }
         }
@@ -132,10 +124,10 @@ private fun CategoryOverflowMenu(
             close,
         ) { actions.onToggleArchived(category.id) }
         if (category.builtIn) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.category_delete_builtin_hint)) },
-                enabled = false,
+            FinTrackMenuItem(
+                text = stringResource(R.string.category_delete_builtin_hint),
                 onClick = {},
+                enabled = false,
             )
         } else {
             CategoryMenuItem(R.string.category_action_delete, close) { actions.onDelete(category.id) }
@@ -149,8 +141,8 @@ private fun CategoryMenuItem(
     onClose: () -> Unit,
     onClick: () -> Unit,
 ) {
-    DropdownMenuItem(
-        text = { Text(stringResource(label)) },
+    FinTrackMenuItem(
+        text = stringResource(label),
         onClick = {
             onClose()
             onClick()

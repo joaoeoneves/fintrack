@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -14,6 +13,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
@@ -131,18 +131,14 @@ private fun RestoreConfirmDialog(
             }
         },
         confirmButton = {
-            if (state.account) {
-                DestructiveTextButton(text = stringResource(R.string.backup_action_replace), onClick = onConfirm)
-            } else {
-                TextButton(onClick = onConfirm) {
-                    Text(stringResource(R.string.action_restore))
-                }
-            }
+            // Restoring replaces what is on this device (or in the account), so it is destructive either way.
+            DestructiveTextButton(
+                text = stringResource(if (state.account) R.string.backup_action_replace else R.string.action_restore),
+                onClick = onConfirm,
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
+            DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss)
         },
     )
 }
@@ -155,9 +151,10 @@ private fun AccountRestoreWarningDialog(actions: BackupDialogActions) {
         text = { Text(stringResource(R.string.backup_account_warning_message)) },
         confirmButton = {
             Row {
-                TextButton(onClick = actions.onExportFirst) {
-                    Text(stringResource(R.string.backup_action_export_first))
-                }
+                DialogTextButton(
+                    text = stringResource(R.string.backup_action_export_first),
+                    onClick = actions.onExportFirst,
+                )
                 DestructiveTextButton(
                     text = stringResource(R.string.backup_action_continue),
                     onClick = actions.onContinueFromWarning,
@@ -165,9 +162,7 @@ private fun AccountRestoreWarningDialog(actions: BackupDialogActions) {
             }
         },
         dismissButton = {
-            TextButton(onClick = actions.onDismissImport) {
-                Text(stringResource(R.string.action_cancel))
-            }
+            DialogTextButton(text = stringResource(R.string.action_cancel), onClick = actions.onDismissImport)
         },
     )
 }
@@ -204,14 +199,10 @@ private fun PartialRestoreDialog(actions: BackupDialogActions) {
         title = { Text(stringResource(R.string.backup_restore_partial_title)) },
         text = { Text(stringResource(R.string.backup_restore_partial_message)) },
         confirmButton = {
-            TextButton(onClick = actions.onRetryRestore) {
-                Text(stringResource(R.string.action_retry))
-            }
+            DialogTextButton(text = stringResource(R.string.action_retry), onClick = actions.onRetryRestore)
         },
         dismissButton = {
-            TextButton(onClick = actions.onDismissImport) {
-                Text(stringResource(R.string.backup_action_close))
-            }
+            DialogTextButton(text = stringResource(R.string.backup_action_close), onClick = actions.onDismissImport)
         },
     )
 }

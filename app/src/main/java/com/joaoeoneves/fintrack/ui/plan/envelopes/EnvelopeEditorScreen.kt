@@ -15,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -46,6 +45,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.EditorScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackIconButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
@@ -306,9 +306,11 @@ private fun MemberRow(
                 modifier = Modifier.width(LimitFieldWidth),
             )
         }
-        IconButton(onClick = onRemove) {
-            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_remove) + " " + name)
-        }
+        FinTrackIconButton(
+            icon = Icons.Filled.Close,
+            contentDescription = stringResource(R.string.action_remove) + " " + name,
+            onClick = onRemove,
+        )
     }
 }
 

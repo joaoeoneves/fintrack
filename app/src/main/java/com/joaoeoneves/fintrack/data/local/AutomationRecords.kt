@@ -13,6 +13,7 @@ internal fun LocalAutomation.toDomain(): AutomationSettings =
         legacyPaydayRecordedThrough = paydayThrough?.let { runCatching { YearMonth.parse(it) }.getOrNull() },
         lineRecordedThrough =
             lineThrough.mapNotNull { (id, raw) -> parseYearMonthOrNull(raw)?.let { id to it } }.toMap(),
+        salaryPaysNextMonth = salaryPaysNextMonth,
     )
 
 internal fun AutomationSettings.toLocal(): LocalAutomation =
@@ -20,6 +21,7 @@ internal fun AutomationSettings.toLocal(): LocalAutomation =
         paydayEnabled = legacyPaydayEnabled,
         paydayThrough = legacyPaydayRecordedThrough?.toString(),
         lineThrough = lineRecordedThrough.mapValues { it.value.toString() },
+        salaryPaysNextMonth = salaryPaysNextMonth,
     )
 
 /** This record when valid, else `null`. */

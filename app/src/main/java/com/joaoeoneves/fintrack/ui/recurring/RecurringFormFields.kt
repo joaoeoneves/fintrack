@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +31,8 @@ import com.joaoeoneves.fintrack.ui.common.symbol
 import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackMenuItem
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
@@ -215,15 +215,10 @@ private fun <T> ChoiceDropdown(
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxWidth()) {
         SettingsRow(title = label, value = selectedLabel, onClick = { expanded = true }, showChevron = true)
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            shape = MaterialTheme.shapes.medium,
-            containerColor = FinTrackTheme.colors.surface2,
-        ) {
+        FinTrackDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             choices.forEach { choice ->
-                DropdownMenuItem(
-                    text = { Text(choice.label) },
+                FinTrackMenuItem(
+                    text = choice.label,
                     onClick = {
                         onSelected(choice.value)
                         expanded = false

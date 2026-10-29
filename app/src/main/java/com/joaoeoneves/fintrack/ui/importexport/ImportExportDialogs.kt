@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -13,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 
 @Composable
@@ -50,17 +50,14 @@ fun ImportPreviewDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            DialogTextButton(
+                text = stringResource(R.string.action_import),
                 onClick = onConfirm,
                 enabled = state.validExpenses.isNotEmpty(),
-            ) {
-                Text(stringResource(R.string.action_import))
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
+            DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss)
         },
     )
 }
@@ -76,9 +73,7 @@ fun MessageDialog(
         title = { Text(title) },
         text = { Text(message) },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_ok))
-            }
+            DialogTextButton(text = stringResource(R.string.action_ok), onClick = onDismiss)
         },
     )
 }

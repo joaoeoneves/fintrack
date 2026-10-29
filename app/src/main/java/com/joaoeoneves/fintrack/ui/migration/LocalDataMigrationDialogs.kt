@@ -18,6 +18,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
 import com.joaoeoneves.fintrack.ui.backup.countsText
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
@@ -166,7 +167,7 @@ private fun DoneDialog(
             title = { Text(stringResource(R.string.migration_remove_confirm_title)) },
             text = { Text(stringResource(R.string.migration_remove_confirm_message)) },
             confirmButton = {
-                DialogTextButton(text = stringResource(R.string.action_delete), onClick = actions.onRemoveLocal)
+                DestructiveTextButton(text = stringResource(R.string.action_delete), onClick = actions.onRemoveLocal)
             },
             dismissButton = {
                 DialogTextButton(text = stringResource(R.string.action_cancel), onClick = { confirmRemove = false })

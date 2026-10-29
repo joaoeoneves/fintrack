@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 17
+internal const val LOCAL_SCHEMA_VERSION = 18
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -171,6 +171,8 @@ data class LocalAutomation(
     val paydayEnabled: Boolean = false,
     val paydayThrough: String? = null,
     val lineThrough: Map<String, String> = emptyMap(),
+    /** Schema v18: whether the salary pays the next month's plan; absent = not chosen (follows the profile). */
+    val salaryPaysNextMonth: Boolean? = null,
 )
 
 /**
