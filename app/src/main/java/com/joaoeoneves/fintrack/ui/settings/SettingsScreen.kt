@@ -145,6 +145,7 @@ private fun SettingsScaffold(
                 onCurrencySelected = actions.onCurrencySelected,
                 onMotionSelected = actions.onMotionSelected,
             )
+            StartChecklistSection()
             BackupFlow(signedIn = !uiState.isGuest) { onExport, onRestore ->
                 DeleteAllDataFlow(
                     isGuest = uiState.isGuest,

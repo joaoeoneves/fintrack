@@ -760,4 +760,12 @@
     <string name="pending_automatic">Automático · %1$s</string>
     <string name="recurring_skipped">Ignorado: “%1$s”</string>
     <string name="recurring_amount_title">Valor de “%1$s”</string>
+    <string name="sign_out_confirm_title">Terminar sessão?</string>
+    <string name="sign_out_confirm_message">Os teus dados ficam na tua conta; inicia sessão outra vez para os veres.</string>
+    <string name="migration_remove_confirm_title">Remover os dados locais?</string>
+    <string name="migration_remove_confirm_message">A cópia neste dispositivo é eliminada de vez. Os teus dados ficam na tua conta.</string>
+    <string name="settings_section_home">Início</string>
+    <string name="settings_show_start_hint">A lista de primeiros passos no Início</string>
+    <string name="settings_show_start">Mostrar Começar</string>
+    <string name="home_start_dismissed">Começar escondido</string>
 </resources>

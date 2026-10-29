@@ -743,4 +743,12 @@
     <string name="pending_automatic">Automatic · %1$s</string>
     <string name="recurring_skipped">Skipped “%1$s”</string>
     <string name="recurring_amount_title">Amount for “%1$s”</string>
+    <string name="sign_out_confirm_title">Sign out?</string>
+    <string name="sign_out_confirm_message">Your data stays in your account; sign in again to see it.</string>
+    <string name="migration_remove_confirm_title">Remove local data?</string>
+    <string name="migration_remove_confirm_message">The copy on this device is deleted for good. Your data stays in your account.</string>
+    <string name="settings_section_home">Home</string>
+    <string name="settings_show_start">Show Get started</string>
+    <string name="settings_show_start_hint">The setup checklist on Home</string>
+    <string name="home_start_dismissed">Get started hidden</string>
 </resources>

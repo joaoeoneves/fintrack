@@ -85,6 +85,7 @@ fun DashboardScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
+    StartDismissedSnackbar(startViewModel, snackbarHostState)
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
     val start = StartChecklistModel(startState, callbacks.onOpenStartStep, startViewModel::onDismiss)

@@ -6,6 +6,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -156,6 +159,21 @@ private fun DoneDialog(
     state: MigrationUiState.Done,
     actions: MigrationActions,
 ) {
+    var confirmRemove by remember { mutableStateOf(false) }
+    if (confirmRemove) {
+        FinTrackAlertDialog(
+            onDismissRequest = { confirmRemove = false },
+            title = { Text(stringResource(R.string.migration_remove_confirm_title)) },
+            text = { Text(stringResource(R.string.migration_remove_confirm_message)) },
+            confirmButton = {
+                TextButton(onClick = actions.onRemoveLocal) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmRemove = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+        return
+    }
     FinTrackAlertDialog(
         onDismissRequest = actions.onKeepLocal,
         title = { Text(stringResource(R.string.migration_done_title)) },
@@ -171,7 +189,9 @@ private fun DoneDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = actions.onRemoveLocal) { Text(stringResource(R.string.migration_action_remove_local)) }
+            TextButton(onClick = { confirmRemove = true }) {
+                Text(stringResource(R.string.migration_action_remove_local))
+            }
         },
         dismissButton = {
             TextButton(onClick = actions.onKeepLocal) { Text(stringResource(R.string.migration_action_keep)) }

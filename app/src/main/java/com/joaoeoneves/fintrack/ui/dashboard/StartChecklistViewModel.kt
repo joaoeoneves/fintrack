@@ -13,7 +13,9 @@ import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObserveStartChecklist
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -88,8 +91,21 @@ class StartChecklistViewModel
             }
         }
 
+        private val dismissals = Channel<Unit>(Channel.BUFFERED)
+
+        /** Fires after each dismissal, so the screen can offer to undo it. */
+        val dismissedEvent: Flow<Unit> = dismissals.receiveAsFlow()
+
         fun onDismiss() {
-            viewModelScope.launch { store.set(StartChecklistState.DISMISSED) }
+            viewModelScope.launch {
+                store.set(StartChecklistState.DISMISSED)
+                dismissals.send(Unit)
+            }
+        }
+
+        /** Takes a dismissal back. */
+        fun onUndoDismiss() {
+            viewModelScope.launch { store.set(StartChecklistState.ACTIVE) }
         }
 
         private suspend fun decide() {
