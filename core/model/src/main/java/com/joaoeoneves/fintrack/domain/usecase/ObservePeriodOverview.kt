@@ -1,9 +1,13 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.Budget
+import com.joaoeoneves.fintrack.domain.model.CARRY_LOOKBACK_MONTHS
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
+import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.model.IncomeFunding
+import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
@@ -13,14 +17,19 @@ import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
+import com.joaoeoneves.fintrack.domain.model.carryOverCents
 import com.joaoeoneves.fintrack.domain.model.cashFlowSummaryOf
 import com.joaoeoneves.fintrack.domain.model.contains
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encloses
 import com.joaoeoneves.fintrack.domain.model.envelopesOf
+import com.joaoeoneves.fintrack.domain.model.fundingIn
+import com.joaoeoneves.fintrack.domain.model.monthActualsOf
+import com.joaoeoneves.fintrack.domain.model.monthFiguresOf
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.recentActivity
+import com.joaoeoneves.fintrack.domain.model.salaryShiftEnabled
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
@@ -61,35 +70,50 @@ class ObservePeriodOverview
                 ) { budgets, lines, settings, catalog -> PlanInputs(budgets, lines, settings, catalog) }
             val inputs =
                 combine(
-                    planInputs,
-                    sources.envelopes.observeEnvelopes(),
-                    sources.recurring.observeRecurring(),
-                ) { plan, envelopes, recurring -> OverviewInputs(plan, envelopes, recurring) }
+                    combine(
+                        planInputs,
+                        sources.envelopes.observeEnvelopes(),
+                        sources.recurring.observeRecurring(),
+                    ) { plan, envelopes, recurring -> OverviewInputs(plan, envelopes, recurring) },
+                    sources.planSettings.observeSalaryPaysNextMonth(),
+                ) { overview, shift -> overview.copy(shiftPreference = shift) }
+            // What the earlier months did, for the money they carry over and a salary paid at their end.
+            val history =
+                transactionRepository.observeTransactions(
+                    InstantRange(
+                        budgetMonth.minusMonths(CARRY_LOOKBACK_MONTHS).toInstantRange(zone).startInclusive,
+                        budgetRange.startInclusive,
+                    ),
+                )
             return if (range.encloses(budgetRange)) {
-                combine(transactions, inputs) { tx, plan ->
+                combine(transactions, history, inputs) { tx, past, plan ->
                     val month =
                         tx.copy(
                             expenses = tx.expenses.filter { it.date in budgetRange },
                             income = tx.income.filter { it.date in budgetRange },
                         )
-                    overviewOf(budgetMonth, tx, month, plan, recentLimit)
+                    overviewOf(budgetMonth, OverviewTransactions(tx, month, past, zone), plan, recentLimit)
                 }
             } else {
                 val monthTransactions = transactionRepository.observeTransactions(budgetRange)
-                combine(transactions, monthTransactions, inputs) { tx, month, plan ->
-                    overviewOf(budgetMonth, tx, month, plan, recentLimit)
+                combine(transactions, monthTransactions, history, inputs) { tx, month, past, plan ->
+                    overviewOf(budgetMonth, OverviewTransactions(tx, month, past, zone), plan, recentLimit)
                 }
             }
         }
 
         private fun overviewOf(
             budgetMonth: YearMonth,
-            transactions: TransactionsInRange,
-            monthTransactions: TransactionsInRange,
+            all: OverviewTransactions,
             inputs: OverviewInputs,
             recentLimit: Int,
         ): PeriodOverview {
+            val transactions = all.period
+            val monthTransactions = all.month
             val plan = inputs.plan
+            val context = fundingContextOf(budgetMonth, all, inputs)
+            val funding = context.funding
+            val fundingIncome = context.income
             val rows =
                 budgetProgressOf(
                     monthTransactions.expenses,
@@ -102,6 +126,16 @@ class ObservePeriodOverview
             val workingDays =
                 effectiveWorkingDays(budgetMonth, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
             val planMonth = PlanMonth(budgetMonth, workingDays)
+            val envelopes =
+                envelopesOf(
+                    buckets = rows,
+                    categories = plan.categories,
+                    envelopes = inputs.envelopes,
+                    plannedIncome = plan.plannedIncome,
+                    monthIncome = fundingIncome,
+                    planMonth = planMonth,
+                    funding = funding,
+                )
             return PeriodOverview(
                 budgetMonth = budgetMonth,
                 transactions = transactions,
@@ -111,26 +145,44 @@ class ObservePeriodOverview
                     monthlyPlanOf(
                         buckets = rows,
                         plannedIncome = plan.plannedIncome,
-                        monthIncome = monthTransactions.income,
+                        monthIncome = fundingIncome,
                         month = budgetMonth,
                         workingDays = workingDays,
                         envelopes = inputs.envelopes,
+                        funding = funding,
                     ),
                 recent = transactions.recentActivity(recentLimit),
-                envelopes =
-                    envelopesOf(
-                        buckets = rows,
-                        categories = plan.categories,
-                        envelopes = inputs.envelopes,
-                        plannedIncome = plan.plannedIncome,
-                        monthIncome = monthTransactions.income,
-                        planMonth = planMonth,
-                    ),
+                envelopes = envelopes,
                 recurring = inputs.recurring,
                 periodEnvelopes = periodEnvelopesOf(transactions, plan.categories, inputs.envelopes, planMonth),
+                figures = monthFiguresOf(envelopes, context.carry),
+                funding = funding,
+                monthIncome = fundingIncome,
             )
         }
     }
+
+/** How income is attributed to months, the incomes funding the month and what earlier months carry into it. */
+private class FundingContext(
+    val funding: IncomeFunding,
+    val income: List<Income>,
+    val carry: Long,
+)
+
+// A salary paid at the end of last month funds this month, one paid at the end of this month does not.
+private fun fundingContextOf(
+    month: YearMonth,
+    all: OverviewTransactions,
+    inputs: OverviewInputs,
+): FundingContext {
+    val plan = inputs.plan
+    val lines = plan.plannedIncome
+    val funding = IncomeFunding.of(salaryShiftEnabled(inputs.shiftPreference, lines), plan.monthSettings)
+    val income = (all.month.income + all.past.income).fundingIn(month, lines, funding, all.zone)
+    val actuals =
+        monthActualsOf(all.past.expenses, all.past.income + all.month.income, plan.categories, lines, funding, all.zone)
+    return FundingContext(funding, income, carryOverCents(month, actuals))
+}
 
 /** Spent per envelope over the whole period's [transactions] (planned amounts and funding are left out). */
 private fun periodEnvelopesOf(
@@ -161,4 +213,15 @@ private class OverviewInputs(
     val plan: PlanInputs,
     val envelopes: List<Envelope>,
     val recurring: List<RecurringItem>,
+    val shiftPreference: Boolean? = null,
+) {
+    fun copy(shiftPreference: Boolean?) = OverviewInputs(plan, envelopes, recurring, shiftPreference)
+}
+
+/** The transactions of the [period], of the budget [month], and of the [past] months before it. */
+private class OverviewTransactions(
+    val period: TransactionsInRange,
+    val month: TransactionsInRange,
+    val past: TransactionsInRange,
+    val zone: ZoneId,
 )

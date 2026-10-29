@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
+import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.firstPendingOccurrence
 import com.joaoeoneves.fintrack.domain.model.isEnded
 import com.joaoeoneves.fintrack.domain.model.paused
@@ -67,10 +68,8 @@ class RecurringListViewModel
                         deleteTarget,
                         goalRepository.observeGoals(),
                     ) { items, catalog, target, goals ->
-                        // A savings plan's monthly item lives in the plan, not in Contas.
-                        val planOwned = goals.mapNotNullTo(mutableSetOf()) { it.recurringId }
-                        // Recurring income lives in the income lines; a stray INCOME item is not a bill.
-                        val bills = items.filter { it.id !in planOwned && it.type == RecurringType.EXPENSE }
+                        // A savings plan's monthly item lives in the plan; recurring income in the income lines.
+                        val bills = billsOf(items, goals)
                         contentOf(bills, catalog, target, today)
                     }.catch { e ->
                         Log.w(TAG, "Failed to observe recurring items", e)

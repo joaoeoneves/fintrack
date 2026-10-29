@@ -37,8 +37,8 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
-import com.joaoeoneves.fintrack.domain.model.amountIn
-import com.joaoeoneves.fintrack.domain.model.payDateIn
+import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
+import com.joaoeoneves.fintrack.domain.model.payingLines
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -124,7 +124,7 @@ fun UpcomingRecurringCard(
             }
             Hairline()
         }
-        state.expectedIncome?.takeIf { it.rows.isNotEmpty() }?.let {
+        state.expectedIncome?.takeIf { it.entries.isNotEmpty() }?.let {
             ExpectedIncomeGroup(expected = it, today = state.today, onReceive = model.onReceiveIncome)
         }
     }
@@ -134,6 +134,7 @@ fun UpcomingRecurringCard(
  * The current month's income not yet received, offered from a week before payday: each row with a check that
  * records it as received today and offers to change the date or amount from the snackbar.
  */
+@Suppress("LongMethod") // One row layout with its receive action.
 @Composable
 private fun ExpectedIncomeGroup(
     expected: ExpectedIncome,
@@ -144,10 +145,11 @@ private fun ExpectedIncomeGroup(
     val haptics = rememberFinTrackHaptics()
     val changeLabel = stringResource(R.string.action_change)
     SectionTitle(title = stringResource(R.string.home_to_receive_title))
-    expected.rows.forEachIndexed { index, row ->
+    expected.entries.forEachIndexed { index, entry ->
         if (index > 0) Hairline()
+        val row = entry.row
         val title = row.displayLabel()
-        val payDate = row.payDateIn(expected.month)
+        val payDate = entry.payDate
         val receiveDate = minOf(payDate, today)
         val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
         Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space4)) {
@@ -169,7 +171,7 @@ private fun ExpectedIncomeGroup(
                         onClick = {
                             haptics.success()
                             onReceive(row, receiveDate, null)
-                            val paying = row.lines.filter { it.amountIn(expected.month, expected.workingDays) > 0L }
+                            val paying = row.payingLines(entry.planMonth, expected.funding)
                             feedback?.announce(
                                 message = snackbarText,
                                 actionLabel = changeLabel,
@@ -179,7 +181,9 @@ private fun ExpectedIncomeGroup(
                                         today = today,
                                         date = receiveDate,
                                         editableAmountCents =
-                                            paying.singleOrNull()?.amountIn(expected.month, expected.workingDays),
+                                            paying.singleOrNull()?.let {
+                                                expected.funding.amountIn(it, entry.planMonth)
+                                            },
                                         onConfirm = { date, cents -> onReceive(row, date, cents) },
                                     ),
                             )

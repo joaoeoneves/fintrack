@@ -6,21 +6,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryBudget
-import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.domain.model.PlannedSource
-import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
-import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.amountIn
-import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
+import com.joaoeoneves.fintrack.domain.model.annualizedCents
+import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.commonPayDateIn
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
@@ -28,10 +24,12 @@ import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
 import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
+import com.joaoeoneves.fintrack.domain.model.isEnded
 import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.looksLikeSalary
-import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
+import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
+import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
 import com.joaoeoneves.fintrack.domain.model.receivedOn
 import com.joaoeoneves.fintrack.domain.model.salaryComponent
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
@@ -66,7 +64,6 @@ private const val TAG = "MonthlyPlanViewModel"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val KEY_SELECTED_MONTH = "selectedMonth"
 private const val ROUTE_MONTH_ARG = "month"
-private const val MONTHS_PER_YEAR = 12
 
 /** The monthly plan: expected-income lines and the month's figures, envelope cards and set-up status. */
 @Suppress("TooManyFunctions") // One handler per user action on the screen.
@@ -182,17 +179,26 @@ class MonthlyPlanViewModel
         ) {
             val content = uiState.value as? MonthlyPlanUiState.Content ?: return
             viewModelScope.launch {
-                val request =
-                    ReceiveRequest(
-                        lines = row.lines,
-                        month = content.workingDays.month,
-                        workingDays = content.workingDays.days,
-                        date = date,
-                        today = content.receipts.today,
-                        zone = clock.zone,
-                        amountOverrideCents = amountCents,
-                    )
-                recordPayday.receive(request).onFailure { reportFailure(it) }
+                // A row can fund this month with what was paid last month: each part is recorded under the
+                // month it is paid in (and dated by the caller), not under the month being viewed.
+                val byPayMonth = row.payingLinesByPayMonth(content.workingDays.month, content.funding)
+                for ((payMonth, lines) in byPayMonth) {
+                    val request =
+                        ReceiveRequest(
+                            lines = lines,
+                            month = payMonth,
+                            workingDays = content.funding.workingDays(payMonth),
+                            date = date,
+                            today = content.receipts.today,
+                            zone = clock.zone,
+                            amountOverrideCents = amountCents,
+                        )
+                    val result = recordPayday.receive(request)
+                    if (result.isFailure) {
+                        result.onFailure { reportFailure(it) }
+                        break
+                    }
+                }
             }
         }
 
@@ -200,7 +206,14 @@ class MonthlyPlanViewModel
         fun onUndoReceive(row: IncomeRow) {
             val content = uiState.value as? MonthlyPlanUiState.Content ?: return
             viewModelScope.launch {
-                recordPayday.unreceive(row.lines, content.workingDays.month, clock.zone).onFailure { reportFailure(it) }
+                val byPayMonth = row.payingLinesByPayMonth(content.workingDays.month, content.funding)
+                for ((payMonth, lines) in byPayMonth) {
+                    val result = recordPayday.unreceive(lines, payMonth, clock.zone)
+                    if (result.isFailure) {
+                        result.onFailure { reportFailure(it) }
+                        break
+                    }
+                }
             }
         }
 
@@ -304,57 +317,35 @@ private fun planFlow(
         repositories.categories.observeCategories(),
         selected.overview,
         combine(repositories.monthSettings.observeMonthSettings(), editor, repositories.goals.observeGoals(), ::Triple),
-    ) { lines, budgets, categories, overview, (settings, editorState, goals) ->
-        val allocations = budgetProgressOf(emptyList(), budgets, categories, overview.recurring, overview.budgetMonth)
+    ) { lines, _, categories, overview, (settings, editorState, goals) ->
         val workingDays = workingDaysOf(overview.budgetMonth, settings)
+        val funding = overview.funding
+        val rows = incomeRowsIn(lines, overview.budgetMonth, funding)
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
                 incomeLines = lines,
-                incomeRows = incomeRowsIn(lines, overview.budgetMonth, workingDays.days),
-                summary =
-                    monthlyPlanOf(
-                        allocations,
-                        lines,
-                        emptyList(),
-                        overview.budgetMonth,
-                        workingDays.days,
-                        overview.envelopes.envelopes
-                            .map {
-                                it.envelope
-                            },
-                    ),
+                incomeRows = rows,
+                // The overview computes the plan once for Home, Movimentos and this screen alike.
+                summary = overview.plan,
                 period = selected.period,
                 canGoToNextMonth = selected.canGoToNextMonth,
                 canAddIncomeLine = lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
                 editor = editorState,
                 envelopes = overview.envelopes,
-                tiles = tilesOf(allocations, overview),
+                figures = overview.figures,
+                extraIncomeCents = overview.plan.extrasExpectedCents,
                 envelopeCards = envelopeCardsOf(overview.envelopes),
                 configure = configureOf(lines, categories, overview, workingDays.days, goals),
-                receipts = receiptsOf(selected, overview, lines, workingDays.days),
-                duplicateKeys = duplicateKeysOf(lines, overview.budgetMonth, workingDays.days),
+                receipts = receiptsOf(selected, overview, rows),
+                duplicateKeys = duplicateKeysOf(lines, rows),
+                funding = funding,
             )
         content
     }.catch { e ->
         Log.w(TAG, "Failed to observe the monthly plan", e)
         emit(MonthlyPlanUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
     }
-
-private fun tilesOf(
-    allocations: List<CategoryBudget>,
-    overview: PeriodOverview,
-): PlanTiles =
-    PlanTiles(
-        incomeCents = overview.plan.expectedIncomeCents,
-        billsCents =
-            allocations
-                .filter { it.plannedSource == PlannedSource.RECURRING && it.category.kind == CategoryKind.SPENDING }
-                .sumOf { it.planned ?: 0L },
-        savingCents = overview.plan.plannedSavingCents,
-        envelopesCents = overview.envelopes.envelopes.sumOf { it.committedCents },
-        freeCents = overview.envelopes.freeCents,
-    )
 
 private fun configureOf(
     lines: List<PlannedIncome>,
@@ -364,36 +355,32 @@ private fun configureOf(
     goals: List<SavingsGoal>,
 ): ConfigureStatus {
     // A savings plan's monthly item is the plan's, not a bill.
-    val planOwned = goals.mapNotNullTo(mutableSetOf()) { it.recurringId }
-    val bills = overview.recurring.filter { it.type == RecurringType.EXPENSE && it.active && it.id !in planOwned }
+    val today = overview.budgetMonth.atDay(1)
+    val bills = billsOf(overview.recurring, goals).filter { it.active && !it.isEnded(today) }
+    val regular = lines.filterNot { it.isExtra }
     return ConfigureStatus(
-        incomeMonthlyCents = lines.filterNot { it.isExtra }.sumOf { it.amountIn(overview.budgetMonth, workingDays) },
-        incomeLineCount = lines.size,
+        incomeMonthlyCents = regular.sumOf { it.amountIn(overview.budgetMonth, workingDays) },
+        incomeLineCount = regular.size,
         envelopeCount = overview.envelopes.envelopes.size,
         billCount = bills.size,
-        billsMonthlyCents = bills.sumOf { it.monthlyCents() },
+        billsMonthlyCents = monthlyEquivalentCents(annualizedCents(bills, RecurringType.EXPENSE, today)),
         categoryCount = categories.count { !it.archived },
     )
-}
-
-private fun RecurringItem.monthlyCents(): Long {
-    val yearly = frequency == RecurringFrequency.YEARLY
-    return if (yearly) amountCents / MONTHS_PER_YEAR else amountCents
 }
 
 private fun receiptsOf(
     selected: SelectedMonth,
     overview: PeriodOverview,
-    lines: List<PlannedIncome>,
-    workingDays: Int,
+    rows: List<IncomeRow>,
 ): IncomeReceipts {
     val month = overview.budgetMonth
+    val funding = overview.funding
     val received =
-        incomeRowsIn(lines, month, workingDays).mapNotNull { row ->
-            row.receivedOn(month, workingDays, overview.transactions.income, selected.zone)?.let { row.key to it }
+        rows.mapNotNull { row ->
+            row.receivedOn(month, funding, overview.monthIncome, selected.zone)?.let { row.key to it }
         }
     return IncomeReceipts(
-        payday = commonPayDateIn(incomeRowsIn(lines, month, workingDays), month),
+        payday = commonPayDateIn(rows, month, funding),
         today = selected.today,
         canReceive = month <= YearMonth.from(selected.today),
         receivedOn = received.toMap(),
@@ -402,10 +389,9 @@ private fun receiptsOf(
 
 private fun duplicateKeysOf(
     lines: List<PlannedIncome>,
-    month: YearMonth,
-    workingDays: Int,
+    rows: List<IncomeRow>,
 ): Set<String> =
-    incomeRowsIn(lines, month, workingDays)
+    rows
         .filter { row -> row.component == null && row.lines.any { it.looksLikeSalary(lines) } }
         .mapTo(mutableSetOf()) { it.key }
 

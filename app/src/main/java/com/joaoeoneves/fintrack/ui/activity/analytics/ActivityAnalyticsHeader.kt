@@ -43,6 +43,7 @@ fun ActivityAnalyticsHeader(
     selectedEnvelope: String?,
     actions: ActivityAnalyticsActions,
     modifier: Modifier = Modifier,
+    showSpent: Boolean = true,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
@@ -61,16 +62,20 @@ fun ActivityAnalyticsHeader(
             alignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
         )
-        Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
-            Text(
-                text = stringResource(R.string.activity_spent_total),
-                style = MaterialTheme.typography.labelMedium,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-            Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
+        if (showSpent) {
+            Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
+                Text(
+                    text = stringResource(R.string.activity_spent_total),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+                Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
+            }
         }
         val hasDetails =
-            analytics.split.spendingCents > 0 || analytics.envelopeChips.isNotEmpty() || !analytics.breakdown.isEmpty
+            (showSpent && analytics.split.spendingCents > 0) ||
+                analytics.envelopeChips.isNotEmpty() ||
+                !analytics.breakdown.isEmpty
         if (hasDetails) {
             SectionAction(
                 text =
@@ -82,7 +87,7 @@ fun ActivityAnalyticsHeader(
             )
         }
         if (hasDetails && expanded) {
-            AnalyticsDetails(analytics, selectedEnvelope, actions)
+            AnalyticsDetails(analytics, selectedEnvelope, actions, showSpent)
         }
     }
 }
@@ -93,9 +98,10 @@ private fun AnalyticsDetails(
     analytics: ActivityAnalytics,
     selectedEnvelope: String?,
     actions: ActivityAnalyticsActions,
+    showSpent: Boolean,
 ) {
     Column {
-        if (analytics.split.spendingCents > 0) {
+        if (showSpent && analytics.split.spendingCents > 0) {
             SpendingSplitCard(
                 split = analytics.split,
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),

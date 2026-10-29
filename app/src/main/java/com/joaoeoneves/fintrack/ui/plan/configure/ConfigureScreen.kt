@@ -12,7 +12,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.plan.ConfigureActions
 import com.joaoeoneves.fintrack.ui.plan.ConfigureSection
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -43,7 +45,18 @@ fun ConfigureScreen(
                     .padding(horizontal = Dimens.ScreenPadding)
                     .padding(bottom = Dimens.Space32),
         ) {
-            ConfigureSection(status = status, actions = actions)
+            val shift by viewModel.salaryPaysNextMonth.collectAsStateWithLifecycle()
+            ConfigureSection(status = status, actions = actions) {
+                shift?.let { enabled ->
+                    Hairline()
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.plan_salary_next_month),
+                        supportingText = stringResource(R.string.plan_salary_next_month_hint),
+                        checked = enabled,
+                        onCheckedChange = viewModel::onSalaryPaysNextMonthChanged,
+                    )
+                }
+            }
         }
     }
 }

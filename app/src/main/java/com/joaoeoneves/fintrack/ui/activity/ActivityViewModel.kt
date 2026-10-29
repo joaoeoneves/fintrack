@@ -8,14 +8,16 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
-import com.joaoeoneves.fintrack.domain.model.netCents
 import com.joaoeoneves.fintrack.domain.model.plannedSlices
+import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
@@ -108,7 +110,15 @@ class ActivityViewModel
 
         // Persisted as the enum itself; the route's token only seeds the first value.
         private val selectedType =
-            savedStateHandle.getStateFlow(KEY_SELECTED_TYPE, initialType(savedStateHandle.get<String>(ARG_TYPE)))
+            savedStateHandle.getStateFlow(
+                KEY_SELECTED_TYPE,
+                initialType(
+                    routeType = savedStateHandle.get<String>(ARG_TYPE),
+                    // A category or envelope handed over by the route lives on the Expenses tab.
+                    hasExpenseFilter =
+                        savedStateHandle.contains(ARG_CATEGORY) || savedStateHandle.contains(ARG_ENVELOPE),
+                ),
+            )
         val type: StateFlow<ActivityType> = selectedType
 
         // Persisted in the SavedStateHandle as the id's raw String (a value class isn't Bundle-able).
@@ -210,12 +220,15 @@ class ActivityViewModel
         fun onCategorySelected(id: CategoryId?) {
             savedStateHandle[KEY_SELECTED_CATEGORY] = id?.value
             selectedCategory.value = id
+            // Categories only exist on the Expenses tab: picking one from elsewhere (the breakdown) goes there.
+            if (id != null) onTypeSelected(ActivityType.EXPENSE)
         }
 
         /** Selects an envelope (or [NO_ENVELOPE]; `null` clears); a selected category outside it is cleared too. */
         fun onEnvelopeSelected(id: String?) {
             savedStateHandle[KEY_SELECTED_ENVELOPE] = id
             selectedEnvelope.value = id
+            if (id != null) onTypeSelected(ActivityType.EXPENSE)
             val category = selectedCategory.value?.let { selected -> categories.value.find { it.id == selected } }
             if (id != null && category != null) {
                 val envelopeIds = (uiState.value as? ActivityUiState.Content)?.analytics?.envelopeIds.orEmpty()
@@ -259,10 +272,14 @@ class ActivityViewModel
         }
     }
 
-private fun initialType(routeType: String?): ActivityType =
-    when (routeType) {
-        ROUTE_TYPE_EXPENSE -> ActivityType.EXPENSE
-        ACTIVITY_TYPE_INCOME -> ActivityType.INCOME
+private fun initialType(
+    routeType: String?,
+    hasExpenseFilter: Boolean = false,
+): ActivityType =
+    when {
+        routeType == ROUTE_TYPE_EXPENSE -> ActivityType.EXPENSE
+        routeType == ACTIVITY_TYPE_INCOME -> ActivityType.INCOME
+        hasExpenseFilter -> ActivityType.EXPENSE
         else -> ActivityType.ALL
     }
 
@@ -299,13 +316,9 @@ private fun PeriodItems.Loaded.toContent(
         canGoToNextMonth = canGoToNextMonth,
         items = sorted,
         days = if (shouldGroupByDay(activeFilters.sort)) groupByDay(sorted, zone) else emptyList(),
-        totals =
-            ActivityTotals(
-                inCents = transactions.income.sumOf { it.amountCents },
-                outCents = transactions.expenses.netCents(),
-            ),
+        totals = activityTotalsOf(sorted, catalog),
         filters = activeFilters,
-        analytics = analytics,
+        analytics = analytics.following(sorted.filterIsInstance<Expense>(), catalog),
         categoryScope =
             envelope?.let { selected ->
                 catalog
@@ -314,6 +327,16 @@ private fun PeriodItems.Loaded.toContent(
                     .toSet()
             },
     )
+}
+
+/** The header's "Spent" and fixed/variable split follow the visible [expenses] (the breakdown stays whole-period). */
+private fun ActivityAnalytics.following(
+    expenses: List<Expense>,
+    catalog: List<Category>,
+): ActivityAnalytics {
+    val spending = expenses.filter { catalog.resolve(it.category.id).kind == CategoryKind.SPENDING }
+    val visibleSplit = spendingSplitOf(spending)
+    return copy(spentCents = visibleSplit.spendingCents, split = visibleSplit)
 }
 
 /** The analytics header's numbers over the whole period (before the list filters). */
