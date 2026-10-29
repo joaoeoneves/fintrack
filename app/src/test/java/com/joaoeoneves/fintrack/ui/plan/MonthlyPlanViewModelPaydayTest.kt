@@ -6,7 +6,6 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -36,14 +35,14 @@ class MonthlyPlanViewModelPaydayTest : MonthlyPlanViewModelTestBase() {
         }
 
     @Test
-    fun linesPayingOnDifferentDays_haveNoPayday() =
+    fun linesPayingOnDifferentDays_paydayIsTheLatest() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(fixed("a", 5))
             incomeRepo.savePlannedIncome(fixed("b", 20))
             val vm = viewModel()
             collect(vm)
 
-            assertNull(vm.content().receipts.payday)
+            assertEquals(LocalDate.of(2026, 10, 20), vm.content().receipts.payday)
         }
 
     @Test
