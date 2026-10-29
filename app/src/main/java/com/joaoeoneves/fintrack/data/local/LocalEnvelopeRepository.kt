@@ -32,6 +32,8 @@ class LocalEnvelopeRepository
                         order = existing?.order ?: ((doc.categoryGroups.maxOfOrNull { it.order } ?: -1) + 1),
                         amountCents = edit.amountCents,
                         fundedByLineId = edit.fundedByLineId,
+                        startMonth = existing?.startMonth,
+                        versions = existing?.versions.orEmpty(),
                     )
                 validateCategoryGroup(record)
                 val known = knownCategoryIds(doc)
@@ -41,7 +43,16 @@ class LocalEnvelopeRepository
                 val members = edit.categoryIds.mapTo(mutableSetOf()) { it.value }
                 val limitRecords =
                     edit.limits.mapNotNull { (categoryId, budget) ->
-                        budget?.let { LocalBudget(categoryId.value, it.limitCents, it.skipMonths.sorted()) }
+                        budget?.let {
+                            val old = doc.budgets.find { b -> b.categoryId == categoryId.value }
+                            LocalBudget(
+                                categoryId.value,
+                                it.limitCents,
+                                it.skipMonths.sorted(),
+                                old?.startMonth,
+                                old?.versions.orEmpty(),
+                            )
+                        }
                     }
                 val touched = edit.limits.keys.mapTo(mutableSetOf()) { it.value }
                 val budgets =

@@ -122,7 +122,7 @@ class FirestoreBudgetRepository
                                 "limitCents" to limit,
                                 "skipMonths" to skip,
                                 "updatedAt" to FieldValue.serverTimestamp(),
-                            ),
+                            ) + planTimingFields(sourceDoc.startMonthOrNull(), sourceDoc.versionsOrEmpty()),
                         )
                     }
                     batch.delete(sourceRef)
@@ -143,7 +143,15 @@ class FirestoreBudgetRepository
             if (limitCents == null) {
                 Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'limitCents'")
             }
-            return limitCents?.let { Budget(categoryId = CategoryId(id), limitCents = it, skipMonths = skipMonths()) }
+            return limitCents?.let {
+                Budget(
+                    categoryId = CategoryId(id),
+                    limitCents = it,
+                    skipMonths = skipMonths(),
+                    startMonth = startMonthOrNull(),
+                    versions = versionsOrEmpty(),
+                )
+            }
         }
 
         // Optional list of month numbers; anything that isn't a number is ignored.

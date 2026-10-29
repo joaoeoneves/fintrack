@@ -184,6 +184,7 @@ internal fun Envelope.toFirestoreMap(): Map<String, Any?> =
         put("order", order)
         amountCents?.let { put("amountCents", it) }
         fundedByLineId?.let { put("fundedBy", it) }
+        putAll(planTimingFields(startMonth, versions))
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
@@ -203,6 +204,8 @@ internal fun DocumentSnapshot.toEnvelopeOrNull(): Envelope? =
                 order = clamped,
                 amountCents = getLong("amountCents")?.takeIf { it in 1..MAX_AMOUNT_CENTS },
                 fundedByLineId = getString("fundedBy")?.takeIf { it.isNotBlank() },
+                startMonth = startMonthOrNull(),
+                versions = versionsOrEmpty(),
             )
         }
     }
