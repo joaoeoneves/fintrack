@@ -21,20 +21,20 @@ class BackupCodecStartMonthTest {
 
         val doc = BackupCodec.decode(text).success().document
 
-        assertEquals(19, doc.schemaVersion)
+        assertEquals(20, doc.schemaVersion)
         assertEquals("2026-02", doc.budgets.single().startMonth)
         assertEquals("2026-02", doc.plannedIncome.single().startMonth)
     }
 
     @Test
-    fun v19Backup_keepsItsStartMonthsAndVersions() {
+    fun v20Backup_keepsItsStartMonthsAndVersions() {
         val versions = listOf(LocalAmountVersion("2026-03", 400), LocalAmountVersion("2026-07", 500))
         val budget = LocalBudget("FOOD", 500, startMonth = "2026-03", versions = versions)
         val doc = backupDoc(budgets = listOf(budget), expenses = listOf(backupExpense(date = "2025-01-10T12:00:00Z")))
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success().document
 
-        assertEquals(19, result.schemaVersion)
+        assertEquals(20, result.schemaVersion)
         assertEquals(budget, result.budgets.single())
         assertTrue(
             result.budgets

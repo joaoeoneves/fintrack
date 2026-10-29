@@ -56,7 +56,7 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
             assertTrue(store.update { it.copy(plannedIncome = listOf(line)) to Unit }.isSuccess)
 
             val onDisk = diskDoc()
-            assertEquals(19, onDisk.schemaVersion)
+            assertEquals(20, onDisk.schemaVersion)
             assertEquals(8L, onDisk.revision)
             assertEquals(listOf(line), onDisk.plannedIncome)
             assertEquals(listOf(LocalBudget("FOOD", 5)), onDisk.budgets.untimedLocal())

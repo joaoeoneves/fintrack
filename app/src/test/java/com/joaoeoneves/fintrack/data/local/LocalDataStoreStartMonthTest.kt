@@ -33,7 +33,7 @@ class LocalDataStoreStartMonthTest : LocalStoreTestBase() {
 
             assertEquals("2026-04", doc.budgets.single().startMonth)
             assertEquals("2026-04", doc.plannedIncome.single().startMonth)
-            assertEquals(19, doc.schemaVersion)
+            assertEquals(20, doc.schemaVersion)
             assertEquals(4L, doc.revision)
             assertEquals(1, doc.expenses.size)
             assertTrue(filesInDir().none { it.contains("corrupt") })
@@ -50,7 +50,7 @@ class LocalDataStoreStartMonthTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun v18File_nextWritePersistsV19() =
+    fun v18File_nextWritePersistsV20() =
         runStoreTest {
             dataFile.writeText(v18File)
             val store = newStore()
@@ -58,7 +58,7 @@ class LocalDataStoreStartMonthTest : LocalStoreTestBase() {
             assertTrue(store.update { it.copy(budgets = it.budgets + LocalBudget("RENT", 1)) to Unit }.isSuccess)
 
             val onDisk = diskDoc()
-            assertEquals(19, onDisk.schemaVersion)
+            assertEquals(20, onDisk.schemaVersion)
             assertEquals("2026-04", onDisk.budgets.first { it.categoryId == "FOOD" }.startMonth)
         }
 

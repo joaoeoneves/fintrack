@@ -56,7 +56,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
         val result = BackupCodec.decode(text).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(19, result.document.schemaVersion)
+        assertEquals(20, result.document.schemaVersion)
         assertTrue(result.document.goals.isEmpty())
         assertEquals(0, result.document.counts().goals)
         assertEquals(0, result.skippedCount)
@@ -127,7 +127,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
 
         val result = BackupCodec.decode(v14).success()
 
-        assertEquals(19, result.document.schemaVersion)
+        assertEquals(20, result.document.schemaVersion)
         assertEquals(
             null,
             result.document.goals

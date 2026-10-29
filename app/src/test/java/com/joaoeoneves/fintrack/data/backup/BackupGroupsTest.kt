@@ -27,7 +27,7 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
         val result = BackupCodec.decode(v4).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(19, result.document.schemaVersion)
+        assertEquals(20, result.document.schemaVersion)
         assertTrue(result.document.categoryGroups.isEmpty())
         assertEquals(
             null,
