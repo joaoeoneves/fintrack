@@ -302,6 +302,21 @@ appId: com.joaoeoneves.fintrack
     visible:
       id: "dashboard_list"
     timeout: 10000
+# Investments page right after switching tabs (Spending -> Home): back must land on Home.
+- scrollUntilVisible:
+    element: "Invested.*"
+    centerElement: true
+- tapOn: "Invested.*"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/investments
+# Back from the page returns to Home (5.0 regression check: it used to exit the app after tab switches).
+- back
+- assertVisible:
+    id: "dashboard_list"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
 - tapOn: "Add expense"
 - waitForAnimationToEnd
 - inputText: "4200"
@@ -310,17 +325,3 @@ appId: com.joaoeoneves.fintrack
 - back
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/add-expense
-# Investments page last (relaunch drops the add-expense form; a back press from the page right after
-# switching tabs exits the app in 5.0, so the flow ends on it).
-- launchApp
-- tapOn:
-    id: "nav_home"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Invested.*"
-- tapOn: "Invested.*"
-- waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/investments
