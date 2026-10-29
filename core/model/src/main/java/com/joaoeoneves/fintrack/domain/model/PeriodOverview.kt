@@ -23,4 +23,5 @@ data class PeriodOverview(
     val figures: MonthFigures = MonthFigures(0L, 0L, 0L, 0L),
     val funding: IncomeFunding = IncomeFunding.unshifted(budgetMonth, 0),
     val monthIncome: List<Income> = emptyList(),
+    val plannedIncome: List<PlannedIncome> = emptyList(),
 )

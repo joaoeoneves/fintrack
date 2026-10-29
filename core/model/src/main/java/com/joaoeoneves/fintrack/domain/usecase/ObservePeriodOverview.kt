@@ -77,7 +77,13 @@ class ObservePeriodOverview
                 ) { overview, shift -> overview.copy(shiftPreference = shift) }
             // The month before each range: a salary paid at its end funds the first month of the range.
             val monthHistory = transactionRepository.observeTransactions(budgetRange.monthBefore(zone))
-            val periodHistory = transactionRepository.observeTransactions(range.monthBefore(zone))
+            // The same month before (the period is the budget month): share one listener instead of opening two.
+            val periodHistory =
+                if (range.monthBefore(zone) == budgetRange.monthBefore(zone)) {
+                    monthHistory
+                } else {
+                    transactionRepository.observeTransactions(range.monthBefore(zone))
+                }
             return if (range.encloses(budgetRange)) {
                 combine(transactions, monthHistory, periodHistory, inputs) { tx, past, periodPast, plan ->
                     val month =
@@ -154,6 +160,7 @@ class ObservePeriodOverview
                 figures = monthFiguresOf(envelopes),
                 funding = funding,
                 monthIncome = fundingIncome,
+                plannedIncome = plan.plannedIncome,
             )
         }
     }
