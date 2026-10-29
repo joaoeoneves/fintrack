@@ -496,7 +496,10 @@
     <string name="salary_year_meal">Meal allowance</string>
     <string name="salary_year_meal_day">%1$s per working day</string>
     <string name="salary_year_meal_year">≈ %1$s per year</string>
-    <string name="salary_year_title">In the year</string>
+    <string name="salary_year_meal_vacation">assuming %1$d vacation days</string>
+    <string name="salary_field_vacation_days">Vacation days per year</string>
+    <string name="salary_vacation_days_hint">Optional. Used to estimate the meal allowance for the year; months with days off already set count those instead.</string>
+    <string name="salary_year_title">In the year (estimate)</string>
     <string name="salary_year_net">Estimated net for the year</string>
     <string name="salary_year_gross">Gross in the year</string>
     <string name="salary_year_ss">Social security in the year</string>

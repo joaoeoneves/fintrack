@@ -50,6 +50,7 @@ import com.joaoeoneves.fintrack.ui.plan.salary.SalaryGroup
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryMoneyField
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryTextField
 import com.joaoeoneves.fintrack.ui.plan.salary.SubsidyMonthsSection
+import com.joaoeoneves.fintrack.ui.plan.salary.VacationDaysField
 import com.joaoeoneves.fintrack.ui.plan.salary.sectorLabel
 import com.joaoeoneves.fintrack.ui.plan.salary.spreadLabel
 import com.joaoeoneves.fintrack.ui.plan.salary.subsidyMonthPair
@@ -349,6 +350,7 @@ private fun MealStep(
                 onChange = { onChange(form.copy(meal = it)) },
                 hint = stringResource(R.string.salary_meal_hint),
             )
+            VacationDaysField(form, state.invalid, onChange)
         }
     }
 }

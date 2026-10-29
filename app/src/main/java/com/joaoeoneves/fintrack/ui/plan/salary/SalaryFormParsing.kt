@@ -32,7 +32,23 @@ internal data class SalaryFormResult(
     val profile: SalaryProfile,
     val invalid: Set<SalaryField>,
     val hasRequiredAmount: Boolean,
+    /** The vacation days typed, `null` when blank or invalid. */
+    val vacationDays: Int? = null,
 )
+
+/** Highest number of vacation days per year the field accepts. */
+internal const val MAX_VACATION_DAYS = 60
+
+/** Whole vacation days of 0..[MAX_VACATION_DAYS]; blank means "not set" (the default applies). */
+internal fun parseVacationDays(text: String): Parsed<Int> {
+    val trimmed = text.trim()
+    val days = trimmed.toIntOrNull()
+    return when {
+        trimmed.isEmpty() -> Parsed.Empty
+        days == null || days !in 0..MAX_VACATION_DAYS -> Parsed.Invalid
+        else -> Parsed.Value(days)
+    }
+}
 
 /** An optional amount; blank and zero both mean "not set". */
 internal fun parseCents(text: String): Parsed<Long> {
@@ -84,7 +100,17 @@ internal fun SalaryForm.toResult(): SalaryFormResult {
     val reader = FieldReader()
     val profile = if (mode == SalaryInputMode.GROSS) grossProfile(reader) else netProfile(reader)
     val required = if (mode == SalaryInputMode.GROSS) profile.baseGrossCents else profile.netMonthlyCents
-    return SalaryFormResult(profile, reader.invalid, hasRequiredAmount = required != null)
+    // TODO(5.3-merge): also set SalaryProfile.vacationDaysPerYear = vacation (Track A adds the field and persistence).
+    val vacation =
+        when (val parsed = parseVacationDays(vacationDays)) {
+            is Parsed.Value -> parsed.value
+            Parsed.Empty -> null
+            Parsed.Invalid -> {
+                reader.invalid += SalaryField.VACATION_DAYS
+                null
+            }
+        }
+    return SalaryFormResult(profile, reader.invalid, hasRequiredAmount = required != null, vacationDays = vacation)
 }
 
 private fun SalaryForm.grossProfile(reader: FieldReader): SalaryProfile =

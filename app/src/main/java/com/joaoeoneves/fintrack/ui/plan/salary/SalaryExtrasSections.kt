@@ -1,12 +1,16 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.DEFAULT_VACATION_DAYS
 import com.joaoeoneves.fintrack.domain.model.ExtraBreakdown
 import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
@@ -14,6 +18,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
@@ -24,6 +29,7 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 @Composable
 internal fun MealSection(
     form: SalaryForm,
+    invalid: Set<SalaryField>,
     onChange: (SalaryForm) -> Unit,
 ) {
     SalaryGroup(stringResource(R.string.salary_group_meal)) {
@@ -34,6 +40,7 @@ internal fun MealSection(
             hint = stringResource(R.string.salary_meal_hint),
         )
         if (form.meal > 0L) {
+            VacationDaysField(form, invalid, onChange)
             Text(
                 text = stringResource(R.string.salary_meal_payment),
                 style = MaterialTheme.typography.labelLarge,
@@ -47,6 +54,28 @@ internal fun MealSection(
             )
         }
     }
+}
+
+/** The optional "vacation days per year" field (placeholder: the default of 22). */
+@Composable
+internal fun VacationDaysField(
+    form: SalaryForm,
+    invalid: Set<SalaryField>,
+    onChange: (SalaryForm) -> Unit,
+) {
+    val isInvalid = SalaryField.VACATION_DAYS in invalid
+    MinimalTextField(
+        value = form.vacationDays,
+        onValueChange = { onChange(form.copy(vacationDays = it.filter(Char::isDigit).take(2))) },
+        label = stringResource(R.string.salary_field_vacation_days),
+        isError = isInvalid,
+        placeholder = { Text(DEFAULT_VACATION_DAYS.toString()) },
+        supportingText = {
+            Text(stringResource(if (isInvalid) R.string.salary_error_invalid else R.string.salary_vacation_days_hint))
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 internal fun mealPaymentLabel(payment: MealPayment): Int =

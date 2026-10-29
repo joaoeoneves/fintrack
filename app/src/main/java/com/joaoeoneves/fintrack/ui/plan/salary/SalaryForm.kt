@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_CHRISTMAS_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_HOLIDAY_SUBSIDY_MONTH
+import com.joaoeoneves.fintrack.domain.model.DEFAULT_VACATION_DAYS
 import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.SPREAD_HALF_PPM
@@ -26,6 +27,7 @@ enum class SalaryField {
     NET_HOLIDAY,
     NET_CHRISTMAS,
     MEAL,
+    VACATION_DAYS,
 }
 
 /** The fields of the extra editor that can hold an invalid or missing value. */
@@ -56,6 +58,8 @@ data class SalaryForm(
     val mealPayment: MealPayment = MealPayment.CARD,
     /** ADSE, SAMS, union dues and similar, as a percent of the gross (GROSS mode). */
     val otherDeductions: String = "",
+    /** Vacation days per year as typed (blank = the default of 22); only used for the yearly meal estimate. */
+    val vacationDays: String = "",
 )
 
 /** The sector the form stands for: the chosen one, private when none was set. */
@@ -104,6 +108,8 @@ sealed interface SalaryProfileUiState {
         val hasSavedProfile: Boolean,
         val month: YearMonth,
         val yearSummary: SalaryYearSummary?,
+        /** The vacation days the year summary assumed (the typed ones, else the default). */
+        val vacationDaysAssumed: Int = DEFAULT_VACATION_DAYS,
         val extraEditor: SalaryExtraEditorState? = null,
         val canAddExtra: Boolean = true,
         /** The plan month the changed amounts apply from (default: the current month). */

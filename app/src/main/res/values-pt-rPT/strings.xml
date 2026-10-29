@@ -510,7 +510,10 @@
     <string name="salary_year_meal">Subsídio de refeição</string>
     <string name="salary_year_meal_day">%1$s por dia útil</string>
     <string name="salary_year_meal_year">≈ %1$s por ano</string>
-    <string name="salary_year_title">No ano</string>
+    <string name="salary_year_meal_vacation">com %1$d dias de férias</string>
+    <string name="salary_field_vacation_days">Dias de férias por ano</string>
+    <string name="salary_vacation_days_hint">Opcional. Serve para estimar o subsídio de refeição do ano; os meses com dias sem trabalho já definidos contam esses.</string>
+    <string name="salary_year_title">No ano (estimativa)</string>
     <string name="salary_year_net">Total anual líquido estimado</string>
     <string name="salary_year_gross">Bruto no ano</string>
     <string name="salary_year_ss">Segurança Social no ano</string>

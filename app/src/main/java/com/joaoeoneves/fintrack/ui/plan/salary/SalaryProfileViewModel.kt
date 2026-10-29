@@ -4,15 +4,20 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.data.local.IdGenerator
+import com.joaoeoneves.fintrack.domain.model.DEFAULT_VACATION_DAYS
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
+import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.YearEstimateInput
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
-import com.joaoeoneves.fintrack.domain.model.salaryYearSummaryOf
+import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
+import com.joaoeoneves.fintrack.domain.model.salaryYearEstimateOf
+import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
@@ -41,6 +46,12 @@ private class FormState(
     val editing: SalaryExtraForm?,
 )
 
+/** The stored plan the year estimate is worked out from: the income lines and each month's days off. */
+private class StoredPlan(
+    val lines: List<PlannedIncome>,
+    val settings: List<MonthSettings>,
+)
+
 /** Edits the salary profile and keeps the plan's managed income lines in sync with it. */
 @Suppress("TooManyFunctions") // the screen's form actions plus the extra editor's
 @HiltViewModel
@@ -50,6 +61,7 @@ class SalaryProfileViewModel
         private val profiles: SalaryProfileRepository,
         private val manageProfile: ManageSalaryProfile,
         private val plannedIncome: PlannedIncomeRepository,
+        private val monthSettings: MonthSettingsRepository,
         private val clock: Clock,
         private val idGenerator: IdGenerator,
     ) : ViewModel() {
@@ -79,8 +91,9 @@ class SalaryProfileViewModel
             combine(
                 combine(form, hasSavedProfile, saving, extraForm, ::FormState),
                 effectiveFrom,
-            ) { typed, from ->
-                typed.form?.let { contentOf(it, typed, from) } ?: SalaryProfileUiState.Loading
+                combine(plannedIncome.observePlannedIncome(), monthSettings.observeMonthSettings(), ::StoredPlan),
+            ) { typed, from, plan ->
+                typed.form?.let { contentOf(it, typed, from, plan) } ?: SalaryProfileUiState.Loading
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -230,12 +243,14 @@ class SalaryProfileViewModel
             current: SalaryForm,
             typed: FormState,
             from: YearMonth?,
+            plan: StoredPlan,
         ): SalaryProfileUiState.Content {
             val (saved, busy, editing) = Triple(typed.saved, typed.busy, typed.editing)
             val result = current.toResult()
             val month = YearMonth.now(clock)
             val effective = from ?: month
             val breakdown = salaryBreakdownOf(result.profile).takeIf { result.invalid.isEmpty() }
+            val vacation = result.vacationDays ?: DEFAULT_VACATION_DAYS
             return SalaryProfileUiState.Content(
                 form = current,
                 invalid = result.invalid,
@@ -243,7 +258,15 @@ class SalaryProfileViewModel
                 canSave = result.hasRequiredAmount && result.invalid.isEmpty() && !busy,
                 hasSavedProfile = saved,
                 month = month,
-                yearSummary = breakdown?.let { salaryYearSummaryOf(result.profile, it, month.year) },
+                yearSummary =
+                    breakdown?.let {
+                        // The lines this profile would produce (honouring "valid from", versions and the start month),
+                        // added up month by month like the Income Year view.
+                        val lines = salaryProfileLines(result.profile, plan.lines, effectiveFrom = effective)
+                        val input = YearEstimateInput(lines, plan.settings, vacation)
+                        salaryYearEstimateOf(result.profile, it, month.year, input)
+                    },
+                vacationDaysAssumed = vacation,
                 extraEditor = editing?.let { editorStateOf(it, current.mode) },
                 canAddExtra = current.extras.size < MAX_SALARY_EXTRAS,
                 effectiveFrom = effective,
