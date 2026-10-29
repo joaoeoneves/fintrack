@@ -1,37 +1,45 @@
 name: CI
 
+# Runs once per change, on the pull request only. The release workflow checks that this passed on the merged PR
+# instead of running it again on main, and it is the only place R8 runs (a minification failure fails the release).
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  # Superseded PR runs are cancelled; pushes to main always finish (a cancelled run still sends a notification).
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
+# Two jobs on separate runners, in parallel: static checks and build/tests. The release workflow requires both.
 jobs:
-  build:
+  checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - &checkout
+        uses: actions/checkout@v7
 
-      - name: Set up JDK 21
+      - &setup-java
+        name: Set up JDK 21
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Gradle
+      # PR runs write the cache too, so later pushes to the same PR start warm (main only runs releases now).
+      - &setup-gradle
+        name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: false
 
       # The google-services Gradle plugin fails the build if app/google-services.json is missing.
       # The real file is a gitignored local credential (Firebase project agenticusage-d7ce3) and is
-      # never committed. This CI job only compiles and runs JVM unit tests (against Fake repositories,
+      # never committed. CI only compiles and runs JVM unit tests (against Fake repositories,
       # not real Firestore), so a placeholder with the right shape and package name is sufficient —
       # it's written here, not committed, so it can never be confused with the real credential.
-      - name: Write placeholder google-services.json
+      - &google-services
+        name: Write placeholder google-services.json
         run: |
           cat > app/google-services.json <<'JSON'
           {
@@ -70,6 +78,35 @@ jobs:
           }
           JSON
 
+      - name: ktlint
+        run: ./gradlew ktlintCheck
+
+      - name: detekt
+        run: ./gradlew detekt
+
+      # Fails the build on lint errors only (warnings are reported, not fatal).
+      - name: Android lint
+        run: ./gradlew lintDebug
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: checks-reports
+          path: |
+            **/build/reports/ktlint
+            **/build/reports/detekt
+            app/build/reports/lint-results-debug.*
+          retention-days: 7
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+      - *setup-java
+      - *setup-gradle
+      - *google-services
+
       # Robolectric downloads its android-all jars from Maven at test time; a flaky download fails every
       # Robolectric test, so keep them cached between runs.
       - name: Cache Robolectric jars
@@ -88,29 +125,12 @@ jobs:
             echo "$PARITY_FIXTURE_BASE64" | base64 -d > app/src/test/resources/private/spreadsheet.json
           fi
 
-      - name: ktlint
-        run: ./gradlew ktlintCheck
-
-      - name: detekt
-        run: ./gradlew detekt
-
-      # Fails the build on lint errors only (warnings are reported, not fatal).
-      - name: Android lint
-        run: ./gradlew lintDebug
-
       - name: Unit tests
         run: ./gradlew testDebugUnitTest :core:model:test
 
+      # Compile-only for the baseline profile generator: generating the profile needs a device.
       - name: Assemble debug APK
-        run: ./gradlew assembleDebug
-
-      # Unsigned release build: catches R8/minification-only failures on PRs.
-      - name: Assemble release APK (unsigned)
-        run: ./gradlew assembleRelease
-
-      # Compile-only: generating the profile needs a device, so CI never runs it.
-      - name: Compile baseline profile generator
-        run: ./gradlew :baselineprofile:assemble
+        run: ./gradlew assembleDebug :baselineprofile:assemble
 
       - name: Remove private parity fixture
         if: always()
@@ -120,11 +140,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: reports
+          name: test-reports
           path: |
-            **/build/reports/ktlint
-            **/build/reports/detekt
             app/build/reports/tests
             core/*/build/reports/tests
-            app/build/reports/lint-results-debug.*
           retention-days: 7
