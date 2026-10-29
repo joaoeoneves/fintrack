@@ -57,7 +57,7 @@ fun LazyListScope.activityHeaderItems(
             selected = state.filters.type,
             label = { stringResource(it.labelRes) },
             onSelect = actions.onTypeSelected,
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+            modifier = Modifier.padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, top = Dimens.Space16),
         )
     }
     if (state.filters.type == ActivityType.EXPENSE) {

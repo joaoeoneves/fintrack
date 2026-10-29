@@ -139,7 +139,7 @@ private fun SavingsHeader(
     modifier: Modifier = Modifier,
 ) {
     val locale = currentLocale()
-    Column(modifier = modifier.fillMaxWidth().padding(bottom = Dimens.Space8)) {
+    Column(modifier = modifier.fillMaxWidth().padding(bottom = Dimens.SectionGap - Dimens.Space12)) {
         Text(
             text = stringResource(R.string.savings_saved_in_year, state.year),
             style = MaterialTheme.typography.labelLarge,

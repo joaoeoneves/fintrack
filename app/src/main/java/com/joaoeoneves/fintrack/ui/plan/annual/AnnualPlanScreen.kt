@@ -55,7 +55,7 @@ private fun AnnualPlanContent(
     modifier: Modifier = Modifier,
 ) {
     val plan = state.plan
-    val cardModifier = Modifier.fillMaxWidth()
+    val cardModifier = Modifier.fillMaxWidth().padding(top = Dimens.SectionGap)
     LazyColumn(
         modifier = modifier,
         contentPadding =

@@ -154,7 +154,7 @@ fun EnvelopeCardsSection(
     actions: EnvelopeCardActions,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(top = Dimens.Space24)) {
+    Column(modifier = modifier.fillMaxWidth().padding(top = Dimens.SectionGap)) {
         SectionTitle(title = stringResource(R.string.plan_tile_envelopes))
         if (cards.isEmpty()) {
             SettingsRow(
