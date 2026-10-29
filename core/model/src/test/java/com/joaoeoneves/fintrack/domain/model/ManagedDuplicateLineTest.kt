@@ -14,9 +14,7 @@ class ManagedDuplicateLineTest {
     private val stored = salaryProfileLines(profile, emptyList(), effectiveFrom = jan)
     private val currentMeal = stored.single { it.id == MANAGED_MEAL }
 
-    private fun duplicate(startMonth: YearMonth?): PlannedIncome {
-        return currentMeal.copy(id = "stray", startMonth = startMonth, versions = emptyList())
-    }
+    private fun duplicate(start: YearMonth?) = currentMeal.copy(id = "stray", startMonth = start, versions = emptyList())
 
     @Test
     fun duplicateWithoutHistory_isDeleted() {
