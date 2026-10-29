@@ -6,8 +6,6 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
-import com.joaoeoneves.fintrack.domain.model.LegacySalaryExtras
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
@@ -19,8 +17,6 @@ import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.amountRange
-import com.joaoeoneves.fintrack.domain.model.toExtras
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -36,7 +32,6 @@ class FirestoreSalaryProfileRepository
     constructor(
         private val firestore: FirebaseFirestore,
         private val firebaseAuth: FirebaseAuth,
-        private val legacyNames: LegacyExtraNamesProvider,
     ) : SalaryProfileRepository {
         private fun docRef(uid: String) = salaryProfileDoc(firestore, uid)
 
@@ -51,7 +46,7 @@ class FirestoreSalaryProfileRepository
                             return@addSnapshotListener
                         }
                         if (snapshot != null) {
-                            trySend(snapshot.takeIf { it.exists() }?.toSalaryProfileOrNull(legacyNames.names()))
+                            trySend(snapshot.takeIf { it.exists() }?.toSalaryProfileOrNull())
                         }
                     }
                 awaitClose { registration.remove() }
@@ -135,10 +130,9 @@ private fun MutableMap<String, Any?>.putIfSet(
     if (value != null) put(key, value)
 }
 
-private fun DocumentSnapshot.toSalaryProfileOrNull(legacyNames: LegacyExtraNames) =
-    mapOrNull("salaryProfile") { parseSalaryProfile(legacyNames) }
+private fun DocumentSnapshot.toSalaryProfileOrNull() = mapOrNull("salaryProfile") { parseSalaryProfile() }
 
-private fun DocumentSnapshot.parseSalaryProfile(legacyNames: LegacyExtraNames): SalaryProfile? {
+private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
     val defaults = SalaryProfile()
     val mode = getString("inputMode")?.let { name -> SalaryInputMode.entries.find { it.name == name } }
     if (mode == null) {
@@ -164,40 +158,20 @@ private fun DocumentSnapshot.parseSalaryProfile(legacyNames: LegacyExtraNames): 
                 ?: defaults.mealSkipMonths,
         holidaySubsidyMonth = int("holidaySubsidyMonth") ?: defaults.holidaySubsidyMonth,
         christmasSubsidyMonth = int("christmasSubsidyMonth") ?: defaults.christmasSubsidyMonth,
-        extras = parseExtras(mode, legacyNames),
+        extras = parseExtras(),
     )
 }
 
-/** The `extras` list (malformed ones dropped, at most [MAX_SALARY_EXTRAS]) or, absent, the migrated legacy fields. */
-private fun DocumentSnapshot.parseExtras(
-    mode: SalaryInputMode,
-    legacyNames: LegacyExtraNames,
-): List<SalaryExtra> {
-    val raw = get("extras") as? List<*>
-    if (raw != null) {
-        return raw
-            .mapNotNull { entry ->
-                (entry as? Map<*, *>)?.toSalaryExtraOrNull().also {
-                    if (it == null) Log.w(TAG, "Dropping malformed extra")
-                }
-            }.distinctBy { it.id }
-            .take(MAX_SALARY_EXTRAS)
-    }
-
-    fun int(field: String) = getLong(field)?.toInt()
-    return LegacySalaryExtras(
-        flexPpm = int("flexPpm"),
-        flexAnnualCents = getLong("flexAnnualCents"),
-        flexFirstMonth = int("flexFirstMonth") ?: 1,
-        flexWithdrawalFeePpm = int("flexWithdrawalFeePpm") ?: 0,
-        profitShareMultiplierPpm = int("profitShareMultiplierPpm"),
-        profitShareMonth = int("profitShareMonth"),
-        profitShareMonths =
-            (get("profitShareMonths") as? List<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toSet().orEmpty(),
-        bonusCents = getLong("bonusCents"),
-        bonusMonth = int("bonusMonth"),
-    ).toExtras(mode, legacyNames)
-}
+/** The `extras` list (malformed ones dropped, at most [MAX_SALARY_EXTRAS]); empty when absent. */
+private fun DocumentSnapshot.parseExtras(): List<SalaryExtra> =
+    (get("extras") as? List<*>)
+        .orEmpty()
+        .mapNotNull { entry ->
+            (entry as? Map<*, *>)?.toSalaryExtraOrNull().also {
+                if (it == null) Log.w(TAG, "Dropping malformed extra")
+            }
+        }.distinctBy { it.id }
+        .take(MAX_SALARY_EXTRAS)
 
 @Suppress("ComplexCondition") // flat null checks of the independently parsed fields
 private fun Map<*, *>.toSalaryExtraOrNull(): SalaryExtra? {

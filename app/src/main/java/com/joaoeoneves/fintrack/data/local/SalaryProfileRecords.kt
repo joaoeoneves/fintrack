@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
 import com.joaoeoneves.fintrack.domain.model.LegacySalaryExtras
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_MULTIPLE_PPM
@@ -22,9 +21,9 @@ import com.joaoeoneves.fintrack.domain.model.toExtras
 
 /**
  * Lenient mapping: an unknown input mode falls back to GROSS. A record with no extras but with legacy
- * flex / profit-share / bonus fields (a v8/v9 file or an older backup) gets the equivalent extras, named [legacyNames].
+ * flex / profit-share / bonus fields (a v8/v9 file or an older backup) gets the equivalent extras.
  */
-internal fun LocalSalaryProfile.toDomain(legacyNames: LegacyExtraNames = LegacyExtraNames()): SalaryProfile {
+internal fun LocalSalaryProfile.toDomain(): SalaryProfile {
     val mode = SalaryInputMode.entries.find { it.name == inputMode } ?: SalaryInputMode.GROSS
     val legacy =
         LegacySalaryExtras(
@@ -55,7 +54,7 @@ internal fun LocalSalaryProfile.toDomain(legacyNames: LegacyExtraNames = LegacyE
         christmasSubsidyMonth = christmasSubsidyMonth,
         extras =
             if (extras.isEmpty() && legacy.hasAny) {
-                legacy.toExtras(mode, legacyNames)
+                legacy.toExtras(mode)
             } else {
                 extras.mapNotNull { it.toDomainOrNull() }
             },

@@ -102,9 +102,6 @@ data class LocalPlannedIncome(
     /** ISO `yyyy-MM`, set for one-off lines. */
     val yearMonth: String? = null,
     val skipMonths: List<Int> = emptyList(),
-    /** An earmark type (`CATEGORY` or `GROUP`); set together with [earmarkId] or not at all (schema v7). */
-    val earmarkType: String? = null,
-    val earmarkId: String? = null,
     /** Set on lines generated from the salary profile (schema v8). */
     val managedKey: String? = null,
     /** Record the line's income on its pay date (schema v16; absent = off). */

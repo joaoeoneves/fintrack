@@ -503,9 +503,6 @@
     <string name="salary_extra_delete">Delete extra</string>
     <string name="salary_extra_deleted">Extra removed</string>
     <string name="salary_extra_gross_only">Gross mode only</string>
-    <string name="salary_extra_default_flex">Flexible benefits</string>
-    <string name="salary_extra_default_profit_share">Profit share</string>
-    <string name="salary_extra_default_bonus">Bonus</string>
     <string name="category_deleted_placeholder">Deleted category</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Enter a valid value</string>

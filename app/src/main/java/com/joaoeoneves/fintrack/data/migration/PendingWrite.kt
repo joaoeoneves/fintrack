@@ -9,7 +9,6 @@ import com.joaoeoneves.fintrack.data.local.toYearMonthOrNull
 import com.joaoeoneves.fintrack.data.planTimingFields
 import com.joaoeoneves.fintrack.data.toFirestoreMap
 import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
 
 /** One document to create: `users/{uid}/[collection]/[id]` with [data]. */
 internal class PendingWrite(
@@ -26,7 +25,7 @@ internal class PendingWrite(
  * distinct custom categories. A planned record that cannot be mapped is a bug (the planner validates
  * everything) and throws instead of being silently dropped.
  */
-internal fun MigrationPlan.toBatches(legacyNames: LegacyExtraNames = LegacyExtraNames()): List<List<PendingWrite>> {
+internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
     val groupWrites = categoryGroups.map { PendingWrite("categoryGroups", it.id, it.toDomain().toFirestoreMap()) }
     val categoryWrites =
         categories.map { category ->
@@ -73,7 +72,7 @@ internal fun MigrationPlan.toBatches(legacyNames: LegacyExtraNames = LegacyExtra
     // The salary profile is a single document in the `plan` collection, committed after the lines it produced.
     val salaryProfileBatches =
         listOfNotNull(salaryProfile).map {
-            listOf(PendingWrite("plan", "salaryProfile", it.toDomain(legacyNames).toFirestoreMap()))
+            listOf(PendingWrite("plan", "salaryProfile", it.toDomain().toFirestoreMap()))
         }
     val automationBatches =
         listOfNotNull(automation).map { listOf(PendingWrite("plan", "automation", it.toDomain().toFirestoreMap())) }

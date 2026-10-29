@@ -517,9 +517,6 @@
     <string name="salary_extra_delete">Eliminar extra</string>
     <string name="salary_extra_deleted">Extra removido</string>
     <string name="salary_extra_gross_only">Só no modo bruto</string>
-    <string name="salary_extra_default_flex">Benefícios flexíveis</string>
-    <string name="salary_extra_default_profit_share">Distribuição de lucros</string>
-    <string name="salary_extra_default_bonus">Prémio</string>
     <string name="category_deleted_placeholder">Categoria eliminada</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Indica um valor válido</string>
