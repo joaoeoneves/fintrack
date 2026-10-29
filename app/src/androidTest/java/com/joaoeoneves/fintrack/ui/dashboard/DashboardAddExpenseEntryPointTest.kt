@@ -57,8 +57,8 @@ class DashboardAddExpenseEntryPointTest {
     private fun setDashboardContent(
         expenses: List<Expense> = emptyList(),
         onOpenActivity: (Period) -> Unit = {},
-        onAddExpense: () -> Unit = {},
-        onAddIncome: () -> Unit = {},
+        onAddExpense: (Period) -> Unit = {},
+        onAddIncome: (Period) -> Unit = {},
         onOpenExpense: (String) -> Unit = {},
     ) {
         val viewModel =
@@ -79,7 +79,6 @@ class DashboardAddExpenseEntryPointTest {
                         onOpenExpense = onOpenExpense,
                         onOpenIncome = {},
                         onOpenActivity = onOpenActivity,
-                        onOpenPlan = {},
                         onOpenRecurring = {},
                         onOpenStartStep = {},
                     ),
