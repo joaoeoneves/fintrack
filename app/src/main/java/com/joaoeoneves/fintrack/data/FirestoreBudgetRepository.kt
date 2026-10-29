@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
+import java.time.YearMonth
 import javax.inject.Inject
 
 class FirestoreBudgetRepository
@@ -49,10 +50,12 @@ class FirestoreBudgetRepository
             }
         }
 
+        @Suppress("UnusedParameter") // Versions are persisted by the data layer.
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
             skipMonths: Set<Int>,
+            effectiveFrom: YearMonth,
         ): Result<Unit> {
             val uid =
                 firebaseAuth.currentUser?.uid

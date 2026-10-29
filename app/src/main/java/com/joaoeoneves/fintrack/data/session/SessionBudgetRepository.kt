@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import dagger.Lazy
 import kotlinx.coroutines.flow.Flow
+import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,7 +29,8 @@ class SessionBudgetRepository
             categoryId: CategoryId,
             limitCents: Long,
             skipMonths: Set<Int>,
-        ): Result<Unit> = switch.call { it.setBudget(categoryId, limitCents, skipMonths) }
+            effectiveFrom: YearMonth,
+        ): Result<Unit> = switch.call { it.setBudget(categoryId, limitCents, skipMonths, effectiveFrom) }
 
         override suspend fun clearBudget(categoryId: CategoryId): Result<Unit> =
             switch.call {

@@ -26,3 +26,19 @@ fun Envelope.asOf(month: YearMonth): Envelope? =
 
 /** The envelopes that exist in plan [month], each resolved with [asOf]. */
 fun List<Envelope>.asOf(month: YearMonth): List<Envelope> = mapNotNull { it.asOf(month) }
+
+/** This envelope with its fixed amount changed to [newAmount] (null = sum of categories) from plan [month] on. */
+fun Envelope.editedFrom(
+    month: YearMonth,
+    newAmount: Long?,
+): Envelope {
+    val edit = editedVersions(startMonth, versions, amountCents, month, newAmount)
+    return if (edit.changedFrom(startMonth, versions)) {
+        copy(amountCents = edit.latest, startMonth = edit.startMonth, versions = edit.versions)
+    } else {
+        this
+    }
+}
+
+/** This (new) envelope starting in plan [month], with no amount history. */
+fun Envelope.startingAt(month: YearMonth): Envelope = copy(startMonth = month, versions = emptyList())

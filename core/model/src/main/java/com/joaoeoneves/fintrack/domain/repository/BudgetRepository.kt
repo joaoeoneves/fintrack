@@ -3,15 +3,20 @@ package com.joaoeoneves.fintrack.domain.repository
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import kotlinx.coroutines.flow.Flow
+import java.time.YearMonth
 
 interface BudgetRepository {
     fun observeBudgets(): Flow<List<Budget>>
 
-    /** Sets the budget as a whole: [skipMonths] replaces the previous skipped months. */
+    /**
+     * Sets the budget as a whole: [skipMonths] replaces the previous skipped months. The new [limitCents] applies
+     * from plan month [effectiveFrom] on (see `Budget.editedFrom`).
+     */
     suspend fun setBudget(
         categoryId: CategoryId,
         limitCents: Long,
         skipMonths: Set<Int> = emptySet(),
+        effectiveFrom: YearMonth = YearMonth.now(),
     ): Result<Unit>
 
     suspend fun clearBudget(categoryId: CategoryId): Result<Unit>

@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,10 +18,12 @@ class LocalBudgetRepository
     ) : BudgetRepository {
         override fun observeBudgets(): Flow<List<Budget>> = store.data.map { doc -> doc.budgets.map { it.toDomain() } }
 
+        @Suppress("UnusedParameter") // Versions are persisted by the data layer.
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
             skipMonths: Set<Int>,
+            effectiveFrom: YearMonth,
         ): Result<Unit> =
             store.update { doc ->
                 validateBudget(categoryId.value, limitCents, knownCategoryIds(doc), skipMonths)

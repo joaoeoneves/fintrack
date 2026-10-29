@@ -92,3 +92,19 @@ fun PlannedIncome.legacyRecurringItemId(): String? =
         .takeIf { it.startsWith(LEGACY_RECURRING_LINE_PREFIX) }
         ?.removePrefix(LEGACY_RECURRING_LINE_PREFIX)
         ?.ifEmpty { null }
+
+/** This line with its amount changed to [newAmount] from plan [month] on (see [editedVersions]). */
+fun PlannedIncome.editedFrom(
+    month: YearMonth,
+    newAmount: Long,
+): PlannedIncome {
+    val edit = editedVersions(startMonth, versions, amountCents, month, newAmount)
+    return if (edit.changedFrom(startMonth, versions)) {
+        copy(amountCents = edit.latest ?: amountCents, startMonth = edit.startMonth, versions = edit.versions)
+    } else {
+        this
+    }
+}
+
+/** This (new) line starting in plan [month], with no amount history. */
+fun PlannedIncome.startingAt(month: YearMonth): PlannedIncome = copy(startMonth = month, versions = emptyList())

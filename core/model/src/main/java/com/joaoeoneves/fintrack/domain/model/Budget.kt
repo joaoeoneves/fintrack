@@ -29,3 +29,19 @@ fun Budget.asOf(month: YearMonth): Budget? =
 
 /** The limits that apply in plan [month], each resolved with [asOf]. */
 fun List<Budget>.asOf(month: YearMonth): List<Budget> = mapNotNull { it.asOf(month) }
+
+/** This limit changed to [newLimit] from plan [month] on (see [editedVersions]). */
+fun Budget.editedFrom(
+    month: YearMonth,
+    newLimit: Long,
+): Budget {
+    val edit = editedVersions(startMonth, versions, limitCents, month, newLimit)
+    return if (edit.changedFrom(startMonth, versions)) {
+        copy(limitCents = edit.latest ?: limitCents, startMonth = edit.startMonth, versions = edit.versions)
+    } else {
+        this
+    }
+}
+
+/** This (new) limit starting in plan [month], with no history. */
+fun Budget.startingAt(month: YearMonth): Budget = copy(startMonth = month, versions = emptyList())
