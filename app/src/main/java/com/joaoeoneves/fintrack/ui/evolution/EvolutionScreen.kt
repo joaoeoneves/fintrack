@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
@@ -31,8 +32,8 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 fun EvolutionScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onCategoryClick: (String) -> Unit = {},
-    onSourceClick: (String) -> Unit = {},
+    onCategoryClick: (String, Period) -> Unit = { _, _ -> },
+    onSourceClick: (String, Period) -> Unit = { _, _ -> },
     viewModel: EvolutionViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -68,10 +69,13 @@ fun EvolutionScreen(
                                 ExpensesEvolution(
                                     analytics = current.analytics,
                                     history = current.history,
-                                    onCategoryClick = { onCategoryClick(it.id.value) },
+                                    onCategoryClick = { onCategoryClick(it.id.value, current.period) },
                                 )
                             EvolutionType.INCOME ->
-                                IncomeEvolution(history = current.history, onSourceClick = onSourceClick)
+                                IncomeEvolution(
+                                    history = current.history,
+                                    onSourceClick = { onSourceClick(it, current.period) },
+                                )
                         }
                     }
             }

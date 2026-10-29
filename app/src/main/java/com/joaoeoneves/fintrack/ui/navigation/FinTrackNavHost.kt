@@ -210,7 +210,11 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
         )
     }
     composable<Evolution> {
-        EvolutionScreen(onBack = dropUnlessResumed { navController.popBackStack() })
+        EvolutionScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onCategoryClick = { id, period -> navController.navigate(CategoryDetail(id, period.encode())) },
+            onSourceClick = { key, period -> navController.navigate(IncomeSourceDetail(key, period.encode())) },
+        )
     }
     composable<Categories> {
         CategoriesScreen(onBack = dropUnlessResumed { navController.popBackStack() })
