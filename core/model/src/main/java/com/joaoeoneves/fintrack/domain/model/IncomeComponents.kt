@@ -46,7 +46,7 @@ data class IncomeRow(
 
 private fun List<PlannedIncome>.inDisplayOrder(): List<PlannedIncome> = sortedWith(compareBy({ it.order }, { it.id }))
 
-private fun rowsOf(
+internal fun rowsOf(
     lines: List<PlannedIncome>,
     build: (component: SalaryComponent?, extraId: String?, lines: List<PlannedIncome>) -> IncomeRow,
 ): List<IncomeRow> {
