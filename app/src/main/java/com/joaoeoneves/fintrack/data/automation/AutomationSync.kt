@@ -17,6 +17,7 @@ import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.usecase.AutoPostRecurring
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -28,6 +29,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "AutomationSync"
+private const val BACKOFF_BASE_MS = 5_000L
+private const val BACKOFF_MAX_SHIFT = 7
+private const val BACKOFF_MAX_MS = 600_000L
 
 /** The repositories the sync observes besides the session, bundled for detekt's LongParameterList. */
 class PaydayData
@@ -61,6 +65,7 @@ class AutomationSync
         private val foregroundTicks = MutableStateFlow(0)
         private var lastAttempted: Attempt? = null
         private var lastGeneration = 0
+        private val attemptCounts = HashMap<Attempt, Int>()
 
         /** What a pass was run for: the same value means nothing new to do. */
         private data class Attempt(
@@ -106,6 +111,7 @@ class AutomationSync
                         if (gated.generation != lastGeneration) {
                             lastGeneration = gated.generation
                             lastAttempted = null
+                            attemptCounts.clear()
                         }
                         val inputs = gated.value
                         val current = inputs.session
@@ -114,9 +120,17 @@ class AutomationSync
                         val attempt = Attempt(current, today, inputs.recurringKey(), inputs.paydayKey())
                         if (attempt == lastAttempted) return@collectLatest
                         lastAttempted = attempt
+                        backOffIfRepeated(attempt)
                         runSteps(today)
                     }
             }
+        }
+
+        // A situation that comes back after being attempted means the server rejected the write and the cursor
+        // rolled back: wait longer each time (cancelled by any new emission) instead of looping on the rejection.
+        private suspend fun backOffIfRepeated(attempt: Attempt) {
+            val repeats = attemptCounts.merge(attempt, 1, Int::plus)!! - 1
+            if (repeats > 0) delay(minOf(BACKOFF_BASE_MS shl minOf(repeats, BACKOFF_MAX_SHIFT), BACKOFF_MAX_MS))
         }
 
         /** Re-checks what is due; called when the app returns to the foreground (the day may have changed). */

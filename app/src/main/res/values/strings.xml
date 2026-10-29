@@ -694,4 +694,5 @@
     <string name="income_meal_card">Meal card</string>
     <string name="income_meal_card_balance">Balance</string>
     <string name="income_meal_card_detail">Received %1$s · spent %2$s</string>
+    <string name="error_write_rejected">Couldn\'t save to the server: %1$s</string>
 </resources>

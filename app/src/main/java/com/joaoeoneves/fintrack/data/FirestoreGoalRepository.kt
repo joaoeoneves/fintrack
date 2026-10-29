@@ -61,7 +61,7 @@ class FirestoreGoalRepository
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when online.
                 docRef
                     .set(goal.toFirestoreMap())
-                    .addOnFailureListener { Log.w(TAG, "Save goal write ${docRef.id} failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Save goal write ${docRef.id} failed"))
                 docRef.id
             }
         }
@@ -72,7 +72,7 @@ class FirestoreGoalRepository
                 collection(uid)
                     .document(id)
                     .delete()
-                    .addOnFailureListener { Log.w(TAG, "Delete goal $id failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Delete goal $id failed"))
                 Unit
             }
         }

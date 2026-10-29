@@ -708,4 +708,5 @@
     <string name="income_meal_card">Cartão refeição</string>
     <string name="income_meal_card_balance">Saldo</string>
     <string name="income_meal_card_detail">Recebido %1$s · gasto %2$s</string>
+    <string name="error_write_rejected">Não foi possível guardar no servidor: %1$s</string>
 </resources>
