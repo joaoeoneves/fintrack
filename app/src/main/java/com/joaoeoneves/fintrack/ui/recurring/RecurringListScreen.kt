@@ -73,8 +73,6 @@ fun RecurringListScreen(
             RecurringListActions(
                 onOpenEditor = onOpenEditor,
                 onDeleteRequested = viewModel::onDeleteRequested,
-                onConfirmDelete = viewModel::onConfirmDelete,
-                onDismissDelete = viewModel::onDismissDelete,
                 onRetry = viewModel::onRetry,
                 onOpenIncome = onOpenIncome,
             ),
@@ -122,16 +120,7 @@ internal fun RecurringListContent(
                         modifier = contentModifier,
                     )
 
-                is RecurringListUiState.Content -> {
-                    RecurringItems(state, actions, contentModifier)
-                    state.deleteTarget?.let { target ->
-                        RecurringDeleteDialog(
-                            name = target.name,
-                            onConfirm = actions.onConfirmDelete,
-                            onDismiss = actions.onDismissDelete,
-                        )
-                    }
-                }
+                is RecurringListUiState.Content -> RecurringItems(state, actions, contentModifier)
             }
         }
     }

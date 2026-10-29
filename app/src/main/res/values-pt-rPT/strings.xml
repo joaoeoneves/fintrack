@@ -407,7 +407,6 @@
     <string name="recurring_ended">Terminado</string>
     <string name="recurring_pause">Pausar</string>
     <string name="recurring_resume">Retomar</string>
-    <string name="recurring_delete_confirm">Eliminar “%1$s”? Os movimentos já criados mantêm-se.</string>
     <string name="recurring_frequency_monthly">Mensal</string>
     <string name="recurring_frequency_yearly">Anual</string>
     <string name="recurring_day_of_month">Dia do mês</string>

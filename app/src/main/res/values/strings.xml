@@ -396,7 +396,6 @@
     <string name="recurring_ended">Ended</string>
     <string name="recurring_pause">Pause</string>
     <string name="recurring_resume">Resume</string>
-    <string name="recurring_delete_confirm">Delete “%1$s”? Transactions already created are kept.</string>
     <string name="recurring_frequency_monthly">Monthly</string>
     <string name="recurring_frequency_yearly">Yearly</string>
     <string name="recurring_day_of_month">Day of month</string>

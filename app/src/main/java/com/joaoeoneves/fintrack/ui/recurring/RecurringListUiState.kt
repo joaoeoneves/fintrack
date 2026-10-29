@@ -22,13 +22,11 @@ sealed interface RecurringListUiState {
     /**
      * @property active items that are on and not ended.
      * @property inactive paused or ended items.
-     * @property deleteTarget the item awaiting delete confirmation.
      */
     data class Content(
         val active: List<RecurringRow>,
         val inactive: List<RecurringRow>,
         val annualExpenseCents: Long,
-        val deleteTarget: RecurringItem? = null,
     ) : RecurringListUiState
 
     data class Error(
@@ -40,8 +38,6 @@ sealed interface RecurringListUiState {
 internal data class RecurringListActions(
     val onOpenEditor: (String?) -> Unit,
     val onDeleteRequested: (String) -> Unit,
-    val onConfirmDelete: () -> Unit,
-    val onDismissDelete: () -> Unit,
     val onRetry: () -> Unit,
     val onOpenIncome: () -> Unit = {},
 )
