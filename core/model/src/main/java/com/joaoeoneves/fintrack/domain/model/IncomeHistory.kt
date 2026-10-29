@@ -63,6 +63,22 @@ data class IncomeSourceHistory(
 
 private fun IncomeRow.key(): IncomeSourceKey = lines.first().rowKey()
 
+/**
+ * The first month funded by a payday income (`pay_<lineId>_<yyyyMM>`) of one of [lineIds], looking at all of
+ * [income]; `null` when none exists. A planned row only counts as "expected" from this month on, because lines
+ * created later (profile set up in September/October) say nothing about the months before they existed.
+ */
+fun firstPaydayFundingMonth(
+    income: List<Income>,
+    lineIds: Set<String>,
+    lines: List<PlannedIncome>,
+    funding: IncomeFunding,
+    zone: ZoneId,
+): YearMonth? =
+    income
+        .filter { parsePaydayIncomeId(it.id)?.first in lineIds }
+        .minOfOrNull { fundingMonthOf(it, lines, funding, zone) }
+
 private class FundedIncome(
     val income: Income,
     val key: IncomeSourceKey,
@@ -71,7 +87,9 @@ private class FundedIncome(
 
 /**
  * Per-source income history over [months]: received by funding month (see [fundingMonthOf]), expected from
- * [incomeRowsIn] only for months up to [today]. Line rows come first in list order, then named sources by received
+ * [incomeRowsIn] only for months up to [today] and, for a line row, only from its first payday income's funding
+ * month on (see [firstPaydayFundingMonth]; a row never paid through a payday has no expected value). Line rows
+ * come first in list order, then named sources by received
  * total (largest first); sources with nothing received and nothing expected are dropped.
  */
 @Suppress("LongParameterList") // The inputs of one income attribution, mirrors monthlyTotalsOf.
@@ -99,12 +117,21 @@ fun incomeHistoryOf(
             .filterIsInstance<IncomeSourceKey.Named>()
             .distinct()
             .sortedByDescending { key -> received.filter { it.key == key }.sumOf { it.income.amountCents } }
+    val rowLines =
+        rowsByMonth.values
+            .flatten()
+            .associate { it.key() to it.lines.map { line -> line.id }.toSet() }
     return (lineKeys + namedKeys).distinct().mapNotNull { key ->
         val mine = received.filter { it.key == key }
+        val expectedFrom = rowLines[key]?.let { ids -> firstPaydayFundingMonth(income, ids, lines, funding, zone) }
         val sourceMonths =
             months.map { month ->
                 val expected =
-                    if (month > today) null else rowsByMonth[month].orEmpty().firstOrNull { it.key() == key }?.cents
+                    if (month > today || expectedFrom == null || month < expectedFrom) {
+                        null
+                    } else {
+                        rowsByMonth[month].orEmpty().firstOrNull { it.key() == key }?.cents
+                    }
                 SourceMonth(month, mine.filter { it.month == month }.sumOf { it.income.amountCents }, expected)
             }
         val label =
