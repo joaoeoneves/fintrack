@@ -51,7 +51,7 @@ internal fun validateBudget(
     skipMonths: Collection<Int> = emptyList(),
 ) {
     requireKnownCategory(categoryId, knownCategoryIds)
-    require(limitCents in 1..MAX_AMOUNT_CENTS) { "Budget limit must be 1..$MAX_AMOUNT_CENTS cents" }
+    require(limitCents in 0..MAX_AMOUNT_CENTS) { "Budget limit must be 0..$MAX_AMOUNT_CENTS cents" }
     val months = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
     require(skipMonths.size <= MAX_MONTH_OF_YEAR && skipMonths.all { it in months }) {
         "Skipped months must be at most 12 values of 1..12"

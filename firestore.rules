@@ -89,7 +89,7 @@ service cloud.firestore {
     function isValidBudget(data) {
       return data.keys().hasOnly(['limitCents', 'skipMonths', 'startMonth', 'versions', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['limitCents'])
-        && data.limitCents is int && data.limitCents > 0 && data.limitCents <= 100000000000
+        && data.limitCents is int && data.limitCents >= 0 && data.limitCents <= 100000000000
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12))
         && isValidPlanTiming(data);
     }
