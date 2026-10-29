@@ -15,6 +15,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 import java.time.YearMonth
@@ -50,7 +51,6 @@ class FirestoreBudgetRepository
             }
         }
 
-        @Suppress("UnusedParameter") // Versions are persisted by the data layer.
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
@@ -61,12 +61,14 @@ class FirestoreBudgetRepository
                 firebaseAuth.currentUser?.uid
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return try {
+                val existing = observeBudgets().first().find { it.categoryId == categoryId }
+                val saved = existing.savedAs(categoryId, limitCents, skipMonths, effectiveFrom)
                 val data =
                     mapOf(
-                        "limitCents" to limitCents,
+                        "limitCents" to saved.limitCents,
                         "skipMonths" to skipMonths.sorted(),
                         "updatedAt" to FieldValue.serverTimestamp(),
-                    )
+                    ) + planTimingFields(saved.startMonth, saved.versions)
                 val docRef = budgetsCollection(uid).document(categoryId.value)
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when
                 // the device is online. Awaiting would hang indefinitely while offline.

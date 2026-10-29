@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.data.savedAs
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
@@ -18,7 +19,6 @@ class LocalBudgetRepository
     ) : BudgetRepository {
         override fun observeBudgets(): Flow<List<Budget>> = store.data.map { doc -> doc.budgets.map { it.toDomain() } }
 
-        @Suppress("UnusedParameter") // Versions are persisted by the data layer.
         override suspend fun setBudget(
             categoryId: CategoryId,
             limitCents: Long,
@@ -28,14 +28,15 @@ class LocalBudgetRepository
             store.update { doc ->
                 validateBudget(categoryId.value, limitCents, knownCategoryIds(doc), skipMonths)
                 // Like the merge write of the signed-in store, the start month and versions are kept.
-                val existing = doc.budgets.find { it.categoryId == categoryId.value }
+                val existing = doc.budgets.find { it.categoryId == categoryId.value }?.toDomain()
+                val saved = existing.savedAs(categoryId, limitCents, skipMonths, effectiveFrom)
                 val record =
                     LocalBudget(
                         categoryId.value,
-                        limitCents,
+                        saved.limitCents,
                         skipMonths.sorted(),
-                        existing?.startMonth,
-                        existing?.versions.orEmpty(),
+                        saved.startMonth?.toString(),
+                        saved.versions.toLocalVersions(),
                     )
                 doc.copy(budgets = doc.budgets.upserted(record) { it.categoryId == record.categoryId }) to Unit
             }
