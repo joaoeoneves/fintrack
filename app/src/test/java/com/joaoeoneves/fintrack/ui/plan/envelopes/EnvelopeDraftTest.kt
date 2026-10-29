@@ -5,8 +5,11 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.testutil.userCategory
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.YearMonth
 
 class EnvelopeDraftTest {
     private val a = CategoryId("a")
@@ -156,5 +159,27 @@ class EnvelopeDraftTest {
             )
         assertNull(edit.amountCents)
         assertEquals(mapOf<CategoryId, Budget?>(a to null, b to null), edit.limits)
+    }
+
+    @Test
+    fun edit_carriesTheDraftsEffectiveFrom() {
+        val month = YearMonth.of(2027, 3)
+        val edit = envelopeEditOf(draft().copy(effectiveFrom = month), emptyList(), emptySet())
+        assertEquals(month, edit.effectiveFrom)
+    }
+
+    @Test
+    fun draftOf_carriesTheGivenEffectiveFrom() {
+        val month = YearMonth.of(2027, 3)
+        assertEquals(month, draftOf(null, cats, emptyList(), month).effectiveFrom)
+        assertEquals(month, draftOf(Envelope("env", "Food", 0), cats, emptyList(), month).effectiveFrom)
+    }
+
+    @Test
+    fun budgetChanged_ignoresTheMonthAndTheName() {
+        val original = draft(amount = 5000)
+        val renamed = original.copy(name = "Other", effectiveFrom = YearMonth.of(2030, 1))
+        assertFalse(budgetChanged(original, renamed))
+        assertTrue(budgetChanged(original, original.copy(amountCents = 6000)))
     }
 }
