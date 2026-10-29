@@ -1,9 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
-import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
@@ -12,10 +10,8 @@ import com.joaoeoneves.fintrack.data.preferences.StartChecklistState
 import com.joaoeoneves.fintrack.data.preferences.StartChecklistStore
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
-import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.usecase.ObserveStartChecklist
@@ -43,7 +39,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
-import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -55,9 +50,7 @@ class StartChecklistViewModelTest {
     private val sessions = FakeSessionRepository(initialSession = Session.Guest)
     private val profiles = FakeSalaryProfileRepository()
     private val plan = FakePlannedIncomeRepository()
-    private val envelopes = FakeEnvelopeRepository()
     private val recurring = FakeRecurringRepository()
-    private val goals = FakeGoalRepository()
     private val expenses = FakeExpenseRepository()
 
     @Before
@@ -69,7 +62,7 @@ class StartChecklistViewModelTest {
     private fun viewModel(session: FakeSessionRepository = sessions) =
         StartChecklistViewModel(
             store,
-            ObserveStartChecklist(profiles, plan, envelopes, recurring, goals, expenses),
+            ObserveStartChecklist(profiles, plan, recurring, expenses),
             session,
             settleMillis,
         )
@@ -84,9 +77,7 @@ class StartChecklistViewModelTest {
         val steps: List<suspend () -> Unit> =
             listOf(
                 { profiles.saveSalaryProfile(SalaryProfile(baseGrossCents = 100_000L)) },
-                { envelopes.addEnvelope("Home") },
                 { recurring.saveRecurring(recurringItem(id = "")) },
-                { goals.saveGoal(goal()) },
                 { expenses.addExpense(expense()) },
                 { plan.savePlannedIncome(PlannedIncome("l1", "Pay", 100_000L, 0, autoRecord = true)) },
             )
@@ -97,22 +88,6 @@ class StartChecklistViewModelTest {
         val date = Instant.parse("2026-10-05T10:00:00Z")
         return Expense("e1", "Coffee", 300L, BuiltInCategories.FOOD, date, null)
     }
-
-    private fun goal() =
-        SavingsGoal(
-            id = "",
-            name = "Trip",
-            targetCents = 100_000L,
-            targetType = GoalTargetType.ANNUAL,
-            startDate = LocalDate.of(2026, 1, 1),
-            targetDate = null,
-            initialCents = 0L,
-            linkedRecurringIds = emptySet(),
-            linkedCategoryId = null,
-            archived = false,
-            order = 0,
-            recurringId = null,
-        )
 
     private fun StartChecklistViewModel.visible() = uiState.value as StartChecklistUiState.Visible
 
@@ -141,9 +116,9 @@ class StartChecklistViewModelTest {
         }
 
     @Test
-    fun fourStepsDone_retiresTheCard_andHidesIt() =
+    fun threeStepsDone_retiresTheCard_andHidesIt() =
         runTest(dispatcher) {
-            setUpSteps(4)
+            setUpSteps(3)
             val vm = started(viewModel())
 
             advanceUntilIdle()
@@ -153,20 +128,20 @@ class StartChecklistViewModelTest {
         }
 
     @Test
-    fun threeStepsDone_isActive_andVisibleWithProgress() =
+    fun twoStepsDone_isActive_andVisibleWithProgress() =
         runTest(dispatcher) {
-            setUpSteps(3)
+            setUpSteps(2)
             val vm = started(viewModel())
 
             advanceUntilIdle()
 
             assertEquals(StartChecklistState.ACTIVE, store.state.first())
             val visible = vm.visible()
-            assertEquals(3, visible.doneCount)
-            assertEquals(6, visible.total)
+            assertEquals(2, visible.doneCount)
+            assertEquals(4, visible.total)
             assertEquals(StartStep.entries, visible.steps.map { it.step })
             assertEquals(
-                setOf(StartStep.SALARY, StartStep.ENVELOPES, StartStep.BILLS),
+                setOf(StartStep.SALARY, StartStep.BILLS),
                 visible.steps
                     .filter { it.done }
                     .map { it.step }
@@ -188,28 +163,29 @@ class StartChecklistViewModelTest {
     @Test
     fun activeChecklist_staysVisibleAsMoreStepsGetDone() =
         runTest(dispatcher) {
-            setUpSteps(3)
+            setUpSteps(1)
             val vm = started(viewModel())
             advanceUntilIdle()
 
-            goals.saveGoal(goal())
+            recurring.saveRecurring(recurringItem(id = ""))
             advanceUntilIdle()
-            assertEquals(4, vm.visible().doneCount)
+            assertEquals(2, vm.visible().doneCount)
             assertEquals(StartChecklistState.ACTIVE, store.state.first())
 
             expenses.addExpense(expense())
             advanceUntilIdle()
-            assertEquals(5, vm.visible().doneCount)
+            assertEquals(3, vm.visible().doneCount)
+            assertEquals(StartChecklistState.ACTIVE, store.state.first())
         }
 
     @Test
     fun completeChecklist_isHidden_butStaysActiveInTheStore() =
         runTest(dispatcher) {
-            setUpSteps(5)
+            setUpSteps(3)
             store.set(StartChecklistState.ACTIVE)
             val vm = started(viewModel())
             advanceUntilIdle()
-            assertEquals(5, vm.visible().doneCount)
+            assertEquals(3, vm.visible().doneCount)
 
             plan.savePlannedIncome(PlannedIncome("l1", "Pay", 100_000L, 0, autoRecord = true))
             advanceUntilIdle()
@@ -248,7 +224,7 @@ class StartChecklistViewModelTest {
     @Test
     fun aFailingDecision_isSwallowed_andALaterClearDecidesAgain() =
         runTest(dispatcher) {
-            goals.nextObserveError = IllegalStateException("offline")
+            profiles.nextObserveError = IllegalStateException("offline")
             val vm = started(viewModel())
             advanceUntilIdle()
 
@@ -257,7 +233,7 @@ class StartChecklistViewModelTest {
             assertEquals(StartChecklistUiState.Hidden, vm.uiState.value)
 
             // The collector is still alive: a later undecided state (after a store change) decides again.
-            goals.nextObserveError = null
+            profiles.nextObserveError = null
             store.set(StartChecklistState.DISMISSED)
             advanceUntilIdle()
             store.clear()
@@ -285,7 +261,7 @@ class StartChecklistViewModelTest {
     @Test
     fun afterClear_anAlreadySetUpAccountIsRetiredAgain() =
         runTest(dispatcher) {
-            setUpSteps(5)
+            setUpSteps(3)
             val vm = started(viewModel())
             advanceUntilIdle()
             assertEquals(StartChecklistState.RETIRED, store.state.first())

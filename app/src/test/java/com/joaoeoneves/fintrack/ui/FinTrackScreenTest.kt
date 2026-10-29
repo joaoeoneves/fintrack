@@ -120,11 +120,11 @@ class FinTrackScreenTest {
     }
 
     @Test
-    fun plan_tab_shows_month_and_year_tabs() {
+    fun income_tab_shows_month_and_year_scale() {
         awaitTag(TestTags.CONTINUE_AS_GUEST).performClick()
-        awaitTag(TestTags.NAV_PLAN).performClick()
-        awaitText(str(R.string.plan_tab_month))
-        awaitText(str(R.string.plan_tab_year))
+        awaitTag(TestTags.NAV_INCOME).performClick()
+        awaitText(str(R.string.period_scale_month))
+        awaitText(str(R.string.period_scale_year))
     }
 
     private companion object {

@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.income
 
-import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
@@ -8,6 +7,7 @@ import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MANAGED_HOLIDAY
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest

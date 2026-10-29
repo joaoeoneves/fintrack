@@ -1,7 +1,5 @@
 package com.joaoeoneves.fintrack.ui.income
 
-import com.joaoeoneves.fintrack.ui.plan.key
-import com.joaoeoneves.fintrack.ui.plan.IncomeReceipts
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.MANAGED_MEAL
@@ -9,6 +7,8 @@ import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.ui.plan.IncomeReceipts
+import com.joaoeoneves.fintrack.ui.plan.key
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle

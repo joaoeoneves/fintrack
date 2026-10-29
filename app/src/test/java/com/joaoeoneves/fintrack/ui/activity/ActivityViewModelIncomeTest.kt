@@ -1,8 +1,6 @@
 package com.joaoeoneves.fintrack.ui.activity
 
-import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
-import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.ui.activity.analytics.encode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,8 +10,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.YearMonth
-import java.time.ZoneOffset
 
 /** Income source filter, shifted incomes and the attached monthly history of [ActivityViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -119,22 +115,4 @@ class ActivityViewModelIncomeTest : ActivityViewModelTestBase() {
 
             assertTrue(f.expenseRepo.listeners.observedRanges.size > before)
         }
-
-    @Test
-    fun shiftedIncomesOf_onlyIncomesWhoseFundingMonthDiffersFromTheirDate() {
-        val salary = PlannedIncome("sal", "Salário líquido", 100_000L, 0, managedKey = MANAGED_NET_SALARY)
-        val zone = ZoneOffset.UTC
-        val shifted = income("pay_sal_202609", 1L, noonOn(2026, 9, 30))
-        val early = income("early", 1L, noonOn(2026, 9, 10)).copy(source = "Gift")
-        val items = listOf(shifted, early, expense("exp", date = noonOn(2026, 9, 30)))
-        val on = IncomeFunding(true) { 20 }
-        val off = IncomeFunding(false) { 20 }
-
-        assertEquals(
-            mapOf("pay_sal_202609" to YearMonth.of(2026, 10)),
-            shiftedIncomesOf(items, listOf(salary), on, zone),
-        )
-        assertTrue(shiftedIncomesOf(items, listOf(salary), off, zone).isEmpty())
-        assertTrue(shiftedIncomesOf(emptyList(), listOf(salary), on, zone).isEmpty())
-    }
 }

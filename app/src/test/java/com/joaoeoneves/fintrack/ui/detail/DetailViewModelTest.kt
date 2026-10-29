@@ -132,8 +132,8 @@ class DetailViewModelTest {
             val c = state(detail("categoryId" to shopping).first) as DetailUiState.Content
 
             assertEquals(12, c.months.size)
-            assertEquals(YearMonth.of(2026, 10), c.selected.month)
-            assertEquals(1_000L, c.selected.valueCents)
+            assertEquals(YearMonth.of(2026, 10), (c.period as Period.Month).yearMonth)
+            assertEquals(1_000L, c.amountCents)
             assertEquals(listOf("oct"), c.movements.map { it.id })
             assertEquals(DetailEditTarget.CategoryEditor(shopping), c.editTarget)
             // (1000 vs the 3000/5000 average of 4000) = -75%.
@@ -141,31 +141,44 @@ class DetailViewModelTest {
         }
 
     @Test
-    fun categoryMode_selectedMonthPersistsUnderMonthKey_andOutOfWindowIsIgnored() =
+    fun categoryMode_selectedMonthPersistsUnderSelectedPeriodKey_andOutOfWindowIsIgnored() =
         runTest(testDispatcher) {
             val (vm, handle) = detail("categoryId" to shopping)
             state(vm)
 
             vm.onSelectMonth(YearMonth.of(2026, 9))
             advanceUntilIdle()
-            assertEquals("2026-09", handle.get<String>("month"))
+            assertEquals("month:2026-09", handle.get<String>("selectedPeriod"))
             val c = vm.uiState.value as DetailUiState.Content
-            assertEquals(3_000L, c.selected.valueCents)
+            assertEquals(3_000L, c.amountCents)
             assertEquals(listOf("sep"), c.movements.map { it.id })
 
             vm.onSelectMonth(YearMonth.of(2024, 1))
             advanceUntilIdle()
-            assertEquals("2026-09", handle.get<String>("month"))
+            assertEquals("month:2026-09", handle.get<String>("selectedPeriod"))
+        }
+
+    @Test
+    fun yearRoute_opensTheYear_andMonthSelectionIsIgnored() =
+        runTest(testDispatcher) {
+            val (vm, handle) = detail("categoryId" to shopping, "period" to "year:2026")
+            val c = state(vm) as DetailUiState.Content
+            assertEquals(Period.Year(2026), c.period)
+
+            vm.onSelectMonth(YearMonth.of(2026, 9))
+            advanceUntilIdle()
+            assertEquals(Period.Year(2026), (vm.uiState.value as DetailUiState.Content).period)
+            assertEquals(null, handle.get<String>("selectedPeriod")?.takeIf { it.startsWith("month") })
         }
 
     @Test
     fun restoredMonth_isUsed_andGarbageFallsBackToTheEndMonth() =
         runTest(testDispatcher) {
-            val restored = state(detail("categoryId" to shopping, "month" to "2026-08").first)
-            assertEquals(5_000L, (restored as DetailUiState.Content).selected.valueCents)
+            val restored = state(detail("categoryId" to shopping, "selectedPeriod" to "month:2026-08").first)
+            assertEquals(5_000L, (restored as DetailUiState.Content).amountCents)
 
-            val garbage = state(detail("categoryId" to shopping, "month" to "nope").first)
-            assertEquals(YearMonth.of(2026, 10), (garbage as DetailUiState.Content).selected.month)
+            val garbage = state(detail("categoryId" to shopping, "selectedPeriod" to "nope").first)
+            assertEquals(YearMonth.of(2026, 10), ((garbage as DetailUiState.Content).period as Period.Month).yearMonth)
         }
 
     @Test
@@ -175,7 +188,7 @@ class DetailViewModelTest {
             val c = state(detail("categoryId" to shopping, "period" to period).first) as DetailUiState.Content
 
             assertEquals(YearMonth.of(2026, 9), c.months.last().month)
-            assertEquals(3_000L, c.selected.valueCents)
+            assertEquals(3_000L, c.amountCents)
         }
 
     @Test
@@ -197,7 +210,7 @@ class DetailViewModelTest {
             val c = state(detail("sourceKey" to rentKey.encode()).first) as DetailUiState.Content
 
             assertTrue(c.isIncome)
-            assertEquals(20_000L, c.selected.valueCents)
+            assertEquals(20_000L, c.amountCents)
             assertEquals(listOf("pay_rent_202610"), c.movements.map { it.id })
             assertEquals(DetailEditTarget.IncomeLines(Period.CurrentMonth.encode()), c.editTarget)
             assertEquals("Rent", (c.subject as DetailSubject.OfSource).label)
@@ -219,6 +232,6 @@ class DetailViewModelTest {
             val c = state(detail("sourceKey" to key).first) as DetailUiState.Content
 
             assertNull(c.editTarget)
-            assertEquals(5_000L, c.selected.valueCents)
+            assertEquals(5_000L, c.amountCents)
         }
 }

@@ -1,11 +1,11 @@
 package com.joaoeoneves.fintrack.ui.income
 
-import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
-import com.joaoeoneves.fintrack.ui.plan.IncomeLineEditorState
 import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.plan.IncomeLineEditorState
+import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle

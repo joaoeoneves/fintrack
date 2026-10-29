@@ -19,7 +19,6 @@ import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
 import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
 import com.joaoeoneves.fintrack.testutil.testExpense
-import com.joaoeoneves.fintrack.ui.navigation.ACTIVITY_TYPE_INCOME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -93,29 +92,33 @@ class SpendingTabViewModelTest {
         return Setup(vm, counting)
     }
 
-    private fun TestScope.content(vm: SpendingTabViewModel): EvolutionUiState.Content {
+    private fun TestScope.content(vm: SpendingTabViewModel): SpendingTabUiState.Content {
         backgroundScope.launch { vm.uiState.collect {} }
         advanceUntilIdle()
-        return vm.uiState.value as EvolutionUiState.Content
+        return vm.uiState.value as SpendingTabUiState.Content
     }
 
     @Test
-    fun seededFromRoute_periodAndType() =
+    fun seededFromRoute_period() =
         runTest(testDispatcher) {
             val period = Period.Month(YearMonth.of(2026, 7))
-            val c = content(setup("period" to period.encode(), "type" to ACTIVITY_TYPE_INCOME).vm)
+            val c = content(setup("period" to period.encode()).vm)
 
             assertEquals(period, c.period)
-            assertEquals(EvolutionType.INCOME, c.type)
         }
 
     @Test
-    fun defaults_currentMonthAndExpense() =
+    fun seededFromRoute_yearToken() =
         runTest(testDispatcher) {
-            val c = content(setup().vm)
+            val c = content(setup("period" to "year:2026").vm)
 
-            assertEquals(Period.CurrentMonth, c.period)
-            assertEquals(EvolutionType.EXPENSE, c.type)
+            assertEquals(Period.Year(2026), c.period)
+        }
+
+    @Test
+    fun defaults_currentMonth() =
+        runTest(testDispatcher) {
+            assertEquals(Period.CurrentMonth, content(setup().vm).period)
         }
 
     @Test
@@ -152,22 +155,17 @@ class SpendingTabViewModelTest {
         }
 
     @Test
-    fun typeChange_doesNotResubscribe_butPeriodChangeDoes() =
+    fun periodChange_resubscribes_andMovesTheWindow() =
         runTest(testDispatcher) {
             val s = setup()
             content(s.vm)
             val before = s.expenseRepo.listeners.observedRanges.size
 
-            s.vm.onTypeSelected(EvolutionType.INCOME)
-            advanceUntilIdle()
-            assertEquals(before, s.expenseRepo.listeners.observedRanges.size)
-            assertEquals(EvolutionType.INCOME, (s.vm.uiState.value as EvolutionUiState.Content).type)
-
             s.vm.periodActions.onPrevious()
             advanceUntilIdle()
             assertTrue(s.expenseRepo.listeners.observedRanges.size > before)
             val last =
-                (s.vm.uiState.value as EvolutionUiState.Content)
+                (s.vm.uiState.value as SpendingTabUiState.Content)
                     .history!!
                     .monthly.months
                     .last()
@@ -188,6 +186,6 @@ class SpendingTabViewModelTest {
             backgroundScope.launch { vm.uiState.collect {} }
             advanceUntilIdle()
 
-            assertTrue(vm.uiState.value is EvolutionUiState.Error)
+            assertTrue(vm.uiState.value is SpendingTabUiState.Error)
         }
 }
