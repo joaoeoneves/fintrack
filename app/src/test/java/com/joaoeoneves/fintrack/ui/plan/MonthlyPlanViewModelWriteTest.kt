@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -53,6 +54,53 @@ class MonthlyPlanViewModelWriteTest : MonthlyPlanViewModelTestBase() {
 
             assertEquals(1, incomeRepo.lines.size)
             assertNotNull(vm.content().editor)
+            assertEquals(failed, vm.errorEvent.first())
+        }
+
+    @Test
+    fun deleteIncomeLine_emitsTheLine_andUndoRestoresIt() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(line("a"))
+            val vm = viewModel()
+            collect(vm)
+
+            vm.onDeleteIncomeLine("a")
+            advanceUntilIdle()
+            val deleted = vm.deletedLineEvent.first()
+
+            assertEquals("a", deleted.id)
+            assertEquals(emptyList<Any>(), incomeRepo.lines)
+
+            vm.onUndoDeleteIncomeLine(deleted)
+            advanceUntilIdle()
+
+            assertEquals(listOf("a"), incomeRepo.lines.map { it.id })
+        }
+
+    @Test
+    fun deleteIncomeLine_unknownId_emitsNothing() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(line("a"))
+            val vm = viewModel()
+            collect(vm)
+
+            vm.onDeleteIncomeLine("nope")
+            advanceUntilIdle()
+
+            assertEquals(1, incomeRepo.lines.size)
+            assertNull(withTimeoutOrNull(1) { vm.deletedLineEvent.first() })
+        }
+
+    @Test
+    fun undoDelete_failure_emitsError() =
+        runTest(testDispatcher) {
+            val vm = viewModel()
+            collect(vm)
+            incomeRepo.nextSaveError = IllegalStateException("nope")
+
+            vm.onUndoDeleteIncomeLine(line("a"))
+            advanceUntilIdle()
+
             assertEquals(failed, vm.errorEvent.first())
         }
 }

@@ -192,4 +192,71 @@ class UpcomingRecurringViewModelTest {
             assertEquals(day(2026, 3, 16), state.today)
             assertEquals(1, state.overview.upcoming.size)
         }
+
+    @Test
+    fun confirmWithAmount_postsTheOverride() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository(listOf(rent))
+            val vm = viewModel(repo)
+            val row = content(started(vm)).overview.upcoming.single()
+
+            vm.onConfirm(row, 2_345L)
+            advanceUntilIdle()
+
+            assertEquals(2_345L, repo.confirmedTransactions.single().amountCents)
+        }
+
+    @Test
+    fun undoOfConfirm_rewindsTheCursor() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository(listOf(rent))
+            val vm = viewModel(repo)
+            val undos = mutableListOf<RecurringUndo>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.undoEvent.collect { undos += it } }
+            val row = content(started(vm)).overview.upcoming.single()
+            vm.onConfirm(row)
+            advanceUntilIdle()
+
+            vm.onUndo(undos.single())
+            advanceUntilIdle()
+
+            assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
+            assertEquals(1, content(vm.uiState.value).overview.upcoming.size)
+        }
+
+    @Test
+    fun skipEmitsASkippedUndo_andUndoUnskips() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository(listOf(rent))
+            val vm = viewModel(repo)
+            val undos = mutableListOf<RecurringUndo>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.undoEvent.collect { undos += it } }
+            val row = content(started(vm)).overview.upcoming.single()
+            vm.onSkip(row)
+            advanceUntilIdle()
+
+            assertEquals(RecurringUndo.Kind.SKIPPED, undos.single().kind)
+            assertEquals(day(2026, 2, 15), undos.single().previousHandledThrough)
+
+            vm.onUndo(undos.single())
+            advanceUntilIdle()
+
+            assertTrue(repo.items.single().skipped.isEmpty())
+            assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
+        }
+
+    @Test
+    fun undoFailure_emitsError() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository(listOf(rent))
+            val vm = viewModel(repo)
+            val errors = mutableListOf<UiText>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
+            started(vm)
+
+            vm.onUndo(RecurringUndo(RecurringUndo.Kind.SKIPPED, "missing", "X", day(2026, 3, 15), null))
+            advanceUntilIdle()
+
+            assertEquals(1, errors.size)
+        }
 }
