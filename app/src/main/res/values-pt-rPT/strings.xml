@@ -422,14 +422,6 @@
     <!-- Redesenho do painel -->
     <string name="action_see_all">Ver tudo</string>
     <string name="cd_balance_chart">Saldo ao longo do período, de %1$s a %2$s</string>
-    <string name="period_tab_1m">1M</string>
-    <string name="period_tab_3m">3M</string>
-    <string name="period_tab_6m">6M</string>
-    <string name="period_tab_1y">1A</string>
-    <string name="cd_period_tab_1m">1 mês</string>
-    <string name="cd_period_tab_3m">3 meses</string>
-    <string name="cd_period_tab_6m">6 meses</string>
-    <string name="cd_period_tab_1y">12 meses</string>
     <string name="nav_home">Início</string>
     <string name="nav_activity">Movimentos</string>
     <string name="nav_plan">Plano</string>

@@ -411,14 +411,6 @@
     <!-- Dashboard redesign -->
     <string name="action_see_all">See all</string>
     <string name="cd_balance_chart">Balance over the period, from %1$s to %2$s</string>
-    <string name="period_tab_1m">1M</string>
-    <string name="period_tab_3m">3M</string>
-    <string name="period_tab_6m">6M</string>
-    <string name="period_tab_1y">1Y</string>
-    <string name="cd_period_tab_1m">1 month</string>
-    <string name="cd_period_tab_3m">3 months</string>
-    <string name="cd_period_tab_6m">6 months</string>
-    <string name="cd_period_tab_1y">12 months</string>
     <string name="nav_home">Home</string>
     <string name="nav_activity">Activity</string>
     <string name="nav_plan">Plan</string>

@@ -23,9 +23,6 @@ import com.joaoeoneves.fintrack.ui.common.categoryColorFor
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.dashboard.CategoryBreakdownSection
-import com.joaoeoneves.fintrack.ui.dashboard.PeriodTab
-import com.joaoeoneves.fintrack.ui.dashboard.toPeriod
-import com.joaoeoneves.fintrack.ui.dashboard.toTab
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
@@ -112,21 +109,13 @@ private fun AnalyticsDetails(
     }
 }
 
-/** The period tabs and the period selector, shared by the Expenses and the Income headers. */
+/** The period selector, shared by the Expenses and the Income headers. */
 @Composable
 internal fun AnalyticsPeriodControls(
     period: Period,
     canGoToNextMonth: Boolean,
     actions: ActivityAnalyticsActions,
 ) {
-    SegmentedTextTabs(
-        options = PeriodTab.entries,
-        selected = period.toTab(),
-        label = { stringResource(it.labelRes) },
-        onSelect = { actions.period.onSelect(it.toPeriod()) },
-        tabContentDescription = { stringResource(it.descriptionRes) },
-        modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-    )
     PeriodSelector(
         period = period,
         canGoToNextMonth = canGoToNextMonth,
