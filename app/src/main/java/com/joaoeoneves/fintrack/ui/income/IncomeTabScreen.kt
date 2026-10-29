@@ -60,6 +60,7 @@ private const val INCOME_MONTHS_AHEAD = 120
  * The Income tab. Month scale: the month's expected vs received income per line (receive/undo, working days, salary
  * profile, manual lines). Year scale: the year's income by source. Both: the bars, "By source" and "Since January".
  */
+@Suppress("LongParameterList") // tab callbacks: navigation targets plus the add pill's two
 @Composable
 fun IncomeTabScreen(
     onOpenSettings: () -> Unit,
@@ -247,7 +248,11 @@ private fun YearOutlook(outlook: YearIncomeOutlook) {
     }
 }
 
-private fun outlookLabel(received: Boolean): Int = if (received) R.string.income_outlook_received else R.string.income_outlook_expected
+private fun outlookLabel(done: Boolean) =
+    when (done) {
+        true -> R.string.income_outlook_received
+        false -> R.string.income_outlook_expected
+    }
 
 /** The meal card: what it received and what was paid with it in the period, and what is left (may be negative). */
 @Composable

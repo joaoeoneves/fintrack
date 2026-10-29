@@ -400,7 +400,8 @@ private fun ActivityAnalytics.following(
 }
 
 /**
- * The one-line summary: spending of the visible list ([ActivityTotals.spendingCents], investments shown apart) and money in. For a
+ * The one-line summary: spending of the visible list ([ActivityTotals.spendingCents], investments apart) and money
+ * in. For a
  * month period with no search or source filter the money in is the month's income ([PeriodOverview.monthIncome]);
  * otherwise it is the visible list's income by date.
  */

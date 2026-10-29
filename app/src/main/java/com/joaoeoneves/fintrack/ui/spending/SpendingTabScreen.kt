@@ -32,6 +32,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
  * since January), then the in-place set-up rows for categories, groups and recurring items. Savings are not spending
  * and never show here.
  */
+@Suppress("LongParameterList") // tab callbacks: navigation targets plus the add pill's two
 @Composable
 fun SpendingTabScreen(
     onOpenSettings: () -> Unit,
