@@ -44,7 +44,6 @@ class FirestoreAutomationSettingsRepository
         override suspend fun updateLineCursors(
             set: Map<String, YearMonth>,
             remove: Set<String>,
-            clearLegacyPayday: Boolean,
         ): Result<Unit> {
             val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
             return runCatchingCancellable {
@@ -53,7 +52,6 @@ class FirestoreAutomationSettingsRepository
                 val data =
                     buildMap<String, Any> {
                         if (cursors.isNotEmpty()) put("lineThrough", cursors)
-                        if (clearLegacyPayday) put("paydayEnabled", false)
                         put("updatedAt", FieldValue.serverTimestamp())
                     }
                 // Not awaited (see FirestoreSalaryProfileRepository): the write lands in the local cache at once.
@@ -113,11 +111,9 @@ internal fun automationSettingsDoc(
         .collection("plan")
         .document("automation")
 
-/** Written whole; the legacy cursor is absent while unset (the rules reject only a malformed one). */
+/** Written whole; the line cursors are absent while there are none. */
 internal fun AutomationSettings.toFirestoreMap(): Map<String, Any?> =
     buildMap {
-        put("paydayEnabled", legacyPaydayEnabled)
-        legacyPaydayRecordedThrough?.let { put("paydayThrough", it.toString()) }
         if (lineRecordedThrough.isNotEmpty()) put("lineThrough", lineRecordedThrough.mapValues { it.value.toString() })
         salaryPaysNextMonth?.let { put("salaryPaysNextMonth", it) }
         put("updatedAt", FieldValue.serverTimestamp())
@@ -125,9 +121,6 @@ internal fun AutomationSettings.toFirestoreMap(): Map<String, Any?> =
 
 private fun DocumentSnapshot.toAutomationSettings(): AutomationSettings =
     AutomationSettings(
-        legacyPaydayEnabled = getBoolean("paydayEnabled") ?: false,
-        legacyPaydayRecordedThrough =
-            getString("paydayThrough")?.let { runCatching { YearMonth.parse(it) }.getOrNull() },
         lineRecordedThrough =
             (get("lineThrough") as? Map<*, *>)
                 .orEmpty()

@@ -517,9 +517,6 @@
     <string name="salary_extra_delete">Eliminar extra</string>
     <string name="salary_extra_deleted">Extra removido</string>
     <string name="salary_extra_gross_only">Só no modo bruto</string>
-    <string name="salary_extra_default_flex">Benefícios flexíveis</string>
-    <string name="salary_extra_default_profit_share">Distribuição de lucros</string>
-    <string name="salary_extra_default_bonus">Prémio</string>
     <string name="category_deleted_placeholder">Categoria eliminada</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Indica um valor válido</string>
@@ -668,6 +665,8 @@
     <string name="detail_context_limit">Limite %1$s</string>
     <string name="detail_context_expected">Esperado %1$s</string>
     <string name="detail_source_unknown">Rendimento</string>
+    <string name="detail_salary_vs_spent">Recebido no fim de %1$s: %2$s · Gasto em %3$s: %4$s</string>
+    <string name="detail_salary_vs_spent_partial">Recebido no fim de %1$s: %2$s · Gasto até agora em %3$s: %4$s</string>
     <string name="home_income_title">Rendimentos</string>
     <string name="home_income_of_expected">de %1$s esperado</string>
     <string name="home_spending_title">Gastos</string>

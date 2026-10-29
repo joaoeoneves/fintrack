@@ -12,8 +12,8 @@ import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
+import com.joaoeoneves.fintrack.domain.repository.PlaceholderNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
@@ -44,7 +44,7 @@ class PlanSingletonSources
         val salaryProfile: SalaryProfileRepository,
         val goals: GoalRepository,
         val automation: AutomationSettingsRepository,
-        val names: LegacyExtraNamesProvider,
+        val names: PlaceholderNamesProvider,
     )
 
 /** Reads the plan data (budgets, planned income, recurring) of the current session for a backup. */
@@ -68,6 +68,6 @@ class PlanBackupSource
                 salaryProfile = singletons.salaryProfile.observeSalaryProfile().first(),
                 goals = singletons.goals.observeGoals().first(),
                 automation = singletons.automation.observeAutomationSettings().first(),
-                deletedCategoryName = singletons.names.names().deletedCategory,
+                deletedCategoryName = singletons.names.deletedCategory(),
             )
     }

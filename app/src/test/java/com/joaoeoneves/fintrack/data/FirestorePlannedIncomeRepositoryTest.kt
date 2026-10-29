@@ -6,7 +6,6 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.TestDocumentSnapshots
-import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -238,7 +237,7 @@ class FirestorePlannedIncomeRepositoryTest {
         }
 
     @Test
-    fun toFirestoreMap_unearmarked_omitsEarmarkFields() {
+    fun toFirestoreMap_hasNoEarmarkKeys() {
         val map = PlannedIncome("x", "Pay", 5L, 0).toFirestoreMapForTest()
 
         assertFalse(map.containsKey("earmarkType"))
@@ -246,30 +245,9 @@ class FirestorePlannedIncomeRepositoryTest {
     }
 
     @Test
-    fun toFirestoreMap_earmarked_writesTypeAndId() {
-        val group = PlannedIncome("x", "Pay", 5L, 0, earmark = Earmark.Group("g1")).toFirestoreMapForTest()
-        val category = PlannedIncome("x", "Pay", 5L, 0, earmark = Earmark.Category("FOOD")).toFirestoreMapForTest()
-
-        assertEquals("GROUP", group["earmarkType"])
-        assertEquals("g1", group["earmarkId"])
-        assertEquals("CATEGORY", category["earmarkType"])
-        assertEquals("FOOD", category["earmarkId"])
-    }
-
-    @Test
-    fun earmarkFields_parse() {
+    fun oldEarmarkFields_areIgnoredOnParse() {
         val extra = mapOf("earmarkType" to str("GROUP"), "earmarkId" to str("g1"))
 
-        assertEquals(Earmark.Group("g1"), toPlannedIncomeOrNull(snapshot("a", fields(extra = extra)))?.earmark)
-    }
-
-    @Test
-    fun earmarkMissingOrHalfPresentOrUnknown_parsesAsUnearmarked() {
-        val half = mapOf("earmarkType" to str("GROUP"))
-        val unknown = mapOf("earmarkType" to str("WALLET"), "earmarkId" to str("w"))
-
-        assertNull(toPlannedIncomeOrNull(snapshot("a", fields()))?.earmark)
-        assertNull(toPlannedIncomeOrNull(snapshot("a", fields(extra = half)))?.earmark)
-        assertNull(toPlannedIncomeOrNull(snapshot("a", fields(extra = unknown)))?.earmark)
+        assertEquals("a", toPlannedIncomeOrNull(snapshot("a", fields(extra = extra)))?.id)
     }
 }

@@ -9,7 +9,6 @@ import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.managedExtraKey
-import com.joaoeoneves.fintrack.domain.model.managedFlexKey
 import com.joaoeoneves.fintrack.testutil.bonusExtra
 import com.joaoeoneves.fintrack.testutil.flexExtra
 import kotlinx.coroutines.test.runTest
@@ -46,7 +45,7 @@ class ManageSalaryProfileTest {
     @Test
     fun save_withLegacyLines_upsertsTheExtraLines_andDeletesTheLegacyOnes() =
         runTest {
-            val legacyKeys = listOf(managedFlexKey(0), managedFlexKey(2), "profile_bonus")
+            val legacyKeys = listOf("profile_flex_q1", "profile_flex_q3", "profile_bonus")
             legacyKeys.forEach { income.savePlannedIncome(PlannedIncome(it, "old", 5, 50, managedKey = it)) }
 
             assertTrue(useCase.save(profile.copy(extras = listOf(flexExtra(), bonusExtra())), labels).isSuccess)

@@ -16,20 +16,8 @@ val PlannedIncome.salaryComponent: SalaryComponent?
             else -> if (isValidManagedKey(key)) SalaryComponent.EXTRA else null
         }
 
-/**
- * The id of the extra a managed line belongs to; the legacy flex / profit-share / bonus lines map to the ids their
- * migrated extras get, so they group with them until the next sync deletes them. `null` for any other line.
- */
-val PlannedIncome.salaryExtraId: String?
-    get() =
-        when (val key = managedKey) {
-            null -> null
-            MANAGED_BONUS -> LEGACY_BONUS_ID
-            else ->
-                parseManagedExtraKey(key)?.first
-                    ?: LEGACY_PROFIT_SHARE_ID.takeIf { key.startsWith(MANAGED_PROFIT_SHARE) }
-                    ?: LEGACY_FLEX_ID.takeIf { key.startsWith("profile_flex_q") }
-        }
+/** The id of the extra a managed line belongs to; `null` for any other line. */
+val PlannedIncome.salaryExtraId: String? get() = managedKey?.let { parseManagedExtraKey(it)?.first }
 
 /**
  * One row of the income lists: every line of a [component] added up, or a single manual line (`component == null`).

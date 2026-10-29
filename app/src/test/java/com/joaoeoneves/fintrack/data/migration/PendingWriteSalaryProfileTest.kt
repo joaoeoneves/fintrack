@@ -4,7 +4,6 @@ import android.app.Application
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalSalaryExtra
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
-import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -97,17 +96,17 @@ class PendingWriteSalaryProfileTest {
     }
 
     @Test
-    fun legacyGuestProfile_usesTheGivenLocalizedNames() {
+    fun legacyGuestProfile_migratesTheBonusWithItsEnglishName() {
         val legacy = LocalSalaryProfile(baseGrossCents = 100_000, bonusCents = 10_000)
 
         val data =
             plan(profile = legacy)
-                .toBatches(LegacyExtraNames(bonus = "Premio"))
+                .toBatches()
                 .single()
                 .single()
                 .data
 
-        assertEquals("Premio", ((data["extras"] as List<*>).single() as Map<*, *>)["name"])
+        assertEquals("Bonus", ((data["extras"] as List<*>).single() as Map<*, *>)["name"])
     }
 
     @Test

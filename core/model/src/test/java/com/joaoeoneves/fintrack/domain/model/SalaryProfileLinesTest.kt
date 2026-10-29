@@ -24,9 +24,6 @@ class SalaryProfileLinesTest {
 
     @Test
     fun managedKeys_helpers() {
-        assertEquals("profile_flex_q1", managedFlexKey(0))
-        assertEquals("profile_flex_q4", managedFlexKey(3))
-        assertEquals("profile_profit_share_4", managedProfitShareKey(4))
         assertEquals("profile_extra_abc_7", managedExtraKey("abc", 7))
     }
 
@@ -129,21 +126,19 @@ class SalaryProfileLinesTest {
     }
 
     @Test
-    fun existingManagedLine_keepsLabelEarmarkAndOrder() {
+    fun existingManagedLine_keepsLabelAndOrder() {
         val edited =
             PlannedIncome(
                 id = MANAGED_NET_SALARY,
                 label = "My pay",
                 amountCents = 1,
                 order = 7,
-                earmark = Earmark.Group("g1"),
                 managedKey = MANAGED_NET_SALARY,
             )
 
         val net = lines(existing = listOf(edited)).byKey(MANAGED_NET_SALARY)
 
         assertEquals("My pay", net.label)
-        assertEquals(Earmark.Group("g1"), net.earmark)
         assertEquals(7, net.order)
         assertEquals(79_000, net.amountCents)
     }
@@ -165,7 +160,6 @@ class SalaryProfileLinesTest {
         val net = lines(existing = listOf(own)).byKey(MANAGED_NET_SALARY)
 
         assertEquals("Net salary", net.label)
-        assertNull(net.earmark)
     }
 
     @Test
@@ -260,13 +254,14 @@ class SalaryProfileLinesTest {
 
     @Test
     fun stale_legacyKeys_areRemoved() {
+        val legacyKeys = listOf("profile_profit_share", "profile_bonus", "profile_flex_q2")
         val legacy =
-            listOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS, managedFlexKey(1)).map {
+            legacyKeys.map {
                 PlannedIncome(it, "old", 1, 0, managedKey = it)
             }
 
         assertEquals(
-            listOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS, managedFlexKey(1)),
+            legacyKeys,
             staleManagedIds(full, legacy + lines()),
         )
     }
@@ -281,26 +276,24 @@ class SalaryProfileLinesTest {
     }
 
     @Test
-    fun extraLines_relabelOnRename_keepingEarmarkAndOrder() {
+    fun extraLines_relabelOnRename_keepingOrder() {
         val first =
             lines().map {
-                if (it.id == "profile_extra_profit_4") it.copy(earmark = Earmark.Group("g"), order = 55) else it
+                if (it.id == "profile_extra_profit_4") it.copy(order = 55) else it
             }
         val renamed = full.copy(extras = listOf(testExtra(), multipleExtra(name = "Dividends"), fixedExtra()))
 
         val line = lines(renamed, first).byKey("profile_extra_profit_4")
 
         assertEquals("Dividends", line.label)
-        assertEquals(Earmark.Group("g"), line.earmark)
         assertEquals(55, line.order)
     }
 
     @Test
-    fun isValidManagedKey_acceptsFixedLegacyAndExtraKeys() {
+    fun isValidManagedKey_acceptsFixedAndExtraKeys() {
         val ok =
             listOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS) +
-                listOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS, managedFlexKey(0), managedFlexKey(3)) +
-                managedProfitShareKey(12) + "profile_extra_abc123_1" + "profile_extra_a_12"
+                listOf("profile_extra_abc123_1", "profile_extra_a_12")
         assertTrue(ok.all(::isValidManagedKey))
     }
 
@@ -318,6 +311,10 @@ class SalaryProfileLinesTest {
                 "profile_extra_a-b_3",
                 "profile_extra_${"x".repeat(21)}_3",
                 "profile_flex_q5",
+                "profile_flex_q1",
+                "profile_bonus",
+                "profile_profit_share",
+                "profile_profit_share_12",
                 "profile_extra_abc_x",
             )
         assertTrue(bad.none(::isValidManagedKey))
@@ -331,7 +328,7 @@ class SalaryProfileLinesTest {
         assertNull(parseManagedExtraKey("profile_extra_abc_13"))
         assertNull(parseManagedExtraKey("profile_extra_a_b_3"))
         assertNull(parseManagedExtraKey("profile_extra_3"))
-        assertNull(parseManagedExtraKey(MANAGED_BONUS))
+        assertNull(parseManagedExtraKey("profile_bonus"))
         assertNull(parseManagedExtraKey("other_abc_3"))
     }
 }

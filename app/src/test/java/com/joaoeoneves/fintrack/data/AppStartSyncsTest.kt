@@ -4,9 +4,6 @@ import android.app.Application
 import com.joaoeoneves.fintrack.data.automation.AutomationSync
 import com.joaoeoneves.fintrack.data.automation.PaydayData
 import com.joaoeoneves.fintrack.data.backup.RestoreGate
-import com.joaoeoneves.fintrack.data.migration.EnvelopeMigrationSync
-import com.joaoeoneves.fintrack.data.migration.IncomeMigrationSync
-import com.joaoeoneves.fintrack.data.migration.SavingsPlanMigrationSync
 import com.joaoeoneves.fintrack.data.preferences.PreferenceField
 import com.joaoeoneves.fintrack.data.preferences.PreferencesSync
 import com.joaoeoneves.fintrack.data.salary.ManagedIncomeSync
@@ -17,7 +14,6 @@ import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.domain.usecase.AutoPostRecurring
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
-import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
@@ -32,7 +28,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.time.Instant
 import java.time.ZoneOffset
@@ -69,15 +64,6 @@ class AppStartSyncsTest {
         val session = FakeSessionRepository(Session.Guest)
         val gate = RestoreGate()
         val automation = FakeAutomationSettingsRepository()
-        val sources =
-            PlanDataSources(
-                FakeBudgetRepository(),
-                plan,
-                FakeMonthSettingsRepository(),
-                FakeCategoryRepository(),
-                FakeEnvelopeRepository(),
-                recurring,
-            )
         return AppStartSyncs(
             preferences,
             ManagedIncomeSync(
@@ -88,9 +74,6 @@ class AppStartSyncsTest {
                 gate,
                 backgroundScope,
             ),
-            EnvelopeMigrationSync(sources, session, RuntimeEnvironment.getApplication(), gate, backgroundScope),
-            SavingsPlanMigrationSync(sources, FakeGoalRepository(), session, clock, gate, backgroundScope),
-            IncomeMigrationSync(sources, automation, session, clock, gate, backgroundScope),
             AutomationSync(
                 session,
                 AutoPostRecurring(

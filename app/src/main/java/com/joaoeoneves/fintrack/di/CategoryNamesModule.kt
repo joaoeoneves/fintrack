@@ -1,10 +1,10 @@
 package com.joaoeoneves.fintrack.di
 
 import com.joaoeoneves.fintrack.data.AppBuiltInCategoryNames
-import com.joaoeoneves.fintrack.data.AppLegacyExtraNames
+import com.joaoeoneves.fintrack.data.AppPlaceholderNames
 import com.joaoeoneves.fintrack.data.AppSalaryLineLabels
 import com.joaoeoneves.fintrack.domain.repository.BuiltInCategoryNames
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
+import com.joaoeoneves.fintrack.domain.repository.PlaceholderNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.SalaryLineLabelsProvider
 import dagger.Binds
 import dagger.Module
@@ -21,7 +21,7 @@ interface CategoryNamesModule {
 
     @Binds
     @Singleton
-    fun bindLegacyExtraNames(impl: AppLegacyExtraNames): LegacyExtraNamesProvider
+    fun bindPlaceholderNames(impl: AppPlaceholderNames): PlaceholderNamesProvider
 
     @Binds
     @Singleton

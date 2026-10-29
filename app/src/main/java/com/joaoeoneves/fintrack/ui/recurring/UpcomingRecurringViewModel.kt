@@ -179,7 +179,7 @@ class UpcomingRecurringViewModel
             return {
                 viewModelScope.launch {
                     for ((month, lines) in byPayMonth) {
-                        val failure = recordPayday.unreceive(lines, month, clock.zone).exceptionOrNull()
+                        val failure = recordPayday.unreceive(lines, month).exceptionOrNull()
                         if (failure != null) {
                             Log.w(TAG, "Failed to undo the received income", failure)
                             errors.send(UiText.StringResource(R.string.error_plan_save_failed))

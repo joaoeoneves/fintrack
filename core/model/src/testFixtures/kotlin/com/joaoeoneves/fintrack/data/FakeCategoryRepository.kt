@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.map
  * documents (overrides of built-ins and user categories) and exposes them merged with the
  * built-ins, like the Firestore implementation. Not wired via Hilt; construct and pass it directly.
  */
+@Suppress("TooManyFunctions") // implements a wide repository interface
 class FakeCategoryRepository(
     initialDocs: List<Category> = emptyList(),
     var nextObserveCategoriesError: Throwable? = null,

@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
-import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MANAGED_HOLIDAY
@@ -20,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.YearMonth
 
-/** Lines generated from the salary profile are read-only except for their label and earmark. */
+/** Lines generated from the salary profile are read-only except for their label and auto-record settings. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
@@ -90,7 +89,7 @@ class IncomeTabViewModelManagedTest : IncomeTabViewModelTestBase() {
         }
 
     @Test
-    fun saveManagedLine_keepsAmountAndSchedule_changesLabelAndEarmark() =
+    fun saveManagedLine_keepsAmountAndSchedule_changesLabel() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(net)
             val vm = viewModel()
@@ -102,7 +101,6 @@ class IncomeTabViewModelManagedTest : IncomeTabViewModelTestBase() {
                     basis = IncomeBasis.PER_WORKING_DAY,
                     frequency = IncomeFrequency.MONTHLY,
                     skipMonths = setOf(2),
-                    earmark = Earmark.Group("g1"),
                 )
 
             vm.onSaveIncomeLine(" My pay ", 1, tampered, month)
@@ -110,7 +108,6 @@ class IncomeTabViewModelManagedTest : IncomeTabViewModelTestBase() {
 
             val saved = incomeRepo.lines.single()
             assertEquals("My pay", saved.label)
-            assertEquals(Earmark.Group("g1"), saved.earmark)
             assertEquals(86_000, saved.amountCents)
             assertEquals(IncomeFrequency.MONTHLY, saved.frequency)
             assertEquals(IncomeBasis.FIXED, saved.basis)
@@ -120,7 +117,7 @@ class IncomeTabViewModelManagedTest : IncomeTabViewModelTestBase() {
         }
 
     @Test
-    fun saveManagedYearlyLine_ignoresTheEarmark() =
+    fun saveManagedYearlyLine_keepsItsScheduleMonth() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(holiday)
             val vm = viewModel()
@@ -131,14 +128,13 @@ class IncomeTabViewModelManagedTest : IncomeTabViewModelTestBase() {
             vm.onSaveIncomeLine(
                 "Subsidy",
                 5,
-                IncomeSchedule(frequency = IncomeFrequency.YEARLY, monthOfYear = 9, earmark = Earmark.Group("g")),
+                IncomeSchedule(frequency = IncomeFrequency.YEARLY, monthOfYear = 9),
                 month,
             )
             advanceUntilIdle()
 
             val saved = incomeRepo.lines.single()
             assertEquals("Subsidy", saved.label)
-            assertEquals(null, saved.earmark)
             assertEquals(6, saved.monthOfYear)
             assertEquals(42_000, saved.amountCents)
         }

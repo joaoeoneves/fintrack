@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.flow.first
@@ -29,18 +28,6 @@ class LocalRecurringRepositoryConfirmTest : LocalStoreTestBase() {
             assertEquals(before + 1, doc.revision)
             assertEquals(listOf("rec_r1_20260315"), doc.expenses.map { it.id })
             assertEquals("2026-03-15", doc.recurring.single().handledThrough)
-        }
-
-    @Test
-    fun confirm_income_storesAnIncome() =
-        runStoreTest {
-            repo.saveRecurring(recurringItem(id = "s", type = RecurringType.INCOME))
-
-            assertTrue(repo.confirmOccurrence("s", march15, income(id = "rec_s_20260315")).isSuccess)
-
-            val doc = store.data.first()
-            assertEquals(listOf("rec_s_20260315"), doc.income.map { it.id })
-            assertTrue(doc.expenses.isEmpty())
         }
 
     @Test

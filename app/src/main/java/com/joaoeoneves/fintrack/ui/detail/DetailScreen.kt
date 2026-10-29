@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.detail
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +15,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
+import com.joaoeoneves.fintrack.domain.model.SalarySpendComparison
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.currentLocale
@@ -28,8 +30,12 @@ import com.joaoeoneves.fintrack.ui.designsystem.DetailScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.MonthlyBar
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.plan.label
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.math.abs
 
 private const val CONTEXT_SEPARATOR = " · "
@@ -124,6 +130,7 @@ private fun DetailContent(
             )
         },
     ) {
+        salaryComparisonItem(state.salaryComparison, locale)
         if (state.movements.isEmpty()) {
             item(key = "empty") { EmptyState(title = stringResource(R.string.detail_no_movements)) }
         }
@@ -166,3 +173,34 @@ private fun contextOf(subject: DetailSubject): String? =
                 subject.expectedCents?.let { stringResource(R.string.detail_context_expected, formatAmountCents(it)) },
             ).takeIf { it.isNotEmpty() }?.joinToString(CONTEXT_SEPARATOR)
     }
+
+@Composable
+private fun salaryComparisonText(
+    comparison: SalarySpendComparison,
+    locale: Locale,
+): String =
+    stringResource(
+        if (comparison.spentIsPartial) R.string.detail_salary_vs_spent_partial else R.string.detail_salary_vs_spent,
+        monthNameOf(comparison.receivedMonth, locale),
+        formatAmountCents(comparison.receivedCents),
+        monthNameOf(comparison.spentMonth, locale),
+        formatAmountCents(comparison.spentCents),
+    )
+
+private fun monthNameOf(
+    month: YearMonth,
+    locale: Locale,
+): String = DateTimeFormatter.ofPattern("LLLL", locale).format(month)
+
+private fun LazyListScope.salaryComparisonItem(
+    comparison: SalarySpendComparison?,
+    locale: Locale,
+) {
+    if (comparison == null) return
+    item(key = "salary_comparison") {
+        SettingsRow(
+            title = salaryComparisonText(comparison, locale),
+            modifier = Modifier.padding(horizontal = Dimens.Space16),
+        )
+    }
+}

@@ -18,7 +18,7 @@ import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
+import com.joaoeoneves.fintrack.domain.repository.PlaceholderNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import kotlinx.coroutines.tasks.await
 import java.io.IOException
@@ -68,7 +68,7 @@ class AccountBackupRestorer
     constructor(
         private val firestore: FirebaseFirestore,
         private val firebaseAuth: FirebaseAuth,
-        private val legacyNames: LegacyExtraNamesProvider,
+        private val placeholderNames: PlaceholderNamesProvider,
         private val themes: ThemeRepository,
         private val currencies: CurrencyRepository,
         private val languages: LanguageRepository,
@@ -140,9 +140,8 @@ class AccountBackupRestorer
             uid: String,
             local: LocalDataDocument,
         ): AccountRestorePlan {
-            val names = legacyNames.names()
             val server = readServerState(uid)
-            val writes = restoreMigrationPlanOf(local, names.deletedCategory).toBatches(names)
+            val writes = restoreMigrationPlanOf(local, placeholderNames.deletedCategory()).toBatches()
             return accountRestorePlanOf(writes, server.ids, server.hasProfile, server.hasAutomation)
         }
 

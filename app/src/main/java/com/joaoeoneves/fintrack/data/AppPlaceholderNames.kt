@@ -5,22 +5,21 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
+import com.joaoeoneves.fintrack.domain.repository.PlaceholderNamesProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** [LegacyExtraNamesProvider] resolving the default extra names in the app's current language. */
+/** [PlaceholderNamesProvider] resolving the names in the app's current language. */
 @Singleton
-class AppLegacyExtraNames
+class AppPlaceholderNames
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-    ) : LegacyExtraNamesProvider {
+    ) : PlaceholderNamesProvider {
         // False positive: the locale only builds a derived context to resolve names; it never changes the app's own.
         @SuppressLint("AppBundleLocaleChanges")
-        override fun names(): LegacyExtraNames {
+        override fun deletedCategory(): String {
             val locale = AppCompatDelegate.getApplicationLocales().get(0)
             val localized =
                 if (locale == null) {
@@ -30,11 +29,6 @@ class AppLegacyExtraNames
                         Configuration(context.resources.configuration).apply { setLocale(locale) },
                     )
                 }
-            return LegacyExtraNames(
-                flex = localized.getString(R.string.salary_extra_default_flex),
-                profitShare = localized.getString(R.string.salary_extra_default_profit_share),
-                bonus = localized.getString(R.string.salary_extra_default_bonus),
-                deletedCategory = localized.getString(R.string.category_deleted_placeholder),
-            )
+            return localized.getString(R.string.category_deleted_placeholder)
         }
     }

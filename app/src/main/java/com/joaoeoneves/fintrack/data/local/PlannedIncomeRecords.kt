@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
@@ -27,7 +26,6 @@ internal fun LocalPlannedIncome.toDomain(): PlannedIncome =
         monthOfYear = monthOfYear,
         yearMonth = yearMonth?.let(::parseYearMonthOrNull),
         skipMonths = skipMonths.toSet(),
-        earmark = earmarkOrNull(earmarkType, earmarkId),
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
@@ -46,39 +44,12 @@ internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
         monthOfYear = monthOfYear,
         yearMonth = yearMonth?.toString(),
         skipMonths = skipMonths.sorted(),
-        earmarkType = earmark?.typeName,
-        earmarkId = earmark?.id,
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay,
         startMonth = startMonth?.toString(),
         versions = versions.toLocalVersions(),
     )
-
-/** The stored name of an earmark's kind (`CATEGORY` / `GROUP`), as persisted in `earmarkType`. */
-internal val Earmark.typeName: String
-    get() =
-        when (this) {
-            is Earmark.Category -> EARMARK_CATEGORY
-            is Earmark.Group -> EARMARK_GROUP
-        }
-
-/** The earmark for a persisted type and id; `null` unless both are present and the type is known. */
-internal fun earmarkOrNull(
-    type: String?,
-    id: String?,
-): Earmark? =
-    when {
-        id.isNullOrBlank() -> null
-        type == EARMARK_CATEGORY -> Earmark.Category(id)
-        type == EARMARK_GROUP -> Earmark.Group(id)
-        else -> null
-    }
-
-private const val EARMARK_CATEGORY = "CATEGORY"
-private const val EARMARK_GROUP = "GROUP"
-private const val MAX_EARMARK_ID_LENGTH = 64
-private val EARMARK_ID_SHAPE = Regex("^[A-Za-z0-9_-]+$")
 
 internal fun parseYearMonthOrNull(raw: String): YearMonth? =
     try {
@@ -101,7 +72,6 @@ internal fun validatePlannedIncome(line: LocalPlannedIncome) {
     require(line.skipMonths.size <= MAX_MONTH_OF_YEAR && line.skipMonths.all { it in months }) {
         "Skipped months must be at most 12 values of 1..12"
     }
-    validateEarmark(line)
     validatePlanTiming(line.startMonth, line.versions)
     require(line.payDay == null || line.payDay in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH) { "Pay day must be 1..31" }
     require(line.managedKey == null || isValidManagedKey(line.managedKey)) { "Invalid managed key ${line.managedKey}" }
@@ -117,14 +87,4 @@ internal fun validatePlannedIncome(line: LocalPlannedIncome) {
                 "A one-off line needs a valid year-month"
             }
     }
-}
-
-// Both fields or neither; the type is CATEGORY or GROUP and the id has the shape of a document id.
-private fun validateEarmark(line: LocalPlannedIncome) {
-    require((line.earmarkType == null) == (line.earmarkId == null)) { "Earmark type and id go together" }
-    val id = line.earmarkId ?: return
-    require(line.earmarkType == EARMARK_CATEGORY || line.earmarkType == EARMARK_GROUP) {
-        "Invalid earmark type ${line.earmarkType}"
-    }
-    require(id.length in 1..MAX_EARMARK_ID_LENGTH && EARMARK_ID_SHAPE.matches(id)) { "Invalid earmark id" }
 }

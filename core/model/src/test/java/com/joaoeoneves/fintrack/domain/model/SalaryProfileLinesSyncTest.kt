@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.domain.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.YearMonth
@@ -60,38 +59,6 @@ class SalaryProfileLinesSyncTest {
 
         assertEquals(listOf(MANAGED_NET_SALARY), result.map { it.managedKey })
         assertEquals(90_000, result.single().amountCents)
-    }
-
-    @Test
-    fun duoLine_mirrorsTheSalaryEarmark() {
-        val salary =
-            PlannedIncome(
-                MANAGED_NET_SALARY,
-                "Pay",
-                1,
-                0,
-                earmark = Earmark.Category("food"),
-                managedKey = MANAGED_NET_SALARY,
-            )
-        val staleDuo =
-            PlannedIncome(
-                MANAGED_DUODECIMOS,
-                "Twelfths",
-                1,
-                1,
-                earmark = Earmark.Group("old"),
-                managedKey = MANAGED_DUODECIMOS,
-            )
-
-        val result = lines(existing = listOf(salary, staleDuo))
-
-        assertEquals(Earmark.Category("food"), result.byKey(MANAGED_DUODECIMOS).earmark)
-        assertEquals("Twelfths", result.byKey(MANAGED_DUODECIMOS).label)
-    }
-
-    @Test
-    fun duoLine_hasNoEarmark_whenSalaryHasNone() {
-        assertNull(lines().byKey(MANAGED_DUODECIMOS).earmark)
     }
 
     @Test
@@ -168,10 +135,10 @@ class SalaryProfileLinesSyncTest {
     }
 
     @Test
-    fun sync_renamingAnExtra_relabelsItsLines_keepingEarmarkAndOrder() {
+    fun sync_renamingAnExtra_relabelsItsLines_keepingOrder() {
         val existing =
             lines().map {
-                if (it.id == managedExtraKey("bonus", 5)) it.copy(earmark = Earmark.Group("g1"), order = 42) else it
+                if (it.id == managedExtraKey("bonus", 5)) it.copy(order = 42) else it
             }
         val renamed = profile.copy(extras = listOf(testExtra(), fixedExtra(name = "Prize")))
 
@@ -179,7 +146,6 @@ class SalaryProfileLinesSyncTest {
 
         val line = sync.upserts.single()
         assertEquals("Prize", line.label)
-        assertEquals(Earmark.Group("g1"), line.earmark)
         assertEquals(42, line.order)
         assertTrue(sync.deletes.isEmpty())
     }
@@ -203,7 +169,7 @@ class SalaryProfileLinesSyncTest {
 
     @Test
     fun sync_legacyFlexProfitAndBonusLines_areDeleted() {
-        val legacyKeys = listOf(managedFlexKey(0), managedProfitShareKey(4), MANAGED_BONUS, MANAGED_PROFIT_SHARE)
+        val legacyKeys = listOf("profile_flex_q1", "profile_profit_share_4", "profile_bonus", "profile_profit_share")
         val legacy = legacyKeys.mapIndexed { i, k -> PlannedIncome(k, "old", 5, 80 + i, managedKey = k) }
 
         val sync = managedLinesSync(profile, lines() + legacy)
@@ -213,13 +179,13 @@ class SalaryProfileLinesSyncTest {
 
     @Test
     fun sync_deletesLegacyProfitShareAndMismatchedIds() {
-        val legacy = PlannedIncome(MANAGED_PROFIT_SHARE, "Profit", 5, 90, managedKey = MANAGED_PROFIT_SHARE)
+        val legacy = PlannedIncome(LEGACY_PROFIT_SHARE_KEY, "Profit", 5, 90, managedKey = LEGACY_PROFIT_SHARE_KEY)
         val oddId = PlannedIncome("random-id", "Odd", 5, 91, managedKey = MANAGED_MEAL)
         val own = PlannedIncome("own", "Own", 5, 92)
 
         val sync = managedLinesSync(profile, lines() + legacy + oddId + own)
 
-        assertTrue(MANAGED_PROFIT_SHARE in sync.deletes)
+        assertTrue(LEGACY_PROFIT_SHARE_KEY in sync.deletes)
         assertTrue("random-id" in sync.deletes)
         assertFalse("own" in sync.deletes)
     }
@@ -230,5 +196,9 @@ class SalaryProfileLinesSyncTest {
 
         assertTrue(sync.upserts.isEmpty())
         assertEquals(lines().map { it.id }.toSet(), sync.deletes.toSet())
+    }
+
+    private companion object {
+        const val LEGACY_PROFIT_SHARE_KEY = "profile_profit_share"
     }
 }

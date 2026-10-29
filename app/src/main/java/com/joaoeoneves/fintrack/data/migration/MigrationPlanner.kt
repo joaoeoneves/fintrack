@@ -28,7 +28,6 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Envelope
-import com.joaoeoneves.fintrack.domain.model.LEGACY_RECURRING_LINE_PREFIX
 import com.joaoeoneves.fintrack.domain.model.effectiveName
 import com.joaoeoneves.fintrack.domain.model.mergeCategories
 
@@ -153,7 +152,7 @@ fun planMigration(
     }
     val salaryProfile = profileToCopy(local, remote)
     val plannedIncome =
-        plannedIncomeToCopy(local.plannedIncome, remote, resolution, groups.idMap, keepManaged = salaryProfile != null)
+        plannedIncomeToCopy(local.plannedIncome, remote, keepManaged = salaryProfile != null)
     if (remote.plannedIncomeIds.isEmpty()) skipped += local.plannedIncome.size - plannedIncome.size
     // An envelope's funding line only survives when the guest's lines are copied under the same ids.
     val copiedLineIds = plannedIncome.mapTo(mutableSetOf()) { it.id }
@@ -205,19 +204,10 @@ private fun recurringToCopy(
 private fun plannedIncomeToCopy(
     local: List<LocalPlannedIncome>,
     remote: RemoteAccountSnapshot,
-    resolution: CategoryResolution,
-    groupIdMap: Map<String, String>,
     keepManaged: Boolean,
 ): List<LocalPlannedIncome> {
-    // The account's lines win, except lines migrated from a recurring income (`rinc_`) it does not have yet.
-    val candidates =
-        if (remote.plannedIncomeIds.isEmpty()) {
-            local
-        } else {
-            local.filter { it.id.startsWith(LEGACY_RECURRING_LINE_PREFIX) && it.id !in remote.plannedIncomeIds }
-        }
-    return candidates
-        .map { it.withEarmarkRemapped(resolution, groupIdMap) }
+    if (remote.plannedIncomeIds.isNotEmpty()) return emptyList()
+    return local
         // Managed lines without a profile to follow would be read-only forever: they become plain lines.
         .map { if (keepManaged) it else it.copy(managedKey = null) }
         .filter { isValid { validatePlannedIncome(it) } }
@@ -230,21 +220,6 @@ private fun profileToCopy(
 ): LocalSalaryProfile? {
     val profile = local.salaryProfile ?: return null
     return profile.takeIf { !remote.hasSalaryProfile && isValid { validateSalaryProfile(it) } }
-}
-
-// An earmark follows its category / group to the account's id; one that cannot be resolved is dropped, the line stays.
-private fun LocalPlannedIncome.withEarmarkRemapped(
-    resolution: CategoryResolution,
-    groupIdMap: Map<String, String>,
-): LocalPlannedIncome {
-    val id = earmarkId ?: return copy(earmarkType = null)
-    val target =
-        when (earmarkType) {
-            "CATEGORY" -> resolution.targetOf(id)
-            "GROUP" -> groupIdMap[id]
-            else -> null
-        }
-    return if (target == null) copy(earmarkType = null, earmarkId = null) else copy(earmarkId = target)
 }
 
 private fun LocalBudget.validated(known: Set<String>) = validateBudget(this, known)

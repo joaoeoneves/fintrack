@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.data.backup
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
-import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.validOrNull
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
@@ -90,7 +89,7 @@ private inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSu
  * against an empty snapshot it merges categories and envelopes of the same name and renumbers their order, which is
  * right for merging guest data but wrong for a replace. Here every id and order is kept; records that cannot be
  * written (invalid, or pointing at a category the backup lacks) are dropped and counted in `skipped`, and dangling
- * links (envelope of a category, earmark, funding line, goal category, automation cursor) are cleared instead of
+ * links (envelope of a category, funding line, goal category, automation cursor) are cleared instead of
  * dropping the record.
  */
 internal fun restoreMigrationPlanOf(
@@ -115,7 +114,6 @@ internal fun restoreMigrationPlanOf(
     val profile = local.salaryProfile?.takeIf { isValid { validateSalaryProfile(it) } }
     val lines =
         local.plannedIncome
-            .map { it.withEarmarkKept(known, groupIds) }
             // Managed lines without a profile to follow would be read-only forever: they become plain lines.
             .map { if (profile != null) it else it.copy(managedKey = null) }
             .filter { isValid { validatePlannedIncome(it) } }
@@ -179,19 +177,4 @@ private fun restoredCategories(
 private fun LocalBudget.isValid(known: Set<String>): Boolean {
     val budget = this
     return isValid { validateBudget(budget, known) }
-}
-
-// An earmark whose category / envelope is not in the backup is dropped, the line stays.
-private fun LocalPlannedIncome.withEarmarkKept(
-    knownCategories: Set<String>,
-    groupIds: Set<String>,
-): LocalPlannedIncome {
-    val id = earmarkId ?: return copy(earmarkType = null)
-    val resolvable =
-        when (earmarkType) {
-            "CATEGORY" -> id in knownCategories
-            "GROUP" -> id in groupIds
-            else -> false
-        }
-    return if (resolvable) this else copy(earmarkType = null, earmarkId = null)
 }

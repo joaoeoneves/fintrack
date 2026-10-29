@@ -10,7 +10,6 @@ import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.initialLineCursor
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
 import com.joaoeoneves.fintrack.domain.model.labelFor
-import com.joaoeoneves.fintrack.domain.model.legacyRecurringIncome
 import com.joaoeoneves.fintrack.domain.model.lineMonthsDue
 import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.paydayIncome
@@ -111,7 +110,6 @@ class RecordPayday
                 lines
                     .filter { it.isActiveIn(month) && it.asOf(month) != null }
                     .filter { line -> existing.none { it.id == paydayIncomeId(line.id, month) } }
-                    .filter { line -> legacyRecurringIncome(line, month, existing) == null }
                     .mapNotNull {
                         val amount = incomeMonth.amountIn(it, month)
                         val days = incomeMonth.workingDays(month)
@@ -165,26 +163,16 @@ class RecordPayday
             }
 
         /**
-         * Deletes the incomes recorded for [lines] in [month] (the payday ones and, for a line migrated from a
-         * recurring income, the old `rec_` ones), so the row counts as not received again. Lines without a recorded
-         * income are skipped silently; stops at the first failure.
+         * Deletes the incomes recorded for [lines] in [month], so the row counts as not received again. Lines
+         * without a recorded income are skipped silently; stops at the first failure.
          */
         suspend fun unreceive(
             lines: List<PlannedIncome>,
             month: YearMonth,
-            zone: ZoneId = ZoneId.systemDefault(),
         ): Result<Unit> {
-            val existing = existingIncomes(month, zone).orEmpty()
             for (line in lines) {
-                val ids =
-                    listOfNotNull(
-                        paydayIncomeId(line.id, month),
-                        legacyRecurringIncome(line, month, existing)?.id,
-                    )
-                for (id in ids) {
-                    val result = incomeRepository.deleteIncome(id)
-                    if (result.isFailure) return result
-                }
+                val result = incomeRepository.deleteIncome(paydayIncomeId(line.id, month))
+                if (result.isFailure) return result
             }
             return Result.success(Unit)
         }

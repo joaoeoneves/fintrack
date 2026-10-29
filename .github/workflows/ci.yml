@@ -115,26 +115,12 @@ jobs:
           path: ~/.m2/repository/org/robolectric
           key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
 
-      # The spreadsheet parity test reads a private fixture; it's skipped when the secret isn't there (forks).
-      - name: Write private parity fixture
-        env:
-          PARITY_FIXTURE_BASE64: ${{ secrets.PARITY_FIXTURE_BASE64 }}
-        run: |
-          if [ -n "$PARITY_FIXTURE_BASE64" ]; then
-            mkdir -p app/src/test/resources/private
-            echo "$PARITY_FIXTURE_BASE64" | base64 -d > app/src/test/resources/private/spreadsheet.json
-          fi
-
       - name: Unit tests
         run: ./gradlew testDebugUnitTest :core:model:test
 
       # Compile-only for the baseline profile generator: generating the profile needs a device.
       - name: Assemble debug APK
         run: ./gradlew assembleDebug :baselineprofile:assemble
-
-      - name: Remove private parity fixture
-        if: always()
-        run: rm -rf app/src/test/resources/private
 
       - name: Upload reports on failure
         if: failure()

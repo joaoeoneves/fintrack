@@ -88,14 +88,13 @@ service cloud.firestore {
 
     function isValidPlannedIncome(data) {
       return data.keys().hasOnly(['label', 'amountCents', 'order', 'basis', 'frequency', 'monthOfYear',
-          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'managedKey', 'autoRecord', 'payDay', 'startMonth', 'versions', 'updatedAt'])
+          'yearMonth', 'skipMonths', 'managedKey', 'autoRecord', 'payDay', 'startMonth', 'versions', 'updatedAt'])
         && data.keys().hasAll(['label', 'amountCents', 'order'])
         && data.label is string && data.label.size() > 0 && data.label.size() <= 50
         && isValidAmountCents(data.amountCents)
         && data.order is int
         && (!('basis' in data) || data.basis in ['FIXED', 'PER_WORKING_DAY'])
         && isValidIncomeFrequency(data)
-        && isValidEarmark(data)
         && (!('managedKey' in data) || data.managedKey.matches(managedKeyPattern()))
         && (!('autoRecord' in data) || data.autoRecord is bool)
         && (!('payDay' in data) || (data.payDay is int && data.payDay >= 1 && data.payDay <= 31))
@@ -130,18 +129,9 @@ service cloud.firestore {
           || (v.amountCents is int && v.amountCents >= 0 && v.amountCents <= 100000000000));
     }
 
-    // The keys of the income lines generated from the salary profile (absent on the user's own lines); the
-    // flex / profit_share / bonus alternatives are legacy, kept for one release so old lines can still be deleted.
+    // The keys of the income lines generated from the salary profile (absent on the user's own lines).
     function managedKeyPattern() {
-      return '^profile_(net_salary|duodecimos|meal|holiday|christmas|bonus|flex_q[1-4]|profit_share(_([1-9]|1[0-2]))?|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
-    }
-
-    // An earmark sets the line aside (legacy, remove in 3.1) for a category or group: both fields or neither, the id shape-checked
-    // only (a dangling target is treated as no earmark).
-    function isValidEarmark(data) {
-      return ('earmarkType' in data) == ('earmarkId' in data)
-        && (!('earmarkType' in data)
-          || (data.earmarkType in ['CATEGORY', 'GROUP'] && isCategoryIdShape(data.earmarkId)));
+      return '^profile_(net_salary|duodecimos|meal|holiday|christmas|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
     }
 
     // Absent frequency means MONTHLY. MONTHLY has neither month field, YEARLY a month 1..12, ONCE a
@@ -170,8 +160,7 @@ service cloud.firestore {
         && data.keys().hasAll(['type', 'name', 'amountCents', 'frequency', 'dayOfMonth', 'startDate', 'active'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
-        && ((data.type == 'EXPENSE' && isKnownCategory(userId, data.get('category', null)))
-          || (data.type == 'INCOME' && data.get('category', null) == null))
+        && data.type == 'EXPENSE' && isKnownCategory(userId, data.get('category', null))
         && data.dayOfMonth is int && data.dayOfMonth >= 1 && data.dayOfMonth <= 31
         && ((data.frequency == 'MONTHLY' && data.get('monthOfYear', null) == null)
           || (data.frequency == 'YEARLY' && data.get('monthOfYear', null) is int
@@ -236,20 +225,16 @@ service cloud.firestore {
     }
 
     // The automation settings are a single document (also holding the salary-shift choice): lineThrough maps a
-    // planned income line id to the last month
-    // (yyyy-MM) it recorded; the payday switch and its month are the legacy single switch, kept until 3.1.
+    // planned income line id to the last month (yyyy-MM) it recorded.
     match /users/{userId}/plan/automation {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidAutomation(request.resource.data);
     }
 
     function isValidAutomation(data) {
-      return data.keys().hasOnly(['paydayEnabled', 'paydayThrough', 'lineThrough', 'salaryPaysNextMonth', 'updatedAt'])
+      return data.keys().hasOnly(['lineThrough', 'salaryPaysNextMonth', 'updatedAt'])
         && (!('salaryPaysNextMonth' in data) || data.salaryPaysNextMonth is bool)
         && (!('lineThrough' in data) || (data.lineThrough is map && data.lineThrough.size() <= 64))
-        && (!('paydayEnabled' in data) || data.paydayEnabled is bool)
-        && (!('paydayThrough' in data) || data.paydayThrough == null
-          || (data.paydayThrough is string && data.paydayThrough.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')))
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
@@ -260,28 +245,19 @@ service cloud.firestore {
     function isValidSalaryProfile(data) {
       return data.keys().hasOnly(['inputMode', 'baseGrossCents', 'subsidySpreadPpm', 'irsBasePpm', 'irsSubsidiesPpm',
           'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
-          'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth', 'flexPpm',
-          'flexAnnualCents', 'flexFirstMonth', 'flexWithdrawalFeePpm', 'profitShareMultiplierPpm',
-          'profitShareMonth', 'profitShareMonths', 'bonusCents', 'bonusMonth', 'extras', 'updatedAt'])
+          'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth',
+          'extras', 'updatedAt'])
         && data.keys().hasAll(['inputMode'])
         && data.inputMode in ['GROSS', 'NET']
         && (!('subsidySpreadPpm' in data) || data.subsidySpreadPpm in [0, 500000, 1000000])
         && isOptionalInt(data, 'irsBasePpm', 0, 1000000) && isOptionalInt(data, 'irsSubsidiesPpm', 0, 1000000)
         && isOptionalInt(data, 'ssPpm', 0, 1000000) && isOptionalInt(data, 'irsJovemExemptPpm', 0, 1000000)
-        && isOptionalInt(data, 'flexPpm', 0, 1000000) && isOptionalInt(data, 'flexWithdrawalFeePpm', 0, 1000000)
-        && isOptionalInt(data, 'profitShareMultiplierPpm', 0, 10000000)
         && isOptionalInt(data, 'baseGrossCents', 1, 100000000000)
         && isOptionalInt(data, 'netMonthlyCents', 1, 100000000000)
         && isOptionalInt(data, 'netHolidayLumpCents', 1, 100000000000)
         && isOptionalInt(data, 'netChristmasLumpCents', 1, 100000000000)
         && isOptionalInt(data, 'mealRatePerDayCents', 1, 100000000000)
-        && isOptionalInt(data, 'flexAnnualCents', 1, 100000000000)
-        && isOptionalInt(data, 'bonusCents', 1, 100000000000)
         && isOptionalInt(data, 'holidaySubsidyMonth', 1, 12) && isOptionalInt(data, 'christmasSubsidyMonth', 1, 12)
-        && isOptionalInt(data, 'flexFirstMonth', 1, 12) && isOptionalInt(data, 'profitShareMonth', 1, 12)
-        && isOptionalInt(data, 'bonusMonth', 1, 12)
-        && (!('profitShareMonths' in data) || (data.profitShareMonths is list && data.profitShareMonths.size() <= 12
-            && data.profitShareMonths.hasOnly([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])))
         && (!('mealSkipMonths' in data) || (data.mealSkipMonths is list && data.mealSkipMonths.size() <= 12))
         && (!('extras' in data) || isValidExtras(data.extras))
         && (!('updatedAt' in data) || data.updatedAt is timestamp);

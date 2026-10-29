@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
-import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
@@ -250,11 +249,10 @@ class SalaryProfileViewModelTest {
         }
 
     @Test
-    fun save_ignoresEarmarkedYearlyOnceAndManagedLines() =
+    fun save_ignoresYearlyAndOnceLines() =
         runTest(dispatcher) {
             val vm =
                 saveWith(
-                    manual.copy(id = "e", earmark = Earmark.Group("g")),
                     manual.copy(id = "y", frequency = IncomeFrequency.YEARLY, monthOfYear = 5),
                     manual.copy(id = "o", frequency = IncomeFrequency.ONCE, yearMonth = YearMonth.of(2026, 12)),
                 )

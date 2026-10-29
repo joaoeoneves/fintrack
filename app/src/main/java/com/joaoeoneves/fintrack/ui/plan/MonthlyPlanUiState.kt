@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.plan
 
-import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
@@ -45,12 +44,11 @@ data class IncomeSchedule(
     val monthOfYear: Int? = null,
     val yearMonth: YearMonth? = null,
     val skipMonths: Set<Int> = emptySet(),
-    val earmark: Earmark? = null,
     val autoRecord: Boolean = false,
     val payDay: Int? = null,
 ) {
     /**
-     * Keeps only the fields that belong to [frequency] (only monthly lines can be earmarked); a missing month
+     * Keeps only the fields that belong to [frequency]; a missing month
      * falls back to [fallback]'s.
      */
     fun normalized(fallback: YearMonth): IncomeSchedule =
@@ -61,10 +59,9 @@ data class IncomeSchedule(
                     monthOfYear = monthOfYear ?: fallback.monthValue,
                     yearMonth = null,
                     skipMonths = emptySet(),
-                    earmark = null,
                 )
             IncomeFrequency.ONCE ->
-                copy(monthOfYear = null, yearMonth = yearMonth ?: fallback, skipMonths = emptySet(), earmark = null)
+                copy(monthOfYear = null, yearMonth = yearMonth ?: fallback, skipMonths = emptySet())
         }
 }
 

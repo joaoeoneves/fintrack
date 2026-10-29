@@ -240,7 +240,6 @@ class IncomeTabViewModel
                                     monthOfYear = line.monthOfYear,
                                     yearMonth = line.yearMonth,
                                     skipMonths = line.skipMonths,
-                                    earmark = line.earmark,
                                     autoRecord = line.autoRecord,
                                     payDay = line.payDay,
                                 ),
@@ -287,7 +286,7 @@ class IncomeTabViewModel
             viewModelScope.launch {
                 val byPayMonth = row.payingLinesByPayMonth(month.workingDays.month, month.incomeMonth)
                 for ((payMonth, lines) in byPayMonth) {
-                    val result = recordPayday.unreceive(lines, payMonth, clock.zone)
+                    val result = recordPayday.unreceive(lines, payMonth)
                     if (result.isFailure) {
                         result.onFailure { reportFailure(it) }
                         break

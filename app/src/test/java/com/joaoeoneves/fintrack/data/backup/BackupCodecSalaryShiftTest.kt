@@ -15,7 +15,6 @@ class BackupCodecSalaryShiftTest {
         val automation = BackupCodec.decode(text).success().let { it.document.automation }
 
         assertNull(automation?.salaryPaysNextMonth)
-        assertEquals(true, automation?.paydayEnabled)
     }
 
     @Test
