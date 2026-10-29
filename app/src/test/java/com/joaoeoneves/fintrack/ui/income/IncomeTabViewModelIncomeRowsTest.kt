@@ -40,7 +40,14 @@ class IncomeTabViewModelIncomeRowsTest : IncomeTabViewModelTestBase() {
             val rows = vm.content().incomeRows
 
             assertEquals(
-                listOf(SalaryComponent.SALARY, SalaryComponent.MEAL, SalaryComponent.SUBSIDIES, null),
+                listOf(
+                    SalaryComponent.SALARY,
+                    SalaryComponent.MEAL,
+                    SalaryComponent.SUBSIDIES,
+                    SalaryComponent.HOLIDAY,
+                    SalaryComponent.CHRISTMAS,
+                    null,
+                ),
                 rows.map { it.component },
             )
             assertEquals(managed.size + 1, incomeRepo.lines.size)

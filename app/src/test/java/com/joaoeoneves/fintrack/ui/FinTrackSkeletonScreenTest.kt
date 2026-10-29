@@ -10,10 +10,12 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.joaoeoneves.fintrack.MainActivity
 import com.joaoeoneves.fintrack.testutil.FirebaseTestApp
+import com.joaoeoneves.fintrack.testutil.TransactionGate
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -23,6 +25,7 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import javax.inject.Inject
 
 /**
  * Skeleton loading on real screens (guest mode, fake sign-in). The main clock is paused so the first frame of a
@@ -38,6 +41,9 @@ class FinTrackSkeletonScreenTest {
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(hiltRule).around(composeRule)
 
+    @Inject
+    lateinit var gate: TransactionGate
+
     private val context: Context = ApplicationProvider.getApplicationContext()
     private var scenario: ActivityScenario<MainActivity>? = null
 
@@ -48,6 +54,7 @@ class FinTrackSkeletonScreenTest {
     fun setUp() {
         FirebaseTestApp.ensureInitialized(context)
         hiltRule.inject()
+        gate.hold = null
         scenario = ActivityScenario.launch(MainActivity::class.java)
     }
 
@@ -84,6 +91,7 @@ class FinTrackSkeletonScreenTest {
             if (count(skeleton) > 0) return
             composeRule.mainClock.advanceTimeByFrame()
         }
+        throw AssertionError("No skeleton appeared within $MAX_FRAMES frames")
     }
 
     @Test
@@ -100,12 +108,16 @@ class FinTrackSkeletonScreenTest {
 
     @Test
     fun dashboard_showsSkeletonUntilLoaded() {
+        // Hold the dashboard's data so Loading cannot be skipped by a fast guest load.
+        val release = CompletableDeferred<Unit>()
+        gate.hold = release
         awaitTag(TestTags.CONTINUE_AS_GUEST)
         composeRule.mainClock.autoAdvance = false
         composeRule.onNode(hasTestTag(TestTags.CONTINUE_AS_GUEST)).performClick()
         stepUntilSkeleton()
         assertEquals(1, count(skeleton))
 
+        release.complete(Unit)
         composeRule.mainClock.autoAdvance = true
         awaitNoSkeleton()
     }
