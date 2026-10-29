@@ -67,24 +67,13 @@ class LeftoverTest {
     }
 
     @Test
-    fun endOfMonthSalary_countsInTheFundingMonth() {
+    fun endOfMonthSalary_countsInItsOwnMonthByDate() {
         val zone = ZoneOffset.UTC
-        val salary = PlannedIncome("sal", "Salário líquido", 100_000L, 0, managedKey = MANAGED_NET_SALARY)
-        val pay =
-            testIncome("pay_sal_202603", 100_000L, LocalDate.of(2026, 3, 31).atTime(12, 0).toInstant(zone))
+        val pay = testIncome("pay_sal_202603", 100_000L, LocalDate.of(2026, 3, 31).atTime(12, 0).toInstant(zone))
         val months = listOf(ym(2026, 3), ym(2026, 4))
-        val monthly =
-            monthlyTotalsOf(
-                months,
-                emptyList(),
-                listOf(pay),
-                emptyList(),
-                listOf(salary),
-                IncomeFunding(true) { 20 },
-                zone,
-            )
+        val monthly = monthlyTotalsOf(months, emptyList(), listOf(pay), emptyList(), zone)
 
-        assertEquals(Leftover(0L, 0L, 1), leftoverOf(monthly, ym(2026, 3), today))
+        assertEquals(Leftover(100_000L, 100_000L, 1), leftoverOf(monthly, ym(2026, 3), today))
         assertEquals(Leftover(100_000L, 50_000L, 2), leftoverOf(monthly, ym(2026, 4), today))
     }
 
