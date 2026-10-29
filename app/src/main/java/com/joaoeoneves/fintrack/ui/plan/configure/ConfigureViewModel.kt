@@ -9,12 +9,12 @@ import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.billsOf
+import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.isEnded
+import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
 import com.joaoeoneves.fintrack.domain.model.salaryShiftEnabled
-import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
-import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -50,8 +50,8 @@ class ConfigureViewModel
         /** The "salary pays the next month" switch: `null` (hidden) without a salary profile, else its state. */
         val salaryPaysNextMonth: StateFlow<Boolean?> =
             combine(planSettings.observeSalaryPaysNextMonth(), repositories.plannedIncome.observePlannedIncome()) {
-                    pref,
-                    lines,
+                pref,
+                lines,
                 ->
                 if (lines.any { it.isManaged }) salaryShiftEnabled(pref, lines) else null
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)

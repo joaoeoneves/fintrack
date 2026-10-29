@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
+import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
@@ -120,19 +121,26 @@ class UpcomingRecurringViewModel
             val content = uiState.value as? UpcomingRecurringUiState.Content ?: return
             val expected = content.expectedIncome ?: return
             viewModelScope.launch {
-                val request =
-                    ReceiveRequest(
-                        lines = row.lines,
-                        month = expected.month,
-                        workingDays = expected.workingDays,
-                        date = date,
-                        today = content.today,
-                        zone = clock.zone,
-                        amountOverrideCents = amountCents,
-                    )
-                recordPayday.receive(request).onFailure {
-                    Log.w(TAG, "Failed to record the received income", it)
-                    errors.send(UiText.StringResource(R.string.error_plan_save_failed))
+                // The row may fund a later plan month with what is paid this month (or last): each part is
+                // recorded under the month it is paid in.
+                val planMonth = expected.entries.firstOrNull { it.row == row }?.planMonth ?: expected.month
+                for ((payMonth, lines) in row.payingLinesByPayMonth(planMonth, expected.funding)) {
+                    val request =
+                        ReceiveRequest(
+                            lines = lines,
+                            month = payMonth,
+                            workingDays = expected.funding.workingDays(payMonth),
+                            date = date,
+                            today = content.today,
+                            zone = clock.zone,
+                            amountOverrideCents = amountCents,
+                        )
+                    val failure = recordPayday.receive(request).exceptionOrNull()
+                    if (failure != null) {
+                        Log.w(TAG, "Failed to record the received income", failure)
+                        errors.send(UiText.StringResource(R.string.error_plan_save_failed))
+                        break
+                    }
                 }
             }
         }

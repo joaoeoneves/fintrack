@@ -136,6 +136,7 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
                         onOpenEnvelope = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenCategories = { navController.navigate(Categories) },
+                        onOpenSavings = { navController.navigateToTab(TopLevelTab.SAVINGS) },
                     ),
             )
         }

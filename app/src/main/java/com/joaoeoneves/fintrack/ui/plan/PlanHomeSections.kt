@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,8 +23,11 @@ import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.ui.common.FundedEnvelopeNote
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
@@ -33,57 +37,90 @@ import com.joaoeoneves.fintrack.ui.designsystem.rememberAnimatedCents
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.time.YearMonth
 
-/** The five figures of the selected month as a two-column grid of tiles; "Free" is red when negative. */
+/** Where the rows of the month summary lead; a `null` target leaves the row inert. */
+class MonthSummaryActions(
+    val onOpenIncome: () -> Unit,
+    val onOpenRecurring: () -> Unit,
+    val onOpenEnvelopes: () -> Unit,
+    val onOpenSavings: () -> Unit,
+)
+
+/**
+ * The month as a subtraction that adds up: what was carried over from [previousMonth] (when there is something),
+ * plus the income, minus recurring, envelopes and savings, equals what is available to spend. The same
+ * [MonthFigures] feed Home and the plan, so a label is never shown with two numbers. Each row opens its section;
+ * [extraIncomeCents] (yearly and one-off income not yet received) is noted under the income.
+ */
 @Composable
-fun PlanTilesRow(
-    tiles: PlanTiles,
+fun MonthSummarySection(
+    figures: MonthFigures,
+    previousMonth: YearMonth,
+    actions: MonthSummaryActions,
     modifier: Modifier = Modifier,
+    extraIncomeCents: Long = 0L,
 ) {
-    val freeLabel = stringResource(R.string.plan_tile_free)
-    val items =
-        listOf(
-            stringResource(R.string.plan_tile_income) to tiles.incomeCents,
-            stringResource(R.string.plan_tile_bills) to tiles.billsCents,
-            stringResource(R.string.plan_tile_saving) to tiles.savingCents,
-            stringResource(R.string.plan_tile_envelopes) to tiles.envelopesCents,
-            freeLabel to tiles.freeCents,
-        )
-    Column(
-        modifier = modifier.fillMaxWidth().padding(top = Dimens.Space16),
-        verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
-    ) {
-        items.chunked(2).forEach { pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.Space16)) {
-                pair.forEach { (label, cents) ->
-                    PlanTile(
-                        label = label,
-                        cents = cents,
-                        negative = label == freeLabel && cents < 0L,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                if (pair.size == 1) Column(modifier = Modifier.weight(1f)) {}
-            }
+    val month = formatMonthLabel(previousMonth, currentLocale(), titlecase = false)
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (figures.carryCents != 0L) {
+            SummaryRow(stringResource(R.string.plan_summary_carry, month), figures.carryCents, signed = true)
+            Hairline()
         }
+        SummaryRow(
+            label = stringResource(R.string.plan_tile_income),
+            cents = figures.incomeCents,
+            onClick = actions.onOpenIncome,
+            note =
+                stringResource(R.string.plan_summary_extras_note, formatAmountCents(extraIncomeCents))
+                    .takeIf { extraIncomeCents > 0L },
+        )
+        Hairline()
+        SummaryRow(stringResource(R.string.plan_tile_bills), -figures.recurringCents, actions.onOpenRecurring, signed = true)
+        Hairline()
+        SummaryRow(stringResource(R.string.plan_tile_envelopes), -figures.envelopesCents, actions.onOpenEnvelopes, signed = true)
+        Hairline()
+        SummaryRow(stringResource(R.string.plan_tile_saving), -figures.savingCents, actions.onOpenSavings, signed = true)
+        Hairline()
+        val available = figures.availableCents
+        SummaryRow(
+            label = stringResource(R.string.plan_tile_free),
+            cents = available,
+            emphasized = true,
+            negative = available < 0L,
+        )
     }
 }
 
+@Suppress("LongParameterList") // one independent display option each
 @Composable
-private fun PlanTile(
+private fun SummaryRow(
     label: String,
     cents: Long,
-    negative: Boolean,
-    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    signed: Boolean = false,
+    emphasized: Boolean = false,
+    negative: Boolean = false,
+    note: String? = null,
 ) {
-    Column(modifier = modifier) {
+    val base = Modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight)
+    Row(
+        modifier = (if (onClick != null) base.clickable(role = Role.Button, onClick = onClick) else base),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+            )
+            if (note != null) {
+                Text(text = note, style = MaterialTheme.typography.bodySmall, color = FinTrackTheme.colors.textSecondary)
+            }
+        }
+        val prefix = if (signed && cents > 0L) "+" else ""
         Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = FinTrackTheme.colors.textSecondary,
-        )
-        Text(
-            text = formatAmountCents(cents),
+            text = prefix + formatAmountCents(cents),
             style = Amount,
             color = if (negative) FinTrackTheme.colors.negative else MaterialTheme.colorScheme.onSurface,
         )
@@ -114,10 +151,8 @@ fun EnvelopeCardsSection(
             )
         }
         cards.forEach { card ->
-            EnvelopeCard(
-                card = card,
-                onClick = { card.id?.let(actions.onOpenEnvelope) ?: actions.onOpenCategories() },
-            )
+            // The "No envelope" card has nothing to open: it only lists what no envelope covers yet.
+            EnvelopeCard(card = card, onClick = card.id?.let { id -> { actions.onOpenEnvelope(id) } })
             Hairline()
         }
     }
@@ -126,19 +161,24 @@ fun EnvelopeCardsSection(
 @Composable
 private fun EnvelopeCard(
     card: EnvelopeCardUi,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .pressScale(interactionSource)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = LocalIndication.current,
-                    role = Role.Button,
-                    onClick = onClick,
+                .then(
+                    if (onClick == null) {
+                        Modifier
+                    } else {
+                        Modifier.pressScale(interactionSource).clickable(
+                            interactionSource = interactionSource,
+                            indication = LocalIndication.current,
+                            role = Role.Button,
+                            onClick = onClick,
+                        )
+                    },
                 ).padding(vertical = Dimens.Space12),
     ) {
         Row(

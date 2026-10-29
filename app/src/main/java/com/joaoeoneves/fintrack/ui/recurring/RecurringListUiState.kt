@@ -5,7 +5,6 @@ import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.LocalDate
 
-
 /**
  * One list row: the [item], its resolved [category] (expenses only), the next pending
  * occurrence ([nextDue], `null` when there is none) and whether it has [isEnded].

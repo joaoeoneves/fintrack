@@ -21,10 +21,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
-import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.payDateIn
+import com.joaoeoneves.fintrack.domain.model.payingLines
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
@@ -85,6 +86,8 @@ data class ExpectedIncomeModel(
     val receipts: IncomeReceipts,
     /** Keys of the manual rows that look like a repeat of the salary the profile already generates. */
     val duplicateKeys: Set<String> = emptySet(),
+    /** How income is attributed to months: the paying month of a row can be the one before the viewed month. */
+    val funding: IncomeFunding = IncomeFunding.unshifted(workingDays.month, workingDays.days),
 )
 
 /**
@@ -185,7 +188,8 @@ private fun IncomeRowItem(
     val feedback = LocalReceiveFeedback.current
     val haptics = rememberFinTrackHaptics()
     val title = row.displayLabel()
-    val receiveDate = minOf(row.payDateIn(model.workingDays.month), receipts.today)
+    // Dated on the row's own pay day (last month's for a salary that pays the next month), never after today.
+    val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.funding), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val changeLabel = stringResource(R.string.action_change)
     val showCheck = paysThisMonth && (received || receipts.canReceive)
@@ -242,13 +246,13 @@ private fun receiveChange(
     actions: ExpectedIncomeActions,
     date: LocalDate,
 ): ReceiveChange {
-    val (month, days) = model.workingDays.let { it.month to it.days }
-    val paying = row.lines.filter { it.amountIn(month, days) > 0L }
+    val month = model.workingDays.month
+    val paying = row.payingLines(month, model.funding)
     return ReceiveChange(
         title = title,
         today = model.receipts.today,
         date = date,
-        editableAmountCents = paying.singleOrNull()?.amountIn(month, days),
+        editableAmountCents = paying.singleOrNull()?.let { model.funding.amountIn(it, month) },
         onConfirm = { date, cents -> actions.onReceive(row, date, cents) },
     )
 }

@@ -157,7 +157,21 @@ private fun MonthlyPlanContent(
                 monthOnly = true,
             )
         }
-        item { PlanTilesRow(tiles = state.tiles, modifier = cardModifier) }
+        item {
+            MonthSummarySection(
+                figures = state.figures,
+                previousMonth = state.workingDays.month.minusMonths(1),
+                extraIncomeCents = state.extraIncomeCents,
+                actions =
+                    MonthSummaryActions(
+                        onOpenIncome = { navigation.onOpenIncome(state.period) },
+                        onOpenRecurring = navigation.onOpenRecurring,
+                        onOpenEnvelopes = navigation.onOpenEnvelopes,
+                        onOpenSavings = navigation.onOpenSavings,
+                    ),
+                modifier = cardModifier.padding(top = Dimens.Space16),
+            )
+        }
         item {
             EnvelopeCardsSection(
                 cards = state.envelopeCards,

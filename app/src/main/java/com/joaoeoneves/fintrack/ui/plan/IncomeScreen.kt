@@ -103,6 +103,7 @@ private fun IncomeContent(
                         workingDays = state.workingDays,
                         receipts = state.receipts,
                         duplicateKeys = state.duplicateKeys,
+                        funding = state.funding,
                     ),
                 actions =
                     ExpectedIncomeActions(
