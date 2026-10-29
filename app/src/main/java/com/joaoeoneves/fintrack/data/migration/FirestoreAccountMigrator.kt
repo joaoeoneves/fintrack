@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.migration
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Source
@@ -65,12 +66,14 @@ class FirestoreAccountMigrator
                 serverGet { userDoc(uid).collection("categoryGroups").get(Source.SERVER).await() }
                     .documents
                     .mapNotNull { it.toEnvelopeOrNull() }
+            val lines = serverGet { userDoc(uid).collection("plannedIncome").get(Source.SERVER).await() }.documents
             return RemoteAccountSnapshot(
                 expenseIds = ids("expenses"),
                 incomeIds = ids("income"),
                 budgetCategoryIds = ids("budgets"),
                 plannedIncomeIds = ids("plannedIncome"),
-                plannedIncomeLabels = plannedIncomeLabels(uid),
+                plannedIncomeLabels = lines.mapNotNullTo(mutableSetOf()) { it.getString("label") },
+                plannedIncomeIdsByLabel = idsByLabel(lines),
                 recurringIds = ids("recurring"),
                 goalIds = ids("goals"),
                 monthSettingsIds = ids("monthSettings"),
@@ -81,10 +84,11 @@ class FirestoreAccountMigrator
             )
         }
 
-        private suspend fun plannedIncomeLabels(uid: String): Set<String> =
-            serverGet { userDoc(uid).collection("plannedIncome").get(Source.SERVER).await() }
-                .documents
-                .mapNotNullTo(mutableSetOf()) { it.getString("label") }
+        private fun idsByLabel(lines: List<DocumentSnapshot>): Map<String, String> {
+            val byLabel = LinkedHashMap<String, String>()
+            lines.forEach { doc -> doc.getString("label")?.let { byLabel.putIfAbsent(it.labelKey(), doc.id) } }
+            return byLabel
+        }
 
         private suspend fun hasSalaryProfile(uid: String): Boolean =
             serverGet { salaryProfileDoc(firestore, uid).get(Source.SERVER).await() }.exists()

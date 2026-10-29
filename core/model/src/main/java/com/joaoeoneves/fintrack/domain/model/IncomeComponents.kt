@@ -8,7 +8,7 @@ enum class SalaryComponent { SALARY, MEAL, SUBSIDIES, EXTRA }
 /** The component of a managed line (the net salary, meal, subsidies, ...); `null` for a manual line. */
 val PlannedIncome.salaryComponent: SalaryComponent?
     get() =
-        when (val key = managedKey) {
+        when (val key = managedKey?.let(::baseManagedKey)) {
             null -> null
             MANAGED_NET_SALARY -> SalaryComponent.SALARY
             MANAGED_MEAL -> SalaryComponent.MEAL

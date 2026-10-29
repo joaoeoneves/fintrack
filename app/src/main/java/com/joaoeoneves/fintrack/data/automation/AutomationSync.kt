@@ -32,6 +32,7 @@ private const val TAG = "AutomationSync"
 private const val BACKOFF_BASE_MS = 5_000L
 private const val BACKOFF_MAX_SHIFT = 7
 private const val BACKOFF_MAX_MS = 600_000L
+private const val MAX_TRACKED_ATTEMPTS = 64
 
 /** The repositories the sync observes besides the session, bundled for detekt's LongParameterList. */
 class PaydayData
@@ -89,7 +90,8 @@ class AutomationSync
             fun paydayKey() =
                 listOf(
                     settings.lineRecordedThrough,
-                    lines.map { listOf(it.id, it.amountCents, it.autoRecord, it.payDay, it.frequency, it.monthOfYear) },
+                    // The whole line: anything that moves a pay date or an amount must re-run the pass.
+                    lines,
                 )
         }
 
@@ -119,9 +121,11 @@ class AutomationSync
                         val today = LocalDate.now(clock)
                         val attempt = Attempt(current, today, inputs.recurringKey(), inputs.paydayKey())
                         if (attempt == lastAttempted) return@collectLatest
-                        lastAttempted = attempt
                         backOffIfRepeated(attempt)
+                        // Marked only once the pass ran to the end: a pass cancelled by a newer emission (or by the
+                        // backoff) must not suppress the next identical one.
                         runSteps(today)
+                        markAttempted(attempt)
                     }
             }
         }
@@ -129,8 +133,15 @@ class AutomationSync
         // A situation that comes back after being attempted means the server rejected the write and the cursor
         // rolled back: wait longer each time (cancelled by any new emission) instead of looping on the rejection.
         private suspend fun backOffIfRepeated(attempt: Attempt) {
-            val repeats = attemptCounts.merge(attempt, 1, Int::plus)!! - 1
+            val repeats = attemptCounts[attempt] ?: 0
             if (repeats > 0) delay(minOf(BACKOFF_BASE_MS shl minOf(repeats, BACKOFF_MAX_SHIFT), BACKOFF_MAX_MS))
+        }
+
+        private fun markAttempted(attempt: Attempt) {
+            lastAttempted = attempt
+            // Bounded: a long-lived process sees many situations; forgetting old ones only drops their backoff.
+            if (attemptCounts.size >= MAX_TRACKED_ATTEMPTS && attempt !in attemptCounts) attemptCounts.clear()
+            attemptCounts[attempt] = minOf((attemptCounts[attempt] ?: 0) + 1, BACKOFF_MAX_SHIFT)
         }
 
         /** Re-checks what is due; called when the app returns to the foreground (the day may have changed). */

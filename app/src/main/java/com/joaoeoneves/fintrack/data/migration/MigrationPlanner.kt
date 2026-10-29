@@ -19,7 +19,6 @@ import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
 import com.joaoeoneves.fintrack.data.local.validateExpense
-import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validateMonthSettings
 import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
 import com.joaoeoneves.fintrack.data.local.validateRecurring
@@ -52,6 +51,8 @@ data class RemoteAccountSnapshot(
     val hasAutomation: Boolean = false,
     /** Labels of the account's income lines; a guest line with the same normalised label is not copied. */
     val plannedIncomeLabels: Set<String> = emptySet(),
+    /** The account's income line id by normalised label (see [labelKey]): where a label-matched guest line goes. */
+    val plannedIncomeIdsByLabel: Map<String, String> = emptyMap(),
 )
 
 /**
@@ -147,10 +148,8 @@ fun planMigration(
         val mapped = resolution.targetOf(expense.categoryId)?.let { expense.copy(categoryId = it) }
         if (mapped != null && isValid { validateExpense(mapped, known) }) expenses += mapped else skipped++
     }
-    val income = mutableListOf<LocalIncome>()
-    for (item in local.income.filter { it.id !in remote.incomeIds }) {
-        if (isValid { validateIncome(item) }) income += item else skipped++
-    }
+    val (income, incomeSkipped) = incomeToCopy(local, remote)
+    skipped += incomeSkipped
     val salaryProfile = profileToCopy(local, remote)
     val plannedIncome =
         plannedIncomeToCopy(local.plannedIncome, remote, keepManaged = salaryProfile != null)
@@ -226,7 +225,7 @@ private fun profileToCopy(
 
 private fun LocalBudget.validated(known: Set<String>) = validateBudget(this, known)
 
-private inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSuccess
+internal inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSuccess
 
 private class CategoryResolver(
     private val remote: RemoteAccountSnapshot,

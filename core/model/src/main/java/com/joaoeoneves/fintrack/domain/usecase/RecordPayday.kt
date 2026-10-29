@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.asOf
 import com.joaoeoneves.fintrack.domain.model.attributeIncomes
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
+import com.joaoeoneves.fintrack.domain.model.filterOwnedInMonth
 import com.joaoeoneves.fintrack.domain.model.initialLineCursor
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
 import com.joaoeoneves.fintrack.domain.model.labelFor
@@ -153,14 +154,20 @@ class RecordPayday
             zone: ZoneId,
         ): List<Income>? =
             runCatching {
-                val start = month.atDay(1).atStartOfDay(zone).toInstant()
-                val end =
+                // A month wider on each side, then only what [month] owns (see ownerMonth).
+                val start =
                     month
-                        .plusMonths(1)
+                        .minusMonths(1)
                         .atDay(1)
                         .atStartOfDay(zone)
                         .toInstant()
-                incomeRepository.observeIncome(start, end).first()
+                val end =
+                    month
+                        .plusMonths(2)
+                        .atDay(1)
+                        .atStartOfDay(zone)
+                        .toInstant()
+                filterOwnedInMonth(incomeRepository.observeIncome(start, end).first(), month, zone)
             }.getOrNull()
 
         /**

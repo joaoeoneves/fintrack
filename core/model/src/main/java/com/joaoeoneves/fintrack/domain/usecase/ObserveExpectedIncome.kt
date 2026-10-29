@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.ExpectedIncomeEntry
 import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.PAYDAY_LEAD_DAYS
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
+import com.joaoeoneves.fintrack.domain.model.filterOwnedInMonth
 import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
 import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.paydayOf
@@ -37,15 +38,17 @@ class ObserveExpectedIncome
             zone: ZoneId,
         ): Flow<ExpectedIncome> {
             val month = YearMonth.from(today)
+            // Receipts are looked up across a month wider on each side: a payday income dated outside its own
+            // month (an early pay date, a late tick) still counts for the month its id names.
             val start =
                 month
-                    .minusMonths(1)
+                    .minusMonths(2)
                     .atDay(1)
                     .atStartOfDay(zone)
                     .toInstant()
             val end =
                 month
-                    .plusMonths(1)
+                    .plusMonths(2)
                     .atDay(1)
                     .atStartOfDay(zone)
                     .toInstant()
@@ -57,9 +60,10 @@ class ObserveExpectedIncome
                 val incomeMonth = IncomeMonth.of(monthSettings)
                 val entries =
                     listOf(month.minusMonths(1), month).flatMap { payMonth ->
+                        val owned = filterOwnedInMonth(incomes, payMonth, zone)
                         incomeRowsIn(lines, payMonth, incomeMonth)
                             .filter { row ->
-                                row.cents > 0L && row.receivedIncomes(payMonth, incomeMonth, incomes, lines) == null
+                                row.cents > 0L && row.receivedIncomes(payMonth, incomeMonth, owned, lines) == null
                             }.map { ExpectedIncomeEntry(it, payMonth, it.payDateIn(payMonth, incomeMonth)) }
                             .filter { today >= it.payDate.minusDays(PAYDAY_LEAD_DAYS) }
                     }

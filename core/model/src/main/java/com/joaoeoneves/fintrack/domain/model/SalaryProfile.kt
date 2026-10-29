@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.domain.model
 
+import java.time.YearMonth
+
 /** Whether the salary profile is typed as a gross salary with tax rates or as the net amounts received. */
 enum class SalaryInputMode { GROSS, NET }
 
@@ -23,6 +25,15 @@ val SUBSIDY_SPREADS_PPM: List<Int> = listOf(SPREAD_NONE_PPM, SPREAD_HALF_PPM, SP
 /** Default social-security rate (11%). */
 const val DEFAULT_SS_PPM = 110_000
 
+/** Vacation days a year assumed when the profile gives none. */
+const val DEFAULT_VACATION_DAYS = 22
+
+/** Highest valid [SalaryProfile.vacationDaysPerYear]. */
+const val MAX_VACATION_DAYS = 60
+
+/** The vacation days a year to plan with: the profile's own or [DEFAULT_VACATION_DAYS]. */
+val SalaryProfile?.vacationDays: Int get() = this?.vacationDaysPerYear ?: DEFAULT_VACATION_DAYS
+
 const val DEFAULT_HOLIDAY_SUBSIDY_MONTH = 6
 const val DEFAULT_CHRISTMAS_SUBSIDY_MONTH = 12
 
@@ -36,8 +47,25 @@ const val MANAGED_DUODECIMOS = "profile_duodecimos"
 private val FIXED_MANAGED_KEYS =
     setOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS)
 
-/** Whether [key] is a `managedKey` the app can generate: a fixed one or an extra's per-month key. */
-fun isValidManagedKey(key: String): Boolean = key in FIXED_MANAGED_KEYS || parseManagedExtraKey(key) != null
+// A subsidy line whose schedule (month of year) changed: `<fixed key>_<yyyyMM it starts>`, see scheduledManagedKey.
+private val SCHEDULED_KEY_PATTERN = Regex("^(${MANAGED_HOLIDAY}|${MANAGED_CHRISTMAS})_(\\d{4})(0[1-9]|1[0-2])$")
+
+/**
+ * The key of the line that carries a subsidy's new schedule from [from]: the old line keeps its own id (and the
+ * incomes recorded under it) and is ended, so earlier months keep the old schedule. [baseKey] is [MANAGED_HOLIDAY]
+ * or [MANAGED_CHRISTMAS].
+ */
+fun scheduledManagedKey(
+    baseKey: String,
+    from: YearMonth,
+): String = "${baseKey}_%04d%02d".format(from.year, from.monthValue)
+
+/** The fixed key a [key] stands for: a scheduled subsidy key maps to its holiday/Christmas key, any other is itself. */
+fun baseManagedKey(key: String): String = SCHEDULED_KEY_PATTERN.matchEntire(key)?.groupValues?.get(1) ?: key
+
+/** Whether [key] is a `managedKey` the app can generate: a fixed one, a scheduled subsidy or an extra's key. */
+fun isValidManagedKey(key: String): Boolean =
+    key in FIXED_MANAGED_KEYS || SCHEDULED_KEY_PATTERN.matches(key) || parseManagedExtraKey(key) != null
 
 /** Default (English) labels of the generated lines; the UI passes localized ones. Existing lines keep theirs. */
 data class SalaryLineLabels(
@@ -72,6 +100,8 @@ data class SalaryProfile(
     val netHolidayLumpCents: Long? = null,
     val netChristmasLumpCents: Long? = null,
     val mealRatePerDayCents: Long? = null,
+    /** Vacation days a year (0..[MAX_VACATION_DAYS]); `null` means [DEFAULT_VACATION_DAYS]. */
+    val vacationDaysPerYear: Int? = null,
     /** Legacy: no longer written nor used to generate lines (the meal allowance is paid every month). */
     val mealSkipMonths: Set<Int> = emptySet(),
     val holidaySubsidyMonth: Int = DEFAULT_HOLIDAY_SUBSIDY_MONTH,

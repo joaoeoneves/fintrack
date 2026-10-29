@@ -83,7 +83,7 @@ fun incomeHistoryOf(
 ): List<IncomeSourceHistory> {
     val received =
         income
-            .map { DatedIncome(it, incomeSourceOf(it, lines), YearMonth.from(it.date.atZone(zone))) }
+            .map { DatedIncome(it, incomeSourceOf(it, lines), it.ownerMonth(zone)) }
             .filter { it.month in months }
     val rowsByMonth = months.associateWith { incomeRowsIn(lines, it, incomeMonth) }
     val lineKeys =

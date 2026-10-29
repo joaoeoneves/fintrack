@@ -1,14 +1,18 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.data.automationSettingsDoc
-import com.joaoeoneves.fintrack.data.awaitServer
+import com.joaoeoneves.fintrack.data.awaitWithin
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
+import com.joaoeoneves.fintrack.domain.model.Session
+import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 /** The server of the signed-in account could not be read, so an export would not be the real data. */
 class ServerUnreachableException(
@@ -22,26 +26,35 @@ interface ServerSync {
 }
 
 /**
- * Reads every account collection and both singleton documents with [Source.SERVER]; a successful server read
- * updates Firestore's local cache, so the listeners read right after see the server's data. An unreachable server
- * (offline, timeout, permission) fails with [ServerUnreachableException].
+ * Reads every account collection and both singleton documents with [Source.SERVER], all at once under one overall
+ * timeout; a successful server read updates Firestore's local cache, so the listeners read right after see the
+ * server's data. An unreachable server (offline, timeout, permission) fails with [ServerUnreachableException]. A
+ * guest (by the app session, not the auth user) never touches the server.
  */
 class FirestoreServerSync
     @Inject
     constructor(
         private val firestore: FirebaseFirestore,
         private val firebaseAuth: FirebaseAuth,
+        private val sessionRepository: SessionRepository,
     ) : ServerSync {
         override suspend fun refresh(): Result<Unit> {
-            val uid = firebaseAuth.currentUser?.uid ?: return Result.success(Unit)
+            val uid =
+                firebaseAuth.currentUser?.uid?.takeIf { sessionRepository.session.value is Session.SignedIn }
+                    ?: return Result.success(Unit)
             return runCatchingCancellable {
                 val user = firestore.collection("users").document(uid)
-                RESTORE_PRUNE_ORDER.forEach { collection ->
-                    awaitServer { user.collection(collection).get(Source.SERVER).await() }
+                val reads: List<Task<*>> =
+                    RESTORE_PRUNE_ORDER.map { user.collection(it).get(Source.SERVER) } +
+                        salaryProfileDoc(firestore, uid).get(Source.SERVER) +
+                        automationSettingsDoc(firestore, uid).get(Source.SERVER)
+                awaitWithin(OVERALL_TIMEOUT) {
+                    reads.map { it.await() }
+                    Unit
                 }
-                awaitServer { salaryProfileDoc(firestore, uid).get(Source.SERVER).await() }
-                awaitServer { automationSettingsDoc(firestore, uid).get(Source.SERVER).await() }
                 Unit
             }.recoverCatching { throw ServerUnreachableException(it) }
         }
     }
+
+private val OVERALL_TIMEOUT = 45.seconds
