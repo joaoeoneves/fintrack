@@ -85,7 +85,6 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
                         onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
-                        onOpenPlan = { period -> navController.navigateToTabWith(PlanHome(period.encode())) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
                     ),
@@ -98,9 +97,8 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
 private fun routeForStartStep(step: StartStep): Any =
     when (step) {
         StartStep.SALARY -> SalarySetup
-        StartStep.ENVELOPES -> EditEnvelope()
         StartStep.BILLS -> AddEditRecurring()
-        StartStep.SAVINGS_PLAN -> EditSavingsPlan()
+        // TODO(5.0 wiring): PAYDAY leads to the Income (Rendimentos) tab once P3's route exists.
         StartStep.PAYDAY -> PlanIncome()
         StartStep.FIRST_EXPENSE -> AddEditExpense()
     }

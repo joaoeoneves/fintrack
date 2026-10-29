@@ -1,10 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.model.InstantRange
-import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -14,46 +11,51 @@ import java.time.YearMonth
 typealias CategoryTotal = com.joaoeoneves.fintrack.domain.model.CategoryTotal
 typealias CategoryBudget = com.joaoeoneves.fintrack.domain.model.CategoryBudget
 
+/**
+ * What was put into investments: [monthCents] in the viewed month (`null` when a whole year is shown) and [yearCents]
+ * in [year] up to the viewed month.
+ */
+data class InvestedFigure(
+    val monthCents: Long?,
+    val yearCents: Long,
+    val year: Int,
+)
+
+/** The average left over per closed month of the year up to [upTo]. */
+data class LeftoverFigure(
+    val averageCents: Long,
+    val upTo: YearMonth,
+)
+
 sealed interface DashboardUiState {
     data object Loading : DashboardUiState
 
     /**
-     * @property budgetMonth the calendar month the plan is evaluated against: the selected month.
-     * @property income every income entry in the period; with [expenses] and [range] it feeds the balance chart.
-     * @property range the instant range [period] covers.
-     * @property outflowCents everything that left in the period, i.e. [spendingCents] + [savedCents].
-     * @property netCents income minus spending (saving is not subtracted).
-     * @property plan the monthly plan evaluated for [budgetMonth].
+     * Home shows income and spending separately.
+     *
+     * @property budgetMonth the month shown (the last month of the year for a year period).
+     * @property incomeCents income dated in the period, by its date.
+     * @property expectedIncomeCents what the income lines expect in the period, `null` without lines.
+     * @property spendingCents net outflow of SPENDING categories (investments are left out).
+     * @property spendingVsAveragePercent signed change against the average of the earlier months, `null` for a year
+     *   or without earlier data.
+     * @property invested the "Invested" row, `null` when nothing was ever invested.
+     * @property leftover the "Left over until" row, `null` without closed months.
      * @property recent the latest expenses and income merged, newest first, at most [RECENT_ITEMS_LIMIT].
-     * @property chartExpenses [expenses] without the saving-kind ones: the balance chart ends at [netCents].
-     * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
-     * @property envelopes the month's envelopes and free money; `null` falls back to the plain plan.
-     * @property figures the month's subtraction shared with the plan (income - ... = available).
-     * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
      */
     data class Content(
         val period: Period,
         val canGoToNextMonth: Boolean,
         val budgetMonth: YearMonth,
         val budgetMonthIsCurrent: Boolean,
-        val expenses: List<Expense>,
-        val income: List<Income>,
-        val range: InstantRange,
-        val outflowCents: Long,
-        val spendingCents: Long,
-        val savedCents: Long,
-        val savingsRate: Double?,
-        val recent: List<Transaction>,
         val incomeCents: Long,
-        val netCents: Long,
-        val plan: MonthlyPlanSummary,
-        val fixedSpendingCents: Long = 0L,
-        val chartExpenses: List<Expense> = expenses,
-        val envelopes: EnvelopesSummary? = null,
-    ) : DashboardUiState {
-        /** What is available to spend: the month figures' total (else the envelopes' free money, else the plan's). */
-        val safeToSpendCents: Long get() = plan.safeToSpendCents
-    }
+        val expectedIncomeCents: Long?,
+        val spendingCents: Long,
+        val spendingVsAveragePercent: Int?,
+        val invested: InvestedFigure?,
+        val leftover: LeftoverFigure?,
+        val recent: List<Transaction>,
+    ) : DashboardUiState
 
     data class Error(
         val message: UiText,
