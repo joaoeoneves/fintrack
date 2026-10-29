@@ -239,27 +239,46 @@ class RecurringListViewModelTest {
         }
 
     @Test
-    fun deleteFlow_requestDismissConfirm() =
+    fun delete_removesAtOnce_emitsTheItem_andUndoRestoresIt() =
         runTest(testDispatcher) {
             val repo = FakeRecurringRepository(listOf(recurringItem()))
             val vm = viewModel(repo)
+            val deleted = mutableListOf<com.joaoeoneves.fintrack.domain.model.RecurringItem>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.deletedEvent.collect { deleted += it } }
             started(vm)
 
             vm.onDeleteRequested("r1")
             advanceUntilIdle()
-            assertEquals("r1", content(vm).deleteTarget?.id)
 
-            vm.onDismissDelete()
+            assertTrue(repo.items.isEmpty())
+            assertEquals(listOf("r1"), deleted.map { it.id })
+
+            vm.onUndoDelete(deleted.single())
             advanceUntilIdle()
-            assertNull(content(vm).deleteTarget)
-            assertEquals(1, repo.items.size)
 
+            assertEquals(listOf("r1"), repo.items.map { it.id })
+        }
+
+    @Test
+    fun delete_unknownId_isNoOp_andFailureEmitsErrorWithoutEvent() =
+        runTest(testDispatcher) {
+            val repo = FakeRecurringRepository(listOf(recurringItem()))
+            val vm = viewModel(repo)
+            val deleted = mutableListOf<com.joaoeoneves.fintrack.domain.model.RecurringItem>()
+            val errors = mutableListOf<UiText>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.deletedEvent.collect { deleted += it } }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
+            started(vm)
+
+            vm.onDeleteRequested("nope")
+            advanceUntilIdle()
+            repo.nextDeleteError = IllegalStateException("boom")
             vm.onDeleteRequested("r1")
             advanceUntilIdle()
-            vm.onConfirmDelete()
-            advanceUntilIdle()
-            assertTrue(repo.items.isEmpty())
-            assertNull(content(vm).deleteTarget)
+
+            assertTrue(deleted.isEmpty())
+            assertEquals(1, errors.size)
+            assertEquals(1, repo.items.size)
         }
 
     @Test

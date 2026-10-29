@@ -4,6 +4,7 @@ import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
@@ -14,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
+import com.joaoeoneves.fintrack.domain.usecase.UndoRecurringOccurrence
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
@@ -67,6 +69,7 @@ class UpcomingRecurringViewModelTest {
                 FakeAutomationSettingsRepository(),
                 FakeSalaryLineLabelsProvider(),
             ),
+            UndoRecurringOccurrence(repo, FakeExpenseRepository()),
             clock,
         )
 
@@ -112,9 +115,9 @@ class UpcomingRecurringViewModelTest {
         runTest(testDispatcher) {
             val repo = FakeRecurringRepository(listOf(rent))
             val vm = viewModel(repo)
-            val messages = mutableListOf<String>()
+            val messages = mutableListOf<RecurringUndo>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                vm.messageEvent.collect { messages += it }
+                vm.undoEvent.collect { messages += it }
             }
             val row = content(started(vm)).overview.upcoming.single()
 
@@ -124,7 +127,8 @@ class UpcomingRecurringViewModelTest {
             assertEquals(1, repo.confirmedTransactions.size)
             assertEquals(1_000L, repo.confirmedTransactions.single().amountCents)
             assertEquals(day(2026, 3, 15), repo.items.single().handledThrough)
-            assertEquals(listOf("Rent"), messages)
+            assertEquals(listOf("Rent"), messages.map { it.itemName })
+            assertEquals(RecurringUndo.Kind.CONFIRMED, messages.single().kind)
         }
 
     @Test
@@ -133,10 +137,10 @@ class UpcomingRecurringViewModelTest {
             val repo = FakeRecurringRepository(listOf(rent))
             val vm = viewModel(repo)
             val errors = mutableListOf<UiText>()
-            val messages = mutableListOf<String>()
+            val messages = mutableListOf<RecurringUndo>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                vm.messageEvent.collect { messages += it }
+                vm.undoEvent.collect { messages += it }
             }
             val row = content(started(vm)).overview.upcoming.single()
             repo.nextConfirmError = IllegalStateException("boom")
