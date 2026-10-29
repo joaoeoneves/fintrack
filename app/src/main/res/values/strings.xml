@@ -539,6 +539,7 @@
     <string name="salary_extra_deductions_irs_ss">IRS + SS</string>
     <string name="salary_extra_fee" formatted="false">Fee (%)</string>
     <string name="salary_extra_delete">Delete extra</string>
+    <string name="salary_extra_deleted">Extra removed</string>
     <string name="salary_extra_gross_only">Gross mode only</string>
     <string name="salary_extra_default_flex">Flexible benefits</string>
     <string name="salary_extra_default_profit_share">Profit share</string>

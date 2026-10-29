@@ -554,6 +554,7 @@
     <string name="salary_extra_deductions_irs_ss">IRS + SS</string>
     <string name="salary_extra_fee" formatted="false">Taxa (%)</string>
     <string name="salary_extra_delete">Eliminar extra</string>
+    <string name="salary_extra_deleted">Extra removido</string>
     <string name="salary_extra_gross_only">Só no modo bruto</string>
     <string name="salary_extra_default_flex">Benefícios flexíveis</string>
     <string name="salary_extra_default_profit_share">Distribuição de lucros</string>
