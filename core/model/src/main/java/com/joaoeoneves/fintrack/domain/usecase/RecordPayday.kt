@@ -93,7 +93,7 @@ class RecordPayday
                 val current = monthSettings.firstOrNull { it.month == month }
                 val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
                 val monthLines = due.filterValues { month in it }.keys.toList()
-                recorded += recordMonth(month, monthLines, IncomeMonth.forMonth(month, workingDays), zone) ?: break
+                recorded += recordMonth(month, monthLines, IncomeMonth.forMonth(month, workingDays), zone, cursors) ?: break
             }
             return recorded
         }
@@ -104,21 +104,37 @@ class RecordPayday
             lines: List<PlannedIncome>,
             incomeMonth: IncomeMonth,
             zone: ZoneId,
+            stored: Map<String, YearMonth>,
         ): Int? {
             val labels = labelsProvider.current()
             val existing = existingIncomes(month, zone) ?: return null
             val received = attributeIncomes(month, existing, lines)
-            val missing =
+            val candidates =
                 lines
                     .filter { it.isActiveIn(month) && it.asOf(month) != null }
                     .filter { line -> received[line.id].isNullOrEmpty() }
+            // A payday income is looked up by its id too: a receipt whose date fell outside the month must not be
+            // overwritten (amount and date wiped) by the automatic one.
+            val absent = candidates.filter { line -> !(incomeExistsById(line, month) ?: return null) }
+            val missing =
+                absent
                     .mapNotNull {
                         val amount = incomeMonth.amountIn(it, month)
                         val days = incomeMonth.workingDays(month)
                         it.paydayIncome(month, days, it.payDateIn(month), zone, amount)?.named(it, labels)
                     }
-            val cursors = lines.associate { it.id to month }
+            // Cursors only move forward: never below what is stored (a cache-only snapshot may be behind).
+            val cursors = lines.associate { it.id to maxOf(month, stored[it.id] ?: month) }
             return missing.size.takeIf { automationRepository.recordPayday(missing, cursors).isSuccess }
+        }
+
+        /** Whether the payday income of [line] in [month] exists; `null` when that could not be read. */
+        private suspend fun incomeExistsById(
+            line: PlannedIncome,
+            month: YearMonth,
+        ): Boolean? {
+            val result = incomeRepository.getIncome(paydayIncomeId(line.id, month))
+            return if (result.isFailure) null else result.getOrNull() != null
         }
 
         private suspend fun existingIncomes(
