@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.domain.model
 
+import java.time.YearMonth
+
 /** Whether the salary profile is typed as a gross salary with tax rates or as the net amounts received. */
 enum class SalaryInputMode { GROSS, NET }
 
@@ -36,8 +38,25 @@ const val MANAGED_DUODECIMOS = "profile_duodecimos"
 private val FIXED_MANAGED_KEYS =
     setOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS)
 
-/** Whether [key] is a `managedKey` the app can generate: a fixed one or an extra's per-month key. */
-fun isValidManagedKey(key: String): Boolean = key in FIXED_MANAGED_KEYS || parseManagedExtraKey(key) != null
+// A subsidy line whose schedule (month of year) changed: `<fixed key>_<yyyyMM it starts>`, see scheduledManagedKey.
+private val SCHEDULED_KEY_PATTERN = Regex("^(${MANAGED_HOLIDAY}|${MANAGED_CHRISTMAS})_(\\d{4})(0[1-9]|1[0-2])$")
+
+/**
+ * The key of the line that carries a subsidy's new schedule from [from]: the old line keeps its own id (and the
+ * incomes recorded under it) and is ended, so earlier months keep the old schedule. [baseKey] is [MANAGED_HOLIDAY]
+ * or [MANAGED_CHRISTMAS].
+ */
+fun scheduledManagedKey(
+    baseKey: String,
+    from: YearMonth,
+): String = "${baseKey}_%04d%02d".format(from.year, from.monthValue)
+
+/** The fixed key a [key] stands for: a scheduled subsidy key maps to its holiday/Christmas key, any other is itself. */
+fun baseManagedKey(key: String): String = SCHEDULED_KEY_PATTERN.matchEntire(key)?.groupValues?.get(1) ?: key
+
+/** Whether [key] is a `managedKey` the app can generate: a fixed one, a scheduled subsidy or an extra's key. */
+fun isValidManagedKey(key: String): Boolean =
+    key in FIXED_MANAGED_KEYS || SCHEDULED_KEY_PATTERN.matches(key) || parseManagedExtraKey(key) != null
 
 /** Default (English) labels of the generated lines; the UI passes localized ones. Existing lines keep theirs. */
 data class SalaryLineLabels(

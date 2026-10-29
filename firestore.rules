@@ -141,7 +141,7 @@ service cloud.firestore {
 
     // The keys of the income lines generated from the salary profile (absent on the user's own lines).
     function managedKeyPattern() {
-      return '^profile_(net_salary|duodecimos|meal|holiday|christmas|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
+      return '^profile_(net_salary|duodecimos|meal|((holiday|christmas)(_20[0-9]{2}(0[1-9]|1[0-2]))?)|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
     }
 
     // Absent frequency means MONTHLY. MONTHLY has neither month field, YEARLY a month 1..12, ONCE a
