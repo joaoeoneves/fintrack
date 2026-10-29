@@ -47,24 +47,11 @@ fun ActivityAnalyticsHeader(
     actions: ActivityAnalyticsActions,
     modifier: Modifier = Modifier,
     showSpent: Boolean = true,
+    figures: HistoryFigures = HistoryFigures(),
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
-        SegmentedTextTabs(
-            options = PeriodTab.entries,
-            selected = period.toTab(),
-            label = { stringResource(it.labelRes) },
-            onSelect = { actions.period.onSelect(it.toPeriod()) },
-            tabContentDescription = { stringResource(it.descriptionRes) },
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-        )
-        PeriodSelector(
-            period = period,
-            canGoToNextMonth = canGoToNextMonth,
-            actions = actions.period,
-            alignment = Alignment.Start,
-            modifier = Modifier.padding(horizontal = Dimens.Space8),
-        )
+        AnalyticsPeriodControls(period, canGoToNextMonth, actions)
         if (showSpent) {
             Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
                 Text(
@@ -73,12 +60,15 @@ fun ActivityAnalyticsHeader(
                     color = FinTrackTheme.colors.textSecondary,
                 )
                 Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
+                figures.comparison?.let { SpendingComparisonLines(it) }
+                figures.monthlyAverageCents?.let { MonthlyAverageLine(it) }
             }
         }
         val hasDetails =
             (showSpent && analytics.split.spendingCents > 0) ||
                 analytics.envelopeChips.isNotEmpty() ||
-                !analytics.breakdown.isEmpty
+                !analytics.breakdown.isEmpty ||
+                figures.hasDetails
         if (hasDetails) {
             SectionAction(
                 text =
@@ -91,7 +81,7 @@ fun ActivityAnalyticsHeader(
             )
         }
         if (hasDetails && expanded) {
-            AnalyticsDetails(analytics, selectedEnvelope, actions, showSpent)
+            AnalyticsDetails(analytics, selectedEnvelope, actions, showSpent, figures)
         }
     }
 }
@@ -103,6 +93,7 @@ private fun AnalyticsDetails(
     selectedEnvelope: String?,
     actions: ActivityAnalyticsActions,
     showSpent: Boolean,
+    figures: HistoryFigures,
 ) {
     Column {
         if (showSpent && analytics.split.spendingCents > 0) {
@@ -121,6 +112,42 @@ private fun AnalyticsDetails(
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
             )
         }
+        HistoryDetails(figures)
+    }
+}
+
+/** The period tabs and the period selector, shared by the Expenses and the Income headers. */
+@Composable
+internal fun AnalyticsPeriodControls(
+    period: Period,
+    canGoToNextMonth: Boolean,
+    actions: ActivityAnalyticsActions,
+) {
+    SegmentedTextTabs(
+        options = PeriodTab.entries,
+        selected = period.toTab(),
+        label = { stringResource(it.labelRes) },
+        onSelect = { actions.period.onSelect(it.toPeriod()) },
+        tabContentDescription = { stringResource(it.descriptionRes) },
+        modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+    )
+    PeriodSelector(
+        period = period,
+        canGoToNextMonth = canGoToNextMonth,
+        actions = actions.period,
+        alignment = Alignment.Start,
+        modifier = Modifier.padding(horizontal = Dimens.Space8),
+    )
+}
+
+/** The Evolution bars and the "Since January" row (each only when it has data). */
+@Composable
+internal fun HistoryDetails(figures: HistoryFigures) {
+    figures.evolution?.let {
+        EvolutionSection(it, modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8))
+    }
+    figures.yearToDate?.let {
+        YearToDateRow(it, modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8))
     }
 }
 

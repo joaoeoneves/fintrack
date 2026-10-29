@@ -4,8 +4,10 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
 import com.joaoeoneves.fintrack.ui.common.DaySection
 import com.joaoeoneves.fintrack.ui.common.UiText
+import java.time.YearMonth
 
 /** Which kinds of transaction the Activity list shows. */
 enum class ActivityType {
@@ -21,6 +23,7 @@ data class ActivityFilters(
     val envelope: String?,
     val query: String,
     val sort: SortOption,
+    val incomeSource: String? = null,
 )
 
 /**
@@ -51,6 +54,8 @@ sealed interface ActivityUiState {
         val filters: ActivityFilters,
         val analytics: ActivityAnalytics,
         val categoryScope: Set<CategoryId>? = null,
+        val history: ActivityHistory? = null,
+        val shiftedIncomes: Map<String, YearMonth> = emptyMap(),
     ) : ActivityUiState
 
     data class Error(

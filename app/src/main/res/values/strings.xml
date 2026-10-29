@@ -742,4 +742,20 @@
     <string name="envelope_no_limit">No limit</string>
     <string name="recurring_pause_hint">Nothing is added until you resume</string>
     <string name="income_line_deleted">Income line deleted</string>
+    <string name="activity_vs_previous_month">vs previous month</string>
+    <string name="activity_vs_average">vs %1$d-month average</string>
+    <string name="activity_monthly_average">Monthly average %1$s</string>
+    <string name="activity_since_january">Since January</string>
+    <string name="activity_ytd_spent">Spent</string>
+    <string name="activity_ytd_received">Received</string>
+    <string name="activity_ytd_saved">Saved</string>
+    <string name="activity_evolution">Evolution</string>
+    <string name="activity_received_total">Received</string>
+    <string name="activity_expected_difference">Expected %1$s · Difference %2$s</string>
+    <string name="activity_by_source">By source</string>
+    <string name="activity_source_expected">of %1$s expected</string>
+    <string name="activity_source_other">Other</string>
+    <string name="activity_income_counts_for">Counts for %1$s</string>
+    <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
+    <string name="income_view_history">View history</string>
 </resources>
