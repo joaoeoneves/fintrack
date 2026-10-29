@@ -199,7 +199,7 @@ fun fundingMonthOf(
     }
 }
 
-private fun normalisedWords(text: String): List<String> =
+internal fun normalisedWords(text: String): List<String> =
     Normalizer
         .normalize(text.trim().lowercase(), Normalizer.Form.NFD)
         .replace(Regex("\\p{M}+"), "")
@@ -207,7 +207,7 @@ private fun normalisedWords(text: String): List<String> =
         .filter { it.isNotEmpty() }
 
 /** Whether one word list equals the other or is a leading-words prefix of it ("salario" of "salario liquido"). */
-private fun isWordPrefixMatch(
+internal fun isWordPrefixMatch(
     a: List<String>,
     b: List<String>,
 ): Boolean = b.isNotEmpty() && (a.take(b.size) == b || b.take(a.size) == a)
