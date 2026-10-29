@@ -9,6 +9,7 @@
     <string name="plan_payday_last_working_day">Último dia útil</string>
     <string name="plan_payday_fixed">Dia fixo</string>
     <string name="plan_auto_day">Automático · dia %d</string>
+    <string name="plan_auto_day_earlier">Automático · dia %d (ou dia útil anterior)</string>
     <string name="plan_auto_last_working_day">Automático · último dia útil</string>
     <string name="plan_looks_like_salary_warning">Isto parece ser o teu salário, que já vem do perfil salarial.</string>
     <string name="plan_looks_like_salary">Parece repetir o salário</string>

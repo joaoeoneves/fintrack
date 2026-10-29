@@ -9,6 +9,7 @@
     <string name="plan_payday_last_working_day">Last working day</string>
     <string name="plan_payday_fixed">Fixed day</string>
     <string name="plan_auto_day">Automatic · day %d</string>
+    <string name="plan_auto_day_earlier">Automatic · day %d (or the working day before)</string>
     <string name="plan_auto_last_working_day">Automatic · last working day</string>
     <string name="plan_looks_like_salary_warning">This looks like your salary, which already comes from the salary profile.</string>
     <string name="plan_looks_like_salary">Looks like the salary again</string>

@@ -177,10 +177,10 @@ fun IncomeSetupGroup(
 private fun autoRecordText(row: IncomeRow): String? {
     val line = row.lines.firstOrNull { it.autoRecord } ?: return null
     val payDay = line.payDay
-    return if (payDay == null) {
-        stringResource(R.string.plan_auto_last_working_day)
-    } else {
-        stringResource(R.string.plan_auto_day, payDay)
+    return when {
+        payDay == null -> stringResource(R.string.plan_auto_last_working_day)
+        line.payDayEarlierIfClosed -> stringResource(R.string.plan_auto_day_earlier, payDay)
+        else -> stringResource(R.string.plan_auto_day, payDay)
     }
 }
 
