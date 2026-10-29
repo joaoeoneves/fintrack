@@ -6,6 +6,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
@@ -49,7 +50,7 @@ fun formatAmount(
     amountCents: Long,
     currency: CurrencyOption,
     locale: Locale,
-): String = currencyFormatter(locale, currency).format(BigDecimal.valueOf(amountCents, CENTS_SCALE))
+): String = currencyFormatter(locale, currency).formatCents(amountCents, locale)
 
 /**
  * Composable counterpart of [formatAmount], using the [LocalCurrency] and the configuration's
@@ -64,8 +65,25 @@ fun formatAmountCents(
     val locale = currentLocale()
     val currency = LocalCurrency.current
     val formatter = remember(locale, currency) { currencyFormatter(locale, currency) }
-    val text = formatter.format(BigDecimal.valueOf(amountCents, CENTS_SCALE))
+    val text = formatter.formatCents(amountCents, locale)
     return if (typographic) text.withTypographicMinus() else text
+}
+
+private val FOUR_DIGITS = Regex("""(?<![\d.,])(\d)(\d{3})(?![\d])""")
+
+/**
+ * Formats [amountCents] with this formatter. Portuguese CLDR data does not group four-digit integers ("1234,56")
+ * while larger ones are grouped ("12 345,67"), and Android's ICU and the JVM disagree on it; this groups from four
+ * digits explicitly so every platform prints "1 234,56 €".
+ */
+private fun NumberFormat.formatCents(
+    amountCents: Long,
+    locale: Locale,
+): String {
+    val text = format(BigDecimal.valueOf(amountCents, CENTS_SCALE))
+    if (locale.language != "pt" || !isGroupingUsed) return text
+    val separator = DecimalFormatSymbols.getInstance(locale).groupingSeparator
+    return FOUR_DIGITS.replaceFirst(text) { "${it.groupValues[1]}$separator${it.groupValues[2]}" }
 }
 
 /** Typographic minus sign (U+2212), wider and better aligned with tabular figures than the ASCII hyphen. */
