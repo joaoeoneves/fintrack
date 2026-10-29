@@ -54,29 +54,13 @@ fun DetailScaffold(
     header: (@Composable () -> Unit)? = null,
     list: LazyListScope.() -> Unit,
 ) {
-    var menuOpen by remember { mutableStateOf(false) }
     LargeTitleScaffold(
         title = title,
         onBack = onBack,
         modifier = modifier,
         actions = {
             if (menuActionLabel != null) {
-                Box {
-                    FinTrackIconButton(
-                        icon = Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.cd_more_options),
-                        onClick = { menuOpen = true },
-                    )
-                    FinTrackDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        FinTrackMenuItem(
-                            text = menuActionLabel,
-                            onClick = {
-                                menuOpen = false
-                                onMenuAction()
-                            },
-                        )
-                    }
-                }
+                DetailMenu(menuActionLabel, onMenuAction)
             }
         },
     ) { padding: PaddingValues ->
@@ -87,18 +71,7 @@ fun DetailScaffold(
                 contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space16),
                 verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
             ) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space4)) {
-                        Text(text = amount, style = AmountLarge)
-                        delta?.let {
-                            Text(
-                                text = it.text,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (it.good) FinTrackTheme.colors.positive else FinTrackTheme.colors.negative,
-                            )
-                        }
-                    }
-                }
+                item { DetailAmount(amount, delta) }
                 item {
                     val highlighted = setOfNotNull(selectedIndex.takeIf { it >= 0 })
                     MonthlyBars(bars = bars, highlighted = highlighted, onBarClick = onBarClick)
@@ -114,6 +87,47 @@ fun DetailScaffold(
                 }
                 list()
             }
+        }
+    }
+}
+
+@Composable
+private fun DetailMenu(
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box {
+        FinTrackIconButton(
+            icon = Icons.Default.MoreVert,
+            contentDescription = stringResource(R.string.cd_more_options),
+            onClick = { menuOpen = true },
+        )
+        FinTrackDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            FinTrackMenuItem(
+                text = actionLabel,
+                onClick = {
+                    menuOpen = false
+                    onAction()
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailAmount(
+    amount: String,
+    delta: DetailDelta?,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space4)) {
+        Text(text = amount, style = AmountLarge)
+        delta?.let {
+            Text(
+                text = it.text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (it.good) FinTrackTheme.colors.positive else FinTrackTheme.colors.negative,
+            )
         }
     }
 }
