@@ -10,8 +10,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -49,6 +47,7 @@ fun AddEditRecurringScreen(
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collectLatest { onSaved() }
     }
+    DeletedRecurringEffect(viewModel.deletedEvent, onSaved)
 
     FormScaffold(
         title = stringResource(if (viewModel.isEditRoute) R.string.recurring_edit_title else R.string.recurring_add),
@@ -89,8 +88,6 @@ private fun RecurringFormContent(
 ) {
     val form = state.form
     val errors = state.errors
-    var confirmDelete by remember { mutableStateOf(false) }
-
     Column(
         modifier =
             modifier
@@ -123,21 +120,10 @@ private fun RecurringFormContent(
         if (state.isEditMode) {
             DestructiveTextButton(
                 text = stringResource(R.string.cd_delete),
-                onClick = { confirmDelete = true },
+                onClick = onDelete,
                 enabled = !state.isSaving,
             )
         }
-    }
-
-    if (confirmDelete) {
-        RecurringDeleteDialog(
-            name = form.name,
-            onConfirm = {
-                confirmDelete = false
-                onDelete()
-            },
-            onDismiss = { confirmDelete = false },
-        )
     }
 }
 

@@ -66,6 +66,11 @@ class AddEditRecurringViewModel
         /** Emits once the item was saved or deleted, so the screen can close. */
         val savedEvent: Flow<Unit> = savedEvents.receiveAsFlow()
 
+        private val deletions = Channel<RecurringItem>(Channel.BUFFERED)
+
+        /** Emits the item just deleted, for the app-level undo snackbar; the screen closes after it. */
+        val deletedEvent: Flow<RecurringItem> = deletions.receiveAsFlow()
+
         // The item being edited, kept so saving preserves its cursor and active flag.
         private var existing: RecurringItem? = null
 
@@ -145,13 +150,13 @@ class AddEditRecurringViewModel
 
         fun onDelete() {
             val current = _uiState.value
-            val id = existing?.id
-            if (current !is AddEditRecurringUiState.Ready || current.isSaving || id == null) return
+            val item = existing
+            if (current !is AddEditRecurringUiState.Ready || current.isSaving || item == null) return
             _uiState.value = current.copy(isSaving = true, saveError = null)
             viewModelScope.launch {
                 recurringRepository
-                    .deleteRecurring(id)
-                    .onSuccess { savedEvents.send(Unit) }
+                    .deleteRecurring(item.id)
+                    .onSuccess { deletions.send(item) }
                     .onFailure { e -> reportFailure("delete", e) }
             }
         }
