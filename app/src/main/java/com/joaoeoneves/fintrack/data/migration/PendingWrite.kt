@@ -15,12 +15,14 @@ internal class PendingWrite(
     val collection: String,
     val id: String,
     val data: Map<String, Any?>,
+    /** Merge into an existing document instead of replacing it (for array unions). */
+    val merge: Boolean = false,
 )
 
 /**
  * The planned writes grouped into batches, in commit order: category groups, categories, budgets, expenses, income,
  * planned income,
- * recurring items, month settings, salary profile, automation settings, goals.
+ * recurring items, month settings, salary profile, automation settings, goals, dismissed suggestions.
  * Every batch holds at most 400 writes; budget, expense and recurring batches also respect the rules' cap on
  * distinct custom categories. A planned record that cannot be mapped is a bug (the planner validates
  * everything) and throws instead of being silently dropped.
@@ -78,7 +80,16 @@ internal fun MigrationPlan.toBatches(): List<List<PendingWrite>> {
         listOfNotNull(automation).map { listOf(PendingWrite("plan", "automation", it.toDomain().toFirestoreMap())) }
     return groupWrites.chunked(BATCH_CHUNK_SIZE) + categoryWrites.chunked(BATCH_CHUNK_SIZE) + budgetBatches +
         expenseBatches + incomeBatches + plannedIncomeBatches + recurringBatches + monthSettingsBatches +
-        salaryProfileBatches + automationBatches + goalBatches()
+        salaryProfileBatches + automationBatches + goalBatches() + suggestionBatches()
+}
+
+// Merged into the account's list, so its own dismissals stay.
+private fun MigrationPlan.suggestionBatches(): List<List<PendingWrite>> {
+    if (dismissedRecurring.isEmpty()) return emptyList()
+    @Suppress("SpreadOperator") // At most 500 keys, once per migration.
+    val union = FieldValue.arrayUnion(*dismissedRecurring.toTypedArray())
+    val data = mapOf("dismissedRecurring" to union, "updatedAt" to FieldValue.serverTimestamp())
+    return listOf(listOf(PendingWrite("settings", "suggestions", data, merge = true)))
 }
 
 // Goals reference categories and recurring items by id only (shape-checked in the rules), so they go last.

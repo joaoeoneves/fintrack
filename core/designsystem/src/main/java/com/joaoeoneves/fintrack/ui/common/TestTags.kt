@@ -23,6 +23,9 @@ object TestTags {
     const val RECURRING_CHANGE = "recurring_change"
     const val RECURRING_ADD = "recurring_add"
     const val START_CHECKLIST = "start_checklist"
+    const val REVIEW_INBOX = "review_inbox"
+    const val QUICK_ADD = "quick_add"
+    const val RECURRING_SUGGESTION = "recurring_suggestion"
     const val SKELETON = "skeleton"
 
     /** Tag of the checklist row of the step named [stepName] (a `StartStep` name). */

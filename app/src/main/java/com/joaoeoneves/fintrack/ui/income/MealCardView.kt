@@ -15,6 +15,9 @@ data class MealCardView(
     val plafondFrom: YearMonth?,
 ) {
     val balanceCents: Long get() = plafondCents - spentCents
+
+    /** A month whose plafond is 0 because no meal allowance was recorded in the month before. */
+    val noAllowanceReceived: Boolean get() = plafondFrom != null && plafondCents == 0L
 }
 
 /**

@@ -10,7 +10,10 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.SuggestionRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 import javax.inject.Inject
 
@@ -29,22 +32,25 @@ class BackupRepository
         private val preferencesStore: UserPreferencesStore,
         private val restorer: BackupRestorer,
         private val serverSync: ServerSync = LocalOnlyServerSync,
+        private val suggestionRepository: SuggestionRepository = NoDismissedSuggestions,
     ) {
         /** Snapshot of the current mode's data plus preferences; works signed in and as a guest. */
         suspend fun buildBackup(exportedAt: Instant): Result<BackupDocument> =
             runCatchingCancellable {
                 // A signed-in export never uses cache or error-fallback data: read the server first or fail.
-                serverSync.refresh().getOrThrow()
-                val expenses = expenseRepository.getAllExpenses().getOrThrow()
-                val income = incomeRepository.getAllIncome().getOrThrow()
-                val plan = planBackupSource.read()
+                // The server read feeds the export directly (no second read); a guest reads its local repositories.
+                val server = serverSync.readAll().getOrThrow()
+                val expenses = server?.expenses ?: expenseRepository.getAllExpenses().getOrThrow()
+                val income = server?.income ?: incomeRepository.getAllIncome().getOrThrow()
+                val plan = server?.let(::planFrom) ?: planBackupSource.read()
                 val budgets = plan.budgets
-                val categories = categoryRepository.observeCategories().first()
+                val categories = server?.categories ?: categoryRepository.observeCategories().first()
                 val prefs = preferencesStore.data.first()
                 val stored = categories.filter { it.needsStoring() }.map { it.toLocal() }
                 val localExpenses = expenses.map { it.toLocal() }
                 val localBudgets = budgets.map { it.toLocal() }
                 val localRecurring = plan.recurring.map { it.toLocal() }
+                val dismissed = suggestionRepository.observeDismissedRecurring().first().sorted()
                 val maxOrder = categories.map { it.order }.filter { it != Int.MAX_VALUE }.maxOrNull() ?: 0
                 BackupDocument(
                     exportedAt = exportedAt.toString(),
@@ -65,6 +71,7 @@ class BackupRepository
                     salaryProfile = plan.salaryProfile?.toLocal(),
                     goals = plan.goals.map { it.toLocal() },
                     automation = plan.automation.takeIf { it != AutomationSettings() }?.toLocal(),
+                    dismissedRecurringSuggestions = dismissed,
                     categories =
                         withPlaceholderCategories(
                             categories = stored,
@@ -75,6 +82,19 @@ class BackupRepository
                         ).namingPlaceholders(stored.size, plan.deletedCategoryName),
                 )
             }
+
+        private fun planFrom(server: ServerData) =
+            PlanBackupData(
+                budgets = server.budgets,
+                plannedIncome = server.plannedIncome,
+                recurring = server.recurring,
+                monthSettings = server.monthSettings,
+                categoryGroups = server.categoryGroups,
+                salaryProfile = server.salaryProfile,
+                goals = server.goals,
+                automation = server.automation,
+                deletedCategoryName = planBackupSource.deletedCategoryName(),
+            )
 
         /** Whether a restore would replace existing data (an account always has some to replace). */
         suspend fun localHasData(): Boolean = restorer.hasData()
@@ -95,4 +115,13 @@ class BackupRepository
 /** No server to read: the default for guest-only use and tests. */
 private object LocalOnlyServerSync : ServerSync {
     override suspend fun refresh(): Result<Unit> = Result.success(Unit)
+}
+
+/** No dismissed suggestions: the default for tests that do not care. */
+private object NoDismissedSuggestions : SuggestionRepository {
+    override fun observeDismissedRecurring(): Flow<Set<String>> = flowOf(emptySet())
+
+    override suspend fun dismissRecurring(key: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun undismissRecurring(key: String): Result<Unit> = Result.success(Unit)
 }

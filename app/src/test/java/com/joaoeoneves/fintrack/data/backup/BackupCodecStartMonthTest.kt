@@ -21,7 +21,7 @@ class BackupCodecStartMonthTest {
 
         val doc = BackupCodec.decode(text).success().document
 
-        assertEquals(21, doc.schemaVersion)
+        assertEquals(22, doc.schemaVersion)
         assertEquals("2026-02", doc.budgets.single().startMonth)
         assertEquals("2026-02", doc.plannedIncome.single().startMonth)
     }
@@ -34,7 +34,7 @@ class BackupCodecStartMonthTest {
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success().document
 
-        assertEquals(21, result.schemaVersion)
+        assertEquals(22, result.schemaVersion)
         assertEquals(budget, result.budgets.single())
         assertTrue(
             result.budgets

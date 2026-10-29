@@ -21,11 +21,10 @@ class YearIncomeOutlookTest {
         val o = yearIncomeOutlook(2026, listOf(line), im, received, today, setOf("s"))
 
         assertEquals(12, o.months.size)
-        assertTrue(o.months.take(9).all { it.received })
-        // The current month is partial: what came in so far, the salary line already received.
-        assertTrue(o.months[9].partial)
-        assertEquals(95_000L, o.months[9].receivedPartCents)
-        assertTrue(o.months.drop(9).none { it.received })
+        // The salary line is already received, so the current month is shown like a past one.
+        assertTrue(o.months.take(10).all { it.received })
+        assertFalse(o.months[9].partial)
+        assertTrue(o.months.drop(10).none { it.received })
         assertEquals(90_000L, o.months[0].cents)
         assertEquals(0L, o.months[1].cents)
         assertEquals(95_000L, o.months[9].cents)

@@ -44,6 +44,7 @@ internal fun LocalExpense.toDomainOrNull(): Expense? =
             note = note,
             isRefund = isRefund,
             paidWithMealCard = paidWithMealCard,
+            needsReview = needsReview,
         )
     }
 
@@ -57,15 +58,30 @@ internal fun Expense.toLocal(): LocalExpense =
         note = note,
         isRefund = isRefund,
         paidWithMealCard = paidWithMealCard,
+        needsReview = needsReview,
     )
 
 internal fun LocalIncome.toDomainOrNull(): Income? =
     parseDateOrNull(date, "income", id)?.let { instant ->
-        Income(id = id, source = source, amountCents = amountCents, date = instant, note = note)
+        Income(
+            id = id,
+            source = source,
+            amountCents = amountCents,
+            date = instant,
+            note = note,
+            needsReview = needsReview,
+        )
     }
 
 internal fun Income.toLocal(): LocalIncome =
-    LocalIncome(id = id, source = source, amountCents = amountCents, date = date.toString(), note = note)
+    LocalIncome(
+        id = id,
+        source = source,
+        amountCents = amountCents,
+        date = date.toString(),
+        note = note,
+        needsReview = needsReview,
+    )
 
 internal fun LocalBudget.toDomain(): Budget =
     Budget(

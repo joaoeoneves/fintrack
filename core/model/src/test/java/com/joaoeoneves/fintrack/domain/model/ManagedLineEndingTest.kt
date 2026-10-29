@@ -108,6 +108,6 @@ class ManagedLineEndingTest {
         assertEquals(MANAGED_HOLIDAY, baseManagedKey("${MANAGED_HOLIDAY}_202603"))
         assertEquals(MANAGED_MEAL, baseManagedKey(MANAGED_MEAL))
         val scheduled = PlannedIncome("x", "H", 1, 0, managedKey = "${MANAGED_HOLIDAY}_202603")
-        assertEquals(SalaryComponent.SUBSIDIES, scheduled.salaryComponent)
+        assertEquals(SalaryComponent.HOLIDAY, scheduled.salaryComponent)
     }
 }
