@@ -87,11 +87,11 @@ class FinTrackSkeletonScreenTest {
     }
 
     @Test
-    fun savings_showsSkeletonUntilLoaded() {
+    fun spending_showsSkeletonUntilLoaded() {
         continueAsGuest()
-        awaitTag(TestTags.NAV_SAVINGS)
+        awaitTag(TestTags.NAV_SPENDING)
         awaitNoSkeleton() // the Dashboard's own skeleton must be gone, so the one seen next is Savings'
-        tapPaused(TestTags.NAV_SAVINGS)
+        tapPaused(TestTags.NAV_SPENDING)
         assertEquals(1, count(skeleton))
 
         composeRule.mainClock.autoAdvance = true

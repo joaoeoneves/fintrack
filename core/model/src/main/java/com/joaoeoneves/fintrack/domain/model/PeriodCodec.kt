@@ -7,19 +7,21 @@ import java.time.ZoneId
 
 private const val TOKEN_CURRENT = "current"
 private const val PREFIX_MONTH = "month"
+private const val PREFIX_YEAR = "year"
 private const val PREFIX_ROLLING = "rolling"
 private const val PREFIX_CUSTOM = "custom"
 private const val TOKEN_SEPARATOR = ':'
 
 /**
  * Encodes this period as a stable, primitive string token (used as a navigation route argument and
- * in `SavedStateHandle`): `"current"`, `"month:2026-09"`, `"rolling:THREE_MONTHS"` or
+ * in `SavedStateHandle`): `"current"`, `"month:2026-09"`, `"year:2026"`, `"rolling:THREE_MONTHS"` or
  * `"custom:2026-10-01:2026-10-15"`. Round-trips through [decodePeriod].
  */
 fun Period.encode(): String =
     when (this) {
         Period.CurrentMonth -> TOKEN_CURRENT
         is Period.Month -> "$PREFIX_MONTH$TOKEN_SEPARATOR$yearMonth"
+        is Period.Year -> "$PREFIX_YEAR$TOKEN_SEPARATOR$year"
         is Period.Rolling -> "$PREFIX_ROLLING$TOKEN_SEPARATOR${range.name}"
         is Period.Custom -> "$PREFIX_CUSTOM$TOKEN_SEPARATOR$start$TOKEN_SEPARATOR$endInclusive"
     }
@@ -41,6 +43,7 @@ fun decodePeriod(
         runCatching {
             when (parts.firstOrNull()) {
                 PREFIX_MONTH -> parts.singleArg()?.let { Period.ofMonth(YearMonth.parse(it), now, zone, monthsAhead) }
+                PREFIX_YEAR -> parts.singleArg()?.let { Period.Year(it.toInt()) }
                 PREFIX_ROLLING -> parts.singleArg()?.let { Period.Rolling(TimeRange.valueOf(it)) }
                 PREFIX_CUSTOM -> parts.toCustomPeriod()
                 else -> null

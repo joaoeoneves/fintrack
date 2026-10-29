@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
+import com.joaoeoneves.fintrack.ui.income.IncomeTabViewModel
 import kotlinx.coroutines.flow.Flow
 
 /** Shows the messages of [events] in [snackbarHostState]. */
@@ -26,7 +27,7 @@ fun CollectPlanErrors(
 /** Offers "Undo" in [snackbarHostState] each time [viewModel] deletes a manual income line. */
 @Composable
 fun CollectDeletedIncomeLines(
-    viewModel: MonthlyPlanViewModel,
+    viewModel: IncomeTabViewModel,
     snackbarHostState: SnackbarHostState,
 ) {
     val resources = LocalResources.current

@@ -120,7 +120,7 @@ fun YearToDateRow(
             YearCell(stringResource(R.string.activity_ytd_received), yearToDate.incomeCents)
             YearCell(stringResource(R.string.activity_ytd_saved), yearToDate.savedCents)
             if (leftover != null && leftover.months > 0) {
-                val until = monthName(YearMonth.of(yearToDate.year, leftover.months), currentLocale())
+                val until = monthName(leftover.until ?: YearMonth.of(yearToDate.year, leftover.months), currentLocale())
                 YearCell(stringResource(R.string.activity_ytd_leftover, until), leftover.totalCents)
             }
         }

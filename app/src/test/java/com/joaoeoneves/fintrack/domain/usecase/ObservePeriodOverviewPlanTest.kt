@@ -107,7 +107,7 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
             val result = overview(Period.Rolling(TimeRange.ONE_YEAR))
 
             assertEquals(10_000L, result.plan.actualIncomeCents)
-            assertEquals(4, income.listeners.observedRanges.size)
+            assertEquals(2, income.listeners.observedRanges.size)
             assertEquals(100_000L, result.summary.incomeCents)
         }
 
@@ -131,8 +131,8 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
             val result = overview(Period.Custom(LocalDate.of(2026, 10, 15), LocalDate.of(2026, 10, 20)))
 
             assertEquals(41_000L, result.plan.actualIncomeCents)
-            assertEquals(4, income.listeners.observedRanges.size)
-            assertEquals(october.toInstantRange(zone), income.listeners.observedRanges[3])
+            assertEquals(2, income.listeners.observedRanges.size)
+            assertEquals(october.toInstantRange(zone), income.listeners.observedRanges[1])
             assertEquals(1_000L, result.summary.incomeCents)
         }
 

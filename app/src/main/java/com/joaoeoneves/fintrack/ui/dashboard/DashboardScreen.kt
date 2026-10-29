@@ -1,42 +1,30 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.StartStep
-import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
+import com.joaoeoneves.fintrack.ui.common.TabScaffold
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
@@ -56,12 +44,7 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import com.joaoeoneves.fintrack.ui.theme.Motion
 import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
-import com.joaoeoneves.fintrack.ui.theme.motionSpec
-import java.time.LocalDate
-import java.time.ZoneId
 
 private val SectionSpacing = Dimens.SectionGap
 
@@ -95,15 +78,21 @@ fun DashboardScreen(
     val listState = rememberLazyListState()
     val content = uiState as? DashboardUiState.Content
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            DashboardTopBar(
-                state = content,
-                actions = actions.period,
-                onOpenSettings = callbacks.onOpenSettings,
-                scrolled = listState.canScrollBackward,
-            )
+    TabScaffold(
+        title = stringResource(R.string.nav_home),
+        onOpenSettings = callbacks.onOpenSettings,
+        scrolled = listState.canScrollBackward,
+        headerExtra = {
+            if (content != null) {
+                PeriodSelector(
+                    period = content.period,
+                    canGoToNextMonth = content.canGoToNextMonth,
+                    actions = actions.period,
+                    monthOnly = true,
+                    showScaleSwitch = true,
+                    modifier = Modifier.padding(horizontal = Dimens.Space8),
+                )
+            }
         },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
         floatingActionButton = {
@@ -115,7 +104,6 @@ fun DashboardScreen(
                 )
             }
         },
-        floatingActionButtonPosition = FabPosition.Center,
     ) { innerPadding ->
         CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
             DashboardBody(
@@ -173,56 +161,6 @@ private fun DashboardBodyFor(
     }
 }
 
-/**
- * Account avatar on the left, then the period selector (once content is loaded); no title. Solid
- * background, with a hairline along its bottom edge that fades in once content is [scrolled] under it.
- */
-@Composable
-private fun DashboardTopBar(
-    state: DashboardUiState.Content?,
-    actions: PeriodActions,
-    onOpenSettings: () -> Unit,
-    scrolled: Boolean,
-) {
-    val separator by animateFloatAsState(
-        targetValue = if (scrolled) 1f else 0f,
-        animationSpec = motionSpec(tween(Motion.Short)),
-        label = "topBarSeparator",
-    )
-    Box(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = Dimens.Space8),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AccountAvatar(onClick = onOpenSettings)
-            Box(modifier = Modifier.weight(1f)) {
-                if (state != null) {
-                    PeriodSelector(
-                        period = state.period,
-                        canGoToNextMonth = state.canGoToNextMonth,
-                        actions = actions,
-                        alignment = Alignment.Start,
-                        monthOnly = true,
-                    )
-                }
-            }
-        }
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(Dimens.HairlineThickness)
-                    .graphicsLayer { alpha = separator }
-                    .background(FinTrackTheme.colors.hairline),
-        )
-    }
-}
-
 /** The list's scroll state plus the add-pill visibility driven by it. */
 private data class DashboardScroll(
     val pill: PillVisibility,
@@ -241,6 +179,7 @@ private fun dashboardActions(
             onPrevious = viewModel::onPreviousMonth,
             onNext = viewModel::onNextMonth,
             onSelect = viewModel::onPeriodSelected,
+            onSelectScale = viewModel::onSelectScale,
         ),
     upcoming =
         UpcomingRecurringModel(
@@ -269,14 +208,6 @@ private data class StartChecklistModel(
     val onDismiss: () -> Unit,
 )
 
-/** What the balance chart needs, plus the scrub position shared with the hero. */
-private data class ChartModel(
-    val series: List<Long>,
-    val startDate: LocalDate,
-    val scrubbedIndex: Int?,
-    val onScrub: (Int?) -> Unit,
-)
-
 @Composable
 private fun DashboardContent(
     state: DashboardUiState.Content,
@@ -285,23 +216,6 @@ private fun DashboardContent(
     scroll: DashboardScroll,
     contentPadding: PaddingValues,
 ) {
-    val zone = remember { ZoneId.systemDefault() }
-    val series =
-        remember(state.chartExpenses, state.income, state.range) {
-            dailyNetSeries(state.chartExpenses, state.income, state.range, zone, LocalDate.now(zone))
-        }
-    var scrubbedIndex by remember(series) { mutableStateOf<Int?>(null) }
-    val chart =
-        ChartModel(
-            series = series,
-            startDate =
-                state.range.startInclusive
-                    .atZone(zone)
-                    .toLocalDate(),
-            scrubbedIndex = scrubbedIndex,
-            onScrub = { scrubbedIndex = it },
-        )
-
     val (pill, listState) = scroll
     pill.BindTo(listState)
 
@@ -314,10 +228,15 @@ private fun DashboardContent(
                 .nestedScroll(pill.connection)
                 .testTag(TestTags.DASHBOARD_LIST),
         contentPadding =
-            PaddingValues(bottom = Dimens.AddPillClearance + contentPadding.calculateBottomPadding()),
+            PaddingValues(bottom = Dimens.AddPillClearance + Dimens.Space16 + contentPadding.calculateBottomPadding()),
     ) {
-        balanceItems(state = state, chart = chart, start = actions.start)
-        planItems(state = state, actions = actions, callbacks = callbacks)
+        startItems(start = actions.start)
+        summaryItems(state = state, callbacks = callbacks)
+        item(key = "upcoming") {
+            ScreenItem {
+                UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
+            }
+        }
         activityItems(state = state, callbacks = callbacks)
     }
 }
@@ -333,62 +252,45 @@ private fun LazyItemScope.ScreenItem(
     ) { content() }
 }
 
-private fun LazyListScope.balanceItems(
-    state: DashboardUiState.Content,
-    chart: ChartModel,
-    start: StartChecklistModel,
-) {
-    item(key = "hero") {
-        ScreenItem(Modifier.padding(top = Dimens.Space8)) {
-            DashboardHero(
-                netCents = state.netCents,
-                savingsRate = state.savingsRate,
-                scrubbedCents = chart.scrubbedIndex?.let { chart.series.getOrNull(it) },
-            )
-        }
-    }
+private fun LazyListScope.startItems(start: StartChecklistModel) {
     if (start.state is StartChecklistUiState.Visible) {
         item(key = "start_checklist") {
-            ScreenItem(Modifier.padding(top = Dimens.Space16)) {
+            ScreenItem(Modifier.padding(top = Dimens.Space8)) {
                 StartChecklistCard(state = start.state, onOpenStep = start.onOpenStep, onDismiss = start.onDismiss)
             }
         }
     }
-    if (state.expenses.isNotEmpty() || state.income.isNotEmpty()) {
-        item(key = "chart") {
-            BalanceLineChart(
-                series = chart.series,
-                startDate = chart.startDate,
-                onScrub = chart.onScrub,
-                modifier = motionAnimateItem(Modifier.padding(top = Dimens.Space8)),
-            )
-        }
-    }
-    item(key = "stats") {
-        ScreenItem(Modifier.padding(top = Dimens.Space24)) {
-            DashboardStatStrip(
-                incomeCents = state.incomeCents,
-                spendingCents = state.spendingCents,
-                savedCents = state.savedCents,
-                fixedSpendingCents = state.fixedSpendingCents,
-            )
-        }
-    }
 }
 
-private fun LazyListScope.planItems(
+private fun LazyListScope.summaryItems(
     state: DashboardUiState.Content,
-    actions: DashboardActions,
     callbacks: DashboardCallbacks,
 ) {
-    item(key = "safe_to_spend") {
-        ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            SafeToSpendSection(state = state, onOpenMonthlyPlan = { callbacks.onOpenPlan(state.period) })
+    item(key = "income") {
+        ScreenItem(Modifier.padding(top = Dimens.Space8)) {
+            IncomeSummaryCard(state = state, onClick = { callbacks.onOpenIncomeTab(state.period) })
         }
     }
-    item(key = "upcoming") {
-        ScreenItem {
-            UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
+    item(key = "spending") {
+        ScreenItem(Modifier.padding(top = Dimens.Space16)) {
+            SpendingSummaryCard(state = state, onClick = { callbacks.onOpenSpendingTab(state.period) })
+        }
+    }
+    state.invested?.let { invested ->
+        item(key = "invested") {
+            ScreenItem(Modifier.padding(top = Dimens.Space16)) {
+                InvestedRow(
+                    figure = invested,
+                    month = state.budgetMonth,
+                    isCurrentMonth = state.budgetMonthIsCurrent,
+                    onClick = { callbacks.onOpenInvestments(state.period) },
+                )
+            }
+        }
+    }
+    state.leftover?.let { leftover ->
+        item(key = "leftover") {
+            ScreenItem(Modifier.padding(top = Dimens.Space12)) { LeftoverRow(figure = leftover) }
         }
     }
 }

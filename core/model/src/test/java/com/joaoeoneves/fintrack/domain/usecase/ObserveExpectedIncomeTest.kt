@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MANAGED_MEAL
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -35,6 +36,12 @@ class ObserveExpectedIncomeTest {
 
     private suspend fun expected(today: LocalDate) = useCase(today, utc).first()
 
+    /** The rows of [today]'s own month (earlier months are listed separately). */
+    private suspend fun rowsOf(today: LocalDate): List<IncomeRow> {
+        val month = YearMonth.from(today)
+        return expected(today).entries.filter { it.month == month }.map { it.row }
+    }
+
     @Test
     fun emptyPlan_hasNoRows() =
         runTest {
@@ -50,7 +57,7 @@ class ObserveExpectedIncomeTest {
         runTest {
             plan.savePlannedIncome(line("p1"))
 
-            assertTrue(expected(LocalDate.of(2026, 10, 22)).rows.isEmpty())
+            assertTrue(rowsOf(LocalDate.of(2026, 10, 22)).isEmpty())
         }
 
     @Test
@@ -58,7 +65,7 @@ class ObserveExpectedIncomeTest {
         runTest {
             plan.savePlannedIncome(line("p1"))
 
-            assertEquals(listOf("p1"), expected(LocalDate.of(2026, 10, 23)).rows.map { it.lines.single().id })
+            assertEquals(listOf("p1"), rowsOf(LocalDate.of(2026, 10, 23)).map { it.lines.single().id })
         }
 
     @Test
@@ -66,8 +73,8 @@ class ObserveExpectedIncomeTest {
         runTest {
             plan.savePlannedIncome(line("p1"))
 
-            assertEquals(1, expected(LocalDate.of(2026, 10, 30)).rows.size)
-            assertEquals(1, expected(LocalDate.of(2026, 10, 31)).rows.size)
+            assertEquals(1, rowsOf(LocalDate.of(2026, 10, 30)).size)
+            assertEquals(1, rowsOf(LocalDate.of(2026, 10, 31)).size)
         }
 
     @Test
@@ -76,8 +83,8 @@ class ObserveExpectedIncomeTest {
             plan.savePlannedIncome(line("p1"))
 
             // Jan 2027: payday Fri 29, so the window opens Fri 22.
-            assertTrue(useCase(LocalDate.of(2027, 1, 21), utc).first().rows.isEmpty())
-            assertEquals(1, useCase(LocalDate.of(2027, 1, 22), utc).first().rows.size)
+            assertTrue(rowsOf(LocalDate.of(2027, 1, 21)).isEmpty())
+            assertEquals(1, rowsOf(LocalDate.of(2027, 1, 22)).size)
         }
 
     @Test
@@ -88,7 +95,7 @@ class ObserveExpectedIncomeTest {
             plan.savePlannedIncome(line("b", order = 1))
             incomes.addIncome(a.paydayIncome(oct, 21, LocalDate.of(2026, 10, 25), utc)!!)
 
-            assertEquals(listOf("b"), expected(LocalDate.of(2026, 10, 28)).rows.map { it.lines.single().id })
+            assertEquals(listOf("b"), rowsOf(LocalDate.of(2026, 10, 28)).map { it.lines.single().id })
         }
 
     @Test
@@ -98,7 +105,7 @@ class ObserveExpectedIncomeTest {
             plan.savePlannedIncome(a)
             incomes.addIncome(a.paydayIncome(oct, 21, LocalDate.of(2026, 10, 30), utc)!!)
 
-            assertTrue(expected(LocalDate.of(2026, 10, 30)).rows.isEmpty())
+            assertTrue(rowsOf(LocalDate.of(2026, 10, 30)).isEmpty())
         }
 
     @Test
@@ -110,7 +117,7 @@ class ObserveExpectedIncomeTest {
             plan.savePlannedIncome(net2)
             incomes.addIncome(net.paydayIncome(oct, 21, LocalDate.of(2026, 10, 25), utc)!!)
 
-            val rows = expected(LocalDate.of(2026, 10, 28)).rows
+            val rows = rowsOf(LocalDate.of(2026, 10, 28))
 
             assertEquals(1, rows.size)
             assertEquals(2, rows.single().lines.size)
@@ -124,7 +131,7 @@ class ObserveExpectedIncomeTest {
             val yearly = line("yearly", order = 2).copy(frequency = IncomeFrequency.YEARLY, monthOfYear = 6)
             plan.savePlannedIncome(yearly)
 
-            assertTrue(expected(LocalDate.of(2026, 10, 28)).rows.isEmpty())
+            assertTrue(rowsOf(LocalDate.of(2026, 10, 28)).isEmpty())
         }
 
     @Test
@@ -137,7 +144,7 @@ class ObserveExpectedIncomeTest {
             val result = expected(LocalDate.of(2026, 10, 28))
 
             assertEquals(18, result.workingDays)
-            assertEquals(18_000L, result.rows.single().cents)
+            assertEquals(18_000L, rowsOf(LocalDate.of(2026, 10, 28)).single().cents)
         }
 
     @Test
@@ -147,6 +154,38 @@ class ObserveExpectedIncomeTest {
             plan.savePlannedIncome(a)
             incomes.addIncome(a.paydayIncome(YearMonth.of(2026, 9), 22, LocalDate.of(2026, 9, 30), utc)!!)
 
-            assertEquals(1, expected(LocalDate.of(2026, 10, 28)).rows.size)
+            assertEquals(1, rowsOf(LocalDate.of(2026, 10, 28)).size)
+        }
+
+    @Test
+    fun lastMonthsUnreceivedLine_staysListedAsLastMonth() =
+        runTest {
+            plan.savePlannedIncome(line("a"))
+
+            val entries = expected(LocalDate.of(2026, 10, 5)).entries
+
+            assertEquals(listOf(YearMonth.of(2026, 9)), entries.map { it.month })
+            assertEquals(LocalDate.of(2026, 9, 30), entries.single().payDate)
+        }
+
+    @Test
+    fun lastMonthsReceivedLine_isNotListed() =
+        runTest {
+            val a = line("a")
+            plan.savePlannedIncome(a)
+            incomes.addIncome(a.paydayIncome(YearMonth.of(2026, 9), 22, LocalDate.of(2026, 9, 30), utc)!!)
+
+            assertTrue(expected(LocalDate.of(2026, 10, 5)).entries.isEmpty())
+        }
+
+    @Test
+    fun nextMonth_isNeverListed() =
+        runTest {
+            plan.savePlannedIncome(line("a"))
+
+            // 28 Oct: October's payday (30th) is in the window, November's (30 Nov) is not and must not appear.
+            val months = expected(LocalDate.of(2026, 10, 28)).entries.map { it.month }
+
+            assertTrue(YearMonth.of(2026, 11) !in months)
         }
 }

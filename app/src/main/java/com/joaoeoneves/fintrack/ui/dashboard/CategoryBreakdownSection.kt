@@ -120,12 +120,14 @@ fun rankedBreakdown(slices: List<CategoryTotal>): List<BreakdownEntry> {
 /**
  * The Activity header's breakdown block: total outflow (or the planned total), an "Actual | Planned"
  * switch when the plan has planned allocations, and the stateless [CategoryBreakdown] below it. When
- * [onCategoryClick] is set, each category row is tappable.
+ * [onCategoryClick] is set, each category row is tappable. With [showTotal] false (the Spending tab, which already
+ * shows "Spent") the heading is "By category" and the big total is left out.
  */
 @Composable
 fun CategoryBreakdownSection(
     breakdown: ActivityBreakdown,
     modifier: Modifier = Modifier,
+    showTotal: Boolean = true,
     onCategoryClick: ((Category) -> Unit)? = null,
 ) {
     val hasPlanned = breakdown.plannedSlices.isNotEmpty()
@@ -140,9 +142,7 @@ fun CategoryBreakdownSection(
     Column(modifier = modifier.fillMaxWidth()) {
         SectionTitle(
             title =
-                stringResource(
-                    if (planned) R.string.dashboard_planned_per_month else R.string.dashboard_total_outflow,
-                ),
+                stringResource(breakdownTitleRes(planned, showTotal)),
             trailing =
                 if (hasPlanned) {
                     { ActualPlannedTabs(planned = planned, onSelect = { showPlanned = it }) }
@@ -153,16 +153,19 @@ fun CategoryBreakdownSection(
         if (!planned && !breakdown.hasExpenses) {
             BreakdownEmpty()
         } else {
-            Text(
-                text = formatAmountCents(slices.clampedForChart().sumOf { it.totalCents }),
-                style = AmountLarge,
-                maxLines = 1,
-            )
+            val bigTotal = showTotal || planned
+            if (bigTotal) {
+                Text(
+                    text = formatAmountCents(slices.clampedForChart().sumOf { it.totalCents }),
+                    style = AmountLarge,
+                    maxLines = 1,
+                )
+            }
             CategoryBreakdown(
                 slices = slices,
                 totalDescriptionRes = if (planned) R.string.cd_pie_chart_planned_total else R.string.cd_pie_chart_total,
                 onCategoryClick = onCategoryClick,
-                modifier = Modifier.padding(top = Dimens.Space16),
+                modifier = Modifier.padding(top = if (bigTotal) Dimens.Space16 else Dimens.Space8),
             )
         }
     }

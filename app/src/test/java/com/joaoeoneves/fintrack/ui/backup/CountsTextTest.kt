@@ -42,7 +42,7 @@ class CountsTextTest {
             )
 
         assertEquals(
-            "Expenses: 1\nIncome: 2\nEnvelopes: 3\nCategories: 4\nExpected income: 5\nRecurring: 6\n" +
+            "Expenses: 1\nIncome: 2\nGroups: 3\nCategories: 4\nExpected income: 5\nRecurring: 6\n" +
                 "Savings plans: 7\nSalary profile: Yes",
             text,
         )

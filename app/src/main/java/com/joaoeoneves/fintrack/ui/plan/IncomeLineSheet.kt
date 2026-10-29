@@ -118,7 +118,7 @@ private fun EffectiveFromField(
     onChange: (YearMonth) -> Unit,
 ) {
     val asked = editor.editingId == null || amountCents != (editor.initialAmountCents ?: 0L)
-    if (!editor.managed && asked) EffectiveFromRow(month = month, onChange = onChange)
+    if (!editor.managed && asked) AdvancedEffectiveFrom(month = month, onChange = onChange)
 }
 
 @Composable

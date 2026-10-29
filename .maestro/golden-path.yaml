@@ -79,27 +79,37 @@ tags:
 - assertVisible: "Previous month"
 - assertVisible: "Next month"
 - assertVisible: "[A-Z][a-z]+ [0-9]{4}"
-- assertVisible: "Net balance"
-# A fresh guest sees the "Get started" card; the Income/Expenses/Saved columns only appear once there is data.
-- assertVisible: "Get started"
-# The balance card's outflow column is "Expenses"; investments count as saved,
-# shown in their own "Saved & invested" column, plus a "Savings rate: NN%" (or "—") line.
-# (The savings-rate line only appears once there is data, so it is not asserted on a fresh guest.)
-# The bottom navigation bar shows its four tabs on Home (Home, Activity, Plan, Savings).
+# 5.0: every figures screen has a Month | Year switch (Home included).
+- assertVisible: "Month"
+- assertVisible: "Year"
+# Home: income card, spending card, left-over row. A fresh guest also sees the "Get started" card.
+- assertVisible:
+    id: "dashboard_income_card"
+- assertVisible:
+    id: "dashboard_spending_card"
+- assertVisible:
+    id: "start_checklist"
+# The bottom navigation bar shows four tabs: Home, Activity, Income, Spending.
 - assertVisible:
     id: "nav_home"
 - assertVisible:
     id: "nav_activity"
 - assertVisible:
-    id: "nav_plan"
+    id: "nav_income"
 - assertVisible:
-    id: "nav_savings"
-# The Insights tab is gone (its content moved into Activity): check the Savings tab opens, then return to Home.
+    id: "nav_spending"
+# Month | Year switch on one screen (Income): Year shows the year label, Month restores the month label.
 - tapOn:
-    id: "nav_savings"
-- assertVisible: "Savings"
-- assertVisible:
-    id: "account_avatar"
+    id: "nav_income"
+- assertVisible: "Expected income"
+- tapOn: "Year"
+- assertVisible: "20[0-9]{2}"
+- assertNotVisible: "[A-Z][a-z]+ [0-9]{4}"
+- tapOn: "Month"
+- assertVisible: "[A-Z][a-z]+ [0-9]{4}"
+- tapOn:
+    id: "nav_spending"
+- assertVisible: "By category"
 - tapOn:
     id: "nav_home"
 - assertVisible:
@@ -113,7 +123,8 @@ tags:
 - scroll
 - takeScreenshot: build/maestro/golden-path-dashboard-bottom
 - scrollUntilVisible:
-    element: "Net balance"
+    element:
+      id: "dashboard_income_card"
     direction: UP
 
 # --- 2: Add a new expense via the Dashboard's floating add pill ---
@@ -180,27 +191,31 @@ tags:
     id: "see_all_activity"
 - assertVisible:
     id: "activity_list"
-# Activity (4.1): one period selector (no 1M/3M/6M/1A tabs), a one-line summary ("Spent X · Received Y")
-# and no analytics header / "Show details" toggle. The summary line opens the pushed Evolution screen.
+# Activity: one period selector (no 1M/3M/6M/1A tabs), a one-line summary ("Spent X · Received Y")
+# and no analytics header / "Show details" toggle.
 - assertVisible: "Spent .*"
 - assertNotVisible: "Show breakdown"
 - assertNotVisible: "Show details"
 - assertNotVisible: "Fixed vs variable"
+# 5.0: the summary's "Spent" opens the Spending tab (no pushed Evolution screen any more).
 - tapOn: "Spent .*"
 - extendedWaitUntil:
-    visible: "Evolution"
+    visible: "By category"
     timeout: 10000
-- assertVisible: "By category"
+- assertVisible:
+    id: "nav_spending"
+- takeScreenshot: build/maestro/golden-path-spending
 # A category row opens its detail page (the only expense is the one created above).
-- scroll
-- takeScreenshot: build/maestro/golden-path-evolution
+- scrollUntilVisible:
+    element: "Shopping.*"
 - tapOn: "Shopping.*"
 - extendedWaitUntil:
     visible: ".*Maestro E2E Test Expense.*"
     timeout: 10000
 - back
-- assertVisible: "Evolution"
-- back
+- assertVisible: "By category"
+- tapOn:
+    id: "nav_activity"
 - assertVisible:
     id: "activity_list"
 - scrollUntilVisible:

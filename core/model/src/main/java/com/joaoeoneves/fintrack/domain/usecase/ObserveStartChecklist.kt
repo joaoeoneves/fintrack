@@ -1,14 +1,10 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
-import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.StartChecklist
 import com.joaoeoneves.fintrack.domain.model.startChecklistOf
-import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
-import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
@@ -22,9 +18,7 @@ class ObserveStartChecklist
     constructor(
         private val salaryProfiles: SalaryProfileRepository,
         private val plannedIncome: PlannedIncomeRepository,
-        private val envelopes: EnvelopeRepository,
         private val recurring: RecurringRepository,
-        private val goals: GoalRepository,
         private val expenses: ExpenseRepository,
     ) {
         operator fun invoke(): Flow<StartChecklist> {
@@ -32,12 +26,8 @@ class ObserveStartChecklist
                 combine(salaryProfiles.observeSalaryProfile(), plannedIncome.observePlannedIncome()) { profile, lines ->
                     StartIncomeInputs(profile, lines)
                 }
-            val plan =
-                combine(envelopes.observeEnvelopes(), recurring.observeRecurring()) { envelopes, recurring ->
-                    StartPlanInputs(envelopes, recurring)
-                }
-            return combine(income, plan, goals.observeGoals(), expenses.observeHasAnyExpense()) { inc, pl, goals, has ->
-                startChecklistOf(inc.profile, inc.lines, pl.envelopes, pl.recurring, goals, has)
+            return combine(income, recurring.observeRecurring(), expenses.observeHasAnyExpense()) { inc, rec, has ->
+                startChecklistOf(inc.profile, inc.lines, rec, has)
             }
         }
     }
@@ -45,9 +35,4 @@ class ObserveStartChecklist
 private class StartIncomeInputs(
     val profile: SalaryProfile?,
     val lines: List<PlannedIncome>,
-)
-
-private class StartPlanInputs(
-    val envelopes: List<Envelope>,
-    val recurring: List<RecurringItem>,
 )

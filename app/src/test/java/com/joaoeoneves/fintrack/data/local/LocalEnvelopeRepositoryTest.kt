@@ -165,7 +165,7 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun save_fixedAmount_clearsTheMembersBudgets() =
+    fun save_fixedAmount_leavesTheMembersBudgetsUntouched() =
         runStoreTest {
             val food = BuiltInCategories.FOOD.id
             val shopping = BuiltInCategories.SHOPPING.id
@@ -174,7 +174,14 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
 
             groups.saveEnvelope(edit(null, "Fixed", amount = 5_000, members = setOf(food)))
 
-            assertEquals(listOf(shopping), budgets.observeBudgets().first().map { it.categoryId })
+            assertEquals(
+                setOf(food, shopping),
+                budgets
+                    .observeBudgets()
+                    .first()
+                    .map { it.categoryId }
+                    .toSet(),
+            )
         }
 
     @Test
@@ -255,7 +262,7 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun delete_alsoDeletesTheBudgetsOfItsCategories_only() =
+    fun delete_leavesTheBudgetsOfItsCategoriesUntouched() =
         runStoreTest {
             val food = groups.addEnvelope("Food").getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, food)
@@ -264,11 +271,18 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
 
             assertTrue(groups.deleteEnvelope(food).isSuccess)
 
-            assertEquals(listOf(BuiltInCategories.SHOPPING.id), budgets.observeBudgets().first().map { it.categoryId })
+            assertEquals(
+                setOf(BuiltInCategories.FOOD.id, BuiltInCategories.SHOPPING.id),
+                budgets
+                    .observeBudgets()
+                    .first()
+                    .map { it.categoryId }
+                    .toSet(),
+            )
         }
 
     @Test
-    fun delete_unfilesABuiltInMember_andDropsItsBudget() =
+    fun delete_unfilesABuiltInMember_andKeepsItsBudget() =
         runStoreTest {
             val food = BuiltInCategories.FOOD.id
             val limits = mapOf(food to Budget(food, 300))
@@ -291,7 +305,7 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
                     .single { it.id == food }
                     .groupId,
             )
-            assertEquals(emptyList<Budget>(), budgets.observeBudgets().first().untimed())
+            assertEquals(listOf(Budget(food, 300)), budgets.observeBudgets().first().untimed())
         }
 
     @Test

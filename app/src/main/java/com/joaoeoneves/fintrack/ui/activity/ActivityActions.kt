@@ -12,7 +12,8 @@ data class ActivityCallbacks(
     val onAddExpense: (Period) -> Unit,
     val onAddIncome: (Period) -> Unit,
     val onOpenSettings: () -> Unit,
-    val onOpenEvolution: (Period, ActivityType) -> Unit = { _, _ -> },
+    val onOpenSpending: (Period) -> Unit = {},
+    val onOpenIncomeTab: (Period) -> Unit = {},
 )
 
 /** Bundles the Activity list's row-level, filter, period and add actions to keep composable parameter lists short. */
@@ -28,5 +29,6 @@ data class ActivityActions(
     val onDelete: (String) -> Unit,
     val onAddExpense: () -> Unit,
     val onAddIncome: () -> Unit,
-    val onOpenEvolution: () -> Unit,
+    val onOpenSpending: () -> Unit,
+    val onOpenIncomeTab: () -> Unit,
 )

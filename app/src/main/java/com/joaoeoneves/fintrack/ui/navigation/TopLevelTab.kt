@@ -5,7 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -25,8 +25,8 @@ enum class TopLevelTab(
 ) {
     HOME(HomeGraph, R.string.nav_home, Icons.Default.Home, TestTags.NAV_HOME),
     ACTIVITY(ActivityGraph, R.string.nav_activity, Icons.AutoMirrored.Filled.ReceiptLong, TestTags.NAV_ACTIVITY),
-    PLAN(PlanGraph, R.string.nav_plan, Icons.Default.AccountBalanceWallet, TestTags.NAV_PLAN),
-    SAVINGS(SavingsGraph, R.string.nav_savings, Icons.Default.Savings, TestTags.NAV_SAVINGS),
+    INCOME(IncomeGraph, R.string.nav_income, Icons.Default.AccountBalanceWallet, TestTags.NAV_INCOME),
+    SPENDING(SpendingGraph, R.string.nav_spending, Icons.Default.ShoppingCart, TestTags.NAV_SPENDING),
 }
 
 /** Whether this destination is one of the tab roots (the bottom bar shows only there). */
@@ -39,6 +39,6 @@ fun NavDestination?.currentTab(): TopLevelTab? =
     }
 
 private fun NavDestination.isTabRoot(): Boolean {
-    val roots = listOf(hasRoute<Home>(), hasRoute<Activity>(), hasRoute<PlanHome>(), hasRoute<SavingsHome>())
+    val roots = listOf(hasRoute<Home>(), hasRoute<Activity>(), hasRoute<IncomeHome>(), hasRoute<SpendingHome>())
     return roots.any { it }
 }

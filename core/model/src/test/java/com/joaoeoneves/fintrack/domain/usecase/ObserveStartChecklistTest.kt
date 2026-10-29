@@ -1,8 +1,6 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
-import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
@@ -23,11 +21,9 @@ import java.time.Instant
 class ObserveStartChecklistTest {
     private val profiles = FakeSalaryProfileRepository()
     private val plan = FakePlannedIncomeRepository()
-    private val envelopes = FakeEnvelopeRepository()
     private val recurring = FakeRecurringRepository()
-    private val goals = FakeGoalRepository()
     private val expenses = FakeExpenseRepository()
-    private val useCase = ObserveStartChecklist(profiles, plan, envelopes, recurring, goals, expenses)
+    private val useCase = ObserveStartChecklist(profiles, plan, recurring, expenses)
 
     @Test
     fun emptyRepositories_nothingDone() =
@@ -40,7 +36,6 @@ class ObserveStartChecklistTest {
         runTest {
             profiles.saveSalaryProfile(SalaryProfile(baseGrossCents = 100_000L))
             plan.savePlannedIncome(PlannedIncome("l1", "Pay", 100_000L, 0, autoRecord = true))
-            envelopes.addEnvelope("Home")
             recurring.saveRecurring(recurringItem(id = ""))
             expenses.addExpense(
                 Expense("e1", "Coffee", 300L, BuiltInCategories.FOOD, Instant.parse("2026-10-05T10:00:00Z"), null),
@@ -51,7 +46,6 @@ class ObserveStartChecklistTest {
             assertEquals(
                 setOf(
                     StartStep.SALARY,
-                    StartStep.ENVELOPES,
                     StartStep.BILLS,
                     StartStep.PAYDAY,
                     StartStep.FIRST_EXPENSE,

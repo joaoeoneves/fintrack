@@ -67,9 +67,7 @@ fun StartChecklistCard(
 private fun StartStep.titleRes(): Int =
     when (this) {
         StartStep.SALARY -> R.string.home_start_step_salary
-        StartStep.ENVELOPES -> R.string.home_start_step_envelopes
         StartStep.BILLS -> R.string.home_start_step_bills
-        StartStep.SAVINGS_PLAN -> R.string.home_start_step_savings
         StartStep.PAYDAY -> R.string.home_start_step_payday
         StartStep.FIRST_EXPENSE -> R.string.home_start_step_expense
     }

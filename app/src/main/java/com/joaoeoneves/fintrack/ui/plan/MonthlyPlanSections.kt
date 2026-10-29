@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.IncomeFunding
+import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.payDateIn
@@ -96,20 +96,18 @@ data class ExpectedIncomeModel(
     val rows: List<IncomeRow>,
     val canAdd: Boolean,
     val workingDays: WorkingDaysState,
-    /** The working days of the month that pays [workingDays]'s month (the previous one with the salary shift). */
-    val payWorkingDays: WorkingDaysState = workingDays,
     val receipts: IncomeReceipts,
     /** Keys of the manual rows that look like a repeat of the salary the profile already generates. */
     val duplicateKeys: Set<String> = emptySet(),
-    /** How income is attributed to months: the paying month of a row can be the one before the viewed month. */
-    val funding: IncomeFunding = IncomeFunding.unshifted(workingDays.month, workingDays.days),
+    /** What each income line pays in a month. */
+    val incomeMonth: IncomeMonth = IncomeMonth.forMonth(workingDays.month, workingDays.days),
 )
 
 /**
- * The salary-profile entry, the working-days row and the expected-income rows with what each pays in the
- * selected month. A manual line opens its editor on tap; every salary-profile row opens the salary profile (a row that
- * does not pay this month is not tappable). The add button is hidden at the line cap. Under the
- * header sits the month's payday; a paying row of a past or current month has a check that records it as received
+ * The expected-income rows with what each pays in the selected month. A manual line opens its editor on tap; every
+ * salary-profile row opens the salary profile (a row that does not pay this month is not tappable). The add button
+ * is hidden at the line cap. Under the header sits the month's payday; a paying row of a past or current month has a
+ * check that records it as received
  * today (the snackbar then offers to change the date or amount); once received it shows a green amount, the day it
  * was received and a filled check that undoes it after a confirmation.
  */
@@ -131,14 +129,6 @@ fun ExpectedIncomeCard(
                 color = FinTrackTheme.colors.textSecondary,
             )
         }
-        SettingsRow(
-            title = stringResource(R.string.plan_salary_profile_row),
-            onClick = actions.onOpenSalaryProfile,
-            showChevron = true,
-        )
-        Hairline()
-        WorkingDaysRow(state = model.payWorkingDays, onClick = actions.onEditWorkingDays)
-        Hairline()
         val (managed, manual) = rows.partition { it.component != null }
         if (managed.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_from_salary_profile))
         managed.forEach { key(it.key) { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) } }
@@ -160,6 +150,24 @@ fun ExpectedIncomeCard(
             },
             onDismiss = { undoing = null },
         )
+    }
+}
+
+/** The month's set-up rows: the salary profile and the working days, as a small settings-style group. */
+@Composable
+fun IncomeSetupGroup(
+    workingDays: WorkingDaysState,
+    actions: ExpectedIncomeActions,
+    modifier: Modifier = Modifier,
+) {
+    SettingsGroup(label = stringResource(R.string.tab_configure), modifier = modifier) {
+        SettingsRow(
+            title = stringResource(R.string.plan_salary_profile_row),
+            onClick = actions.onOpenSalaryProfile,
+            showChevron = true,
+        )
+        Hairline()
+        WorkingDaysRow(state = workingDays, onClick = actions.onEditWorkingDays)
     }
 }
 
@@ -202,7 +210,7 @@ private fun IncomeRowItem(
     val haptics = rememberFinTrackHaptics()
     val title = row.displayLabel()
     // Dated on the row's own pay day (last month's for a salary that pays the next month), never after today.
-    val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.funding), receipts.today)
+    val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.incomeMonth), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val undoLabel = stringResource(R.string.action_undo)
     val showCheck = paysThisMonth && (received || canReceive(row, model))
@@ -271,7 +279,10 @@ private fun IncomeRowItem(
 private fun canReceive(
     row: IncomeRow,
     model: ExpectedIncomeModel,
-): Boolean = model.receipts.canReceive || row.payDateIn(model.workingDays.month, model.funding) <= model.receipts.today
+): Boolean {
+    val payDate = row.payDateIn(model.workingDays.month, model.incomeMonth)
+    return model.receipts.canReceive || payDate <= model.receipts.today
+}
 
 /** An income row still to be received: the shared pending row, tapping it opens its editor. */
 @Suppress("LongParameterList") // the row, its model and the two actions are independent
@@ -284,7 +295,7 @@ private fun PendingIncomeRow(
     onReceive: () -> Unit,
     onChangeAmount: () -> Unit,
 ) {
-    val payDate = row.payDateIn(model.workingDays.month, model.funding)
+    val payDate = row.payDateIn(model.workingDays.month, model.incomeMonth)
     val status =
         listOfNotNull(
             autoRecordText(row) ?: stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
@@ -324,12 +335,12 @@ private fun receiveChange(
     date: LocalDate,
 ): ReceiveChange {
     val month = model.workingDays.month
-    val paying = row.payingLines(month, model.funding)
+    val paying = row.payingLines(month, model.incomeMonth)
     return ReceiveChange(
         title = title,
         today = model.receipts.today,
         date = date,
-        editableAmountCents = paying.singleOrNull()?.let { model.funding.amountIn(it, month) },
+        editableAmountCents = paying.singleOrNull()?.let { model.incomeMonth.amountIn(it, month) },
         onConfirm = { date, cents -> actions.onReceive(row, date, cents) },
     )
 }
