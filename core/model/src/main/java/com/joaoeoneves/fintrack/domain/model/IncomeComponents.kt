@@ -65,22 +65,4 @@ fun incomeRowsIn(
     lines: List<PlannedIncome>,
     month: YearMonth,
     workingDays: Int,
-): List<IncomeRow> = incomeRowsIn(lines, month, IncomeFunding.unshifted(month, workingDays))
-
-/** The year's income rows like [incomeRowsIn], with the year's total and paying months; empty rows are dropped. */
-fun annualIncomeRowsOf(
-    lines: List<PlannedIncome>,
-    months: List<YearMonth>,
-    funding: IncomeFunding,
-): List<IncomeRow> =
-    rowsOf(lines) { component, extraId, group ->
-        val byMonth = months.sorted().map { month -> month.monthValue to group.sumOf { funding.amountIn(it, month) } }
-        val paying = byMonth.filter { it.second > 0 }.map { it.first }
-        IncomeRow(component, group, byMonth.sumOf { it.second }, paying, extraId)
-    }.filter { it.cents > 0 }
-
-/** The year's income rows for a plain map of working days per month (no salary shift). */
-fun annualIncomeRowsOf(
-    lines: List<PlannedIncome>,
-    workingDays: Map<YearMonth, Int>,
-): List<IncomeRow> = annualIncomeRowsOf(lines, workingDays.keys.toList(), IncomeFunding(false) { workingDays[it] ?: 0 })
+): List<IncomeRow> = incomeRowsIn(lines, month, IncomeMonth.forMonth(month, workingDays))

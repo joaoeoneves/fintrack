@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.domain.model
 
-import java.time.LocalDate
 import java.time.YearMonth
 
 /**
@@ -39,8 +38,7 @@ data class MonthlyPlanSummary(
  * Evaluates the plan for [month]: [buckets] are the month's budget rows, [monthIncome] only that month's
  * income and [workingDays] the working days of the month (per-working-day lines multiply by it). With
  * [envelopes] the buckets filed under one commit pooled (the larger of its amount and its spend); an
- * envelope with a fixed amount counts as spending. With [funding] the income is attributed to months by it (see
- * [IncomeFunding]); without it every line counts in the month it pays in.
+ * envelope with a fixed amount counts as spending.
  */
 @Suppress("LongParameterList") // The plan's inputs, one per source.
 fun monthlyPlanOf(
@@ -50,9 +48,8 @@ fun monthlyPlanOf(
     month: YearMonth,
     workingDays: Int,
     envelopes: List<Envelope> = emptyList(),
-    funding: IncomeFunding? = null,
 ): MonthlyPlanSummary {
-    val income = funding ?: IncomeFunding.unshifted(month, workingDays)
+    val income = IncomeMonth.forMonth(month, workingDays)
     val activeIncome = plannedIncome.asOf(month)
     val (extras, regular) = activeIncome.partition { it.isExtra }
     val split = splitBuckets(buckets, envelopes.asOf(month))
@@ -89,20 +86,3 @@ fun List<CategoryBudget>.plannedSlices(): List<CategoryTotal> =
     mapNotNull { bucket ->
         bucket.planned?.takeIf { it > 0 }?.let { CategoryTotal(bucket.category, it) }
     }
-
-/** What can be spent per remaining day: [cents] over [daysLeft] days, today included. */
-data class DailyAllowance(
-    val cents: Long,
-    val daysLeft: Int,
-)
-
-/** The daily allowance for the current [month] only, and only while there is something left to spend. */
-fun dailyAllowanceOf(
-    safeToSpendCents: Long,
-    month: YearMonth,
-    today: LocalDate,
-): DailyAllowance? {
-    if (safeToSpendCents <= 0 || YearMonth.from(today) != month) return null
-    val daysLeft = month.lengthOfMonth() - today.dayOfMonth + 1
-    return DailyAllowance(cents = safeToSpendCents / daysLeft, daysLeft = daysLeft)
-}
