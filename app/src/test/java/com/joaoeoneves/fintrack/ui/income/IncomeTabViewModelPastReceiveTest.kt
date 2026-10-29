@@ -25,7 +25,7 @@ import java.time.ZoneOffset
 class IncomeTabViewModelPastReceiveTest : IncomeTabViewModelTestBase() {
     private val sep = YearMonth.of(2026, 9)
 
-    private fun september() = viewModel(SavedStateHandle(mapOf("month" to Period.Month(sep).encode())))
+    private fun september() = viewModel(SavedStateHandle(mapOf("period" to Period.Month(sep).encode())))
 
     @Test
     fun pastMonth_canReceive() =

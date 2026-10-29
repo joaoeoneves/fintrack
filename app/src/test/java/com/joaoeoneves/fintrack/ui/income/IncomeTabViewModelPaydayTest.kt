@@ -46,16 +46,6 @@ class IncomeTabViewModelPaydayTest : IncomeTabViewModelTestBase() {
             assertEquals(LocalDate.of(2026, 10, 20), vm.content().receipts.payday)
         }
 
-    private fun managed(day: Int?) =
-        PlannedIncome(
-            id = "salary",
-            label = "Salary",
-            amountCents = 100_000L,
-            order = 0,
-            payDay = day,
-            managedKey = "profile_net_salary",
-        )
-
     @Test
     fun noPayingRows_haveNoPayday() =
         runTest(testDispatcher) {
@@ -69,7 +59,7 @@ class IncomeTabViewModelPaydayTest : IncomeTabViewModelTestBase() {
     fun monthRouteArgument_opensThePlanOnThatMonth() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(fixed("a", 10))
-            val vm = viewModel(SavedStateHandle(mapOf("month" to "month:2026-08")))
+            val vm = viewModel(SavedStateHandle(mapOf("period" to "month:2026-08")))
             collect(vm)
 
             assertEquals(YearMonth.of(2026, 8), vm.content().workingDays.month)

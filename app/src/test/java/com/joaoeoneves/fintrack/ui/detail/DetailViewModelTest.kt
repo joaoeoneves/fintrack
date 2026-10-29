@@ -132,7 +132,7 @@ class DetailViewModelTest {
             val c = state(detail("categoryId" to shopping).first) as DetailUiState.Content
 
             assertEquals(12, c.months.size)
-            assertEquals(YearMonth.of(2026, 10), (c.period as Period.Month).yearMonth)
+            assertEquals(Period.CurrentMonth, c.period)
             assertEquals(1_000L, c.amountCents)
             assertEquals(listOf("oct"), c.movements.map { it.id })
             assertEquals(DetailEditTarget.CategoryEditor(shopping), c.editTarget)
@@ -178,7 +178,7 @@ class DetailViewModelTest {
             assertEquals(5_000L, (restored as DetailUiState.Content).amountCents)
 
             val garbage = state(detail("categoryId" to shopping, "selectedPeriod" to "nope").first)
-            assertEquals(YearMonth.of(2026, 10), ((garbage as DetailUiState.Content).period as Period.Month).yearMonth)
+            assertEquals(Period.CurrentMonth, (garbage as DetailUiState.Content).period)
         }
 
     @Test

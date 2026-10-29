@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MANAGED_MEAL
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -35,8 +36,11 @@ class ObserveExpectedIncomeTest {
 
     private suspend fun expected(today: LocalDate) = useCase(today, utc).first()
 
-    /** The rows of [today]'s own month (earlier months' unreceived lines are listed separately). */
-    private suspend fun rowsOf(today: LocalDate) = expected(today).entries.filter { it.month == YearMonth.from(today) }.map { it.row }
+    /** The rows of [today]'s own month (earlier months are listed separately). */
+    private suspend fun rowsOf(today: LocalDate): List<IncomeRow> {
+        val month = YearMonth.from(today)
+        return expected(today).entries.filter { it.month == month }.map { it.row }
+    }
 
     @Test
     fun emptyPlan_hasNoRows() =
