@@ -10,7 +10,7 @@ import java.time.YearMonth
 class RelabelPaydayIncomesTest {
     private val en = FakeSalaryLineLabelsProvider.ENGLISH
     private val pt = FakeSalaryLineLabelsProvider.PORTUGUESE
-    private val defaults = listOf(en, pt)
+    private val defaults = FakeSalaryLineLabelsProvider().knownDefaults()
     private val oct = YearMonth.of(2026, 10)
 
     private fun income(
@@ -28,11 +28,25 @@ class RelabelPaydayIncomesTest {
     }
 
     @Test
-    fun sharedSubsidyLabel_coversHolidayAndChristmas() {
-        val holiday = income(paydayIncomeId(MANAGED_HOLIDAY, oct), "Subsidy")
-        val christmas = income(paydayIncomeId(MANAGED_CHRISTMAS, oct), "Subsidy")
+    fun holidayAndChristmasPaydays_areRenamedToTheirOwnLabels() {
+        val holiday = income("pay_profile_holiday_202610", "Holiday subsidy")
+        val christmas = income("pay_profile_christmas_202610", "Christmas subsidy")
 
-        assertEquals(listOf("Subsídio", "Subsídio"), relabel(holiday, christmas).map { it.source })
+        assertEquals(
+            listOf("Subsídio de férias", "Subsídio de Natal"),
+            relabel(holiday, christmas).map { it.source },
+        )
+    }
+
+    @Test
+    fun legacySharedSubsidySource_isRenamedPerLine() {
+        val holiday = income(paydayIncomeId(MANAGED_HOLIDAY, oct), "Subsidy")
+        val christmas = income(paydayIncomeId(MANAGED_CHRISTMAS, oct), "Subsídio")
+
+        assertEquals(
+            listOf("Subsídio de férias", "Subsídio de Natal"),
+            relabel(holiday, christmas).map { it.source },
+        )
     }
 
     @Test
