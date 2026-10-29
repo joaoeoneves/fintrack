@@ -36,6 +36,16 @@ data class Activity(
     val envelope: String? = null,
 )
 
+/**
+ * The Evolution screen, pushed on top of whichever tab is current; [period] is an encoded `Period` token (null: the
+ * current month) and [type] is `"INCOME"` or anything else for expenses; both are only initial values.
+ */
+@Serializable
+data class Evolution(
+    val period: String? = null,
+    val type: String? = null,
+)
+
 /** Start destination of [PlanGraph]; [month] is an encoded `Period` token (null: the current month). */
 @Serializable
 data class PlanHome(

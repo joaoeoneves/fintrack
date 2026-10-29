@@ -5,7 +5,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -13,15 +12,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
 import com.joaoeoneves.fintrack.ui.activity.ActivityScreen
+import com.joaoeoneves.fintrack.ui.activity.ActivityType
 import com.joaoeoneves.fintrack.ui.common.newTransactionArg
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
+import com.joaoeoneves.fintrack.ui.evolution.EvolutionScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
 import com.joaoeoneves.fintrack.ui.plan.ConfigureActions
@@ -119,6 +119,10 @@ private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
                             navController.navigate(AddEditIncome(period = period.newTransactionArg()))
                         },
                         onOpenSettings = { navController.navigate(Settings) },
+                        onOpenEvolution = { period, type ->
+                            val token = if (type == ActivityType.INCOME) ACTIVITY_TYPE_INCOME else null
+                            navController.navigate(Evolution(period = period.encode(), type = token))
+                        },
                     ),
             )
         }
@@ -199,8 +203,13 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
             onOpenSalaryProfile = { hasProfile ->
                 navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
             },
-            onOpenHistory = { period -> navController.openIncomeHistory(period) },
+            onOpenHistory = { period ->
+                navController.navigate(Evolution(period = period.encode(), type = ACTIVITY_TYPE_INCOME))
+            },
         )
+    }
+    composable<Evolution> {
+        EvolutionScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
     composable<Categories> {
         CategoriesScreen(onBack = dropUnlessResumed { navController.popBackStack() })
@@ -212,6 +221,11 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
             onOpenIncome = { navController.navigate(PlanIncome()) },
         )
     }
+    salaryRoutes(navController)
+}
+
+/** The salary profile editor and set-up wizard. */
+private fun NavGraphBuilder.salaryRoutes(navController: NavHostController) {
     composable<EditSalaryProfile> {
         SalaryProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
@@ -272,9 +286,4 @@ private fun NavGraphBuilder.formRoutes(
             onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }
-}
-
-/** Opens Activity on the Income tab for the month of [period] (the income screen's "View history"). */
-private fun NavController.openIncomeHistory(period: Period) {
-    navigateToTabWith(Activity(period = period.encode(), type = ACTIVITY_TYPE_INCOME))
 }
