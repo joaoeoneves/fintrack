@@ -56,17 +56,17 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
         val result = BackupCodec.decode(text).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(21, result.document.schemaVersion)
+        assertEquals(22, result.document.schemaVersion)
         assertTrue(result.document.goals.isEmpty())
         assertEquals(0, result.document.counts().goals)
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v21File_isUnsupported() {
+    fun v23File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(22),
-            BackupCodec.decode("""{$header,"schemaVersion":22}"""),
+            BackupDecodeResult.UnsupportedVersion(23),
+            BackupCodec.decode("""{$header,"schemaVersion":23}"""),
         )
     }
 
@@ -127,7 +127,7 @@ class BackupGoalsTest : BackupRepositoryTestBase() {
 
         val result = BackupCodec.decode(v14).success()
 
-        assertEquals(21, result.document.schemaVersion)
+        assertEquals(22, result.document.schemaVersion)
         assertEquals(
             null,
             result.document.goals

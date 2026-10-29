@@ -45,6 +45,27 @@ class RestoreMigrationPlanTest {
     }
 
     @Test
+    fun reviewFlags_andDismissals_areCarriedToTheAccountPlan() {
+        val local =
+            LocalDataDocument(
+                expenses = listOf(backupExpense("e1").copy(needsReview = true), backupExpense("e2")),
+                income = listOf(backupIncome("i1").copy(needsReview = true)),
+                dismissedRecurringSuggestions = listOf("netflix", "", "netflix", "gym"),
+            )
+
+        val plan = restoreMigrationPlanOf(local)
+
+        assertEquals(listOf(true, false), plan.expenses.map { it.needsReview })
+        assertEquals(listOf(true), plan.income.map { it.needsReview })
+        assertEquals(listOf("netflix", "gym"), plan.dismissedRecurring)
+    }
+
+    @Test
+    fun noDismissals_meansNoSuggestionsWrite() {
+        assertTrue(restoreMigrationPlanOf(LocalDataDocument()).dismissedRecurring.isEmpty())
+    }
+
+    @Test
     fun recordOrder_isPreserved() {
         val local =
             LocalDataDocument(

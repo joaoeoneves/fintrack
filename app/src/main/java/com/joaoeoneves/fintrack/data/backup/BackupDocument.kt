@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
 const val BACKUP_FORMAT = "fintrack-backup"
 
 /** Version written into [BackupDocument.schemaVersion]; a file with a higher one is refused. */
-const val BACKUP_SCHEMA_VERSION = 21
+const val BACKUP_SCHEMA_VERSION = 22
 
 /**
  * A portable JSON backup of one data set (works from both guest and signed-in mode). The record
@@ -51,6 +51,8 @@ data class BackupDocument(
     val goals: List<LocalSavingsGoal> = emptyList(),
     /** Added in schema version 12; absent (none) in older files. */
     val automation: LocalAutomation? = null,
+    /** Added in schema version 22 (with the expense/income `needsReview` flag); absent (empty) in older files. */
+    val dismissedRecurringSuggestions: List<String> = emptyList(),
 )
 
 /** App preferences as enum names; an unrecognized name leaves the current value alone on restore. */
@@ -109,4 +111,5 @@ internal fun BackupDocument.toLocalDataDocument(): LocalDataDocument =
         salaryProfile = salaryProfile,
         goals = goals,
         automation = automation,
+        dismissedRecurringSuggestions = dismissedRecurringSuggestions,
     )

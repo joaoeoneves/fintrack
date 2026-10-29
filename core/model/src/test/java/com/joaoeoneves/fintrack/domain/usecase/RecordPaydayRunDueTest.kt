@@ -81,6 +81,17 @@ class RecordPaydayRunDueTest : RecordPaydayTestBase() {
         }
 
     @Test
+    fun autoRecordedIncomes_areFlaggedForReview() =
+        runTest {
+            plan.savePlannedIncome(line("p1"))
+            cursors("p1" to sep)
+
+            useCase.runDue(payday, utc)
+
+            assertTrue(stored().single().needsReview)
+        }
+
+    @Test
     fun onlyAutoRecordLinesAreRecorded() =
         runTest {
             plan.savePlannedIncome(line("auto"))

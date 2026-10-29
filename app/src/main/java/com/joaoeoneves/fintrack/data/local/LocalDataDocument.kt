@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 21
+internal const val LOCAL_SCHEMA_VERSION = 22
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -32,6 +32,8 @@ data class LocalDataDocument(
     val goals: List<LocalSavingsGoal> = emptyList(),
     /** The automation settings singleton (absent in schema v1 to v11 files). */
     val automation: LocalAutomation? = null,
+    /** Normalized names of the dismissed "make it recurring?" suggestions (absent in schema v1 to v21 files). */
+    val dismissedRecurringSuggestions: List<String> = emptyList(),
 ) {
     /** Whether there is no user data at all. */
     val isEmpty: Boolean get() =

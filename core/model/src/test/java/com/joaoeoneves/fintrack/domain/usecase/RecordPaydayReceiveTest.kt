@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -19,6 +20,14 @@ class RecordPaydayReceiveTest : RecordPaydayTestBase() {
         date: LocalDate = today,
         override: Long? = null,
     ) = ReceiveRequest(lines.toList(), oct, 21, date, today, utc, override)
+
+    @Test
+    fun receive_doesNotFlagForReview() =
+        runTest {
+            useCase.receive(request(line("p1")))
+
+            assertFalse(stored().single().needsReview)
+        }
 
     @Test
     fun singleLine_isRecorded_withDeterministicIdAndNoonDate() =

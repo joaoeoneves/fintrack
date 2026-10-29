@@ -17,7 +17,7 @@ data class QuickAddSuggestion(
  * The expenses repeated at least [minCount] times in the last [windowDays] days (today included), as prefill
  * suggestions taken from the latest record of each name; at most [limit], most frequent first.
  */
-@Suppress("UnusedParameter", "LongParameterList") // Body lands with the quick-add implementation.
+@Suppress("LongParameterList") // Window, threshold and limit are tunable defaults.
 fun quickAddSuggestions(
     expenses: List<Expense>,
     today: LocalDate,
@@ -25,4 +25,20 @@ fun quickAddSuggestions(
     windowDays: Int = 90,
     minCount: Int = 2,
     limit: Int = 4,
-): List<QuickAddSuggestion> = emptyList()
+): List<QuickAddSuggestion> {
+    val from = today.minusDays(windowDays - 1L)
+    val latestOrder = compareBy<Expense> { it.date }.thenBy { it.id }
+    return expenses
+        .filter { !it.isRefund && it.name.isNotBlank() && !it.id.startsWith("rec_") }
+        .filter { it.date.atZone(zone).toLocalDate() in from..today }
+        .groupBy { normalizedMerchantName(it.name) }
+        .values
+        .filter { it.size >= minCount }
+        .map { group -> group.size to group.maxWith(latestOrder) }
+        .sortedWith(
+            compareByDescending<Pair<Int, Expense>> { it.first }
+                .thenByDescending { it.second.date }
+                .thenBy { normalizedMerchantName(it.second.name) },
+        ).take(limit)
+        .map { (count, e) -> QuickAddSuggestion(e.name, e.amountCents, e.category.id, count) }
+}
