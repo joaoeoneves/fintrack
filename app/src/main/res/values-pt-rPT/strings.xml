@@ -485,7 +485,6 @@
         <item quantity="other">%1$d dias de folga</item>
     </plurals>
     <string name="plan_days_off_title">Dias de férias/folga neste mês</string>
-    <string name="plan_carnival_chip">Carnaval, %1$s</string>
     <string name="cd_fewer_days_off">Menos dias de folga</string>
     <string name="cd_more_days_off">Mais dias de folga</string>
     <string name="plan_working_days_edited">%1$d (alterado)</string>

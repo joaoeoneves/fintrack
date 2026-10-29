@@ -470,7 +470,6 @@
         <item quantity="other">%1$d days off</item>
     </plurals>
     <string name="plan_days_off_title">Days off this month</string>
-    <string name="plan_carnival_chip">Carnival, %1$s</string>
     <string name="cd_fewer_days_off">Fewer days off</string>
     <string name="cd_more_days_off">More days off</string>
     <string name="plan_working_days_edited">%1$d (edited)</string>

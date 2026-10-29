@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.carnivalWeekdayIn
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.asString
@@ -122,7 +121,6 @@ private fun IncomeContent(
     if (editingWorkingDays) {
         WorkingDaysDialog(
             state = state.workingDays,
-            carnival = carnivalWeekdayIn(state.workingDays.month),
             onSave = viewModel::onSetWorkingDays,
             onDismiss = { editingWorkingDays = false },
         )
