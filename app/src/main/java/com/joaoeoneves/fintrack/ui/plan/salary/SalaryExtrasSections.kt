@@ -90,15 +90,17 @@ internal fun SalaryExtrasSection(
     }
 }
 
-/** What an extra pays: its yearly total, or the amount of each payment and the total when it has several. */
+/** What an extra pays: the amount of one payment, then (with several) the count and the yearly total below. */
 @Composable
 internal fun extraAmountText(breakdown: ExtraBreakdown): String =
     if (breakdown.payments.size > 1) {
-        stringResource(
-            R.string.salary_extra_per_payment_and_year,
-            formatAmountCents(breakdown.payments.first().second),
-            formatAmountCents(breakdown.totalCents),
-        )
+        stringResource(R.string.salary_extra_per_payment, formatAmountCents(breakdown.payments.first().second)) +
+            "\n" +
+            stringResource(
+                R.string.salary_extra_payments_total,
+                breakdown.payments.size,
+                formatAmountCents(breakdown.totalCents),
+            )
     } else {
         formatAmountCents(breakdown.totalCents)
     }

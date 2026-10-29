@@ -235,7 +235,8 @@ private fun YearOutlook(outlook: YearIncomeOutlook) {
     }
 }
 
-private fun outlookLabel(received: Boolean): Int = if (received) R.string.income_outlook_received else R.string.income_outlook_expected
+private fun outlookLabel(received: Boolean): Int =
+    if (received) R.string.income_outlook_received else R.string.income_outlook_expected
 
 /** The meal card: what it received and what was paid with it in the period, and what is left (may be negative). */
 @Composable
@@ -273,8 +274,8 @@ private fun IncomeConfigure(
             onClick = { onOpenSalaryProfile(state.hasProfile) },
             showChevron = true,
         )
-        Hairline()
         if (state.canAddIncomeLine) {
+            Hairline()
             GhostButton(
                 text = stringResource(R.string.plan_add_income_line),
                 onClick = viewModel::onAddIncomeLine,

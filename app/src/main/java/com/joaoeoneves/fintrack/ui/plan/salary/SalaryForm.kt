@@ -11,6 +11,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountScope
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
+import com.joaoeoneves.fintrack.domain.model.SalaryYearSummary
 import java.time.YearMonth
 
 /** The fields of the salary form that can hold an invalid value. */
@@ -102,7 +103,7 @@ sealed interface SalaryProfileUiState {
         val canSave: Boolean,
         val hasSavedProfile: Boolean,
         val month: YearMonth,
-        val workingDays: Int,
+        val yearSummary: SalaryYearSummary?,
         val extraEditor: SalaryExtraEditorState? = null,
         val canAddExtra: Boolean = true,
         /** The plan month the changed amounts apply from (default: the current month). */

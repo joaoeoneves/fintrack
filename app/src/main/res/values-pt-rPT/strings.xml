@@ -406,7 +406,7 @@
     <string name="nav_activity">Movimentos</string>
     <string name="nav_income">Rendimentos</string>
     <string name="nav_spending">Gastos</string>
-    <string name="tab_configure">Configurar</string>
+    <string name="tab_configure">Ajustes</string>
     <string name="spending_new_group">Novo grupo</string>
     <string name="insights_split_title">Fixo vs. variável</string>
     <string name="insights_split_fixed">Fixo</string>
@@ -507,7 +507,19 @@
     <string name="salary_extra_value_fixed_per_payment">Valor por pagamento</string>
     <string name="salary_extra_value_multiple_per_payment">Múltiplo do salário base por pagamento</string>
     <string name="salary_extra_value_percent_per_payment" formatted="false">Percentagem do bruto anual por pagamento (%)</string>
-    <string name="salary_extra_per_payment_and_year">%1$s por pagamento · %2$s/ano</string>
+    <string name="salary_extra_per_payment">%1$s por pagamento</string>
+    <string name="salary_extra_payments_total">%1$d pagamentos · total %2$s por ano</string>
+    <string name="salary_year_payments_title">Pagamentos ao longo do ano</string>
+    <string name="salary_year_each">%1$s cada</string>
+    <string name="salary_year_meal">Subsídio de refeição</string>
+    <string name="salary_year_meal_day">%1$s por dia útil</string>
+    <string name="salary_year_meal_year">≈ %1$s por ano</string>
+    <string name="salary_year_title">No ano</string>
+    <string name="salary_year_net">Total anual líquido estimado</string>
+    <string name="salary_year_gross">Bruto no ano</string>
+    <string name="salary_year_ss">Segurança Social no ano</string>
+    <string name="salary_year_other_deductions">ADSE / outros descontos no ano</string>
+    <string name="salary_year_irs">IRS no ano</string>
     <string name="salary_extra_months">Mês de pagamento</string>
     <string name="salary_extra_deductions">Descontos</string>
     <string name="salary_extra_deductions_none">Nenhum</string>
@@ -520,7 +532,7 @@
     <string name="category_deleted_placeholder">Categoria eliminada</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Indica um valor válido</string>
-    <string name="salary_breakdown_title">Detalhe</string>
+    <string name="salary_breakdown_title">Por mês (salário + duodécimos)</string>
     <string name="salary_breakdown_gross">Bruto mensal</string>
     <string name="salary_breakdown_ss">Segurança Social</string>
     <string name="salary_breakdown_other_deductions">ADSE / outros descontos</string>

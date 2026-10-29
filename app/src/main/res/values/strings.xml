@@ -396,7 +396,7 @@
     <string name="nav_activity">Activity</string>
     <string name="nav_income">Income</string>
     <string name="nav_spending">Spending</string>
-    <string name="tab_configure">Configure</string>
+    <string name="tab_configure">Adjustments</string>
     <string name="spending_new_group">New group</string>
     <string name="insights_split_title">Fixed vs variable</string>
     <string name="insights_split_fixed">Fixed</string>
@@ -493,7 +493,19 @@
     <string name="salary_extra_value_fixed_per_payment">Amount per payment</string>
     <string name="salary_extra_value_multiple_per_payment">Multiple of base salary per payment</string>
     <string name="salary_extra_value_percent_per_payment" formatted="false">Share of annual gross per payment (%)</string>
-    <string name="salary_extra_per_payment_and_year">%1$s per payment · %2$s/year</string>
+    <string name="salary_extra_per_payment">%1$s per payment</string>
+    <string name="salary_extra_payments_total">%1$d payments · total %2$s per year</string>
+    <string name="salary_year_payments_title">Payments during the year</string>
+    <string name="salary_year_each">%1$s each</string>
+    <string name="salary_year_meal">Meal allowance</string>
+    <string name="salary_year_meal_day">%1$s per working day</string>
+    <string name="salary_year_meal_year">≈ %1$s per year</string>
+    <string name="salary_year_title">In the year</string>
+    <string name="salary_year_net">Estimated net for the year</string>
+    <string name="salary_year_gross">Gross in the year</string>
+    <string name="salary_year_ss">Social security in the year</string>
+    <string name="salary_year_other_deductions">ADSE / other deductions in the year</string>
+    <string name="salary_year_irs">IRS in the year</string>
     <string name="salary_extra_months">Payment month</string>
     <string name="salary_extra_deductions">Deductions</string>
     <string name="salary_extra_deductions_none">None</string>
@@ -506,7 +518,7 @@
     <string name="category_deleted_placeholder">Deleted category</string>
     <string name="salary_group_extras">Extras</string>
     <string name="salary_error_invalid">Enter a valid value</string>
-    <string name="salary_breakdown_title">Breakdown</string>
+    <string name="salary_breakdown_title">Per month (salary + twelfths)</string>
     <string name="salary_breakdown_gross">Gross monthly</string>
     <string name="salary_breakdown_ss">Social security</string>
     <string name="salary_breakdown_other_deductions">ADSE / other deductions</string>
