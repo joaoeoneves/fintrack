@@ -253,7 +253,7 @@
     <string name="cd_category_more_actions">Mais ações para %1$s</string>
     <string name="cd_category_icon_option">Ícone %1$d</string>
     <string name="cd_category_color_option">Cor %1$d</string>
-    <string name="category_delete_confirm">Eliminar “%1$s”?</string>
+    <string name="category_deleted">Categoria eliminada</string>
     <string name="category_in_use_message">“%1$s” é usada por despesas, envelopes ou recorrentes. Arquivar em vez disso?</string>
     <string name="category_in_use_archived_message">“%1$s” é usada por despesas, envelopes ou recorrentes e não pode ser eliminada.</string>
     <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação à internet. Arquivar em vez disso?</string>
@@ -407,7 +407,6 @@
     <string name="recurring_ended">Terminado</string>
     <string name="recurring_pause">Pausar</string>
     <string name="recurring_resume">Retomar</string>
-    <string name="recurring_delete_confirm">Eliminar “%1$s”? Os movimentos já criados mantêm-se.</string>
     <string name="recurring_frequency_monthly">Mensal</string>
     <string name="recurring_frequency_yearly">Anual</string>
     <string name="recurring_day_of_month">Dia do mês</string>
@@ -554,6 +553,7 @@
     <string name="salary_extra_deductions_irs_ss">IRS + SS</string>
     <string name="salary_extra_fee" formatted="false">Taxa (%)</string>
     <string name="salary_extra_delete">Eliminar extra</string>
+    <string name="salary_extra_deleted">Extra removido</string>
     <string name="salary_extra_gross_only">Só no modo bruto</string>
     <string name="salary_extra_default_flex">Benefícios flexíveis</string>
     <string name="salary_extra_default_profit_share">Distribuição de lucros</string>

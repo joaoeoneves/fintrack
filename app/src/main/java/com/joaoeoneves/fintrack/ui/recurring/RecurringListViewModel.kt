@@ -11,9 +11,7 @@ import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.firstPendingOccurrence
 import com.joaoeoneves.fintrack.domain.model.isEnded
-import com.joaoeoneves.fintrack.domain.model.paused
 import com.joaoeoneves.fintrack.domain.model.resolve
-import com.joaoeoneves.fintrack.domain.model.resumed
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -51,7 +49,6 @@ class RecurringListViewModel
         private val clock: Clock,
     ) : ViewModel() {
         private val retryTrigger = MutableStateFlow(0)
-        private val deleteTarget = MutableStateFlow<RecurringItem?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
         private val deletions = Channel<RecurringItem>(Channel.BUFFERED)
 
@@ -69,12 +66,11 @@ class RecurringListViewModel
                     combine(
                         recurringRepository.observeRecurring(),
                         categoryRepository.observeCategories(),
-                        deleteTarget,
                         goalRepository.observeGoals(),
-                    ) { items, catalog, target, goals ->
+                    ) { items, catalog, goals ->
                         // A savings plan's monthly item lives in the plan; recurring income in the income lines.
                         val bills = billsOf(items, goals)
-                        contentOf(bills, catalog, target, today)
+                        contentOf(bills, catalog, today)
                     }.catch { e ->
                         Log.w(TAG, "Failed to observe recurring items", e)
                         emit(RecurringListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
@@ -87,19 +83,6 @@ class RecurringListViewModel
 
         fun onRetry() {
             retryTrigger.value++
-        }
-
-        /**
-         * Pauses an active item (see [paused]); resuming one (see [resumed]) skips the occurrences of the
-         * paused period rather than offering them as overdue.
-         */
-        fun onTogglePaused(id: String) {
-            viewModelScope.launch {
-                val item = latest(id) ?: return@launch
-                val today = LocalDate.now(clock)
-                val updated = if (item.active) item.paused(today) else item.resumed(today)
-                recurringRepository.saveRecurring(updated).onFailure { reportFailure(it) }
-            }
         }
 
         /** Deletes the item at once; the screen offers to undo (its past transactions are never touched). */
@@ -118,18 +101,6 @@ class RecurringListViewModel
             viewModelScope.launch { recurringRepository.saveRecurring(item).onFailure { reportFailure(it) } }
         }
 
-        fun onConfirmDelete() {
-            val target = deleteTarget.value ?: return
-            deleteTarget.value = null
-            viewModelScope.launch {
-                recurringRepository.deleteRecurring(target.id).onFailure { reportFailure(it) }
-            }
-        }
-
-        fun onDismissDelete() {
-            deleteTarget.value = null
-        }
-
         private suspend fun latest(id: String): RecurringItem? {
             val items = recurringRepository.observeRecurring().first()
             return items.firstOrNull { it.id == id }
@@ -144,7 +115,6 @@ class RecurringListViewModel
 private fun contentOf(
     items: List<RecurringItem>,
     catalog: List<Category>,
-    deleteTarget: RecurringItem?,
     today: LocalDate,
 ): RecurringListUiState {
     val rows =
@@ -162,6 +132,5 @@ private fun contentOf(
         active = active,
         inactive = inactive,
         annualExpenseCents = annualizedCents(items, RecurringType.EXPENSE, today),
-        deleteTarget = deleteTarget,
     )
 }

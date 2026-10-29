@@ -23,13 +23,12 @@ private data class ConfirmAction(
 )
 
 /**
- * The delete flow's single dialog, switching on [state]: checking usage, confirming, or (when the
+ * The delete flow's single dialog, switching on [state]: checking usage, or (when the
  * category is in use / usage can't be verified) offering to archive it instead.
  */
 @Composable
 internal fun CategoryDeleteDialog(
     state: DeleteDialogState,
-    onDelete: () -> Unit,
     onArchive: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -42,15 +41,6 @@ internal fun CategoryDeleteDialog(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground)
                 }
             }
-        }
-
-        is DeleteDialogState.ConfirmDelete -> {
-            DeleteAlert(
-                title = stringResource(R.string.category_delete_confirm, name),
-                confirm = ConfirmAction(R.string.category_action_delete, onDelete, destructive = true),
-                onDismiss = onDismiss,
-                dismissLabel = R.string.action_cancel,
-            ) {}
         }
 
         is DeleteDialogState.InUse -> {

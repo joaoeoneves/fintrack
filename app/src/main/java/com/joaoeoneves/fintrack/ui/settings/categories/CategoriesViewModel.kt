@@ -55,7 +55,12 @@ class CategoriesViewModel
         @Volatile
         private var catalog: List<Category> = BuiltInCategories.all
 
+        private val deletions = Channel<Category>(Channel.BUFFERED)
+
         val errorEvent: Flow<UiText> = errors.receiveAsFlow()
+
+        /** Each category just deleted, for an undo snackbar. */
+        val deletedEvent: Flow<Category> = deletions.receiveAsFlow()
 
         val uiState: StateFlow<CategoriesUiState> =
             combine(
@@ -158,38 +163,43 @@ class CategoriesViewModel
             }
         }
 
+        /** Checks usage, then deletes an unused category at once (the screen offers to undo) or explains why not. */
         fun onDeleteRequested(id: CategoryId) {
             val category = catalog.find { it.id == id }?.takeUnless { it.builtIn }
             if (category != null) {
                 deleteDialog.value = DeleteDialogState.Checking(category)
                 viewModelScope.launch {
                     val result = checkCategoryUsage(id)
-                    deleteDialog.update { current ->
-                        if (current is DeleteDialogState.Checking && current.category.id == id) {
-                            result.fold<DeleteDialogState, CategoryUsage>(
-                                onSuccess = { usage ->
-                                    if (usage.inUse) {
-                                        DeleteDialogState.InUse(category, usage)
-                                    } else {
-                                        DeleteDialogState.ConfirmDelete(category)
-                                    }
-                                },
-                                onFailure = { DeleteDialogState.CannotVerify(category) },
-                            )
+                    val current = deleteDialog.value
+                    if (current is DeleteDialogState.Checking && current.category.id == id) {
+                        if (result.getOrNull()?.inUse == false) {
+                            deleteDialog.value = null
+                            deleteUnused(category)
                         } else {
-                            current
+                            deleteDialog.value =
+                                result.fold<DeleteDialogState, CategoryUsage>(
+                                    onSuccess = { DeleteDialogState.InUse(category, it) },
+                                    onFailure = { DeleteDialogState.CannotVerify(category) },
+                                )
                         }
                     }
                 }
             }
         }
 
-        fun onConfirmDelete() {
-            val dialog = deleteDialog.value
-            if (dialog is DeleteDialogState.ConfirmDelete) {
-                deleteDialog.value = null
-                launchWrite { categoryRepository.deleteCategory(dialog.category.id) }
-            }
+        private suspend fun deleteUnused(category: Category) {
+            categoryRepository
+                .deleteCategory(category.id)
+                .onSuccess { deletions.send(category) }
+                .onFailure { e ->
+                    Log.w(TAG, "Deleting the category ${category.id.value} failed", e)
+                    errors.send(UiText.StringResource(R.string.error_category_save_failed))
+                }
+        }
+
+        /** Puts back a category deleted a moment ago (same id and position, so its history lines up again). */
+        fun onUndoDelete(category: Category) {
+            launchWrite { categoryRepository.updateCategory(category) }
         }
 
         fun onDismissDelete() {

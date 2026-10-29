@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,9 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -29,21 +26,20 @@ import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.MAX_GOAL_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
-import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.EditorScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
-import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
-import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import java.time.LocalDate
 import java.time.LocalTime
@@ -65,24 +61,15 @@ fun SavingsPlanEditorScreen(
     LaunchedEffect(Unit) { viewModel.navigateBack.collect { onBack() } }
     DeletedSavingsPlanEffect(viewModel.deletedEvent, onBack)
     val content = state as? SavingsPlanEditorUiState.Content
-    LargeTitleScaffold(
+    EditorScaffold(
         title = stringResource(if (content?.isNew == false) R.string.savings_edit_plan else R.string.savings_new_plan),
+        dirty = rememberIsDirty(content?.draft),
         onBack = onBack,
+        onSave = viewModel::onSave,
+        saving = content?.saving == true,
+        showSave = content != null,
         modifier = modifier,
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (content != null) {
-                PrimaryPillButton(
-                    text = stringResource(R.string.action_save),
-                    onClick = viewModel::onSave,
-                    loading = content.saving,
-                    modifier =
-                        Modifier
-                            .navigationBarsPadding()
-                            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12),
-                )
-            }
-        },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (val current = state) {
@@ -103,7 +90,6 @@ private fun EditorBody(
     modifier: Modifier,
 ) {
     val draft = state.draft
-    var confirmingDelete by remember { mutableStateOf(false) }
     Column(
         modifier =
             modifier
@@ -117,22 +103,10 @@ private fun EditorBody(
         if (!state.isNew) {
             DestructiveTextButton(
                 text = stringResource(R.string.savings_delete_plan),
-                onClick = { confirmingDelete = true },
+                onClick = viewModel::onDelete,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
         }
-    }
-    if (confirmingDelete) {
-        ConfirmRemoveDialog(
-            title = stringResource(R.string.savings_delete_plan),
-            message = stringResource(R.string.savings_delete_message, draft.name),
-            confirmLabel = stringResource(R.string.action_delete),
-            onConfirm = {
-                confirmingDelete = false
-                viewModel.onDelete()
-            },
-            onDismiss = { confirmingDelete = false },
-        )
     }
 }
 

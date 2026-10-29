@@ -250,7 +250,7 @@
     <string name="cd_category_more_actions">More actions for %1$s</string>
     <string name="cd_category_icon_option">Icon %1$d</string>
     <string name="cd_category_color_option">Color %1$d</string>
-    <string name="category_delete_confirm">Delete “%1$s”?</string>
+    <string name="category_deleted">Category deleted</string>
     <string name="category_in_use_message">“%1$s” is used by expenses, envelopes or recurring. Archive it instead?</string>
     <string name="category_in_use_archived_message">“%1$s” is used by expenses, envelopes or recurring and can\'t be deleted.</string>
     <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
@@ -396,7 +396,6 @@
     <string name="recurring_ended">Ended</string>
     <string name="recurring_pause">Pause</string>
     <string name="recurring_resume">Resume</string>
-    <string name="recurring_delete_confirm">Delete “%1$s”? Transactions already created are kept.</string>
     <string name="recurring_frequency_monthly">Monthly</string>
     <string name="recurring_frequency_yearly">Yearly</string>
     <string name="recurring_day_of_month">Day of month</string>
@@ -539,6 +538,7 @@
     <string name="salary_extra_deductions_irs_ss">IRS + SS</string>
     <string name="salary_extra_fee" formatted="false">Fee (%)</string>
     <string name="salary_extra_delete">Delete extra</string>
+    <string name="salary_extra_deleted">Extra removed</string>
     <string name="salary_extra_gross_only">Gross mode only</string>
     <string name="salary_extra_default_flex">Flexible benefits</string>
     <string name="salary_extra_default_profit_share">Profit share</string>

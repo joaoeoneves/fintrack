@@ -37,7 +37,6 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.codePointLength
-import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -146,7 +145,6 @@ private fun EditorBody(
     actions: EditorActions,
     modifier: Modifier,
 ) {
-    var confirmingDelete by remember { mutableStateOf(false) }
     Column(
         modifier =
             modifier
@@ -174,22 +172,10 @@ private fun EditorBody(
         if (!state.isNew) {
             DestructiveTextButton(
                 text = stringResource(R.string.envelope_delete),
-                onClick = { confirmingDelete = true },
+                onClick = actions.onDelete,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
         }
-    }
-    if (confirmingDelete) {
-        ConfirmRemoveDialog(
-            title = stringResource(R.string.envelope_delete),
-            message = stringResource(R.string.envelope_delete_confirm, state.draft.name),
-            confirmLabel = stringResource(R.string.action_delete),
-            onConfirm = {
-                confirmingDelete = false
-                actions.onDelete()
-            },
-            onDismiss = { confirmingDelete = false },
-        )
     }
 }
 

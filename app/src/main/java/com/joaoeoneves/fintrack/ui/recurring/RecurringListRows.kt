@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,9 +17,6 @@ import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
-import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
-import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
-import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.TransactionRow
@@ -85,19 +81,4 @@ private fun statusText(row: RecurringRow): String {
         row.nextDue != null -> stringResource(R.string.recurring_next_due, formatter.format(row.nextDue))
         else -> ""
     }
-}
-
-/** Confirms deleting a recurring item; the transactions it already created are kept. */
-@Composable
-internal fun RecurringDeleteDialog(
-    name: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    FinTrackAlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.recurring_delete_confirm, name)) },
-        confirmButton = { DestructiveTextButton(text = stringResource(R.string.cd_delete), onClick = onConfirm) },
-        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
-    )
 }

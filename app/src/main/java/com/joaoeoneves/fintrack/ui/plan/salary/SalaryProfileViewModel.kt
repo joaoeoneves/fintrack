@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.data.local.IdGenerator
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.SalaryExtra
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
@@ -129,8 +130,22 @@ class SalaryProfileViewModel
 
         fun onDeleteExtra(id: String) {
             val current = form.value ?: return
+            val index = current.extras.indexOfFirst { it.id == id }
+            if (index < 0) return
             form.value = current.copy(extras = current.extras.filterNot { it.id == id })
             extraForm.value = null
+            events.trySend(SalaryProfileEvent.ExtraDeleted(current.extras[index], index))
+        }
+
+        /** Puts a just-deleted draft extra back where it was. */
+        fun onUndoDeleteExtra(
+            extra: SalaryExtra,
+            index: Int,
+        ) {
+            val current = form.value ?: return
+            if (current.extras.any { it.id == extra.id }) return
+            val at = index.coerceIn(0, current.extras.size)
+            form.value = current.copy(extras = current.extras.take(at) + extra + current.extras.drop(at))
         }
 
         /** Stores the profile and regenerates the managed lines, naming new ones with [labels]. */
