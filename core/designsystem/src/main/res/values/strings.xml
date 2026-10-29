@@ -3,6 +3,7 @@
     <string name="action_add_expense">Add expense</string>
     <string name="action_add_income">Add income</string>
     <string name="cd_back">Back</string>
+    <string name="cd_more_options">More options</string>
     <string name="dashboard_add_expense_short">Expense</string>
     <string name="dashboard_add_income_short">Income</string>
     <string name="discard_changes_title">Discard changes?</string>
