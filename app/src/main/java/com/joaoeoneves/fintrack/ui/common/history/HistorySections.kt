@@ -61,12 +61,9 @@ fun SpendingHistory(
         if (analytics.split.spendingCents > 0) SpendingSplitCard(analytics.split, padding)
         figures.evolution?.let { EvolutionSection(it, padding) }
         if (!analytics.breakdown.isEmpty) {
-            SectionTitle(
-                title = stringResource(R.string.insights_by_category),
-                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-            )
             CategoryBreakdownSection(
                 breakdown = analytics.breakdown,
+                showTotal = false,
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
                 onCategoryClick = onCategoryClick,
             )
@@ -85,18 +82,15 @@ fun SpendingHistory(
     }
 }
 
-/** The Rendimentos side (both scales): Received with Expected/Difference, the bars, "By source" and year to date. */
+/** The Income tab's headline: Received with "of X expected", or nothing when nothing was received. */
 @Composable
-fun IncomeHistory(
+fun IncomeHeadline(
     history: ActivityHistory?,
-    onSourceClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val analytics = remember(history) { history?.incomeAnalytics() }
-    val figures = remember(history) { history?.incomeFigures(null) ?: HistoryFigures() }
-    val padding = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8)
-    Column(modifier = modifier.fillMaxWidth()) {
-        if (analytics != null && analytics.receivedCents != 0L) {
+    if (analytics != null && analytics.receivedCents != 0L) {
+        Column(modifier = modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
                 Text(
                     text = stringResource(R.string.activity_received_total),
@@ -118,6 +112,20 @@ fun IncomeHistory(
                 }
             }
         }
+    }
+}
+
+/** The Income tab's bars, "By source" and year to date; the [IncomeHeadline] is drawn separately, above the lines. */
+@Composable
+fun IncomeHistory(
+    history: ActivityHistory?,
+    onSourceClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val analytics = remember(history) { history?.incomeAnalytics() }
+    val figures = remember(history) { history?.incomeFigures(null) ?: HistoryFigures() }
+    val padding = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8)
+    Column(modifier = modifier.fillMaxWidth()) {
         figures.evolution?.let { EvolutionSection(it, padding) }
         analytics?.sources?.takeIf { it.isNotEmpty() }?.let { SourceRows(it, onSourceClick, padding) }
         figures.yearToDate?.let { YearToDateRow(it, padding, figures.leftover) }

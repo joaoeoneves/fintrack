@@ -1,40 +1,30 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.StartStep
-import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
+import com.joaoeoneves.fintrack.ui.common.TabScaffold
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
@@ -54,10 +44,7 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import com.joaoeoneves.fintrack.ui.theme.Motion
 import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
-import com.joaoeoneves.fintrack.ui.theme.motionSpec
 
 private val SectionSpacing = Dimens.SectionGap
 
@@ -91,15 +78,21 @@ fun DashboardScreen(
     val listState = rememberLazyListState()
     val content = uiState as? DashboardUiState.Content
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            DashboardTopBar(
-                state = content,
-                actions = actions.period,
-                onOpenSettings = callbacks.onOpenSettings,
-                scrolled = listState.canScrollBackward,
-            )
+    TabScaffold(
+        title = stringResource(R.string.nav_home),
+        onOpenSettings = callbacks.onOpenSettings,
+        scrolled = listState.canScrollBackward,
+        headerExtra = {
+            if (content != null) {
+                PeriodSelector(
+                    period = content.period,
+                    canGoToNextMonth = content.canGoToNextMonth,
+                    actions = actions.period,
+                    monthOnly = true,
+                    showScaleSwitch = true,
+                    modifier = Modifier.padding(horizontal = Dimens.Space8),
+                )
+            }
         },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
         floatingActionButton = {
@@ -111,7 +104,6 @@ fun DashboardScreen(
                 )
             }
         },
-        floatingActionButtonPosition = FabPosition.Center,
     ) { innerPadding ->
         CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
             DashboardBody(
@@ -166,57 +158,6 @@ private fun DashboardBodyFor(
                 modifier = Modifier.fillMaxSize().padding(contentPadding),
             )
         }
-    }
-}
-
-/**
- * Account avatar on the left, then the period selector (once content is loaded); no title. Solid
- * background, with a hairline along its bottom edge that fades in once content is [scrolled] under it.
- */
-@Composable
-private fun DashboardTopBar(
-    state: DashboardUiState.Content?,
-    actions: PeriodActions,
-    onOpenSettings: () -> Unit,
-    scrolled: Boolean,
-) {
-    val separator by animateFloatAsState(
-        targetValue = if (scrolled) 1f else 0f,
-        animationSpec = motionSpec(tween(Motion.Short)),
-        label = "topBarSeparator",
-    )
-    Box(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = Dimens.Space8),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AccountAvatar(onClick = onOpenSettings)
-            Box(modifier = Modifier.weight(1f)) {
-                if (state != null) {
-                    PeriodSelector(
-                        period = state.period,
-                        canGoToNextMonth = state.canGoToNextMonth,
-                        actions = actions,
-                        alignment = Alignment.Start,
-                        monthOnly = true,
-                        showScaleSwitch = true,
-                    )
-                }
-            }
-        }
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(Dimens.HairlineThickness)
-                    .graphicsLayer { alpha = separator }
-                    .background(FinTrackTheme.colors.hairline),
-        )
     }
 }
 
@@ -287,7 +228,7 @@ private fun DashboardContent(
                 .nestedScroll(pill.connection)
                 .testTag(TestTags.DASHBOARD_LIST),
         contentPadding =
-            PaddingValues(bottom = Dimens.AddPillClearance + contentPadding.calculateBottomPadding()),
+            PaddingValues(bottom = Dimens.AddPillClearance + Dimens.Space16 + contentPadding.calculateBottomPadding()),
     ) {
         startItems(start = actions.start)
         summaryItems(state = state, callbacks = callbacks)

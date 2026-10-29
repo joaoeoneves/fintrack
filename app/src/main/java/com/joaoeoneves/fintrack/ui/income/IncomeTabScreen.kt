@@ -20,16 +20,16 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
+import com.joaoeoneves.fintrack.ui.common.TabScaffold
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.common.history.IncomeHeadline
 import com.joaoeoneves.fintrack.ui.common.history.IncomeHistory
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
-import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
@@ -40,6 +40,7 @@ import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeActions
 import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeCard
 import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeModel
 import com.joaoeoneves.fintrack.ui.plan.IncomeLineSheet
+import com.joaoeoneves.fintrack.ui.plan.IncomeSetupGroup
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.WorkingDaysDialog
 import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
@@ -66,9 +67,9 @@ fun IncomeTabScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
-        LargeTitleScaffold(
+        TabScaffold(
             title = stringResource(R.string.nav_income),
-            navigationIcon = { AccountAvatar(onClick = onOpenSettings) },
+            onOpenSettings = onOpenSettings,
             modifier = modifier,
             snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
         ) { innerPadding ->
@@ -116,6 +117,7 @@ private fun IncomeContent(
             showScaleSwitch = true,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
         )
+        IncomeHeadline(history = state.history)
         val month = state.month
         if (month != null) {
             MonthCard(state, month, viewModel, onOpenSalaryProfile) { editingWorkingDays = true }
@@ -124,7 +126,13 @@ private fun IncomeContent(
             history = state.history,
             onSourceClick = { onOpenSource(it, state.period) },
         )
-        if (month == null) {
+        if (month != null) {
+            IncomeSetupGroup(
+                workingDays = month.workingDays,
+                actions = incomeActions(state, viewModel, onOpenSalaryProfile) { editingWorkingDays = true },
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(top = Dimens.Space16),
+            )
+        } else {
             IncomeConfigure(state, viewModel, onOpenSalaryProfile)
         }
     }
@@ -150,6 +158,20 @@ private fun IncomeContent(
     }
 }
 
+private fun incomeActions(
+    state: IncomeTabUiState.Content,
+    viewModel: IncomeTabViewModel,
+    onOpenSalaryProfile: (hasProfile: Boolean) -> Unit,
+    onEditWorkingDays: () -> Unit,
+) = ExpectedIncomeActions(
+    onAdd = viewModel::onAddIncomeLine,
+    onEdit = viewModel::onEditIncomeLine,
+    onEditWorkingDays = onEditWorkingDays,
+    onOpenSalaryProfile = { onOpenSalaryProfile(state.hasProfile) },
+    onReceive = viewModel::onReceive,
+    onUndoReceive = viewModel::onUndoReceive,
+)
+
 @Composable
 private fun MonthCard(
     state: IncomeTabUiState.Content,
@@ -168,15 +190,7 @@ private fun MonthCard(
                 duplicateKeys = month.duplicateKeys,
                 incomeMonth = month.incomeMonth,
             ),
-        actions =
-            ExpectedIncomeActions(
-                onAdd = viewModel::onAddIncomeLine,
-                onEdit = viewModel::onEditIncomeLine,
-                onEditWorkingDays = onEditWorkingDays,
-                onOpenSalaryProfile = { onOpenSalaryProfile(state.hasProfile) },
-                onReceive = viewModel::onReceive,
-                onUndoReceive = viewModel::onUndoReceive,
-            ),
+        actions = incomeActions(state, viewModel, onOpenSalaryProfile, onEditWorkingDays),
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding),
     )
 }

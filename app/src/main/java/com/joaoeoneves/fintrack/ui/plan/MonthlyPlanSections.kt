@@ -104,10 +104,10 @@ data class ExpectedIncomeModel(
 )
 
 /**
- * The salary-profile entry, the working-days row and the expected-income rows with what each pays in the
- * selected month. A manual line opens its editor on tap; every salary-profile row opens the salary profile (a row that
- * does not pay this month is not tappable). The add button is hidden at the line cap. Under the
- * header sits the month's payday; a paying row of a past or current month has a check that records it as received
+ * The expected-income rows with what each pays in the selected month. A manual line opens its editor on tap; every
+ * salary-profile row opens the salary profile (a row that does not pay this month is not tappable). The add button
+ * is hidden at the line cap. Under the header sits the month's payday; a paying row of a past or current month has a
+ * check that records it as received
  * today (the snackbar then offers to change the date or amount); once received it shows a green amount, the day it
  * was received and a filled check that undoes it after a confirmation.
  */
@@ -129,14 +129,6 @@ fun ExpectedIncomeCard(
                 color = FinTrackTheme.colors.textSecondary,
             )
         }
-        SettingsRow(
-            title = stringResource(R.string.plan_salary_profile_row),
-            onClick = actions.onOpenSalaryProfile,
-            showChevron = true,
-        )
-        Hairline()
-        WorkingDaysRow(state = model.workingDays, onClick = actions.onEditWorkingDays)
-        Hairline()
         val (managed, manual) = rows.partition { it.component != null }
         if (managed.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_from_salary_profile))
         managed.forEach { key(it.key) { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) } }
@@ -158,6 +150,24 @@ fun ExpectedIncomeCard(
             },
             onDismiss = { undoing = null },
         )
+    }
+}
+
+/** The month's set-up rows: the salary profile and the working days, as a small settings-style group. */
+@Composable
+fun IncomeSetupGroup(
+    workingDays: WorkingDaysState,
+    actions: ExpectedIncomeActions,
+    modifier: Modifier = Modifier,
+) {
+    SettingsGroup(label = stringResource(R.string.tab_configure), modifier = modifier) {
+        SettingsRow(
+            title = stringResource(R.string.plan_salary_profile_row),
+            onClick = actions.onOpenSalaryProfile,
+            showChevron = true,
+        )
+        Hairline()
+        WorkingDaysRow(state = workingDays, onClick = actions.onEditWorkingDays)
     }
 }
 
