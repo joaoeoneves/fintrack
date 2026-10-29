@@ -1,25 +1,18 @@
 package com.joaoeoneves.fintrack.ui.plan.annual
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.ErrorState
-import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
@@ -61,7 +54,6 @@ private fun AnnualPlanContent(
         contentPadding =
             PaddingValues(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.Space32),
     ) {
-        item { YearNavigator(state, actions) }
         if (!state.hasData) {
             item {
                 EmptyState(
@@ -79,32 +71,6 @@ private fun AnnualPlanContent(
         if (plan.subscriptions.isNotEmpty()) {
             item { AnnualSubscriptionsCard(plan.subscriptions, state.year, cardModifier) }
         }
-    }
-}
-
-@Composable
-private fun YearNavigator(
-    state: AnnualPlanUiState.Content,
-    actions: AnnualPlanActions,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        LabeledIconButton(
-            icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-            contentDescription = stringResource(R.string.cd_previous_year),
-            onClick = actions.onPreviousYear,
-            enabled = state.canGoPrevious,
-        )
-        Text(text = state.year.toString(), style = MaterialTheme.typography.titleMedium)
-        LabeledIconButton(
-            icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = stringResource(R.string.cd_next_year),
-            onClick = actions.onNextYear,
-            enabled = state.canGoNext,
-        )
     }
 }
 
