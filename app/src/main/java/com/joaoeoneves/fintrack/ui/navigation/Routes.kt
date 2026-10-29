@@ -53,6 +53,10 @@ data class SpendingHome(
 data class AddEditExpense(
     val expenseId: String? = null,
     val period: String? = null,
+    /** Optional prefill for a new expense (quick-add chips); ignored when editing. */
+    val prefillName: String? = null,
+    val prefillAmountCents: Long? = null,
+    val prefillCategoryId: String? = null,
 )
 
 /** The income form; [period] is the encoded past month it was opened from (a new income then defaults to it). */
@@ -91,6 +95,11 @@ object SalarySetup
 @Serializable
 data class AddEditRecurring(
     val recurringId: String? = null,
+    /** Optional prefill for a new recurring expense ("make it recurring?" suggestion); ignored when editing. */
+    val prefillName: String? = null,
+    val prefillAmountCents: Long? = null,
+    val prefillCategoryId: String? = null,
+    val prefillDay: Int? = null,
 )
 
 /**

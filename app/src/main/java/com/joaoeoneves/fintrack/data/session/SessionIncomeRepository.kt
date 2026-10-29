@@ -28,6 +28,10 @@ class SessionIncomeRepository
             endExclusive: Instant,
         ): Flow<List<Income>> = switch.flow(emptyList()) { it.observeIncome(startInclusive, endExclusive) }
 
+        override fun observeNeedingReview(): Flow<List<Income>> = switch.flow(emptyList()) { it.observeNeedingReview() }
+
+        override suspend fun markReviewed(ids: Collection<String>): Result<Unit> = switch.call { it.markReviewed(ids) }
+
         override suspend fun addIncome(income: Income): Result<String> = switch.call { it.addIncome(income) }
 
         override suspend fun updateIncome(income: Income): Result<Unit> = switch.call { it.updateIncome(income) }

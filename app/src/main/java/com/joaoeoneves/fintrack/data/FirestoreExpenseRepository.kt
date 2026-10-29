@@ -29,6 +29,7 @@ import java.time.Instant
 import javax.inject.Inject
 
 private const val TAG = "FirestoreExpenseRepo"
+private const val REVIEW_BATCH_SIZE = 500
 
 @Suppress("TooManyFunctions") // One override per ExpenseRepository operation.
 class FirestoreExpenseRepository
@@ -80,6 +81,42 @@ class FirestoreExpenseRepository
                     }
                 awaitClose { registration.remove() }
             }.distinctUntilChanged()
+        }
+
+        override fun observeNeedingReview(): Flow<List<Expense>> {
+            val uid = firebaseAuth.currentUser?.uid ?: return flowOf(emptyList())
+            val query = expensesCollection(uid).whereEqualTo("needsReview", true)
+            return callbackFlow {
+                val registration =
+                    query.addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            trySend(snapshot.toExpenses())
+                        }
+                    }
+                awaitClose { registration.remove() }
+            }
+        }
+
+        override suspend fun markReviewed(ids: Collection<String>): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                for (chunk in ids.distinct().chunked(REVIEW_BATCH_SIZE)) {
+                    val batch = firestore.batch()
+                    chunk.forEach { id ->
+                        val changes =
+                            mapOf("needsReview" to FieldValue.delete(), "updatedAt" to FieldValue.serverTimestamp())
+                        batch.update(expensesCollection(uid).document(id), changes)
+                    }
+                    // Not awaited: lands in the local cache at once and syncs later (see addExpense).
+                    batch.commit().addOnFailureListener(onFail(TAG, "Mark expenses reviewed failed"))
+                }
+            }
         }
 
         override suspend fun addExpense(expense: Expense): Result<String> {
@@ -306,6 +343,12 @@ internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?
     if (includeCreatedAt) {
         map["createdAt"] = FieldValue.serverTimestamp()
     }
+    // Written only when true. Updates merge, so a false flag must delete the key explicitly.
+    if (needsReview) {
+        map["needsReview"] = true
+    } else if (!includeCreatedAt) {
+        map["needsReview"] = FieldValue.delete()
+    }
     return map
 }
 
@@ -326,6 +369,7 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
     val note = getString("note")
     val isRefund = get("isRefund") as? Boolean ?: false
     val paidWithMealCard = get("paidWithMealCard") as? Boolean ?: false
+    val needsReview = get("needsReview") as? Boolean ?: false
 
     return when {
         name == null -> {
@@ -354,6 +398,7 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
                 note = note,
                 isRefund = isRefund,
                 paidWithMealCard = paidWithMealCard,
+                needsReview = needsReview,
             )
     }
 }

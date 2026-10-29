@@ -30,6 +30,21 @@ class LocalIncomeRepository
                     .sortedBy { it.date }
             }
 
+        override fun observeNeedingReview(): Flow<List<Income>> =
+            store.data.map { doc ->
+                doc.income
+                    .filter { it.needsReview }
+                    .mapNotNull { it.toDomainOrNull() }
+                    .sortedBy { it.date }
+            }
+
+        override suspend fun markReviewed(ids: Collection<String>): Result<Unit> =
+            store.update { doc ->
+                val wanted = ids.toSet()
+                val income = doc.income.map { if (it.id in wanted) it.copy(needsReview = false) else it }
+                doc.copy(income = income) to Unit
+            }
+
         override suspend fun addIncome(income: Income): Result<String> =
             store.update { doc ->
                 val record = income.toLocal().let { it.copy(id = it.id.ifBlank { idGenerator.newId() }) }

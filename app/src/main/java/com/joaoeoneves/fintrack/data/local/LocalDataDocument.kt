@@ -60,6 +60,8 @@ data class LocalExpense(
     val isRefund: Boolean = false,
     /** Paid from the meal card (schema v20; absent = bank). */
     val paidWithMealCard: Boolean = false,
+    /** Recorded automatically and not yet reviewed (schema v22; absent = reviewed). */
+    val needsReview: Boolean = false,
 )
 
 @Serializable
@@ -69,6 +71,8 @@ data class LocalIncome(
     val amountCents: Long,
     val date: String,
     val note: String? = null,
+    /** Recorded automatically and not yet reviewed (schema v22; absent = reviewed). */
+    val needsReview: Boolean = false,
 )
 
 @Serializable
