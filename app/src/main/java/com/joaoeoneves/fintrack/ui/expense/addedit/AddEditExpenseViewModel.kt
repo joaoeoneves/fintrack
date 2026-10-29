@@ -192,22 +192,30 @@ class AddEditExpenseViewModel(
                             AddEditUiState.Error(UiText.StringResource(R.string.error_generic_fallback))
                     }
             } else {
-                val category =
-                    defaultCategory(
-                        categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first(),
-                    )
-                _uiState.value =
-                    readyWithSaved(
-                        ExpenseFormState(
-                            category = category,
-                            date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
-                            mealCardAvailable = mealAvailable,
-                            mealCardPlafondUsed = plafondUsed,
-                        ).withMealCardPrefill(),
-                        categoryOptions.value,
-                    )
-                history = loadHistory(expenseRepository, clock)
-                suggestionIndex = categorySuggestionIndex(history)
+                loadNewForm()
+            }
+        }
+    }
+
+    /** A new form: today's date, the default category and the route's prefill (a saved snapshot wins over it). */
+    private suspend fun loadNewForm() {
+        val catalog = categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first()
+        val base =
+            ExpenseFormState(
+                category = defaultCategory(catalog),
+                date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
+                mealCardAvailable = mealAvailable,
+                mealCardPlafondUsed = plafondUsed,
+            )
+        val prefilled =
+            base.withPrefill(route.prefillName, route.prefillAmountCents, route.prefillCategoryId, catalog)
+        _uiState.value = readyWithSaved(prefilled.withMealCardPrefill(), categoryOptions.value)
+        history = loadHistory(expenseRepository, clock)
+        suggestionIndex = categorySuggestionIndex(history)
+        // A chip whose category is gone or archived falls back to the one last used for its name.
+        if (route.prefillName != null && !prefilled.suggestedCategory) {
+            updateForm {
+                if (it.categoryTouched) it else it.withSuggestion(suggestionIndex, catalog).withMealCardPrefill()
             }
         }
     }
