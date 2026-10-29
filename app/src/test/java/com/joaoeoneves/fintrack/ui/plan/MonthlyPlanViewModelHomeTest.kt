@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
+import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringType
@@ -40,7 +41,7 @@ class MonthlyPlanViewModelHomeTest : MonthlyPlanViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            assertEquals(PlanTiles(0L, 0L, 0L, 0L, 0L), vm.content().tiles)
+            assertEquals(MonthFigures(0L, 0L, 0L, 0L, 0L), vm.content().figures)
             val configure = vm.content().configure
             assertEquals(0L, configure.incomeMonthlyCents)
             assertEquals(0, configure.incomeLineCount)
@@ -60,11 +61,10 @@ class MonthlyPlanViewModelHomeTest : MonthlyPlanViewModelTestBase() {
             collect(vm)
 
             val content = vm.content()
-            assertEquals(200_000L, content.tiles.incomeCents)
-            assertEquals(content.envelopes.freeCents, content.tiles.freeCents)
-            assertEquals(170_000L, content.tiles.freeCents)
-            assertEquals(30_000L, content.tiles.envelopesCents)
-            assertEquals(0L, content.tiles.billsCents)
+            assertEquals(200_000L, content.figures.incomeCents)
+                        assertEquals(170_000L, content.figures.availableCents)
+            assertEquals(30_000L, content.figures.envelopesCents)
+            assertEquals(0L, content.figures.recurringCents)
         }
 
     @Test
@@ -75,7 +75,7 @@ class MonthlyPlanViewModelHomeTest : MonthlyPlanViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            assertEquals(50_000L, vm.content().tiles.billsCents)
+            assertEquals(50_000L, vm.content().figures.recurringCents)
         }
 
     @Test
@@ -86,8 +86,8 @@ class MonthlyPlanViewModelHomeTest : MonthlyPlanViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            assertEquals(10_000L, vm.content().tiles.savingCents)
-            assertEquals(vm.content().summary.plannedSavingCents, vm.content().tiles.savingCents)
+            assertEquals(10_000L, vm.content().figures.savingCents)
+            assertEquals(10_000L, vm.content().figures.savingCents)
         }
 
     @Test

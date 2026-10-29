@@ -157,7 +157,7 @@ class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
         }
 
     @Test
-    fun totals_sumWholePeriod_beforeFilters() =
+    fun totals_followTheVisibleList() =
         runTest(testDispatcher) {
             val fixture =
                 Fixture(
@@ -170,7 +170,7 @@ class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
             vm.onTypeSelected(ActivityType.EXPENSE)
             advanceUntilIdle()
 
-            assertEquals(ActivityTotals(inCents = 4_100L, outCents = 1_500L), current(vm).totals)
+            assertEquals(ActivityTotals(inCents = 0L, outCents = 1_000L), current(vm).totals)
             assertEquals(listOf("a"), current(vm).items.map { it.id })
         }
 

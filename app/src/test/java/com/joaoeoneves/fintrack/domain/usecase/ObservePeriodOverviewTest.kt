@@ -18,23 +18,27 @@ import java.time.YearMonth
  */
 class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
     @Test
-    fun currentMonth_opensOneExpenseOneIncomeOneBudgetListener() =
+    fun currentMonth_opensTheMonthAndTheHistoryListener_andOneBudgetListener() =
         runTest {
             val result = overview(Period.CurrentMonth)
 
-            assertEquals(listOf(october.toInstantRange(zone)), expenses.listeners.observedRanges)
-            assertEquals(listOf(october.toInstantRange(zone)), income.listeners.observedRanges)
+            val expected = listOf(history(october), october.toInstantRange(zone))
+            assertEquals(expected, expenses.listeners.observedRanges)
+            assertEquals(expected, income.listeners.observedRanges)
             assertEquals(1, budgets.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
 
     @Test
-    fun pastMonth_opensOneExpenseListener_andBudgetsThatMonth() =
+    fun pastMonth_opensTheMonthAndHistoryListener_andBudgetsThatMonth() =
         runTest {
             val result = overview(Period.Month(september))
 
-            assertEquals(listOf(september.toInstantRange(zone)), expenses.listeners.observedRanges)
-            assertEquals(1, income.listeners.observedRanges.size)
+            assertEquals(
+                listOf(september.toInstantRange(zone), history(september)),
+                expenses.listeners.observedRanges,
+            )
+            assertEquals(2, income.listeners.observedRanges.size)
             assertEquals(september, result.budgetMonth)
         }
 
@@ -43,14 +47,10 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         runTest {
             val result = overview(Period.Rolling(TimeRange.THREE_MONTHS))
 
-            assertEquals(
-                listOf(TimeRange.THREE_MONTHS.toInstantRange(now, zone), october.toInstantRange(zone)),
-                expenses.listeners.observedRanges,
-            )
-            assertEquals(
-                listOf(TimeRange.THREE_MONTHS.toInstantRange(now, zone), october.toInstantRange(zone)),
-                income.listeners.observedRanges,
-            )
+            val expected =
+                listOf(TimeRange.THREE_MONTHS.toInstantRange(now, zone), history(october), october.toInstantRange(zone))
+            assertEquals(expected, expenses.listeners.observedRanges)
+            assertEquals(expected, income.listeners.observedRanges)
             assertEquals(1, budgets.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
@@ -60,7 +60,9 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         runTest {
             val result = overview(Period.Custom(LocalDate.of(2026, 9, 15), LocalDate.of(2026, 10, 31)))
 
-            assertEquals(1, expenses.listeners.observedRanges.size)
+            // The period's own listener plus the history one; no separate listener for the month.
+            assertEquals(2, expenses.listeners.observedRanges.size)
+            assertEquals(history(october), expenses.listeners.observedRanges[1])
             assertEquals(october, result.budgetMonth)
         }
 
@@ -69,9 +71,9 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         runTest {
             val result = overview(Period.Custom(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 30)))
 
-            assertEquals(2, expenses.listeners.observedRanges.size)
-            assertEquals(october.toInstantRange(zone), expenses.listeners.observedRanges[1])
-            assertEquals(2, income.listeners.observedRanges.size)
+            assertEquals(3, expenses.listeners.observedRanges.size)
+            assertEquals(october.toInstantRange(zone), expenses.listeners.observedRanges[2])
+            assertEquals(3, income.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
 
@@ -84,7 +86,7 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
 
             val result = overview(Period.Custom(LocalDate.of(2026, 9, 15), LocalDate.of(2026, 10, 31)))
 
-            assertEquals(1, expenses.listeners.observedRanges.size)
+            assertEquals(2, expenses.listeners.observedRanges.size)
             val food = result.budgets.single { it.category == BuiltInCategories.FOOD }
             assertEquals(2_000L, food.spentCents)
             assertEquals(5_000L, food.limitCents)
