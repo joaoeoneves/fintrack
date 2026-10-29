@@ -4,13 +4,19 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.domain.model.Envelope
-import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.amountIn
+import com.joaoeoneves.fintrack.domain.model.annualizedCents
+import com.joaoeoneves.fintrack.domain.model.billsOf
+import com.joaoeoneves.fintrack.domain.model.isEnded
+import com.joaoeoneves.fintrack.domain.model.isManaged
+import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
+import com.joaoeoneves.fintrack.domain.model.salaryShiftEnabled
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
+import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.ui.plan.ConfigureStatus
 import com.joaoeoneves.fintrack.ui.plan.PlanRepositories
@@ -21,13 +27,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "ConfigureViewModel"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
-private const val MONTHS_PER_YEAR = 12
 
 /** The global set-up status (income, envelopes, bills, categories), measured on the current month. */
 @HiltViewModel
@@ -37,8 +44,22 @@ class ConfigureViewModel
         repositories: PlanRepositories,
         envelopes: EnvelopeRepository,
         recurring: RecurringRepository,
+        private val planSettings: PlanSettingsRepository,
         private val clock: Clock,
     ) : ViewModel() {
+        /** The "salary pays the next month" switch: `null` (hidden) without a salary profile, else its state. */
+        val salaryPaysNextMonth: StateFlow<Boolean?> =
+            combine(planSettings.observeSalaryPaysNextMonth(), repositories.plannedIncome.observePlannedIncome()) {
+                    pref,
+                    lines,
+                ->
+                if (lines.any { it.isManaged }) salaryShiftEnabled(pref, lines) else null
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
+
+        fun onSalaryPaysNextMonthChanged(enabled: Boolean) {
+            viewModelScope.launch { planSettings.setSalaryPaysNextMonth(enabled) }
+        }
+
         /** Empty (every row reads "not set") until the first emission. */
         val status: StateFlow<ConfigureStatus> =
             statusFlow(repositories, envelopes.observeEnvelopes(), recurring.observeRecurring())
@@ -61,15 +82,15 @@ class ConfigureViewModel
                 val monthSettings = settings.firstOrNull { it.month == month }
                 val days = effectiveWorkingDays(month, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
                 // A savings plan's monthly item is the plan's, not a bill.
-                val planOwned = goals.mapNotNullTo(mutableSetOf()) { it.recurringId }
-                val bills =
-                    recurringList.filter { it.type == RecurringType.EXPENSE && it.active && it.id !in planOwned }
+                val bills = billsOf(recurringList, goals).filter { it.active && !it.isEnded(LocalDate.now(clock)) }
+                val regular = lines.filterNot { it.isExtra }
                 ConfigureStatus(
-                    incomeMonthlyCents = lines.filterNot { it.isExtra }.sumOf { it.amountIn(month, days) },
-                    incomeLineCount = lines.size,
+                    incomeMonthlyCents = regular.sumOf { it.amountIn(month, days) },
+                    incomeLineCount = regular.size,
                     envelopeCount = envelopeList.size,
                     billCount = bills.size,
-                    billsMonthlyCents = bills.sumOf { it.monthlyCents() },
+                    billsMonthlyCents =
+                        monthlyEquivalentCents(annualizedCents(bills, RecurringType.EXPENSE, LocalDate.now(clock))),
                     categoryCount = categories.count { !it.archived },
                 )
             }
@@ -84,8 +105,3 @@ private val EMPTY_STATUS =
         billsMonthlyCents = 0,
         categoryCount = 0,
     )
-
-private fun RecurringItem.monthlyCents(): Long {
-    val yearly = frequency == RecurringFrequency.YEARLY
-    return if (yearly) amountCents / MONTHS_PER_YEAR else amountCents
-}

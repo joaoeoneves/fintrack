@@ -743,4 +743,9 @@
     <string name="backup_restore_partial_title">Restauro incompleto</string>
     <string name="backup_restore_partial_message">Alguns dados já foram substituídos. Tenta novamente para terminar — repetir não duplica nada.</string>
     <string name="backup_error_restore_offline">Sem ligação. Nada foi alterado.</string>
+    <string name="plan_salary_next_month">O salário paga o mês seguinte</string>
+    <string name="plan_salary_next_month_hint">O salário pago nos últimos dias do mês financia o plano do mês seguinte.</string>
+    <string name="plan_summary_carry">Transitou de %1$s</string>
+    <string name="plan_summary_extras_note">%1$s de rendimento extra não conta até ser recebido</string>
+    <string name="activity_total_out_includes_saving">inclui %1$s poupados</string>
 </resources>

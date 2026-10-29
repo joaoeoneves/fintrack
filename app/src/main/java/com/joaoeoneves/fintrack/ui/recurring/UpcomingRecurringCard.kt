@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence

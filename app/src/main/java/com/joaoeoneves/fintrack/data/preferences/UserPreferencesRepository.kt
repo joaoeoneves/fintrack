@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.UserPreferences
 import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.domain.repository.MotionRepository
+import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -28,7 +29,8 @@ class UserPreferencesRepository
     ) : ThemeRepository,
         CurrencyRepository,
         LanguageRepository,
-        MotionRepository {
+        MotionRepository,
+        PlanSettingsRepository {
         override fun observeThemePreference(): Flow<ThemePreference> = pick { it.theme }
 
         override suspend fun setThemePreference(preference: ThemePreference) {
@@ -55,6 +57,13 @@ class UserPreferencesRepository
         // Device-local: not synced to Firestore.
         override suspend fun setMotionPreference(preference: MotionPreference) {
             store.update { it.copy(reducedMotion = preference) }
+        }
+
+        override fun observeSalaryPaysNextMonth(): Flow<Boolean?> = pick { it.salaryPaysNextMonth }
+
+        // Device-local like the motion preference: not synced to Firestore.
+        override suspend fun setSalaryPaysNextMonth(enabled: Boolean) {
+            store.update { it.copy(salaryPaysNextMonth = enabled) }
         }
 
         private fun <T> pick(f: (UserPreferences) -> T): Flow<T> = store.data.map(f).distinctUntilChanged()
