@@ -24,7 +24,16 @@ class LocalBudgetRepository
         ): Result<Unit> =
             store.update { doc ->
                 validateBudget(categoryId.value, limitCents, knownCategoryIds(doc), skipMonths)
-                val record = LocalBudget(categoryId.value, limitCents, skipMonths.sorted())
+                // Like the merge write of the signed-in store, the start month and versions are kept.
+                val existing = doc.budgets.find { it.categoryId == categoryId.value }
+                val record =
+                    LocalBudget(
+                        categoryId.value,
+                        limitCents,
+                        skipMonths.sorted(),
+                        existing?.startMonth,
+                        existing?.versions.orEmpty(),
+                    )
                 doc.copy(budgets = doc.budgets.upserted(record) { it.categoryId == record.categoryId }) to Unit
             }
 
