@@ -16,6 +16,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.SalarySpendComparison
+import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.currentLocale
@@ -59,6 +60,12 @@ fun DetailScreen(
     when (val current = state) {
         DetailUiState.Loading -> PlaceholderPage(onBack, modifier, message = null)
         DetailUiState.NotFound -> PlaceholderPage(onBack, modifier, message = stringResource(R.string.detail_not_found))
+        DetailUiState.Error ->
+            ErrorState(
+                message = stringResource(R.string.error_generic_fallback),
+                onRetry = viewModel::onRetry,
+                modifier = modifier,
+            )
         is DetailUiState.Content ->
             DetailContent(
                 state = current,
