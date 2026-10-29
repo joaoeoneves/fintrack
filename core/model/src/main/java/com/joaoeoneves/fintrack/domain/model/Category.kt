@@ -12,7 +12,7 @@ value class CategoryId(
  * localized default name); [iconKey]/[colorKey] are presentation keys resolved by the UI layer.
  * [archived] categories are hidden from pickers but still shown wherever they have data.
  * [groupId] is the id of the [Envelope] the category is filed under, `null` when ungrouped (a
- * dangling id is treated the same way).
+ * dangling id is treated the same way). [mealCardByDefault] prefills new expenses as paid with the meal card.
  */
 data class Category(
     val id: CategoryId,
@@ -24,6 +24,7 @@ data class Category(
     val archived: Boolean,
     val builtIn: Boolean,
     val groupId: String? = null,
+    val mealCardByDefault: Boolean = false,
 ) {
     /** Whether this is a placeholder for an id that matches no known category (see [unknown]). */
     val isUnknown: Boolean get() = !builtIn && customName == null

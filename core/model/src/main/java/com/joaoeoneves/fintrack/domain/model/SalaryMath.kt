@@ -22,6 +22,8 @@ data class SalaryBreakdown(
     val duoCents: Long,
     val grossCents: Long,
     val ssCents: Long,
+    /** ADSE / other deductions ([SalaryProfile.otherDeductionsPpm]) on the monthly gross; 0 when none. */
+    val otherDeductionsCents: Long,
     val irsBaseCents: Long,
     val irsSubsidiesCents: Long,
     val irsCents: Long,
@@ -68,12 +70,23 @@ private fun grossBreakdown(
     val duo = baseExact.multiply(BigDecimal(2 * spread)).divide(PPM.multiply(BigDecimal(MONTHS)), EXACT_SCALE, HALF_UP)
     val gross = baseExact.add(duo)
     val ss = gross.ppm(profile.ssPpm)
+    val other = gross.ppm(profile.otherDeductionsPpm)
     val irsBase = baseExact.ppm(profile.irsBasePpm)
     val irsSubs = duo.ppm(profile.effectiveIrsSubsidiesPpm)
     val irs = irsBase.add(irsSubs).ppm(PPM_SCALE - profile.irsJovemExemptPpm)
-    val netMonthly = gross.subtract(ss).subtract(irs).cents()
+    val netMonthly =
+        gross
+            .subtract(ss)
+            .subtract(other)
+            .subtract(irs)
+            .cents()
     val irsBasePaid = irsBase.ppm(PPM_SCALE - profile.irsJovemExemptPpm)
-    val netBase = baseExact.subtract(baseExact.ppm(profile.ssPpm)).subtract(irsBasePaid).cents()
+    val netBase =
+        baseExact
+            .subtract(baseExact.ppm(profile.ssPpm))
+            .subtract(baseExact.ppm(profile.otherDeductionsPpm))
+            .subtract(irsBasePaid)
+            .cents()
     val lump = base.ppm(PPM_SCALE - spread)
     val lumpNet = lump.lumpNet(profile)
     return SalaryBreakdown(
@@ -81,6 +94,7 @@ private fun grossBreakdown(
         duoCents = duo.cents(),
         grossCents = gross.cents(),
         ssCents = ss.cents(),
+        otherDeductionsCents = other.cents(),
         irsBaseCents = irsBase.cents(),
         irsSubsidiesCents = irsSubs.cents(),
         irsCents = irs.cents(),
@@ -104,6 +118,7 @@ private fun netBreakdown(
         duoCents = 0L,
         grossCents = 0L,
         ssCents = 0L,
+        otherDeductionsCents = 0L,
         irsBaseCents = 0L,
         irsSubsidiesCents = 0L,
         irsCents = 0L,
@@ -118,12 +133,18 @@ private fun netBreakdown(
     )
 
 /**
- * A subsidy lump after SS and IRS: lump x (1 - ss - irsBase x (1 - exempt)), rounded once. The lump is withheld at
+ * A subsidy lump after SS, other deductions and IRS: lump x (1 - ss - other - irsBase x (1 - exempt)), rounded
+ * once. The lump is withheld at
  * about the base rate, not the much lower rate that only fits the small monthly twelfths.
  */
 private fun Long.lumpNet(profile: SalaryProfile): Long {
     val irsPaid = BigDecimal(profile.irsBasePpm).multiply(BigDecimal(PPM_SCALE - profile.irsJovemExemptPpm))
-    val factor = PPM.multiply(PPM).subtract(BigDecimal(profile.ssPpm).multiply(PPM)).subtract(irsPaid)
+    val factor =
+        PPM
+            .multiply(PPM)
+            .subtract(BigDecimal(profile.ssPpm).multiply(PPM))
+            .subtract(BigDecimal(profile.otherDeductionsPpm).multiply(PPM))
+            .subtract(irsPaid)
     return BigDecimal(this).multiply(factor).divide(PPM.multiply(PPM), 0, RoundingMode.HALF_UP).toLong()
 }
 

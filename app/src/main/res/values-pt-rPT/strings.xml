@@ -523,6 +523,7 @@
     <string name="salary_breakdown_title">Detalhe</string>
     <string name="salary_breakdown_gross">Bruto mensal</string>
     <string name="salary_breakdown_ss">Segurança Social</string>
+    <string name="salary_breakdown_other_deductions">ADSE / outros descontos</string>
     <string name="salary_breakdown_irs">IRS</string>
     <string name="salary_breakdown_net">Líquido mensal</string>
     <string name="salary_breakdown_meal">Subsídio de refeição em %1$s</string>

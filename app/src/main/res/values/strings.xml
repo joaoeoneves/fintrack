@@ -509,6 +509,7 @@
     <string name="salary_breakdown_title">Breakdown</string>
     <string name="salary_breakdown_gross">Gross monthly</string>
     <string name="salary_breakdown_ss">Social security</string>
+    <string name="salary_breakdown_other_deductions">ADSE / other deductions</string>
     <string name="salary_breakdown_irs">IRS</string>
     <string name="salary_breakdown_net">Net monthly</string>
     <string name="salary_breakdown_meal">Meal allowance in %1$s</string>

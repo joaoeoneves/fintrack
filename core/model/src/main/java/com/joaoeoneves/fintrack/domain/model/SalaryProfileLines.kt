@@ -53,6 +53,7 @@ fun salaryProfileLines(
                 managedKey = wanted.key,
                 autoRecord = (current ?: salaryLine)?.autoRecord ?: false,
                 payDay = (current ?: salaryLine)?.payDay,
+                payDayEarlierIfClosed = (current ?: salaryLine)?.payDayEarlierIfClosed ?: false,
                 startMonth = current?.startMonth,
                 versions = current?.versions.orEmpty(),
             )

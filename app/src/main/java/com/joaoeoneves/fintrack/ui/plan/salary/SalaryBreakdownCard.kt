@@ -29,6 +29,9 @@ private fun BreakdownRows(
     if (breakdown.grossCents > 0) {
         rows += stringResource(R.string.salary_breakdown_gross) to breakdown.grossCents
         rows += stringResource(R.string.salary_breakdown_ss) to -breakdown.ssCents
+        if (breakdown.otherDeductionsCents > 0) {
+            rows += stringResource(R.string.salary_breakdown_other_deductions) to -breakdown.otherDeductionsCents
+        }
         rows += stringResource(R.string.salary_breakdown_irs) to -breakdown.irsCents
     }
     rows += stringResource(R.string.salary_breakdown_net) to breakdown.netMonthlyCents
