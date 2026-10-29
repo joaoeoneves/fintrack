@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
 import android.app.Application
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
@@ -56,7 +57,7 @@ class SalaryProfileViewModelTest {
 
     private val manage get() = ManageSalaryProfile(profiles, income)
 
-    private fun viewModel() = SalaryProfileViewModel(profiles, manage, income, clock, idGenerator = { "id1" })
+    private fun viewModel() = SalaryProfileViewModel(profiles, manage, income, FakeMonthSettingsRepository(), clock, idGenerator = { "id1" })
 
     private fun TestScope.started(vm: SalaryProfileViewModel): SalaryProfileViewModel {
         backgroundScope.launch { vm.uiState.collect {} }

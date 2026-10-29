@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
 import android.app.Application
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.AmountVersion
@@ -54,6 +55,7 @@ class SalaryProfileViewModelEffectiveFromTest {
                 profiles,
                 ManageSalaryProfile(profiles, income),
                 income,
+                FakeMonthSettingsRepository(),
                 clock,
                 idGenerator = { "id1" },
             )

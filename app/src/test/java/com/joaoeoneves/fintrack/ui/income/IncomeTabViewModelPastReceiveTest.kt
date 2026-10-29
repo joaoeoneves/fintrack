@@ -34,7 +34,7 @@ class IncomeTabViewModelPastReceiveTest : IncomeTabViewModelTestBase() {
             val vm = september()
             collect(vm)
 
-            assertTrue(vm.content().receipts.canReceive)
+            assertTrue(vm.content().receipts.canReceive.isNotEmpty())
             assertEquals(LocalDate.of(2026, 9, 30), vm.content().receipts.payday)
         }
 

@@ -51,7 +51,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             assertEquals(YearMonth.of(2027, 3), content.workingDays.month)
             assertNull(content.history)
             assertEquals(100_000L, content.incomeRows.single().cents)
-            assertFalse(content.receipts.canReceive)
+            assertTrue(content.receipts.canReceive.isEmpty())
             assertTrue(content.receipts.receivedOn.isEmpty())
             assertNull(content.receipts.receivedPayday)
         }
@@ -183,7 +183,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             collect(vm)
 
             val balance = vm.content().mealCard!!
-            assertEquals(20_000L, balance.receivedCents)
+            assertEquals(20_000L, balance.plafondCents)
             assertEquals(25_000L, balance.spentCents)
             assertEquals(-5_000L, balance.balanceCents)
         }
@@ -210,7 +210,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             seedMealYear()
             val balance = yearWithMeal(true).content().mealCard!!
 
-            assertEquals(30_000L, balance.receivedCents)
+            assertEquals(30_000L, balance.plafondCents)
             assertEquals(7_000L, balance.spentCents)
         }
 
