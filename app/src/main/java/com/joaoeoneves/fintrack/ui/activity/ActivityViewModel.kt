@@ -115,7 +115,8 @@ class ActivityViewModel
                 initialType(
                     routeType = savedStateHandle.get<String>(ARG_TYPE),
                     // A category or envelope handed over by the route lives on the Expenses tab.
-                    hasExpenseFilter = savedStateHandle.contains(ARG_CATEGORY) || savedStateHandle.contains(ARG_ENVELOPE),
+                    hasExpenseFilter =
+                        savedStateHandle.contains(ARG_CATEGORY) || savedStateHandle.contains(ARG_ENVELOPE),
                 ),
             )
         val type: StateFlow<ActivityType> = selectedType

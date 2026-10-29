@@ -134,6 +134,7 @@ fun UpcomingRecurringCard(
  * The current month's income not yet received, offered from a week before payday: each row with a check that
  * records it as received today and offers to change the date or amount from the snackbar.
  */
+@Suppress("LongMethod") // One row layout with its receive action.
 @Composable
 private fun ExpectedIncomeGroup(
     expected: ExpectedIncome,
@@ -180,7 +181,9 @@ private fun ExpectedIncomeGroup(
                                         today = today,
                                         date = receiveDate,
                                         editableAmountCents =
-                                            paying.singleOrNull()?.let { expected.funding.amountIn(it, entry.planMonth) },
+                                            paying.singleOrNull()?.let {
+                                                expected.funding.amountIn(it, entry.planMonth)
+                                            },
                                         onConfirm = { date, cents -> onReceive(row, date, cents) },
                                     ),
                             )

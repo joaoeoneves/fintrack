@@ -17,7 +17,6 @@ import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.billsOf
-import com.joaoeoneves.fintrack.domain.model.budgetProgressOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.commonPayDateIn
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
@@ -318,8 +317,7 @@ private fun planFlow(
         repositories.categories.observeCategories(),
         selected.overview,
         combine(repositories.monthSettings.observeMonthSettings(), editor, repositories.goals.observeGoals(), ::Triple),
-    ) { lines, budgets, categories, overview, (settings, editorState, goals) ->
-        val allocations = budgetProgressOf(emptyList(), budgets, categories, overview.recurring, overview.budgetMonth)
+    ) { lines, _, categories, overview, (settings, editorState, goals) ->
         val workingDays = workingDaysOf(overview.budgetMonth, settings)
         val funding = overview.funding
         val rows = incomeRowsIn(lines, overview.budgetMonth, funding)

@@ -31,7 +31,7 @@ sealed interface DashboardUiState {
      * @property chartExpenses [expenses] without the saving-kind ones: the balance chart ends at [netCents].
      * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
      * @property envelopes the month's envelopes and free money; `null` falls back to the plain plan.
-     * @property figures the month's subtraction shared with the plan (carry + income - recurring - envelopes - savings).
+     * @property figures the month's subtraction shared with the plan (carry + income - ... = available).
      * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
      */
     data class Content(

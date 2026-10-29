@@ -11,6 +11,7 @@ import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import javax.inject.Inject
 
 /** The plan-side repositories an overview is assembled from, bundled for detekt's LongParameterList. */
+@Suppress("LongParameterList") // One repository per plan source.
 class PlanDataSources
     @Inject
     constructor(

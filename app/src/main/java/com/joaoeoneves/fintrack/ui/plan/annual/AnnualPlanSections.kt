@@ -18,6 +18,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AnnualEnvelope
 import com.joaoeoneves.fintrack.domain.model.AnnualFunding
 import com.joaoeoneves.fintrack.domain.model.AnnualIncome
+import com.joaoeoneves.fintrack.domain.model.AnnualSavings
 import com.joaoeoneves.fintrack.domain.model.AnnualSubscription
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -89,26 +90,39 @@ fun AnnualIncomeCard(
 fun AnnualEnvelopesCard(
     envelopes: List<AnnualEnvelope>,
     modifier: Modifier = Modifier,
+    savings: AnnualSavings = AnnualSavings(0L, 0L),
 ) {
     val shown = envelopes.filter { it.plannedCents > 0 || it.actualCents > 0 }
-    if (shown.isEmpty()) return
+    val hasSavings = savings.plannedCents > 0 || savings.actualCents > 0
+    if (shown.isEmpty() && !hasSavings) return
     SettingsGroup(label = stringResource(R.string.plan_envelopes_title), modifier = modifier) {
         shown.forEach { group ->
-            AnnualEnvelopeRow(group)
+            AnnualEnvelopeRow(group, group.envelope?.name ?: stringResource(R.string.plan_group_other))
+            Hairline()
+        }
+        // Savings read the same as in the month: one "Savings" line, never an envelope.
+        if (hasSavings) {
+            AnnualEnvelopeRow(
+                AnnualEnvelope(null, savings.plannedCents, savings.actualCents),
+                stringResource(R.string.plan_tile_saving),
+            )
             Hairline()
         }
     }
 }
 
 @Composable
-private fun AnnualEnvelopeRow(group: AnnualEnvelope) {
+private fun AnnualEnvelopeRow(
+    group: AnnualEnvelope,
+    name: String,
+) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space12)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = group.envelope?.name ?: stringResource(R.string.plan_group_other),
+                text = name,
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

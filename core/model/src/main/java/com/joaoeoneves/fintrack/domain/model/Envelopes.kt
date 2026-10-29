@@ -30,6 +30,9 @@ data class EnvelopeProgress(
     /** What its funding line leaves after the spend; `null` when unfunded. */
     val leftoverCents: Long? get() = fundingCents?.let { it - spentCents }
 
+    /** The money this envelope takes out of the month: its funding plus overflow when funded, else [committedCents]. */
+    val reservedCents: Long get() = fundingCents?.let { it + overflowCents } ?: committedCents
+
     /** How much of [committedCents] the funding line does not cover (taken from the free money); 0 when unfunded. */
     val overflowCents: Long get() = fundingCents?.let { maxOf(committedCents - it, 0L) } ?: 0L
 
@@ -141,7 +144,7 @@ fun envelopesOf(
             loose.sumOf { maxOf(it.planned ?: 0L, it.spentCents) } +
             progress.sumOf { it.overflowCents } + savingCommitted
     val recurring =
-        progress.sumOf { recurringPartOf(it.rows, it.fundingCents?.let { f -> f + it.overflowCents } ?: it.committedCents) } +
+        progress.sumOf { recurringPartOf(it.rows, it.reservedCents) } +
             loose.sumOf { recurringPartOf(listOf(it), maxOf(it.planned ?: 0L, it.spentCents)) }
     return EnvelopesSummary(
         envelopes = progress,

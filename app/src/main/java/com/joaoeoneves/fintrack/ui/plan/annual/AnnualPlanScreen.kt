@@ -73,7 +73,7 @@ private fun AnnualPlanContent(
         }
         item { LeftoverHero(year = state.year, leftoverCents = plan.leftoverCents, modifier = cardModifier) }
         if (plan.income.totalCents > 0) item { AnnualIncomeCard(plan.income, state.year, cardModifier) }
-        if (plan.envelopes.isNotEmpty()) item { AnnualEnvelopesCard(plan.envelopes, cardModifier) }
+        item { AnnualEnvelopesCard(plan.envelopes, cardModifier, plan.savings) }
         if (plan.funding.isNotEmpty()) item { AnnualFundingCard(plan.funding, cardModifier) }
         if (plan.goals.isNotEmpty()) item { AnnualGoalsCard(plan.goals, cardModifier) }
         if (plan.subscriptions.isNotEmpty()) {

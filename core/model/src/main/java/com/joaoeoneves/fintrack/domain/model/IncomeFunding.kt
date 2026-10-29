@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // The one place funding rules live.
+
 package com.joaoeoneves.fintrack.domain.model
 
 import java.time.LocalDate
@@ -157,11 +159,11 @@ fun IncomeRow.receivedOn(
 
 /** The line id and pay month a payday income id (`pay_<lineId>_<yyyyMM>`) stands for; `null` for any other id. */
 fun parsePaydayIncomeId(id: String): Pair<String, YearMonth>? {
-    if (!isPaydayIncomeId(id)) return null
-    val body = id.removePrefix(PAYDAY_ID_PREFIX_VALUE)
-    val lineId = body.substringBeforeLast('_', missingDelimiterValue = "").takeIf { it.isNotEmpty() } ?: return null
-    val month = runCatching { YearMonth.parse(body.substringAfterLast('_'), PAYDAY_MONTH_PARSER) }.getOrNull()
-    return month?.let { lineId to it }
+    val body = id.takeIf(::isPaydayIncomeId)?.removePrefix(PAYDAY_ID_PREFIX_VALUE)
+    val lineId = body?.substringBeforeLast('_', missingDelimiterValue = "")?.takeIf { it.isNotEmpty() }
+    val suffix = body?.substringAfterLast('_')
+    val month = suffix?.let { runCatching { YearMonth.parse(it, PAYDAY_MONTH_PARSER) }.getOrNull() }
+    return if (lineId != null && month != null) lineId to month else null
 }
 
 private const val PAYDAY_ID_PREFIX_VALUE = "pay_"

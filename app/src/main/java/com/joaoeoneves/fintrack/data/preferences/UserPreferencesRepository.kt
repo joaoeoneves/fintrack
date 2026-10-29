@@ -20,6 +20,7 @@ import javax.inject.Singleton
  * DataStore-backed implementation of the theme, currency and language repositories. Each setter
  * writes locally first, then pushes the change to Firestore via [PreferencesSync].
  */
+@Suppress("TooManyFunctions") // One observe/set pair per preference.
 @Singleton
 class UserPreferencesRepository
     @Inject

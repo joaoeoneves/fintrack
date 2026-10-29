@@ -56,6 +56,7 @@ data class MonthActuals(
  * on the last working day funds the next month) and expenses by their date in [zone]; expense kinds come from
  * [categories]. Sorted by month.
  */
+@Suppress("LongParameterList") // One input per source.
 fun monthActualsOf(
     expenses: List<Expense>,
     incomes: List<Income>,

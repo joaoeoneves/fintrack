@@ -67,7 +67,8 @@ class ObserveExpectedIncome
                         incomeRowsIn(lines, plan, funding)
                             .filter { it.cents > 0L && it.receivedIncomes(plan, funding, incomes) == null }
                             .map { ExpectedIncomeEntry(it, plan, it.payDateIn(plan, funding)) }
-                            .filter { YearMonth.from(it.payDate) <= month && today >= it.payDate.minusDays(PAYDAY_LEAD_DAYS) }
+                            .filter { YearMonth.from(it.payDate) <= month }
+                            .filter { today >= it.payDate.minusDays(PAYDAY_LEAD_DAYS) }
                     }
                 val current = monthSettings.firstOrNull { it.month == month }
                 val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)

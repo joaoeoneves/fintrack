@@ -88,6 +88,7 @@ private fun PlanSetupRow(
     }
 }
 
+@Suppress("LongMethod") // One column of independent rows.
 @Composable
 private fun PlanContent(
     state: DashboardUiState.Content,

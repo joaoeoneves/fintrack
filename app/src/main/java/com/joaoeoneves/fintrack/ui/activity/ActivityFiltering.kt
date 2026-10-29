@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // One small matcher per filter.
+
 package com.joaoeoneves.fintrack.ui.activity
 
 import com.joaoeoneves.fintrack.domain.model.Category
@@ -15,9 +17,9 @@ import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
 /**
  * Applies the type, category, envelope and search filters (all must match). The [category] and [envelope] only
  * exist on the Expenses tab ([ActivityType.EXPENSE]): under [ActivityType.ALL] and [ActivityType.INCOME] they are
- * ignored, so a leftover selection never silently hides income. [envelope] is an envelope id or [NO_ENVELOPE]; [envelopeOf] maps a category to its
- * existing envelope (`null`: none). A blank [query] matches everything; [labels] are the localized category names
- * the query is also matched against.
+ * ignored, so a leftover selection never silently hides income. [envelope] is an envelope id or [NO_ENVELOPE];
+ * [envelopeOf] maps a category to its existing envelope (`null`: none). A blank [query] matches everything;
+ * [labels] are the localized category names the query is also matched against.
  */
 @Suppress("LongParameterList") // one independent input per filter
 fun filterTransactions(

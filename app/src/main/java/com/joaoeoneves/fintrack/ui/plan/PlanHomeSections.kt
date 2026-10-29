@@ -76,11 +76,26 @@ fun MonthSummarySection(
                     .takeIf { extraIncomeCents > 0L },
         )
         Hairline()
-        SummaryRow(stringResource(R.string.plan_tile_bills), -figures.recurringCents, actions.onOpenRecurring, signed = true)
+        SummaryRow(
+            label = stringResource(R.string.plan_tile_bills),
+            cents = -figures.recurringCents,
+            onClick = actions.onOpenRecurring,
+            signed = true,
+        )
         Hairline()
-        SummaryRow(stringResource(R.string.plan_tile_envelopes), -figures.envelopesCents, actions.onOpenEnvelopes, signed = true)
+        SummaryRow(
+            label = stringResource(R.string.plan_tile_envelopes),
+            cents = -figures.envelopesCents,
+            onClick = actions.onOpenEnvelopes,
+            signed = true,
+        )
         Hairline()
-        SummaryRow(stringResource(R.string.plan_tile_saving), -figures.savingCents, actions.onOpenSavings, signed = true)
+        SummaryRow(
+            label = stringResource(R.string.plan_tile_saving),
+            cents = -figures.savingCents,
+            onClick = actions.onOpenSavings,
+            signed = true,
+        )
         Hairline()
         val available = figures.availableCents
         SummaryRow(
@@ -115,7 +130,11 @@ private fun SummaryRow(
                 style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
             )
             if (note != null) {
-                Text(text = note, style = MaterialTheme.typography.bodySmall, color = FinTrackTheme.colors.textSecondary)
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
             }
         }
         val prefix = if (signed && cents > 0L) "+" else ""

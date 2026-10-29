@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.CARRY_LOOKBACK_MONTHS
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -110,23 +111,9 @@ class ObservePeriodOverview
             val transactions = all.period
             val monthTransactions = all.month
             val plan = inputs.plan
-            val funding = IncomeFunding.of(salaryShiftEnabled(inputs.shiftPreference, plan.plannedIncome), plan.monthSettings)
-            // Income that funds this month: a salary paid at the end of last month counts here, one paid at the
-            // end of this month does not.
-            val fundingIncome =
-                (monthTransactions.income + all.past.income).fundingIn(budgetMonth, plan.plannedIncome, funding, all.zone)
-            val carry =
-                carryOverCents(
-                    budgetMonth,
-                    monthActualsOf(
-                        all.past.expenses,
-                        all.past.income + monthTransactions.income,
-                        plan.categories,
-                        plan.plannedIncome,
-                        funding,
-                        all.zone,
-                    ),
-                )
+            val context = fundingContextOf(budgetMonth, all, inputs)
+            val funding = context.funding
+            val fundingIncome = context.income
             val rows =
                 budgetProgressOf(
                     monthTransactions.expenses,
@@ -168,12 +155,34 @@ class ObservePeriodOverview
                 envelopes = envelopes,
                 recurring = inputs.recurring,
                 periodEnvelopes = periodEnvelopesOf(transactions, plan.categories, inputs.envelopes, planMonth),
-                figures = monthFiguresOf(envelopes, carry),
+                figures = monthFiguresOf(envelopes, context.carry),
                 funding = funding,
                 monthIncome = fundingIncome,
             )
         }
     }
+
+/** How income is attributed to months, the incomes funding the month and what earlier months carry into it. */
+private class FundingContext(
+    val funding: IncomeFunding,
+    val income: List<Income>,
+    val carry: Long,
+)
+
+// A salary paid at the end of last month funds this month, one paid at the end of this month does not.
+private fun fundingContextOf(
+    month: YearMonth,
+    all: OverviewTransactions,
+    inputs: OverviewInputs,
+): FundingContext {
+    val plan = inputs.plan
+    val lines = plan.plannedIncome
+    val funding = IncomeFunding.of(salaryShiftEnabled(inputs.shiftPreference, lines), plan.monthSettings)
+    val income = (all.month.income + all.past.income).fundingIn(month, lines, funding, all.zone)
+    val actuals =
+        monthActualsOf(all.past.expenses, all.past.income + all.month.income, plan.categories, lines, funding, all.zone)
+    return FundingContext(funding, income, carryOverCents(month, actuals))
+}
 
 /** Spent per envelope over the whole period's [transactions] (planned amounts and funding are left out). */
 private fun periodEnvelopesOf(

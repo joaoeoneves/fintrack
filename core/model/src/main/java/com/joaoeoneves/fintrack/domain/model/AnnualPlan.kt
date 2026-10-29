@@ -114,7 +114,6 @@ fun annualPlanOf(
     val months = (1..MONTHS_PER_YEAR).map { YearMonth.of(year, it) }
     val funding = IncomeFunding.of(inputs.shiftSalary, inputs.monthSettings)
     val plannedByCategory = plannedByCategory(months, inputs)
-    val savingIds = plannedByCategory.keys.filterTo(mutableSetOf()) { inputs.categories.resolve(it).kind == CategoryKind.SAVING }
     return AnnualPlan(
         year = year,
         income = annualIncomeOf(inputs.lines, months, funding),
