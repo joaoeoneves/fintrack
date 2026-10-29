@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -20,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +41,6 @@ import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.color
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.icon
-import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
@@ -86,50 +85,7 @@ internal fun ActiveCategoryRow(
             onClick = { actions.onMove(category.id, MoveDirection.DOWN) },
             enabled = canMoveDown,
         )
-        CategoryOverflowMenu(category, actions)
-    }
-}
-
-@Composable
-private fun CategoryOverflowMenu(
-    category: Category,
-    actions: CategoryRowActions,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val name = category.displayName
-    val description = stringResource(R.string.cd_category_more_actions, name)
-    IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = description }) {
-        Icon(Icons.Filled.MoreVert, contentDescription = null)
-    }
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { expanded = false },
-        shape = MaterialTheme.shapes.medium,
-        containerColor = FinTrackTheme.colors.surface2,
-    ) {
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.category_action_edit)) },
-            onClick = {
-                expanded = false
-                actions.onEdit(category.id)
-            },
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.category_action_archive)) },
-            onClick = {
-                expanded = false
-                actions.onToggleArchived(category.id)
-            },
-        )
-        if (!category.builtIn) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.category_action_delete)) },
-                onClick = {
-                    expanded = false
-                    actions.onDelete(category.id)
-                },
-            )
-        }
+        CategoryOverflowMenu(category, archived = false, actions = actions)
     }
 }
 
@@ -144,44 +100,62 @@ internal fun ArchivedCategoryRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CategoryIdentity(category, modifier = Modifier.alpha(ARCHIVED_ALPHA))
-        TextButton(onClick = { actions.onToggleArchived(category.id) }) {
-            Text(stringResource(R.string.category_action_unarchive))
-        }
-        if (!category.builtIn) {
-            DestructiveTextButton(
-                text = stringResource(R.string.category_action_delete),
-                onClick = { actions.onDelete(category.id) },
-            )
-        }
-        ArchivedOverflowMenu(category, actions)
+        CategoryOverflowMenu(category, archived = true, actions = actions)
     }
 }
 
-/** Overflow menu of an archived row: moving everything that still uses the category elsewhere. */
+/** Overflow menu of every category row (active or archived): one pattern for all row actions. */
 @Composable
-private fun ArchivedOverflowMenu(
+private fun CategoryOverflowMenu(
     category: Category,
+    archived: Boolean,
     actions: CategoryRowActions,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val description = stringResource(R.string.cd_category_more_actions, category.displayName)
+    val close = { expanded = false }
     IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = description }) {
         Icon(Icons.Filled.MoreVert, contentDescription = null)
     }
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = { expanded = false },
+        onDismissRequest = close,
         shape = MaterialTheme.shapes.medium,
         containerColor = FinTrackTheme.colors.surface2,
     ) {
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.category_action_move_items)) },
-            onClick = {
-                expanded = false
-                actions.onMoveItems(category.id)
-            },
-        )
+        if (!archived) {
+            CategoryMenuItem(R.string.category_action_edit, close) { actions.onEdit(category.id) }
+        }
+        CategoryMenuItem(R.string.category_action_move_items, close) { actions.onMoveItems(category.id) }
+        CategoryMenuItem(
+            if (archived) R.string.category_action_unarchive else R.string.category_action_archive,
+            close,
+        ) { actions.onToggleArchived(category.id) }
+        if (category.builtIn) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.category_delete_builtin_hint)) },
+                enabled = false,
+                onClick = {},
+            )
+        } else {
+            CategoryMenuItem(R.string.category_action_delete, close) { actions.onDelete(category.id) }
+        }
     }
+}
+
+@Composable
+private fun CategoryMenuItem(
+    @StringRes label: Int,
+    onClose: () -> Unit,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(stringResource(label)) },
+        onClick = {
+            onClose()
+            onClick()
+        },
+    )
 }
 
 /** Monochrome icon, name and kind of a category plus its colour dot; fills the row's remaining width. */
