@@ -12,6 +12,7 @@ import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
 import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
+import com.joaoeoneves.fintrack.testutil.FakePlanSettingsRepository
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.YearMonth
@@ -32,7 +33,13 @@ abstract class ObservePeriodOverviewTestBase {
 
     /** The month before [range]'s start, up to its start: where a salary funding the range's first month is paid. */
     protected fun monthBefore(range: InstantRange): InstantRange =
-        InstantRange(range.startInclusive.atZone(zone).minusMonths(1).toInstant(), range.startInclusive)
+        InstantRange(
+            range.startInclusive
+                .atZone(zone)
+                .minusMonths(1)
+                .toInstant(),
+            range.startInclusive,
+        )
 
     protected fun monthBefore(month: YearMonth): InstantRange = monthBefore(month.toInstantRange(zone))
 
@@ -44,6 +51,7 @@ abstract class ObservePeriodOverviewTestBase {
     protected val groups = FakeEnvelopeRepository()
     protected val recurring = FakeRecurringRepository()
     protected val monthSettings = FakeMonthSettingsRepository()
+    protected val planSettings = FakePlanSettingsRepository()
 
     protected val useCase =
         ObservePeriodOverview(
@@ -56,6 +64,7 @@ abstract class ObservePeriodOverviewTestBase {
                     categories = categories,
                     envelopes = groups,
                     recurring = recurring,
+                    planSettings = planSettings,
                 ),
         )
 

@@ -78,7 +78,7 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
             advanceUntilIdle()
             assertActive(expenseListeners = 3)
             assertEquals(currentMonth, viewModel.content().budgetMonth)
-            // CurrentMonth, then Month(previous), then CurrentMonth again (each: the month and the month before, twice).
+            // CurrentMonth, Month(previous), CurrentMonth again: three listeners each.
             assertEquals(9, expenses.listeners.observedRanges.size)
         }
 

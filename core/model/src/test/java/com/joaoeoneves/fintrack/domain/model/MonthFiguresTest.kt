@@ -37,7 +37,7 @@ class MonthFiguresTest {
 
     @Test
     fun availableCents_canBeNegative() {
-        val figures = MonthFigures(incomeCents = 10_000L, recurringCents = 50_000L, envelopesCents = 0L, savingCents = 0L)
+        val figures = MonthFigures(10_000L, 50_000L, 0L, 0L)
 
         assertEquals(-40_000L, figures.availableCents)
     }
