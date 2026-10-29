@@ -207,7 +207,9 @@ class AddEditExpenseViewModel(
         updateForm { it.copy(note = limitInput(it.note, note, MAX_NOTE_LENGTH), saveError = null) }
     }
 
-    fun onRefundChanged(isRefund: Boolean) = updateForm { it.copy(isRefund = isRefund, saveError = null).withMealCardPrefill() }
+    fun onRefundChanged(isRefund: Boolean) {
+        updateForm { it.copy(isRefund = isRefund, saveError = null).withMealCardPrefill() }
+    }
 
     /** The "Paid with meal card" switch; once the user sets it, the category no longer decides. */
     fun onMealCardChanged(paid: Boolean) = updateForm { it.copy(paidWithMealCard = paid, mealCardTouched = true) }

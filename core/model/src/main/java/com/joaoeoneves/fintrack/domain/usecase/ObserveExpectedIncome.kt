@@ -58,7 +58,9 @@ class ObserveExpectedIncome
                 val entries =
                     listOf(month.minusMonths(1), month).flatMap { payMonth ->
                         incomeRowsIn(lines, payMonth, incomeMonth)
-                            .filter { it.cents > 0L && it.receivedIncomes(payMonth, incomeMonth, incomes, lines) == null }
+                            .filter { row ->
+                                row.cents > 0L && row.receivedIncomes(payMonth, incomeMonth, incomes, lines) == null
+                            }
                             .map { ExpectedIncomeEntry(it, payMonth, it.payDateIn(payMonth, incomeMonth)) }
                             .filter { today >= it.payDate.minusDays(PAYDAY_LEAD_DAYS) }
                     }

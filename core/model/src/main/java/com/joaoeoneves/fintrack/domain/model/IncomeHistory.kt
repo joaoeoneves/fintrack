@@ -30,7 +30,8 @@ fun PlannedIncome.rowKey(): IncomeSourceKey.Row =
     }
 
 /**
- * The source [income] belongs to: the row of its line by [lineOfIncome] (the one attribution rule); else [IncomeSourceKey.Named] by exact normalised source text.
+ * The source [income] belongs to: the row of its line by [lineOfIncome] (the one attribution rule); else
+ * [IncomeSourceKey.Named] by exact normalised source text.
  */
 fun incomeSourceOf(
     income: Income,

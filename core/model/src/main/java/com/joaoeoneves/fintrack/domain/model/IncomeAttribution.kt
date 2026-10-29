@@ -14,11 +14,10 @@ fun lineOfIncome(
     lines: List<PlannedIncome>,
 ): PlannedIncome? {
     val byPayday = parsePaydayIncomeId(income.id)?.let { (lineId, _) -> lines.firstOrNull { it.id == lineId } }
-    if (byPayday != null) return byPayday
     val words = normalisedWords(income.source)
-    if (words.isEmpty()) return null
-    val equal = lines.firstOrNull { normalisedWords(it.label) == words }
-    return equal ?: matchingLine(words, lines)
+    return byPayday
+        ?: lines.firstOrNull { words.isNotEmpty() && normalisedWords(it.label) == words }
+        ?: matchingLine(words, lines)
 }
 
 /**
