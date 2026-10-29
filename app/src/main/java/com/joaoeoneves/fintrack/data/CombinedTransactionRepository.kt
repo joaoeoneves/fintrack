@@ -2,11 +2,13 @@ package com.joaoeoneves.fintrack.data
 
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
+import com.joaoeoneves.fintrack.domain.model.filterOwnedIn
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -19,9 +21,25 @@ class CombinedTransactionRepository
         private val expenseRepository: ExpenseRepository,
         private val incomeRepository: IncomeRepository,
     ) : TransactionRepository {
-        override fun observeTransactions(range: InstantRange): Flow<TransactionsInRange> =
-            combine(
+        // Income is fetched a month wider on each side and re-attributed by owner month, so a payday income dated
+        // outside its own month still counts in it (and not in the month it was dated in).
+        override fun observeTransactions(range: InstantRange): Flow<TransactionsInRange> {
+            val zone = ZoneId.systemDefault()
+            val start =
+                range.startInclusive
+                    .atZone(zone)
+                    .minusMonths(1)
+                    .toInstant()
+            val end =
+                range.endExclusive
+                    .atZone(zone)
+                    .plusMonths(1)
+                    .toInstant()
+            return combine(
                 expenseRepository.observeExpenses(range.startInclusive, range.endExclusive),
-                incomeRepository.observeIncome(range.startInclusive, range.endExclusive),
-            ) { expenses, income -> TransactionsInRange(range = range, expenses = expenses, income = income) }
+                incomeRepository.observeIncome(start, end),
+            ) { expenses, income ->
+                TransactionsInRange(range = range, expenses = expenses, income = filterOwnedIn(income, range, zone))
+            }
+        }
     }
