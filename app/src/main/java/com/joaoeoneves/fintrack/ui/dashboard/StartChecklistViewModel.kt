@@ -118,9 +118,8 @@ class StartChecklistViewModel
                     runCatchingCancellable {
                         sessionRepository.session.first { it is Session.Guest || it is Session.SignedIn }
                         // The first value is often the cache or a half-loaded set: wait for one that stays put.
-                        // The decision is final: once the card has been shown (ACTIVE) it is never retired behind the
-                        // user's back. TODO(5.3-merge): also wait for server-settled data (not the cache or the
-                        // fallback categories) once the repositories expose a "from server" signal.
+                        // The decision is final: once the card has been shown (ACTIVE) it is never retired behind
+                        // the user's back. The repositories expose no "from server" signal: only the debounce settles.
                         val checklist = observeChecklist().debounce(settleMillis).first()
                         val alreadySetUp = checklist.doneCount >= RETIRE_THRESHOLD
                         store.set(if (alreadySetUp) StartChecklistState.RETIRED else StartChecklistState.ACTIVE)

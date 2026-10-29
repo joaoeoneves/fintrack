@@ -87,8 +87,8 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
     val writePermissionMessage = stringResource(writeErrorMessageRes(WriteErrorKind.PERMISSION))
     val writeFailedMessage = stringResource(writeErrorMessageRes(WriteErrorKind.OTHER))
     LaunchedEffect(writePermissionMessage, writeFailedMessage) {
-        WriteErrors.events.collect { reason ->
-            val permission = reason == com.joaoeoneves.fintrack.data.WriteErrorCode.PERMISSION_DENIED
+        WriteErrors.events.collect { code ->
+            val permission = writeErrorKindOf(code) == WriteErrorKind.PERMISSION
             snackbarHostState.showSnackbar(if (permission) writePermissionMessage else writeFailedMessage)
         }
     }

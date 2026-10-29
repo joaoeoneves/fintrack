@@ -214,7 +214,7 @@ private fun IncomeRowItem(
     val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.incomeMonth), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val undoLabel = stringResource(R.string.action_undo)
-    val showCheck = paysThisMonth && (received || receipts.canReceive)
+    val showCheck = paysThisMonth && (received || row.key in receipts.canReceive)
     if (showCheck && !received) {
         PendingIncomeRow(
             row = row,

@@ -11,12 +11,13 @@ import java.time.YearMonth
 /**
  * The common payday (`null` when rows pay on different days) and the receipts of [Content.period]'s month:
  * [receivedOn] holds the day each fully received income row
- * (keyed by [key]) was received; [canReceive] is false for future months; [today] caps the date of a receipt.
+ * (keyed by [key]) was received; [canReceive] holds the keys of the rows whose pay date is today or past (a row
+ * paid later cannot be received yet); [today] caps the date of a receipt.
  */
 data class IncomeReceipts(
     val payday: LocalDate?,
     val today: LocalDate,
-    val canReceive: Boolean,
+    val canReceive: Set<String>,
     val receivedOn: Map<String, LocalDate> = emptyMap(),
     /** The day the month's salary (or, without a salary line, every due line) was actually received; else `null`. */
     val receivedPayday: LocalDate? = null,

@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.DEFAULT_CHRISTMAS_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_HOLIDAY_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_SS_PPM
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_MULTIPLE_PPM
+import com.joaoeoneves.fintrack.domain.model.MAX_VACATION_DAYS
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
@@ -35,9 +36,6 @@ internal data class SalaryFormResult(
     /** The vacation days typed, `null` when blank or invalid. */
     val vacationDays: Int? = null,
 )
-
-/** Highest number of vacation days per year the field accepts. */
-internal const val MAX_VACATION_DAYS = 60
 
 /** Whole vacation days of 0..[MAX_VACATION_DAYS]; blank means "not set" (the default applies). */
 internal fun parseVacationDays(text: String): Parsed<Int> {
@@ -100,7 +98,6 @@ internal fun SalaryForm.toResult(): SalaryFormResult {
     val reader = FieldReader()
     val profile = if (mode == SalaryInputMode.GROSS) grossProfile(reader) else netProfile(reader)
     val required = if (mode == SalaryInputMode.GROSS) profile.baseGrossCents else profile.netMonthlyCents
-    // TODO(5.3-merge): also set SalaryProfile.vacationDaysPerYear = vacation (Track A adds the field and persistence).
     val vacation =
         when (val parsed = parseVacationDays(vacationDays)) {
             is Parsed.Value -> parsed.value
@@ -110,7 +107,12 @@ internal fun SalaryForm.toResult(): SalaryFormResult {
                 null
             }
         }
-    return SalaryFormResult(profile, reader.invalid, hasRequiredAmount = required != null, vacationDays = vacation)
+    return SalaryFormResult(
+        profile.copy(vacationDaysPerYear = vacation),
+        reader.invalid,
+        hasRequiredAmount = required != null,
+        vacationDays = vacation,
+    )
 }
 
 private fun SalaryForm.grossProfile(reader: FieldReader): SalaryProfile =

@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.data.local.IdGenerator
-import com.joaoeoneves.fintrack.domain.model.DEFAULT_VACATION_DAYS
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -17,6 +16,7 @@ import com.joaoeoneves.fintrack.domain.model.YearEstimateInput
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.domain.model.salaryYearEstimateOf
+import com.joaoeoneves.fintrack.domain.model.vacationDays
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
@@ -250,7 +250,7 @@ class SalaryProfileViewModel
             val month = YearMonth.now(clock)
             val effective = from ?: month
             val breakdown = salaryBreakdownOf(result.profile).takeIf { result.invalid.isEmpty() }
-            val vacation = result.vacationDays ?: DEFAULT_VACATION_DAYS
+            val vacation = result.profile.vacationDays
             return SalaryProfileUiState.Content(
                 form = current,
                 invalid = result.invalid,

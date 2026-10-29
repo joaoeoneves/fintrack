@@ -20,8 +20,7 @@ data class MealCardView(
 /**
  * The meal-card block of [period] from the plafond and spent figures, or `null` for a future month or year (nothing
  * is recorded there yet) and for periods that are neither a month nor a year. [today] decides what is the future.
- *
- * TODO(5.3-merge): feed it from Track A's `mealCardMonthOf(month)` (a year: the sum of its twelve months).
+ * [balance] comes from `mealCardMonthOf` (a month) or `mealCardYearOf` (a year, the sum of its twelve months).
  */
 fun mealCardViewOf(
     period: Period,

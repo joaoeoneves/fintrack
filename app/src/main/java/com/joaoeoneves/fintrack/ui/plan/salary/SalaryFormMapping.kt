@@ -26,7 +26,7 @@ internal fun SalaryProfile.toForm(decimalSeparator: Char): SalaryForm {
         sector = sector,
         mealPayment = mealPayment,
         otherDeductions = percent(otherDeductionsPpm),
-        // TODO(5.3-merge): vacationDays = vacationDaysPerYear?.toString().orEmpty() (Track A's SalaryProfile field).
+        vacationDays = vacationDaysPerYear?.toString().orEmpty(),
     )
 }
 

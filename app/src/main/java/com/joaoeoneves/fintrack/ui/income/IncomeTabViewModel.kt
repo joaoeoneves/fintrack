@@ -15,20 +15,22 @@ import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.YearIncomeOutlook
+import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.attributeIncomes
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
+import com.joaoeoneves.fintrack.domain.model.canReceiveIn
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.domain.model.filterOwnedInMonth
 import com.joaoeoneves.fintrack.domain.model.holidayWeekdaysIn
 import com.joaoeoneves.fintrack.domain.model.incomeRowsIn
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.looksLikeSalary
-import com.joaoeoneves.fintrack.domain.model.mealCardBalanceOf
-import com.joaoeoneves.fintrack.domain.model.mealCardReceivedCents
-import com.joaoeoneves.fintrack.domain.model.parsePaydayIncomeId
+import com.joaoeoneves.fintrack.domain.model.mealCardMonthOf
+import com.joaoeoneves.fintrack.domain.model.mealCardYearOf
 import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
 import com.joaoeoneves.fintrack.domain.model.receivedIncomes
@@ -107,11 +109,16 @@ private class TabSources(
     val extras: YearExtras = YearExtras(false),
 )
 
-/** The Year scale's extra inputs; [mealCard] says whether the meal-card row applies. */
+/**
+ * The extra inputs: [mealCard] says whether the meal-card row applies; [transactions] and [settings] are the Year
+ * scale's (the outlook and the year's meal card); [priorIncomes] are the incomes owned by the month before the
+ * period (the meal card's plafond, December of the year before for a Year).
+ */
 private class YearExtras(
     val mealCard: Boolean,
     val transactions: TransactionsInRange? = null,
     val settings: List<MonthSettings> = emptyList(),
+    val priorIncomes: List<Income> = emptyList(),
 )
 
 /**
@@ -231,28 +238,38 @@ class IncomeTabViewModel(
             )
         }
 
-    // What only the Year scale needs: the year's transactions (meal card) and the month settings (outlook).
+    // The year's transactions (outlook, meal card), the month settings (outlook) and, for the meal card, the incomes
+    // of the month before the period.
     private fun yearExtras(
         period: Period,
         now: Instant,
-    ): Flow<YearExtras> =
-        if (period !is Period.Year) {
-            mealCardAvailable.map { YearExtras(it) }
-        } else {
-            combine(
-                mealCardAvailable.flatMapLatest { available ->
-                    if (available) {
-                        observePeriodOverview(period, now, clock.zone, recentLimit = 0)
-                            .map<PeriodOverview, TransactionsInRange?> { it.transactions }
-                            .catch { emit(null) }
-                    } else {
-                        flowOf(null)
-                    }
-                },
-                mealCardAvailable,
-                repositories.monthSettings.observeMonthSettings(),
-            ) { transactions, available, settings -> YearExtras(available, transactions, settings) }
+    ): Flow<YearExtras> {
+        val isYear = period is Period.Year
+        val first = period.anchorMonth(now, clock.zone) ?: YearMonth.of((period as Period.Year).year, 1)
+        val prior = Period.Month(first.minusMonths(1))
+        val settings = if (isYear) repositories.monthSettings.observeMonthSettings() else flowOf(emptyList())
+        val transactions =
+            if (isYear) {
+                observePeriodOverview(period, now, clock.zone, recentLimit = 0)
+                    .map<PeriodOverview, TransactionsInRange?> { it.transactions }
+                    .catch { emit(null) }
+            } else {
+                flowOf(null)
+            }
+        val priorIncomes =
+            mealCardAvailable.flatMapLatest { available ->
+                if (available) {
+                    observePeriodOverview(prior, now, clock.zone, recentLimit = 0)
+                        .map { it.transactions.income }
+                        .catch { emit(emptyList()) }
+                } else {
+                    flowOf(emptyList())
+                }
+            }
+        return combine(transactions, mealCardAvailable, settings, priorIncomes) { tx, on, monthSettings, incomes ->
+            YearExtras(on, tx, monthSettings, incomes)
         }
+    }
 
     // The window ends at the period's last month (at most the current one) and is at least a year long.
     private fun historyOf(
@@ -287,8 +304,8 @@ class IncomeTabViewModel(
             editor = sources.editor,
             hasProfile = sources.lines.any { it.isManaged },
             canAddIncomeLine = sources.lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
-            mealCard = mealCardOf(sources, period, currentYearMonth(clock.instant(), clock.zone)),
-            outlook = outlookOf(period, sources, LocalDate.now(clock)),
+            mealCard = mealCardOf(sources, period, currentYearMonth(clock.instant(), clock.zone), clock.zone),
+            outlook = outlookOf(period, sources, LocalDate.now(clock), clock.zone),
         )
 
     fun onAddIncomeLine() {
@@ -474,6 +491,7 @@ private fun outlookOf(
     period: Period,
     sources: TabSources,
     today: LocalDate,
+    zone: ZoneId,
 ): YearIncomeOutlook? {
     val year = (period as? Period.Year)?.year?.takeIf { it >= today.year } ?: return null
     val received =
@@ -484,27 +502,37 @@ private fun outlookOf(
             .associate { it.month to it.incomeCents }
     val incomeMonth = IncomeMonth.of(sources.extras.settings)
     val thisMonth = YearMonth.from(today)
-    // TODO(5.3-merge): attribute by the owner month once Track A's rule lands (a pay_ id belongs to its own month).
     val receivedLineIds =
         sources.extras.transactions
             ?.income
-            ?.filter { monthOfIncome(it) == thisMonth }
+            ?.let { filterOwnedInMonth(it, thisMonth, zone) }
             ?.let { attributeIncomes(thisMonth, it, sources.lines).keys }
             .orEmpty()
     return yearIncomeOutlook(year, sources.lines, incomeMonth, received, thisMonth, receivedLineIds)
 }
 
-/** The meal-card balance of the tab's period (its month's overview or the year's transactions); `null` when off. */
+/**
+ * The meal card of the tab's period (its month's expenses or the year's, plus the incomes of the month before it for
+ * the plafond); `null` when the meal card is off.
+ */
 private fun mealCardOf(
     sources: TabSources,
     period: Period,
     today: YearMonth,
+    zone: ZoneId,
 ): MealCardView? {
     val transactions = sources.inputs?.overview?.transactions ?: sources.extras.transactions
-    // TODO(5.3-merge): replace this period-wide figure with Track A's mealCardMonthOf(month) (plafond = M-1 allowance).
-    return transactions?.takeIf { sources.extras.mealCard }?.let {
-        mealCardViewOf(period, today, mealCardBalanceOf(mealCardReceivedCents(it.income, sources.lines), it.expenses))
-    }
+    if (!sources.extras.mealCard || transactions == null) return null
+    val incomes = transactions.income + sources.extras.priorIncomes
+    val expenses = transactions.expenses
+    val balance =
+        when (period) {
+            Period.CurrentMonth -> mealCardMonthOf(today, incomes, expenses, sources.lines, zone)
+            is Period.Month -> mealCardMonthOf(period.yearMonth, incomes, expenses, sources.lines, zone)
+            is Period.Year -> mealCardYearOf(period.year, incomes, expenses, sources.lines, zone)
+            else -> null
+        }
+    return balance?.let { mealCardViewOf(period, today, it) }
 }
 
 private suspend fun PlanRepositories.currentLines(): List<PlannedIncome> = plannedIncome.observePlannedIncome().first()
@@ -547,7 +575,7 @@ private fun receiptsOf(
         // The latest pay date of the rows that pay this month none without rows.
         payday = rows.filter { it.cents > 0L }.maxOfOrNull { it.payDateIn(month, incomeMonth) },
         today = today,
-        canReceive = month <= YearMonth.from(today),
+        canReceive = rows.filter { it.canReceiveIn(month, incomeMonth, today) }.mapTo(mutableSetOf()) { it.key },
         receivedOn = received.toMap(),
         receivedPayday = receivedPaydayOf(rows, received.toMap()),
         receivedCents = receivedRows.associate { (row, incomes) -> row.key to incomes.sumOf { it.amountCents } },
@@ -579,6 +607,3 @@ private fun workingDaysOf(
         overridden = override != null,
     )
 }
-
-private fun monthOfIncome(income: Income): YearMonth =
-    parsePaydayIncomeId(income.id)?.second ?: YearMonth.from(income.date.atZone(ZoneId.systemDefault()))

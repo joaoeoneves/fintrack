@@ -2,9 +2,6 @@ package com.joaoeoneves.fintrack.domain.model
 
 import java.time.YearMonth
 
-/** The vacation days a year is assumed to have when the profile does not say (spread over months with no days off). */
-const val DEFAULT_VACATION_DAYS = 22
-
 private const val MONTHS_IN_YEAR = 12
 
 /**
