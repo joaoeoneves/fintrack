@@ -688,4 +688,6 @@
     <string name="salary_setup_meal_no">No</string>
     <string name="salary_setup_meal_card">Yes, on a card</string>
     <string name="salary_setup_meal_salary">Yes, with salary</string>
+    <string name="expense_field_meal_card">Paid with meal card</string>
+    <string name="category_field_meal_card">Usually paid with meal card</string>
 </resources>

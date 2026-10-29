@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.Instant
@@ -13,6 +14,11 @@ data class ExpenseFormState(
     val date: Instant = Instant.now(),
     val note: String = "",
     val isRefund: Boolean = false,
+    /** Paid with the meal card; only meaningful (and shown) while [mealCardAvailable]. */
+    val paidWithMealCard: Boolean = false,
+    /** Whether the meal-card switch applies: meals are paid on a card and the meal rate is above 0. */
+    val mealCardAvailable: Boolean = false,
+    val mealCardTouched: Boolean = false,
     val categoryTouched: Boolean = false,
     val suggestedCategory: Boolean = false,
     val nameError: UiText? = null,
@@ -33,6 +39,24 @@ data class ExpenseFormState(
     val canDelete: Boolean
         get() = isEditMode && expenseId != null
 }
+
+/**
+ * Whether a new expense starts as paid with the meal card: the switch applies, the expense is not a refund (refunds
+ * go back to the bank) and the [category] is a spending one usually paid that way.
+ */
+fun mealCardPrefill(
+    category: Category,
+    isRefund: Boolean,
+    available: Boolean,
+): Boolean = available && !isRefund && category.kind == CategoryKind.SPENDING && category.mealCardByDefault
+
+/** This form with the meal-card switch prefilled from its category (new, untouched expenses only). */
+fun ExpenseFormState.withMealCardPrefill(): ExpenseFormState =
+    if (isEditMode || mealCardTouched) {
+        this
+    } else {
+        copy(paidWithMealCard = mealCardPrefill(category, isRefund, mealCardAvailable))
+    }
 
 sealed interface AddEditUiState {
     data object Loading : AddEditUiState

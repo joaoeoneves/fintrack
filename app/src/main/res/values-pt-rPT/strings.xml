@@ -702,4 +702,6 @@
     <string name="salary_setup_meal_no">Não</string>
     <string name="salary_setup_meal_card">Sim, em cartão</string>
     <string name="salary_setup_meal_salary">Sim, com o salário</string>
+    <string name="expense_field_meal_card">Pago com cartão refeição</string>
+    <string name="category_field_meal_card">Normalmente pago com cartão refeição</string>
 </resources>

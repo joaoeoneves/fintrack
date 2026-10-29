@@ -204,9 +204,7 @@ private fun PayDeductionSwitches(
 }
 
 @Composable
-private fun SectorStep(
-    onSelect: (EmploymentSector) -> Unit,
-) {
+private fun SectorStep(onSelect: (EmploymentSector) -> Unit) {
     SettingsGroup(label = stringResource(R.string.salary_setup_sector_question)) {
         EmploymentSector.entries.forEachIndexed { index, option ->
             if (index > 0) Hairline()
