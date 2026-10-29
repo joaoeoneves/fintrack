@@ -138,17 +138,21 @@ fun yearToDateOf(
 
 /**
  * What was left over in the closed months of [upTo]'s year: per month income - spending - saved (income by its
- * date), summed. [months] counts the months summed and [averageCents] is the per-month average, `null` for none.
+ * date), summed. [months] counts the months summed, [averageCents] is the per-month average (`null` for none) and
+ * [until] the last month summed (`null` for none).
  */
 data class Leftover(
     val totalCents: Long,
     val averageCents: Long?,
     val months: Int,
+    val until: YearMonth? = null,
 )
 
 /**
  * The [Leftover] of the CLOSED months from January of [upTo]'s year through the earlier of [upTo] and the month
- * before [today]'s month; the running month is never counted. Only months present in [totals] count.
+ * before [today]'s month; the running month is never counted. Only months present in [totals] count, and the
+ * count starts at the first month of that year with any record (income, spending or saving): empty months before it
+ * are not averaged in. With no closed month from there on, [Leftover.months] is 0 and [Leftover.averageCents] `null`.
  */
 fun leftoverOf(
     totals: List<MonthTotals>,
@@ -156,9 +160,16 @@ fun leftoverOf(
     today: YearMonth = YearMonth.now(),
 ): Leftover {
     val last = minOf(upTo, today.minusMonths(1))
-    val closed = totals.filter { it.month.year == upTo.year && it.month <= last }
+    val inYear = totals.filter { it.month.year == upTo.year && it.month <= last }
+    val firstWithData = totals.filter { it.month.year == upTo.year && it.hasData }.minOfOrNull { it.month }
+    val closed = if (firstWithData == null) emptyList() else inYear.filter { it.month >= firstWithData }
     val total = closed.sumOf { it.incomeCents - it.spendingCents - it.savedCents }
-    return Leftover(total, closed.takeIf { it.isNotEmpty() }?.let { total / it.size }, closed.size)
+    return Leftover(
+        totalCents = total,
+        averageCents = closed.takeIf { it.isNotEmpty() }?.let { total / it.size },
+        months = closed.size,
+        until = closed.maxOfOrNull { it.month },
+    )
 }
 
 /** The percentage change from [base] to [current], rounded; `null` when [base] is missing or not positive. */
