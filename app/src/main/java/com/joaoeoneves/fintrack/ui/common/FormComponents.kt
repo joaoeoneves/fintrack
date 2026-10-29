@@ -14,8 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,6 +30,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChipIcon
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackIconButton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.rememberLeaveGuard
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -63,9 +62,11 @@ fun FormScaffold(
             CenterAlignedTopAppBar(
                 title = { Text(text = title, style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
-                    IconButton(onClick = requestLeave) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_cancel))
-                    }
+                    FinTrackIconButton(
+                        icon = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.cd_cancel),
+                        onClick = requestLeave,
+                    )
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(

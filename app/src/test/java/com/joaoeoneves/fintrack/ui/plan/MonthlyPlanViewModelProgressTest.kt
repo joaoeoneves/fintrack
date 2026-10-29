@@ -30,17 +30,17 @@ class MonthlyPlanViewModelProgressTest : MonthlyPlanViewModelTestBase() {
     // ---- month navigation ----
 
     @Test
-    fun defaultPeriod_isCurrentMonth_withoutNext() =
+    fun defaultPeriod_isCurrentMonth_withNextMonthAllowed() =
         runTest(testDispatcher) {
             val vm = viewModel()
             collect(vm)
 
             assertEquals(Period.CurrentMonth, vm.content().period)
-            assertFalse(vm.content().canGoToNextMonth)
+            assertTrue(vm.content().canGoToNextMonth)
         }
 
     @Test
-    fun previousThenNext_walksBackAndForth_neverPastCurrentMonth() =
+    fun previousThenNext_walksBackAndForth_neverPastNextMonth() =
         runTest(testDispatcher) {
             val vm = viewModel()
             collect(vm)
@@ -58,11 +58,16 @@ class MonthlyPlanViewModelProgressTest : MonthlyPlanViewModelTestBase() {
             vm.periodActions.onNext()
             advanceUntilIdle()
             assertEquals(Period.CurrentMonth, vm.content().period)
+            assertTrue(vm.content().canGoToNextMonth)
+
+            vm.periodActions.onNext()
+            advanceUntilIdle()
+            assertEquals(Period.Month(YearMonth.of(2026, 11)), vm.content().period)
             assertFalse(vm.content().canGoToNextMonth)
 
             vm.periodActions.onNext()
             advanceUntilIdle()
-            assertEquals(Period.CurrentMonth, vm.content().period)
+            assertEquals(Period.Month(YearMonth.of(2026, 11)), vm.content().period)
         }
 
     @Test
@@ -148,15 +153,15 @@ class MonthlyPlanViewModelProgressTest : MonthlyPlanViewModelTestBase() {
         runTest(testDispatcher) {
             val vm = viewModel()
             collect(vm)
-            assertFalse(vm.content().canGoToNextMonth)
+            assertTrue(vm.content().canGoToNextMonth)
 
             clock.now = Instant.parse("2026-11-02T12:00:00Z")
             vm.onRetry()
             advanceUntilIdle()
 
-            // Still the (re-resolved) current month, so it still cannot go forward.
+            // Still the (re-resolved) current month, and the next month stays reachable.
             assertEquals(Period.CurrentMonth, vm.content().period)
-            assertFalse(vm.content().canGoToNextMonth)
+            assertTrue(vm.content().canGoToNextMonth)
             vm.periodActions.onPrevious()
             advanceUntilIdle()
             assertEquals(Period.Month(YearMonth.of(2026, 10)), vm.content().period)

@@ -13,6 +13,8 @@ import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
+import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
+import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
@@ -46,6 +48,7 @@ data class DashboardRepositories(
     val monthSettingsRepository: MonthSettingsRepository = FakeMonthSettingsRepository(),
     val envelopeRepository: EnvelopeRepository = FakeEnvelopeRepository(),
     val recurringRepository: RecurringRepository = FakeRecurringRepository(),
+    val planSettings: PlanSettingsRepository = NoPlanSettings,
 )
 
 /** Like the five-parameter overload, but with an explicit [DashboardRepositories.categoryRepository]. */
@@ -73,5 +76,6 @@ fun observePeriodOverviewOf(repositories: DashboardRepositories): ObservePeriodO
                 categories = repositories.categoryRepository,
                 envelopes = repositories.envelopeRepository,
                 recurring = repositories.recurringRepository,
+                planSettings = repositories.planSettings,
             ),
     )

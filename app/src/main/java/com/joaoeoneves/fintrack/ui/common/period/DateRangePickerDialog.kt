@@ -6,7 +6,6 @@ import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -18,6 +17,7 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.finTrackDatePickerColors
 import com.joaoeoneves.fintrack.ui.common.toUtcMillis
 import com.joaoeoneves.fintrack.ui.common.utcMillisToLocalDate
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import java.time.LocalDate
 
 /** Only dates up to (and including) [today] can be picked; there is nothing to show after it. */
@@ -58,7 +58,8 @@ fun DateRangePickerDialog(
         onDismissRequest = onDismiss,
         colors = finTrackDatePickerColors(),
         confirmButton = {
-            TextButton(
+            DialogTextButton(
+                text = stringResource(R.string.action_ok),
                 onClick = {
                     if (startMillis != null && endMillis != null) {
                         val start = utcMillisToLocalDate(startMillis)
@@ -66,14 +67,10 @@ fun DateRangePickerDialog(
                     }
                 },
                 enabled = startMillis != null && endMillis != null,
-            ) {
-                Text(stringResource(R.string.action_ok))
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
+            DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss)
         },
     ) {
         DateRangePicker(
