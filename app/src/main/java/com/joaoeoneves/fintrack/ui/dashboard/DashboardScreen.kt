@@ -21,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.StartStep
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TabScaffold
@@ -29,6 +29,9 @@ import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxCard
+import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxModel
+import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxUiState
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
@@ -72,7 +75,8 @@ fun DashboardScreen(
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
     val start = StartChecklistModel(startState, callbacks.onOpenStartStep, startViewModel::onDismiss)
-    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, start, callbacks)
+    val blocks = rememberHomeBlocks(start, callbacks, snackbarHostState)
+    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, blocks, callbacks)
 
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
@@ -171,7 +175,7 @@ private fun dashboardActions(
     viewModel: DashboardViewModel,
     upcomingViewModel: UpcomingRecurringViewModel,
     upcomingState: UpcomingRecurringUiState,
-    start: StartChecklistModel,
+    blocks: HomeBlocks,
     callbacks: DashboardCallbacks,
 ) = DashboardActions(
     period =
@@ -189,7 +193,7 @@ private fun dashboardActions(
             onReceiveIncome = upcomingViewModel::onReceiveIncome,
             onManage = callbacks.onOpenRecurring,
         ),
-    start = start,
+    blocks = blocks,
     onRetry = viewModel::onRetry,
 )
 
@@ -197,15 +201,8 @@ private fun dashboardActions(
 private data class DashboardActions(
     val period: PeriodActions,
     val upcoming: UpcomingRecurringModel,
-    val start: StartChecklistModel,
+    val blocks: HomeBlocks,
     val onRetry: () -> Unit,
-)
-
-/** The "Get started" card's state and callbacks. */
-private data class StartChecklistModel(
-    val state: StartChecklistUiState,
-    val onOpenStep: (StartStep) -> Unit,
-    val onDismiss: () -> Unit,
 )
 
 @Composable
@@ -230,7 +227,8 @@ private fun DashboardContent(
         contentPadding =
             PaddingValues(bottom = Dimens.AddPillClearance + Dimens.Space16 + contentPadding.calculateBottomPadding()),
     ) {
-        startItems(start = actions.start)
+        startItems(start = actions.blocks.start)
+        reviewItems(review = actions.blocks.review, visible = state.showsCurrentMonthBlocks)
         summaryItems(state = state, callbacks = callbacks)
         item(key = "upcoming") {
             ScreenItem {
@@ -261,6 +259,21 @@ private fun LazyListScope.startItems(start: StartChecklistModel) {
         }
     }
 }
+
+private fun LazyListScope.reviewItems(
+    review: ReviewInboxModel,
+    visible: Boolean,
+) {
+    if (visible && review.state is ReviewInboxUiState.Visible) {
+        item(key = "review_inbox") {
+            ScreenItem(Modifier.padding(top = SectionSpacing)) { ReviewInboxCard(state = review.state, model = review) }
+        }
+    }
+}
+
+/** The review, quick-add and recurring-suggestion blocks only make sense for the current month. */
+private val DashboardUiState.Content.showsCurrentMonthBlocks: Boolean
+    get() = period !is Period.Year && budgetMonthIsCurrent
 
 private fun LazyListScope.summaryItems(
     state: DashboardUiState.Content,

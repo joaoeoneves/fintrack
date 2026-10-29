@@ -157,6 +157,8 @@ class AddEditIncomeViewModel
                         amountCents = amountCents,
                         date = form.date,
                         note = form.note.trim().ifBlank { null },
+                        // Saving counts as looking at it: an edited automatic record leaves the review inbox.
+                        needsReview = false,
                     )
                 val result =
                     if (form.isEditMode) {

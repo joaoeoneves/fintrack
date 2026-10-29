@@ -288,6 +288,8 @@ class AddEditExpenseViewModel(
                     note = form.note.trim().ifBlank { null },
                     isRefund = form.isRefund,
                     paidWithMealCard = form.paidWithMealCard,
+                    // Saving counts as looking at it: an edited automatic record leaves the review inbox.
+                    needsReview = false,
                 )
             val result =
                 if (form.isEditMode) {

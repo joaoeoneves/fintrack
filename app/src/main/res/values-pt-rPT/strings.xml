@@ -726,4 +726,20 @@
     <string name="income_outlook_total_detail">Recebido %1$s · previsto %2$s</string>
     <string name="error_write_rejected">Não foi possível guardar uma alteração no servidor.</string>
     <string name="error_write_permission">O servidor não aceitou uma alteração. Confirma que entraste com a conta certa.</string>
+    <string name="home_review_title">Por rever</string>
+    <string name="home_review_subtitle">Registados automaticamente</string>
+    <string name="home_review_confirm_all">Confirmar todos</string>
+    <string name="home_review_more">e mais %d</string>
+    <plurals name="home_review_confirmed">
+        <item quantity="one">%d movimento confirmado</item>
+        <item quantity="other">%d movimentos confirmados</item>
+    </plurals>
+    <string name="home_quick_add_title">Adicionar rápido</string>
+    <string name="home_quick_add_chip_cd">Adicionar %1$s, %2$s</string>
+    <string name="expense_name_suggestions">Sugestões de nome</string>
+    <string name="home_recurring_suggestion_title">Tornar recorrente?</string>
+    <string name="home_recurring_suggestion_body">%1$s apareceu nos últimos 3 meses, cerca de %2$s.</string>
+    <string name="home_recurring_suggestion_accept">Criar recorrente</string>
+    <string name="home_recurring_suggestion_dismiss">Ignorar</string>
+    <string name="home_recurring_suggestion_dismissed">Sugestão ignorada</string>
 </resources>
