@@ -25,7 +25,7 @@ class ResubscribeOnErrorTest {
             val source =
                 flow {
                     subscriptions++
-                    if (subscriptions < 3) throw IllegalStateException("listener failed")
+                    check(subscriptions >= 3) { "listener failed" }
                     emit("ok")
                 }
 
@@ -42,7 +42,7 @@ class ResubscribeOnErrorTest {
             val source =
                 flow {
                     subscriptions++
-                    if (subscriptions < 4) throw IllegalStateException("x")
+                    check(subscriptions >= 4) { "x" }
                     emit(Unit)
                 }
 
@@ -59,7 +59,7 @@ class ResubscribeOnErrorTest {
             val source =
                 flow {
                     subscriptions++
-                    if (subscriptions < 10) throw IllegalStateException("x")
+                    check(subscriptions >= 10) { "x" }
                     emit(Unit)
                 }
 
