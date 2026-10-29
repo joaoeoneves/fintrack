@@ -18,8 +18,9 @@ class ObserveUpcomingRecurringPlanOwnedTest {
     private val rent = recurringItem(id = "rent", amountCents = 1_000, handledThrough = day(2026, 2, 15))
     private val owned = recurringItem(id = "own", amountCents = 9_000, handledThrough = day(2026, 2, 15))
 
-    private fun goal(recurringId: String?) =
-        SavingsGoal("g1", "Plan", 0, GoalTargetType.ANNUAL, day(2026, 1, 1), recurringId = recurringId)
+    private val start = day(2026, 1, 1)
+
+    private fun goal(owned: String?) = SavingsGoal("g1", "Plan", 0, GoalTargetType.ANNUAL, start, recurringId = owned)
 
     private fun overview(goals: List<SavingsGoal>) =
         runBlocking {
