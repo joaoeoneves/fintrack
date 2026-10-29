@@ -378,6 +378,7 @@
     <string name="recurring_added">Added “%1$s”</string>
     <string name="recurring_next_due">Next: %1$s</string>
     <string name="recurring_section_active">Active</string>
+    <string name="recurring_section_investments">Investments</string>
     <string name="recurring_section_inactive">Paused and ended</string>
     <string name="recurring_list_empty">No recurring yet</string>
     <string name="recurring_paused">Paused</string>
@@ -580,7 +581,6 @@
     <string name="savings_empty">No savings plans yet</string>
     <string name="savings_delete_plan">Delete plan</string>
     <string name="savings_plan_deleted">Savings plan deleted</string>
-    <string name="recurring_no_saving_hint">For savings use the Savings tab</string>
     <string name="annual_goals_title">Savings plans</string>
     <string name="annual_goal_planned_of_target">%1$s planned of %2$s</string>
     <string name="annual_goal_planned">%1$s planned</string>

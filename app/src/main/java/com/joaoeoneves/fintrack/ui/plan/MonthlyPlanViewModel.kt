@@ -14,7 +14,6 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringType
-import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.asOf
 import com.joaoeoneves.fintrack.domain.model.billsOf
@@ -335,7 +334,7 @@ private fun planFlow(
         repositories.categories.observeCategories(),
         selected.overview,
         combine(repositories.monthSettings.observeMonthSettings(), editor, repositories.goals.observeGoals(), ::Triple),
-    ) { lines, _, categories, overview, (settings, editorState, goals) ->
+    ) { lines, _, categories, overview, (settings, editorState, _) ->
         val workingDays = workingDaysOf(overview.budgetMonth, settings)
         val incomeMonth = IncomeMonth.of(settings)
         val rows = incomeRowsIn(lines, overview.budgetMonth, incomeMonth)
@@ -353,7 +352,7 @@ private fun planFlow(
                 envelopes = overview.envelopes,
                 extraIncomeCents = overview.plan.extrasExpectedCents,
                 envelopeCards = envelopeCardsOf(overview.envelopes),
-                configure = configureOf(lines, categories, overview, workingDays.days, goals),
+                configure = configureOf(lines, categories, overview, workingDays.days),
                 receipts = receiptsOf(selected, overview, rows, incomeMonth),
                 duplicateKeys = duplicateKeysOf(lines, rows),
                 incomeMonth = incomeMonth,
@@ -369,11 +368,10 @@ private fun configureOf(
     categories: List<Category>,
     overview: PeriodOverview,
     workingDays: Int,
-    goals: List<SavingsGoal>,
 ): ConfigureStatus {
     // A savings plan's monthly item is the plan's, not a bill.
     val today = overview.budgetMonth.atDay(1)
-    val bills = billsOf(overview.recurring, goals).filter { it.active && !it.isEnded(today) }
+    val bills = billsOf(overview.recurring).filter { it.active && !it.isEnded(today) }
     val incomeMonth = IncomeMonth.forMonth(overview.budgetMonth, workingDays)
     val regular = lines.asOf(overview.budgetMonth).filterNot { it.isExtra }
     return ConfigureStatus(

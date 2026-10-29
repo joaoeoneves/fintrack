@@ -389,6 +389,7 @@
     <string name="recurring_added">Adicionado: “%1$s”</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
     <string name="recurring_section_active">Ativos</string>
+    <string name="recurring_section_investments">Investimentos</string>
     <string name="recurring_section_inactive">Em pausa e terminados</string>
     <string name="recurring_list_empty">Ainda não há recorrentes</string>
     <string name="recurring_paused">Em pausa</string>
@@ -595,7 +596,6 @@
     <string name="savings_empty">Ainda não há planos de poupança</string>
     <string name="savings_delete_plan">Eliminar plano</string>
     <string name="savings_plan_deleted">Plano de poupança eliminado</string>
-    <string name="recurring_no_saving_hint">Para poupança usa o separador Poupança</string>
     <string name="annual_goals_title">Planos de poupança</string>
     <string name="annual_goal_planned_of_target">%1$s planeados de %2$s</string>
     <string name="annual_goal_planned">%1$s planeados</string>

@@ -65,7 +65,7 @@ class ConfigureViewModel
                 val monthSettings = settings.firstOrNull { it.month == month }
                 val days = effectiveWorkingDays(month, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
                 // A savings plan's monthly item is the plan's, not a bill.
-                val bills = billsOf(recurringList, goals).filter { it.active && !it.isEnded(LocalDate.now(clock)) }
+                val bills = billsOf(recurringList).filter { it.active && !it.isEnded(LocalDate.now(clock)) }
                 val incomeMonth = IncomeMonth.forMonth(month, days)
                 val regular = lines.asOf(month).filterNot { it.isExtra }
                 ConfigureStatus(

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,7 +37,6 @@ import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Month
@@ -93,7 +91,6 @@ internal fun RecurringCategoryField(
     options: List<Category>,
     errors: RecurringFormErrors?,
     onChange: (RecurringForm) -> Unit,
-    showSavingsHint: Boolean = false,
 ) {
     CategoryChipFlow(
         options = options,
@@ -101,13 +98,6 @@ internal fun RecurringCategoryField(
         error = errors?.category?.asString(),
         onSelected = { onChange(form.copy(category = it)) },
     )
-    if (showSavingsHint) {
-        Text(
-            text = stringResource(R.string.recurring_no_saving_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = FinTrackTheme.colors.textSecondary,
-        )
-    }
 }
 
 @Composable
