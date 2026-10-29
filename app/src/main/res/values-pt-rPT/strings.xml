@@ -673,9 +673,7 @@
     <string name="home_start_dismiss">Dispensar</string>
     <string name="home_start_done">Feito</string>
     <string name="home_start_step_salary">Definir o salário ou rendimento</string>
-    <string name="home_start_step_envelopes">Criar envelopes</string>
     <string name="home_start_step_bills">Adicionar recorrentes</string>
-    <string name="home_start_step_savings">Criar um plano de poupança</string>
     <string name="home_start_step_payday">Escolher o dia de pagamento</string>
     <string name="home_start_step_payday_hint">Escolhe o dia em que o rendimento é registado automaticamente</string>
     <string name="home_start_step_expense">Registar o primeiro gasto</string>
@@ -762,4 +760,18 @@
     <string name="detail_context_next_month">Conta para o mês seguinte</string>
     <string name="detail_context_expected">Esperado %1$s</string>
     <string name="detail_source_unknown">Rendimento</string>
+    <string name="home_income_title">Rendimentos</string>
+    <string name="home_income_of_expected">de %1$s esperado</string>
+    <string name="home_spending_title">Gastos</string>
+    <string name="home_invested_month">Investido: %1$s este mês · %2$s em %3$s</string>
+    <string name="home_invested_other_month">Investido: %1$s em %2$s · %3$s em %4$s</string>
+    <string name="home_invested_year">Investido em %1$s: %2$s</string>
+    <string name="home_leftover">Sobrou até %1$s: média de %2$s por mês</string>
+    <string name="investments_title">Investimentos</string>
+    <string name="investments_this_month">Este mês</string>
+    <string name="investments_all_time">Desde sempre</string>
+    <string name="investments_summary">%1$s %2$s · %3$s %4$s · %5$s %6$s</string>
+    <string name="investments_by_instrument">Por instrumento</string>
+    <string name="investments_movements">Movimentos</string>
+    <string name="investments_no_movements">Sem investimentos neste mês</string>
 </resources>

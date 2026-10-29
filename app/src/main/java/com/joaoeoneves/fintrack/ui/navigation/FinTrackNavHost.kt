@@ -57,6 +57,7 @@ fun FinTrackNavHost(
         spendingRoutes(navController)
         sharedRoutes(navController)
         detailRoutes(navController)
+        investmentRoutes(navController)
         envelopeRoutes(navController)
         formRoutes(navController, transitions)
     }
@@ -78,7 +79,11 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
                         onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
-                        onOpenPlan = { period -> navController.navigateToTabWith(IncomeHome(period.encode())) },
+                        onOpenIncomeTab = { period -> navController.navigateToTabWith(IncomeHome(period.encode())) },
+                        onOpenSpendingTab = { period ->
+                            navController.navigateToTabWith(SpendingHome(period.encode()))
+                        },
+                        onOpenInvestments = { period -> navController.navigate(InvestmentDetail(period.encode())) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
                     ),
@@ -91,9 +96,7 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
 private fun routeForStartStep(step: StartStep): Any =
     when (step) {
         StartStep.SALARY -> SalarySetup
-        StartStep.ENVELOPES -> EditEnvelope()
         StartStep.BILLS -> AddEditRecurring()
-        StartStep.SAVINGS_PLAN -> AddEditRecurring()
         StartStep.PAYDAY -> IncomeHome()
         StartStep.FIRST_EXPENSE -> AddEditExpense()
     }
