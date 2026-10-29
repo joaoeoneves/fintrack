@@ -14,8 +14,9 @@ class ManagedDuplicateLineTest {
     private val stored = salaryProfileLines(profile, emptyList(), effectiveFrom = jan)
     private val currentMeal = stored.single { it.id == MANAGED_MEAL }
 
-    private fun duplicate(startMonth: YearMonth?) =
-        currentMeal.copy(id = "stray", startMonth = startMonth, versions = emptyList())
+    private fun duplicate(startMonth: YearMonth?): PlannedIncome {
+        return currentMeal.copy(id = "stray", startMonth = startMonth, versions = emptyList())
+    }
 
     @Test
     fun duplicateWithoutHistory_isDeleted() {
@@ -49,6 +50,6 @@ class ManagedDuplicateLineTest {
 
         assertTrue(staleManagedIds(moved, withScheduled, mar).isEmpty())
         assertTrue(again.all { line -> withScheduled.any { it.id == line.id } })
-        assertEquals(0L, again.single { it.id == MANAGED_HOLIDAY }.asOf(mar)?.amountCents)
+        assertEquals(0L, withScheduled.single { it.id == MANAGED_HOLIDAY }.asOf(mar)?.amountCents)
     }
 }
