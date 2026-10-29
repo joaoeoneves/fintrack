@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.activity
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,14 +9,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
@@ -23,38 +28,46 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.domain.model.resolve
-import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalyticsActions
-import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalyticsHeader
-import com.joaoeoneves.fintrack.ui.activity.analytics.HistoryFigures
-import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeAnalyticsHeader
-import com.joaoeoneves.fintrack.ui.activity.analytics.spendingFigures
+import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeChip
+import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeFilterRow
+import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeSourceFilterRow
 import com.joaoeoneves.fintrack.ui.common.DaySectionHeader
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
 import com.joaoeoneves.fintrack.ui.common.SearchField
 import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
+import com.joaoeoneves.fintrack.ui.common.categoryColorFor
 import com.joaoeoneves.fintrack.ui.common.dayHeaderOf
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
-import com.joaoeoneves.fintrack.ui.designsystem.AnimatedAmountText
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 
-/** The analytics header, totals, type chips, category chips (not for income) and the search and sort row. */
+/** Period selector, one summary line, type tabs, chips (envelope/category or source), then the search and sort row. */
 fun LazyListScope.activityHeaderItems(
     state: ActivityUiState.Content,
     query: String,
     categories: List<Category>,
     actions: ActivityActions,
 ) {
-    item(key = "analytics") { AnalyticsItem(state, actions) }
-    item(key = "totals") { ActivityTotalsRow(state.totals, state.filters.type) }
+    item(key = "period") {
+        PeriodSelector(
+            period = state.period,
+            canGoToNextMonth = state.canGoToNextMonth,
+            actions = actions.period,
+            alignment = Alignment.Start,
+            modifier = Modifier.padding(horizontal = Dimens.Space8),
+        )
+    }
+    item(key = "summary") { ActivitySummaryLine(state.summary, state.filters.type, actions.onOpenEvolution) }
     item(key = "type") {
         SegmentedTextTabs(
             options = ActivityType.entries,
@@ -64,21 +77,7 @@ fun LazyListScope.activityHeaderItems(
             modifier = Modifier.padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, top = Dimens.Space16),
         )
     }
-    if (state.filters.type == ActivityType.EXPENSE) {
-        item(key = "categories") {
-            val selected = state.filters.category
-            CategoryFilterRow(
-                // Archived categories are hidden unless one is the active filter.
-                categories =
-                    categories
-                        .optionsIncluding(selected?.let(categories::resolve))
-                        .filter { state.categoryScope == null || it.id in state.categoryScope },
-                selected = selected,
-                onSelected = actions.onCategorySelected,
-                modifier = Modifier.padding(top = Dimens.Space8),
-            )
-        }
-    }
+    activityChipItems(state, categories, actions)
     item(key = "search") {
         Row(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
@@ -96,6 +95,44 @@ fun LazyListScope.activityHeaderItems(
                 selected = state.filters.sort,
                 onSelected = actions.onSortSelected,
                 optionLabel = { it.label },
+            )
+        }
+    }
+}
+
+/** The chips under the type tabs: envelopes and categories on Expenses, sources on Income. */
+private fun LazyListScope.activityChipItems(
+    state: ActivityUiState.Content,
+    categories: List<Category>,
+    actions: ActivityActions,
+) {
+    if (state.filters.type == ActivityType.EXPENSE) {
+        if (state.analytics.envelopeChips.isNotEmpty()) {
+            item(key = "envelopes") {
+                EnvelopeChipsRow(state.analytics.envelopeChips, state.filters.envelope, actions.onEnvelopeSelected)
+            }
+        }
+        item(key = "categories") {
+            val selected = state.filters.category
+            CategoryFilterRow(
+                // Archived categories are hidden unless one is the active filter.
+                categories =
+                    categories
+                        .optionsIncluding(selected?.let(categories::resolve))
+                        .filter { state.categoryScope == null || it.id in state.categoryScope },
+                selected = selected,
+                onSelected = actions.onCategorySelected,
+                modifier = Modifier.padding(top = Dimens.Space8),
+            )
+        }
+    }
+    if (state.filters.type == ActivityType.INCOME && state.incomeSources.isNotEmpty()) {
+        item(key = "sources") {
+            IncomeSourceFilterRow(
+                sources = state.incomeSources,
+                selected = state.filters.incomeSource,
+                onSelected = actions.onIncomeSourceSelected,
+                modifier = Modifier.padding(top = Dimens.Space16),
             )
         }
     }
@@ -133,95 +170,67 @@ fun LazyListScope.activityRowItems(
 }
 
 @Composable
-private fun AnalyticsItem(
-    state: ActivityUiState.Content,
-    actions: ActivityActions,
+private fun EnvelopeChipsRow(
+    chips: List<EnvelopeChip>,
+    selected: String?,
+    onSelected: (String?) -> Unit,
 ) {
-    val type = state.filters.type
-    val analyticsActions =
-        ActivityAnalyticsActions(
-            period = actions.period,
-            onEnvelopeSelected = actions.onEnvelopeSelected,
-            onCategorySelected = { actions.onCategorySelected(it.id) },
-            onIncomeSourceSelected = actions.onIncomeSourceSelected,
-        )
-    if (type == ActivityType.INCOME) {
-        IncomeAnalyticsHeader(
-            period = state.period,
-            canGoToNextMonth = state.canGoToNextMonth,
-            history = state.history,
-            selectedSource = state.filters.incomeSource,
-            actions = analyticsActions,
-        )
-        return
-    }
-    val category = state.filters.category
-    val figures =
-        remember(state.history, category, state.categoryScope) {
-            state.history?.spendingFigures(category, state.categoryScope) ?: HistoryFigures()
-        }
-    ActivityAnalyticsHeader(
-        period = state.period,
-        canGoToNextMonth = state.canGoToNextMonth,
-        // Envelopes (and the spent total) are about expenses: only the Expenses tab shows the envelope chips, and
-        // the Income tab has no spending to total.
-        analytics =
-            if (type == ActivityType.EXPENSE) state.analytics else state.analytics.copy(envelopeChips = emptyList()),
-        selectedEnvelope = state.filters.envelope,
-        actions = analyticsActions,
-        figures = figures,
+    val dark = LocalDarkTheme.current
+    EnvelopeFilterRow(
+        chips = chips,
+        selected = selected,
+        onSelected = onSelected,
+        modifier = Modifier.padding(top = Dimens.Space16),
+        dotColors = chips.map { categoryColorFor(it.colorKey, dark) },
     )
 }
 
+/**
+ * "Spent X · Received Y ›": only the side that matches the tab (both on All); tapping it opens the Evolution screen
+ * for this period and tab. A note repeats how much of the spent amount went into savings.
+ */
 @Composable
-private fun ActivityTotalsRow(
-    totals: ActivityTotals,
+private fun ActivitySummaryLine(
+    summary: ActivitySummary,
     type: ActivityType,
-    modifier: Modifier = Modifier,
+    onOpenEvolution: () -> Unit,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.Space24),
-    ) {
-        if (type != ActivityType.EXPENSE) {
-            TotalCell(
-                label = stringResource(R.string.activity_total_in),
-                cents = totals.inCents,
-                prefix = "+",
-                color = FinTrackTheme.colors.positive,
-            )
-        }
-        if (type != ActivityType.INCOME) {
-            TotalCell(
-                label = stringResource(R.string.activity_total_out),
-                cents = totals.outCents,
-                color = MaterialTheme.colorScheme.onSurface,
-                note =
-                    stringResource(R.string.activity_total_out_includes_saving, formatAmountCents(totals.savedCents))
-                        .takeIf { totals.savedCents != 0L },
-            )
-        }
-    }
-}
-
-@Composable
-private fun TotalCell(
-    label: String,
-    cents: Long,
-    color: Color,
-    prefix: String = "",
-    note: String? = null,
-) {
-    Column {
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = FinTrackTheme.colors.textSecondary)
-        AnimatedAmountText(
-            cents = cents,
-            style = MaterialTheme.typography.titleMedium,
-            color = color,
-            format = { prefix + formatAmountCents(it) },
+    val parts =
+        listOfNotNull(
+            stringResource(R.string.activity_summary_spent, formatAmountCents(summary.spentCents))
+                .takeIf { type != ActivityType.INCOME },
+            stringResource(R.string.activity_summary_received, formatAmountCents(summary.receivedCents))
+                .takeIf { type != ActivityType.EXPENSE },
         )
-        if (note != null) {
-            Text(text = note, style = MaterialTheme.typography.bodySmall, color = FinTrackTheme.colors.textSecondary)
+    val openLabel = stringResource(R.string.cd_open_evolution)
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClickLabel = openLabel, role = Role.Button, onClick = onOpenEvolution)
+                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = parts.joinToString(" · "),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f, fill = false),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = FinTrackTheme.colors.textSecondary,
+            )
+        }
+        if (type != ActivityType.INCOME && summary.savedCents != 0L) {
+            Text(
+                text =
+                    stringResource(R.string.activity_total_out_includes_saving, formatAmountCents(summary.savedCents)),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
         }
     }
 }

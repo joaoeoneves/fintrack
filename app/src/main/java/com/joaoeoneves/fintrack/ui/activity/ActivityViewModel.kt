@@ -23,23 +23,17 @@ import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.fundingMonthOf
 import com.joaoeoneves.fintrack.domain.model.incomeSourceOf
 import com.joaoeoneves.fintrack.domain.model.netCents
-import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
-import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
-import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
-import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
-import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
-import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeChip
 import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
+import com.joaoeoneves.fintrack.ui.activity.analytics.analyticsOf
 import com.joaoeoneves.fintrack.ui.activity.analytics.encode
-import com.joaoeoneves.fintrack.ui.activity.analytics.envelopeColorKeyOf
-import com.joaoeoneves.fintrack.ui.activity.analytics.envelopeColorKeysOf
+import com.joaoeoneves.fintrack.ui.activity.analytics.periodIncomeSourcesOf
 import com.joaoeoneves.fintrack.ui.activity.analytics.periodMonthsOf
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.groupByDay
@@ -56,7 +50,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -102,7 +95,6 @@ class ActivityViewModel
     @Inject
     constructor(
         private val observePeriodOverview: ObservePeriodOverview,
-        private val observeMonthlyHistory: ObserveMonthlyHistory,
         categoryRepository: CategoryRepository,
         private val deleteTransaction: DeleteTransaction,
         private val savedStateHandle: SavedStateHandle,
@@ -205,27 +197,6 @@ class ActivityViewModel
                         }
                 }
 
-        // The history window ends at the period's last month and is at least a year long; it only re-subscribes when
-        // one of those two changes (not on filters, search or sort).
-        private val historyWindow: Flow<Pair<YearMonth, Int>> =
-            combine(selection.token, retryTrigger) { token, _ -> token }
-                .map { token ->
-                    val now = clock.instant()
-                    val months = periodMonthsOf(decodePeriod(token, now, clock.zone), now, clock.zone)
-                    months.last() to maxOf(HISTORY_MONTHS, months.size)
-                }.distinctUntilChanged()
-
-        private val history: StateFlow<MonthlyHistory?> =
-            historyWindow
-                .flatMapLatest { (end, months) ->
-                    observeMonthlyHistory(end, months, clock.zone)
-                        .map<MonthlyHistory, MonthlyHistory?> { it }
-                        .catch { e ->
-                            Log.w(TAG, "History flow failed", e)
-                            emit(null)
-                        }
-                }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
-
         private val filters: Flow<ActivityFilters> =
             combine(
                 combine(selectedType, selectedCategory, selectedEnvelope) { type, category, envelope ->
@@ -252,9 +223,9 @@ class ActivityViewModel
             )
 
         val uiState: StateFlow<ActivityUiState> =
-            combine(periodItems, filters, categoryLabels, categories, history) { items, active, labels, catalog, past ->
+            combine(periodItems, filters, categoryLabels, categories) { items, active, labels, catalog ->
                 when (items) {
-                    is PeriodItems.Loaded -> items.toContent(active, labels, catalog, clock.zone, past)
+                    is PeriodItems.Loaded -> items.toContent(active, labels, catalog, clock.zone)
                     is PeriodItems.Failed -> ActivityUiState.Error(items.message)
                 }
             }.stateIn(
@@ -329,7 +300,6 @@ class ActivityViewModel
             private const val KEY_SELECTED_PERIOD = "selectedPeriod"
             private const val KEY_SELECTED_ENVELOPE = "selectedEnvelope"
             private const val KEY_SELECTED_INCOME_SOURCE = "selectedIncomeSource"
-            private const val HISTORY_MONTHS = 12
         }
     }
 
@@ -355,17 +325,16 @@ private fun PeriodItems.Loaded.toContent(
     labels: Map<CategoryId, String>,
     catalog: List<Category>,
     zone: ZoneId,
-    monthly: MonthlyHistory?,
 ): ActivityUiState.Content {
-    val analytics = analyticsOf(requested.envelope, catalog)
+    val analytics = overview.analyticsOf(requested.envelope, catalog)
     // An envelope id that no longer exists filters nothing.
     val envelope = requested.envelope?.takeIf { it == NO_ENVELOPE || it in analytics.envelopeIds }
     val activeFilters = requested.copy(envelope = envelope)
     val byId = catalog.associateBy { it.id }
     val lines = overview.plannedIncome
-    val sourceKeys = monthly?.incomeSources?.map { it.key.encode() }.orEmpty()
-    // A source that no longer exists in the history filters nothing.
-    val incomeSource = requested.incomeSource?.takeIf { it in sourceKeys }
+    val sources = periodIncomeSourcesOf(transactions.income, lines)
+    // A source that is not in the period filters nothing.
+    val incomeSource = requested.incomeSource?.takeIf { key -> sources.any { it.key == key } }
     val byType =
         filterTransactions(
             list = transactions.expenses + transactions.income,
@@ -383,18 +352,17 @@ private fun PeriodItems.Loaded.toContent(
             byType
         }
     val sorted = sortTransactions(filtered, activeFilters.sort)
+    val totals = activityTotalsOf(sorted, catalog)
     return ActivityUiState.Content(
         period = period,
         canGoToNextMonth = canGoToNextMonth,
         items = sorted,
         days = if (shouldGroupByDay(activeFilters.sort)) groupByDay(sorted, zone) else emptyList(),
-        totals = activityTotalsOf(sorted, catalog),
+        totals = totals,
         filters = activeFilters.copy(incomeSource = incomeSource),
         analytics = analytics.following(sorted.filterIsInstance<Expense>(), catalog),
-        history =
-            monthly
-                ?.takeIf { it.months.lastOrNull()?.month == months.last() }
-                ?.let { ActivityHistory(months, period is Period.CurrentMonth || period is Period.Month, it) },
+        incomeSources = sources,
+        summary = activitySummaryOf(activeFilters, incomeSource, period, overview, totals),
         shiftedIncomes = shiftedIncomesOf(sorted, lines, overview.funding, zone),
         categoryScope =
             envelope?.let { selected ->
@@ -428,37 +396,6 @@ private fun ActivityAnalytics.following(
     )
 }
 
-/** The analytics header's numbers over the whole period (before the list filters). */
-private fun PeriodItems.Loaded.analyticsOf(
-    selectedEnvelope: String?,
-    catalog: List<Category>,
-): ActivityAnalytics {
-    val split = spendingSplitOf(transactions.expenses)
-    val summary = overview.periodEnvelopes
-    val kept = summary.envelopes.filter { it.spentCents > 0 || it.envelope.id == selectedEnvelope }
-    val showUnenveloped = summary.unenvelopedSpentCents > 0 || selectedEnvelope == NO_ENVELOPE
-    val keys = envelopeColorKeysOf(kept.map { it.envelope.id }, catalog)
-    val chips =
-        kept.mapIndexed { i, e -> EnvelopeChip(e.envelope.id, e.envelope.name, e.spentCents, keys[i]) } +
-            listOfNotNull(
-                EnvelopeChip(NO_ENVELOPE, null, summary.unenvelopedSpentCents, envelopeColorKeyOf(NO_ENVELOPE, catalog))
-                    .takeIf { showUnenveloped },
-            )
-    return ActivityAnalytics(
-        spentCents = split.spendingCents,
-        split = split,
-        breakdown =
-            ActivityBreakdown(
-                categoryTotals = overview.summary.categoryTotals,
-                plannedSlices = overview.budgets.plannedSlices(),
-                hasExpenses = transactions.expenses.isNotEmpty(),
-                envelopes = summary,
-            ),
-        envelopeChips = chips,
-        envelopeIds = summary.envelopes.map { it.envelope.id }.toSet(),
-    )
-}
-
 /** The listed incomes whose funding month differs from their date's month (a shifted salary), by id. */
 internal fun shiftedIncomesOf(
     items: List<Transaction>,
@@ -472,3 +409,24 @@ internal fun shiftedIncomesOf(
             val month = fundingMonthOf(income, lines, funding, zone)
             (income.id to month).takeIf { month != YearMonth.from(income.date.atZone(zone)) }
         }.toMap()
+
+/**
+ * The one-line summary: money out of the visible list ([ActivityTotals.outCents], savings included) and money in. For a
+ * month period with no search or source filter the money in is what funds the month ([PeriodOverview.monthIncome], a
+ * shifted salary counts for the month it funds); otherwise it is the visible list's income by date.
+ */
+internal fun activitySummaryOf(
+    filters: ActivityFilters,
+    incomeSource: String?,
+    period: Period,
+    overview: PeriodOverview,
+    totals: ActivityTotals,
+): ActivitySummary {
+    val byFundingMonth =
+        (period is Period.CurrentMonth || period is Period.Month) && filters.query.isBlank() && incomeSource == null
+    return ActivitySummary(
+        spentCents = totals.outCents,
+        savedCents = totals.savedCents,
+        receivedCents = if (byFundingMonth) overview.monthIncome.sumOf { it.amountCents } else totals.inCents,
+    )
+}

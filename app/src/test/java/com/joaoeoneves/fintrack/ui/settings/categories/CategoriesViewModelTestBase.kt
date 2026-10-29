@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
+import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeBuiltInCategoryNames
@@ -42,17 +43,24 @@ abstract class CategoriesViewModelTestBase {
         Dispatchers.resetMain()
     }
 
-    protected fun newViewModel(repo: FakeCategoryRepository): CategoriesViewModel =
+    protected fun newViewModel(
+        repo: FakeCategoryRepository,
+        editId: String? = null,
+    ): CategoriesViewModel =
         CategoriesViewModel(
             repo,
             CheckCategoryUsage(expenses, budgets, recurring),
             FakeBuiltInCategoryNames(),
             MoveCategoryItems(expenses, budgets, recurring, testDispatcher),
+            SavedStateHandle(listOfNotNull(editId?.let { "editId" to it }).toMap()),
         )
 
     /** Creates the view model, collects its state and events, and lets the first emission land. */
-    protected fun TestScope.start(repo: FakeCategoryRepository): CategoriesViewModel {
-        val viewModel = newViewModel(repo)
+    protected fun TestScope.start(
+        repo: FakeCategoryRepository,
+        editId: String? = null,
+    ): CategoriesViewModel {
+        val viewModel = newViewModel(repo, editId)
         backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
         val unconfined = UnconfinedTestDispatcher(testScheduler)
         backgroundScope.launch(unconfined) { viewModel.errorEvent.collect { errors += it } }

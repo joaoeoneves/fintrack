@@ -17,12 +17,19 @@ import java.time.format.DateTimeFormatter
 const val NEXT_MONTH_PAY_DAY = 26
 
 /**
- * Whether this line, when paid in month X, is the money for month X+1. Only the lines generated from the salary
- * profile (salary, meal allowance, subsidies) that pay every month qualify; manual lines and yearly or one-off
- * extras always belong to the month they are paid in. See [NEXT_MONTH_PAY_DAY].
+ * Whether this line, when paid in month X, is the money for month X+1. Every line generated from the salary
+ * profile qualifies, monthly (salary, meal allowance, duodecimos) and yearly (Christmas / holiday subsidy, profit
+ * share, Coverflex, performance review, ...), as long as it is paid on the last working day or on day
+ * [NEXT_MONTH_PAY_DAY] or later: what is paid with the salary at the end of month X funds month X+1. A yearly line
+ * with `monthOfYear = M` is paid in M and shows up in the plan of M+1 (Christmas in November funds December; a
+ * December line funds January of the next year). Manual lines and one-off lines always belong to the month they
+ * are paid in. See [NEXT_MONTH_PAY_DAY].
  */
 val PlannedIncome.paysForNextMonth: Boolean
-    get() = isManaged && frequency == IncomeFrequency.MONTHLY && (payDay == null || payDay >= NEXT_MONTH_PAY_DAY)
+    get() =
+        isManaged &&
+            (frequency == IncomeFrequency.MONTHLY || frequency == IncomeFrequency.YEARLY) &&
+            (payDay == null || payDay >= NEXT_MONTH_PAY_DAY)
 
 /** Whether the salary pays for the next month: the user's choice, else on exactly when a salary profile exists. */
 fun salaryShiftEnabled(
@@ -32,8 +39,9 @@ fun salaryShiftEnabled(
 
 /**
  * How the plan's income is attributed to months: the single place that knows about "salary pays the next month".
- * With [shift] on, a line that [paysForNextMonth] funds plan month M with what it pays in month M-1 (its amount,
- * working days, pay date and payday income all belong to M-1); every other line funds the month it pays in.
+ * With [shift] on, a line that [paysForNextMonth] (monthly or yearly) funds plan month M with what it pays in
+ * month M-1 (its amount, working days, pay date and payday income all belong to M-1, across a year boundary too);
+ * every other line funds the month it pays in.
  * [workingDaysOf] gives a month's effective working days.
  */
 class IncomeFunding(
