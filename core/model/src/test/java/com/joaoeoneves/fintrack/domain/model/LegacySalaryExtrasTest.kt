@@ -50,7 +50,10 @@ class LegacySalaryExtrasTest {
             testExtra(id = "flex", name = "Flexible benefits", months = setOf(2, 5, 8, 11), feePpm = 5_000),
             result.byId("flex"),
         )
-        assertEquals(multipleExtra(id = "profitshare", name = "Profit share", months = setOf(4, 10)), result.byId("profitshare"))
+        assertEquals(
+            multipleExtra(id = "profitshare", name = "Profit share", months = setOf(4, 10)),
+            result.byId("profitshare"),
+        )
         assertEquals(
             fixedExtra(id = "bonus", name = "Bonus", deductions = SalaryExtraDeductions.IRS_SS),
             result.byId("bonus"),

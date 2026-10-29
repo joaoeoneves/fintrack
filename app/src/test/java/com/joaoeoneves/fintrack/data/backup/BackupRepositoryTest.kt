@@ -111,6 +111,21 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
         }
 
     @Test
+    fun export_orphanPlaceholders_useTheProvidedDeletedCategoryName() =
+        runStoreTest {
+            val ghost = Category.unknown(CategoryId("ghost"))
+            val repo =
+                repository(
+                    expenses = listOf(testExpense("e1", 100, march, category = ghost)),
+                    deletedCategoryName = "Categoria apagada",
+                )
+
+            val doc = repo.build()
+
+            assertEquals(listOf("Categoria apagada"), doc.categories.map { it.name })
+        }
+
+    @Test
     fun export_orphanExpenseAndBudget_getArchivedPlaceholders() =
         runStoreTest {
             val gym = userCategory("gym", order = 7)

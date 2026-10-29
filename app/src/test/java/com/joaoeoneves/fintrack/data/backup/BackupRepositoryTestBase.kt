@@ -74,6 +74,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         salaryProfile: SalaryProfile? = null,
         goals: List<SavingsGoal> = emptyList(),
         automation: AutomationSettings = AutomationSettings(),
+        deletedCategoryName: String = "Deleted category",
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
@@ -87,7 +88,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
                 FakeSalaryProfileRepository(salaryProfile),
                 FakeGoalRepository(goals),
                 FakeAutomationSettingsRepository(automation),
-                FakePlaceholderNames(),
+                FakePlaceholderNames(deletedCategoryName),
             ),
         ),
         FakeCategoryRepository(categoryDocs),

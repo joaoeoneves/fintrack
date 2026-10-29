@@ -69,13 +69,6 @@ class PendingWriteRecurringTest {
     }
 
     @Test
-    fun incomeRecurring_hasNullCategory() {
-        val write = plan(listOf(localRecurring("r1", null, "INCOME"))).toBatches().single().single()
-
-        assertEquals(null, write.data["category"])
-    }
-
-    @Test
     fun recurringBatches_capDistinctCustomCategories_builtInsDontCount() {
         val items =
             (0 until 16).map { localRecurring("c$it", "cat$it") } + (0 until 20).map { localRecurring("f$it", "FOOD") }

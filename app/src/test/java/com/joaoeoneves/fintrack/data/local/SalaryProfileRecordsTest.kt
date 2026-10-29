@@ -162,7 +162,6 @@ class SalaryProfileRecordsTest {
     fun managedKey_everyKnownKeyIsValid() {
         val keys =
             listOf(MANAGED_NET_SALARY, "profile_duodecimos", "profile_meal", "profile_holiday", "profile_christmas") +
-                listOf("profile_bonus", "profile_profit_share", "profile_profit_share_3", "profile_flex_q2") +
                 listOf("profile_extra_abc_1", "profile_extra_Zz9_12")
         keys.forEach { validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0, managedKey = it)) }
     }
@@ -172,6 +171,10 @@ class SalaryProfileRecordsTest {
         validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0))
         listOf(
             "profile_other",
+            "profile_bonus",
+            "profile_profit_share",
+            "profile_profit_share_3",
+            "profile_flex_q2",
             "",
             "profile_extra_abc_0",
             "profile_extra_abc_13",

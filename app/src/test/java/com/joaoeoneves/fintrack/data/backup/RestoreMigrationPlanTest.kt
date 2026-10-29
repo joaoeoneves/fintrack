@@ -95,6 +95,15 @@ class RestoreMigrationPlanTest {
     }
 
     @Test
+    fun orphanPlaceholder_isNamedWithTheGivenDeletedCategoryName() {
+        val local = LocalDataDocument(budgets = listOf(LocalBudget("ghost", 100)))
+
+        val plan = restoreMigrationPlanOf(local, "Categoria apagada")
+
+        assertEquals("Categoria apagada", plan.categories.single().name)
+    }
+
+    @Test
     fun goalLinkedToAMissingCategory_isClearedNotDropped() {
         val local =
             LocalDataDocument(

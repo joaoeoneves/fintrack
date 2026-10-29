@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.data.local
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
@@ -99,7 +98,6 @@ class LocalCategoryMoveTest : LocalStoreTestBase() {
             recurring.saveRecurring(recurringItem(id = "r1", categoryId = food))
             recurring.saveRecurring(recurringItem(id = "r2", categoryId = food))
             recurring.saveRecurring(recurringItem(id = "r3", categoryId = shopping))
-            recurring.saveRecurring(recurringItem(id = "r4", type = RecurringType.INCOME))
             val before = revision()
 
             val moved = recurring.moveRecurringCategory(food, shopping).getOrThrow()
@@ -107,10 +105,9 @@ class LocalCategoryMoveTest : LocalStoreTestBase() {
             assertEquals(2, moved)
             assertEquals(before + 1, revision())
             val items = recurring.observeRecurring().first().associateBy { it.id }
-            assertEquals(setOf("r1", "r2", "r3", "r4"), items.keys)
+            assertEquals(setOf("r1", "r2", "r3"), items.keys)
             assertEquals(shopping, items.getValue("r1").categoryId)
             assertEquals(shopping, items.getValue("r2").categoryId)
-            assertEquals(null, items.getValue("r4").categoryId)
         }
 
     @Test

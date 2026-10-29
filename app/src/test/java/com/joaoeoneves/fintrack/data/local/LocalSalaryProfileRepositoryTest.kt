@@ -44,7 +44,7 @@ class LocalSalaryProfileRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun legacyV9File_isMigratedOnRead_withLocalizedNames() =
+    fun legacyV9File_isMigratedOnRead_withTheEnglishNames() =
         runStoreTest {
             dataFile.writeText(
                 """{"schemaVersion":9,"revision":1,"salaryProfile":""" +
@@ -54,7 +54,7 @@ class LocalSalaryProfileRepositoryTest : LocalStoreTestBase() {
             val extras = current()!!.extras
 
             assertEquals(listOf("flex", "bonus"), extras.map { it.id })
-            assertEquals(listOf("Flexivel", "Premio"), extras.map { it.name })
+            assertEquals(listOf("Flexible benefits", "Bonus"), extras.map { it.name })
         }
 
     @Test
