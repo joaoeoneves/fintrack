@@ -1,5 +1,6 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
+import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
@@ -18,11 +19,11 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** Auto-record, pay day and the salary-duplicate warning in [MonthlyPlanViewModel]. */
+/** Auto-record, pay day and the salary-duplicate warning in [IncomeTabViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelAutoRecordTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelAutoRecordTest : IncomeTabViewModelTestBase() {
     private val oct = YearMonth.of(2026, 10)
     private val sep = YearMonth.of(2026, 9)
 

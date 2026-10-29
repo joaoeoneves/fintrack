@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import com.joaoeoneves.fintrack.R
@@ -16,11 +16,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Deleting income lines and setting/clearing category allocations through [MonthlyPlanViewModel]. */
+/** Deleting income lines and setting/clearing category allocations through [IncomeTabViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelWriteTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelWriteTest : IncomeTabViewModelTestBase() {
     private val failed = UiText.StringResource(R.string.error_plan_save_failed)
 
     @Test

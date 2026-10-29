@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
@@ -21,12 +21,12 @@ import java.time.YearMonth
 
 /**
  * The month navigation of
- * [MonthlyPlanViewModel]. "Now" is 2026-10-15, so September 2026 is the previous month.
+ * [IncomeTabViewModel]. "Now" is 2026-10-15, so September 2026 is the previous month.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelProgressTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelProgressTest : IncomeTabViewModelTestBase() {
     // ---- month navigation ----
 
     @Test

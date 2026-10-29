@@ -1,5 +1,7 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
+import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
+import com.joaoeoneves.fintrack.ui.plan.IncomeLineEditorState
 import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
@@ -17,11 +19,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.YearMonth
 
-/** The income-line editor flow (open, save, validate, delete) of [MonthlyPlanViewModel]. */
+/** The income-line editor flow (open, save, validate, delete) of [IncomeTabViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelEditorTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelEditorTest : IncomeTabViewModelTestBase() {
     private val month = YearMonth.of(2026, 10)
 
     @Test

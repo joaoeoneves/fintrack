@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
@@ -16,11 +16,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.YearMonth
 
-/** Days off in [MonthlyPlanViewModel]: `onSetWorkingDays(month, days, daysOff)` and the resulting state. */
+/** Days off in [IncomeTabViewModel]: `onSetWorkingDays(month, days, daysOff)` and the resulting state. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelDaysOffTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelDaysOffTest : IncomeTabViewModelTestBase() {
     private val oct = YearMonth.of(2026, 10)
 
     private suspend fun kotlinx.coroutines.test.TestScope.perDayLine() {

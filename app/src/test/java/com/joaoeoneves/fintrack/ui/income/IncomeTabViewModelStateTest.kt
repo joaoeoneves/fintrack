@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
@@ -15,15 +15,15 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** State derivation, loading/error/retry and the line cap of [MonthlyPlanViewModel]. */
+/** State derivation, loading/error/retry and the line cap of [IncomeTabViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelStateTest : IncomeTabViewModelTestBase() {
     @Test
     fun initialState_isLoading() =
         runTest(testDispatcher) {
-            assertEquals(MonthlyPlanUiState.Loading, viewModel().uiState.value)
+            assertEquals(IncomeTabUiState.Loading, viewModel().uiState.value)
         }
 
     @Test
@@ -66,7 +66,7 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
             collect(vm)
 
             assertEquals(
-                MonthlyPlanUiState.Error(genericErrorText),
+                IncomeTabUiState.Error(genericErrorText),
                 vm.uiState.value,
             )
         }
@@ -77,13 +77,13 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
             incomeRepo.nextObserveError = IllegalStateException("boom")
             val vm = viewModel()
             collect(vm)
-            assertTrue(vm.uiState.value is MonthlyPlanUiState.Error)
+            assertTrue(vm.uiState.value is IncomeTabUiState.Error)
 
             incomeRepo.nextObserveError = null
             vm.onRetry()
             advanceUntilIdle()
 
-            assertTrue(vm.uiState.value is MonthlyPlanUiState.Content)
+            assertTrue(vm.uiState.value is IncomeTabUiState.Content)
         }
 
     @Test
@@ -93,7 +93,7 @@ class MonthlyPlanViewModelStateTest : MonthlyPlanViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            assertTrue(vm.uiState.value is MonthlyPlanUiState.Error)
+            assertTrue(vm.uiState.value is IncomeTabUiState.Error)
         }
 
     @Test

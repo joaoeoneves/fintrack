@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
@@ -10,11 +10,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Error handling of the expense feed behind [MonthlyPlanViewModel]. */
+/** Error handling of the expense feed behind [IncomeTabViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelFailureTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelFailureTest : IncomeTabViewModelTestBase() {
     @Test
     fun expensesFailure_surfacesErrorState() =
         runTest(testDispatcher) {
@@ -22,6 +22,6 @@ class MonthlyPlanViewModelFailureTest : MonthlyPlanViewModelTestBase() {
             val vm = viewModel(expenses = failing)
             collect(vm)
 
-            assertTrue(vm.uiState.value is MonthlyPlanUiState.Error)
+            assertTrue(vm.uiState.value is IncomeTabUiState.Error)
         }
 }

@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
@@ -16,12 +16,12 @@ import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
-import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
-import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardRepositories
+import com.joaoeoneves.fintrack.ui.dashboard.observeMonthlyHistoryOf
 import com.joaoeoneves.fintrack.ui.dashboard.observePeriodOverviewOf
+import com.joaoeoneves.fintrack.ui.plan.PlanRepositories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -36,10 +36,10 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 import java.time.ZoneOffset
 
-/** Shared setup for the [MonthlyPlanViewModel] tests. */
+/** Shared setup for the [IncomeTabViewModel] tests. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Config(application = Application::class)
-open class MonthlyPlanViewModelTestBase {
+open class IncomeTabViewModelTestBase {
     protected val testDispatcher = StandardTestDispatcher()
     protected val incomeRepo = FakePlannedIncomeRepository()
     protected val monthSettingsRepo = FakeMonthSettingsRepository()
@@ -68,10 +68,8 @@ open class MonthlyPlanViewModelTestBase {
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         expenses: ExpenseRepository = expenseRepo,
         incomes: IncomeRepository = actualIncomeRepo,
-        planSettings: PlanSettingsRepository = NoPlanSettings,
-    ) = MonthlyPlanViewModel(
-        PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo, goalRepo, automationRepo),
-        observePeriodOverviewOf(
+    ): IncomeTabViewModel {
+        val repositories =
             DashboardRepositories(
                 expenses,
                 budgetRepo,
@@ -81,26 +79,28 @@ open class MonthlyPlanViewModelTestBase {
                 monthSettingsRepo,
                 envelopeRepo,
                 recurringRepo,
-                planSettings,
-            ),
-        ),
-        RecordPayday(
-            incomeRepo,
-            monthSettingsRepo,
-            incomes,
-            automationRepo,
-            FakeSalaryLineLabelsProvider(),
-        ),
-        savedStateHandle,
-        clock,
-    )
+            )
+        return IncomeTabViewModel(
+            PlanRepositories(incomeRepo, budgetRepo, categoryRepo, monthSettingsRepo, goalRepo, automationRepo),
+            observePeriodOverviewOf(repositories),
+            observeMonthlyHistoryOf(repositories),
+            RecordPayday(incomeRepo, monthSettingsRepo, incomes, automationRepo, FakeSalaryLineLabelsProvider()),
+            savedStateHandle,
+            clock,
+        )
+    }
 
-    protected fun TestScope.collect(viewModel: MonthlyPlanViewModel) {
+    protected fun TestScope.collect(viewModel: IncomeTabViewModel) {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
     }
 
-    protected fun MonthlyPlanViewModel.content() = uiState.value as MonthlyPlanUiState.Content
+    protected fun IncomeTabViewModel.content() = uiState.value as IncomeTabUiState.Content
+
+    protected val IncomeTabUiState.Content.incomeRows get() = month!!.incomeRows
+    protected val IncomeTabUiState.Content.workingDays get() = month!!.workingDays
+    protected val IncomeTabUiState.Content.receipts get() = month!!.receipts
+    protected val IncomeTabUiState.Content.duplicateKeys get() = month!!.duplicateKeys
 
     protected fun line(
         id: String,

@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
@@ -22,7 +22,7 @@ import java.time.ZoneOffset
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelPastReceiveTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelPastReceiveTest : IncomeTabViewModelTestBase() {
     private val sep = YearMonth.of(2026, 9)
 
     private fun september() = viewModel(SavedStateHandle(mapOf("month" to Period.Month(sep).encode())))

@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
@@ -15,11 +15,11 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** The payday header (common pay date or none) and the "month" route argument of [MonthlyPlanViewModel]. */
+/** The payday header (common pay date or none) and the "month" route argument of [IncomeTabViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelPaydayTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelPaydayTest : IncomeTabViewModelTestBase() {
     private fun fixed(
         id: String,
         day: Int,

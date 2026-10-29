@@ -1,5 +1,6 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
+import com.joaoeoneves.fintrack.ui.plan.IncomeReceipts
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.MANAGED_MEAL
@@ -20,11 +21,11 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** "Received" in [MonthlyPlanViewModel]: [IncomeReceipts] in the state and [MonthlyPlanViewModel.onReceive]. */
+/** "Received" in [IncomeTabViewModel]: [IncomeReceipts] in the state and [IncomeTabViewModel.onReceive]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelReceiveTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelReceiveTest : IncomeTabViewModelTestBase() {
     private val oct = YearMonth.of(2026, 10)
 
     @Test

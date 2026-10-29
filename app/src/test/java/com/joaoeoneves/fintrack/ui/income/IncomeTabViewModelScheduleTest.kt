@@ -1,5 +1,7 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
+import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
+import com.joaoeoneves.fintrack.ui.plan.WorkingDaysState
 import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
@@ -22,15 +24,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.YearMonth
 
-/** Income-line schedules (basis, frequency) and the working-days override in [MonthlyPlanViewModel]. */
+/** Income-line schedules (basis, frequency) and the working-days override in [IncomeTabViewModel]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelScheduleTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelScheduleTest : IncomeTabViewModelTestBase() {
     private val oct = YearMonth.of(2026, 10)
 
     private suspend fun kotlinx.coroutines.test.TestScope.save(
-        vm: MonthlyPlanViewModel,
+        vm: IncomeTabViewModel,
         schedule: IncomeSchedule,
         amount: Long = 1046L,
         month: YearMonth = oct,

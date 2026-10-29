@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
@@ -27,7 +27,7 @@ import java.time.YearMonth
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelHomeTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelHomeTest : IncomeTabViewModelTestBase() {
     private suspend fun addEnvelope(
         id: String,
         amountCents: Long,

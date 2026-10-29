@@ -1,5 +1,6 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
+import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
@@ -23,7 +24,7 @@ import java.time.YearMonth
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelManagedTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelManagedTest : IncomeTabViewModelTestBase() {
     private val net =
         PlannedIncome(
             id = MANAGED_NET_SALARY,

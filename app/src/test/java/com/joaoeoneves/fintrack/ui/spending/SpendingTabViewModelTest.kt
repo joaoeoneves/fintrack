@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.evolution
+package com.joaoeoneves.fintrack.ui.spending
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
@@ -48,7 +48,7 @@ import java.time.ZoneOffset
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class EvolutionViewModelTest {
+class SpendingTabViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-20T12:00:00Z"), ZoneOffset.UTC)
 
@@ -63,7 +63,7 @@ class EvolutionViewModelTest {
     }
 
     private class Setup(
-        val vm: EvolutionViewModel,
+        val vm: SpendingTabViewModel,
         val expenseRepo: CountingExpenseRepository,
     )
 
@@ -83,7 +83,7 @@ class EvolutionViewModelTest {
                 recurring = FakeRecurringRepository(),
             )
         val vm =
-            EvolutionViewModel(
+            SpendingTabViewModel(
                 ObservePeriodOverview(transactionRepository = transactions, sources = sources),
                 ObserveMonthlyHistory(transactions, sources),
                 FakeCategoryRepository(),
@@ -93,7 +93,7 @@ class EvolutionViewModelTest {
         return Setup(vm, counting)
     }
 
-    private fun TestScope.content(vm: EvolutionViewModel): EvolutionUiState.Content {
+    private fun TestScope.content(vm: SpendingTabViewModel): EvolutionUiState.Content {
         backgroundScope.launch { vm.uiState.collect {} }
         advanceUntilIdle()
         return vm.uiState.value as EvolutionUiState.Content

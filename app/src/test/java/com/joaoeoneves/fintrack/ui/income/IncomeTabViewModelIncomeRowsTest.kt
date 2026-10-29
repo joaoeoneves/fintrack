@@ -1,5 +1,6 @@
-package com.joaoeoneves.fintrack.ui.plan
+package com.joaoeoneves.fintrack.ui.income
 
+import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import android.app.Application
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
@@ -24,7 +25,7 @@ import java.time.YearMonth
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
-class MonthlyPlanViewModelIncomeRowsTest : MonthlyPlanViewModelTestBase() {
+class IncomeTabViewModelIncomeRowsTest : IncomeTabViewModelTestBase() {
     private val profile = SalaryProfile(baseGrossCents = 100_000, irsBasePpm = 100_000, mealRatePerDayCents = 900)
     private val managed = salaryProfileLines(profile, emptyList())
 
