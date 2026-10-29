@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,12 +15,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.categoryColorFor
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
-import com.joaoeoneves.fintrack.ui.common.sliceColorFor
 import com.joaoeoneves.fintrack.ui.dashboard.CategoryBreakdownSection
 import com.joaoeoneves.fintrack.ui.dashboard.PeriodTab
 import com.joaoeoneves.fintrack.ui.dashboard.toPeriod
@@ -84,6 +87,7 @@ fun ActivityAnalyticsHeader(
                     ),
                 onClick = { expanded = !expanded },
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+                startPadding = 0.dp,
             )
         }
         if (hasDetails && expanded) {
@@ -130,28 +134,29 @@ private fun EnvelopeFilterSection(
     val noEnvelope = stringResource(R.string.plan_group_other)
     val spoken = chips.map { "${it.name ?: noEnvelope} ${formatAmountCents(it.spentCents, false)}" }.joinToString("; ")
     val description = stringResource(R.string.cd_envelope_bar, spoken)
-    val colors = chips.indices.map { sliceColorFor(it, dark) }
-    val selectedIndex = chips.indexOfFirst { it.id == selected }.takeIf { it >= 0 }
+    val colors = chips.map { categoryColorFor(it.colorKey, dark) }
+    // Tapping a bar segment only highlights it (and names it below); the chips are what filter.
+    var highlightedRaw by rememberSaveable { mutableStateOf<Int?>(null) }
+    val highlighted = highlightedRaw?.takeIf { it in chips.indices }
     EnvelopeSpendBar(
         segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, colors[index]) },
         description = description,
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
-        selectedIndex = selectedIndex,
-        onSegmentClick = { index ->
-            val id = chips[index].id
-            onSelected(if (id == selected) null else id)
-        },
+        selectedIndex = highlighted,
+        onSegmentClick = { index -> highlightedRaw = if (highlighted == index) null else index },
     )
-    val shown = selectedIndex?.let { chips[it] }
+    val shown = highlighted?.let { chips.getOrNull(it) }
     if (shown != null) {
         Text(
             text = "${shown.name ?: noEnvelope} · ${formatAmountCents(shown.spentCents)}",
             style = MaterialTheme.typography.labelMedium,
-            color = colors[selectedIndex],
+            color = colors[highlighted ?: 0],
             modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(bottom = Dimens.Space8),
         )
     }
+    Spacer(Modifier.height(Dimens.Space12))
     EnvelopeFilterRow(chips = chips, selected = selected, onSelected = onSelected, dotColors = colors)
+    Spacer(Modifier.height(Dimens.Space16))
 }
 
 /** The breakdown with a Category | Envelope switch (only when envelopes exist; otherwise just by category). */

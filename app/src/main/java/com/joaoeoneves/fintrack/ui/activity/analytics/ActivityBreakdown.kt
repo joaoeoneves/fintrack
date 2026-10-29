@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.activity.analytics
 
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.SpendingSplit
+import com.joaoeoneves.fintrack.ui.common.FALLBACK_COLOR_KEY
 import com.joaoeoneves.fintrack.ui.dashboard.CategoryTotal
 
 /** The [EnvelopeChip.id] of the implicit "no envelope" bucket (and the matching envelope filter value). */
@@ -31,6 +32,8 @@ data class EnvelopeChip(
     val id: String,
     val name: String?,
     val spentCents: Long,
+    /** Palette key of the colour of this envelope's bar segment and chip dot (see [envelopeColorKeyOf]). */
+    val colorKey: String = FALLBACK_COLOR_KEY,
 )
 
 /**

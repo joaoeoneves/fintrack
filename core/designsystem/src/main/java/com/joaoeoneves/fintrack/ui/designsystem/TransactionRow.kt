@@ -41,6 +41,7 @@ fun TransactionRow(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     badge: (@Composable () -> Unit)? = null,
+    subtitleMaxLines: Int = 1,
 ) {
     Row(
         modifier =
@@ -79,7 +80,7 @@ fun TransactionRow(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = FinTrackTheme.colors.textSecondary,
-                    maxLines = 1,
+                    maxLines = subtitleMaxLines,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
