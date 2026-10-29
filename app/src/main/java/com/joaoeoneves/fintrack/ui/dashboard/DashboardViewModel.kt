@@ -21,6 +21,7 @@ import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.common.period.PeriodScale
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import com.joaoeoneves.fintrack.ui.common.period.asMonthPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,6 +97,8 @@ class DashboardViewModel
         fun onPeriodSelected(period: Period) {
             selection.select(if (period is Period.Year) period else period.asMonthPeriod())
         }
+
+        fun onSelectScale(scale: PeriodScale) = selection.selectScale(scale)
 
         fun onPreviousMonth() {
             val current = currentPeriod()

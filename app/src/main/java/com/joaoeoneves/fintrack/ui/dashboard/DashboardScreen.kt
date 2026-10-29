@@ -203,6 +203,7 @@ private fun DashboardTopBar(
                         actions = actions,
                         alignment = Alignment.Start,
                         monthOnly = true,
+                        showScaleSwitch = true,
                     )
                 }
             }
@@ -237,6 +238,7 @@ private fun dashboardActions(
             onPrevious = viewModel::onPreviousMonth,
             onNext = viewModel::onNextMonth,
             onSelect = viewModel::onPeriodSelected,
+            onSelectScale = viewModel::onSelectScale,
         ),
     upcoming =
         UpcomingRecurringModel(
