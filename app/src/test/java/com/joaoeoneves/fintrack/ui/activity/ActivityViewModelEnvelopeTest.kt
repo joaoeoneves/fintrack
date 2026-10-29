@@ -49,6 +49,12 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
 
     private fun ActivityUiState.Content.ids() = items.map { it.id }.toSet()
 
+    private fun foodChip(spent: Long) = EnvelopeChip(foodEnvelope, "Food", spent, "violet")
+
+    private fun billsChip(spent: Long) = EnvelopeChip(billsEnvelope, "Bills", spent, "blue")
+
+    private fun noEnvChip(spent: Long) = EnvelopeChip(NO_ENVELOPE, null, spent, "slate")
+
     @Test
     fun noEnvelope_byDefault_showsEverything() =
         runTest(testDispatcher) {
@@ -247,12 +253,29 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
         }
 
     @Test
+    fun envelopeChipActive_breakdownCategoryTotals_sumOnlyVisibleExpenses() =
+        runTest(testDispatcher) {
+            val vm = fixture().vm
+            content(vm)
+
+            vm.onEnvelopeSelected(foodEnvelope)
+            advanceUntilIdle()
+
+            val nonZero =
+                current(vm)
+                    .analytics.breakdown.categoryTotals
+                    .filter { it.totalCents != 0L }
+            assertEquals(listOf(BuiltInCategories.FOOD.id), nonZero.map { it.category.id })
+            assertEquals(900L, nonZero.sumOf { it.totalCents })
+        }
+
+    @Test
     fun chips_listOnlyEnvelopesWithSpend_andNoEnvelopeWhenItHasSpend() =
         runTest(testDispatcher) {
             val vm = fixture(expenses = listOf(lunch, mug)).vm
 
             assertEquals(
-                listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet"), EnvelopeChip(NO_ENVELOPE, null, 300L, "slate")),
+                listOf(foodChip(900L), noEnvChip(300L)),
                 content(vm).analytics.envelopeChips,
             )
         }
@@ -263,7 +286,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             val vm = fixture(expenses = listOf(lunch, rent)).vm
 
             assertEquals(
-                listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet"), EnvelopeChip(billsEnvelope, "Bills", 5_000L, "blue")),
+                listOf(foodChip(900L), billsChip(5_000L)),
                 content(vm).analytics.envelopeChips,
             )
         }
@@ -287,7 +310,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertEquals(
-                listOf(EnvelopeChip(billsEnvelope, "Bills", 0L, "blue"), EnvelopeChip(NO_ENVELOPE, null, 300L, "slate")),
+                listOf(billsChip(0L), noEnvChip(300L)),
                 current(vm).analytics.envelopeChips,
             )
         }
@@ -302,7 +325,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertEquals(
-                listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet"), EnvelopeChip(NO_ENVELOPE, null, 0L, "slate")),
+                listOf(foodChip(900L), noEnvChip(0L)),
                 current(vm).analytics.envelopeChips,
             )
         }
@@ -314,12 +337,12 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             val vm = fixture(expenses = listOf(september, mug)).vm
             content(vm)
 
-            assertEquals(listOf(EnvelopeChip(NO_ENVELOPE, null, 300L, "slate")), current(vm).analytics.envelopeChips)
+            assertEquals(listOf(noEnvChip(300L)), current(vm).analytics.envelopeChips)
 
             vm.periodActions.onSelect(Period.Month(YearMonth.of(2026, 9)))
             advanceUntilIdle()
 
-            assertEquals(listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet")), current(vm).analytics.envelopeChips)
+            assertEquals(listOf(foodChip(900L)), current(vm).analytics.envelopeChips)
         }
 
     @Test

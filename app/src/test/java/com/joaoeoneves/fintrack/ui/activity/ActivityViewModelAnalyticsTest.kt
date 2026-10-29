@@ -262,7 +262,11 @@ class ActivityViewModelAnalyticsTest : ActivityViewModelTestBase() {
 
             assertTrue(current(vm).items.isEmpty())
             assertEquals(before.breakdown.envelopes, current(vm).analytics.breakdown.envelopes)
-            assertTrue(current(vm).analytics.breakdown.categoryTotals.all { it.totalCents == 0L })
+            assertTrue(
+                current(vm)
+                    .analytics.breakdown.categoryTotals
+                    .all { it.totalCents == 0L },
+            )
             assertEquals(0L, current(vm).analytics.spentCents)
             assertEquals(1_500L, before.spentCents)
         }

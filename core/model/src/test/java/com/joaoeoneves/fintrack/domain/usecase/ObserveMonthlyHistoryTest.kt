@@ -7,9 +7,9 @@ import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.Expense
-import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.InstantRange
+import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
@@ -114,7 +114,8 @@ class ObserveMonthlyHistoryTest {
     fun previousMonthEndSalary_landsInFirstMonth() =
         runTest {
             val pay = testIncome("pay_sal_202607", 100_000L, at(2026, 7, 31))
-            val history = useCase(Transactions(emptyList(), listOf(pay)), listOf(salary), true)(end, 3, zone, end).first()
+            val tx = Transactions(emptyList(), listOf(pay))
+            val history = useCase(tx, listOf(salary), true)(end, 3, zone, end).first()
             assertEquals(listOf(100_000L, 0L, 0L), history.months.map { it.incomeCents })
         }
 
