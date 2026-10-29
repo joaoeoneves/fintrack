@@ -3,9 +3,11 @@ package com.joaoeoneves.fintrack.ui.plan
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.testutil.FakePlanSettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -43,6 +45,67 @@ class MonthlyPlanViewModelPaydayTest : MonthlyPlanViewModelTestBase() {
             collect(vm)
 
             assertEquals(LocalDate.of(2026, 10, 20), vm.content().receipts.payday)
+        }
+
+    private fun managed(day: Int?) =
+        PlannedIncome(
+            id = "salary",
+            label = "Salary",
+            amountCents = 100_000L,
+            order = 0,
+            payDay = day,
+            managedKey = "profile_net_salary",
+        )
+
+    @Test
+    fun noPayingRows_haveNoPayday() =
+        runTest(testDispatcher) {
+            val vm = viewModel()
+            collect(vm)
+
+            assertNull(vm.content().receipts.payday)
+        }
+
+    @Test
+    fun shiftedSalary_paydayIsInThePreviousMonth() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(managed(28))
+            val vm = viewModel(planSettings = FakePlanSettingsRepository(true))
+            collect(vm)
+
+            assertEquals(LocalDate.of(2026, 9, 28), vm.content().receipts.payday)
+        }
+
+    @Test
+    fun payWorkingDays_withShift_isThePreviousMonth() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(managed(null))
+            val vm = viewModel(planSettings = FakePlanSettingsRepository(true))
+            collect(vm)
+
+            assertEquals(YearMonth.of(2026, 10), vm.content().workingDays.month)
+            assertEquals(YearMonth.of(2026, 9), vm.content().payWorkingDays.month)
+        }
+
+    @Test
+    fun payWorkingDays_shiftSwitchedOff_isTheViewedMonthEvenForASalaryLine() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(managed(null))
+            val vm = viewModel(planSettings = FakePlanSettingsRepository(false))
+            collect(vm)
+
+            assertEquals(YearMonth.of(2026, 10), vm.content().payWorkingDays.month)
+        }
+
+    @Test
+    fun payWorkingDays_withoutShift_isTheViewedMonth() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(fixed("manual", 5))
+            val vm = viewModel()
+            collect(vm)
+
+            assertEquals(vm.content().workingDays, vm.content().payWorkingDays)
+            assertEquals(YearMonth.of(2026, 10), vm.content().payWorkingDays.month)
         }
 
     @Test
