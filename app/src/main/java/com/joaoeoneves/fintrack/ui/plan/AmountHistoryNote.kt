@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,5 +80,26 @@ fun EffectiveFromRow(
             },
             onDismiss = { picking = false },
         )
+    }
+}
+
+/**
+ * The "Valid from" row tucked under an "Advanced" row that expands on tap; collapsed by default so the usual
+ * case (valid from this month) needs no thought.
+ */
+@Composable
+fun AdvancedEffectiveFrom(
+    month: YearMonth,
+    onChange: (YearMonth) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    Column(modifier = modifier) {
+        SettingsRow(
+            title = stringResource(R.string.advanced_title),
+            onClick = { expanded = !expanded },
+            showChevron = true,
+        )
+        if (expanded) EffectiveFromRow(month = month, onChange = onChange)
     }
 }
