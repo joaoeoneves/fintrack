@@ -31,7 +31,7 @@ jobs:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
         run: echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/google-services.json
 
-      # Private-repo runners have little free disk; the AVD's userdata partition didn't fit.
+      # Runners have little free disk; the AVD's userdata partition didn't fit.
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost "$AGENT_TOOLSDIRECTORY/CodeQL" && df -h /
 
@@ -48,7 +48,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-api34-google_apis-x86_64-pixel_6
+          key: avd-api34-google_apis-x86_64-pixel_6-4cores
 
       # On a cache miss, boot once to create the AVD and save its snapshot; the real run below then reuses it.
       - name: Create AVD and snapshot for caching
@@ -59,7 +59,7 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
-          cores: 2
+          cores: 4
           ram-size: 4096M
           emulator-boot-timeout: 1500
           disk-size: 4096M
@@ -75,8 +75,8 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
-          # Private-repo runners have 2 vCPUs (public ones have 4), so the emulator boots much slower.
-          cores: 2
+          # Public-repo runners have 4 vCPUs; give them all to the emulator.
+          cores: 4
           ram-size: 4096M
           emulator-boot-timeout: 1500
           disk-size: 4096M
