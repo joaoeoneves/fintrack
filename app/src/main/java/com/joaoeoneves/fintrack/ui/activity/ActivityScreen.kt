@@ -78,7 +78,7 @@ fun ActivityScreen(
                         state = state,
                         query = query,
                         categories = categories,
-                        actions = viewModel.activityActions(callbacks, state.period, state.filters.type),
+                        actions = viewModel.activityActions(callbacks, state.period),
                         contentPadding = innerPadding,
                     )
                 }
@@ -116,7 +116,6 @@ private fun DeletedSnackbar(
 private fun ActivityViewModel.activityActions(
     callbacks: ActivityCallbacks,
     period: Period,
-    type: ActivityType,
 ): ActivityActions =
     ActivityActions(
         period = periodActions,
@@ -135,7 +134,8 @@ private fun ActivityViewModel.activityActions(
         onDelete = ::onDelete,
         onAddExpense = { callbacks.onAddExpense(period) },
         onAddIncome = { callbacks.onAddIncome(period) },
-        onOpenEvolution = { callbacks.onOpenEvolution(period, type) },
+        onOpenSpending = { callbacks.onOpenSpending(period) },
+        onOpenIncomeTab = { callbacks.onOpenIncomeTab(period) },
     )
 
 @Composable

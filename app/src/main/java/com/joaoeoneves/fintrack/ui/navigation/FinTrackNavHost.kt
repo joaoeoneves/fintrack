@@ -16,29 +16,22 @@ import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
 import com.joaoeoneves.fintrack.ui.activity.ActivityScreen
-import com.joaoeoneves.fintrack.ui.activity.ActivityType
 import com.joaoeoneves.fintrack.ui.common.newTransactionArg
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
 import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
-import com.joaoeoneves.fintrack.ui.evolution.EvolutionScreen
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
+import com.joaoeoneves.fintrack.ui.income.IncomeTabScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
-import com.joaoeoneves.fintrack.ui.plan.ConfigureActions
-import com.joaoeoneves.fintrack.ui.plan.IncomeScreen
-import com.joaoeoneves.fintrack.ui.plan.PlanNavigation
-import com.joaoeoneves.fintrack.ui.plan.PlanScreen
-import com.joaoeoneves.fintrack.ui.plan.configure.ConfigureScreen
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeEditorScreen
-import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.setup.SalarySetupScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
-import com.joaoeoneves.fintrack.ui.savings.SavingsPlanEditorScreen
-import com.joaoeoneves.fintrack.ui.savings.SavingsScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
+import com.joaoeoneves.fintrack.ui.spending.SpendingTabNavigation
+import com.joaoeoneves.fintrack.ui.spending.SpendingTabScreen
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
 
 /** The app's navigation graph: one nested graph per bottom-bar tab plus the screens shared by all tabs. */
@@ -60,8 +53,8 @@ fun FinTrackNavHost(
     ) {
         homeRoutes(navController)
         activityRoutes(navController)
-        planRoutes(navController)
-        savingsRoutes(navController)
+        incomeRoutes(navController)
+        spendingRoutes(navController)
         sharedRoutes(navController)
         detailRoutes(navController)
         envelopeRoutes(navController)
@@ -85,7 +78,7 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
                         onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
-                        onOpenPlan = { period -> navController.navigateToTabWith(PlanHome(period.encode())) },
+                        onOpenPlan = { period -> navController.navigateToTabWith(IncomeHome(period.encode())) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
                     ),
@@ -100,8 +93,8 @@ private fun routeForStartStep(step: StartStep): Any =
         StartStep.SALARY -> SalarySetup
         StartStep.ENVELOPES -> EditEnvelope()
         StartStep.BILLS -> AddEditRecurring()
-        StartStep.SAVINGS_PLAN -> EditSavingsPlan()
-        StartStep.PAYDAY -> PlanIncome()
+        StartStep.SAVINGS_PLAN -> AddEditRecurring()
+        StartStep.PAYDAY -> IncomeHome()
         StartStep.FIRST_EXPENSE -> AddEditExpense()
     }
 
@@ -120,58 +113,49 @@ private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
                             navController.navigate(AddEditIncome(period = period.newTransactionArg()))
                         },
                         onOpenSettings = { navController.navigate(Settings) },
-                        onOpenEvolution = { period, type ->
-                            val token = if (type == ActivityType.INCOME) ACTIVITY_TYPE_INCOME else null
-                            navController.navigate(Evolution(period = period.encode(), type = token))
+                        onOpenSpending = { period ->
+                            navController.navigateToTabWith(SpendingHome(period.encode()))
                         },
+                        onOpenIncomeTab = { period -> navController.navigateToTabWith(IncomeHome(period.encode())) },
                     ),
             )
         }
     }
 }
 
-private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
-    navigation<PlanGraph>(startDestination = PlanHome()) {
-        composable<PlanHome> {
-            PlanScreen(
+private fun NavGraphBuilder.incomeRoutes(navController: NavHostController) {
+    navigation<IncomeGraph>(startDestination = IncomeHome()) {
+        composable<IncomeHome> {
+            IncomeTabScreen(
                 onOpenSettings = { navController.navigate(Settings) },
-                onOpenConfigure = { navController.navigate(Configure) },
+                onOpenSalaryProfile = { hasProfile ->
+                    navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
+                },
+                onOpenSource = { key, period -> navController.navigate(IncomeSourceDetail(key, period.encode())) },
+            )
+        }
+    }
+}
+
+private fun NavGraphBuilder.spendingRoutes(navController: NavHostController) {
+    navigation<SpendingGraph>(startDestination = SpendingHome()) {
+        composable<SpendingHome> {
+            SpendingTabScreen(
+                onOpenSettings = { navController.navigate(Settings) },
                 navigation =
-                    PlanNavigation(
-                        onOpenIncome = { period -> navController.navigate(PlanIncome(month = period.encode())) },
-                        onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
-                        onOpenEnvelope = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
-                        onOpenRecurring = { navController.navigate(RecurringList) },
+                    SpendingTabNavigation(
+                        onOpenCategory = { id, period -> navController.navigate(CategoryDetail(id, period.encode())) },
                         onOpenCategories = { navController.navigate(Categories()) },
-                        onOpenSavings = { navController.navigateToTab(TopLevelTab.SAVINGS) },
+                        onOpenGroup = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
+                        onOpenRecurring = { navController.navigate(RecurringList) },
                     ),
             )
         }
     }
 }
 
-private fun NavGraphBuilder.savingsRoutes(navController: NavHostController) {
-    navigation<SavingsGraph>(startDestination = SavingsHome) {
-        composable<SavingsHome> {
-            SavingsScreen(
-                onOpenSettings = { navController.navigate(Settings) },
-                onOpenPlan = { id -> navController.navigate(EditSavingsPlan(id = id)) },
-            )
-        }
-    }
-}
-
-/** The envelope list and editors, pushed on top of whichever tab is current. */
+/** The group editor, pushed on top of whichever tab is current. */
 private fun NavGraphBuilder.envelopeRoutes(navController: NavHostController) {
-    composable<PlanEnvelopes> {
-        EnvelopesScreen(
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            onOpenEditor = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
-        )
-    }
-    composable<EditSavingsPlan> {
-        SavingsPlanEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
-    }
     composable<EditEnvelope> {
         EnvelopeEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
@@ -183,37 +167,6 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
-            onOpenCategories = { navController.navigate(Categories()) },
-        )
-    }
-    composable<Configure> {
-        ConfigureScreen(
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            actions =
-                ConfigureActions(
-                    onOpenIncome = { navController.navigate(PlanIncome()) },
-                    onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
-                    onOpenRecurring = { navController.navigate(RecurringList) },
-                    onOpenCategories = { navController.navigate(Categories()) },
-                ),
-        )
-    }
-    composable<PlanIncome> {
-        IncomeScreen(
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            onOpenSalaryProfile = { hasProfile ->
-                navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
-            },
-            onOpenHistory = { period ->
-                navController.navigate(Evolution(period = period.encode(), type = ACTIVITY_TYPE_INCOME))
-            },
-        )
-    }
-    composable<Evolution> {
-        EvolutionScreen(
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            onCategoryClick = { id, period -> navController.navigate(CategoryDetail(id, period.encode())) },
-            onSourceClick = { key, period -> navController.navigate(IncomeSourceDetail(key, period.encode())) },
         )
     }
     composable<Categories> {
@@ -223,7 +176,7 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
         RecurringListScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onOpenEditor = { id -> navController.navigate(AddEditRecurring(recurringId = id)) },
-            onOpenIncome = { navController.navigate(PlanIncome()) },
+            onOpenIncome = { navController.navigateToTabWith(IncomeHome()) },
         )
     }
     salaryRoutes(navController)

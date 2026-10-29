@@ -109,18 +109,3 @@ private fun FontLicenseSheet(onDismiss: () -> Unit) {
         }
     }
 }
-
-/** Links to the plan's global set-up that also belongs with the app's settings. */
-@Composable
-fun PlanSection(
-    onOpenCategories: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SettingsGroup(label = stringResource(R.string.nav_plan), modifier = modifier) {
-        SettingsRow(
-            title = stringResource(R.string.plan_configure_categories),
-            onClick = onOpenCategories,
-            showChevron = true,
-        )
-    }
-}

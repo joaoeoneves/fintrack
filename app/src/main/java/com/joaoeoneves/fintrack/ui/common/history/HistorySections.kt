@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.evolution
+package com.joaoeoneves.fintrack.ui.common.history
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -9,9 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,10 +19,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
-import com.joaoeoneves.fintrack.ui.activity.analytics.BarSegmentData
 import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeBreakdown
-import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeChip
-import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeSpendBar
 import com.joaoeoneves.fintrack.ui.activity.analytics.EvolutionSection
 import com.joaoeoneves.fintrack.ui.activity.analytics.HistoryFigures
 import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeSourceRow
@@ -35,18 +30,16 @@ import com.joaoeoneves.fintrack.ui.activity.analytics.YearToDateRow
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeFigures
 import com.joaoeoneves.fintrack.ui.activity.analytics.spendingFigures
-import com.joaoeoneves.fintrack.ui.common.categoryColorFor
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.dashboard.CategoryBreakdownSection
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 
-/** The Despesas side: Spent with its comparison lines, fixed/variable, envelope bar, bars, breakdowns, year to date. */
+/** The Gastos side: Spent with its comparison lines, fixed/variable, bars, breakdowns, year to date. */
 @Composable
-fun ExpensesEvolution(
+fun SpendingHistory(
     analytics: ActivityAnalytics,
     history: ActivityHistory?,
     onCategoryClick: (Category) -> Unit,
@@ -66,7 +59,6 @@ fun ExpensesEvolution(
             figures.monthlyAverageCents?.let { MonthlyAverageLine(it) }
         }
         if (analytics.split.spendingCents > 0) SpendingSplitCard(analytics.split, padding)
-        if (analytics.envelopeChips.isNotEmpty()) EnvelopeHighlightBar(analytics.envelopeChips, padding)
         figures.evolution?.let { EvolutionSection(it, padding) }
         if (!analytics.breakdown.isEmpty) {
             SectionTitle(
@@ -93,9 +85,9 @@ fun ExpensesEvolution(
     }
 }
 
-/** The Rendimentos side: Received with Expected/Difference, the bars, "By source" and year to date. */
+/** The Rendimentos side (both scales): Received with Expected/Difference, the bars, "By source" and year to date. */
 @Composable
-fun IncomeEvolution(
+fun IncomeHistory(
     history: ActivityHistory?,
     onSourceClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -139,37 +131,6 @@ private fun signedAmount(cents: Long): String =
         cents < 0 -> "−" + formatAmountCents(-cents)
         else -> formatAmountCents(0L)
     }
-
-/** The envelope bar: a tap only highlights a segment (and names it below); nothing is filtered here. */
-@Composable
-private fun EnvelopeHighlightBar(
-    chips: List<EnvelopeChip>,
-    modifier: Modifier = Modifier,
-) {
-    val dark = LocalDarkTheme.current
-    val noEnvelope = stringResource(R.string.plan_group_other)
-    val spoken = chips.map { "${it.name ?: noEnvelope} ${formatAmountCents(it.spentCents, false)}" }.joinToString("; ")
-    val colors = chips.map { categoryColorFor(it.colorKey, dark) }
-    var highlightedRaw by rememberSaveable { mutableStateOf<Int?>(null) }
-    val highlighted = highlightedRaw?.takeIf { it in chips.indices }
-    Column(modifier = modifier.fillMaxWidth()) {
-        EnvelopeSpendBar(
-            segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, colors[index]) },
-            description = stringResource(R.string.cd_envelope_bar, spoken),
-            selectedIndex = highlighted,
-            onSegmentClick = { index -> highlightedRaw = if (highlighted == index) null else index },
-        )
-        highlighted?.let { index ->
-            val shown = chips[index]
-            Text(
-                text = "${shown.name ?: noEnvelope} · ${formatAmountCents(shown.spentCents)}",
-                style = MaterialTheme.typography.labelMedium,
-                color = colors[index],
-                modifier = Modifier.padding(top = Dimens.Space8),
-            )
-        }
-    }
-}
 
 @Composable
 private fun SourceRows(

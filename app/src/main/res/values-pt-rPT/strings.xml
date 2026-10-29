@@ -422,7 +422,10 @@
     <string name="cd_balance_chart">Saldo ao longo do período, de %1$s a %2$s</string>
     <string name="nav_home">Início</string>
     <string name="nav_activity">Movimentos</string>
-    <string name="nav_plan">Plano</string>
+    <string name="nav_income">Rendimentos</string>
+    <string name="nav_spending">Gastos</string>
+    <string name="tab_configure">Configurar</string>
+    <string name="spending_new_group">Novo grupo</string>
     <string name="insights_split_title">Fixo vs. variável</string>
     <string name="insights_split_fixed">Fixo</string>
     <string name="insights_split_variable">Variável</string>

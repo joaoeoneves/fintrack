@@ -1,4 +1,4 @@
-package com.joaoeoneves.fintrack.ui.evolution
+package com.joaoeoneves.fintrack.ui.spending
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
@@ -7,22 +7,25 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
+import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
 import com.joaoeoneves.fintrack.ui.activity.analytics.analyticsOf
 import com.joaoeoneves.fintrack.ui.activity.analytics.periodMonthsOf
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
-import com.joaoeoneves.fintrack.ui.navigation.ACTIVITY_TYPE_INCOME
+import com.joaoeoneves.fintrack.ui.common.period.asMonthOrYearPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -40,10 +43,8 @@ import java.time.YearMonth
 import javax.inject.Inject
 
 private const val ARG_PERIOD = "period"
-private const val ARG_TYPE = "type"
 private const val KEY_SELECTED_PERIOD = "selectedPeriod"
-private const val KEY_SELECTED_TYPE = "selectedType"
-private const val TAG = "EvolutionViewModel"
+private const val TAG = "SpendingTabViewModel"
 private const val HISTORY_MONTHS = 12
 
 // How long (in ms) the listeners outlive the last collector, so a configuration change doesn't re-subscribe.
@@ -62,18 +63,18 @@ private sealed interface PeriodData {
 }
 
 /**
- * Evolution: the figures, bars and breakdowns of one period. It owns its own period (seeded from the route) and the
- * 13-month history listener, which is therefore only active while the screen is open.
+ * The Spending tab: the figures, bars and breakdowns of one month or year, SAVING-kind categories left out. It owns
+ * its own period (seeded from the route) and the history listener, which is only active while the tab is open.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class EvolutionViewModel
+class SpendingTabViewModel
     @Inject
     constructor(
         private val observePeriodOverview: ObservePeriodOverview,
         private val observeMonthlyHistory: ObserveMonthlyHistory,
         categoryRepository: CategoryRepository,
-        private val savedStateHandle: SavedStateHandle,
+        savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
         private val selection =
@@ -84,16 +85,6 @@ class EvolutionViewModel
                 clock = clock,
             )
         private val retryTrigger = MutableStateFlow(0)
-        private val selectedType =
-            savedStateHandle.getStateFlow(
-                KEY_SELECTED_TYPE,
-                if (savedStateHandle.get<String>(ARG_TYPE) == ACTIVITY_TYPE_INCOME) {
-                    EvolutionType.INCOME
-                } else {
-                    EvolutionType.EXPENSE
-                },
-            )
-
         private val categories: Flow<List<Category>> =
             categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }
 
@@ -102,11 +93,16 @@ class EvolutionViewModel
                 .flatMapLatest { token ->
                     val now = clock.instant()
                     val period = decodePeriod(token, now, clock.zone)
-                    val canGoToNextMonth = period.canGoToNextMonth(now, clock.zone)
+                    val canGoToNextMonth =
+                        if (period is Period.Year) {
+                            period.canGoToNextYear(now, clock.zone)
+                        } else {
+                            period.canGoToNextMonth(now, clock.zone)
+                        }
                     observePeriodOverview(period, now, clock.zone, recentLimit = 0)
                         .map<PeriodOverview, PeriodData> { PeriodData.Loaded(period, canGoToNextMonth, it) }
                         .catch { e ->
-                            Log.w(TAG, "Evolution flow failed", e)
+                            Log.w(TAG, "Spending flow failed", e)
                             emit(PeriodData.Failed(UiText.StringResource(R.string.error_generic_fallback)))
                         }
                 }
@@ -132,23 +128,24 @@ class EvolutionViewModel
             }
 
         val periodActions =
-            PeriodActions(onPrevious = selection::previous, onNext = selection::next, onSelect = selection::select)
+            PeriodActions(
+                onPrevious = selection::previous,
+                onNext = selection::next,
+                onSelect = { selection.select(it.asMonthOrYearPeriod()) },
+                onSelectScale = selection::selectScale,
+            )
 
-        val uiState: StateFlow<EvolutionUiState> =
-            combine(periodData, history, categories, selectedType) { data, monthly, catalog, type ->
+        val uiState: StateFlow<SpendingTabUiState> =
+            combine(periodData, history, categories) { data, monthly, catalog ->
                 when (data) {
-                    is PeriodData.Loaded -> data.toContent(monthly, catalog, type)
-                    is PeriodData.Failed -> EvolutionUiState.Error(data.message)
+                    is PeriodData.Loaded -> data.toContent(monthly, catalog)
+                    is PeriodData.Failed -> SpendingTabUiState.Error(data.message)
                 }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
-                initialValue = EvolutionUiState.Loading,
+                initialValue = SpendingTabUiState.Loading,
             )
-
-        fun onTypeSelected(type: EvolutionType) {
-            savedStateHandle[KEY_SELECTED_TYPE] = type
-        }
 
         fun onRetry() {
             retryTrigger.value++
@@ -157,14 +154,13 @@ class EvolutionViewModel
         private fun PeriodData.Loaded.toContent(
             monthly: MonthlyHistory?,
             catalog: List<Category>,
-            type: EvolutionType,
-        ): EvolutionUiState.Content {
+        ): SpendingTabUiState.Content {
             val months = periodMonthsOf(period, clock.instant(), clock.zone)
-            return EvolutionUiState.Content(
+            return SpendingTabUiState.Content(
                 period = period,
                 canGoToNextMonth = canGoToNextMonth,
-                type = type,
-                analytics = overview.analyticsOf(selectedEnvelope = null, catalog = catalog),
+                analytics = overview.analyticsOf(selectedEnvelope = null, catalog = catalog).withoutSaving(),
+                groups = overview.periodEnvelopes.envelopes.map { SpendingGroup(it.envelope.id, it.envelope.name) },
                 history =
                     monthly
                         ?.takeIf { it.months.lastOrNull()?.month == months.last() }
@@ -172,3 +168,15 @@ class EvolutionViewModel
             )
         }
     }
+
+/** The analytics of spending only: SAVING-kind categories leave the category list; planned slices are not shown. */
+private fun ActivityAnalytics.withoutSaving(): ActivityAnalytics =
+    copy(
+        split = split.copy(savingCents = 0L),
+        breakdown =
+            breakdown.copy(
+                categoryTotals = breakdown.categoryTotals.filter { it.category.kind != CategoryKind.SAVING },
+                plannedSlices = emptyList(),
+                hasExpenses = breakdown.categoryTotals.any { it.category.kind != CategoryKind.SAVING },
+            ),
+    )

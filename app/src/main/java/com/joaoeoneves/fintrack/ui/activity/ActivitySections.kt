@@ -64,9 +64,12 @@ fun LazyListScope.activityHeaderItems(
             actions = actions.period,
             alignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
+            showScaleSwitch = true,
         )
     }
-    item(key = "summary") { ActivitySummaryLine(state.summary, state.filters.type, actions.onOpenEvolution) }
+    item(key = "summary") {
+        ActivitySummaryLine(state.summary, state.filters.type, actions.onOpenSpending, actions.onOpenIncomeTab)
+    }
     item(key = "type") {
         SegmentedTextTabs(
             options = ActivityType.entries,
@@ -185,38 +188,36 @@ private fun EnvelopeChipsRow(
 }
 
 /**
- * "Spent X · Received Y ›": only the side that matches the tab (both on All); tapping it opens the Evolution screen
- * for this period and tab. A note repeats how much of the spent amount went into savings.
+ * "Spent X · Received Y": only the side that matches the tab (both on All). Each figure is a link: "Spent" opens the
+ * Spending tab and "Received" the Income tab, both for this period. A note repeats how much of the outflow went
+ * into savings.
  */
 @Composable
 private fun ActivitySummaryLine(
     summary: ActivitySummary,
     type: ActivityType,
-    onOpenEvolution: () -> Unit,
+    onOpenSpending: () -> Unit,
+    onOpenIncome: () -> Unit,
 ) {
-    val parts =
-        listOfNotNull(
-            stringResource(R.string.activity_summary_spent, formatAmountCents(summary.spentCents))
-                .takeIf { type != ActivityType.INCOME },
-            stringResource(R.string.activity_summary_received, formatAmountCents(summary.receivedCents))
-                .takeIf { type != ActivityType.EXPENSE },
-        )
-    val openLabel = stringResource(R.string.cd_open_evolution)
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClickLabel = openLabel, role = Role.Button, onClick = onOpenEvolution)
-                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = parts.joinToString(" · "),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f, fill = false),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (type != ActivityType.INCOME) {
+                SummaryLink(
+                    text = stringResource(R.string.activity_summary_spent, formatAmountCents(summary.spentCents)),
+                    onClickLabel = stringResource(R.string.cd_open_spending),
+                    onClick = onOpenSpending,
+                )
+            }
+            if (type == ActivityType.ALL) {
+                Text(text = " · ", style = MaterialTheme.typography.titleMedium)
+            }
+            if (type != ActivityType.EXPENSE) {
+                SummaryLink(
+                    text = stringResource(R.string.activity_summary_received, formatAmountCents(summary.receivedCents)),
+                    onClickLabel = stringResource(R.string.cd_open_income),
+                    onClick = onOpenIncome,
+                )
+            }
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
@@ -232,6 +233,24 @@ private fun ActivitySummaryLine(
             )
         }
     }
+}
+
+@Composable
+private fun SummaryLink(
+    text: String,
+    onClickLabel: String,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier =
+            Modifier
+                .clickable(onClickLabel = onClickLabel, role = Role.Button, onClick = onClick)
+                .padding(vertical = Dimens.Space4),
+    )
 }
 
 @Composable

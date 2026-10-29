@@ -411,7 +411,10 @@
     <string name="cd_balance_chart">Balance over the period, from %1$s to %2$s</string>
     <string name="nav_home">Home</string>
     <string name="nav_activity">Activity</string>
-    <string name="nav_plan">Plan</string>
+    <string name="nav_income">Income</string>
+    <string name="nav_spending">Spending</string>
+    <string name="tab_configure">Configure</string>
+    <string name="spending_new_group">New group</string>
     <string name="insights_split_title">Fixed vs variable</string>
     <string name="insights_split_fixed">Fixed</string>
     <string name="insights_split_variable">Variable</string>

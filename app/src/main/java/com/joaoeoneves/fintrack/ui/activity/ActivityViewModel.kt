@@ -216,6 +216,7 @@ class ActivityViewModel
                 onPrevious = selection::previous,
                 onNext = selection::next,
                 onSelect = selection::select,
+                onSelectScale = selection::selectScale,
             )
 
         val uiState: StateFlow<ActivityUiState> =

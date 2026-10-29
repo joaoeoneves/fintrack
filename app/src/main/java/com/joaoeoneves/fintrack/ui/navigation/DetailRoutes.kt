@@ -14,7 +14,13 @@ internal fun NavGraphBuilder.detailRoutes(navController: NavHostController) {
         DetailActions(
             onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
             onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
-            onEdit = { target -> navController.navigate(target.route()) },
+            onEdit = { target ->
+                when (target) {
+                    is DetailEditTarget.IncomeLines ->
+                        navController.navigateToTabWith(IncomeHome(period = target.month))
+                    else -> navController.navigate(target.route())
+                }
+            },
         )
     composable<CategoryDetail> {
         DetailScreen(onBack = dropUnlessResumed { navController.popBackStack() }, actions = actions)
@@ -29,5 +35,5 @@ private fun DetailEditTarget.route(): Any =
     when (this) {
         is DetailEditTarget.CategoryEditor -> Categories(editId = id)
         DetailEditTarget.SalaryProfile -> EditSalaryProfile
-        is DetailEditTarget.IncomeLines -> PlanIncome(month = month)
+        is DetailEditTarget.IncomeLines -> IncomeHome(period = month)
     }

@@ -40,16 +40,24 @@ class PeriodSelection(
     }
 
     /** Moves a month selection one month back (a year selection one year); no-op for rolling/custom periods. */
-    fun previous() =
-        current().let { select(if (it is Period.Year) it.previousYear() else it.previousMonth(clock.instant(), clock.zone)) }
+    fun previous() {
+        val now = clock.instant()
+        val period = current()
+        select(if (period is Period.Year) period.previousYear() else period.previousMonth(now, clock.zone))
+    }
 
     /** Moves a selection forward by its scale, never past the current month or year (plus [monthsAhead]). */
-    fun next() =
-        current().let {
-            select(
-                if (it is Period.Year) it.nextYear(clock.instant(), clock.zone) else it.nextMonth(clock.instant(), clock.zone, monthsAhead),
-            )
-        }
+    fun next() {
+        val now = clock.instant()
+        val period = current()
+        select(
+            if (period is Period.Year) {
+                period.nextYear(now, clock.zone)
+            } else {
+                period.nextMonth(now, clock.zone, monthsAhead)
+            },
+        )
+    }
 
     /** Switches to [scale] keeping the anchor, see [switchedTo]. */
     fun selectScale(scale: PeriodScale) = select(current().switchedTo(scale, clock.instant(), clock.zone, monthsAhead))
