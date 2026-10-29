@@ -30,7 +30,8 @@ private fun PlannedIncome.rowKey(): IncomeSourceKey.Row =
 
 /**
  * The source [income] belongs to: a payday income (`pay_<lineId>_<yyyyMM>`) to its line's row; else a source
- * matching a line label (case/accent-insensitive, equal or whole-word prefix, like [isSalaryPayment]) to that line's
+ * matching a line label (case/accent-insensitive, equal or a whole-word prefix of the label, see [matchingLine]) to
+ * that line's
  * row; else [IncomeSourceKey.Named] by exact normalised source text.
  */
 fun incomeSourceOf(
@@ -39,8 +40,7 @@ fun incomeSourceOf(
 ): IncomeSourceKey {
     val paydayLine = parsePaydayIncomeId(income.id)?.let { (lineId, _) -> lines.firstOrNull { it.id == lineId } }
     val words = normalisedWords(income.source)
-    val labelLine =
-        if (words.isEmpty()) null else lines.firstOrNull { isWordPrefixMatch(words, normalisedWords(it.label)) }
+    val labelLine = matchingLine(words, lines)
     return (paydayLine ?: labelLine)?.rowKey() ?: IncomeSourceKey.Named(words.joinToString(" "))
 }
 
