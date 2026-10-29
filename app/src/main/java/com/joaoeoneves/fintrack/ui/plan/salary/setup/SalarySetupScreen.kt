@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -18,9 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.SUBSIDY_SPREADS_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
@@ -31,11 +35,12 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
-import com.joaoeoneves.fintrack.ui.plan.salary.MealSection
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryDuplicatesDialog
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryEffectiveFrom
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryField
@@ -44,6 +49,7 @@ import com.joaoeoneves.fintrack.ui.plan.salary.SalaryGroup
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryMoneyField
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryTextField
 import com.joaoeoneves.fintrack.ui.plan.salary.SubsidyMonthsSection
+import com.joaoeoneves.fintrack.ui.plan.salary.sectorLabel
 import com.joaoeoneves.fintrack.ui.plan.salary.spreadLabel
 import com.joaoeoneves.fintrack.ui.plan.salary.subsidyMonthPair
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -74,7 +80,7 @@ fun SalarySetupScreen(
             }
         }
     }
-    BackHandler(enabled = state.step != SalarySetupStep.PAY) { viewModel.onBack() }
+    BackHandler(enabled = state.step != SalarySetupStep.SECTOR) { viewModel.onBack() }
     val labels = setupLineLabels()
 
     LargeTitleScaffold(
@@ -88,6 +94,11 @@ fun SalarySetupScreen(
                 SalarySetupActions(
                     onChange = viewModel::onFormChange,
                     onNetLumpsChange = viewModel::onNetLumpsChange,
+                    onSectorSelected = viewModel::onSectorSelected,
+                    onMealAnswerChange = viewModel::onMealAnswerChange,
+                    onPayDayChange = viewModel::onPayDayChange,
+                    onIrsJovemChange = viewModel::onIrsJovemChange,
+                    onAdseChange = viewModel::onAdseChange,
                     onEffectiveFromChange = viewModel::onEffectiveFromChange,
                     onPrimary = {
                         if (state.step == SalarySetupStep.SUMMARY) viewModel.onSave(labels) else viewModel.onNext()
@@ -111,6 +122,11 @@ fun SalarySetupScreen(
 private data class SalarySetupActions(
     val onChange: (SalaryForm) -> Unit,
     val onNetLumpsChange: (Boolean) -> Unit,
+    val onSectorSelected: (EmploymentSector) -> Unit,
+    val onMealAnswerChange: (MealAnswer) -> Unit,
+    val onPayDayChange: (PayDayDraft) -> Unit,
+    val onIrsJovemChange: (Boolean) -> Unit,
+    val onAdseChange: (Boolean) -> Unit,
     val onEffectiveFromChange: (YearMonth) -> Unit,
     val onPrimary: () -> Unit,
     val onOpenAdvanced: () -> Unit,
@@ -136,31 +152,81 @@ private fun SalarySetupContent(
             color = FinTrackTheme.colors.textSecondary,
         )
         when (state.step) {
-            SalarySetupStep.PAY -> PayStep(state, actions.onChange, actions.onOpenAdvanced)
+            SalarySetupStep.SECTOR -> SectorStep(actions.onSectorSelected)
+            SalarySetupStep.PAY -> PayStep(state, actions)
             SalarySetupStep.SUBSIDIES -> SubsidiesStep(state, actions.onChange, actions.onNetLumpsChange)
-            SalarySetupStep.MEAL -> MealSection(state.form, actions.onChange)
-            SalarySetupStep.SUMMARY -> SummaryStep(state, actions.onEffectiveFromChange)
+            SalarySetupStep.MEAL -> MealStep(state, actions.onChange, actions.onMealAnswerChange)
+            SalarySetupStep.SUMMARY -> SummaryStep(state, actions)
         }
-        PrimaryPillButton(
-            text =
-                stringResource(
-                    if (state.step == SalarySetupStep.SUMMARY) R.string.action_save else R.string.salary_setup_next,
-                ),
-            onClick = actions.onPrimary,
-            enabled = state.canContinue,
-            loading = state.saving,
-            modifier = Modifier.padding(top = Dimens.Space24),
+        // The first step advances with the tap on an answer, so it has no button.
+        if (state.step != SalarySetupStep.SECTOR) {
+            PrimaryPillButton(
+                text =
+                    stringResource(
+                        if (state.step == SalarySetupStep.SUMMARY) R.string.action_save else R.string.salary_setup_next,
+                    ),
+                onClick = actions.onPrimary,
+                enabled = state.canContinue,
+                loading = state.saving,
+                modifier = Modifier.padding(top = Dimens.Space24),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PayDeductionSwitches(
+    state: SalarySetupUiState,
+    actions: SalarySetupActions,
+) {
+    val form = state.form
+    if (state.sector == EmploymentSector.PUBLIC) {
+        SettingsSwitchRow(
+            title = stringResource(R.string.salary_setup_adse),
+            supportingText = stringResource(R.string.salary_setup_adse_hint),
+            checked = form.hasAdse,
+            onCheckedChange = actions.onAdseChange,
         )
+    }
+    SettingsSwitchRow(
+        title = stringResource(R.string.salary_setup_irs_jovem),
+        checked = state.irsJovem,
+        onCheckedChange = actions.onIrsJovemChange,
+    )
+    if (state.irsJovem) {
+        SalaryTextField(
+            label = stringResource(R.string.salary_field_irs_jovem),
+            value = form.exempt,
+            onChange = { actions.onChange(form.copy(exempt = it)) },
+            invalid = SalaryField.EXEMPT in state.invalid,
+        )
+    }
+}
+
+@Composable
+private fun SectorStep(
+    onSelect: (EmploymentSector) -> Unit,
+) {
+    SettingsGroup(label = stringResource(R.string.salary_setup_sector_question)) {
+        EmploymentSector.entries.forEachIndexed { index, option ->
+            if (index > 0) Hairline()
+            SettingsRow(
+                title = stringResource(sectorLabel(option)),
+                onClick = { onSelect(option) },
+                showChevron = true,
+            )
+        }
     }
 }
 
 @Composable
 private fun ColumnScope.PayStep(
     state: SalarySetupUiState,
-    onChange: (SalaryForm) -> Unit,
-    onOpenAdvanced: () -> Unit,
+    actions: SalarySetupActions,
 ) {
     val form = state.form
+    val onChange = actions.onChange
+    val public = state.sector == EmploymentSector.PUBLIC
     SalaryGroup(stringResource(R.string.salary_setup_pay_question)) {
         SegmentedTextTabs(
             options = SalaryInputMode.entries,
@@ -183,8 +249,12 @@ private fun ColumnScope.PayStep(
                 value = form.irsBase,
                 onChange = { onChange(form.copy(irsBase = it)) },
                 invalid = SalaryField.IRS_BASE in state.invalid,
-                hint = stringResource(R.string.salary_setup_irs_hint),
+                hint =
+                    stringResource(
+                        if (public) R.string.salary_setup_irs_hint_public else R.string.salary_setup_irs_hint,
+                    ),
             )
+            PayDeductionSwitches(state, actions)
         } else {
             SalaryMoneyField(
                 label = stringResource(R.string.salary_field_net_monthly),
@@ -196,7 +266,7 @@ private fun ColumnScope.PayStep(
     }
     GhostButton(
         text = stringResource(R.string.salary_setup_advanced),
-        onClick = onOpenAdvanced,
+        onClick = actions.onOpenAdvanced,
         modifier = Modifier.align(Alignment.CenterHorizontally),
     )
 }
@@ -251,10 +321,74 @@ private fun SubsidiesStep(
 }
 
 @Composable
+private fun MealStep(
+    state: SalarySetupUiState,
+    onChange: (SalaryForm) -> Unit,
+    onAnswerChange: (MealAnswer) -> Unit,
+) {
+    val form = state.form
+    SalaryGroup(stringResource(R.string.salary_setup_meal_question)) {
+        SegmentedTextTabs(
+            options = MealAnswer.entries,
+            selected = state.mealAnswer,
+            label = {
+                stringResource(
+                    when (it) {
+                        MealAnswer.NO -> R.string.salary_setup_meal_no
+                        MealAnswer.CARD -> R.string.salary_setup_meal_card
+                        MealAnswer.WITH_SALARY -> R.string.salary_setup_meal_salary
+                    },
+                )
+            },
+            onSelect = onAnswerChange,
+        )
+        if (state.mealAnswer != MealAnswer.NO) {
+            SalaryMoneyField(
+                label = stringResource(R.string.salary_field_meal),
+                cents = form.meal,
+                onChange = { onChange(form.copy(meal = it)) },
+                hint = stringResource(R.string.salary_meal_hint),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PayDayRow(
+    draft: PayDayDraft,
+    onChange: (PayDayDraft) -> Unit,
+) {
+    SalaryGroup(stringResource(R.string.plan_payday_label)) {
+        SegmentedTextTabs(
+            options = listOf(false, true),
+            selected = draft.fixed,
+            label = { stringResource(if (it) R.string.plan_payday_fixed else R.string.plan_payday_last_working_day) },
+            onSelect = { onChange(draft.copy(fixed = it, earlierIfClosed = it && draft.earlierIfClosed)) },
+        )
+        if (draft.fixed) {
+            MinimalTextField(
+                value = draft.dayText,
+                onValueChange = { onChange(draft.copy(dayText = it)) },
+                label = stringResource(R.string.plan_payday_label),
+                isError = draft.dayText.isNotEmpty() && draft.day == null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            SettingsSwitchRow(
+                title = stringResource(R.string.plan_payday_earlier_if_closed),
+                checked = draft.earlierIfClosed,
+                onCheckedChange = { onChange(draft.copy(earlierIfClosed = it)) },
+            )
+        }
+    }
+}
+
+@Composable
 private fun SummaryStep(
     state: SalarySetupUiState,
-    onEffectiveFromChange: (YearMonth) -> Unit,
+    actions: SalarySetupActions,
 ) {
+    val onEffectiveFromChange = actions.onEffectiveFromChange
     val breakdown = state.breakdown
     SettingsGroup(label = stringResource(R.string.salary_setup_summary)) {
         if (breakdown != null) {
@@ -281,6 +415,7 @@ private fun SummaryStep(
             }
         }
     }
+    PayDayRow(state.payDay, actions.onPayDayChange)
     SalaryEffectiveFrom(state.effectiveFrom, onEffectiveFromChange)
     Text(
         text = stringResource(R.string.salary_setup_later_hint),

@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.SalaryBreakdown
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -28,7 +29,13 @@ private fun BreakdownRows(
     val rows = mutableListOf<Pair<String, Long>>()
     if (breakdown.grossCents > 0) {
         rows += stringResource(R.string.salary_breakdown_gross) to breakdown.grossCents
-        rows += stringResource(R.string.salary_breakdown_ss) to -breakdown.ssCents
+        rows += stringResource(
+            if (state.form.effectiveSector == EmploymentSector.PUBLIC) {
+                R.string.salary_breakdown_ss_public
+            } else {
+                R.string.salary_breakdown_ss
+            },
+        ) to -breakdown.ssCents
         if (breakdown.otherDeductionsCents > 0) {
             rows += stringResource(R.string.salary_breakdown_other_deductions) to -breakdown.otherDeductionsCents
         }

@@ -682,4 +682,24 @@
     <string name="investments_by_instrument">Por instrumento</string>
     <string name="investments_movements">Movimentos</string>
     <string name="investments_no_movements">Sem investimentos neste mês</string>
+    <string name="plan_payday_earlier_if_closed">Se calhar ao fim de semana ou feriado, recebo no dia útil anterior</string>
+    <string name="salary_group_sector">Onde trabalhas</string>
+    <string name="salary_sector_private">Setor privado</string>
+    <string name="salary_sector_public">Função pública</string>
+    <string name="salary_field_ss_public" formatted="false">SS/CGA (%)</string>
+    <string name="salary_ss_hint_public">11 se vazio</string>
+    <string name="salary_breakdown_ss_public">SS/CGA</string>
+    <string name="salary_field_other_deductions" formatted="false">ADSE / outros descontos (%)</string>
+    <string name="salary_meal_payment">O subsídio de refeição é pago</string>
+    <string name="salary_meal_payment_card">Em cartão refeição</string>
+    <string name="salary_meal_payment_salary">Com o salário</string>
+    <string name="salary_setup_sector_question">Onde trabalhas?</string>
+    <string name="salary_setup_irs_hint_public">Opcional. A SS/CGA usa 11%.</string>
+    <string name="salary_setup_adse">Tenho ADSE</string>
+    <string name="salary_setup_adse_hint">Desconta 3,5% do bruto.</string>
+    <string name="salary_setup_irs_jovem">Tenho IRS Jovem</string>
+    <string name="salary_setup_meal_question">Recebes subsídio de refeição?</string>
+    <string name="salary_setup_meal_no">Não</string>
+    <string name="salary_setup_meal_card">Sim, em cartão</string>
+    <string name="salary_setup_meal_salary">Sim, com o salário</string>
 </resources>

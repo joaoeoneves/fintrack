@@ -40,7 +40,6 @@ import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import com.joaoeoneves.fintrack.ui.common.period.asMonthOrYearPeriod
 import com.joaoeoneves.fintrack.ui.plan.IncomeLineEditorState
 import com.joaoeoneves.fintrack.ui.plan.IncomeReceipts
-import com.joaoeoneves.fintrack.ui.plan.receivedPaydayOf
 import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import com.joaoeoneves.fintrack.ui.plan.PlanRepositories
 import com.joaoeoneves.fintrack.ui.plan.WorkingDaysState
@@ -48,6 +47,7 @@ import com.joaoeoneves.fintrack.ui.plan.amountHistoryNote
 import com.joaoeoneves.fintrack.ui.plan.incomeLineOf
 import com.joaoeoneves.fintrack.ui.plan.key
 import com.joaoeoneves.fintrack.ui.plan.paysDifferently
+import com.joaoeoneves.fintrack.ui.plan.receivedPaydayOf
 import com.joaoeoneves.fintrack.ui.plan.validateIncomeLineLabel
 import com.joaoeoneves.fintrack.ui.plan.versionedFrom
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -243,6 +243,7 @@ class IncomeTabViewModel
                                     skipMonths = line.skipMonths,
                                     autoRecord = line.autoRecord,
                                     payDay = line.payDay,
+                                    payDayEarlierIfClosed = line.payDayEarlierIfClosed,
                                 ),
                         )
                 }

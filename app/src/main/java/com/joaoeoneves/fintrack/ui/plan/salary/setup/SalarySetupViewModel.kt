@@ -4,10 +4,12 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryBreakdown
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
+import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
@@ -15,6 +17,7 @@ import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryField
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryForm
+import com.joaoeoneves.fintrack.ui.plan.salary.effectiveSector
 import com.joaoeoneves.fintrack.ui.plan.salary.manualMonthlyLines
 import com.joaoeoneves.fintrack.ui.plan.salary.toResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,15 +39,20 @@ private const val TAG = "SalarySetupViewModel"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val KEY_STEP = "step"
 private const val KEY_LUMPS = "net_lumps"
+private const val KEY_SECTOR = "sector"
 
-/** The steps of the salary set-up wizard, in order. */
-enum class SalarySetupStep { PAY, SUBSIDIES, MEAL, SUMMARY }
+private class SetupChoices(
+    val mealAnswer: MealAnswer,
+    val payDay: PayDayDraft,
+    val irsJovem: Boolean,
+)
 
 private class SetupInputs(
     val step: SalarySetupStep,
     val form: SalaryForm,
     val lumps: Boolean,
     val busy: Boolean,
+    val choices: SetupChoices,
 )
 
 /** What the set-up wizard shows; [stepNumber] of [stepCount] is 1-based. */
@@ -61,9 +69,15 @@ data class SalarySetupUiState(
     val saving: Boolean,
     /** The plan month the new salary lines start in (default: the current month). */
     val effectiveFrom: YearMonth = month,
+    val mealAnswer: MealAnswer = MealAnswer.CARD,
+    val payDay: PayDayDraft = PayDayDraft(),
+    /** Whether the "I have IRS Jovem" switch is on (it reveals the exempt-percent field). */
+    val irsJovem: Boolean = false,
 ) {
-    val stepNumber: Int get() = step.ordinal + 1
-    val stepCount: Int get() = SalarySetupStep.entries.size
+    val steps: List<SalarySetupStep> get() = setupStepsFor(form.sector)
+    val stepNumber: Int get() = steps.indexOf(step) + 1
+    val stepCount: Int get() = steps.size
+    val sector: EmploymentSector get() = form.effectiveSector
 }
 
 /** One-off outcomes of the wizard. */
@@ -89,7 +103,11 @@ class SalarySetupViewModel
         private val clock: Clock,
     ) : ViewModel() {
         private val step = MutableStateFlow(storedStep(savedState))
-        private val form = MutableStateFlow(SalaryForm())
+        private val restoredSector = storedSector(savedState)
+        private val form = MutableStateFlow(restoredSector?.let { SalaryForm().withSectorPreset(it) } ?: SalaryForm())
+        private val mealAnswer = MutableStateFlow(restoredSector?.let(::mealAnswerPresetFor) ?: MealAnswer.CARD)
+        private val payDay = MutableStateFlow(restoredSector?.let(::payDayPresetFor) ?: PayDayDraft())
+        private val irsJovem = MutableStateFlow(false)
         private val netLumps = MutableStateFlow(savedState.get<Boolean>(KEY_LUMPS) ?: false)
         private val saving = MutableStateFlow(false)
         private val effectiveFrom = MutableStateFlow<YearMonth?>(null)
@@ -106,14 +124,21 @@ class SalarySetupViewModel
 
         val uiState: StateFlow<SalarySetupUiState> =
             combine(
-                combine(step, form, netLumps, saving, ::SetupInputs),
+                combine(
+                    step,
+                    form,
+                    netLumps,
+                    saving,
+                    combine(mealAnswer, payDay, irsJovem, ::SetupChoices),
+                    ::SetupInputs,
+                ),
                 effectiveFrom,
             ) { inputs, from ->
                 stateOf(inputs, from)
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
-                initialValue = stateOf(SetupInputs(step.value, form.value, netLumps.value, saving.value), null),
+                initialValue = stateOf(currentInputs(), null),
             )
 
         init {
@@ -130,6 +155,38 @@ class SalarySetupViewModel
             form.value = new
         }
 
+        /** Picks where the user works: applies that sector's presets and moves to the next step. */
+        fun onSectorSelected(sector: EmploymentSector) {
+            if (form.value.sector != sector) {
+                form.value = form.value.withSectorPreset(sector)
+                mealAnswer.value = mealAnswerPresetFor(sector)
+                payDay.value = payDayPresetFor(sector)
+                irsJovem.value = form.value.exempt.isNotBlank()
+                savedState[KEY_SECTOR] = sector.name
+            }
+            moveTo(SalarySetupStep.PAY)
+        }
+
+        fun onMealAnswerChange(answer: MealAnswer) {
+            mealAnswer.value = answer
+            form.value = form.value.withMealAnswer(answer)
+        }
+
+        fun onPayDayChange(draft: PayDayDraft) {
+            payDay.value = draft.copy(dayText = draft.dayText.filter(Char::isDigit).take(2))
+        }
+
+        /** The "I have IRS Jovem" switch; turning it off clears the exempt percent. */
+        fun onIrsJovemChange(on: Boolean) {
+            irsJovem.value = on
+            if (!on) form.value = form.value.copy(exempt = "")
+        }
+
+        /** The "I have ADSE" switch: sets other deductions to 3.5%, or clears them. */
+        fun onAdseChange(on: Boolean) {
+            form.value = form.value.withAdse(on)
+        }
+
         fun onNetLumpsChange(separate: Boolean) {
             netLumps.value = separate
             savedState[KEY_LUMPS] = separate
@@ -139,13 +196,14 @@ class SalarySetupViewModel
         fun onNext() {
             val current = uiState.value
             if (!current.canContinue) return
-            val next = SalarySetupStep.entries.getOrNull(current.step.ordinal + 1) ?: return
+            val next = current.steps.getOrNull(current.steps.indexOf(current.step) + 1) ?: return
             moveTo(next)
         }
 
         /** Goes back one step; returns false on the first step, where the screen should leave instead. */
         fun onBack(): Boolean {
-            val previous = SalarySetupStep.entries.getOrNull(step.value.ordinal - 1) ?: return false
+            val steps = setupStepsFor(form.value.sector)
+            val previous = steps.getOrNull(steps.indexOf(step.value) - 1) ?: return false
             moveTo(previous)
             return true
         }
@@ -153,11 +211,14 @@ class SalarySetupViewModel
         /** Stores the profile and regenerates the managed lines, naming new ones with [labels]. */
         fun onSave(labels: SalaryLineLabels) {
             val result = form.value.toResult()
-            if (saving.value || !result.hasRequiredAmount || result.invalid.isNotEmpty()) return
+            val pay = payDay.value
+            val savable = result.hasRequiredAmount && result.invalid.isEmpty() && pay.isValid
+            if (saving.value || !savable) return
             viewModelScope.launch {
                 saving.value = true
                 manageProfile
                     .save(result.profile, labels, effectiveFrom.value ?: YearMonth.now(clock))
+                    .mapCatching { applyPayDay(pay) }
                     .onSuccess { finishSave() }
                     .onFailure {
                         Log.w(TAG, "Failed to save the salary profile", it)
@@ -181,6 +242,29 @@ class SalarySetupViewModel
             duplicateCandidates.value = emptyList()
             viewModelScope.launch { events.send(SalarySetupEvent.Done) }
         }
+
+        // The new profile has no managed lines of its own yet, so the chosen pay day goes on every one of them.
+        private suspend fun applyPayDay(pay: PayDayDraft) {
+            val day = pay.day ?: return
+            plannedIncome
+                .observePlannedIncome()
+                .first()
+                .filter { it.isManaged }
+                .forEach {
+                    plannedIncome
+                        .savePlannedIncome(it.copy(payDay = day, payDayEarlierIfClosed = pay.earlierIfClosed))
+                        .getOrThrow()
+                }
+        }
+
+        private fun currentInputs() =
+            SetupInputs(
+                step.value,
+                form.value,
+                netLumps.value,
+                saving.value,
+                SetupChoices(mealAnswer.value, payDay.value, irsJovem.value),
+            )
 
         private suspend fun finishSave() {
             val others = manualMonthlyLines(plannedIncome)
@@ -212,15 +296,29 @@ class SalarySetupViewModel
                 breakdown = salaryBreakdownOf(result.profile).takeIf { valid },
                 month = month,
                 workingDays = workingDaysIn(month),
-                canContinue = valid && !busy && (current != SalarySetupStep.PAY || result.hasRequiredAmount),
+                canContinue =
+                    valid &&
+                        !busy &&
+                        (current != SalarySetupStep.PAY || result.hasRequiredAmount) &&
+                        (current != SalarySetupStep.SUMMARY || inputs.choices.payDay.isValid),
                 saving = busy,
                 effectiveFrom = effective,
+                mealAnswer = inputs.choices.mealAnswer,
+                payDay = inputs.choices.payDay,
+                irsJovem = inputs.choices.irsJovem,
             )
         }
     }
 
 private fun storedStep(savedState: SavedStateHandle): SalarySetupStep =
-    SalarySetupStep.entries.firstOrNull { it.name == savedState.get<String>(KEY_STEP) } ?: SalarySetupStep.PAY
+    SalarySetupStep.entries
+        .firstOrNull { it.name == savedState.get<String>(KEY_STEP) }
+        // Past the first step only with a sector chosen; without one the wizard starts over.
+        ?.takeIf { it == SalarySetupStep.SECTOR || storedSector(savedState) != null }
+        ?: SalarySetupStep.SECTOR
+
+private fun storedSector(savedState: SavedStateHandle): EmploymentSector? =
+    EmploymentSector.entries.firstOrNull { it.name == savedState.get<String>(KEY_SECTOR) }
 
 /** Whether [mode] is the gross one; the wizard's pay step and the subsidies step differ by it. */
 internal val SalaryForm.isGross: Boolean get() = mode == SalaryInputMode.GROSS

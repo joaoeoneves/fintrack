@@ -66,6 +66,8 @@ data class IncomeSchedule(
     val skipMonths: Set<Int> = emptySet(),
     val autoRecord: Boolean = false,
     val payDay: Int? = null,
+    /** With a fixed [payDay]: a weekend or holiday moves the pay date to the previous working day. */
+    val payDayEarlierIfClosed: Boolean = false,
 ) {
     /**
      * Keeps only the fields that belong to [frequency]; a missing month

@@ -2,6 +2,8 @@ package com.joaoeoneves.fintrack.ui.plan.salary
 
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_CHRISTMAS_SUBSIDY_MONTH
 import com.joaoeoneves.fintrack.domain.model.DEFAULT_HOLIDAY_SUBSIDY_MONTH
+import com.joaoeoneves.fintrack.domain.model.EmploymentSector
+import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.SPREAD_HALF_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryBreakdown
 import com.joaoeoneves.fintrack.domain.model.SalaryExtra
@@ -17,6 +19,7 @@ enum class SalaryField {
     IRS_BASE,
     IRS_SUBSIDIES,
     SS,
+    OTHER_DEDUCTIONS,
     EXEMPT,
     NET_MONTHLY,
     NET_HOLIDAY,
@@ -47,7 +50,15 @@ data class SalaryForm(
     /** The (up to two) months the subsidies are paid in, oldest selection first. */
     val subsidyMonths: List<Int> = listOf(DEFAULT_HOLIDAY_SUBSIDY_MONTH, DEFAULT_CHRISTMAS_SUBSIDY_MONTH),
     val extras: List<SalaryExtra> = emptyList(),
+    /** Where the user works; `null` (never set) reads as the private sector. */
+    val sector: EmploymentSector? = null,
+    val mealPayment: MealPayment = MealPayment.CARD,
+    /** ADSE, SAMS, union dues and similar, as a percent of the gross (GROSS mode). */
+    val otherDeductions: String = "",
 )
+
+/** The sector the form stands for: the chosen one, private when none was set. */
+val SalaryForm.effectiveSector: EmploymentSector get() = sector ?: EmploymentSector.PRIVATE
 
 /**
  * What the user has typed in the extra editor sheet; [editingId] is `null` for a new extra. The value is

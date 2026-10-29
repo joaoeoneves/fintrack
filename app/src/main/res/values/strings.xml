@@ -668,4 +668,24 @@
     <string name="investments_by_instrument">By instrument</string>
     <string name="investments_movements">Movements</string>
     <string name="investments_no_movements">No investments in this month</string>
+    <string name="plan_payday_earlier_if_closed">If it falls on a weekend or holiday, pay is on the previous working day</string>
+    <string name="salary_group_sector">Where you work</string>
+    <string name="salary_sector_private">Private sector</string>
+    <string name="salary_sector_public">Public service</string>
+    <string name="salary_field_ss_public" formatted="false">SS/CGA (%)</string>
+    <string name="salary_ss_hint_public">11 when empty</string>
+    <string name="salary_breakdown_ss_public">SS/CGA</string>
+    <string name="salary_field_other_deductions" formatted="false">ADSE / other deductions (%)</string>
+    <string name="salary_meal_payment">Meal allowance is paid</string>
+    <string name="salary_meal_payment_card">On a meal card</string>
+    <string name="salary_meal_payment_salary">With the salary</string>
+    <string name="salary_setup_sector_question">Where do you work?</string>
+    <string name="salary_setup_irs_hint_public">Optional. SS/CGA uses 11%.</string>
+    <string name="salary_setup_adse">I have ADSE</string>
+    <string name="salary_setup_adse_hint">Takes 3.5% of your gross pay.</string>
+    <string name="salary_setup_irs_jovem">I have IRS Jovem</string>
+    <string name="salary_setup_meal_question">Do you get a meal allowance?</string>
+    <string name="salary_setup_meal_no">No</string>
+    <string name="salary_setup_meal_card">Yes, on a card</string>
+    <string name="salary_setup_meal_salary">Yes, with salary</string>
 </resources>

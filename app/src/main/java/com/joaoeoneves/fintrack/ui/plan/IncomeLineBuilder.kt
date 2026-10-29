@@ -29,6 +29,7 @@ internal fun incomeLineOf(
             skipMonths = schedule.skipMonths,
             autoRecord = schedule.autoRecord,
             payDay = schedule.payDay,
+            payDayEarlierIfClosed = schedule.payDay != null && schedule.payDayEarlierIfClosed,
         )
     }
 
@@ -53,7 +54,8 @@ internal fun PlannedIncome.versionedFrom(
 /** Whether [other] switches automation or the pay day, which restarts the line's cursor. */
 internal fun PlannedIncome.paysDifferently(other: PlannedIncome): Boolean =
     autoRecord != other.autoRecord ||
-        payDay != other.payDay
+        payDay != other.payDay ||
+        payDayEarlierIfClosed != other.payDayEarlierIfClosed
 
 /**
  * A managed line keeps the profile's amount and schedule; the label, [autoRecord] and
@@ -67,4 +69,5 @@ private fun PlannedIncome.withUserEdits(
         label = label,
         autoRecord = schedule.autoRecord,
         payDay = schedule.payDay,
+        payDayEarlierIfClosed = schedule.payDay != null && schedule.payDayEarlierIfClosed,
     )
