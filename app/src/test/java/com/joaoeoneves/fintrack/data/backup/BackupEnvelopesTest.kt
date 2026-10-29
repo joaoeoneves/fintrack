@@ -28,7 +28,12 @@ class BackupEnvelopesTest : BackupRepositoryTestBase() {
                 .single()
                 .copy(startMonth = null),
         )
-        assertEquals("meal", result.document.plannedIncome.single().id)
+        assertEquals(
+            "meal",
+            result.document.plannedIncome
+                .single()
+                .id,
+        )
         assertEquals(0, result.skippedCount)
     }
 

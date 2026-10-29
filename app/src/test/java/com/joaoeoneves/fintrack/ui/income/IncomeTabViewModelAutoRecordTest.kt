@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.income
 
 import android.app.Application
-import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.payDateIn
@@ -121,7 +120,7 @@ class IncomeTabViewModelAutoRecordTest : IncomeTabViewModelTestBase() {
         }
 
     @Test
-    fun managedLine_persistsAutoRecordAndPayDay_withLabelAndEarmark() =
+    fun managedLine_persistsAutoRecordAndPayDay_withLabel() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(net)
             val vm = viewModel()
@@ -132,14 +131,13 @@ class IncomeTabViewModelAutoRecordTest : IncomeTabViewModelTestBase() {
             vm.onSaveIncomeLine(
                 "Pay",
                 1,
-                IncomeSchedule(earmark = Earmark.Group("g1"), autoRecord = true, payDay = 25),
+                IncomeSchedule(autoRecord = true, payDay = 25),
                 oct,
             )
             advanceUntilIdle()
 
             val saved = incomeRepo.lines.single()
             assertEquals("Pay", saved.label)
-            assertEquals(Earmark.Group("g1"), saved.earmark)
             assertTrue(saved.autoRecord)
             assertEquals(25, saved.payDay)
             assertEquals(100_000L, saved.amountCents)

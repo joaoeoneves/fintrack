@@ -3,8 +3,8 @@ package com.joaoeoneves.fintrack.data.migration
 import android.app.Application
 import com.joaoeoneves.fintrack.data.local.LocalAutomation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class MigrationAutomationTest {
-    private val automation = LocalAutomation(paydayEnabled = true, paydayThrough = "2026-09")
+    private val automation = LocalAutomation(lineThrough = mapOf("p1" to "2026-09"), salaryPaysNextMonth = true)
 
     @Test
     fun emptyAccount_copiesTheGuestSettings_andCountsOne() {
@@ -35,7 +35,7 @@ class MigrationAutomationTest {
 
     @Test
     fun invalidGuestCursor_isNotCopied() {
-        val bad = automation.copy(paydayThrough = "soon")
+        val bad = automation.copy(lineThrough = mapOf("p1" to "soon"))
 
         assertNull(planMigration(localDoc().copy(automation = bad), remoteSnapshot()).automation)
     }
@@ -55,16 +55,8 @@ class MigrationAutomationTest {
         val write = plan.toBatches().flatten().single { it.id == "automation" }
 
         assertEquals("plan", write.collection)
-        assertEquals(true, write.data["paydayEnabled"])
-        assertEquals("2026-09", write.data["paydayThrough"])
-    }
-
-    @Test
-    fun enabledWithoutCursor_omitsTheCursorField() {
-        val plan = planMigration(localDoc().copy(automation = LocalAutomation(true)), remoteSnapshot())
-
-        val write = plan.toBatches().flatten().single { it.id == "automation" }
-
-        assertTrue(!write.data.containsKey("paydayThrough"))
+        assertEquals(mapOf("p1" to "2026-09"), write.data["lineThrough"])
+        assertFalse(write.data.containsKey("paydayEnabled"))
+        assertFalse(write.data.containsKey("paydayThrough"))
     }
 }
