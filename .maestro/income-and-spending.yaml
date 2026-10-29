@@ -71,7 +71,7 @@ tags:
 - tapOn: "New group"
 - tapOn: "Name"
 - inputText: "Essentials"
-- back
+# No `back` here: with no IME up (CI ATD image) it would pop the editor instead of closing the keyboard.
 - tapOn: "Add category"
 - tapOn:
     text: "Food"
