@@ -84,8 +84,8 @@ class SalaryMathTest {
 
         assertEquals(5_208, half.irsCents)
         assertEquals(91_208, half.netMonthlyCents)
-        // Reconciled row: 108333 - 11917 - 96417 (net rounded once from the exact 96416.67).
-        assertEquals(-1, full.irsCents)
+        // Reconciled row would be 108333 - 11917 - 96417 = -1 (net rounded once from 96416.67); clamped at 0.
+        assertEquals(0, full.irsCents)
         assertEquals(96_417, full.netMonthlyCents)
         // The lump's IRS is exempt too: 50000 * (1 - 0.11).
         assertEquals(44_500, full.holidayLumpNetCents)

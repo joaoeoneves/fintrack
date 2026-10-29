@@ -46,7 +46,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -349,10 +348,6 @@ class DetailViewModelTest {
             assertEquals(DetailUiState.Error, state(detail("categoryId" to shopping).first))
         }
 
-    @Ignore(
-        "DetailViewModel.uiState applies .catch after retryTrigger.flatMapLatest, " +
-            "so a failure ends the flow and onRetry cannot recover",
-    )
     @Test
     fun aFailingFlow_emitsError_andOnRetryRecovers() =
         runTest(testDispatcher) {
