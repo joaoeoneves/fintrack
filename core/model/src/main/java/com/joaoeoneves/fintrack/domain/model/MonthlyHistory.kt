@@ -99,6 +99,24 @@ fun spendingComparisonOf(
     )
 }
 
+/**
+ * The value at [index] of [values] against the average of the up-to-[window] earlier entries that have data (non-zero);
+ * `null` when no earlier entry has data. [SpendingComparison.previousCents] is the entry right before [index].
+ */
+fun seriesComparisonOf(
+    values: List<Long>,
+    index: Int,
+    window: Int = COMPARISON_WINDOW_MONTHS,
+): SpendingComparison {
+    val earlier = (1..window).mapNotNull { back -> values.getOrNull(index - back)?.takeIf { it != 0L } }
+    return SpendingComparison(
+        currentCents = values.getOrNull(index) ?: 0L,
+        previousCents = values.getOrNull(index - 1)?.takeIf { it != 0L },
+        averageCents = earlier.takeIf { it.isNotEmpty() }?.let { list -> list.sum() / list.size },
+        averageMonths = earlier.size,
+    )
+}
+
 /** Income, spending and saving of [year] from January up to the month given to [yearToDateOf]. */
 data class YearToDate(
     val year: Int,
@@ -119,6 +137,31 @@ fun yearToDateOf(
         incomeCents = inYear.sumOf { it.incomeCents },
         savedCents = inYear.sumOf { it.savedCents },
     )
+}
+
+/**
+ * What was left over in the closed months of [upTo]'s year: per month income - spending - saved (income by the month
+ * it funds), summed. [months] counts the months summed and [averageCents] is the per-month average, `null` for none.
+ */
+data class Leftover(
+    val totalCents: Long,
+    val averageCents: Long?,
+    val months: Int,
+)
+
+/**
+ * The [Leftover] of the CLOSED months from January of [upTo]'s year through the earlier of [upTo] and the month
+ * before [today]'s month; the running month is never counted. Only months present in [totals] count.
+ */
+fun leftoverOf(
+    totals: List<MonthTotals>,
+    upTo: YearMonth,
+    today: YearMonth = YearMonth.now(),
+): Leftover {
+    val last = minOf(upTo, today.minusMonths(1))
+    val closed = totals.filter { it.month.year == upTo.year && it.month <= last }
+    val total = closed.sumOf { it.incomeCents - it.spendingCents - it.savedCents }
+    return Leftover(total, closed.takeIf { it.isNotEmpty() }?.let { total / it.size }, closed.size)
 }
 
 /** The percentage change from [base] to [current], rounded; `null` when [base] is missing or not positive. */

@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.Leftover
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.SpendingComparison
 import com.joaoeoneves.fintrack.domain.model.YearToDate
@@ -86,6 +87,7 @@ data class HistoryFigures(
     val comparison: SpendingComparison? = null,
     val monthlyAverageCents: Long? = null,
     val yearToDate: YearToDate? = null,
+    val leftover: Leftover? = null,
     val evolution: Evolution? = null,
 ) {
     val hasDetails: Boolean get() = yearToDate != null || evolution != null
@@ -102,5 +104,6 @@ fun ActivityHistory.spendingFigures(
         comparison = comparison()?.takeIf { it.previousCents != null || it.averageCents != null },
         monthlyAverageCents = monthlyAverageSpendingCents(),
         yearToDate = monthly.yearToDate.orNull(),
+        leftover = monthly.leftover.takeIf { it.months > 0 },
         evolution = evolutionOf(spendingSeries(category, scope)),
     )

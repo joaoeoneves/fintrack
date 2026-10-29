@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.settings.categories
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
@@ -32,6 +33,10 @@ import javax.inject.Inject
 
 private const val TAG = "CategoriesViewModel"
 
+// The Categories route argument and the "already opened" flag.
+private const val ARG_EDIT_ID = "editId"
+private const val KEY_EDIT_HANDLED = "editHandled"
+
 // How long (in ms) the underlying Firestore listener is kept alive after the last collector
 // disappears, so a configuration change doesn't tear it down and re-subscribe.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
@@ -45,6 +50,7 @@ class CategoriesViewModel
         private val checkCategoryUsage: CheckCategoryUsage,
         private val builtInCategoryNames: BuiltInCategoryNames,
         private val moveCategoryItems: MoveCategoryItems,
+        private val savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val editor = MutableStateFlow<CategoryEditorState?>(null)
         private val deleteDialog = MutableStateFlow<DeleteDialogState?>(null)
@@ -72,6 +78,7 @@ class CategoriesViewModel
                 deleteDialog,
                 moveDialog,
             ) { categories, editorState, dialog, move ->
+                openRequestedEditorOnce(categories)
                 CategoriesUiState.Content(
                     active = categories.active(),
                     archived = categories.filter { it.archived },
@@ -84,6 +91,17 @@ class CategoriesViewModel
                 SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                 CategoriesUiState.Loading,
             )
+
+        // The editor a detail page asked for (route arg `editId`): opened once, when the category is in the catalog.
+        private fun openRequestedEditorOnce(categories: List<Category>) {
+            val id = savedStateHandle.get<String>(ARG_EDIT_ID)
+            if (id != null && savedStateHandle.get<Boolean>(KEY_EDIT_HANDLED) != true) {
+                if (categories.any { it.id.value == id }) {
+                    savedStateHandle[KEY_EDIT_HANDLED] = true
+                    onEdit(CategoryId(id))
+                }
+            }
+        }
 
         fun onAdd() {
             editor.value = CategoryEditorState(null, false, newCategoryDefaults(catalog))

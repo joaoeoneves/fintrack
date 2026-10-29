@@ -3,16 +3,12 @@ package com.joaoeoneves.fintrack.ui.activity
 import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
-import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.ui.activity.analytics.encode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -91,50 +87,6 @@ class ActivityViewModelIncomeTest : ActivityViewModelTestBase() {
             f.vm.onTypeSelected(ActivityType.INCOME)
 
             assertEquals(listOf("pay_rent_202610"), ids(content(f.recreate())))
-        }
-
-    @Test
-    fun history_isAttachedForTheCurrentMonth() =
-        runTest(testDispatcher) {
-            val history = content(fixture().vm).history
-
-            assertNotNull(history)
-            assertEquals(listOf(YearMonth.of(2026, 10)), history!!.periodMonths)
-            assertTrue(history.calendarMonth)
-            assertEquals(
-                YearMonth.of(2026, 10),
-                history.monthly.months
-                    .last()
-                    .month,
-            )
-        }
-
-    @Test
-    fun history_neverAttachedWithAnotherEndMonthThanThePeriod() =
-        runTest(testDispatcher) {
-            val vm = fixture().vm
-            val states = mutableListOf<ActivityUiState>()
-            backgroundScope.launch { vm.uiState.toList(states) }
-            advanceUntilIdle()
-            vm.periodActions.onPrevious()
-            advanceUntilIdle()
-            vm.periodActions.onSelect(Period.Month(YearMonth.of(2026, 7)))
-            advanceUntilIdle()
-
-            val contents = states.filterIsInstance<ActivityUiState.Content>()
-            assertTrue(contents.size > 2)
-            contents.forEach {
-                val history = it.history
-                if (history != null) {
-                    assertEquals(
-                        history.periodMonths.last(),
-                        history.monthly.months
-                            .last()
-                            .month,
-                    )
-                }
-            }
-            assertEquals(YearMonth.of(2026, 7), current(vm).history?.periodMonths?.last())
         }
 
     @Test

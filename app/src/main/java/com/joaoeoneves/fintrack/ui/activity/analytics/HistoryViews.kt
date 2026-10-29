@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Leftover
 import com.joaoeoneves.fintrack.domain.model.SpendingComparison
 import com.joaoeoneves.fintrack.domain.model.YearToDate
 import com.joaoeoneves.fintrack.domain.model.percentChange
@@ -25,6 +26,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.MonthlyBars
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -106,16 +108,29 @@ fun MonthlyAverageLine(
 fun YearToDateRow(
     yearToDate: YearToDate,
     modifier: Modifier = Modifier,
+    leftover: Leftover? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionTitle(title = stringResource(R.string.activity_since_january))
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space8),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.Space24),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.Space16),
         ) {
             YearCell(stringResource(R.string.activity_ytd_spent), yearToDate.spentCents)
             YearCell(stringResource(R.string.activity_ytd_received), yearToDate.incomeCents)
             YearCell(stringResource(R.string.activity_ytd_saved), yearToDate.savedCents)
+            if (leftover != null && leftover.months > 0) {
+                val until = monthName(YearMonth.of(yearToDate.year, leftover.months), currentLocale())
+                YearCell(stringResource(R.string.activity_ytd_leftover, until), leftover.totalCents)
+            }
+        }
+        val average = leftover?.averageCents
+        if (average != null) {
+            Text(
+                text = stringResource(R.string.activity_leftover_average, formatAmountCents(average)),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
         }
     }
 }

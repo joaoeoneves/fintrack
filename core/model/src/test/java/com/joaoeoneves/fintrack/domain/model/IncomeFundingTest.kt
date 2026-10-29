@@ -45,7 +45,7 @@ class IncomeFundingTest {
     fun rule_manualLinesAndExtrasNeverShift() {
         assertFalse(manual.paysForNextMonth)
         assertFalse(manual.copy(payDay = 30).paysForNextMonth)
-        assertFalse(salary(frequency = IncomeFrequency.YEARLY).paysForNextMonth)
+        assertFalse(manual.copy(frequency = IncomeFrequency.YEARLY).paysForNextMonth)
         assertFalse(salary(frequency = IncomeFrequency.ONCE).paysForNextMonth)
     }
 

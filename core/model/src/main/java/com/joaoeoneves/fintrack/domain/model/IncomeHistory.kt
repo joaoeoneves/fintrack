@@ -21,7 +21,7 @@ sealed interface IncomeSourceKey {
     ) : IncomeSourceKey
 }
 
-private fun PlannedIncome.rowKey(): IncomeSourceKey.Row =
+fun PlannedIncome.rowKey(): IncomeSourceKey.Row =
     if (isManaged) {
         IncomeSourceKey.Row(salaryComponent, salaryExtraId, null)
     } else {

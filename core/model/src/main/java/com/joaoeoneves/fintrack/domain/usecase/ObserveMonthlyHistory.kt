@@ -5,12 +5,14 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceHistory
 import com.joaoeoneves.fintrack.domain.model.InstantRange
+import com.joaoeoneves.fintrack.domain.model.Leftover
 import com.joaoeoneves.fintrack.domain.model.MonthTotals
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.YearToDate
 import com.joaoeoneves.fintrack.domain.model.categoryMonthlyOf
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.incomeHistoryOf
+import com.joaoeoneves.fintrack.domain.model.leftoverOf
 import com.joaoeoneves.fintrack.domain.model.monthlyTotalsOf
 import com.joaoeoneves.fintrack.domain.model.salaryShiftEnabled
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
@@ -33,6 +35,7 @@ data class MonthlyHistory(
     val categoryMonthly: Map<CategoryId, List<Long>>,
     val incomeSources: List<IncomeSourceHistory>,
     val yearToDate: YearToDate,
+    val leftover: Leftover = Leftover(0L, null, 0),
 )
 
 /**
@@ -74,6 +77,7 @@ class ObserveMonthlyHistory
                     categoryMonthly = categoryMonthlyOf(window, tx.expenses, plan.categories, zone),
                     incomeSources = incomeHistoryOf(window, tx.income, plan.lines, plan.funding, zone, today),
                     yearToDate = yearToDateOf(totals, endMonth),
+                    leftover = leftoverOf(totals, endMonth, today),
                 )
             }
         }

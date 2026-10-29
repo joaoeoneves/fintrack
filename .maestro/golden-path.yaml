@@ -84,7 +84,7 @@ tags:
 - assertVisible: "Get started"
 # The balance card's outflow column is "Expenses"; investments count as saved,
 # shown in their own "Saved & invested" column, plus a "Savings rate: NN%" (or "—") line.
-- assertVisible: "Savings rate.*"
+# (The savings-rate line only appears once there is data, so it is not asserted on a fresh guest.)
 # The bottom navigation bar shows its four tabs on Home (Home, Activity, Plan, Savings).
 - assertVisible:
     id: "nav_home"
@@ -180,13 +180,29 @@ tags:
     id: "see_all_activity"
 - assertVisible:
     id: "activity_list"
-# Activity's header: period tabs, the big "Spent" total and the "Fixed vs variable" card (shown only
-# when there is spending, which the expense above guarantees). The breakdown starts collapsed.
-- assertVisible: "Spent"
-- assertVisible: "Fixed vs variable"
-- scrollUntilVisible:
-    element: "Show breakdown"
-    direction: DOWN
+# Activity (4.1): one period selector (no 1M/3M/6M/1A tabs), a one-line summary ("Spent X · Received Y")
+# and no analytics header / "Show details" toggle. The summary line opens the pushed Evolution screen.
+- assertVisible: "Spent .*"
+- assertNotVisible: "Show breakdown"
+- assertNotVisible: "Show details"
+- assertNotVisible: "Fixed vs variable"
+- tapOn: "Spent .*"
+- extendedWaitUntil:
+    visible: "Evolution"
+    timeout: 10000
+- assertVisible: "By category"
+# A category row opens its detail page (the only expense is the one created above).
+- scroll
+- takeScreenshot: build/maestro/golden-path-evolution
+- tapOn: "Shopping.*"
+- extendedWaitUntil:
+    visible: ".*Maestro E2E Test Expense.*"
+    timeout: 10000
+- back
+- assertVisible: "Evolution"
+- back
+- assertVisible:
+    id: "activity_list"
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
@@ -213,9 +229,9 @@ tags:
     direction: DOWN
 - assertVisible: "[-−]€56\\.78"
 
-# --- 5: Exercise Activity's period selector (period tabs plus the full period menu). Open the menu via
-# the label's dropdown icon (content description "Change period"), pick a rolling window, check the
-# label reflects it; then restore "This month".
+# --- 5: Exercise Activity's single period selector. Open the menu via the label's dropdown icon
+# (content description "Change period"), pick a rolling window, check the label reflects it; then
+# restore "This month".
 - scrollUntilVisible:
     element: "Change period"
     direction: UP

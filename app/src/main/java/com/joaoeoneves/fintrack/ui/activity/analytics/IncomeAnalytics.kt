@@ -1,6 +1,10 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.incomeSourceOf
+import com.joaoeoneves.fintrack.domain.model.rowKey
 
 /** Income per month (aligned to [MonthlyHistory.months]): everything funding the month, or one [source]'s. */
 fun ActivityHistory.incomeSeries(source: String?): List<Long> {
@@ -57,3 +61,29 @@ fun ActivityHistory.incomeAnalytics(): IncomeAnalytics {
 /** The Income header's figures; the Evolution chart follows the selected [source]. */
 fun ActivityHistory.incomeFigures(source: String?): HistoryFigures =
     HistoryFigures(yearToDate = monthly.yearToDate.orNull(), evolution = evolutionOf(incomeSeries(source)))
+
+/** One "Source" filter chip of the Income tab: the encoded [key] of a source and its display [label]. */
+data class IncomeSourceChip(
+    val key: String,
+    val label: String?,
+)
+
+/**
+ * The distinct sources of [incomes] (by [incomeSourceOf]), biggest first. A line's label wins for a row source and the
+ * latest spelling for a free-text one; a `null` label means the source has no name (shown as "Other").
+ */
+fun periodIncomeSourcesOf(
+    incomes: List<Income>,
+    lines: List<PlannedIncome>,
+): List<IncomeSourceChip> =
+    incomes
+        .groupBy { incomeSourceOf(it, lines) }
+        .map { (key, mine) ->
+            val label =
+                when (key) {
+                    is IncomeSourceKey.Row -> lines.firstOrNull { it.rowKey() == key }?.label
+                    is IncomeSourceKey.Named -> mine.maxByOrNull { it.date }?.source?.trim()
+                }
+            Triple(key, label?.takeIf { it.isNotBlank() }, mine.sumOf { it.amountCents })
+        }.sortedByDescending { it.third }
+        .map { (key, label, _) -> IncomeSourceChip(key.encode(), label) }
