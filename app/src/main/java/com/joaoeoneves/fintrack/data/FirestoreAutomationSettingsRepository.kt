@@ -1,11 +1,13 @@
 package com.joaoeoneves.fintrack.data
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
@@ -13,10 +15,13 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "FirestoreAutomationRepo"
+private const val SERVER_READ_TIMEOUT_MS = 10_000L
 
 /** The automation settings, the single document `users/{uid}/plan/automation`. Writes are not awaited. */
 class FirestoreAutomationSettingsRepository
@@ -47,7 +52,7 @@ class FirestoreAutomationSettingsRepository
             val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
             return runCatchingCancellable {
                 val removed = remove.associateWith<String, Any> { FieldValue.delete() }
-                val cursors = removed + set.mapValues { it.value.toString() }
+                val cursors = removed + forwardOnly(uid, set).mapValues { it.value.toString() }
                 val data =
                     buildMap<String, Any> {
                         if (cursors.isNotEmpty()) put("lineThrough", cursors)
@@ -81,12 +86,16 @@ class FirestoreAutomationSettingsRepository
             return runCatchingCancellable {
                 val batch = firestore.batch()
                 val user = firestore.collection("users").document(uid)
-                incomes.forEach {
+                // Create-only and forward-only, decided on the server's data: when it cannot be read (offline) the
+                // pass is skipped rather than guessing from the cache and overwriting another device's receipt.
+                val absent = absentOnServer(user.collection("income"), incomes)
+                absent.forEach {
                     batch.set(user.collection("income").document(it.id), it.toFirestoreMap(includeCreatedAt = true))
                 }
+                val forward = forwardOnly(uid, cursors)
                 val data =
                     buildMap<String, Any> {
-                        if (cursors.isNotEmpty()) put("lineThrough", cursors.mapValues { it.value.toString() })
+                        if (forward.isNotEmpty()) put("lineThrough", forward.mapValues { it.value.toString() })
                         put("updatedAt", FieldValue.serverTimestamp())
                     }
                 batch.set(automationSettingsDoc(firestore, uid), data, SetOptions.merge())
@@ -95,6 +104,32 @@ class FirestoreAutomationSettingsRepository
                 Unit
             }
         }
+
+        // [wanted] with each cursor raised to the server's when that is later: cursors only ever move forward, even
+        // when the local cache is behind. Reads the server only when there is something to move; throws when it
+        // cannot be read.
+        private suspend fun forwardOnly(
+            uid: String,
+            wanted: Map<String, YearMonth>,
+        ): Map<String, YearMonth> {
+            if (wanted.isEmpty()) return wanted
+            val stored =
+                serverRead(automationSettingsDoc(firestore, uid))
+                    .toAutomationSettings()
+                    .lineRecordedThrough
+            return wanted.mapValues { (id, month) -> maxOf(month, stored[id] ?: month) }
+        }
+
+        // The [incomes] whose document does not exist on the server; throws when it cannot be read.
+        private suspend fun absentOnServer(
+            collection: CollectionReference,
+            incomes: List<Income>,
+        ): List<Income> = incomes.filter { !serverRead(collection.document(it.id)).exists() }
+
+        // A timeout is a plain failure here (a TimeoutCancellationException would read as a cancellation).
+        private suspend fun serverRead(doc: DocumentReference): DocumentSnapshot =
+            withTimeoutOrNull(SERVER_READ_TIMEOUT_MS) { doc.get(Source.SERVER).await() }
+                ?: error("Server unreachable")
 
         private fun notSignedIn(): Result<Unit> = Result.failure(IllegalStateException("Not signed in"))
     }
