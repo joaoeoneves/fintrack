@@ -84,7 +84,7 @@ class RecordValidationTest {
     @Test
     fun budget_rules() {
         validateBudget("FOOD", 1, known)
-        invalid { validateBudget("FOOD", 0, known) }
+        validateBudget("FOOD", 0, known)
         invalid { validateBudget("FOOD", -1, known) }
         invalid { validateBudget("NOPE", 1, known) }
     }

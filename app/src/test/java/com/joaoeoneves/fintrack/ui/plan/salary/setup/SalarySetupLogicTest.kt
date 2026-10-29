@@ -17,11 +17,11 @@ import org.junit.Test
 
 class SalarySetupLogicTest {
     @Test
-    fun privatePreset_isTodaysDefaults() {
+    fun privatePreset_noTwelfths_juneDecember_mealOnCard() {
         val form = SalaryForm(base = 100_000L, ss = "12").withSectorPreset(EmploymentSector.PRIVATE)
 
         assertEquals(EmploymentSector.PRIVATE, form.sector)
-        assertEquals(SPREAD_HALF_PPM, form.spreadPpm)
+        assertEquals(SPREAD_NONE_PPM, form.spreadPpm)
         assertEquals(listOf(6, 12), form.subsidyMonths)
         assertEquals(MealPayment.CARD, form.mealPayment)
         assertEquals("", form.otherDeductions)
@@ -86,7 +86,7 @@ class SalarySetupLogicTest {
 
     @Test
     fun presetsPerSector() {
-        assertEquals(PayDayDraft(fixed = true), payDayPresetFor(EmploymentSector.PUBLIC))
+        assertEquals(PayDayDraft(fixed = true, earlierIfClosed = true), payDayPresetFor(EmploymentSector.PUBLIC))
         assertEquals(PayDayDraft(), payDayPresetFor(EmploymentSector.PRIVATE))
         assertEquals(MealAnswer.WITH_SALARY, mealAnswerPresetFor(EmploymentSector.PUBLIC))
         assertEquals(MealAnswer.CARD, mealAnswerPresetFor(EmploymentSector.PRIVATE))

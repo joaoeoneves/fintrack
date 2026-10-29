@@ -41,7 +41,7 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
             newStore().update { it.copy(recurring = listOf(item)) to Unit }
 
             val onDisk = diskDoc()
-            assertEquals(20, onDisk.schemaVersion)
+            assertEquals(21, onDisk.schemaVersion)
             assertEquals(listOf(item), onDisk.recurring)
             assertEquals(1, onDisk.plannedIncome.size)
         }

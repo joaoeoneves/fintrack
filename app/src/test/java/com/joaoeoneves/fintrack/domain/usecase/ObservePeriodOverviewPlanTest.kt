@@ -132,7 +132,7 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
 
             assertEquals(41_000L, result.plan.actualIncomeCents)
             assertEquals(2, income.listeners.observedRanges.size)
-            assertEquals(october.toInstantRange(zone), income.listeners.observedRanges[1])
+            assertEquals(incomeWindow(october.toInstantRange(zone)), income.listeners.observedRanges[1])
             assertEquals(1_000L, result.summary.incomeCents)
         }
 

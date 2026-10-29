@@ -43,6 +43,24 @@ abstract class ObservePeriodOverviewTestBase {
 
     protected fun monthBefore(month: YearMonth): InstantRange = monthBefore(month.toInstantRange(zone))
 
+    /**
+     * What the combined repository asks the income listener for: [range] a month wider on each side (in the system
+     * zone, as production does), so a payday income dated outside its owner month still arrives.
+     */
+    protected fun incomeWindow(range: InstantRange): InstantRange {
+        val systemZone = ZoneId.systemDefault()
+        return InstantRange(
+            range.startInclusive
+                .atZone(systemZone)
+                .minusMonths(1)
+                .toInstant(),
+            range.endExclusive
+                .atZone(systemZone)
+                .plusMonths(1)
+                .toInstant(),
+        )
+    }
+
     protected val expenses = CountingExpenseRepository()
     protected val income = CountingIncomeRepository()
     protected val budgets = CountingBudgetRepository()
