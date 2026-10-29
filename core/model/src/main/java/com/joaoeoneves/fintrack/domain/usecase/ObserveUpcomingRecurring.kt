@@ -38,7 +38,7 @@ class ObserveUpcomingRecurring
                 // A savings plan's contribution is not a bill: the annual figure matches the Recurring screen.
                 val bills = billsOf(items, goals)
                 RecurringOverview(
-                    upcoming = upcomingOf(items, today, UPCOMING_WINDOW_DAYS),
+                    upcoming = upcomingOf(bills, today, UPCOMING_WINDOW_DAYS),
                     annualExpenseCents = annualizedCents(bills, RecurringType.EXPENSE, today),
                     hasItems = items.isNotEmpty(),
                 )

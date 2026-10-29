@@ -32,6 +32,7 @@ import com.joaoeoneves.fintrack.domain.model.payingLines
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.PendingOccurrenceRow
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.rememberFinTrackHaptics
@@ -180,6 +181,7 @@ private fun IncomeGroupHeader(text: String) {
     )
 }
 
+@Suppress("LongMethod") // one row layout with its receive/undo wiring
 @Composable
 private fun IncomeRowItem(
     row: IncomeRow,
@@ -198,8 +200,24 @@ private fun IncomeRowItem(
     // Dated on the row's own pay day (last month's for a salary that pays the next month), never after today.
     val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.funding), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
-    val changeLabel = stringResource(R.string.action_change)
+    val undoLabel = stringResource(R.string.action_undo)
     val showCheck = paysThisMonth && (received || receipts.canReceive)
+    if (showCheck && !received) {
+        PendingIncomeRow(
+            row = row,
+            title = title,
+            model = model,
+            modifier = rowTapModifier(tappable, row, actions),
+            onReceive = {
+                haptics.success()
+                actions.onReceive(row, receiveDate, null)
+                feedback?.announce(snackbarText, undoLabel) { actions.onUndoReceive(row) }
+            },
+            onChangeAmount = { feedback?.open(receiveChange(row, title, model, actions, receiveDate)) },
+        )
+        Hairline()
+        return
+    }
     val valueColor =
         when {
             !paysThisMonth -> FinTrackTheme.colors.textSecondary
@@ -230,11 +248,7 @@ private fun IncomeRowItem(
                             } else {
                                 haptics.success()
                                 actions.onReceive(row, receiveDate, null)
-                                feedback?.announce(
-                                    message = snackbarText,
-                                    actionLabel = changeLabel,
-                                    change = receiveChange(row, title, model, actions, receiveDate),
-                                )
+                                feedback?.announce(snackbarText, undoLabel) { actions.onUndoReceive(row) }
                             }
                         },
                     )
@@ -244,6 +258,34 @@ private fun IncomeRowItem(
             },
     )
     Hairline()
+}
+
+/** An income row still to be received: the shared pending row, tapping it opens its editor. */
+@Suppress("LongParameterList") // the row, its model and the two actions are independent
+@Composable
+private fun PendingIncomeRow(
+    row: IncomeRow,
+    title: String,
+    model: ExpectedIncomeModel,
+    modifier: Modifier,
+    onReceive: () -> Unit,
+    onChangeAmount: () -> Unit,
+) {
+    val payDate = row.payDateIn(model.workingDays.month, model.funding)
+    val status =
+        listOfNotNull(
+            autoRecordText(row) ?: stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
+            stringResource(R.string.plan_looks_like_salary).takeIf { row.key in model.duplicateKeys },
+        ).joinToString(" · ")
+    PendingOccurrenceRow(
+        title = title,
+        amountText = formatAmountCents(row.cents),
+        statusText = status,
+        labels = rememberPendingLabels(income = true),
+        modifier = modifier,
+        onConfirm = onReceive,
+        onChangeAmount = onChangeAmount,
+    )
 }
 
 private fun rowTapModifier(

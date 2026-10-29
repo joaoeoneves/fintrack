@@ -35,18 +35,21 @@ class ReceiveFeedback(
     var change by mutableStateOf<ReceiveChange?>(null)
         private set
 
-    /** Shows [message] with [actionLabel]; tapping the action opens [change]'s sheet. */
+    /** Shows [message] with [undoLabel]; tapping the action runs [onUndo]. */
     fun announce(
         message: String,
-        actionLabel: String,
-        change: ReceiveChange,
+        undoLabel: String,
+        onUndo: () -> Unit,
     ) {
         scope.launch {
             host.currentSnackbarData?.dismiss()
-            if (host.showActionSnackbar(message, actionLabel) == SnackbarResult.ActionPerformed) {
-                this@ReceiveFeedback.change = change
-            }
+            if (host.showActionSnackbar(message, undoLabel) == SnackbarResult.ActionPerformed) onUndo()
         }
+    }
+
+    /** Opens the receive sheet for [change] (the row's "Alterar valor"). */
+    fun open(change: ReceiveChange) {
+        this.change = change
     }
 
     fun dismissChange() {
@@ -63,7 +66,7 @@ fun rememberReceiveFeedback(host: SnackbarHostState): ReceiveFeedback {
     return remember(host, scope) { ReceiveFeedback(host, scope) }
 }
 
-/** The sheet opened by the snackbar's "Change" action, when there is one. */
+/** The receive sheet opened by a row's "Alterar valor", when there is one. */
 @Composable
 fun ReceiveFeedback.ChangeSheet() {
     change?.let { current ->

@@ -738,4 +738,9 @@
     <string name="plan_summary_carry">Carried over from %1$s</string>
     <string name="plan_summary_extras_note">%1$s of extra income does not count until it is received</string>
     <string name="activity_total_out_includes_saving">includes %1$s saved</string>
+    <string name="pending_more_options">More options</string>
+    <string name="pending_change_amount">Change amount</string>
+    <string name="pending_automatic">Automatic · %1$s</string>
+    <string name="recurring_skipped">Skipped “%1$s”</string>
+    <string name="recurring_amount_title">Amount for “%1$s”</string>
 </resources>
