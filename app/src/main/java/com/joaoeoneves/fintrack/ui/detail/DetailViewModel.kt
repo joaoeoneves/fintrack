@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
+import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.SalarySpendComparison
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
@@ -96,7 +97,7 @@ class DetailViewModel
             decodePeriod(savedStateHandle[ARG_PERIOD] ?: Period.CurrentMonth.encode(), clock.instant(), clock.zone)
                 .asMonthOrYearPeriod()
         private val routeEnd: YearMonth = routeEndOf(routePeriod, clock.instant(), clock.zone)
-        private val isSalarySource: Boolean = (sourceKey as? IncomeSourceKey.Row)?.component != null
+        private val isSalarySource: Boolean = (sourceKey as? IncomeSourceKey.Row)?.component == SalaryComponent.SALARY
         private val selection =
             PeriodSelection(savedStateHandle, KEY_SELECTED_PERIOD, routePeriod.encode(), clock)
 
