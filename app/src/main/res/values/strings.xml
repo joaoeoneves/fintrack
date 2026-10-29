@@ -651,6 +651,8 @@
     <string name="detail_context_limit">Limit %1$s</string>
     <string name="detail_context_expected">Expected %1$s</string>
     <string name="detail_source_unknown">Income</string>
+    <string name="detail_salary_vs_spent">Received at the end of %1$s: %2$s · Spent in %3$s: %4$s</string>
+    <string name="detail_salary_vs_spent_partial">Received at the end of %1$s: %2$s · Spent so far in %3$s: %4$s</string>
     <string name="home_income_title">Income</string>
     <string name="home_income_of_expected">of %1$s expected</string>
     <string name="home_spending_title">Spending</string>

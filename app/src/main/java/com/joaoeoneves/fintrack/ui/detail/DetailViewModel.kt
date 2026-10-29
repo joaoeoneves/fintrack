@@ -10,14 +10,17 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
+import com.joaoeoneves.fintrack.domain.model.SalarySpendComparison
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
+import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.incomeSourceOf
 import com.joaoeoneves.fintrack.domain.model.percentChange
 import com.joaoeoneves.fintrack.domain.model.resolve
+import com.joaoeoneves.fintrack.domain.model.salarySpendComparisonOf
 import com.joaoeoneves.fintrack.domain.model.seriesComparisonOf
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
@@ -38,6 +41,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
+import java.time.Instant
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -55,6 +59,7 @@ const val DETAIL_MONTHS = 12
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 /** What one emission of the page is built from. */
+@Suppress("LongParameterList") // one input per combined flow
 private class DetailSources(
     val period: Period,
     val months: List<YearMonth>,
@@ -62,6 +67,8 @@ private class DetailSources(
     val overview: PeriodOverview,
     val categories: List<Category>,
     val canGoNext: Boolean,
+    /** The SPENDING total of the month after the selected one, when a salary source needs it. */
+    val nextMonthSpendingCents: Long = 0L,
 )
 
 /**
@@ -89,6 +96,7 @@ class DetailViewModel
             decodePeriod(savedStateHandle[ARG_PERIOD] ?: Period.CurrentMonth.encode(), clock.instant(), clock.zone)
                 .asMonthOrYearPeriod()
         private val routeEnd: YearMonth = routeEndOf(routePeriod, clock.instant(), clock.zone)
+        private val isSalarySource: Boolean = (sourceKey as? IncomeSourceKey.Row)?.component != null
         private val selection =
             PeriodSelection(savedStateHandle, KEY_SELECTED_PERIOD, routePeriod.encode(), clock)
 
@@ -133,8 +141,27 @@ class DetailViewModel
                 observeMonthlyHistory(months.last(), months.size, clock.zone),
                 observePeriodOverview(period, now, clock.zone, recentLimit = 0),
                 categoryRepository.observeCategories(),
-            ) { history, overview, categories ->
-                DetailSources(period, months, history, overview, categories, canGoNext)
+                nextMonthSpendingOf(period, now),
+            ) { history, overview, categories, nextSpending ->
+                DetailSources(period, months, history, overview, categories, canGoNext, nextSpending)
+            }
+        }
+
+        /**
+         * The SPENDING total (the Spending tab's figure) of the month after the selected one, for a salary source
+         * on the month scale once that month has started; 0 (unused) otherwise.
+         */
+        private fun nextMonthSpendingOf(
+            period: Period,
+            now: Instant,
+        ): Flow<Long> {
+            val month = period.anchorMonth(now, clock.zone)
+            val next = month?.plusMonths(1)
+            return if (!isSalarySource || next == null || next > currentYearMonth(now, clock.zone)) {
+                flowOf(0L)
+            } else {
+                observePeriodOverview(Period.ofMonth(next, now, clock.zone), now, clock.zone, recentLimit = 0)
+                    .map { it.summary.spendingCents }
             }
         }
 
@@ -237,7 +264,25 @@ class DetailViewModel
                 delta = deltaOf(sources, values),
                 movements = movements,
                 editTarget = editTargetOf(key, sources.period),
+                salaryComparison = salaryComparisonOf(sources, values),
             )
+        }
+
+        private fun salaryComparisonOf(
+            sources: DetailSources,
+            values: List<Long>,
+        ): SalarySpendComparison? {
+            val index = selectedIndexOf(sources)
+            return if (!isSalarySource || index < 0) {
+                null
+            } else {
+                salarySpendComparisonOf(
+                    month = sources.months[index],
+                    receivedCents = values[index],
+                    nextMonthSpendingCents = sources.nextMonthSpendingCents,
+                    today = currentYearMonth(clock.instant(), clock.zone),
+                )
+            }
         }
 
         private fun editTargetOf(

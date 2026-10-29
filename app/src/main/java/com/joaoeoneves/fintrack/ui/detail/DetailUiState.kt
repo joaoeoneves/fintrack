@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.detail
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
+import com.joaoeoneves.fintrack.domain.model.SalarySpendComparison
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import java.time.YearMonth
 
@@ -65,6 +66,7 @@ sealed interface DetailUiState {
         val delta: DetailDeltaFigure?,
         val movements: List<Transaction>,
         val editTarget: DetailEditTarget?,
+        val salaryComparison: SalarySpendComparison? = null,
     ) : DetailUiState {
         val isIncome: Boolean get() = subject is DetailSubject.OfSource
         val hasData: Boolean get() = months.any { it.valueCents != 0L } || movements.isNotEmpty()
