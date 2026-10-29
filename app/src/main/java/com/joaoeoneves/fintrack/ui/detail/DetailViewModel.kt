@@ -124,8 +124,11 @@ class DetailViewModel
             } else {
                 retryTrigger
                     .flatMapLatest { selection.token }
-                    .flatMapLatest { token -> sourcesOf(token).map(::contentOf) }
-                    .catch { emit(DetailUiState.Error) }
+                    .flatMapLatest { token ->
+                        sourcesOf(token)
+                            .map(::contentOf)
+                            .catch { emit(DetailUiState.Error) }
+                    }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), DetailUiState.Loading)
 
         /** Selects [month] on the month scale (one of the chart's months; anything else is ignored). */
