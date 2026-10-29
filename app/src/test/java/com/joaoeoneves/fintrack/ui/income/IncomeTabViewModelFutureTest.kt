@@ -51,7 +51,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             assertEquals(YearMonth.of(2027, 3), content.workingDays.month)
             assertNull(content.history)
             assertEquals(100_000L, content.incomeRows.single().cents)
-            assertFalse(content.receipts.canReceive)
+            assertTrue(content.receipts.canReceive.isEmpty())
             assertTrue(content.receipts.receivedOn.isEmpty())
             assertNull(content.receipts.receivedPayday)
         }
@@ -143,22 +143,15 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             collect(vm)
 
             val outlook = vm.content().outlook!!
-            println(
-                "DEBUG " +
-                    vm
-                        .content()
-                        .history
-                        ?.monthly
-                        ?.months
-                        ?.map { it.month to it.incomeCents } + " " + actualIncomeRepo.getAllIncome(),
-            )
-            assertEquals(10, outlook.months.count { it.received })
+            // October is the current month: partial, not yet received.
+            assertEquals(9, outlook.months.count { it.received })
+            assertTrue(outlook.months[9].partial)
             assertEquals(95_000L, outlook.months[1].cents)
             assertEquals(0L, outlook.months[0].cents)
             assertFalse(outlook.months[10].received)
             assertEquals(100_000L, outlook.months[10].cents)
             assertEquals(95_000L, outlook.receivedCents)
-            assertEquals(200_000L, outlook.expectedCents)
+            assertEquals(300_000L, outlook.expectedCents)
         }
 
     @Test
@@ -174,7 +167,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
     fun mealCard_month_receivedSpentAndNegativeBalance() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(meal())
-            actualIncomeRepo.addIncome(testIncome("pay_meal_202610", 20_000L, Instant.parse("2026-10-05T10:00:00Z")))
+            actualIncomeRepo.addIncome(testIncome("pay_meal_202609", 20_000L, Instant.parse("2026-09-30T10:00:00Z")))
             val card = testExpense("e1", 25_000L, Instant.parse("2026-10-06T10:00:00Z"))
             val bank = testExpense("e2", 9_000L, Instant.parse("2026-10-07T10:00:00Z"))
             expenseRepo.addExpense(card.copy(paidWithMealCard = true))
@@ -183,7 +176,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             collect(vm)
 
             val balance = vm.content().mealCard!!
-            assertEquals(20_000L, balance.receivedCents)
+            assertEquals(20_000L, balance.plafondCents)
             assertEquals(25_000L, balance.spentCents)
             assertEquals(-5_000L, balance.balanceCents)
         }
@@ -210,7 +203,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             seedMealYear()
             val balance = yearWithMeal(true).content().mealCard!!
 
-            assertEquals(30_000L, balance.receivedCents)
+            assertEquals(30_000L, balance.plafondCents)
             assertEquals(7_000L, balance.spentCents)
         }
 

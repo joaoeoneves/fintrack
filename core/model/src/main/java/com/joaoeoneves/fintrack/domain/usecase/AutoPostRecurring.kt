@@ -47,20 +47,32 @@ class AutoPostRecurring
         suspend operator fun invoke(
             today: LocalDate,
             zone: ZoneId,
-        ): Int {
+        ): Int = run(today, zone).count
+
+        /** Like [invoke], but also says whether any item hit a failed read or write (retry later). */
+        suspend fun run(
+            today: LocalDate,
+            zone: ZoneId,
+        ): AutomationOutcome {
             val items = recurringRepository.observeRecurring().first()
             var catalog: List<Category>? = null
-            return items.filter { it.type == RecurringType.EXPENSE }.sumOf { item ->
-                val candidates = item.selfHealCandidates(today)
-                val healed =
-                    if (candidates.isEmpty()) {
-                        0
-                    } else {
-                        val categories = catalog ?: categoryRepository.observeCategories().first().also { catalog = it }
-                        heal(item, candidates, zone, categories)
-                    }
-                healed + post(item, today, zone)
-            }
+            var failed = false
+            val count =
+                items.filter { it.type == RecurringType.EXPENSE }.sumOf { item ->
+                    val candidates = item.selfHealCandidates(today)
+                    val healed =
+                        if (candidates.isEmpty()) {
+                            AutomationOutcome(0)
+                        } else {
+                            val categories =
+                                catalog ?: categoryRepository.observeCategories().first().also { catalog = it }
+                            heal(item, candidates, zone, categories)
+                        }
+                    val posted = post(item, today, zone)
+                    failed = failed || healed.failed || posted.failed
+                    healed.count + posted.count
+                }
+            return AutomationOutcome(count, failed)
         }
 
         private suspend fun heal(
@@ -68,26 +80,30 @@ class AutoPostRecurring
             candidates: List<LocalDate>,
             zone: ZoneId,
             catalog: List<Category>,
-        ): Int {
+        ): AutomationOutcome {
             val prefix = occurrenceIdPrefix(item.id)
             val existing =
                 expenseRepository
                     .expenseIdsBetween(
                         prefix + idDate(periodStart(item, candidates.first())),
                         prefix + idDate(periodEnd(item, candidates.last())),
-                    ).getOrNull() ?: return 0
-            return item.missingOccurrences(candidates, existing).count { date ->
-                val expense = item.transactionFor(date, zone, catalog) as Expense
-                expenseRepository.addExpense(expense).isSuccess
-            }
+                    ).getOrNull() ?: return AutomationOutcome(0, failed = true)
+            var failed = false
+            val created =
+                item.missingOccurrences(candidates, existing).count { date ->
+                    val expense = item.transactionFor(date, zone, catalog) as Expense
+                    expenseRepository.addExpense(expense).isSuccess.also { if (!it) failed = true }
+                }
+            return AutomationOutcome(created, failed)
         }
 
         private suspend fun post(
             item: RecurringItem,
             today: LocalDate,
             zone: ZoneId,
-        ): Int {
+        ): AutomationOutcome {
             var posted = 0
+            var failed = false
             for (occurrence in item.autoPostDueOccurrences(today)) {
                 val id = occurrenceTransactionId(item.id, occurrence)
                 val exists = expenseRepository.getExpense(id).getOrNull() != null
@@ -97,9 +113,12 @@ class AutoPostRecurring
                     } else {
                         handleOccurrence.confirm(item.id, occurrence, today, zone).onSuccess { posted++ }
                     }
-                if (result.isFailure) break
+                if (result.isFailure) {
+                    failed = true
+                    break
+                }
             }
-            return posted
+            return AutomationOutcome(posted, failed)
         }
 
         private fun idDate(date: LocalDate): String = DateTimeFormatter.BASIC_ISO_DATE.format(date)

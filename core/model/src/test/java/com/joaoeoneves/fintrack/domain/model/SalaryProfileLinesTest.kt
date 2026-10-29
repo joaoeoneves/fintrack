@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.YearMonth
 
 class SalaryProfileLinesTest {
     private val full =
@@ -258,7 +259,7 @@ class SalaryProfileLinesTest {
         val legacyKeys = listOf("profile_profit_share", "profile_bonus", "profile_flex_q2")
         val legacy =
             legacyKeys.map {
-                PlannedIncome(it, "old", 1, 0, managedKey = it)
+                PlannedIncome(it, "old", 1, 0, managedKey = it, startMonth = YearMonth.now())
             }
 
         assertEquals(

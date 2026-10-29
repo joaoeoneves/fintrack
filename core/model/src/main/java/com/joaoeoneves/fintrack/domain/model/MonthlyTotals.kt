@@ -26,7 +26,7 @@ fun monthlyTotalsOf(
     val from = months.start
     val to = months.endInclusive
     val expensesByMonth = expenses.groupBy { YearMonth.from(it.date.atZone(zone)) }
-    val incomeByMonth = income.groupBy { YearMonth.from(it.date.atZone(zone)) }
+    val incomeByMonth = income.groupBy { it.ownerMonth(zone) }
     return generateSequence(from) { month -> month.plusMonths(1).takeIf { it <= to } }
         .map { month ->
             MonthlyTotals(

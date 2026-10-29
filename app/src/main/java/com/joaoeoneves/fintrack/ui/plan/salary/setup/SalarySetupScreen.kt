@@ -30,6 +30,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.moneySymbolsFor
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
@@ -41,6 +42,8 @@ import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
+import com.joaoeoneves.fintrack.ui.plan.salary.MEAL_CASH_LIMIT_CENTS
+import com.joaoeoneves.fintrack.ui.plan.salary.MealTaxWarning
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryDuplicatesDialog
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryEffectiveFrom
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryField
@@ -49,6 +52,7 @@ import com.joaoeoneves.fintrack.ui.plan.salary.SalaryGroup
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryMoneyField
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryTextField
 import com.joaoeoneves.fintrack.ui.plan.salary.SubsidyMonthsSection
+import com.joaoeoneves.fintrack.ui.plan.salary.VacationDaysField
 import com.joaoeoneves.fintrack.ui.plan.salary.sectorLabel
 import com.joaoeoneves.fintrack.ui.plan.salary.spreadLabel
 import com.joaoeoneves.fintrack.ui.plan.salary.subsidyMonthPair
@@ -82,6 +86,7 @@ fun SalarySetupScreen(
     }
     BackHandler(enabled = state.step != SalarySetupStep.SECTOR) { viewModel.onBack() }
     val labels = setupLineLabels()
+    val separator = moneySymbolsFor(currentLocale()).decimal
 
     LargeTitleScaffold(
         title = stringResource(R.string.salary_setup_title),
@@ -98,7 +103,7 @@ fun SalarySetupScreen(
                     onMealAnswerChange = viewModel::onMealAnswerChange,
                     onPayDayChange = viewModel::onPayDayChange,
                     onIrsJovemChange = viewModel::onIrsJovemChange,
-                    onAdseChange = viewModel::onAdseChange,
+                    onAdseChange = { viewModel.onAdseChange(it, separator) },
                     onEffectiveFromChange = viewModel::onEffectiveFromChange,
                     onPrimary = {
                         if (state.step == SalarySetupStep.SUMMARY) viewModel.onSave(labels) else viewModel.onNext()
@@ -347,6 +352,8 @@ private fun MealStep(
                 onChange = { onChange(form.copy(meal = it)) },
                 hint = stringResource(R.string.salary_meal_hint),
             )
+            if (state.mealAnswer == MealAnswer.WITH_SALARY && form.meal > MEAL_CASH_LIMIT_CENTS) MealTaxWarning()
+            VacationDaysField(form, state.invalid, onChange)
         }
     }
 }
@@ -361,7 +368,7 @@ private fun PayDayRow(
             options = listOf(false, true),
             selected = draft.fixed,
             label = { stringResource(if (it) R.string.plan_payday_fixed else R.string.plan_payday_last_working_day) },
-            onSelect = { onChange(draft.copy(fixed = it, earlierIfClosed = it && draft.earlierIfClosed)) },
+            onSelect = { onChange(draft.copy(fixed = it, earlierIfClosed = it)) },
         )
         if (draft.fixed) {
             MinimalTextField(

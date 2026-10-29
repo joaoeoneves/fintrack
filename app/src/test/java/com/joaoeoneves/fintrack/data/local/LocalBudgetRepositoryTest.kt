@@ -32,11 +32,16 @@ class LocalBudgetRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun set_limitZeroOrNegative_failsNothingWritten() =
+    fun set_limitNegative_failsNothingWritten() =
         runStoreTest {
-            assertTrue(repo.setBudget(food, 0).exceptionOrNull() is IllegalArgumentException)
-            assertTrue(repo.setBudget(food, -1).isFailure)
+            assertTrue(repo.setBudget(food, -1).exceptionOrNull() is IllegalArgumentException)
             assertFalse(dataFile.exists())
+        }
+
+    @Test
+    fun set_limitZero_accepted() =
+        runStoreTest {
+            assertTrue(repo.setBudget(food, 0).isSuccess)
         }
 
     @Test

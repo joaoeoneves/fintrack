@@ -191,7 +191,7 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
 
             val result =
                 groups.saveEnvelope(
-                    edit(null, "Bad", members = setOf(food), limits = mapOf(food to Budget(food, 0))),
+                    edit(null, "Bad", members = setOf(food), limits = mapOf(food to Budget(food, -1))),
                 )
 
             assertTrue(result.isFailure)

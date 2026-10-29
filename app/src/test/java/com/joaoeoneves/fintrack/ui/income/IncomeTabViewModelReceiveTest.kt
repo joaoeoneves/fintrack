@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,7 +40,7 @@ class IncomeTabViewModelReceiveTest : IncomeTabViewModelTestBase() {
 
             assertEquals(LocalDate.of(2026, 10, 30), receipts.payday)
             assertEquals(LocalDate.of(2026, 10, 15), receipts.today)
-            assertTrue(receipts.canReceive)
+            assertTrue(receipts.canReceive.isEmpty())
             assertTrue(receipts.receivedOn.isEmpty())
         }
 
@@ -165,8 +164,8 @@ class IncomeTabViewModelReceiveTest : IncomeTabViewModelTestBase() {
 
             // The Income tab reaches future months (display only), but nothing future is receivable.
             assertEquals(YearMonth.of(2026, 12), future.workingDays.month)
-            assertFalse(future.receipts.canReceive)
-            assertTrue(past.receipts.canReceive)
+            assertTrue(future.receipts.canReceive.isEmpty())
+            assertTrue(past.receipts.canReceive.isNotEmpty())
             assertEquals(LocalDate.of(2026, 8, 31), past.receipts.payday)
         }
 

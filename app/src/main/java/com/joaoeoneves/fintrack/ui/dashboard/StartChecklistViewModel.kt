@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 private const val TAG = "StartChecklistVM"
@@ -38,7 +37,6 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val RETIRE_THRESHOLD = 3
 private const val DECIDE_ATTEMPTS = 3
 private const val RETRY_DELAY_MS = 5_000L
-private const val LATE_DATA_WINDOW_MS = 30_000L
 
 /** One checklist row: [step] and whether it is [done]. */
 data class StartStepUi(
@@ -120,29 +118,17 @@ class StartChecklistViewModel
                     runCatchingCancellable {
                         sessionRepository.session.first { it is Session.Guest || it is Session.SignedIn }
                         // The first value is often the cache or a half-loaded set: wait for one that stays put.
+                        // The decision is final: once the card has been shown (ACTIVE) it is never retired behind
+                        // the user's back. The repositories expose no "from server" signal: only the debounce settles.
                         val checklist = observeChecklist().debounce(settleMillis).first()
                         val alreadySetUp = checklist.doneCount >= RETIRE_THRESHOLD
                         store.set(if (alreadySetUp) StartChecklistState.RETIRED else StartChecklistState.ACTIVE)
-                        if (!alreadySetUp) viewModelScope.launch { retireIfDataArrivesLate() }
                     }.onFailure { e ->
                         Log.w(TAG, "Could not decide whether to show the start checklist (attempt ${attempt + 1})", e)
                     }.isSuccess
                 if (decided) return
                 delay(RETRY_DELAY_MS)
             }
-        }
-
-        /**
-         * Slow data can still arrive after the decision: while the card is untouched (still ACTIVE, shortly after it
-         * was first shown) an already set-up user's late data retires it instead of showing "nothing ticked".
-         */
-        private suspend fun retireIfDataArrivesLate() {
-            runCatchingCancellable {
-                withTimeoutOrNull(LATE_DATA_WINDOW_MS) {
-                    observeChecklist().first { it.doneCount >= RETIRE_THRESHOLD }
-                    if (store.state.first() == StartChecklistState.ACTIVE) store.set(StartChecklistState.RETIRED)
-                }
-            }.onFailure { e -> Log.w(TAG, "Late start checklist check failed", e) }
         }
 
         private fun StartChecklist.toVisible() =

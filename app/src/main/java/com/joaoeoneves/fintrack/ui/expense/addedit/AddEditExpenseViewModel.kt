@@ -20,6 +20,8 @@ import com.joaoeoneves.fintrack.domain.model.normalizedMerchantName
 import com.joaoeoneves.fintrack.domain.model.usesMealCard
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
@@ -28,6 +30,7 @@ import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.defaultNewTransactionDate
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +38,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -43,6 +49,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
+import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "AddEditExpenseViewModel"
@@ -55,7 +62,8 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val SUGGESTION_HISTORY_MONTHS = 12L
 private const val DAY_SECONDS = 86_400L
 
-@Suppress("TooManyFunctions") // One handler per form field plus load, save and delete.
+@OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("TooManyFunctions", "LongParameterList") // One handler per form field; the flows are test seams.
 @HiltViewModel
 class AddEditExpenseViewModel(
     private val expenseRepository: ExpenseRepository,
@@ -65,6 +73,8 @@ class AddEditExpenseViewModel(
     /** Whether the meal-card switch applies (see `usesMealCard`); the switch is hidden while it does not. */
     private val mealCardAvailable: Flow<Boolean> = flowOf(false),
     private val clock: Clock = Clock.systemDefaultZone(),
+    /** Whether a month's meal-card plafond is used up (new expenses in it then default to the bank). */
+    private val mealCardPlafondUsed: (YearMonth) -> Flow<Boolean> = { flowOf(false) },
 ) : ViewModel() {
     @Inject
     constructor(
@@ -73,6 +83,8 @@ class AddEditExpenseViewModel(
         deleteTransaction: DeleteTransaction,
         savedStateHandle: SavedStateHandle,
         salaryProfiles: SalaryProfileRepository,
+        incomeRepository: IncomeRepository,
+        plannedIncomeRepository: PlannedIncomeRepository,
         clock: Clock,
     ) : this(
         expenseRepository,
@@ -81,6 +93,7 @@ class AddEditExpenseViewModel(
         savedStateHandle,
         salaryProfiles.observeSalaryProfile().map { it.usesMealCard() }.catch { emit(false) },
         clock,
+        mealCardPlafondUsedIn(expenseRepository, incomeRepository, plannedIncomeRepository, clock.zone),
     )
 
     private val route = savedStateHandle.toRoute<AddEditExpense>()
@@ -114,6 +127,7 @@ class AddEditExpenseViewModel(
 
     // Whether the meal-card switch applies right now; forms built after the profile loaded start with it.
     private var mealAvailable = false
+    private var plafondUsed = false
 
     init {
         loadExpense()
@@ -123,7 +137,21 @@ class AddEditExpenseViewModel(
                 updateForm { it.copy(mealCardAvailable = available).withMealCardPrefill() }
             }
         }
+        viewModelScope.launch {
+            // The plafond of the month the form's date is in; a new date in another month re-evaluates it.
+            _uiState
+                .map { state -> (state as? AddEditUiState.Ready)?.form?.date?.let(::monthOf) }
+                .filterNotNull()
+                .distinctUntilChanged()
+                .flatMapLatest(mealCardPlafondUsed)
+                .collect { used ->
+                    plafondUsed = used
+                    updateForm { it.copy(mealCardPlafondUsed = used).withMealCardPrefill() }
+                }
+        }
     }
+
+    private fun monthOf(date: Instant): YearMonth = YearMonth.from(date.atZone(clock.zone))
 
     private fun loadExpense() {
         viewModelScope.launch {
@@ -170,6 +198,7 @@ class AddEditExpenseViewModel(
                             category = category,
                             date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
                             mealCardAvailable = mealAvailable,
+                            mealCardPlafondUsed = plafondUsed,
                         ).withMealCardPrefill(),
                         categoryOptions.value,
                     )

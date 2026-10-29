@@ -113,6 +113,7 @@ fun WorkingDaysDialog(
                     daysOff = daysOff,
                     onChange = { daysOff = it },
                 )
+                CarnivalShortcut(state.month, daysOff) { daysOff = it }
             }
         },
         confirmButton = {

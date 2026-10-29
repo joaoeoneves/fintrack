@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_MULTIPLE_PPM
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
+import com.joaoeoneves.fintrack.domain.model.MAX_VACATION_DAYS
 import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
@@ -51,6 +52,7 @@ internal fun LocalSalaryProfile.toDomain(): SalaryProfile {
         netHolidayLumpCents = netHolidayLumpCents,
         netChristmasLumpCents = netChristmasLumpCents,
         mealRatePerDayCents = mealRatePerDayCents,
+        vacationDaysPerYear = vacationDaysPerYear,
         sector = EmploymentSector.entries.find { it.name == sector },
         mealPayment = MealPayment.entries.find { it.name == mealPayment } ?: MealPayment.CARD,
         otherDeductionsPpm = otherDeductionsPpm.coerceIn(0, PPM_SCALE),
@@ -88,6 +90,7 @@ internal fun SalaryProfile.toLocal(): LocalSalaryProfile =
         netHolidayLumpCents = netHolidayLumpCents,
         netChristmasLumpCents = netChristmasLumpCents,
         mealRatePerDayCents = mealRatePerDayCents,
+        vacationDaysPerYear = vacationDaysPerYear,
         sector = sector?.name,
         mealPayment = mealPayment.name,
         otherDeductionsPpm = otherDeductionsPpm,
@@ -143,6 +146,9 @@ internal fun validateSalaryProfile(profile: LocalSalaryProfile) {
             profile.flexAnnualCents,
             profile.bonusCents,
         )
+    require(profile.vacationDaysPerYear?.let { it in 0..MAX_VACATION_DAYS } != false) {
+        "Vacation days must be 0..$MAX_VACATION_DAYS"
+    }
     require(amounts.all { it in 1..MAX_AMOUNT_CENTS }) { "Amounts must be 1..$MAX_AMOUNT_CENTS cents" }
     val months =
         listOfNotNull(

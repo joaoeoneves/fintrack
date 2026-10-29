@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
 import android.app.Application
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.data.local.IdGenerator
@@ -59,7 +60,10 @@ class SalaryProfileViewModelExtrasTest {
 
     private val manage get() = ManageSalaryProfile(profiles, income)
 
-    private fun viewModel() = SalaryProfileViewModel(profiles, manage, income, clock, ids)
+    private fun viewModel(): SalaryProfileViewModel {
+        val months = FakeMonthSettingsRepository()
+        return SalaryProfileViewModel(profiles, manage, income, months, clock, ids)
+    }
 
     private val default = SalaryProfile(baseGrossCents = 100_000)
 

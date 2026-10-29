@@ -176,7 +176,7 @@ private fun SalaryProfileContent(
             NetSection(form, actions.onChange)
         }
         SubsidyMonthsSection(form, actions.onChange)
-        MealSection(form, actions.onChange)
+        MealSection(form, state.invalid, actions.onChange)
         SalaryExtrasSection(state, actions.extras.onAdd, actions.extras.onEdit)
         if (state.showEffectiveFrom) {
             SalaryEffectiveFrom(state.effectiveFrom, actions.onEffectiveFromChange)

@@ -87,13 +87,13 @@ class MigrationPlannerRecordsTest {
     }
 
     @Test
-    fun budgets_nonPositiveLimit_isSkipped() {
+    fun budgets_negativeLimit_isSkipped_zeroKept() {
         val local = localDoc(budgets = listOf(LocalBudget("FOOD", 0), LocalBudget("SHOPPING", -1)))
 
         val plan = planMigration(local, remoteSnapshot())
 
-        assertTrue(plan.budgets.isEmpty())
-        assertEquals(2, plan.skipped)
+        assertEquals(listOf("FOOD"), plan.budgets.map { it.categoryId })
+        assertEquals(1, plan.skipped)
     }
 
     @Test

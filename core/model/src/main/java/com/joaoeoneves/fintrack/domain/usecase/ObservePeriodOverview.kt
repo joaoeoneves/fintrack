@@ -19,6 +19,7 @@ import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encloses
 import com.joaoeoneves.fintrack.domain.model.envelopesOf
+import com.joaoeoneves.fintrack.domain.model.filterOwnedIn
 import com.joaoeoneves.fintrack.domain.model.monthlyPlanOf
 import com.joaoeoneves.fintrack.domain.model.recentActivity
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
@@ -32,7 +33,8 @@ import javax.inject.Inject
 
 /**
  * Observes the [PeriodOverview] of a [Period]. Budgets and the monthly plan are evaluated against
- * the period's anchor month, or the current month for rolling/custom periods. Income counts by its date. When the
+ * the period's anchor month, or the current month for rolling/custom periods. Income counts in its owner month
+ * (see `ownerMonth`). When the
  * period's range already covers that whole month, the month's spend and income are derived from the period's own
  * transactions instead of opening a second listener.
  */
@@ -68,7 +70,7 @@ class ObservePeriodOverview
                     val month =
                         tx.copy(
                             expenses = tx.expenses.filter { it.date in budgetRange },
-                            income = tx.income.filter { it.date in budgetRange },
+                            income = filterOwnedIn(tx.income, budgetRange, zone),
                         )
                     overviewOf(budgetMonth, tx, month, plan, recentLimit)
                 }

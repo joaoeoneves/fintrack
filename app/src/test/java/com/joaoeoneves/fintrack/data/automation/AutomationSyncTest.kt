@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.automation
 
+import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
@@ -23,11 +24,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.time.Clock
 import java.time.Instant
 import java.time.YearMonth
@@ -35,6 +41,8 @@ import java.time.ZoneId
 
 /** [AutomationSync]: when a pass runs (session, foreground, data) and when it is not repeated. */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
 class AutomationSyncTest {
     private val clock = Clock.fixed(Instant.parse("2026-03-20T10:00:00Z"), ZoneId.of("UTC"))
 
@@ -63,6 +71,9 @@ class AutomationSyncTest {
     )
 
     private val jan = YearMonth.of(2026, 1)
+
+    // 5 s base shifted by the one earlier attempt.
+    private val firstRetryBackoffMs = 10_000L
 
     private fun autoLine() = PlannedIncome("p1", "Salary", 100_000L, 0, autoRecord = true)
 
@@ -124,7 +135,7 @@ class AutomationSyncTest {
         }
 
     @Test
-    fun identicalFailingAttempt_isNotRetried_onForeground() =
+    fun aFailedAttempt_isRetriedOnForeground() =
         runTest(UnconfinedTestDispatcher()) {
             val repo = FakeRecurringRepository(listOf(due()), nextConfirmError = IllegalStateException("down"))
             val sync = sync(guest(), repo)
@@ -133,10 +144,12 @@ class AutomationSyncTest {
             assertTrue(repo.confirmedTransactions.isEmpty())
 
             sync.onForeground()
-            advanceUntilIdle()
+            advanceTimeBy(firstRetryBackoffMs + 1)
+            runCurrent()
 
-            // The failure was one-shot; a retry would have posted. Same inputs: not attempted again.
-            assertTrue(repo.confirmedTransactions.isEmpty())
+            // The failure was one-shot and a failed pass is not remembered as attempted: the tick retries once the
+            // backoff has passed, and posts.
+            assertEquals(listOf("rec_r1_20260315"), repo.confirmedTransactions.map { it.id })
         }
 
     @Test

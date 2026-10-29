@@ -71,3 +71,9 @@ private fun PlannedIncome.withUserEdits(
         payDay = schedule.payDay,
         payDayEarlierIfClosed = schedule.payDay != null && schedule.payDayEarlierIfClosed,
     )
+
+/** The month a new amount starts in by default: the viewed month once it is in the future, else the current one. */
+internal fun defaultEffectiveFrom(
+    viewed: YearMonth,
+    now: YearMonth,
+): YearMonth = if (viewed.isAfter(now)) viewed else now

@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 20
+internal const val LOCAL_SCHEMA_VERSION = 21
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -211,6 +211,8 @@ data class LocalSalaryProfile(
     val netHolidayLumpCents: Long? = null,
     val netChristmasLumpCents: Long? = null,
     val mealRatePerDayCents: Long? = null,
+    /** Vacation days a year (schema v21); absent = the default of 22. */
+    val vacationDaysPerYear: Int? = null,
     /** An [com.joaoeoneves.fintrack.domain.model.EmploymentSector] name (schema v20); absent = private. */
     val sector: String? = null,
     /** A [com.joaoeoneves.fintrack.domain.model.MealPayment] name (schema v20); absent = card. */

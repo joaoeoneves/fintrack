@@ -104,13 +104,18 @@ class SalarySetupViewModel
     ) : ViewModel() {
         private val step = MutableStateFlow(storedStep(savedState))
         private val restoredSector = storedSector(savedState)
-        private val form = MutableStateFlow(restoredSector?.let { SalaryForm().withSectorPreset(it) } ?: SalaryForm())
-        private val mealAnswer = MutableStateFlow(restoredSector?.let(::mealAnswerPresetFor) ?: MealAnswer.CARD)
-        private val payDay = MutableStateFlow(restoredSector?.let(::payDayPresetFor) ?: PayDayDraft())
-        private val irsJovem = MutableStateFlow(false)
+        private val draft = savedState.loadDraft()
+        private val form =
+            MutableStateFlow(
+                draft?.form ?: restoredSector?.let { SalaryForm().withSectorPreset(it) } ?: SalaryForm(),
+            )
+        private val mealAnswer =
+            MutableStateFlow(draft?.mealAnswer ?: restoredSector?.let(::mealAnswerPresetFor) ?: MealAnswer.CARD)
+        private val payDay = MutableStateFlow(draft?.payDay ?: restoredSector?.let(::payDayPresetFor) ?: PayDayDraft())
+        private val irsJovem = MutableStateFlow(draft?.irsJovem ?: false)
         private val netLumps = MutableStateFlow(savedState.get<Boolean>(KEY_LUMPS) ?: false)
         private val saving = MutableStateFlow(false)
-        private val effectiveFrom = MutableStateFlow<YearMonth?>(null)
+        private val effectiveFrom = MutableStateFlow(draft?.effectiveFrom)
         private val duplicateCandidates = MutableStateFlow<List<PlannedIncome>>(emptyList())
         private val events = Channel<SalarySetupEvent>(Channel.BUFFERED)
 
@@ -143,6 +148,9 @@ class SalarySetupViewModel
 
         init {
             viewModelScope.launch {
+                combine(form, mealAnswer, payDay, irsJovem, effectiveFrom, ::SetupDraft).collect(savedState::saveDraft)
+            }
+            viewModelScope.launch {
                 if (profiles.observeSalaryProfile().first() != null) events.send(SalarySetupEvent.OpenAdvanced)
             }
         }
@@ -158,9 +166,10 @@ class SalarySetupViewModel
         /** Picks where the user works: applies that sector's presets and moves to the next step. */
         fun onSectorSelected(sector: EmploymentSector) {
             if (form.value.sector != sector) {
-                form.value = form.value.withSectorPreset(sector)
-                mealAnswer.value = mealAnswerPresetFor(sector)
-                payDay.value = payDayPresetFor(sector)
+                val answers = SectorAnswers(form.value, mealAnswer.value, payDay.value).withSector(sector)
+                form.value = answers.form
+                mealAnswer.value = answers.mealAnswer
+                payDay.value = answers.payDay
                 irsJovem.value = form.value.exempt.isNotBlank()
                 savedState[KEY_SECTOR] = sector.name
             }
@@ -182,9 +191,12 @@ class SalarySetupViewModel
             if (!on) form.value = form.value.copy(exempt = "")
         }
 
-        /** The "I have ADSE" switch: sets other deductions to 3.5%, or clears them. */
-        fun onAdseChange(on: Boolean) {
-            form.value = form.value.withAdse(on)
+        /** The "I have ADSE" switch: sets other deductions to 3.5% (typed with [decimalSeparator]), or clears them. */
+        fun onAdseChange(
+            on: Boolean,
+            decimalSeparator: Char,
+        ) {
+            form.value = form.value.withAdse(on, decimalSeparator)
         }
 
         fun onNetLumpsChange(separate: Boolean) {
@@ -299,7 +311,7 @@ class SalarySetupViewModel
                 canContinue =
                     valid &&
                         !busy &&
-                        (current != SalarySetupStep.PAY || result.hasRequiredAmount) &&
+                        (current == SalarySetupStep.SECTOR || result.hasRequiredAmount) &&
                         (current != SalarySetupStep.SUMMARY || inputs.choices.payDay.isValid),
                 saving = busy,
                 effectiveFrom = effective,

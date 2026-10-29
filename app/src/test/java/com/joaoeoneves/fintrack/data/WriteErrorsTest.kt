@@ -20,8 +20,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class WriteErrorsTest {
-    private fun events(block: () -> Unit): List<String> {
-        val seen = mutableListOf<String>()
+    private fun events(block: () -> Unit): List<WriteErrorCode> {
+        val seen = mutableListOf<WriteErrorCode>()
         runTest(UnconfinedTestDispatcher()) {
             val job = backgroundScope.launch { WriteErrors.events.toList(seen) }
             block()
@@ -36,7 +36,7 @@ class WriteErrorsTest {
     fun permissionDenied_emitsAnEvent() {
         val seen = events { onFail("t", "write").onFailure(failure(Code.PERMISSION_DENIED)) }
 
-        assertEquals(listOf("rejected: PERMISSION_DENIED"), seen)
+        assertEquals(listOf(WriteErrorCode.PERMISSION_DENIED), seen)
     }
 
     @Test
@@ -47,13 +47,13 @@ class WriteErrorsTest {
     }
 
     @Test
-    fun nonFirestoreError_emitsItsMessage_orItsClassName() {
+    fun nonFirestoreError_emitsOther_andRepeatsCollapse() {
         val seen =
             events {
                 onFail("t", "write").onFailure(IllegalStateException("boom"))
                 onFail("t", "write").onFailure(IllegalStateException())
             }
 
-        assertEquals(listOf("boom", "IllegalStateException"), seen)
+        assertEquals(listOf(WriteErrorCode.OTHER), seen)
     }
 }

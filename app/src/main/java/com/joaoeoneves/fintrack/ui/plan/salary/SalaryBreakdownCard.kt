@@ -29,7 +29,7 @@ internal fun SalaryBreakdownCard(state: SalaryProfileUiState.Content) {
     val summary = state.yearSummary ?: return
     if (summary.payments.isNotEmpty() || summary.mealPerDayCents > 0) {
         SettingsGroup(label = stringResource(R.string.salary_year_payments_title)) {
-            PaymentRows(summary, state.month.year)
+            PaymentRows(summary, state.month.year, state.vacationDaysAssumed)
         }
     }
     SettingsGroup(label = stringResource(R.string.salary_year_title)) {
@@ -72,6 +72,7 @@ private fun MonthlyRows(
 private fun PaymentRows(
     summary: SalaryYearSummary,
     year: Int,
+    vacationDays: Int,
 ) {
     val locale = currentLocale()
     summary.payments.forEachIndexed { index, payment ->
@@ -93,7 +94,9 @@ private fun PaymentRows(
         if (summary.payments.isNotEmpty()) Hairline()
         SettingsRow(
             title = stringResource(R.string.salary_year_meal),
-            supportingText = stringResource(R.string.salary_year_meal_year, formatAmountCents(summary.mealYearCents)),
+            supportingText =
+                stringResource(R.string.salary_year_meal_year, formatAmountCents(summary.mealYearCents)) +
+                    " · " + stringResource(R.string.salary_year_meal_vacation, vacationDays),
             value = stringResource(R.string.salary_year_meal_day, formatAmountCents(summary.mealPerDayCents)),
         )
     }

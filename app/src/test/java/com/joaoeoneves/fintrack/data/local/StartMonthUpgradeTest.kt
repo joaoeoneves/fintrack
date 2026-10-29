@@ -90,7 +90,8 @@ class StartMonthUpgradeTest {
     fun validateBudget_checksLimitAndTiming() {
         val known = setOf("FOOD")
         validateBudget(LocalBudget("FOOD", 1, startMonth = "2026-01"), known)
-        assertThrows(IllegalArgumentException::class.java) { validateBudget(LocalBudget("FOOD", 0), known) }
+        validateBudget(LocalBudget("FOOD", 0), known)
+        assertThrows(IllegalArgumentException::class.java) { validateBudget(LocalBudget("FOOD", -1), known) }
         assertThrows(IllegalArgumentException::class.java) { validateBudget(LocalBudget("NOPE", 5), known) }
         assertThrows(IllegalArgumentException::class.java) {
             validateBudget(LocalBudget("FOOD", 5, startMonth = "bad"), known)

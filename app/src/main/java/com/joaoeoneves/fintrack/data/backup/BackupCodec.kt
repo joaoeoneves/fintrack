@@ -106,6 +106,7 @@ object BackupCodec {
         // 18 -> 19 plan startMonth / versions (absent = the earliest month with data, see upgradedToStartMonths).
         // 19 -> 20 salaryProfile sector/mealPayment/otherDeductionsPpm, plannedIncome payDayEarlierIfClosed, expense
         // paidWithMealCard and category mealCardByDefault (absent = private / card / 0 / off / off / off).
+        // 20 -> 21 salaryProfile vacationDaysPerYear (absent = the default of 22).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION ->
                 sanitize(document.upgradedToStartMonths(YearMonth.now(clock), clock.zone))

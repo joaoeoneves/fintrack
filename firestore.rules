@@ -89,7 +89,7 @@ service cloud.firestore {
     function isValidBudget(data) {
       return data.keys().hasOnly(['limitCents', 'skipMonths', 'startMonth', 'versions', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['limitCents'])
-        && data.limitCents is int && data.limitCents > 0 && data.limitCents <= 100000000000
+        && data.limitCents is int && data.limitCents >= 0 && data.limitCents <= 100000000000
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12))
         && isValidPlanTiming(data);
     }
@@ -141,7 +141,7 @@ service cloud.firestore {
 
     // The keys of the income lines generated from the salary profile (absent on the user's own lines).
     function managedKeyPattern() {
-      return '^profile_(net_salary|duodecimos|meal|holiday|christmas|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
+      return '^profile_(net_salary|duodecimos|meal|((holiday|christmas)(_20[0-9]{2}(0[1-9]|1[0-2]))?)|extra_[A-Za-z0-9]{1,20}_([1-9]|1[0-2]))$';
     }
 
     // Absent frequency means MONTHLY. MONTHLY has neither month field, YEARLY a month 1..12, ONCE a
@@ -255,7 +255,7 @@ service cloud.firestore {
     function isValidSalaryProfile(data) {
       return data.keys().hasOnly(['inputMode', 'baseGrossCents', 'subsidySpreadPpm', 'irsBasePpm', 'irsSubsidiesPpm',
           'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
-          'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth',
+          'mealRatePerDayCents', 'vacationDaysPerYear', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth',
           'extras', 'sector', 'mealPayment', 'otherDeductionsPpm', 'updatedAt'])
         && data.keys().hasAll(['inputMode'])
         && data.inputMode in ['GROSS', 'NET']
@@ -270,6 +270,7 @@ service cloud.firestore {
         && isOptionalInt(data, 'netHolidayLumpCents', 1, 100000000000)
         && isOptionalInt(data, 'netChristmasLumpCents', 1, 100000000000)
         && isOptionalInt(data, 'mealRatePerDayCents', 1, 100000000000)
+        && isOptionalInt(data, 'vacationDaysPerYear', 0, 60)
         && isOptionalInt(data, 'holidaySubsidyMonth', 1, 12) && isOptionalInt(data, 'christmasSubsidyMonth', 1, 12)
         && (!('mealSkipMonths' in data) || (data.mealSkipMonths is list && data.mealSkipMonths.size() <= 12))
         && (!('extras' in data) || isValidExtras(data.extras))
