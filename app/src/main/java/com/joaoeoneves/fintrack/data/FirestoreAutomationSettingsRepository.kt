@@ -61,7 +61,7 @@ class FirestoreAutomationSettingsRepository
                 // Not awaited (see FirestoreSalaryProfileRepository): the write lands in the local cache at once.
                 automationSettingsDoc(firestore, uid)
                     .set(data, SetOptions.merge())
-                    .addOnFailureListener(onFail(TAG, "Update line cursors failed"))
+                    .addOnFailureListener(onFail(TAG, "Update line cursors failed", notify = false))
                 Unit
             }
         }
@@ -100,7 +100,7 @@ class FirestoreAutomationSettingsRepository
                     }
                 batch.set(automationSettingsDoc(firestore, uid), data, SetOptions.merge())
                 // Not awaited: the batch is applied to the local cache at once and syncs when online.
-                batch.commit().addOnFailureListener(onFail(TAG, "Record payday failed"))
+                batch.commit().addOnFailureListener(onFail(TAG, "Record payday failed", notify = false))
                 Unit
             }
         }

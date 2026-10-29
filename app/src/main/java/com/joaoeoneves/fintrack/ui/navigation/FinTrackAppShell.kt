@@ -86,7 +86,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
     val showRecurringDeleted = rememberRecurringDeletedHandler(snackbarHostState, undoLabel)
     val writeFailedFormat = stringResource(R.string.error_write_rejected)
     LaunchedEffect(writeFailedFormat) {
-        WriteErrors.events.collect { reason -> snackbarHostState.showSnackbar(writeFailedFormat.format(reason)) }
+        WriteErrors.events.collect { reason -> snackbarHostState.showSnackbar(writeFailedFormat.format(reason.name)) }
     }
     Scaffold(
         modifier = modifier,
