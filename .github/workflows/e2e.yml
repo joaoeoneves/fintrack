@@ -46,7 +46,7 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-      # Private-repo runners have little free disk; the AVD's userdata partition didn't fit.
+      # Runners have little free disk; the AVD's userdata partition didn't fit.
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost "$AGENT_TOOLSDIRECTORY/CodeQL" && df -h /
 
@@ -65,8 +65,8 @@ jobs:
           target: google_atd
           arch: x86_64
           profile: pixel_6
-          # Private-repo runners have 2 vCPUs (public ones have 4), so the emulator boots much slower.
-          cores: 2
+          # Public-repo runners have 4 vCPUs; give them all to the emulator.
+          cores: 4
           ram-size: 4096M
           emulator-boot-timeout: 1500
           disk-size: 4096M
