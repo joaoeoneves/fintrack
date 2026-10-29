@@ -761,4 +761,7 @@
     <string name="activity_income_counts_for">Counts for %1$s</string>
     <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
     <string name="income_view_history">View history</string>
+    <string name="effective_from_title">Valid from</string>
+    <string name="effective_from_history">%1$s until %2$s</string>
+    <string name="salary_shift_effective_note">The salary received at the end of %1$s counts for %2$s</string>
 </resources>
