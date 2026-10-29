@@ -11,4 +11,6 @@ data class AutomationSettings(
     val legacyPaydayEnabled: Boolean = false,
     val legacyPaydayRecordedThrough: YearMonth? = null,
     val lineRecordedThrough: Map<String, YearMonth> = emptyMap(),
+    /** Whether the salary pays the next month's plan; `null` until chosen (then follows the salary profile). */
+    val salaryPaysNextMonth: Boolean? = null,
 )
