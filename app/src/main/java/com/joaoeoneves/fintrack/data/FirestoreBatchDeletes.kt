@@ -11,8 +11,10 @@ import kotlin.time.Duration.Companion.seconds
 internal val FIRESTORE_SERVER_TIMEOUT = 30.seconds
 
 /** Runs [block], throwing [IOException] when it does not finish within [FIRESTORE_SERVER_TIMEOUT]. */
-internal suspend fun <T : Any> awaitServer(block: suspend () -> T): T =
-    withTimeoutOrNull(FIRESTORE_SERVER_TIMEOUT) { block() } ?: throw IOException("Firestore did not respond in time")
+internal suspend fun <T : Any> awaitServer(
+    timeout: kotlin.time.Duration = FIRESTORE_SERVER_TIMEOUT,
+    block: suspend () -> T,
+): T = withTimeoutOrNull(timeout) { block() } ?: throw IOException("Firestore did not respond in time")
 
 /** Deletes [refs] in one batch and awaits the server (with a timeout). The caller keeps [refs] within the batch cap. */
 internal suspend fun deleteDocumentBatch(
