@@ -201,7 +201,15 @@ class ObserveExpectedIncomeAttributionTest {
     private val today = LocalDate.of(2026, 10, 30)
 
     private suspend fun pendingIds() =
-        useCase(today, utc).first().entries.filter { it.month == YearMonth.of(2026, 10) }.map { it.row.lines.single().id }
+        useCase(today, utc)
+            .first()
+            .entries
+            .filter { it.month == YearMonth.of(2026, 10) }
+            .map {
+                it.row.lines
+                    .single()
+                    .id
+            }
 
     @Test
     fun manualIncomeWithTheLabel_countsAsReceived() =

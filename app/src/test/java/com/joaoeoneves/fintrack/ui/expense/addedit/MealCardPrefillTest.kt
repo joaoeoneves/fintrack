@@ -24,8 +24,7 @@ class MealCardPrefillTest {
         assertFalse(mealCardPrefill(food.copy(mealCardByDefault = false), isRefund = false, available = true))
 
     @Test
-    fun savingKind_neverPrefills() =
-        assertFalse(mealCardPrefill(food.copy(kind = CategoryKind.SAVING), isRefund = false, available = true))
+    fun savingKind_neverPrefills() = assertFalse(mealCardPrefill(food.copy(kind = CategoryKind.SAVING), isRefund = false, available = true))
 
     @Test
     fun withPrefill_respectsTouchedAndEditMode() {

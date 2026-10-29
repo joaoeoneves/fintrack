@@ -82,7 +82,12 @@ class CategoriesViewModelMealCardTest : CategoriesViewModelTestBase() {
             val viewModel = vm(repo)
             viewModel.onEdit(lunch.id)
             advanceUntilIdle()
-            assertTrue(viewModel.content().editor!!.initial.mealCardByDefault)
+            assertTrue(
+                viewModel
+                    .content()
+                    .editor!!
+                    .initial.mealCardByDefault,
+            )
             viewModel.onSaveEditor(CategoryDraft("Lunch", "home", "teal", CategoryKind.SPENDING, mealCardByDefault = true))
             advanceUntilIdle()
             assertTrue(repo.docs.single().mealCardByDefault)

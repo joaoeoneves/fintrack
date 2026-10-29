@@ -25,7 +25,10 @@ class SalarySetupViewModelSectorTest : SalarySetupViewModelTestBase() {
     ) {
         vm.onSectorSelected(sector)
         advanceUntilIdle()
-        vm.onFormChange(vm.uiState.value.form.copy(base = 100_000L))
+        vm.onFormChange(
+            vm.uiState.value.form
+                .copy(base = 100_000L),
+        )
         advanceUntilIdle()
         repeat(3) {
             vm.onNext()
@@ -72,7 +75,10 @@ class SalarySetupViewModelSectorTest : SalarySetupViewModelTestBase() {
             val vm = viewModel()
             started(vm)
             vm.onSectorSelected(EmploymentSector.PRIVATE)
-            vm.onFormChange(vm.uiState.value.form.copy(base = 123_00L))
+            vm.onFormChange(
+                vm.uiState.value.form
+                    .copy(base = 123_00L),
+            )
             advanceUntilIdle()
             vm.onBack()
             vm.onSectorSelected(EmploymentSector.PRIVATE)
@@ -151,7 +157,10 @@ class SalarySetupViewModelSectorTest : SalarySetupViewModelTestBase() {
             val vm = viewModel()
             started(vm)
             toSummary(vm, EmploymentSector.PRIVATE)
-            vm.onFormChange(vm.uiState.value.form.copy(meal = 900L))
+            vm.onFormChange(
+                vm.uiState.value.form
+                    .copy(meal = 900L),
+            )
             vm.onPayDayChange(PayDayDraft(fixed = true, dayText = "25", earlierIfClosed = true))
             advanceUntilIdle()
 
@@ -172,7 +181,10 @@ class SalarySetupViewModelSectorTest : SalarySetupViewModelTestBase() {
             val vm = viewModel()
             started(vm)
             toSummary(vm, EmploymentSector.PRIVATE)
-            vm.onFormChange(vm.uiState.value.form.copy(meal = 900L))
+            vm.onFormChange(
+                vm.uiState.value.form
+                    .copy(meal = 900L),
+            )
             advanceUntilIdle()
 
             vm.onSave(labels)

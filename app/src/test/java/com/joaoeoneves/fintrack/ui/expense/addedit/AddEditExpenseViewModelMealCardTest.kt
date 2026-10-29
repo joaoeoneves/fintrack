@@ -158,7 +158,13 @@ class AddEditExpenseViewModelMealCardTest {
             viewModel.onSave()
             advanceUntilIdle()
 
-            assertTrue(repo.getAllExpenses().getOrThrow().single().paidWithMealCard)
+            assertTrue(
+                repo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .single()
+                    .paidWithMealCard,
+            )
         }
 
     @Test
@@ -173,6 +179,12 @@ class AddEditExpenseViewModelMealCardTest {
             viewModel.onSave()
             advanceUntilIdle()
 
-            assertFalse(repo.getAllExpenses().getOrThrow().single().paidWithMealCard)
+            assertFalse(
+                repo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .single()
+                    .paidWithMealCard,
+            )
         }
 }

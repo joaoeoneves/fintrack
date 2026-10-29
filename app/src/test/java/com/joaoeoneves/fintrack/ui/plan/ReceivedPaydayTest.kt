@@ -11,7 +11,8 @@ import org.junit.Test
 import java.time.LocalDate
 
 class ReceivedPaydayTest {
-    private val salary = IncomeRow(SalaryComponent.SALARY, listOf(PlannedIncome("s", "Salary", 1L, 0, managedKey = MANAGED_NET_SALARY)), 100L)
+    private val salary =
+        IncomeRow(SalaryComponent.SALARY, listOf(PlannedIncome("s", "Salary", 1L, 0, managedKey = MANAGED_NET_SALARY)), 100L)
     private val meal = IncomeRow(SalaryComponent.MEAL, listOf(PlannedIncome("m", "Meal", 1L, 1, managedKey = MANAGED_MEAL)), 50L)
     private val manual = IncomeRow(null, listOf(PlannedIncome("x", "Gig", 1L, 2)), 20L)
     private val idle = IncomeRow(SalaryComponent.EXTRA, listOf(PlannedIncome("i", "Idle", 0L, 3)), 0L)
