@@ -60,7 +60,10 @@ class SalaryProfileViewModelExtrasTest {
 
     private val manage get() = ManageSalaryProfile(profiles, income)
 
-    private fun viewModel() = SalaryProfileViewModel(profiles, manage, income, FakeMonthSettingsRepository(), clock, ids)
+    private fun viewModel(): SalaryProfileViewModel {
+        val months = FakeMonthSettingsRepository()
+        return SalaryProfileViewModel(profiles, manage, income, months, clock, ids)
+    }
 
     private val default = SalaryProfile(baseGrossCents = 100_000)
 

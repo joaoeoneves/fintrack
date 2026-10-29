@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.asOf
 import com.joaoeoneves.fintrack.domain.model.managedExtraKey
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.testutil.bonusExtra
@@ -27,6 +28,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.YearMonth
 
 private const val LEGACY_PROFIT_SHARE = "profile_profit_share"
 
@@ -105,7 +107,8 @@ class ManagedIncomeSyncTest {
             assertEquals(79_000, byId.getValue(MANAGED_NET_SALARY).amountCents)
             assertEquals("Mine", byId.getValue(MANAGED_NET_SALARY).label)
             assertEquals(wantedDuo, byId.getValue(MANAGED_DUODECIMOS).amountCents)
-            assertTrue(LEGACY_PROFIT_SHARE !in byId)
+            // A legacy line with history is ended (versioned to 0), not deleted.
+            assertEquals(0L, byId.getValue(LEGACY_PROFIT_SHARE).asOf(YearMonth.of(2099, 1))?.amountCents)
             assertTrue("own" in byId)
             assertTrue(managedExtraKey("bonus", 5) in byId)
         }
@@ -122,7 +125,9 @@ class ManagedIncomeSyncTest {
             advanceUntilIdle()
 
             val ids = income.lines.map { it.id }.toSet()
-            assertTrue(legacyKeys.none { it in ids })
+            // Legacy lines with history are ended (versioned to 0), not deleted.
+            val byId = income.lines.associateBy { it.id }
+            assertTrue(legacyKeys.all { byId.getValue(it).asOf(YearMonth.of(2099, 1))?.amountCents == 0L })
             assertTrue(managedExtraKey("bonus", 5) in ids)
             assertTrue(listOf(1, 4, 7, 10).all { managedExtraKey("flex", it) in ids })
             assertTrue("own" in ids)

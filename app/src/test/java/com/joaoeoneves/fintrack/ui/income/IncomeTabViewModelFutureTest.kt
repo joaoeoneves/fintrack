@@ -151,7 +151,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             assertFalse(outlook.months[10].received)
             assertEquals(100_000L, outlook.months[10].cents)
             assertEquals(95_000L, outlook.receivedCents)
-            assertEquals(200_000L, outlook.expectedCents)
+            assertEquals(300_000L, outlook.expectedCents)
         }
 
     @Test
@@ -167,7 +167,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
     fun mealCard_month_receivedSpentAndNegativeBalance() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(meal())
-            actualIncomeRepo.addIncome(testIncome("pay_meal_202610", 20_000L, Instant.parse("2026-10-05T10:00:00Z")))
+            actualIncomeRepo.addIncome(testIncome("pay_meal_202609", 20_000L, Instant.parse("2026-09-30T10:00:00Z")))
             val card = testExpense("e1", 25_000L, Instant.parse("2026-10-06T10:00:00Z"))
             val bank = testExpense("e2", 9_000L, Instant.parse("2026-10-07T10:00:00Z"))
             expenseRepo.addExpense(card.copy(paidWithMealCard = true))

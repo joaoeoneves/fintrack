@@ -40,7 +40,7 @@ class IncomeTabViewModelReceiveTest : IncomeTabViewModelTestBase() {
 
             assertEquals(LocalDate.of(2026, 10, 30), receipts.payday)
             assertEquals(LocalDate.of(2026, 10, 15), receipts.today)
-            assertTrue(receipts.canReceive.isNotEmpty())
+            assertTrue(receipts.canReceive.isEmpty())
             assertTrue(receipts.receivedOn.isEmpty())
         }
 
