@@ -2,11 +2,13 @@ package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FirestoreBudgetRepository
 import com.joaoeoneves.fintrack.data.local.LocalBudgetRepository
+import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,12 +19,15 @@ class SessionBudgetRepository
     @Inject
     constructor(
         sessionRepository: SessionRepository,
+        @ApplicationScope scope: CoroutineScope,
         remote: Lazy<FirestoreBudgetRepository>,
         local: LocalBudgetRepository,
     ) : BudgetRepository {
         private val switch = SessionSwitch<BudgetRepository>(sessionRepository, remote, local)
 
-        override fun observeBudgets(): Flow<List<Budget>> = switch.flow(emptyList()) { it.observeBudgets() }
+        private val observeBudgetsShared = switch.shared(scope, emptyList()) { it.observeBudgets() }
+
+        override fun observeBudgets(): Flow<List<Budget>> = observeBudgetsShared
 
         override suspend fun setBudget(
             categoryId: CategoryId,

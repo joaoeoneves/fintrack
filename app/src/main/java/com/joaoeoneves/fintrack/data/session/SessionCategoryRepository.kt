@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FirestoreCategoryRepository
 import com.joaoeoneves.fintrack.data.local.LocalCategoryRepository
+import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
@@ -9,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,15 +21,15 @@ class SessionCategoryRepository
     @Inject
     constructor(
         sessionRepository: SessionRepository,
+        @ApplicationScope scope: CoroutineScope,
         remote: Lazy<FirestoreCategoryRepository>,
         local: LocalCategoryRepository,
     ) : CategoryRepository {
         private val switch = SessionSwitch<CategoryRepository>(sessionRepository, remote, local)
 
-        override fun observeCategories(): Flow<List<Category>> =
-            switch.flow(BuiltInCategories.all) {
-                it.observeCategories()
-            }
+        private val observeCategoriesShared = switch.shared(scope, BuiltInCategories.all) { it.observeCategories() }
+
+        override fun observeCategories(): Flow<List<Category>> = observeCategoriesShared
 
         override suspend fun addCategory(
             name: String,

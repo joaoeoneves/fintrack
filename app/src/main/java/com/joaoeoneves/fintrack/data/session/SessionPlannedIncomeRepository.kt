@@ -2,10 +2,12 @@ package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FirestorePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncomeRepository
+import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,15 +18,15 @@ class SessionPlannedIncomeRepository
     @Inject
     constructor(
         sessionRepository: SessionRepository,
+        @ApplicationScope scope: CoroutineScope,
         remote: Lazy<FirestorePlannedIncomeRepository>,
         local: LocalPlannedIncomeRepository,
     ) : PlannedIncomeRepository {
         private val switch = SessionSwitch<PlannedIncomeRepository>(sessionRepository, remote, local)
 
-        override fun observePlannedIncome(): Flow<List<PlannedIncome>> =
-            switch.flow(emptyList()) {
-                it.observePlannedIncome()
-            }
+        private val observePlannedIncomeShared = switch.shared(scope, emptyList()) { it.observePlannedIncome() }
+
+        override fun observePlannedIncome(): Flow<List<PlannedIncome>> = observePlannedIncomeShared
 
         override suspend fun savePlannedIncome(line: PlannedIncome): Result<String> =
             switch.call {
