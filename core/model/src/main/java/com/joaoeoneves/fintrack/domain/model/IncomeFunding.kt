@@ -2,6 +2,7 @@
 
 package com.joaoeoneves.fintrack.domain.model
 
+import java.text.Normalizer
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -174,7 +175,8 @@ private val PAYDAY_MONTH_PARSER = DateTimeFormatter.ofPattern("yyyyMM")
  * - a payday income of a line that [paysForNextMonth] (`pay_<lineId>_<yyyyMM>`) funds the month after the one in
  *   its id;
  * - any other income (e.g. a manually recorded "Salário") is a salary payment when [isSalaryPayment]: its source
- *   equals (case-insensitive, trimmed) the label of a salary-profile line that [paysForNextMonth] and it was
+ *   matches (see [isSalaryPayment]: case/accent-insensitive, equal or whole-word prefix) the label of a salary-profile
+ *   line that [paysForNextMonth] and it was
  *   received on the pay-day rule (the last working day of its month, or on day [NEXT_MONTH_PAY_DAY] or later in
  *   [zone]). It then funds the month after the one of its date.
  * Everything else (prizes, refunds, cashback, benefits on other days, any income of a non-salary source) funds the
@@ -197,9 +199,23 @@ fun fundingMonthOf(
     }
 }
 
+private fun normalisedWords(text: String): List<String> =
+    Normalizer
+        .normalize(text.trim().lowercase(), Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}+"), "")
+        .split(Regex("\\s+"))
+        .filter { it.isNotEmpty() }
+
+/** Whether one word list equals the other or is a leading-words prefix of it ("salario" of "salario liquido"). */
+private fun isWordPrefixMatch(
+    a: List<String>,
+    b: List<String>,
+): Boolean = b.isNotEmpty() && (a.take(b.size) == b || b.take(a.size) == a)
+
 /**
- * Whether [income] is a salary payment that funds the next month: its source matches (case-insensitive) the label
- * of a salary-profile line that [paysForNextMonth], and it was received on the last working day of its month or on
+ * Whether [income] is a salary payment that funds the next month: its source matches the label of a salary-profile
+ * line that [paysForNextMonth] (trimmed, case- and accent-insensitive, equal or one is a whole-word prefix of the
+ * other: "Salário" matches "Salário líquido"), and it was received on the last working day of its month or on
  * day [NEXT_MONTH_PAY_DAY] or later (in [zone]).
  */
 fun isSalaryPayment(
@@ -207,8 +223,10 @@ fun isSalaryPayment(
     lines: List<PlannedIncome>,
     zone: ZoneId,
 ): Boolean {
-    val source = income.source.trim()
-    val matches = lines.any { it.paysForNextMonth && it.label.trim().equals(source, ignoreCase = true) }
+    val source = normalisedWords(income.source)
+    val matches =
+        source.isNotEmpty() &&
+            lines.any { it.paysForNextMonth && isWordPrefixMatch(source, normalisedWords(it.label)) }
     val date = income.date.atZone(zone).toLocalDate()
     return matches && (date.dayOfMonth >= NEXT_MONTH_PAY_DAY || date == lastWorkingDayOf(YearMonth.from(date)))
 }
