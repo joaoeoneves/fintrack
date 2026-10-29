@@ -19,6 +19,9 @@ interface AutomationSettingsRepository {
         clearLegacyPayday: Boolean = false,
     ): Result<Unit>
 
+    /** Stores the salary-shift choice with the account (or the guest data), see `salaryShiftEnabled`. */
+    suspend fun setSalaryPaysNextMonth(enabled: Boolean): Result<Unit>
+
     /** Stores [incomes] and moves the line [cursors] in one atomic write (an empty list only moves them). */
     suspend fun recordPayday(
         incomes: List<Income>,

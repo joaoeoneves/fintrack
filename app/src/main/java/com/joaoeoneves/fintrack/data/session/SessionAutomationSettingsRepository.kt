@@ -32,6 +32,8 @@ class SessionAutomationSettingsRepository
             clearLegacyPayday: Boolean,
         ): Result<Unit> = switch.call { it.updateLineCursors(set, remove, clearLegacyPayday) }
 
+        override suspend fun setSalaryPaysNextMonth(on: Boolean) = switch.call { it.setSalaryPaysNextMonth(on) }
+
         override suspend fun recordPayday(
             incomes: List<Income>,
             cursors: Map<String, YearMonth>,

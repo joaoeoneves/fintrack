@@ -49,7 +49,8 @@ class UserPreferencesStore
                 prefs[currencyKey] = result.currency.name
                 prefs[languageKey] = result.language.name
                 prefs[reducedMotionKey] = result.reducedMotion.name
-                result.salaryPaysNextMonth?.let { prefs[salaryPaysNextMonthKey] = it }
+                val shift = result.salaryPaysNextMonth
+                if (shift != null) prefs[salaryPaysNextMonthKey] = shift else prefs.remove(salaryPaysNextMonthKey)
             }
             return result
         }

@@ -64,6 +64,18 @@ class FirestoreAutomationSettingsRepository
             }
         }
 
+        override suspend fun setSalaryPaysNextMonth(enabled: Boolean): Result<Unit> {
+            val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
+            return runCatchingCancellable {
+                val data = mapOf("salaryPaysNextMonth" to enabled, "updatedAt" to FieldValue.serverTimestamp())
+                // Not awaited, like the other settings writes.
+                automationSettingsDoc(firestore, uid)
+                    .set(data, SetOptions.merge())
+                    .addOnFailureListener { Log.w(TAG, "Set salary shift failed", it) }
+                Unit
+            }
+        }
+
         override suspend fun recordPayday(
             incomes: List<Income>,
             cursors: Map<String, YearMonth>,
@@ -107,6 +119,7 @@ internal fun AutomationSettings.toFirestoreMap(): Map<String, Any?> =
         put("paydayEnabled", legacyPaydayEnabled)
         legacyPaydayRecordedThrough?.let { put("paydayThrough", it.toString()) }
         if (lineRecordedThrough.isNotEmpty()) put("lineThrough", lineRecordedThrough.mapValues { it.value.toString() })
+        salaryPaysNextMonth?.let { put("salaryPaysNextMonth", it) }
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
@@ -122,4 +135,5 @@ private fun DocumentSnapshot.toAutomationSettings(): AutomationSettings =
                     val month = (raw as? String)?.let { runCatching { YearMonth.parse(it) }.getOrNull() }
                     if (id is String && month != null) id to month else null
                 }.toMap(),
+        salaryPaysNextMonth = getBoolean("salaryPaysNextMonth"),
     )
