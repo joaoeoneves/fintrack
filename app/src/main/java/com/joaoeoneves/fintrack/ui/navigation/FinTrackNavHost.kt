@@ -63,6 +63,7 @@ fun FinTrackNavHost(
         planRoutes(navController)
         savingsRoutes(navController)
         sharedRoutes(navController)
+        detailRoutes(navController)
         envelopeRoutes(navController)
         formRoutes(navController, transitions)
     }
@@ -141,7 +142,7 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
                         onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
                         onOpenEnvelope = { id -> navController.navigate(EditEnvelope(envelopeId = id)) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
-                        onOpenCategories = { navController.navigate(Categories) },
+                        onOpenCategories = { navController.navigate(Categories()) },
                         onOpenSavings = { navController.navigateToTab(TopLevelTab.SAVINGS) },
                     ),
             )
@@ -182,7 +183,7 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
-            onOpenCategories = { navController.navigate(Categories) },
+            onOpenCategories = { navController.navigate(Categories()) },
         )
     }
     composable<Configure> {
@@ -193,7 +194,7 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
                     onOpenIncome = { navController.navigate(PlanIncome()) },
                     onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
                     onOpenRecurring = { navController.navigate(RecurringList) },
-                    onOpenCategories = { navController.navigate(Categories) },
+                    onOpenCategories = { navController.navigate(Categories()) },
                 ),
         )
     }

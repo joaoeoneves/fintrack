@@ -99,6 +99,24 @@ fun spendingComparisonOf(
     )
 }
 
+/**
+ * The value at [index] of [values] against the average of the up-to-[window] earlier entries that have data (non-zero);
+ * `null` when no earlier entry has data. [SpendingComparison.previousCents] is the entry right before [index].
+ */
+fun seriesComparisonOf(
+    values: List<Long>,
+    index: Int,
+    window: Int = COMPARISON_WINDOW_MONTHS,
+): SpendingComparison {
+    val earlier = (1..window).mapNotNull { back -> values.getOrNull(index - back)?.takeIf { it != 0L } }
+    return SpendingComparison(
+        currentCents = values.getOrNull(index) ?: 0L,
+        previousCents = values.getOrNull(index - 1)?.takeIf { it != 0L },
+        averageCents = earlier.takeIf { it.isNotEmpty() }?.let { list -> list.sum() / list.size },
+        averageMonths = earlier.size,
+    )
+}
+
 /** Income, spending and saving of [year] from January up to the month given to [yearToDateOf]. */
 data class YearToDate(
     val year: Int,
