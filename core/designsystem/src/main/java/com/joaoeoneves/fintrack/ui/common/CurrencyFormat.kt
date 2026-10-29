@@ -83,7 +83,8 @@ private fun NumberFormat.formatCents(
     val text = format(BigDecimal.valueOf(amountCents, CENTS_SCALE))
     if (locale.language != "pt" || !isGroupingUsed) return text
     val separator = DecimalFormatSymbols.getInstance(locale).groupingSeparator
-    return FOUR_DIGITS.replaceFirst(text) { "${it.groupValues[1]}$separator${it.groupValues[2]}" }
+    val match = FOUR_DIGITS.find(text) ?: return text
+    return text.replaceRange(match.range, "${match.groupValues[1]}$separator${match.groupValues[2]}")
 }
 
 /** Typographic minus sign (U+2212), wider and better aligned with tabular figures than the ASCII hyphen. */
