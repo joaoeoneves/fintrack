@@ -245,7 +245,11 @@ private fun IncomeRowItem(
                 autoRecordText(row),
                 stringResource(R.string.plan_looks_like_salary).takeIf { row.key in model.duplicateKeys },
             ).joinToString("\n").ifEmpty { null },
-        value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
+        value =
+            when {
+                !paysThisMonth -> stringResource(R.string.plan_not_this_month)
+                else -> formatAmountCents(receipts.receivedCents[row.key] ?: row.cents)
+            },
         valueColor = valueColor,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
         modifier = rowTapModifier(tappable, row, actions),

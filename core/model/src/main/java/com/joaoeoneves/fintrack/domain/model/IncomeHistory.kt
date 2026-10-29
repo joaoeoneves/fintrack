@@ -30,20 +30,14 @@ fun PlannedIncome.rowKey(): IncomeSourceKey.Row =
     }
 
 /**
- * The source [income] belongs to: a payday income (`pay_<lineId>_<yyyyMM>`) to its line's row; else a source
- * matching a line label (case/accent-insensitive, equal or a whole-word prefix of the label, see [matchingLine]) to
- * that line's
- * row; else [IncomeSourceKey.Named] by exact normalised source text.
+ * The source [income] belongs to: the row of its line by [lineOfIncome] (the one attribution rule); else [IncomeSourceKey.Named] by exact normalised source text.
  */
 fun incomeSourceOf(
     income: Income,
     lines: List<PlannedIncome>,
-): IncomeSourceKey {
-    val paydayLine = parsePaydayIncomeId(income.id)?.let { (lineId, _) -> lines.firstOrNull { it.id == lineId } }
-    val words = normalisedWords(income.source)
-    val labelLine = matchingLine(words, lines)
-    return (paydayLine ?: labelLine)?.rowKey() ?: IncomeSourceKey.Named(words.joinToString(" "))
-}
+): IncomeSourceKey =
+    lineOfIncome(income, lines)?.rowKey()
+        ?: IncomeSourceKey.Named(normalisedWords(income.source).joinToString(" "))
 
 /** One month of a source: what was [receivedCents] against what was [expectedCents] (`null` when not expected yet). */
 data class SourceMonth(

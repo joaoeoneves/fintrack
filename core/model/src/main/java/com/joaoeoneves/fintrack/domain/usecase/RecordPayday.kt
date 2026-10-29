@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.asOf
+import com.joaoeoneves.fintrack.domain.model.attributeIncomes
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.initialLineCursor
 import com.joaoeoneves.fintrack.domain.model.isActiveIn
@@ -106,10 +107,11 @@ class RecordPayday
         ): Int? {
             val labels = labelsProvider.current()
             val existing = existingIncomes(month, zone) ?: return null
+            val received = attributeIncomes(month, existing, lines)
             val missing =
                 lines
                     .filter { it.isActiveIn(month) && it.asOf(month) != null }
-                    .filter { line -> existing.none { it.id == paydayIncomeId(line.id, month) } }
+                    .filter { line -> received[line.id].isNullOrEmpty() }
                     .mapNotNull {
                         val amount = incomeMonth.amountIn(it, month)
                         val days = incomeMonth.workingDays(month)

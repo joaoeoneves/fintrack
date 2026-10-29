@@ -20,6 +20,8 @@ data class IncomeReceipts(
     val receivedOn: Map<String, LocalDate> = emptyMap(),
     /** The day the month's salary (or, without a salary line, every due line) was actually received; else `null`. */
     val receivedPayday: LocalDate? = null,
+    /** What each received row (keyed by [key]) actually brought in; may differ from its planned amount. */
+    val receivedCents: Map<String, Long> = emptyMap(),
 )
 
 /**

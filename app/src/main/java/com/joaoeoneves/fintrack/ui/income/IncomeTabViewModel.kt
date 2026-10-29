@@ -24,7 +24,7 @@ import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.looksLikeSalary
 import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
-import com.joaoeoneves.fintrack.domain.model.receivedOn
+import com.joaoeoneves.fintrack.domain.model.receivedIncomes
 import com.joaoeoneves.fintrack.domain.model.salaryComponent
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
@@ -422,10 +422,13 @@ private fun receiptsOf(
     zone: ZoneId,
 ): IncomeReceipts {
     val month = overview.budgetMonth
-    val received =
+    val allLines = rows.flatMap { it.lines }
+    val receivedRows =
         rows.mapNotNull { row ->
-            row.receivedOn(month, incomeMonth, overview.monthIncome, zone)?.let { row.key to it }
+            row.receivedIncomes(month, incomeMonth, overview.monthIncome, allLines)?.let { row to it }
         }
+    val received =
+        receivedRows.map { (row, incomes) -> row.key to incomes.maxOf { it.date }.atZone(zone).toLocalDate() }
     return IncomeReceipts(
         // The latest pay date of the rows that pay this month none without rows.
         payday = rows.filter { it.cents > 0L }.maxOfOrNull { it.payDateIn(month, incomeMonth) },
@@ -433,6 +436,7 @@ private fun receiptsOf(
         canReceive = month <= YearMonth.from(today),
         receivedOn = received.toMap(),
         receivedPayday = receivedPaydayOf(rows, received.toMap()),
+        receivedCents = receivedRows.associate { (row, incomes) -> row.key to incomes.sumOf { it.amountCents } },
     )
 }
 
