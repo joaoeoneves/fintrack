@@ -688,6 +688,7 @@
     <string name="plan_tile_envelopes">Envelopes</string>
     <string name="plan_tile_free">Disponível para gastar</string>
     <string name="plan_configure">Configurar</string>
+    <string name="salary_setup_done">Salário guardado</string>
     <string name="plan_configure_income">Rendimento</string>
     <string name="plan_configure_envelopes">Envelopes</string>
     <string name="plan_configure_bills">Recorrentes</string>

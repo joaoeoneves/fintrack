@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
+import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
@@ -34,6 +37,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 fun PlanScreen(
     onOpenSettings: () -> Unit,
+    onOpenConfigure: () -> Unit,
     navigation: PlanNavigation,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
 ) {
@@ -44,6 +48,7 @@ fun PlanScreen(
     )
     PlanScaffold(
         onOpenSettings = onOpenSettings,
+        onOpenConfigure = onOpenConfigure,
         snackbarHostState = snackbarHostState,
         viewModel = viewModel,
         navigation = navigation,
@@ -53,6 +58,7 @@ fun PlanScreen(
 @Composable
 private fun PlanScaffold(
     onOpenSettings: () -> Unit,
+    onOpenConfigure: () -> Unit,
     snackbarHostState: SnackbarHostState,
     viewModel: MonthlyPlanViewModel,
     navigation: PlanNavigation,
@@ -61,6 +67,13 @@ private fun PlanScaffold(
     LargeTitleScaffold(
         title = stringResource(R.string.nav_plan),
         navigationIcon = { AccountAvatar(onClick = onOpenSettings) },
+        actions = {
+            LabeledIconButton(
+                icon = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.plan_configure),
+                onClick = onOpenConfigure,
+            )
+        },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val annualViewModel: AnnualPlanViewModel = hiltViewModel()
@@ -152,19 +165,6 @@ private fun MonthlyPlanContent(
                     EnvelopeCardActions(
                         onOpenEnvelope = navigation.onOpenEnvelope,
                         onOpenEnvelopes = navigation.onOpenEnvelopes,
-                        onOpenCategories = navigation.onOpenCategories,
-                    ),
-                modifier = cardModifier,
-            )
-        }
-        item {
-            ConfigureSection(
-                status = state.configure,
-                actions =
-                    ConfigureActions(
-                        onOpenIncome = { navigation.onOpenIncome(state.period) },
-                        onOpenEnvelopes = navigation.onOpenEnvelopes,
-                        onOpenRecurring = navigation.onOpenRecurring,
                         onOpenCategories = navigation.onOpenCategories,
                     ),
                 modifier = cardModifier,
