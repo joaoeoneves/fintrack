@@ -229,6 +229,7 @@ private fun DashboardContent(
                 UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
             }
         }
+        recurringSuggestionItems(recurring = actions.blocks.recurring, visible = state.showsCurrentMonthBlocks)
         activityItems(state = state, callbacks = callbacks)
     }
 }

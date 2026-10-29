@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.dashboard
 
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.QuickAddSuggestion
+import com.joaoeoneves.fintrack.domain.model.RecurringCandidate
 import com.joaoeoneves.fintrack.domain.model.StartStep
 
 /**
@@ -32,4 +33,6 @@ data class DashboardCallbacks(
     val onOpenInvestments: (Period) -> Unit = {},
     /** Opens the new-expense form prefilled from a quick-add chip; never saves directly. */
     val onQuickAdd: (QuickAddSuggestion) -> Unit = {},
+    /** Opens the recurring editor prefilled from a "make it recurring?" suggestion. */
+    val onCreateRecurring: (RecurringCandidate) -> Unit = {},
 )

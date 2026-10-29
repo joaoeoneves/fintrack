@@ -15,6 +15,11 @@ import com.joaoeoneves.fintrack.domain.model.QuickAddSuggestion
 import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.ui.dashboard.quickadd.QuickAddRow
 import com.joaoeoneves.fintrack.ui.dashboard.quickadd.QuickAddViewModel
+import com.joaoeoneves.fintrack.ui.dashboard.recurring.RecurringSuggestionCard
+import com.joaoeoneves.fintrack.ui.dashboard.recurring.RecurringSuggestionModel
+import com.joaoeoneves.fintrack.ui.dashboard.recurring.RecurringSuggestionSnackbars
+import com.joaoeoneves.fintrack.ui.dashboard.recurring.RecurringSuggestionUiState
+import com.joaoeoneves.fintrack.ui.dashboard.recurring.RecurringSuggestionViewModel
 import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxCard
 import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxModel
 import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxSnackbars
@@ -35,9 +40,11 @@ data class HomeBlocks(
     val start: StartChecklistModel,
     val review: ReviewInboxModel,
     val quickAdd: List<QuickAddSuggestion>,
+    val recurring: RecurringSuggestionModel,
 )
 
 /** Creates the view models behind [HomeBlocks], collects their state and hosts their snackbars. */
+@Suppress("LongParameterList") // The defaulted view models are test seams.
 @Composable
 fun rememberHomeBlocks(
     start: StartChecklistModel,
@@ -45,13 +52,22 @@ fun rememberHomeBlocks(
     snackbarHostState: SnackbarHostState,
     reviewViewModel: ReviewInboxViewModel = hiltViewModel(),
     quickAddViewModel: QuickAddViewModel = hiltViewModel(),
+    recurringViewModel: RecurringSuggestionViewModel = hiltViewModel(),
 ): HomeBlocks {
     val reviewState by reviewViewModel.uiState.collectAsStateWithLifecycle()
     val quickAdd by quickAddViewModel.suggestions.collectAsStateWithLifecycle()
+    val recurringState by recurringViewModel.uiState.collectAsStateWithLifecycle()
     ReviewInboxSnackbars(reviewViewModel, snackbarHostState)
+    RecurringSuggestionSnackbars(recurringViewModel, snackbarHostState)
     return HomeBlocks(
         start = start,
         quickAdd = quickAdd,
+        recurring =
+            RecurringSuggestionModel(
+                state = recurringState,
+                onAccept = callbacks.onCreateRecurring,
+                onDismiss = recurringViewModel::onDismiss,
+            ),
         review =
             ReviewInboxModel(
                 state = reviewState,
@@ -110,6 +126,19 @@ internal fun LazyListScope.quickAddItems(
         item(key = "quick_add") {
             ScreenItem(Modifier.padding(top = SectionSpacing)) {
                 QuickAddRow(suggestions = blocks.quickAdd, onQuickAdd = callbacks.onQuickAdd)
+            }
+        }
+    }
+}
+
+internal fun LazyListScope.recurringSuggestionItems(
+    recurring: RecurringSuggestionModel,
+    visible: Boolean,
+) {
+    if (visible && recurring.state is RecurringSuggestionUiState.Visible) {
+        item(key = "recurring_suggestion") {
+            ScreenItem(Modifier.padding(top = SectionSpacing)) {
+                RecurringSuggestionCard(candidate = recurring.state.candidate, model = recurring)
             }
         }
     }

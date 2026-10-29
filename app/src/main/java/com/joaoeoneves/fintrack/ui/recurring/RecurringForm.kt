@@ -17,6 +17,7 @@ import com.joaoeoneves.fintrack.domain.model.paused
 import com.joaoeoneves.fintrack.domain.model.resumed
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.LocalDate
+import java.time.YearMonth
 
 /**
  * The add/edit recurring form as typed: text fields stay strings until [validateRecurringForm]
@@ -167,3 +168,28 @@ fun newRecurringForm(
         dayText = today.dayOfMonth.toString(),
         monthOfYear = today.monthValue,
     )
+
+/**
+ * A new monthly expense form prefilled from a "make it recurring?" suggestion. It starts on [day] of the month after
+ * [lastMonth] (clamped to that month's length), so auto-post does not add a duplicate of the month already paid.
+ * The [category] is only set when it is still usable; otherwise the user has to choose one.
+ */
+fun prefilledRecurringForm(
+    name: String,
+    amountCents: Long,
+    category: Category?,
+    day: Int,
+    lastMonth: YearMonth,
+): RecurringForm {
+    val month = lastMonth.plusMonths(1)
+    val billingDay = day.coerceIn(MIN_DAY_OF_MONTH, MAX_DAY_OF_MONTH)
+    val start = month.atDay(billingDay.coerceAtMost(month.lengthOfMonth()))
+    return RecurringForm(
+        startDate = start,
+        name = name.take(MAX_NAME_LENGTH),
+        amountCents = amountCents.takeIf { it in 1..MAX_AMOUNT_CENTS } ?: 0L,
+        category = category,
+        dayText = billingDay.toString(),
+        monthOfYear = start.monthValue,
+    )
+}

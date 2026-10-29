@@ -100,6 +100,8 @@ data class AddEditRecurring(
     val prefillAmountCents: Long? = null,
     val prefillCategoryId: String? = null,
     val prefillDay: Int? = null,
+    /** The latest month the suggested expense was seen in (`YYYY-MM`); the new item starts the month after. */
+    val prefillLastMonth: String? = null,
 )
 
 /**

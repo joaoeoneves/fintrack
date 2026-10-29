@@ -86,6 +86,17 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenInvestments = { period -> navController.navigate(InvestmentDetail(period.encode())) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
+                        onCreateRecurring = { candidate ->
+                            navController.navigate(
+                                AddEditRecurring(
+                                    prefillName = candidate.name,
+                                    prefillAmountCents = candidate.amountCents,
+                                    prefillCategoryId = candidate.categoryId.value,
+                                    prefillDay = candidate.dayOfMonth,
+                                    prefillLastMonth = candidate.lastMonth.toString(),
+                                ),
+                            )
+                        },
                         onQuickAdd = { chip ->
                             navController.navigate(
                                 AddEditExpense(
