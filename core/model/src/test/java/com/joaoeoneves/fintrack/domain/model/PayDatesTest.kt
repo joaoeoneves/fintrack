@@ -164,8 +164,7 @@ class PayDatesTest {
 
     // --- payDayEarlierIfClosed ---
 
-    private fun early(payDay: Int?) =
-        PlannedIncome("e", "Early", 100_000L, 0, payDay = payDay, payDayEarlierIfClosed = true)
+    private fun early(payDay: Int?) = PlannedIncome("e", "E", 100_000L, 0, payDay = payDay, payDayEarlierIfClosed = true)
 
     private fun d(
         y: Int,
@@ -295,7 +294,8 @@ class PayDatesTest {
                 payDay = 1,
                 payDayEarlierIfClosed = true,
             )
-        val profile = SalaryProfile(baseGrossCents = 200_000, irsBasePpm = 100_000, mealRatePerDayCents = 600)
+        val profile =
+            SalaryProfile(baseGrossCents = 200_000, irsBasePpm = 100_000, mealRatePerDayCents = 600)
         val lines = salaryProfileLines(profile, listOf(salary))
 
         assertTrue(lines.size >= 3)

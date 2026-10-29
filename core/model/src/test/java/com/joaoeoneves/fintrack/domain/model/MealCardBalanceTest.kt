@@ -41,7 +41,8 @@ class MealCardBalanceTest {
     @Test
     fun negativeBalance_isKeptAsIs() {
         assertEquals(-2_500, mealCardBalanceOf(1_000, listOf(spent("a", 3_500, true))).balanceCents)
-        assertEquals(-500, mealCardBalanceOf(0, listOf(spent("a", 1_000, true), spent("r", 500, true, true))).balanceCents)
+        val withRefund = listOf(spent("a", 1_000, true), spent("r", 500, true, true))
+        assertEquals(-500, mealCardBalanceOf(0, withRefund).balanceCents)
     }
 
     @Test

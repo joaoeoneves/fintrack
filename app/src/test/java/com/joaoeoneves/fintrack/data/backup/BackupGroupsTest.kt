@@ -47,8 +47,8 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
     @Test
     fun v20File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(20),
-            BackupCodec.decode("""{$header,"schemaVersion":20}"""),
+            BackupDecodeResult.UnsupportedVersion(21),
+            BackupCodec.decode("""{$header,"schemaVersion":21}"""),
         )
     }
 

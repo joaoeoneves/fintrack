@@ -33,9 +33,9 @@ class BackupCodecPlannedIncomeTest {
 
     @Test
     fun v20File_isUnsupported() {
-        val text = """{$header,"schemaVersion":20}"""
+        val text = """{$header,"schemaVersion":21}"""
 
-        assertEquals(BackupDecodeResult.UnsupportedVersion(20), BackupCodec.decode(text))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(21), BackupCodec.decode(text))
     }
 
     @Test
