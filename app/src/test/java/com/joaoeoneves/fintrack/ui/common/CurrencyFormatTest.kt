@@ -56,7 +56,12 @@ class CurrencyFormatTest {
     fun ptPt_eur_fourDigitGroupingSeparator_isTheLocalesOwn() {
         val raw = formatAmount(123_456L, CurrencyOption.EUR, ptPt)
 
-        assertEquals(java.text.DecimalFormatSymbols.getInstance(ptPt).groupingSeparator, raw[1])
+        assertEquals(
+            java.text.DecimalFormatSymbols
+                .getInstance(ptPt)
+                .groupingSeparator,
+            raw[1],
+        )
     }
 
     @Test
