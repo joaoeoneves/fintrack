@@ -30,7 +30,6 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.effectiveName
 import com.joaoeoneves.fintrack.domain.model.mergeCategories
-import java.text.Normalizer
 
 /** What already exists in the account (read from the server): ids of records and the stored categories. */
 data class RemoteAccountSnapshot(
@@ -81,23 +80,6 @@ data class MigrationPlan(
             monthSettings.size + categoryGroups.size + goals.size + (if (salaryProfile != null) 1 else 0) +
             (if (automation != null) 1 else 0)
 }
-
-private fun String.nameKey(): String = trim().lowercase()
-
-private val COMBINING_MARKS = Regex("\\p{M}+")
-private val WHITESPACE = Regex("\\s+")
-
-/** A label compared ignoring case, accents and extra spaces. */
-private fun String.labelKey(): String =
-    Normalizer
-        .normalize(trim().lowercase(), Normalizer.Form.NFD)
-        .replace(COMBINING_MARKS, "")
-        .replace(WHITESPACE, " ")
-
-private fun nameKindKey(
-    name: String,
-    kind: String,
-): String = "$kind:${name.nameKey()}"
 
 private class CategoryResolution(
     /** Local category id to the account category id it ends up as. */

@@ -66,8 +66,8 @@ internal fun validateGoal(goal: LocalSavingsGoal) {
     val end = goal.targetDate?.let(::requireGoalDate)
     require(end == null || end >= start) { "Target date is before start date" }
     require(goal.linkedRecurringIds.size <= MAX_GOAL_LINKED_RECURRING) { "Too many linked recurring items" }
-    goal.linkedCategoryId?.let(::requireCategoryIdShape)
-    goal.recurringId?.let(::requireCategoryIdShape)
+    goal.linkedCategoryId?.let { requireIdShape(it) }
+    goal.recurringId?.let { requireIdShape(it) }
 }
 
 private fun parseGoalDate(raw: String): LocalDate? =

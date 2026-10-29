@@ -18,6 +18,7 @@ import javax.inject.Inject
  * Builds backups from the current (session-switched) data and restores them into the guest store or the
  * signed-in account.
  */
+@Suppress("LongParameterList") // one collaborator per data source; bundling them would only hide the list
 class BackupRepository
     @Inject
     constructor(

@@ -60,9 +60,11 @@ internal fun RecurringItem.occursIn(month: YearMonth): Boolean = occurrenceIn(mo
 
 /** The date of this item's occurrence in [month], or `null` when it has none. */
 internal fun RecurringItem.occurrenceIn(month: YearMonth): LocalDate? {
-    if (!hasValidSchedule) return null
     val step = if (frequency == RecurringFrequency.YEARLY) MONTHS_PER_YEAR else 1
-    val months = YearMonth.from(firstScheduled()).until(month, ChronoUnit.MONTHS)
-    if (months < 0 || months % step != 0L) return null
-    return occurrence((months / step).toInt()).takeIf { endDate == null || it <= endDate }
+    val months = if (hasValidSchedule) YearMonth.from(firstScheduled()).until(month, ChronoUnit.MONTHS) else -1L
+    return if (months < 0 || months % step != 0L) {
+        null
+    } else {
+        occurrence((months / step).toInt()).takeIf { endDate == null || it <= endDate }
+    }
 }

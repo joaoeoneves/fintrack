@@ -30,7 +30,7 @@ internal fun Envelope.toLocal(): LocalCategoryGroup =
 
 /** Mirror of the firestore.rules check; throws [IllegalArgumentException] for a violation. */
 internal fun validateCategoryGroup(group: LocalCategoryGroup) {
-    requireCategoryIdShape(group.id)
+    requireIdShape(group.id)
     requireText(group.name, MAX_GROUP_NAME_LENGTH, "Envelope name")
     group.amountCents?.let {
         require(it in 1..MAX_AMOUNT_CENTS) { "Envelope amount must be 1..$MAX_AMOUNT_CENTS cents" }

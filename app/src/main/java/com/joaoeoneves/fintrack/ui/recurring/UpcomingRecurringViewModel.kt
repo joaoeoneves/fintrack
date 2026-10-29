@@ -220,4 +220,7 @@ class UpcomingRecurringViewModel
         }
     }
 
-private fun UpcomingOccurrence.undo(kind: Kind) = RecurringUndo(kind, item.id, item.name, date, item.handledThrough, item.type)
+private fun UpcomingOccurrence.undo(kind: Kind): RecurringUndo {
+    val handled = item.handledThrough
+    return RecurringUndo(kind, item.id, item.name, date, handled, item.type)
+}

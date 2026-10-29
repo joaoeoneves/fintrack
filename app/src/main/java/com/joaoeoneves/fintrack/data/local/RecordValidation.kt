@@ -60,7 +60,7 @@ internal fun validateBudget(
 
 /** A category is written whole; a built-in's override may leave the name null, a user one may not. */
 internal fun validateCategory(category: LocalCategory) {
-    requireCategoryIdShape(category.id)
+    requireIdShape(category.id)
     val name = category.name
     require(name == null || (name.isNotEmpty() && name.codePointLength() <= MAX_CATEGORY_NAME_LENGTH)) {
         "Category name must be 1..$MAX_CATEGORY_NAME_LENGTH characters"
@@ -68,18 +68,16 @@ internal fun validateCategory(category: LocalCategory) {
     require(KEY_REGEX.matches(category.iconKey) && category.iconKey.length <= MAX_KEY_LENGTH) { "Invalid icon key" }
     require(KEY_REGEX.matches(category.colorKey) && category.colorKey.length <= MAX_KEY_LENGTH) { "Invalid color key" }
     require(CategoryKind.entries.any { it.name == category.kind }) { "Invalid category kind ${category.kind}" }
-    category.groupId?.let(::requireCategoryIdShape)
+    category.groupId?.let { requireIdShape(it) }
     // Blank-after-trim counts as no name: the mappers treat it that way, so validation must agree.
     val builtIn = category.id in BuiltInCategories.all.map { it.id.value }
     require(builtIn || !name.isNullOrBlank()) { "A user category needs a name" }
 }
 
-internal fun requireCategoryIdShape(id: String) = requireIdShape(id, "category")
-
 /** The shape firestore.rules' `isCategoryIdShape` demands of an id: 1..64 characters of `[A-Za-z0-9_-]`. */
 internal fun requireIdShape(
     id: String,
-    what: String,
+    what: String = "category",
 ) {
     require(id.isNotEmpty() && id.length <= MAX_CATEGORY_ID_LENGTH && CATEGORY_ID_REGEX.matches(id)) {
         "Invalid $what id"
@@ -90,7 +88,7 @@ internal fun requireKnownCategory(
     id: String,
     known: Set<String>,
 ) {
-    requireCategoryIdShape(id)
+    requireIdShape(id)
     require(id in known) { "Unknown category $id" }
 }
 
