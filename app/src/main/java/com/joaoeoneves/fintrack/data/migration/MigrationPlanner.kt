@@ -247,7 +247,7 @@ private fun LocalPlannedIncome.withEarmarkRemapped(
     return if (target == null) copy(earmarkType = null, earmarkId = null) else copy(earmarkId = target)
 }
 
-private fun LocalBudget.validated(known: Set<String>) = validateBudget(categoryId, limitCents, known, skipMonths)
+private fun LocalBudget.validated(known: Set<String>) = validateBudget(this, known)
 
 private inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSuccess
 

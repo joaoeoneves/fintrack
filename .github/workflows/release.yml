@@ -52,7 +52,13 @@ jobs:
             case "$run" in
               "completed success") echo "CI passed on $GITHUB_SHA"; exit 0 ;;
               completed*) echo "::error::CI on $GITHUB_SHA did not pass ($run)"; exit 1 ;;
-              "null null") echo "::error::No CI run found for $GITHUB_SHA; release a commit that went through CI"; exit 1 ;;
+              # Right after a merge the CI run may not exist yet; give it a few minutes to appear.
+              "null null")
+                missing=$((${missing:-0} + 1))
+                if (( missing > 10 )); then
+                  echo "::error::No CI run found for $GITHUB_SHA; release a commit that went through CI"; exit 1
+                fi
+                echo "No CI run yet for $GITHUB_SHA, waiting…"; sleep 30 ;;
               *) echo "CI still running ($run), waiting…"; sleep 60 ;;
             esac
           done

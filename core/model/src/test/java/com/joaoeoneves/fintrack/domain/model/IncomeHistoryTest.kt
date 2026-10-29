@@ -114,33 +114,19 @@ class IncomeHistoryTest {
     }
 
     @Test
-    fun history_expectedNullBeforeTheLinesFirstPayday() {
+    fun history_expectedNullBeforeTheLinesStartMonth() {
         val months = listOf(ym(2026, 8), ym(2026, 9), ym(2026, 10))
-        val row = incomeHistoryOf(months, listOf(rentPay(2026, 9)), listOf(rent), off, zone, ym(2026, 10)).single()
+        val started = listOf(rent.copy(startMonth = ym(2026, 9)))
+        val row = incomeHistoryOf(months, listOf(rentPay(2026, 9)), started, off, zone, ym(2026, 10)).single()
         assertEquals(listOf(null, 20_000L, 20_000L), row.months.map { it.expectedCents })
     }
 
     @Test
-    fun history_rowNeverPaidViaPaydayId_hasNoExpected() {
+    fun history_manualPayment_stillShowsTheLinesExpected() {
         val manual = income("m1", "Rent", 20_000L, at(2026, 10, 1))
         val row = incomeHistoryOf(listOf(ym(2026, 10)), listOf(manual), listOf(rent), off, zone, ym(2026, 10)).single()
-        assertEquals(listOf<Long?>(null), row.months.map { it.expectedCents })
+        assertEquals(listOf<Long?>(20_000L), row.months.map { it.expectedCents })
         assertEquals(20_000L, row.receivedCents)
-    }
-
-    @Test
-    fun firstPaydayFundingMonth_earliestFundingMonthOfTheLinesPaydays_nullWhenNone() {
-        val paid = listOf(rentPay(2026, 10), rentPay(2026, 8), income("pay_other_202601", "x", 1L, at(2026, 1, 1)))
-        assertEquals(ym(2026, 8), firstPaydayFundingMonth(paid, setOf("rent"), listOf(rent), off, zone))
-        assertEquals(null, firstPaydayFundingMonth(paid, setOf("none"), listOf(rent), off, zone))
-        assertEquals(null, firstPaydayFundingMonth(emptyList(), setOf("rent"), listOf(rent), off, zone))
-    }
-
-    @Test
-    fun firstPaydayFundingMonth_usesTheShiftedFundingMonth() {
-        val pay = income("pay_sal_202609", "Salário líquido", 100_000L, at(2026, 9, 30))
-        assertEquals(ym(2026, 10), firstPaydayFundingMonth(listOf(pay), setOf("sal"), listOf(salary), on, zone))
-        assertEquals(ym(2026, 9), firstPaydayFundingMonth(listOf(pay), setOf("sal"), listOf(salary), off, zone))
     }
 
     @Test

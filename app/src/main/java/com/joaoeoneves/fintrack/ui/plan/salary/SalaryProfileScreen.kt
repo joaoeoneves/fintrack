@@ -36,6 +36,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import java.time.YearMonth
 
 /**
  * The salary profile: the user's gross (with rates) or net amounts, from which the plan's income lines are
@@ -77,6 +78,7 @@ fun SalaryProfileScreen(
                             SalaryProfileActions(
                                 onChange = viewModel::onFormChange,
                                 onDelete = viewModel::onDelete,
+                                onEffectiveFromChange = viewModel::onEffectiveFromChange,
                                 extras =
                                     SalaryExtraActions(
                                         onAdd = viewModel::onAddExtra,
@@ -139,6 +141,7 @@ internal data class SalaryExtraActions(
 internal data class SalaryProfileActions(
     val onChange: (SalaryForm) -> Unit,
     val onDelete: () -> Unit,
+    val onEffectiveFromChange: (YearMonth) -> Unit,
     val extras: SalaryExtraActions,
 )
 
@@ -173,6 +176,9 @@ private fun SalaryProfileContent(
         SubsidyMonthsSection(form, actions.onChange)
         MealSection(form, actions.onChange)
         SalaryExtrasSection(state, actions.extras.onAdd, actions.extras.onEdit)
+        if (state.showEffectiveFrom) {
+            SalaryEffectiveFrom(state.effectiveFrom, state.shiftSource, actions.onEffectiveFromChange)
+        }
         if (state.hasSavedProfile) {
             DestructiveTextButton(
                 text = stringResource(R.string.salary_delete),

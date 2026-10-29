@@ -65,10 +65,7 @@ fun incomeRowsIn(
     lines: List<PlannedIncome>,
     month: YearMonth,
     workingDays: Int,
-): List<IncomeRow> =
-    rowsOf(lines) { component, extraId, group ->
-        IncomeRow(component, group, group.sumOf { it.amountIn(month, workingDays) }, extraId = extraId)
-    }
+): List<IncomeRow> = incomeRowsIn(lines, month, IncomeFunding.unshifted(month, workingDays))
 
 /** The year's income rows like [incomeRowsIn], with the year's total and paying months; empty rows are dropped. */
 fun annualIncomeRowsOf(

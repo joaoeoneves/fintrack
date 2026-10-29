@@ -113,13 +113,14 @@ fun annualPlanOf(
 ): AnnualPlan {
     val months = (1..MONTHS_PER_YEAR).map { YearMonth.of(year, it) }
     val funding = IncomeFunding.of(inputs.shiftSalary, inputs.monthSettings)
-    val plannedByCategory = plannedByCategory(months, inputs)
+    val plannedByMonth = plannedByCategoryMonth(months, inputs)
+    val plannedByCategory = plannedByMonth.mapValues { (_, byMonth) -> byMonth.values.sum() }.filterValues { it > 0 }
     return AnnualPlan(
         year = year,
         income = annualIncomeOf(inputs.lines, months, funding),
-        envelopes = annualEnvelopesOf(plannedByCategory, inputs),
+        envelopes = annualEnvelopesOf(months, plannedByMonth, inputs),
         subscriptions = subscriptionsOf(year, inputs.recurring),
-        funding = annualFundingOf(inputs, months, funding, plannedByCategory),
+        funding = annualFundingOf(inputs, months, funding, plannedByMonth),
         goals = annualGoalsOf(months, inputs),
         savings = annualSavingsOf(plannedByCategory, inputs),
     )
@@ -161,11 +162,11 @@ private fun annualIncomeOf(
     return AnnualIncome(regular, extras, annualIncomeRowsOf(lines, months, funding))
 }
 
-/** Planned cents per category id over the year, only for categories with something planned. */
-private fun plannedByCategory(
+/** Planned cents per category id and month of the year, for categories with something planned. */
+private fun plannedByCategoryMonth(
     months: List<YearMonth>,
     inputs: AnnualPlanInputs,
-): Map<CategoryId, Long> {
+): Map<CategoryId, Map<YearMonth, Long>> {
     val budgetById = inputs.budgets.associateBy { it.categoryId }
     val recurringById =
         inputs.recurring
@@ -173,15 +174,38 @@ private fun plannedByCategory(
             .groupBy({ it.first }, { it.second })
     return (budgetById.keys + recurringById.keys)
         .associateWith { id ->
-            months.sumOf { plannedForCategory(it, budgetById[id], recurringById[id].orEmpty()).cents ?: 0L }
-        }.filterValues { it > 0 }
+            months.associateWith { plannedForCategory(it, budgetById[id], recurringById[id].orEmpty()).cents ?: 0L }
+        }.filterValues { byMonth -> byMonth.values.sum() > 0 }
+}
+
+/**
+ * What [envelope] plans in [month]: its fixed amount, else what its categories plan; 0 when it does not exist
+ * that month. Categories of an envelope not yet started are not in it (see [envelopeOfCategoryIn]).
+ */
+private fun envelopePlannedIn(
+    envelope: Envelope,
+    month: YearMonth,
+    inputs: AnnualPlanInputs,
+    plannedByMonth: Map<CategoryId, Map<YearMonth, Long>>,
+    includeSaving: Boolean,
+): Long {
+    val active = envelope.asOf(month) ?: return 0L
+    return active.amountCents
+        ?: plannedByMonth
+            .filter { (id, _) ->
+                inputs.categories.resolve(id).groupId == envelope.id &&
+                    (includeSaving || inputs.categories.resolve(id).kind != CategoryKind.SAVING)
+            }.values
+            .sumOf { it[month] ?: 0L }
 }
 
 private fun annualEnvelopesOf(
-    plannedByCategory: Map<CategoryId, Long>,
+    months: List<YearMonth>,
+    plannedByMonth: Map<CategoryId, Map<YearMonth, Long>>,
     inputs: AnnualPlanInputs,
 ): List<AnnualEnvelope> {
-    val envelopeIds = inputs.envelopes.mapTo(mutableSetOf()) { it.id }
+    val listed = inputs.envelopes.filter { envelope -> months.any { envelope.asOf(it) != null } }
+    val envelopeIds = listed.mapTo(mutableSetOf()) { it.id }
     val actualByCategory =
         inputs.yearExpenses
             .groupBy { it.category.id }
@@ -195,20 +219,29 @@ private fun annualEnvelopesOf(
             ?.takeIf { it in envelopeIds }
 
     fun isSaving(id: CategoryId) = inputs.categories.resolve(id).kind == CategoryKind.SAVING
-    val plannedByEnvelope =
-        plannedByCategory.entries.filterNot { isSaving(it.key) }.groupBy({ envelopeIdOf(it.key) }, { it.value })
     val actualByEnvelope =
         actualByCategory.entries.filterNot { isSaving(it.key) }.groupBy({ envelopeIdOf(it.key) }, { it.value })
 
-    fun annualEnvelope(envelope: Envelope?) =
+    // A category's plan in a month counts for its envelope only while that envelope exists (else it is "other").
+    val otherPlanned =
+        plannedByMonth.entries
+            .filterNot { isSaving(it.key) }
+            .sumOf { (id, byMonth) ->
+                val groupId = inputs.categories.resolve(id).groupId
+                val envelope = listed.firstOrNull { it.id == groupId }
+                byMonth.entries.filter { (month, _) -> envelope?.asOf(month) == null }.sumOf { it.value }
+            }
+
+    fun annualEnvelope(envelope: Envelope) =
         AnnualEnvelope(
-            envelope = envelope,
-            plannedCents =
-                envelope?.amountCents?.let { it * MONTHS_PER_YEAR } ?: plannedByEnvelope[envelope?.id].orEmpty().sum(),
-            actualCents = actualByEnvelope[envelope?.id].orEmpty().sum(),
+            envelope = months.asReversed().firstNotNullOfOrNull { envelope.asOf(it) } ?: envelope,
+            plannedCents = months.sumOf { envelopePlannedIn(envelope, it, inputs, plannedByMonth, false) },
+            actualCents = actualByEnvelope[envelope.id].orEmpty().sum(),
         )
-    val defined = inputs.envelopes.sortedWith(compareBy({ it.order }, { it.id })).map(::annualEnvelope)
-    val other = annualEnvelope(null).takeIf { it.plannedCents > 0 || it.actualCents > 0 }
+    val defined = listed.sortedWith(compareBy({ it.order }, { it.id })).map(::annualEnvelope)
+    val other =
+        AnnualEnvelope(null, otherPlanned, actualByEnvelope[null].orEmpty().sum())
+            .takeIf { it.plannedCents > 0 || it.actualCents > 0 }
     return defined + listOfNotNull(other)
 }
 
@@ -243,7 +276,7 @@ private fun annualFundingOf(
     inputs: AnnualPlanInputs,
     months: List<YearMonth>,
     funding: IncomeFunding,
-    plannedByCategory: Map<CategoryId, Long>,
+    plannedByMonth: Map<CategoryId, Map<YearMonth, Long>>,
 ): List<AnnualFunding> {
     val lineById = inputs.lines.filterNot { it.isExtra }.associateBy { it.id }
     val usedLines = mutableSetOf<String>()
@@ -257,11 +290,7 @@ private fun annualFundingOf(
                 envelope = envelope,
                 line = line,
                 incomeCents = months.sumOf { funding.amountIn(line, it) },
-                plannedCents =
-                    envelope.amountCents?.let { it * MONTHS_PER_YEAR }
-                        ?: plannedByCategory.entries
-                            .filter { (id, _) -> inputs.categories.resolve(id).groupId == envelope.id }
-                            .sumOf { it.value },
+                plannedCents = months.sumOf { envelopePlannedIn(envelope, it, inputs, plannedByMonth, true) },
             )
         }.filter { it.incomeCents > 0 || it.plannedCents > 0 }
 }

@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.data.session.SessionCategoryRepository
 import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Session
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -50,6 +51,7 @@ class ImportExportGuestRoundTripTest : LocalStoreTestBase() {
         val categories =
             SessionCategoryRepository(
                 sessions,
+                CoroutineScope(Dispatchers.Unconfined),
                 Lazy<FirestoreCategoryRepository> { error("no Firestore as guest") },
                 LocalCategoryRepository(store, ids),
             )

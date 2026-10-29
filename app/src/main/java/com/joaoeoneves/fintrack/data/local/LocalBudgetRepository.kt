@@ -1,10 +1,12 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.data.savedAs
 import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,10 +23,21 @@ class LocalBudgetRepository
             categoryId: CategoryId,
             limitCents: Long,
             skipMonths: Set<Int>,
+            effectiveFrom: YearMonth,
         ): Result<Unit> =
             store.update { doc ->
                 validateBudget(categoryId.value, limitCents, knownCategoryIds(doc), skipMonths)
-                val record = LocalBudget(categoryId.value, limitCents, skipMonths.sorted())
+                // Like the merge write of the signed-in store, the start month and versions are kept.
+                val existing = doc.budgets.find { it.categoryId == categoryId.value }?.toDomain()
+                val saved = existing.savedAs(categoryId, limitCents, skipMonths, effectiveFrom)
+                val record =
+                    LocalBudget(
+                        categoryId.value,
+                        saved.limitCents,
+                        skipMonths.sorted(),
+                        saved.startMonth?.toString(),
+                        saved.versions.toLocalVersions(),
+                    )
                 doc.copy(budgets = doc.budgets.upserted(record) { it.categoryId == record.categoryId }) to Unit
             }
 

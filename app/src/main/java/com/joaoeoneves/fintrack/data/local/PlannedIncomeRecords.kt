@@ -31,6 +31,8 @@ internal fun LocalPlannedIncome.toDomain(): PlannedIncome =
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
+        startMonth = startMonth.toYearMonthOrNull(),
+        versions = versions.toDomainVersions(),
     )
 
 internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
@@ -49,6 +51,8 @@ internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay,
+        startMonth = startMonth?.toString(),
+        versions = versions.toLocalVersions(),
     )
 
 /** The stored name of an earmark's kind (`CATEGORY` / `GROUP`), as persisted in `earmarkType`. */
@@ -98,6 +102,7 @@ internal fun validatePlannedIncome(line: LocalPlannedIncome) {
         "Skipped months must be at most 12 values of 1..12"
     }
     validateEarmark(line)
+    validatePlanTiming(line.startMonth, line.versions)
     require(line.payDay == null || line.payDay in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH) { "Pay day must be 1..31" }
     require(line.managedKey == null || isValidManagedKey(line.managedKey)) { "Invalid managed key ${line.managedKey}" }
     when (frequency) {
