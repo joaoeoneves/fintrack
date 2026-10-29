@@ -45,7 +45,8 @@ import java.time.ZoneId
 class AutomationSyncRetryTest {
     private val clock = Clock.fixed(Instant.parse("2026-03-20T10:00:00Z"), ZoneId.of("UTC"))
     private val income = FakeIncomeRepository()
-    private val plan = FakePlannedIncomeRepository(listOf(PlannedIncome("p1", "Salary", 100_000L, 0, autoRecord = true)))
+    private val autoLine = PlannedIncome("p1", "Salary", 100_000L, 0, autoRecord = true)
+    private val plan = FakePlannedIncomeRepository(listOf(autoLine))
     private val automation = FakeAutomationSettingsRepository(incomeRepo = income)
     private val repo = FakeRecurringRepository()
     private var reads = 0
@@ -91,12 +92,14 @@ class AutomationSyncRetryTest {
             assertTrue(automation.recorded.isEmpty())
 
             sync.onForeground()
-            advanceUntilIdle()
+            advanceTimeBy(BACKOFF_FIRST_RETRY_MS + 1)
+            runCurrent()
             assertEquals(listOf("pay_p1_202602"), automation.recorded.flatMap { it.second }.map { it.id })
             val readsAfter = reads
 
             sync.onForeground()
-            advanceUntilIdle()
+            advanceTimeBy(BACKOFF_MAX_WAIT_MS)
+            runCurrent()
 
             assertEquals(1, automation.recorded.size)
             assertEquals(readsAfter, reads)
@@ -125,5 +128,6 @@ class AutomationSyncRetryTest {
     private companion object {
         // 5 s base shifted by the number of earlier attempts (1).
         const val BACKOFF_FIRST_RETRY_MS = 10_000L
+        const val BACKOFF_MAX_WAIT_MS = 600_000L
     }
 }
