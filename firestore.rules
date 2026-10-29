@@ -255,7 +255,7 @@ service cloud.firestore {
     function isValidSalaryProfile(data) {
       return data.keys().hasOnly(['inputMode', 'baseGrossCents', 'subsidySpreadPpm', 'irsBasePpm', 'irsSubsidiesPpm',
           'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
-          'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth',
+          'mealRatePerDayCents', 'vacationDaysPerYear', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth',
           'extras', 'sector', 'mealPayment', 'otherDeductionsPpm', 'updatedAt'])
         && data.keys().hasAll(['inputMode'])
         && data.inputMode in ['GROSS', 'NET']
@@ -270,6 +270,7 @@ service cloud.firestore {
         && isOptionalInt(data, 'netHolidayLumpCents', 1, 100000000000)
         && isOptionalInt(data, 'netChristmasLumpCents', 1, 100000000000)
         && isOptionalInt(data, 'mealRatePerDayCents', 1, 100000000000)
+        && isOptionalInt(data, 'vacationDaysPerYear', 0, 60)
         && isOptionalInt(data, 'holidaySubsidyMonth', 1, 12) && isOptionalInt(data, 'christmasSubsidyMonth', 1, 12)
         && (!('mealSkipMonths' in data) || (data.mealSkipMonths is list && data.mealSkipMonths.size() <= 12))
         && (!('extras' in data) || isValidExtras(data.extras))

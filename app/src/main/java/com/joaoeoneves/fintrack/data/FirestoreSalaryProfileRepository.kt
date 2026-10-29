@@ -109,6 +109,7 @@ internal fun SalaryProfile.toFirestoreMap(): Map<String, Any?> =
         putIfSet("netHolidayLumpCents", netHolidayLumpCents)
         putIfSet("netChristmasLumpCents", netChristmasLumpCents)
         putIfSet("mealRatePerDayCents", mealRatePerDayCents)
+        putIfSet("vacationDaysPerYear", vacationDaysPerYear)
         putIfSet("sector", sector?.name)
         if (mealPayment != MealPayment.CARD) put("mealPayment", mealPayment.name)
         if (otherDeductionsPpm != 0) put("otherDeductionsPpm", otherDeductionsPpm)
@@ -158,6 +159,7 @@ private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
         netHolidayLumpCents = getLong("netHolidayLumpCents"),
         netChristmasLumpCents = getLong("netChristmasLumpCents"),
         mealRatePerDayCents = getLong("mealRatePerDayCents"),
+        vacationDaysPerYear = int("vacationDaysPerYear"),
         mealSkipMonths =
             (get("mealSkipMonths") as? List<*>)?.mapNotNull { (it as? Number)?.toInt() }?.toSet()
                 ?: defaults.mealSkipMonths,

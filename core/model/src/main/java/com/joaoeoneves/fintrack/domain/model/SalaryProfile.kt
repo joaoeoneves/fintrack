@@ -25,6 +25,15 @@ val SUBSIDY_SPREADS_PPM: List<Int> = listOf(SPREAD_NONE_PPM, SPREAD_HALF_PPM, SP
 /** Default social-security rate (11%). */
 const val DEFAULT_SS_PPM = 110_000
 
+/** Vacation days a year assumed when the profile gives none. */
+const val DEFAULT_VACATION_DAYS = 22
+
+/** Highest valid [SalaryProfile.vacationDaysPerYear]. */
+const val MAX_VACATION_DAYS = 60
+
+/** The vacation days a year to plan with: the profile's own or [DEFAULT_VACATION_DAYS]. */
+val SalaryProfile?.vacationDays: Int get() = this?.vacationDaysPerYear ?: DEFAULT_VACATION_DAYS
+
 const val DEFAULT_HOLIDAY_SUBSIDY_MONTH = 6
 const val DEFAULT_CHRISTMAS_SUBSIDY_MONTH = 12
 
@@ -91,6 +100,8 @@ data class SalaryProfile(
     val netHolidayLumpCents: Long? = null,
     val netChristmasLumpCents: Long? = null,
     val mealRatePerDayCents: Long? = null,
+    /** Vacation days a year (0..[MAX_VACATION_DAYS]); `null` means [DEFAULT_VACATION_DAYS]. */
+    val vacationDaysPerYear: Int? = null,
     /** Legacy: no longer written nor used to generate lines (the meal allowance is paid every month). */
     val mealSkipMonths: Set<Int> = emptySet(),
     val holidaySubsidyMonth: Int = DEFAULT_HOLIDAY_SUBSIDY_MONTH,
