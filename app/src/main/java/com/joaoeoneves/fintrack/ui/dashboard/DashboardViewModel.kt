@@ -122,9 +122,10 @@ class DashboardViewModel
                 netCents = summary.netCents,
                 plan = plan,
                 envelopes = envelopes,
+                figures = figures,
                 dailyAllowance =
                     if (isCurrentMonth) {
-                        val safe = envelopes.freeCents
+                        val safe = figures.availableCents
                         dailyAllowanceOf(safe, budgetMonth, now.atZone(zone).toLocalDate())
                     } else {
                         null

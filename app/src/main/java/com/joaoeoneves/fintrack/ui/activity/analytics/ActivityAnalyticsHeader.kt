@@ -32,7 +32,7 @@ import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 
 /**
  * The top of Activity: period tabs and selector, the big "Spent" total, fixed vs variable, the envelope bar with
- * its filter chips and a collapsed "Show breakdown" with the category/envelope breakdown.
+ * its filter chips and the category/envelope breakdown; everything below the total sits behind a "Show details" toggle.
  */
 @Suppress("LongParameterList") // the header is fed straight from the screen state
 @Composable
@@ -43,6 +43,7 @@ fun ActivityAnalyticsHeader(
     selectedEnvelope: String?,
     actions: ActivityAnalyticsActions,
     modifier: Modifier = Modifier,
+    showSpent: Boolean = true,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
@@ -61,33 +62,60 @@ fun ActivityAnalyticsHeader(
             alignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
         )
-        Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
-            Text(
-                text = stringResource(R.string.activity_spent_total),
-                style = MaterialTheme.typography.labelMedium,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-            Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
-            if (analytics.split.spendingCents > 0) {
-                SpendingSplitCard(split = analytics.split, modifier = Modifier.padding(top = Dimens.Space16))
+        if (showSpent) {
+            Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
+                Text(
+                    text = stringResource(R.string.activity_spent_total),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+                Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
             }
+        }
+        val hasDetails =
+            (showSpent && analytics.split.spendingCents > 0) ||
+                analytics.envelopeChips.isNotEmpty() ||
+                !analytics.breakdown.isEmpty
+        if (hasDetails) {
+            SectionAction(
+                text =
+                    stringResource(
+                        if (expanded) R.string.activity_hide_breakdown else R.string.activity_show_breakdown,
+                    ),
+                onClick = { expanded = !expanded },
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+            )
+        }
+        if (hasDetails && expanded) {
+            AnalyticsDetails(analytics, selectedEnvelope, actions, showSpent)
+        }
+    }
+}
+
+/** The collapsible detail: fixed vs variable, the envelope bar with its filter chips and the breakdown. */
+@Composable
+private fun AnalyticsDetails(
+    analytics: ActivityAnalytics,
+    selectedEnvelope: String?,
+    actions: ActivityAnalyticsActions,
+    showSpent: Boolean,
+) {
+    Column {
+        if (showSpent && analytics.split.spendingCents > 0) {
+            SpendingSplitCard(
+                split = analytics.split,
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
+            )
         }
         if (analytics.envelopeChips.isNotEmpty()) {
             EnvelopeFilterSection(analytics.envelopeChips, selectedEnvelope, actions.onEnvelopeSelected)
         }
         if (!analytics.breakdown.isEmpty) {
-            Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
-                SectionAction(
-                    text =
-                        stringResource(
-                            if (expanded) R.string.activity_hide_breakdown else R.string.activity_show_breakdown,
-                        ),
-                    onClick = { expanded = !expanded },
-                )
-                if (expanded) {
-                    BreakdownCard(breakdown = analytics.breakdown, onCategoryClick = actions.onCategorySelected)
-                }
-            }
+            BreakdownCard(
+                breakdown = analytics.breakdown,
+                onCategoryClick = actions.onCategorySelected,
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+            )
         }
     }
 }
@@ -102,12 +130,28 @@ private fun EnvelopeFilterSection(
     val noEnvelope = stringResource(R.string.plan_group_other)
     val spoken = chips.map { "${it.name ?: noEnvelope} ${formatAmountCents(it.spentCents, false)}" }.joinToString("; ")
     val description = stringResource(R.string.cd_envelope_bar, spoken)
+    val colors = chips.indices.map { sliceColorFor(it, dark) }
+    val selectedIndex = chips.indexOfFirst { it.id == selected }.takeIf { it >= 0 }
     EnvelopeSpendBar(
-        segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, sliceColorFor(index, dark)) },
+        segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, colors[index]) },
         description = description,
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
+        selectedIndex = selectedIndex,
+        onSegmentClick = { index ->
+            val id = chips[index].id
+            onSelected(if (id == selected) null else id)
+        },
     )
-    EnvelopeFilterRow(chips = chips, selected = selected, onSelected = onSelected)
+    val shown = selectedIndex?.let { chips[it] }
+    if (shown != null) {
+        Text(
+            text = "${shown.name ?: noEnvelope} · ${formatAmountCents(shown.spentCents)}",
+            style = MaterialTheme.typography.labelMedium,
+            color = colors[selectedIndex],
+            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(bottom = Dimens.Space8),
+        )
+    }
+    EnvelopeFilterRow(chips = chips, selected = selected, onSelected = onSelected, dotColors = colors)
 }
 
 /** The breakdown with a Category | Envelope switch (only when envelopes exist; otherwise just by category). */

@@ -97,8 +97,9 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             vm.onEnvelopeSelected(null)
             advanceUntilIdle()
 
+            // Selecting an envelope moved to the Expenses tab, which clearing it does not undo.
             assertNull(current(vm).filters.envelope)
-            assertEquals(setOf("lunch", "rent", "mug", "salary"), current(vm).ids())
+            assertEquals(setOf("lunch", "rent", "mug"), current(vm).ids())
         }
 
     @Test
@@ -225,7 +226,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
 
             assertNull(content.filters.envelope)
             assertNull(content.categoryScope)
-            assertEquals(setOf("lunch", "rent", "mug", "salary"), content.ids())
+            assertEquals(setOf("lunch", "rent", "mug"), content.ids())
         }
 
     @Test
@@ -240,8 +241,9 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             envelopeRepo.deleteEnvelope(foodEnvelope)
             advanceUntilIdle()
 
+            // Selecting an envelope moved to the Expenses tab, which clearing it does not undo.
             assertNull(current(vm).filters.envelope)
-            assertEquals(setOf("lunch", "rent", "mug", "salary"), current(vm).ids())
+            assertEquals(setOf("lunch", "rent", "mug"), current(vm).ids())
         }
 
     @Test

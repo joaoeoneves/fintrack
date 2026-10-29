@@ -7,13 +7,16 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
+import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
 import com.joaoeoneves.fintrack.domain.usecase.ReceiveRequest
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.domain.usecase.RecurringOverview
+import com.joaoeoneves.fintrack.domain.usecase.UndoRecurringOccurrence
 import com.joaoeoneves.fintrack.ui.common.UiText
+import com.joaoeoneves.fintrack.ui.recurring.RecurringUndo.Kind
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -51,6 +54,17 @@ sealed interface UpcomingRecurringUiState {
     ) : UpcomingRecurringUiState
 }
 
+/** What a confirm or skip of a recurring occurrence did, kept so the snackbar can take it back. */
+data class RecurringUndo(
+    val kind: Kind,
+    val itemId: String,
+    val itemName: String,
+    val date: LocalDate,
+    val previousHandledThrough: LocalDate?,
+) {
+    enum class Kind { CONFIRMED, SKIPPED }
+}
+
 /** Drives the dashboard's upcoming-recurring card: what is due now (Confirm / Skip) and the income to mark received. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -61,17 +75,18 @@ class UpcomingRecurringViewModel
         observeExpectedIncome: ObserveExpectedIncome,
         private val handleRecurringOccurrence: HandleRecurringOccurrence,
         private val recordPayday: RecordPayday,
+        private val undoRecurringOccurrence: UndoRecurringOccurrence,
         private val clock: Clock,
     ) : ViewModel() {
         private val retryTrigger = MutableStateFlow(0)
         private val errors = Channel<UiText>(Channel.BUFFERED)
-        private val messages = Channel<String>(Channel.BUFFERED)
+        private val undos = Channel<RecurringUndo>(Channel.BUFFERED)
 
         /** One-shot user-facing messages for confirm/skip writes that failed, shown as a snackbar. */
         val errorEvent: Flow<UiText> = errors.receiveAsFlow()
 
-        /** The name of each item whose occurrence was just confirmed, for an "Added ..." snackbar. */
-        val messageEvent: Flow<String> = messages.receiveAsFlow()
+        /** Each confirm or skip just done, for a snackbar with "Undo" (see [onUndo]). */
+        val undoEvent: Flow<RecurringUndo> = undos.receiveAsFlow()
 
         val uiState: StateFlow<UpcomingRecurringUiState> =
             retryTrigger
@@ -102,12 +117,30 @@ class UpcomingRecurringViewModel
             retryTrigger.value++
         }
 
-        fun onConfirm(row: UpcomingOccurrence) {
+        /** Confirms [row], with [amountCents] instead of the item's amount when set (a bill that varies). */
+        fun onConfirm(
+            row: UpcomingOccurrence,
+            amountCents: Long? = null,
+        ) {
             viewModelScope.launch {
                 handleRecurringOccurrence
-                    .confirm(row.item.id, row.date, LocalDate.now(clock), clock.zone)
-                    .onSuccess { messages.send(row.item.name) }
+                    .confirm(row.item.id, row.date, LocalDate.now(clock), clock.zone, amountCents)
+                    .onSuccess { undos.send(row.undo(RecurringUndo.Kind.CONFIRMED)) }
                     .onFailure { reportFailure(it) }
+            }
+        }
+
+        /** Takes back the confirm or skip described by [undo]. */
+        fun onUndo(undo: RecurringUndo) {
+            viewModelScope.launch {
+                val result =
+                    when (undo.kind) {
+                        RecurringUndo.Kind.CONFIRMED ->
+                            undoRecurringOccurrence.undoConfirm(undo.itemId, undo.date, undo.previousHandledThrough)
+                        RecurringUndo.Kind.SKIPPED ->
+                            undoRecurringOccurrence.undoSkip(undo.itemId, undo.date, undo.previousHandledThrough)
+                    }
+                result.onFailure { reportFailure(it) }
             }
         }
 
@@ -116,30 +149,55 @@ class UpcomingRecurringViewModel
             row: IncomeRow,
             date: LocalDate,
             amountCents: Long?,
-        ) {
-            val content = uiState.value as? UpcomingRecurringUiState.Content ?: return
-            val expected = content.expectedIncome ?: return
+        ): () -> Unit {
+            val content = uiState.value as? UpcomingRecurringUiState.Content
+            val expected = content?.expectedIncome
+            if (content == null || expected == null) return {}
+            // The row may fund a later plan month with what is paid this month (or last): each part is
+            // recorded under the month it is paid in.
+            val planMonth = expected.entries.firstOrNull { it.row == row }?.planMonth ?: expected.month
+            val byPayMonth = row.payingLinesByPayMonth(planMonth, expected.funding)
             viewModelScope.launch {
-                val request =
-                    ReceiveRequest(
-                        lines = row.lines,
-                        month = expected.month,
-                        workingDays = expected.workingDays,
-                        date = date,
-                        today = content.today,
-                        zone = clock.zone,
-                        amountOverrideCents = amountCents,
-                    )
-                recordPayday.receive(request).onFailure {
-                    Log.w(TAG, "Failed to record the received income", it)
-                    errors.send(UiText.StringResource(R.string.error_plan_save_failed))
+                for ((payMonth, lines) in byPayMonth) {
+                    val request =
+                        ReceiveRequest(
+                            lines = lines,
+                            month = payMonth,
+                            workingDays = expected.funding.workingDays(payMonth),
+                            date = date,
+                            today = content.today,
+                            zone = clock.zone,
+                            amountOverrideCents = amountCents,
+                        )
+                    val failure = recordPayday.receive(request).exceptionOrNull()
+                    if (failure != null) {
+                        Log.w(TAG, "Failed to record the received income", failure)
+                        errors.send(UiText.StringResource(R.string.error_plan_save_failed))
+                        break
+                    }
                 }
+            }
+            return {
+                viewModelScope.launch {
+                    for ((payMonth, lines) in byPayMonth) {
+                        val failure = recordPayday.unreceive(lines, payMonth, clock.zone).exceptionOrNull()
+                        if (failure != null) {
+                            Log.w(TAG, "Failed to undo the received income", failure)
+                            errors.send(UiText.StringResource(R.string.error_plan_save_failed))
+                            break
+                        }
+                    }
+                }
+                Unit
             }
         }
 
         fun onSkip(row: UpcomingOccurrence) {
             viewModelScope.launch {
-                handleRecurringOccurrence.skip(row.item.id, row.date).onFailure { reportFailure(it) }
+                handleRecurringOccurrence
+                    .skip(row.item.id, row.date)
+                    .onSuccess { undos.send(row.undo(RecurringUndo.Kind.SKIPPED)) }
+                    .onFailure { reportFailure(it) }
             }
         }
 
@@ -148,3 +206,5 @@ class UpcomingRecurringViewModel
             errors.send(UiText.StringResource(R.string.error_recurring_save_failed))
         }
     }
+
+private fun UpcomingOccurrence.undo(kind: Kind) = RecurringUndo(kind, item.id, item.name, date, item.handledThrough)

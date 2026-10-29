@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.InstantRange
+import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
@@ -30,6 +31,7 @@ sealed interface DashboardUiState {
      * @property chartExpenses [expenses] without the saving-kind ones: the balance chart ends at [netCents].
      * @property fixedSpendingCents the part of [spendingCents] that came from recurring items; the rest is variable.
      * @property envelopes the month's envelopes and free money; `null` falls back to the plain plan.
+     * @property figures the month's subtraction shared with the plan (carry + income - ... = available).
      * @property savingsRate [savedCents] as a fraction of [incomeCents], `null` without income.
      */
     data class Content(
@@ -52,9 +54,10 @@ sealed interface DashboardUiState {
         val fixedSpendingCents: Long = 0L,
         val chartExpenses: List<Expense> = expenses,
         val envelopes: EnvelopesSummary? = null,
+        val figures: MonthFigures? = null,
     ) : DashboardUiState {
-        /** What is free to spend: the envelopes' free money (the plan's safe-to-spend without envelopes). */
-        val safeToSpendCents: Long get() = envelopes?.freeCents ?: plan.safeToSpendCents
+        /** What is available to spend: the month figures' total (else the envelopes' free money, else the plan's). */
+        val safeToSpendCents: Long get() = figures?.availableCents ?: envelopes?.freeCents ?: plan.safeToSpendCents
     }
 
     data class Error(

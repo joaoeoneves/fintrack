@@ -62,7 +62,7 @@ fun envelopeCardOf(progress: EnvelopeProgress): EnvelopeCardUi {
     val hasBudgetRow = progress.rows.any { it.plannedSource == PlannedSource.BUDGET }
     val amount = progress.amountCents
     return when {
-        amount != null && (envelope.amountCents != null || hasBudgetRow) ->
+        amount != null && amount > 0L && (envelope.amountCents != null || hasBudgetRow) ->
             EnvelopeCardUi.Budgeted(
                 id = envelope.id,
                 name = envelope.name,
@@ -72,7 +72,7 @@ fun envelopeCardOf(progress: EnvelopeProgress): EnvelopeCardUi {
                 overflowCents = progress.overflowCents,
                 fundingCents = progress.fundingCents ?: 0L,
             )
-        amount != null && progress.rows.any { it.plannedSource == PlannedSource.RECURRING } ->
+        amount != null && amount > 0L && progress.rows.any { it.plannedSource == PlannedSource.RECURRING } ->
             EnvelopeCardUi.BillsOnly(
                 id = envelope.id,
                 name = envelope.name,

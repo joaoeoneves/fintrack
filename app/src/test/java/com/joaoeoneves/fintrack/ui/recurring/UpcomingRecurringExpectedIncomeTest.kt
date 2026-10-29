@@ -3,16 +3,19 @@ package com.joaoeoneves.fintrack.ui.recurring
 import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
+import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
+import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
+import com.joaoeoneves.fintrack.domain.usecase.UndoRecurringOccurrence
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +73,7 @@ class UpcomingRecurringExpectedIncomeTest {
                 FakeAutomationSettingsRepository(),
                 FakeSalaryLineLabelsProvider(),
             ),
+            UndoRecurringOccurrence(recurring, FakeExpenseRepository()),
             clock,
         )
     }
@@ -131,6 +135,34 @@ class UpcomingRecurringExpectedIncomeTest {
                     .single()
                     .amountCents,
             )
+        }
+
+    @Test
+    fun onReceiveIncome_undo_removesTheIncome_andTheRowReturns() =
+        runTest(dispatcher) {
+            val vm = viewModel()
+            val row = content(vm).expectedIncome!!.rows.single()
+            val undo = vm.onReceiveIncome(row, LocalDate.of(2026, 10, 27), null)
+            advanceUntilIdle()
+            assertEquals(1, incomes.getAllIncome().getOrThrow().size)
+
+            undo()
+            advanceUntilIdle()
+
+            assertTrue(incomes.getAllIncome().getOrThrow().isEmpty())
+            assertEquals(1, content(vm).expectedIncome!!.rows.size)
+        }
+
+    @Test
+    fun onReceiveIncome_beforeContentLoads_returnsANoOpUndo() =
+        runTest(dispatcher) {
+            val vm = viewModel()
+
+            val undo = vm.onReceiveIncome(IncomeRow(null, emptyList(), 0L), LocalDate.of(2026, 10, 27), null)
+            undo()
+            advanceUntilIdle()
+
+            assertTrue(incomes.getAllIncome().getOrThrow().isEmpty())
         }
 
     @Test

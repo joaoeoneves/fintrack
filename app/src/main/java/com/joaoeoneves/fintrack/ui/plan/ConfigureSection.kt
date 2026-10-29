@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -8,29 +10,23 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
-import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 
-/** The "Set up" group: income, envelopes, bills and categories, each with a one-line status. */
+/**
+ * The rows of the "Set up" screen: income, envelopes, bills and categories, each with a one-line status.
+ * [extraRows] is the place for further global set-up rows (each preceded by its own [Hairline]).
+ */
 @Composable
 fun ConfigureSection(
     status: ConfigureStatus,
     actions: ConfigureActions,
     modifier: Modifier = Modifier,
+    extraRows: @Composable ColumnScope.() -> Unit = {},
 ) {
-    SettingsGroup(label = stringResource(R.string.plan_configure), modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth()) {
         SettingsRow(
             title = stringResource(R.string.plan_configure_income),
-            supportingText =
-                if (status.incomeLineCount > 0) {
-                    stringResource(
-                        R.string.plan_configure_income_status,
-                        formatAmountCents(status.incomeMonthlyCents),
-                        status.incomeLineCount,
-                    )
-                } else {
-                    stringResource(R.string.plan_configure_not_set)
-                },
+            supportingText = incomeStatus(status),
             onClick = actions.onOpenIncome,
             showChevron = true,
         )
@@ -74,5 +70,18 @@ fun ConfigureSection(
             onClick = actions.onOpenCategories,
             showChevron = true,
         )
+        extraRows()
     }
 }
+
+@Composable
+private fun incomeStatus(status: ConfigureStatus): String =
+    if (status.incomeLineCount > 0) {
+        stringResource(
+            R.string.plan_configure_income_status,
+            formatAmountCents(status.incomeMonthlyCents),
+            status.incomeLineCount,
+        )
+    } else {
+        stringResource(R.string.plan_configure_not_set)
+    }

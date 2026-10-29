@@ -95,13 +95,17 @@ class AddEditRecurringViewModelSaveTest : AddEditRecurringViewModelTestBase() {
         }
 
     @Test
-    fun delete_removesItem_andEmitsSavedEvent_orReportsFailure() =
+    fun delete_removesItem_andEmitsDeletedEvent_notSavedEvent_orReportsFailure() =
         runTest(testDispatcher) {
             val item = recurringItem(id = "r5")
             val repo = FakeRecurringRepository(listOf(item))
             val vm = viewModel(repo, id = "r5")
             var saved = 0
+            val deleted = mutableListOf<String>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.savedEvent.collect { saved++ } }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                vm.deletedEvent.collect { deleted += it.id }
+            }
             advanceUntilIdle()
 
             repo.nextDeleteError = IllegalStateException("boom")
@@ -110,11 +114,12 @@ class AddEditRecurringViewModelSaveTest : AddEditRecurringViewModelTestBase() {
             assertNotNull(vm.ready().saveError)
             assertFalse(vm.ready().isSaving)
             assertEquals(1, repo.items.size)
-            assertEquals(0, saved)
+            assertTrue(deleted.isEmpty())
 
             vm.onDelete()
             advanceUntilIdle()
             assertTrue(repo.items.isEmpty())
-            assertEquals(1, saved)
+            assertEquals(listOf("r5"), deleted)
+            assertEquals(0, saved)
         }
 }

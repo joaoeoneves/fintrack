@@ -88,16 +88,16 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
         }
 
     @Test
-    fun onTypeSelected_filtersList_andKeepsTotalsUnfiltered() =
+    fun onTypeSelected_filtersList_andTotalsFollowIt() =
         runTest(testDispatcher) {
             val vm = fixture().vm
-            val before = content(vm).totals
+            content(vm)
 
             vm.onTypeSelected(ActivityType.INCOME)
             advanceUntilIdle()
 
             assertEquals(listOf("salary"), ids(current(vm).items))
-            assertEquals(before, current(vm).totals)
+            assertEquals(ActivityTotals(inCents = 250_000L, outCents = 0L), current(vm).totals)
             assertEquals(ActivityType.INCOME, vm.type.value)
         }
 
@@ -142,11 +142,12 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
 
             vm.onCategorySelected(null)
             advanceUntilIdle()
-            assertEquals(3, current(vm).items.size)
+            assertEquals(ActivityType.EXPENSE, current(vm).filters.type)
+            assertEquals(2, current(vm).items.size)
         }
 
     @Test
-    fun onCategorySelected_withIncomeType_doesNotHideIncome() =
+    fun onCategorySelected_fromIncomeTab_switchesToExpenses() =
         runTest(testDispatcher) {
             val vm = fixture(args("type" to "INCOME")).vm
             content(vm)
@@ -154,7 +155,8 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
             vm.onCategorySelected(BuiltInCategories.FOOD.id)
             advanceUntilIdle()
 
-            assertEquals(listOf("salary"), ids(current(vm).items))
+            assertEquals(ActivityType.EXPENSE, current(vm).filters.type)
+            assertEquals(listOf("food"), ids(current(vm).items))
         }
 
     @Test
@@ -229,7 +231,8 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
             val restored = fixture.recreate()
 
             assertNull(content(restored).filters.category)
-            assertEquals(3, current(restored).items.size)
+            // The route category put the list on the Expenses tab; clearing it keeps that tab.
+            assertEquals(2, current(restored).items.size)
         }
 
     @Test
@@ -250,7 +253,7 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
 
             assertEquals(expenseObserves, fixture.expenseRepo.listeners.observedRanges.size)
             assertEquals(incomeObserves, fixture.incomeRepo.listeners.observedRanges.size)
-            assertEquals(1, fixture.expenseRepo.listeners.active)
-            assertEquals(1, fixture.incomeRepo.listeners.active)
+            assertEquals(2, fixture.expenseRepo.listeners.active)
+            assertEquals(2, fixture.incomeRepo.listeners.active)
         }
 }

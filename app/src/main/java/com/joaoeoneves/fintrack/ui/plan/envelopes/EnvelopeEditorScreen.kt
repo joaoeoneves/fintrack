@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -38,23 +37,22 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.codePointLength
-import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.EditorScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
-import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
-import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.plan.label
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -116,27 +114,18 @@ fun EnvelopeEditorScreen(
             )
         }
     val content = state as? EnvelopeEditorUiState.Content
-    LargeTitleScaffold(
+    EditorScaffold(
         title =
             stringResource(
                 if (content?.isNew == false) R.string.envelope_edit_title else R.string.envelope_new_title,
             ),
+        dirty = rememberIsDirty(content?.draft),
         onBack = onBack,
+        onSave = actions.onSave,
+        saving = content?.saving == true,
+        showSave = content != null,
         modifier = modifier,
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (content != null) {
-                PrimaryPillButton(
-                    text = stringResource(R.string.action_save),
-                    onClick = actions.onSave,
-                    loading = content.saving,
-                    modifier =
-                        Modifier
-                            .navigationBarsPadding()
-                            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12),
-                )
-            }
-        },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (val current = state) {
@@ -156,7 +145,6 @@ private fun EditorBody(
     actions: EditorActions,
     modifier: Modifier,
 ) {
-    var confirmingDelete by remember { mutableStateOf(false) }
     Column(
         modifier =
             modifier
@@ -184,22 +172,10 @@ private fun EditorBody(
         if (!state.isNew) {
             DestructiveTextButton(
                 text = stringResource(R.string.envelope_delete),
-                onClick = { confirmingDelete = true },
+                onClick = actions.onDelete,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
         }
-    }
-    if (confirmingDelete) {
-        ConfirmRemoveDialog(
-            title = stringResource(R.string.envelope_delete),
-            message = stringResource(R.string.envelope_delete_confirm, state.draft.name),
-            confirmLabel = stringResource(R.string.action_delete),
-            onConfirm = {
-                confirmingDelete = false
-                actions.onDelete()
-            },
-            onDismiss = { confirmingDelete = false },
-        )
     }
 }
 
@@ -228,6 +204,17 @@ private fun BudgetModeSection(
         if (state.draft.mode == EnvelopeBudgetMode.NONE) {
             Text(
                 text = stringResource(R.string.envelope_mode_none_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+        }
+        val dropsLimits =
+            state.draft.mode != EnvelopeBudgetMode.PER_CATEGORY &&
+                state.draft.limits.values
+                    .any { (it ?: 0L) > 0L }
+        if (dropsLimits) {
+            Text(
+                text = stringResource(R.string.envelope_limits_dropped_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
             )
@@ -267,6 +254,12 @@ private fun CategoriesSection(
             enabled = state.addable.isNotEmpty(),
             modifier = Modifier.fillMaxWidth().padding(top = Dimens.Space8),
         )
+        Text(
+            text = stringResource(R.string.envelope_saving_hidden_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = FinTrackTheme.colors.textSecondary,
+            modifier = Modifier.padding(top = Dimens.Space4),
+        )
     }
     if (adding) {
         AddCategorySheet(
@@ -294,17 +287,22 @@ private fun MemberRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(imageVector = member.category.icon, contentDescription = null)
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyLarge,
-            maxLines = 1,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = name, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+            member.movedFromName?.let {
+                Text(
+                    text = stringResource(R.string.envelope_leaves_other, it),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+        }
         if (perCategory) {
             MoneyTextField(
                 cents = member.limitCents ?: 0L,
                 onCentsChange = { onLimitChange(it.takeIf { cents -> cents > 0L }) },
                 label = name,
+                emptyText = stringResource(R.string.envelope_no_limit),
                 modifier = Modifier.width(LimitFieldWidth),
             )
         }
@@ -345,7 +343,7 @@ private fun AddCategorySheet(
                     )
                     item.inEnvelopeName?.let {
                         Text(
-                            text = stringResource(R.string.envelope_in_other, it),
+                            text = stringResource(R.string.envelope_leaves_other, it),
                             style = MaterialTheme.typography.bodySmall,
                             color = FinTrackTheme.colors.textSecondary,
                         )
@@ -362,9 +360,16 @@ private fun FundingSection(
     state: EnvelopeEditorUiState.Content,
     onFundedByChange: (String?) -> Unit,
 ) {
-    if (state.fundingOptions.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
         SectionTitle(title = stringResource(R.string.envelope_paid_by))
+        if (state.fundingOptions.isEmpty()) {
+            Text(
+                text = stringResource(R.string.envelope_paid_by_empty),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+            return
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
             verticalArrangement = Arrangement.spacedBy(Dimens.Space8),

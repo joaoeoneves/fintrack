@@ -50,17 +50,17 @@ fun LazyListScope.activityHeaderItems(
     actions: ActivityActions,
 ) {
     item(key = "analytics") { AnalyticsItem(state, actions) }
-    item(key = "totals") { ActivityTotalsRow(state.totals) }
+    item(key = "totals") { ActivityTotalsRow(state.totals, state.filters.type) }
     item(key = "type") {
         SegmentedTextTabs(
             options = ActivityType.entries,
             selected = state.filters.type,
             label = { stringResource(it.labelRes) },
             onSelect = actions.onTypeSelected,
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+            modifier = Modifier.padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, top = Dimens.Space16),
         )
     }
-    if (state.filters.type != ActivityType.INCOME) {
+    if (state.filters.type == ActivityType.EXPENSE) {
         item(key = "categories") {
             val selected = state.filters.category
             CategoryFilterRow(
@@ -133,12 +133,15 @@ private fun AnalyticsItem(
     state: ActivityUiState.Content,
     actions: ActivityActions,
 ) {
-    val onlyIncome = state.filters.type == ActivityType.INCOME
+    val type = state.filters.type
     ActivityAnalyticsHeader(
         period = state.period,
         canGoToNextMonth = state.canGoToNextMonth,
-        // Income has no envelopes, so the envelope bar and chips are hidden for it.
-        analytics = if (onlyIncome) state.analytics.copy(envelopeChips = emptyList()) else state.analytics,
+        // Envelopes (and the spent total) are about expenses: only the Expenses tab shows the envelope chips, and
+        // the Income tab has no spending to total.
+        analytics =
+            if (type == ActivityType.EXPENSE) state.analytics else state.analytics.copy(envelopeChips = emptyList()),
+        showSpent = type != ActivityType.INCOME,
         selectedEnvelope = state.filters.envelope,
         actions =
             ActivityAnalyticsActions(
@@ -152,23 +155,31 @@ private fun AnalyticsItem(
 @Composable
 private fun ActivityTotalsRow(
     totals: ActivityTotals,
+    type: ActivityType,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space24),
     ) {
-        TotalCell(
-            label = stringResource(R.string.activity_total_in),
-            cents = totals.inCents,
-            prefix = "+",
-            color = FinTrackTheme.colors.positive,
-        )
-        TotalCell(
-            label = stringResource(R.string.activity_total_out),
-            cents = totals.outCents,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+        if (type != ActivityType.EXPENSE) {
+            TotalCell(
+                label = stringResource(R.string.activity_total_in),
+                cents = totals.inCents,
+                prefix = "+",
+                color = FinTrackTheme.colors.positive,
+            )
+        }
+        if (type != ActivityType.INCOME) {
+            TotalCell(
+                label = stringResource(R.string.activity_total_out),
+                cents = totals.outCents,
+                color = MaterialTheme.colorScheme.onSurface,
+                note =
+                    stringResource(R.string.activity_total_out_includes_saving, formatAmountCents(totals.savedCents))
+                        .takeIf { totals.savedCents != 0L },
+            )
+        }
     }
 }
 
@@ -178,6 +189,7 @@ private fun TotalCell(
     cents: Long,
     color: Color,
     prefix: String = "",
+    note: String? = null,
 ) {
     Column {
         Text(text = label, style = MaterialTheme.typography.labelMedium, color = FinTrackTheme.colors.textSecondary)
@@ -187,6 +199,9 @@ private fun TotalCell(
             color = color,
             format = { prefix + formatAmountCents(it) },
         )
+        if (note != null) {
+            Text(text = note, style = MaterialTheme.typography.bodySmall, color = FinTrackTheme.colors.textSecondary)
+        }
     }
 }
 
@@ -232,7 +247,7 @@ private fun Transaction.rowKey(): String =
 private fun emptyTitle(filters: ActivityFilters): String =
     when {
         filters.query.isNotBlank() -> stringResource(R.string.activity_no_match, filters.query)
-        (filters.category != null || filters.envelope != null) && filters.type != ActivityType.INCOME ->
+        (filters.category != null || filters.envelope != null) && filters.type == ActivityType.EXPENSE ->
             stringResource(R.string.activity_no_match_filter)
         filters.type == ActivityType.EXPENSE -> stringResource(R.string.dashboard_no_expenses)
         filters.type == ActivityType.INCOME -> stringResource(R.string.dashboard_no_income)

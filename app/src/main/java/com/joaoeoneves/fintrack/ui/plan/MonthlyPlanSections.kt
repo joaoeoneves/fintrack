@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,13 +24,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.payDateIn
+import com.joaoeoneves.fintrack.domain.model.payingLines
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.PendingOccurrenceRow
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.rememberFinTrackHaptics
@@ -46,6 +51,7 @@ private fun AmountRow(
     valueStyle: TextStyle = Amount,
     badge: String? = null,
     trailing: (@Composable () -> Unit)? = null,
+    showChevron: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight),
@@ -64,6 +70,13 @@ private fun AmountRow(
         }
         Text(text = value, style = valueStyle, color = valueColor)
         trailing?.invoke()
+        if (showChevron) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = FinTrackTheme.colors.textSecondary,
+            )
+        }
     }
 }
 
@@ -85,12 +98,14 @@ data class ExpectedIncomeModel(
     val receipts: IncomeReceipts,
     /** Keys of the manual rows that look like a repeat of the salary the profile already generates. */
     val duplicateKeys: Set<String> = emptySet(),
+    /** How income is attributed to months: the paying month of a row can be the one before the viewed month. */
+    val funding: IncomeFunding = IncomeFunding.unshifted(workingDays.month, workingDays.days),
 )
 
 /**
  * The salary-profile entry, the working-days row and the expected-income rows with what each pays in the
- * selected month. A manual line, the salary and the meal allowance open their editor on tap; the other salary
- * components (which sum several lines) open the salary profile. The add button is hidden at the line cap. Under the
+ * selected month. A manual line opens its editor on tap; every salary-profile row opens the salary profile (a row that
+ * does not pay this month is not tappable). The add button is hidden at the line cap. Under the
  * header sits the month's payday; a paying row of a past or current month has a check that records it as received
  * today (the snackbar then offers to change the date or amount); once received it shows a green amount, the day it
  * was received and a filled check that undoes it after a confirmation.
@@ -166,9 +181,7 @@ private fun IncomeGroupHeader(text: String) {
     )
 }
 
-/** Rows opening the line editor: a manual line (no component), the salary and the meal allowance. */
-private val EDITABLE_COMPONENTS = listOf(null, SalaryComponent.SALARY, SalaryComponent.MEAL)
-
+@Suppress("LongMethod") // one row layout with its receive/undo wiring
 @Composable
 private fun IncomeRowItem(
     row: IncomeRow,
@@ -177,18 +190,34 @@ private fun IncomeRowItem(
     onUndo: (IncomeRow) -> Unit,
 ) {
     val receipts = model.receipts
-    val line = row.lines.first()
-    val opensEditor = row.component in EDITABLE_COMPONENTS
     val paysThisMonth = row.cents > 0L
+    val tappable = row.component == null || paysThisMonth
     val receivedOn = receipts.receivedOn[row.key]
     val received = receivedOn != null
     val feedback = LocalReceiveFeedback.current
     val haptics = rememberFinTrackHaptics()
     val title = row.displayLabel()
-    val receiveDate = minOf(row.payDateIn(model.workingDays.month), receipts.today)
+    // Dated on the row's own pay day (last month's for a salary that pays the next month), never after today.
+    val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.funding), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
-    val changeLabel = stringResource(R.string.action_change)
+    val undoLabel = stringResource(R.string.action_undo)
     val showCheck = paysThisMonth && (received || receipts.canReceive)
+    if (showCheck && !received) {
+        PendingIncomeRow(
+            row = row,
+            title = title,
+            model = model,
+            modifier = rowTapModifier(tappable, row, actions),
+            onReceive = {
+                haptics.success()
+                actions.onReceive(row, receiveDate, null)
+                feedback?.announce(snackbarText, undoLabel) { actions.onUndoReceive(row) }
+            },
+            onChangeAmount = { feedback?.open(receiveChange(row, title, model, actions, receiveDate)) },
+        )
+        Hairline()
+        return
+    }
     val valueColor =
         when {
             !paysThisMonth -> FinTrackTheme.colors.textSecondary
@@ -206,7 +235,8 @@ private fun IncomeRowItem(
         value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
         valueColor = valueColor,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
-        modifier = Modifier.clickable { if (opensEditor) actions.onEdit(line.id) else actions.onOpenSalaryProfile() },
+        modifier = rowTapModifier(tappable, row, actions),
+        showChevron = tappable,
         trailing =
             if (showCheck) {
                 {
@@ -218,11 +248,7 @@ private fun IncomeRowItem(
                             } else {
                                 haptics.success()
                                 actions.onReceive(row, receiveDate, null)
-                                feedback?.announce(
-                                    message = snackbarText,
-                                    actionLabel = changeLabel,
-                                    change = receiveChange(row, title, model, actions, receiveDate),
-                                )
+                                feedback?.announce(snackbarText, undoLabel) { actions.onUndoReceive(row) }
                             }
                         },
                     )
@@ -234,6 +260,48 @@ private fun IncomeRowItem(
     Hairline()
 }
 
+/** An income row still to be received: the shared pending row, tapping it opens its editor. */
+@Suppress("LongParameterList") // the row, its model and the two actions are independent
+@Composable
+private fun PendingIncomeRow(
+    row: IncomeRow,
+    title: String,
+    model: ExpectedIncomeModel,
+    modifier: Modifier,
+    onReceive: () -> Unit,
+    onChangeAmount: () -> Unit,
+) {
+    val payDate = row.payDateIn(model.workingDays.month, model.funding)
+    val status =
+        listOfNotNull(
+            autoRecordText(row) ?: stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
+            stringResource(R.string.plan_looks_like_salary).takeIf { row.key in model.duplicateKeys },
+        ).joinToString(" · ")
+    PendingOccurrenceRow(
+        title = title,
+        amountText = formatAmountCents(row.cents),
+        statusText = status,
+        labels = rememberPendingLabels(income = true),
+        modifier = modifier,
+        onConfirm = onReceive,
+        onChangeAmount = onChangeAmount,
+    )
+}
+
+private fun rowTapModifier(
+    tappable: Boolean,
+    row: IncomeRow,
+    actions: ExpectedIncomeActions,
+): Modifier =
+    if (tappable) {
+        // A manual line opens its editor; a salary-profile row goes straight to the profile.
+        Modifier.clickable {
+            if (row.component == null) actions.onEdit(row.lines.first().id) else actions.onOpenSalaryProfile()
+        }
+    } else {
+        Modifier
+    }
+
 /** What the received snackbar's "Change" reopens for [row]: the sheet, with the amount editable for one line. */
 private fun receiveChange(
     row: IncomeRow,
@@ -242,13 +310,13 @@ private fun receiveChange(
     actions: ExpectedIncomeActions,
     date: LocalDate,
 ): ReceiveChange {
-    val (month, days) = model.workingDays.let { it.month to it.days }
-    val paying = row.lines.filter { it.amountIn(month, days) > 0L }
+    val month = model.workingDays.month
+    val paying = row.payingLines(month, model.funding)
     return ReceiveChange(
         title = title,
         today = model.receipts.today,
         date = date,
-        editableAmountCents = paying.singleOrNull()?.amountIn(month, days),
+        editableAmountCents = paying.singleOrNull()?.let { model.funding.amountIn(it, month) },
         onConfirm = { date, cents -> actions.onReceive(row, date, cents) },
     )
 }

@@ -94,6 +94,26 @@ class EnvelopesViewModelTest {
     }
 
     @Test
+    fun rowsOf_ownAmountZero_isNotBudgeted() {
+        val rows = rowsOf(listOf(Envelope("e", "E", 0, 0)), emptyList(), emptyList())
+
+        assertTrue(rows.single().status !is EnvelopeRowStatus.Budgeted)
+        assertEquals(EnvelopeRowStatus.Empty, rows.single().status)
+    }
+
+    @Test
+    fun rowsOf_ownAmountZeroWithCategories_isTracking() {
+        val rows =
+            rowsOf(
+                listOf(Envelope("e", "E", 0, 0)),
+                listOf(userCategory("a").copy(groupId = "e")),
+                emptyList(),
+            )
+
+        assertEquals(EnvelopeRowStatus.Tracking, rows.single().status)
+    }
+
+    @Test
     fun onMove_downAndUp_reorder() =
         runTest(dispatcher) {
             val repo = FakeEnvelopeRepository(three)

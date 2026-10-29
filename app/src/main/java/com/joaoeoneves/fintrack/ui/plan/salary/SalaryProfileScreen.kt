@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,12 +27,14 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.moneySymbolsFor
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.EditorScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
-import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
-import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /**
@@ -47,22 +49,20 @@ fun SalaryProfileScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val duplicates by viewModel.duplicates.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val failedMessage = stringResource(R.string.error_plan_save_failed)
     val separator = moneySymbolsFor(currentLocale()).decimal
     LaunchedEffect(separator) { viewModel.start(separator) }
-    LaunchedEffect(Unit) {
-        viewModel.eventFlow.collect { event ->
-            when (event) {
-                SalaryProfileEvent.Done -> onBack()
-                SalaryProfileEvent.Failed -> snackbarHostState.showSnackbar(failedMessage)
-            }
-        }
-    }
+    SalaryEventsEffect(viewModel, snackbarHostState, onBack)
     val labels = salaryLineLabels()
 
-    LargeTitleScaffold(
+    val content = state as? SalaryProfileUiState.Content
+    EditorScaffold(
         title = stringResource(R.string.salary_profile_title),
+        dirty = rememberIsDirty(content?.form),
         onBack = onBack,
+        onSave = { viewModel.onSave(labels) },
+        saving = false,
+        saveEnabled = content?.canSave == true,
+        showSave = content != null,
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
@@ -76,7 +76,6 @@ fun SalaryProfileScreen(
                         actions =
                             SalaryProfileActions(
                                 onChange = viewModel::onFormChange,
-                                onSave = { viewModel.onSave(labels) },
                                 onDelete = viewModel::onDelete,
                                 extras =
                                     SalaryExtraActions(
@@ -102,6 +101,30 @@ fun SalaryProfileScreen(
     }
 }
 
+@Composable
+private fun SalaryEventsEffect(
+    viewModel: SalaryProfileViewModel,
+    snackbarHostState: SnackbarHostState,
+    onBack: () -> Unit,
+) {
+    val failedMessage = stringResource(R.string.error_plan_save_failed)
+    val extraDeletedMessage = stringResource(R.string.salary_extra_deleted)
+    val undoLabel = stringResource(R.string.action_undo)
+    LaunchedEffect(Unit) {
+        viewModel.eventFlow.collect { event ->
+            when (event) {
+                SalaryProfileEvent.Done -> onBack()
+                SalaryProfileEvent.Failed -> snackbarHostState.showSnackbar(failedMessage)
+                is SalaryProfileEvent.ExtraDeleted -> {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    val result = snackbarHostState.showActionSnackbar(extraDeletedMessage, undoLabel)
+                    if (result == SnackbarResult.ActionPerformed) viewModel.onUndoDeleteExtra(event.extra, event.index)
+                }
+            }
+        }
+    }
+}
+
 /** What the extra editor can trigger, bundled for detekt's LongParameterList. */
 internal data class SalaryExtraActions(
     val onAdd: () -> Unit,
@@ -115,7 +138,6 @@ internal data class SalaryExtraActions(
 /** What the salary screen can trigger, bundled for detekt's LongParameterList. */
 internal data class SalaryProfileActions(
     val onChange: (SalaryForm) -> Unit,
-    val onSave: () -> Unit,
     val onDelete: () -> Unit,
     val extras: SalaryExtraActions,
 )
@@ -151,12 +173,6 @@ private fun SalaryProfileContent(
         SubsidyMonthsSection(form, actions.onChange)
         MealSection(form, actions.onChange)
         SalaryExtrasSection(state, actions.extras.onAdd, actions.extras.onEdit)
-        PrimaryPillButton(
-            text = stringResource(R.string.action_save),
-            onClick = actions.onSave,
-            enabled = state.canSave,
-            modifier = Modifier.padding(top = Dimens.Space24),
-        )
         if (state.hasSavedProfile) {
             DestructiveTextButton(
                 text = stringResource(R.string.salary_delete),
@@ -190,7 +206,7 @@ private fun DeleteSalaryProfileDialog(
         title = { Text(stringResource(R.string.salary_delete_title)) },
         text = { Text(stringResource(R.string.salary_delete_message)) },
         confirmButton = { DestructiveTextButton(text = stringResource(R.string.salary_delete), onClick = onConfirm) },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }
 

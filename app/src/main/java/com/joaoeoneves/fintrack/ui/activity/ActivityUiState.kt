@@ -23,10 +23,15 @@ data class ActivityFilters(
     val sort: SortOption,
 )
 
-/** The period's money in and out, before the filters: [inCents] is income, [outCents] net expenses (refunds netted). */
+/**
+ * The money in and out of the visible list: [inCents] is income, [outCents] net expenses (refunds netted, savings
+ * included) of which [spendingCents] is spending and [savedCents] is put into savings.
+ */
 data class ActivityTotals(
     val inCents: Long,
     val outCents: Long,
+    val spendingCents: Long = outCents,
+    val savedCents: Long = 0L,
 )
 
 sealed interface ActivityUiState {

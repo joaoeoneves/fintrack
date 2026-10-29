@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -27,17 +27,17 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
-import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
+import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.settings.categories.MoveDirection
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
-/** The envelopes list: tap a row to edit it, move rows with the arrows, "New envelope" at the bottom. */
+/** The envelopes list: tap a row to edit it, move rows with the arrows, a sticky "New envelope" button. */
 @Composable
 fun EnvelopesScreen(
     onBack: () -> Unit,
@@ -56,6 +56,16 @@ fun EnvelopesScreen(
         onBack = onBack,
         modifier = modifier,
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
+        bottomBar = {
+            PrimaryPillButton(
+                text = stringResource(R.string.envelopes_new),
+                onClick = { onOpenEditor(null) },
+                modifier =
+                    Modifier
+                        .navigationBarsPadding()
+                        .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12),
+            )
+        },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         StateCrossfade(state) { current ->
@@ -105,13 +115,6 @@ private fun EnvelopesList(
                     }
                 }
             }
-        }
-        item {
-            GhostButton(
-                text = stringResource(R.string.envelopes_new),
-                onClick = { onOpenEditor(null) },
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
     }
 }

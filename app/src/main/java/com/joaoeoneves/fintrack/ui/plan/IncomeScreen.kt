@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.carnivalWeekdayIn
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.asString
@@ -42,6 +41,7 @@ fun IncomeScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     CollectPlanErrors(snackbarHostState = snackbarHostState, events = listOf(viewModel.errorEvent))
+    CollectDeletedIncomeLines(viewModel, snackbarHostState)
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -103,6 +103,7 @@ private fun IncomeContent(
                         workingDays = state.workingDays,
                         receipts = state.receipts,
                         duplicateKeys = state.duplicateKeys,
+                        funding = state.funding,
                     ),
                 actions =
                     ExpectedIncomeActions(
@@ -121,7 +122,6 @@ private fun IncomeContent(
     if (editingWorkingDays) {
         WorkingDaysDialog(
             state = state.workingDays,
-            carnival = carnivalWeekdayIn(state.workingDays.month),
             onSave = viewModel::onSetWorkingDays,
             onDismiss = { editingWorkingDays = false },
         )

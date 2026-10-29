@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
@@ -21,7 +20,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.ui.common.EnvelopeOverflowRow
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -29,7 +27,8 @@ import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
-import com.joaoeoneves.fintrack.ui.theme.Amount
+import com.joaoeoneves.fintrack.ui.plan.MonthSummaryActions
+import com.joaoeoneves.fintrack.ui.plan.MonthSummarySection
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -89,6 +88,7 @@ private fun PlanSetupRow(
     }
 }
 
+@Suppress("LongMethod") // One column of independent rows.
 @Composable
 private fun PlanContent(
     state: DashboardUiState.Content,
@@ -135,7 +135,21 @@ private fun PlanContent(
             )
         }
         state.envelopes?.let { EnvelopeOverflowRow(summary = it, modifier = Modifier.padding(top = Dimens.Space8)) }
-        PlanRows(plan = state.plan, modifier = Modifier.padding(top = Dimens.Space16))
+        state.figures?.let {
+            MonthSummarySection(
+                figures = it,
+                previousMonth = state.budgetMonth.minusMonths(1),
+                actions =
+                    MonthSummaryActions(
+                        onOpenIncome = onOpenMonthlyPlan,
+                        onOpenRecurring = onOpenMonthlyPlan,
+                        onOpenEnvelopes = onOpenMonthlyPlan,
+                        onOpenSavings = onOpenMonthlyPlan,
+                    ),
+                extraIncomeCents = state.plan.extrasExpectedCents,
+                modifier = Modifier.padding(top = Dimens.Space16),
+            )
+        }
         if (!state.budgetMonthIsCurrent) {
             Text(
                 text = stringResource(R.string.plan_current_plan_caption),
@@ -143,67 +157,6 @@ private fun PlanContent(
                 color = FinTrackTheme.colors.textSecondary,
                 modifier = Modifier.padding(top = Dimens.Space12),
             )
-        }
-    }
-}
-
-@Composable
-private fun PlanRows(
-    plan: MonthlyPlanSummary,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier) {
-        Hairline()
-        PlanRow(
-            label = stringResource(R.string.plan_expected_income),
-            value = formatAmountCents(plan.expectedIncomeCents),
-            subValue = stringResource(R.string.plan_received, formatAmountCents(plan.actualIncomeCents)),
-        )
-        Hairline()
-        PlanRow(
-            label = stringResource(R.string.plan_planned_allocations),
-            value = formatAmountCents(plan.plannedAllocationsCents),
-        )
-        Hairline()
-        PlanRow(
-            label = stringResource(R.string.plan_left_in_budgets),
-            value = formatAmountCents(plan.remainingInBucketsCents),
-        )
-        Hairline()
-    }
-}
-
-@Composable
-private fun PlanRow(
-    label: String,
-    value: String,
-    subValue: String? = null,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = Dimens.SettingsRowMinHeight)
-                .padding(vertical = Dimens.Space8),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = FinTrackTheme.colors.textSecondary,
-            modifier = Modifier.weight(1f),
-        )
-        Column(horizontalAlignment = Alignment.End) {
-            Text(text = value, style = Amount.copy(fontSize = 14.sp), maxLines = 1)
-            if (subValue != null) {
-                Text(
-                    text = subValue,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FinTrackTheme.colors.textSecondary,
-                    maxLines = 1,
-                )
-            }
         }
     }
 }

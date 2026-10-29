@@ -13,6 +13,8 @@ import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.codePointLength
+import com.joaoeoneves.fintrack.domain.model.paused
+import com.joaoeoneves.fintrack.domain.model.resumed
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.LocalDate
 
@@ -33,6 +35,8 @@ data class RecurringForm(
     val monthOfYear: Int? = null,
     val endDate: LocalDate? = null,
     val autoPost: Boolean = true,
+    /** Paused: no occurrences are offered or posted until resumed (editing an existing item only). */
+    val paused: Boolean = false,
 )
 
 /** Per-field validation messages; a `null` field is valid. */
@@ -100,7 +104,19 @@ private val monthRange = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
  * the month dropped for monthly items. Keeps [existing]'s id, handled-through cursor, skipped occurrences,
  * pause day and active flag when editing; a new item is active with a blank id. [autoPost] starts on for a new item.
  */
-fun RecurringForm.toItem(existing: RecurringItem?): RecurringItem =
+fun RecurringForm.toItem(
+    existing: RecurringItem?,
+    today: LocalDate = LocalDate.now(),
+): RecurringItem =
+    toBaseItem(existing).let { item ->
+        when {
+            paused && item.active -> item.paused(today)
+            !paused && !item.active && existing != null -> item.resumed(today)
+            else -> item
+        }
+    }
+
+private fun RecurringForm.toBaseItem(existing: RecurringItem?): RecurringItem =
     RecurringItem(
         id = existing?.id.orEmpty(),
         type = type,
@@ -134,6 +150,7 @@ fun RecurringItem.toForm(category: Category?): RecurringForm =
         monthOfYear = monthOfYear,
         endDate = endDate,
         autoPost = autoPost,
+        paused = !active,
     )
 
 /**

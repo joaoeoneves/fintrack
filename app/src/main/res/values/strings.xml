@@ -20,7 +20,6 @@
     <string name="action_ok">OK</string>
     <string name="action_retry">Retry</string>
     <string name="action_undo">Undo</string>
-    <string name="action_change">Change</string>
     <string name="action_import">Import</string>
     <string name="action_sign_out">Sign out</string>
     <string name="action_add_expense">Add expense</string>
@@ -127,8 +126,8 @@
     <string name="activity_total_in">In</string>
     <string name="activity_total_out">Out</string>
     <string name="activity_spent_total">Spent</string>
-    <string name="activity_show_breakdown">By category</string>
-    <string name="activity_hide_breakdown">Hide breakdown</string>
+    <string name="activity_show_breakdown">Show details</string>
+    <string name="activity_hide_breakdown">Hide details</string>
     <string name="activity_envelope_all">All</string>
     <string name="cd_envelope_bar">Spending by envelope: %1$s</string>
     <string name="cd_envelope_chip">%1$s, %2$s spent</string>
@@ -172,8 +171,6 @@
     <string name="error_source_required">Name is required</string>
     <string name="error_failed_save_income">Couldn\'t save the income</string>
     <string name="error_failed_delete_income">Couldn\'t delete the income</string>
-    <string name="confirm_remove_title">Remove “%1$s”?</string>
-    <string name="income_line_remove_message">It stops counting as expected income. Income already recorded is kept.</string>
 
 
     <!-- Settings -->
@@ -244,12 +241,13 @@
     <string name="category_action_archive">Archive</string>
     <string name="category_action_unarchive">Unarchive</string>
     <string name="category_action_delete">Delete</string>
+    <string name="category_delete_builtin_hint">Delete (built-in)</string>
     <string name="category_move_up">Move up</string>
     <string name="category_move_down">Move down</string>
     <string name="cd_category_more_actions">More actions for %1$s</string>
     <string name="cd_category_icon_option">Icon %1$d</string>
     <string name="cd_category_color_option">Color %1$d</string>
-    <string name="category_delete_confirm">Delete “%1$s”?</string>
+    <string name="category_deleted">Category deleted</string>
     <string name="category_in_use_message">“%1$s” is used by expenses, envelopes or recurring. Archive it instead?</string>
     <string name="category_in_use_archived_message">“%1$s” is used by expenses, envelopes or recurring and can\'t be deleted.</string>
     <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
@@ -343,9 +341,6 @@
     <string name="plan_over_by">Over plan by %1$s</string>
     <string name="plan_expected_income">Expected income</string>
     <string name="home_to_receive_title">To receive</string>
-    <string name="plan_received">received %1$s</string>
-    <string name="plan_planned_allocations">Planned</string>
-    <string name="plan_left_in_budgets">Left in envelopes</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/day for %2$d day</item>
         <item quantity="other">≈ %1$s/day for %2$d days</item>
@@ -393,9 +388,6 @@
     <string name="recurring_list_empty">No recurring yet</string>
     <string name="recurring_paused">Paused</string>
     <string name="recurring_ended">Ended</string>
-    <string name="recurring_pause">Pause</string>
-    <string name="recurring_resume">Resume</string>
-    <string name="recurring_delete_confirm">Delete “%1$s”? Transactions already created are kept.</string>
     <string name="recurring_frequency_monthly">Monthly</string>
     <string name="recurring_frequency_yearly">Yearly</string>
     <string name="recurring_day_of_month">Day of month</string>
@@ -469,12 +461,13 @@
         <item quantity="other">%1$d days off</item>
     </plurals>
     <string name="plan_days_off_title">Days off this month</string>
-    <string name="plan_carnival_chip">Carnival, %1$s</string>
     <string name="cd_fewer_days_off">Fewer days off</string>
     <string name="cd_more_days_off">More days off</string>
     <string name="plan_working_days_edited">%1$d (edited)</string>
     <string name="plan_working_days_reset">Reset to automatic</string>
-    <string name="plan_working_days_hint">Replaces the calendar count for this month only.</string>
+    <string name="plan_working_days_hint">Set by hand for this month, so days off no longer change it.</string>
+    <string name="plan_working_days_hint_auto">Counted from the calendar: weekdays minus holidays and days off.</string>
+    <string name="plan_working_days_label">Working days</string>
     <string name="cd_fewer_working_days">Fewer working days</string>
     <string name="cd_more_working_days">More working days</string>
 
@@ -537,6 +530,7 @@
     <string name="salary_extra_deductions_irs_ss">IRS + SS</string>
     <string name="salary_extra_fee" formatted="false">Fee (%)</string>
     <string name="salary_extra_delete">Delete extra</string>
+    <string name="salary_extra_deleted">Extra removed</string>
     <string name="salary_extra_gross_only">Gross mode only</string>
     <string name="salary_extra_default_flex">Flexible benefits</string>
     <string name="salary_extra_default_profit_share">Profit share</string>
@@ -598,7 +592,6 @@
     <string name="savings_total">Total</string>
     <string name="savings_empty">No savings plans yet</string>
     <string name="savings_delete_plan">Delete plan</string>
-    <string name="savings_delete_message">“%1$s” and its monthly amount are removed. Expenses already recorded are kept.</string>
     <string name="savings_plan_deleted">Savings plan deleted</string>
     <string name="recurring_no_saving_hint">For savings use the Savings tab</string>
     <string name="annual_goals_title">Savings plans</string>
@@ -641,14 +634,17 @@
     <string name="envelope_mode_per_category">Per category</string>
     <string name="envelope_mode_none">No limit</string>
     <string name="envelope_mode_none_hint">Only tracks what you spend</string>
+    <string name="envelope_limits_dropped_hint">Saving drops the limits set per category.</string>
     <string name="envelope_amount">Monthly amount</string>
     <string name="envelope_categories">Categories</string>
     <string name="envelope_add_category">Add category</string>
+    <string name="envelope_saving_hidden_hint">Savings categories belong to the savings plan, so they are not listed here.</string>
     <string name="envelope_in_other">in %1$s</string>
+    <string name="envelope_leaves_other">Leaves %1$s</string>
     <string name="envelope_paid_by">Funded by</string>
+    <string name="envelope_paid_by_empty">Add a regular monthly income to choose what funds this envelope.</string>
     <string name="envelope_paid_by_none">None</string>
     <string name="envelope_delete">Delete envelope</string>
-    <string name="envelope_delete_confirm">Delete “%1$s”? Its categories stay; the envelope and its amount are removed.</string>
     <string name="envelope_deleted">Envelope deleted</string>
     <string name="envelope_error_name_blank">Enter a name</string>
     <string name="envelope_error_name_duplicate">An envelope with this name already exists</string>
@@ -658,8 +654,9 @@
     <string name="envelope_row_empty">No categories</string>
     <string name="envelope_card_of">%1$s of %2$s</string>
     <string name="envelope_card_over">Over by %1$s</string>
-    <string name="envelope_card_paid">%1$s of %2$s paid</string>
+    <string name="envelope_card_paid">Recurring: %1$s paid of %2$s</string>
     <string name="envelope_card_spent">Spent this month: %1$s</string>
+    <string name="annual_envelope_spent">Spent: %1$s</string>
     <string name="envelope_card_funded">Funded by %1$s</string>
     <string name="envelope_funded_overflow">%1$s covers %2$s; %3$s comes from other income.</string>
     <plurals name="envelopes_status">
@@ -672,6 +669,7 @@
     <string name="plan_tile_envelopes">Envelopes</string>
     <string name="plan_tile_free">Safe to spend</string>
     <string name="plan_configure">Set up</string>
+    <string name="salary_setup_done">Salary saved</string>
     <string name="plan_configure_income">Income</string>
     <string name="plan_configure_envelopes">Envelopes</string>
     <string name="plan_configure_bills">Recurring</string>
@@ -695,7 +693,7 @@
     <string name="home_start_step_bills">Add recurring</string>
     <string name="home_start_step_savings">Create a savings plan</string>
     <string name="home_start_step_payday">Set your pay day</string>
-    <string name="home_start_step_payday_hint">Record income automatically</string>
+    <string name="home_start_step_payday_hint">Choose the day your income is recorded automatically</string>
     <string name="home_start_step_expense">Record your first expense</string>
     <string name="salary_setup_title">Salary set-up</string>
     <string name="salary_setup_step">Step %1$d of %2$d</string>
@@ -725,4 +723,26 @@
     <string name="backup_restore_partial_title">Restore incomplete</string>
     <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish — retrying doesn\'t duplicate anything.</string>
     <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
+    <string name="plan_salary_next_month">Salary pays the next month</string>
+    <string name="plan_salary_next_month_hint">Salary paid in the last days of a month funds the next month\'s plan.</string>
+    <string name="plan_summary_carry">Carried over from %1$s</string>
+    <string name="plan_summary_extras_note">%1$s of extra income does not count until it is received</string>
+    <string name="activity_total_out_includes_saving">includes %1$s saved</string>
+    <string name="pending_more_options">More options</string>
+    <string name="pending_change_amount">Change amount</string>
+    <string name="pending_automatic">Automatic · %1$s</string>
+    <string name="recurring_skipped">Skipped “%1$s”</string>
+    <string name="recurring_amount_title">Amount for “%1$s”</string>
+    <string name="sign_out_confirm_title">Sign out?</string>
+    <string name="sign_out_confirm_message">Your data stays in your account; sign in again to see it.</string>
+    <string name="migration_remove_confirm_title">Remove local data?</string>
+    <string name="migration_remove_confirm_message">The copy on this device is deleted for good. Your data stays in your account.</string>
+    <string name="settings_section_home">Home</string>
+    <string name="settings_show_start">Show Get started</string>
+    <string name="settings_show_start_hint">The setup checklist on Home</string>
+    <string name="home_start_dismissed">Get started hidden</string>
+    <string name="recurring_deleted">Recurring deleted; its past entries stay</string>
+    <string name="envelope_no_limit">No limit</string>
+    <string name="recurring_pause_hint">Nothing is added until you resume</string>
+    <string name="income_line_deleted">Income line deleted</string>
 </resources>

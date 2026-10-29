@@ -5,4 +5,9 @@
     <string name="cd_back">Voltar</string>
     <string name="dashboard_add_expense_short">Despesa</string>
     <string name="dashboard_add_income_short">Rendimento</string>
+    <string name="discard_changes_title">Descartar alterações?</string>
+    <string name="discard_changes_message">As alterações ainda não foram guardadas.</string>
+    <string name="discard_changes_confirm">Descartar</string>
+    <string name="discard_changes_keep">Continuar a editar</string>
+    <string name="editor_save">Guardar</string>
 </resources>

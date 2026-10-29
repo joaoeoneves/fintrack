@@ -29,14 +29,18 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.designsystem.CategoryChipIcon
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
+import com.joaoeoneves.fintrack.ui.designsystem.rememberLeaveGuard
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /**
  * Shell of the amount-first add/edit screens: a small centred [title] with a close icon
- * ("Cancel"), and a pill "Save" bar pinned above the keyboard (shown only when [showSave]).
+ * ("Cancel"), and a pill "Save" bar pinned above the keyboard (shown only when [showSave]). Leaving while
+ * [dirty] asks to discard the unsaved changes first.
  */
 @Suppress("LongParameterList") // scaffold slots shared by three screens
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,8 +52,10 @@ fun FormScaffold(
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
     showSave: Boolean = true,
+    dirty: Boolean = false,
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val requestLeave = rememberLeaveGuard(dirty, onCancel)
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
@@ -57,7 +63,7 @@ fun FormScaffold(
             CenterAlignedTopAppBar(
                 title = { Text(text = title, style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
-                    IconButton(onClick = onCancel) {
+                    IconButton(onClick = requestLeave) {
                         Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_cancel))
                     }
                 },
@@ -122,12 +128,12 @@ fun CategoryChipFlow(
                     label = category.displayName,
                     selected = category.id == selected?.id,
                     onClick = { onSelected(category) },
-                    icon = category.icon,
+                    leading = { tint -> CategoryChipIcon(category.icon, tint) },
                 )
             }
         }
         if (error != null) {
-            Text(text = error, style = MaterialTheme.typography.bodySmall, color = FinTrackTheme.colors.negative)
+            FieldErrorText(text = error)
         }
     }
 }
