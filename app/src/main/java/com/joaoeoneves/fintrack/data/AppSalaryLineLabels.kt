@@ -14,6 +14,10 @@ import javax.inject.Singleton
 
 private val supportedLocales = listOf(Locale.forLanguageTag("en"), Locale.forLanguageTag("pt-PT"))
 
+// The single label ("Subsidy" / "Subsídio") the holiday and Christmas lines shared before they were told apart.
+private val legacySubsidyLabels =
+    listOf("Subsidy", "Subsídio").map { SalaryLineLabels(holidaySubsidy = it, christmasSubsidy = it) }
+
 /** [SalaryLineLabelsProvider] resolving the salary line names from the string resources. */
 @Singleton
 class AppSalaryLineLabels
@@ -27,10 +31,11 @@ class AppSalaryLineLabels
             return labelsIn(if (locale == null) context else localized(locale))
         }
 
-        // The defaults ever written are those of each supported language plus the model's own (English).
+        // The defaults ever written are those of each supported language plus the model's own (English), and the
+        // generic subsidy name both subsidy lines used to share, so existing lines are relabelled by the sync.
         override fun knownDefaults(): List<SalaryLineLabels> {
             val perLocale = supportedLocales.map { labelsIn(localized(it)) }
-            return perLocale + SalaryLineLabels()
+            return perLocale + SalaryLineLabels() + legacySubsidyLabels
         }
 
         // False positive: the locale only builds a derived context to resolve names; it never changes the app's own.
@@ -45,6 +50,7 @@ class AppSalaryLineLabels
                 netSalary = localized.getString(R.string.salary_line_net),
                 duodecimos = localized.getString(R.string.salary_line_duodecimos),
                 meal = localized.getString(R.string.salary_group_meal),
-                subsidy = localized.getString(R.string.salary_line_subsidy),
+                holidaySubsidy = localized.getString(R.string.salary_line_holiday),
+                christmasSubsidy = localized.getString(R.string.salary_line_christmas),
             )
     }

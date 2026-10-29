@@ -41,7 +41,7 @@ class MonthlyPlanViewModelHomeTest : MonthlyPlanViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            assertEquals(MonthFigures(0L, 0L, 0L, 0L, 0L), vm.content().figures)
+            assertEquals(MonthFigures(0L, 0L, 0L, 0L), vm.content().figures)
             val configure = vm.content().configure
             assertEquals(0L, configure.incomeMonthlyCents)
             assertEquals(0, configure.incomeLineCount)

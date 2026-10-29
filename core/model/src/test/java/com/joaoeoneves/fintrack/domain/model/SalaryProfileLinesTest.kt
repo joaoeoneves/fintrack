@@ -212,13 +212,13 @@ class SalaryProfileLinesTest {
     }
 
     @Test
-    fun subsidyLines_orderedEarlierFirst_sharedLabel() {
+    fun subsidyLines_orderedEarlierFirst_distinctLabels() {
         val result = lines(full.copy(holidaySubsidyMonth = 11, christmasSubsidyMonth = 2))
 
         assertEquals(2, result.byKey(MANAGED_HOLIDAY).monthOfYear)
         assertEquals(11, result.byKey(MANAGED_CHRISTMAS).monthOfYear)
-        assertEquals("Subsidy", result.byKey(MANAGED_HOLIDAY).label)
-        assertEquals("Subsidy", result.byKey(MANAGED_CHRISTMAS).label)
+        assertEquals("Holiday subsidy", result.byKey(MANAGED_HOLIDAY).label)
+        assertEquals("Christmas subsidy", result.byKey(MANAGED_CHRISTMAS).label)
     }
 
     @Test

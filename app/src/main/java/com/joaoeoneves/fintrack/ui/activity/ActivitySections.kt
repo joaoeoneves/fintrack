@@ -25,6 +25,9 @@ import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalyticsActions
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalyticsHeader
+import com.joaoeoneves.fintrack.ui.activity.analytics.HistoryFigures
+import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeAnalyticsHeader
+import com.joaoeoneves.fintrack.ui.activity.analytics.spendingFigures
 import com.joaoeoneves.fintrack.ui.common.DaySectionHeader
 import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.IncomeRow
@@ -40,6 +43,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 
 /** The analytics header, totals, type chips, category chips (not for income) and the search and sort row. */
@@ -110,7 +114,7 @@ fun LazyListScope.activityRowItems(
     }
     if (state.days.isEmpty()) {
         items(state.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = true, actions = actions)
+            ActivityRow(transaction, showDate = true, actions = actions, shiftedIncomes = state.shiftedIncomes)
         }
         return
     }
@@ -123,7 +127,7 @@ fun LazyListScope.activityRowItems(
             )
         }
         items(section.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = false, actions = actions)
+            ActivityRow(transaction, showDate = false, actions = actions, shiftedIncomes = state.shiftedIncomes)
         }
     }
 }
@@ -134,6 +138,28 @@ private fun AnalyticsItem(
     actions: ActivityActions,
 ) {
     val type = state.filters.type
+    val analyticsActions =
+        ActivityAnalyticsActions(
+            period = actions.period,
+            onEnvelopeSelected = actions.onEnvelopeSelected,
+            onCategorySelected = { actions.onCategorySelected(it.id) },
+            onIncomeSourceSelected = actions.onIncomeSourceSelected,
+        )
+    if (type == ActivityType.INCOME) {
+        IncomeAnalyticsHeader(
+            period = state.period,
+            canGoToNextMonth = state.canGoToNextMonth,
+            history = state.history,
+            selectedSource = state.filters.incomeSource,
+            actions = analyticsActions,
+        )
+        return
+    }
+    val category = state.filters.category
+    val figures =
+        remember(state.history, category, state.categoryScope) {
+            state.history?.spendingFigures(category, state.categoryScope) ?: HistoryFigures()
+        }
     ActivityAnalyticsHeader(
         period = state.period,
         canGoToNextMonth = state.canGoToNextMonth,
@@ -141,14 +167,9 @@ private fun AnalyticsItem(
         // the Income tab has no spending to total.
         analytics =
             if (type == ActivityType.EXPENSE) state.analytics else state.analytics.copy(envelopeChips = emptyList()),
-        showSpent = type != ActivityType.INCOME,
         selectedEnvelope = state.filters.envelope,
-        actions =
-            ActivityAnalyticsActions(
-                period = actions.period,
-                onEnvelopeSelected = actions.onEnvelopeSelected,
-                onCategorySelected = { actions.onCategorySelected(it.id) },
-            ),
+        actions = analyticsActions,
+        figures = figures,
     )
 }
 
@@ -210,6 +231,7 @@ private fun LazyItemScope.ActivityRow(
     transaction: Transaction,
     showDate: Boolean,
     actions: ActivityActions,
+    shiftedIncomes: Map<String, YearMonth> = emptyMap(),
 ) {
     SwipeToDeleteRow(
         onDelete = { actions.onDelete(transaction.id) },
@@ -229,6 +251,7 @@ private fun LazyItemScope.ActivityRow(
                 IncomeRow(
                     income = transaction,
                     showDate = showDate,
+                    countsFor = shiftedIncomes[transaction.id],
                     onClick = { actions.onOpen(transaction) },
                     modifier = rowModifier,
                 )

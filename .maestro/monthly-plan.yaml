@@ -3,8 +3,9 @@ tags:
   - release
 ---
 # Plan tab basics (release smoke): guest start -> Plan tab -> the month view is there (period selector,
-# Income/Bills/Savings/Envelopes/Free tiles, payday line, envelopes, "Set up" rows) -> open Set up ->
-# Income, check the salary profile row and that a new income line offers "Record automatically" with a
+# Income/Recurring/Envelopes/Savings/Safe-to-spend summary rows, envelopes) -> open the Set up screen via the
+# gear icon next to the "Plan" title (3.2: Income/Envelopes/Recurring/Categories rows live there, not on
+# the tab any more) -> Income, check the salary profile row and that a new income line offers "Record automatically" with a
 # pay day (item C) -> close the sheet and return. Starts from a fresh guest install (see
 # _guest-start.yaml), so nothing needs cleaning up afterwards.
 
@@ -25,40 +26,38 @@ tags:
 - tapOn:
     id: "nav_plan"
 - assertVisible: "Previous month"
-- assertVisible: "Bills"
-- assertVisible: "Free"
-- assertVisible: "Payday.*"
+- assertVisible: "Recurring"
+- assertVisible: "Safe to spend"
 
-# The envelopes section and the "Set up" group further down the tab.
-- scrollUntilVisible:
-    element: "Set up"
-    direction: DOWN
-- assertVisible: "Categories"
+# The gear icon beside the title opens the Set up screen (contentDescription "Set up").
+- tapOn: "Set up"
+- extendedWaitUntil:
+    visible: "Categories"
+    timeout: 10000
+- assertVisible: "Recurring"
+- assertVisible: "Envelopes"
 
-# Set up -> Income. "Income" is also a tile label above, so take the last match (the Set up row).
-- tapOn:
-    text: "Income"
-    index: -1
+# Set up -> Income.
+- tapOn: "Income"
 - extendedWaitUntil:
     visible: "Salary profile"
     timeout: 10000
-- assertVisible: "Payday.*"
+- assertVisible: "Working days in.*"
 
 # A new income line carries "Record automatically" and a pay day. (Not typing anything: with the soft
 # keyboard up the sheet's Save sits below it, and hideKeyboard is unsafe on ATD images with no IME.)
-- scrollUntilVisible:
-    element: "Add income line"
-    direction: DOWN
-- tapOn: "Add income line"
-- assertVisible: "New income line"
+- tapOn: "Add income"
+- assertVisible: "New income"
 - scrollUntilVisible:
     element: "Record automatically"
     direction: DOWN
 - assertVisible: "Payday"
 - back
-- assertNotVisible: "New income line"
+- assertNotVisible: "New income"
 
-# Back to the Plan tab.
+# Back to Set up, then to the Plan tab.
+- back
+- assertVisible: "Categories"
 - back
 - assertVisible:
     id: "nav_plan"

@@ -19,9 +19,7 @@ import androidx.compose.ui.semantics.text
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.ui.common.FundedEnvelopeNote
-import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
-import com.joaoeoneves.fintrack.ui.common.period.formatMonthLabel
 import com.joaoeoneves.fintrack.ui.designsystem.EnvelopeRow
 import com.joaoeoneves.fintrack.ui.designsystem.EnvelopeRowData
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
@@ -31,7 +29,6 @@ import com.joaoeoneves.fintrack.ui.designsystem.rememberAnimatedCents
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import java.time.YearMonth
 
 /** Where the rows of the month summary lead; a `null` target leaves the row inert. */
 class MonthSummaryActions(
@@ -42,25 +39,19 @@ class MonthSummaryActions(
 )
 
 /**
- * The month as a subtraction that adds up: what was carried over from [previousMonth] (when there is something),
- * plus the income, minus recurring, envelopes and savings, equals what is available to spend. The same
+ * The month as a subtraction that adds up: the income, minus recurring, envelopes and savings, equals what is
+ * available to spend. Each month stands on its own; nothing is carried over from the one before. The same
  * [MonthFigures] feed Home and the plan, so a label is never shown with two numbers. Each row opens its section;
  * [extraIncomeCents] (yearly and one-off income not yet received) is noted under the income.
  */
 @Composable
 fun MonthSummarySection(
     figures: MonthFigures,
-    previousMonth: YearMonth,
     actions: MonthSummaryActions,
     modifier: Modifier = Modifier,
     extraIncomeCents: Long = 0L,
 ) {
-    val month = formatMonthLabel(previousMonth, currentLocale(), titlecase = false)
     Column(modifier = modifier.fillMaxWidth()) {
-        if (figures.carryCents != 0L) {
-            SummaryRow(stringResource(R.string.plan_summary_carry, month), figures.carryCents, signed = true)
-            Hairline()
-        }
         SummaryRow(
             label = stringResource(R.string.plan_tile_income),
             cents = figures.incomeCents,

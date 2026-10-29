@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -64,13 +65,14 @@ fun SectionAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
+    startPadding: Dp = Dimens.Space16,
 ) {
     Box(
         modifier =
             modifier
                 .heightIn(min = SectionTitleMinHeight)
                 .clickable(role = Role.Button, onClick = onClick)
-                .padding(start = Dimens.Space16),
+                .padding(start = startPadding),
         contentAlignment = Alignment.CenterEnd,
     ) {
         Text(

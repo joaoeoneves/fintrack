@@ -27,7 +27,7 @@ sealed interface MonthlyPlanUiState {
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
      * @property editor the income-line sheet, or `null` when it is closed.
      * @property envelopes the month's envelopes (amounts, spend, funding) and free money.
-     * @property figures the month's subtraction (carry + income - recurring - envelopes - savings = available).
+     * @property figures the month's subtraction (income - recurring - envelopes - savings = available).
      * @property extraIncomeCents yearly and one-off income planned this month, not counted until received.
      * @property funding how income is attributed to months (salary paying the next month).
      * @property envelopeCards one card per envelope of the month, then the one for the unenveloped categories.

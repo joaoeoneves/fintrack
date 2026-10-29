@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.designsystem
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -115,12 +116,15 @@ private fun PendingOverflow(
 ) {
     if (onSkip == null && onChangeAmount == null) return
     var expanded by remember { mutableStateOf(false) }
-    IconButton(onClick = { expanded = true }, modifier = Modifier.testTag(TestTags.RECURRING_MORE)) {
-        Icon(
-            imageVector = Icons.Filled.MoreVert,
-            contentDescription = labels.more,
-            tint = FinTrackTheme.colors.textSecondary,
-        )
+    // The menu is anchored to the Box (not nested in the button) so it opens under this row's button.
+    Box {
+        IconButton(onClick = { expanded = true }, modifier = Modifier.testTag(TestTags.RECURRING_MORE)) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = labels.more,
+                tint = FinTrackTheme.colors.textSecondary,
+            )
+        }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (onChangeAmount != null) {
                 DropdownMenuItem(

@@ -18,6 +18,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.ReceiveChange
 import com.joaoeoneves.fintrack.ui.plan.displayLabel
+import com.joaoeoneves.fintrack.ui.plan.key
 import com.joaoeoneves.fintrack.ui.plan.rememberPaydayText
 import com.joaoeoneves.fintrack.ui.plan.rememberPendingLabels
 import com.joaoeoneves.fintrack.ui.plan.rememberReceivedText
@@ -160,35 +162,37 @@ private fun ExpectedIncomeGroup(
         val payDate = entry.payDate
         val receiveDate = minOf(payDate, today)
         val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
-        PendingOccurrenceRow(
-            title = title,
-            amountText = formatAmountCents(row.cents),
-            statusText = stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
-            labels = labels,
-            onConfirm =
-                if (row.cents > 0L) {
-                    {
-                        haptics.success()
-                        val undo = onReceive(row, receiveDate, null)
-                        feedback?.announce(snackbarText, undoLabel, undo)
-                    }
-                } else {
-                    null
+        key(row.key, payDate) {
+            PendingOccurrenceRow(
+                title = title,
+                amountText = formatAmountCents(row.cents),
+                statusText = stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
+                labels = labels,
+                onConfirm =
+                    if (row.cents > 0L) {
+                        {
+                            haptics.success()
+                            val undo = onReceive(row, receiveDate, null)
+                            feedback?.announce(snackbarText, undoLabel, undo)
+                        }
+                    } else {
+                        null
+                    },
+                onChangeAmount = {
+                    val paying = row.payingLines(entry.planMonth, expected.funding)
+                    feedback?.open(
+                        ReceiveChange(
+                            title = title,
+                            today = today,
+                            date = receiveDate,
+                            editableAmountCents =
+                                paying.singleOrNull()?.let { expected.funding.amountIn(it, entry.planMonth) },
+                            onConfirm = { date, cents -> onReceive(row, date, cents) },
+                        ),
+                    )
                 },
-            onChangeAmount = {
-                val paying = row.payingLines(entry.planMonth, expected.funding)
-                feedback?.open(
-                    ReceiveChange(
-                        title = title,
-                        today = today,
-                        date = receiveDate,
-                        editableAmountCents =
-                            paying.singleOrNull()?.let { expected.funding.amountIn(it, entry.planMonth) },
-                        onConfirm = { date, cents -> onReceive(row, date, cents) },
-                    ),
-                )
-            },
-        )
+            )
+        }
     }
 }
 
@@ -212,7 +216,7 @@ private fun UpcomingContent(
     }
     rows.take(DASHBOARD_UPCOMING_LIMIT).forEachIndexed { index, row ->
         if (index > 0) Hairline()
-        UpcomingRow(row = row, today = state.today, model = model)
+        key(row.item.id, row.date) { UpcomingRow(row = row, today = state.today, model = model) }
     }
     if (state.overview.annualExpenseCents > 0) {
         Text(

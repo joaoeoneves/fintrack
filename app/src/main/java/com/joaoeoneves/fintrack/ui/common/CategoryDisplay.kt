@@ -51,7 +51,7 @@ private data class CategoryColor(
     val dark: Color,
 )
 
-private const val FALLBACK_COLOR_KEY = "slate"
+const val FALLBACK_COLOR_KEY = "slate"
 
 /**
  * Category palette by color key: light-mode brand hues (Tailwind 600) and their dark-mode variants

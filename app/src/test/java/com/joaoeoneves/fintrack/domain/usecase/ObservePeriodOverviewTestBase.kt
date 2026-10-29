@@ -6,13 +6,13 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
-import com.joaoeoneves.fintrack.domain.model.CARRY_LOOKBACK_MONTHS
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
 import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
+import com.joaoeoneves.fintrack.testutil.FakePlanSettingsRepository
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.YearMonth
@@ -31,12 +31,17 @@ abstract class ObservePeriodOverviewTestBase {
         day: Int,
     ): Instant = month.atDay(day).atTime(12, 0).toInstant(ZoneOffset.UTC)
 
-    /** The extra range every overview reads: the 12 months before [month], for the carry-over. */
-    protected fun history(month: YearMonth): InstantRange =
+    /** The month before [range]'s start, up to its start: where a salary funding the range's first month is paid. */
+    protected fun monthBefore(range: InstantRange): InstantRange =
         InstantRange(
-            month.minusMonths(CARRY_LOOKBACK_MONTHS).toInstantRange(zone).startInclusive,
-            month.toInstantRange(zone).startInclusive,
+            range.startInclusive
+                .atZone(zone)
+                .minusMonths(1)
+                .toInstant(),
+            range.startInclusive,
         )
+
+    protected fun monthBefore(month: YearMonth): InstantRange = monthBefore(month.toInstantRange(zone))
 
     protected val expenses = CountingExpenseRepository()
     protected val income = CountingIncomeRepository()
@@ -46,6 +51,7 @@ abstract class ObservePeriodOverviewTestBase {
     protected val groups = FakeEnvelopeRepository()
     protected val recurring = FakeRecurringRepository()
     protected val monthSettings = FakeMonthSettingsRepository()
+    protected val planSettings = FakePlanSettingsRepository()
 
     protected val useCase =
         ObservePeriodOverview(
@@ -58,6 +64,7 @@ abstract class ObservePeriodOverviewTestBase {
                     categories = categories,
                     envelopes = groups,
                     recurring = recurring,
+                    planSettings = planSettings,
                 ),
         )
 
