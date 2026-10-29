@@ -252,7 +252,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             val vm = fixture(expenses = listOf(lunch, mug)).vm
 
             assertEquals(
-                listOf(EnvelopeChip(foodEnvelope, "Food", 900L), EnvelopeChip(NO_ENVELOPE, null, 300L)),
+                listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet"), EnvelopeChip(NO_ENVELOPE, null, 300L, "slate")),
                 content(vm).analytics.envelopeChips,
             )
         }
@@ -263,7 +263,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             val vm = fixture(expenses = listOf(lunch, rent)).vm
 
             assertEquals(
-                listOf(EnvelopeChip(foodEnvelope, "Food", 900L), EnvelopeChip(billsEnvelope, "Bills", 5_000L)),
+                listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet"), EnvelopeChip(billsEnvelope, "Bills", 5_000L, "blue")),
                 content(vm).analytics.envelopeChips,
             )
         }
@@ -287,7 +287,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertEquals(
-                listOf(EnvelopeChip(billsEnvelope, "Bills", 0L), EnvelopeChip(NO_ENVELOPE, null, 300L)),
+                listOf(EnvelopeChip(billsEnvelope, "Bills", 0L, "blue"), EnvelopeChip(NO_ENVELOPE, null, 300L, "slate")),
                 current(vm).analytics.envelopeChips,
             )
         }
@@ -302,7 +302,7 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertEquals(
-                listOf(EnvelopeChip(foodEnvelope, "Food", 900L), EnvelopeChip(NO_ENVELOPE, null, 0L)),
+                listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet"), EnvelopeChip(NO_ENVELOPE, null, 0L, "slate")),
                 current(vm).analytics.envelopeChips,
             )
         }
@@ -314,12 +314,12 @@ class ActivityViewModelEnvelopeTest : ActivityViewModelTestBase() {
             val vm = fixture(expenses = listOf(september, mug)).vm
             content(vm)
 
-            assertEquals(listOf(EnvelopeChip(NO_ENVELOPE, null, 300L)), current(vm).analytics.envelopeChips)
+            assertEquals(listOf(EnvelopeChip(NO_ENVELOPE, null, 300L, "slate")), current(vm).analytics.envelopeChips)
 
             vm.periodActions.onSelect(Period.Month(YearMonth.of(2026, 9)))
             advanceUntilIdle()
 
-            assertEquals(listOf(EnvelopeChip(foodEnvelope, "Food", 900L)), current(vm).analytics.envelopeChips)
+            assertEquals(listOf(EnvelopeChip(foodEnvelope, "Food", 900L, "violet")), current(vm).analytics.envelopeChips)
         }
 
     @Test
