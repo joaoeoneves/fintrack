@@ -86,12 +86,12 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
     }
 }
 
-/** Where a "Get started" checklist step leads. */
+/** Where a "Get started" checklist step leads: the "add" editor itself (pay day edits existing income). */
 private fun routeForStartStep(step: StartStep): Any =
     when (step) {
         StartStep.SALARY -> SalarySetup
-        StartStep.ENVELOPES -> PlanEnvelopes
-        StartStep.BILLS -> RecurringList
+        StartStep.ENVELOPES -> EditEnvelope()
+        StartStep.BILLS -> AddEditRecurring()
         StartStep.SAVINGS_PLAN -> EditSavingsPlan()
         StartStep.PAYDAY -> PlanIncome()
         StartStep.FIRST_EXPENSE -> AddEditExpense()
