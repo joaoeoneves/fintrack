@@ -123,11 +123,7 @@
     <string name="activity_no_match">Nothing matches “%1$s”.</string>
     <string name="activity_no_match_filter">No expenses match the selected filter.</string>
     <string name="activity_empty">No activity in this period yet.</string>
-    <string name="activity_total_in">In</string>
-    <string name="activity_total_out">Out</string>
     <string name="activity_spent_total">Spent</string>
-    <string name="activity_show_breakdown">Show details</string>
-    <string name="activity_hide_breakdown">Hide details</string>
     <string name="activity_envelope_all">All</string>
     <string name="cd_envelope_bar">Spending by envelope: %1$s</string>
     <string name="cd_envelope_chip">%1$s, %2$s spent</string>
@@ -756,4 +752,8 @@
     <string name="effective_from_title">Valid from</string>
     <string name="effective_from_history">%1$s until %2$s</string>
     <string name="salary_shift_effective_note">The salary received at the end of %1$s counts for %2$s</string>
+    <string name="activity_summary_spent">Spent %1$s</string>
+    <string name="activity_summary_received">Received %1$s</string>
+    <string name="cd_open_evolution">Open evolution</string>
+    <string name="activity_source_all">All</string>
 </resources>

@@ -4,7 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
-import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
+import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeSourceChip
 import com.joaoeoneves.fintrack.ui.common.DaySection
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.YearMonth
@@ -37,6 +37,13 @@ data class ActivityTotals(
     val savedCents: Long = 0L,
 )
 
+/** The summary line: [spentCents] out (of which [savedCents] put into savings) and [receivedCents] in. */
+data class ActivitySummary(
+    val spentCents: Long,
+    val savedCents: Long,
+    val receivedCents: Long,
+)
+
 sealed interface ActivityUiState {
     data object Loading : ActivityUiState
 
@@ -54,7 +61,8 @@ sealed interface ActivityUiState {
         val filters: ActivityFilters,
         val analytics: ActivityAnalytics,
         val categoryScope: Set<CategoryId>? = null,
-        val history: ActivityHistory? = null,
+        val incomeSources: List<IncomeSourceChip> = emptyList(),
+        val summary: ActivitySummary = ActivitySummary(0L, 0L, 0L),
         val shiftedIncomes: Map<String, YearMonth> = emptyMap(),
     ) : ActivityUiState
 
