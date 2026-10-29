@@ -19,10 +19,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.MealCardBalance
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.TabScaffold
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.history.IncomeHeadline
 import com.joaoeoneves.fintrack.ui.common.history.IncomeHistory
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
@@ -122,6 +124,7 @@ private fun IncomeContent(
         if (month != null) {
             MonthCard(state, month, viewModel, onOpenSalaryProfile) { editingWorkingDays = true }
         }
+        state.mealCard?.let { MealCardRow(it) }
         IncomeHistory(
             history = state.history,
             onSourceClick = { onOpenSource(it, state.period) },
@@ -193,6 +196,26 @@ private fun MonthCard(
         actions = incomeActions(state, viewModel, onOpenSalaryProfile, onEditWorkingDays),
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding),
     )
+}
+
+/** The meal card: what it received and what was paid with it in the period, and what is left (may be negative). */
+@Composable
+private fun MealCardRow(balance: MealCardBalance) {
+    SettingsGroup(
+        label = stringResource(R.string.income_meal_card),
+        modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(top = Dimens.Space16),
+    ) {
+        SettingsRow(
+            title = stringResource(R.string.income_meal_card_balance),
+            supportingText =
+                stringResource(
+                    R.string.income_meal_card_detail,
+                    formatAmountCents(balance.receivedCents),
+                    formatAmountCents(balance.spentCents),
+                ),
+            value = formatAmountCents(balance.balanceCents),
+        )
+    }
 }
 
 /** The Year scale's in-place set-up: the salary profile and a new manual line (the Month card has both already). */

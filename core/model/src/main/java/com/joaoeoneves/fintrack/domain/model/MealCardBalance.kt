@@ -18,6 +18,12 @@ fun mealCardBalanceOf(
     expenses: Iterable<Expense>,
 ): MealCardBalance = MealCardBalance(receivedCents, expenses.filter { it.paidWithMealCard }.netCents())
 
+/** What the meal line(s) among [lines] received in [incomes] (attributed with the one rule of [lineOfIncome]). */
+fun mealCardReceivedCents(
+    incomes: Iterable<Income>,
+    lines: List<PlannedIncome>,
+): Long = incomes.filter { lineOfIncome(it, lines)?.salaryComponent == SalaryComponent.MEAL }.sumOf { it.amountCents }
+
 /** Whether the meal-card features apply: meals are paid on a card and the meal rate is above 0. */
 fun SalaryProfile?.usesMealCard(): Boolean {
     val profile = this ?: return false
