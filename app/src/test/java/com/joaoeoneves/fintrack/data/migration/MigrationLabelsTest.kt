@@ -20,7 +20,9 @@ class MigrationLabelsTest {
     fun guestLine_withALabelMissingFromTheAccount_isCopied() {
         val local = localDoc().copy(plannedIncome = lines("Bonus"))
 
-        val plan = planMigration(local, remoteSnapshot(plannedIncomeIds = setOf("x"), plannedIncomeLabels = setOf("Salary")))
+        val remote = remoteSnapshot(plannedIncomeIds = setOf("x"), plannedIncomeLabels = setOf("Salary"))
+
+        val plan = planMigration(local, remote)
 
         assertEquals(listOf("Bonus"), plan.plannedIncome.map { it.label })
         assertEquals(0, plan.skipped)
