@@ -25,14 +25,17 @@ class HandleRecurringOccurrence
         /**
          * Creates the expense/income for [occurrence] (with [amountOverrideCents] instead of the item's amount,
          * when set) and advances the item's cursor in one atomic
-         * write. Refused when [occurrence] is after [today]; fails when the item no longer exists.
+         * write. With [forReview] the transaction is flagged for the review inbox. Refused when [occurrence] is
+         * after [today]; fails when the item no longer exists.
          */
+        @Suppress("LongParameterList") // Optional override and review flag; callers pass them by name.
         suspend fun confirm(
             itemId: String,
             occurrence: LocalDate,
             today: LocalDate,
             zone: ZoneId,
             amountOverrideCents: Long? = null,
+            forReview: Boolean = false,
         ): Result<Unit> =
             runNonCancelling {
                 val item = latest(itemId)
@@ -40,12 +43,19 @@ class HandleRecurringOccurrence
                 require(occurrence <= today) { "Occurrence $occurrence is in the future" }
                 val catalog = categoryRepository.observeCategories().first()
                 val transaction = item.transactionFor(occurrence, zone, catalog)
-                val posted =
+                val amounted =
                     when {
                         amountOverrideCents == null -> transaction
                         transaction is Expense -> transaction.copy(amountCents = amountOverrideCents)
                         transaction is Income -> transaction.copy(amountCents = amountOverrideCents)
                         else -> transaction
+                    }
+                val posted =
+                    when {
+                        !forReview -> amounted
+                        amounted is Expense -> amounted.copy(needsReview = true)
+                        amounted is Income -> amounted.copy(needsReview = true)
+                        else -> amounted
                     }
                 recurringRepository.confirmOccurrence(itemId, occurrence, posted).getOrThrow()
             }
