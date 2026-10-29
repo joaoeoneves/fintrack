@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +34,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
@@ -52,6 +54,17 @@ fun RecurringListScreen(
     OnResumeEffect(onResume = viewModel::onRetry)
     LaunchedEffect(Unit) {
         viewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
+    }
+    LaunchedEffect(Unit) {
+        viewModel.deletedEvent.collect { item ->
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result =
+                snackbarHostState.showActionSnackbar(
+                    resources.getString(R.string.recurring_deleted),
+                    resources.getString(R.string.action_undo),
+                )
+            if (result == SnackbarResult.ActionPerformed) viewModel.onUndoDelete(item)
+        }
     }
 
     RecurringListContent(

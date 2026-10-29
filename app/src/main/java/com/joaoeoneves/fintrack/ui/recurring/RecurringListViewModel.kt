@@ -53,6 +53,10 @@ class RecurringListViewModel
         private val retryTrigger = MutableStateFlow(0)
         private val deleteTarget = MutableStateFlow<RecurringItem?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
+        private val deletions = Channel<RecurringItem>(Channel.BUFFERED)
+
+        /** Each item just deleted, for an undo snackbar. */
+        val deletedEvent: Flow<RecurringItem> = deletions.receiveAsFlow()
 
         /** One-shot user-facing messages for writes that failed, shown as a snackbar. */
         val errorEvent: Flow<UiText> = errors.receiveAsFlow()
@@ -98,8 +102,20 @@ class RecurringListViewModel
             }
         }
 
+        /** Deletes the item at once; the screen offers to undo (its past transactions are never touched). */
         fun onDeleteRequested(id: String) {
-            viewModelScope.launch { deleteTarget.value = latest(id) }
+            viewModelScope.launch {
+                val item = latest(id) ?: return@launch
+                recurringRepository
+                    .deleteRecurring(id)
+                    .onSuccess { deletions.send(item) }
+                    .onFailure { reportFailure(it) }
+            }
+        }
+
+        /** Puts back an item deleted a moment ago. */
+        fun onUndoDelete(item: RecurringItem) {
+            viewModelScope.launch { recurringRepository.saveRecurring(item).onFailure { reportFailure(it) } }
         }
 
         fun onConfirmDelete() {

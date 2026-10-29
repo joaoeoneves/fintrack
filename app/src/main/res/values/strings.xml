@@ -751,4 +751,5 @@
     <string name="settings_show_start">Show Get started</string>
     <string name="settings_show_start_hint">The setup checklist on Home</string>
     <string name="home_start_dismissed">Get started hidden</string>
+    <string name="recurring_deleted">Recurring deleted; its past entries stay</string>
 </resources>

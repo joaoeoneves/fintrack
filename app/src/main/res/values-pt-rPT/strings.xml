@@ -768,4 +768,5 @@
     <string name="settings_show_start_hint">A lista de primeiros passos no Início</string>
     <string name="settings_show_start">Mostrar Começar</string>
     <string name="home_start_dismissed">Começar escondido</string>
+    <string name="recurring_deleted">Recorrente eliminado; os movimentos passados ficam</string>
 </resources>
