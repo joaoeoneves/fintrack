@@ -31,6 +31,7 @@ import com.joaoeoneves.fintrack.ui.common.history.IncomeHeadline
 import com.joaoeoneves.fintrack.ui.common.history.IncomeHistory
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
+import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
@@ -64,6 +65,8 @@ fun IncomeTabScreen(
     onOpenSettings: () -> Unit,
     onOpenSalaryProfile: (hasProfile: Boolean) -> Unit,
     onOpenSource: (String, Period) -> Unit,
+    onAddExpense: (Period) -> Unit,
+    onAddIncome: (Period) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: IncomeTabViewModel = hiltViewModel(),
 ) {
@@ -80,6 +83,15 @@ fun IncomeTabScreen(
             onOpenSettings = onOpenSettings,
             modifier = modifier,
             snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
+            floatingActionButton = {
+                (state as? IncomeTabUiState.Content)?.let { content ->
+                    AddTransactionPill(
+                        visible = true,
+                        onAddExpense = { onAddExpense(content.period) },
+                        onAddIncome = { onAddIncome(content.period) },
+                    )
+                }
+            },
         ) { innerPadding ->
             val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
             StateCrossfade(state) { current ->
@@ -115,7 +127,7 @@ private fun IncomeContent(
             modifier
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(bottom = Dimens.Space32),
+                .padding(bottom = Dimens.AddPillClearance),
     ) {
         PeriodSelector(
             period = state.period,
@@ -235,8 +247,7 @@ private fun YearOutlook(outlook: YearIncomeOutlook) {
     }
 }
 
-private fun outlookLabel(received: Boolean): Int =
-    if (received) R.string.income_outlook_received else R.string.income_outlook_expected
+private fun outlookLabel(received: Boolean): Int = if (received) R.string.income_outlook_received else R.string.income_outlook_expected
 
 /** The meal card: what it received and what was paid with it in the period, and what is left (may be negative). */
 @Composable

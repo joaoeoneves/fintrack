@@ -166,7 +166,6 @@ private fun contextOf(subject: DetailSubject): String? =
             listOfNotNull(
                 subject.envelopeName?.let { stringResource(R.string.detail_context_envelope, it) }
                     ?: stringResource(R.string.detail_context_no_envelope),
-                subject.limitCents?.let { stringResource(R.string.detail_context_limit, formatAmountCents(it)) },
             ).joinToString(CONTEXT_SEPARATOR)
         is DetailSubject.OfSource ->
             listOfNotNull(

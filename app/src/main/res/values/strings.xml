@@ -35,7 +35,7 @@
     <string name="cd_previous_year">Previous year</string>
     <string name="cd_next_year">Next year</string>
     <string name="cd_change_period">Change period</string>
-    <string name="cd_pie_chart_total">Outflow breakdown. Total outflow: %1$s (spending %2$s, saved or invested %3$s).</string>
+    <string name="cd_pie_chart_total">Outflow breakdown. Total outflow: %1$s (spending %2$s, invested %3$s).</string>
     <string name="cd_pie_chart_category_item">%1$s, %2$d percent, %3$s</string>
 
     <!-- Shared form field labels -->
@@ -229,7 +229,7 @@
     <string name="category_field_color">Color</string>
     <string name="category_field_kind">Type</string>
     <string name="category_kind_spending">Spending</string>
-    <string name="category_kind_saving">Saving</string>
+    <string name="category_kind_saving">Investment</string>
     <string name="category_action_edit">Edit</string>
     <string name="category_action_archive">Archive</string>
     <string name="category_action_unarchive">Unarchive</string>
@@ -263,10 +263,8 @@
     </plurals>
     <plurals name="category_move_recurring">
         <item quantity="one">%1$d recurring</item>
-        <item quantity="other">%1$d recurrings</item>
+        <item quantity="other">%1$d recurring items</item>
     </plurals>
-    <string name="category_move_budget">Its limit</string>
-    <string name="category_move_budget_merge">Its limit (“%1$s” already has one, which is kept; this one is dropped)</string>
     <string name="category_action_move">Move</string>
     <string name="category_move_moving">Moving…</string>
     <string name="category_move_done">Items moved</string>
@@ -276,7 +274,7 @@
     <string name="settings_export_backup">Export backup (JSON)</string>
     <string name="settings_restore_backup">Restore backup (JSON)</string>
     <string name="action_restore">Restore</string>
-    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nGroups: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring: %6$d\nSavings plans: %7$d\nSalary profile: %8$s</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nGroups: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring: %6$d\nGoals: %7$d\nSalary profile: %8$s</string>
     <string name="backup_salary_no">No</string>
     <string name="backup_salary_yes">Yes</string>
     <string name="backup_export_done_title">Backup exported</string>
@@ -330,14 +328,14 @@
 
     <string name="plan_expected_income">Expected income</string>
     <string name="home_to_receive_title">To receive</string>
-    <string name="plan_add_income_line">Add income</string>
-    <string name="plan_income_line_new">New income</string>
-    <string name="plan_income_line_edit">Edit income</string>
+    <string name="plan_add_income_line">Add expected income</string>
+    <string name="plan_income_line_new">New expected income</string>
+    <string name="plan_income_line_edit">Edit expected income</string>
     <string name="plan_field_label">Name</string>
     <string name="plan_field_amount">Amount</string>
     <string name="error_plan_label_required">Enter a name</string>
     <string name="error_plan_label_too_long">At most 50 characters</string>
-    <string name="error_plan_save_failed">Couldn\'t save the plan</string>
+    <string name="error_plan_save_failed">Couldn\'t save</string>
     <string name="dashboard_breakdown_actual">Actual</string>
     <string name="dashboard_breakdown_planned">Planned</string>
     <string name="dashboard_planned_per_month">Planned / month</string>
@@ -456,7 +454,7 @@
     <string name="salary_mode_net">Net amounts</string>
     <string name="salary_group_salary">Salary</string>
     <string name="salary_field_base">Gross base salary (monthly)</string>
-    <string name="salary_group_duo">Twelfths</string>
+    <string name="salary_group_duo">Subsidies in twelfths</string>
     <string name="salary_duo_hint">Share of the holiday and Christmas subsidies paid every month</string>
     <string name="salary_spread_none">None</string>
     <string name="salary_spread_half" formatted="false">50%</string>
@@ -534,8 +532,8 @@
 
     <string name="settings_delete_all_data">Delete all data</string>
     <string name="delete_all_data_title">Delete all data?</string>
-    <string name="delete_all_data_message_account">This permanently deletes all your expenses, income, plan, categories, groups, recurring and savings plans from your account, on all your devices. Export a backup first if you might need it.</string>
-    <string name="delete_all_data_message_device">This permanently deletes all your expenses, income, plan, categories, groups, recurring and savings plans on this device. Export a backup first if you might need it.</string>
+    <string name="delete_all_data_message_account">This permanently deletes all your expenses, income, plan, categories, groups, recurring items and goals from your account, on all your devices. Export a backup first if you might need it.</string>
+    <string name="delete_all_data_message_device">This permanently deletes all your expenses, income, plan, categories, groups, recurring items and goals on this device. Export a backup first if you might need it.</string>
     <string name="delete_all_data_export_backup">Export backup</string>
     <string name="delete_all_data_confirm">Delete everything</string>
     <string name="delete_all_data_progress">Deleting your data…</string>
@@ -549,10 +547,10 @@
     <string name="salary_duplicates_keep">Keep</string>
     <string name="plan_income_salary">Salary</string>
     <string name="plan_income_meal">Meal allowance</string>
-    <string name="plan_income_subsidies">Subsidies</string>
+    <string name="plan_income_subsidies">Subsidies in twelfths</string>
     <string name="salary_breakdown_net_base">Base salary (net)</string>
-    <string name="salary_breakdown_net_duo">Twelfths (net)</string>
-    <string name="salary_line_duodecimos">Subsidies (twelfths)</string>
+    <string name="salary_breakdown_net_duo">Subsidies in twelfths (net)</string>
+    <string name="salary_line_duodecimos">Subsidies in twelfths</string>
     <string name="income_received">Received</string>
     <string name="plan_received_on">Received on %1$s</string>
     <string name="income_mark_received">Mark as received</string>
@@ -567,12 +565,12 @@
     <string name="envelope_name">Name</string>
     <string name="envelope_categories">Categories</string>
     <string name="envelope_add_category">Add category</string>
-    <string name="envelope_saving_hidden_hint">Savings categories belong to the savings plan, so they are not listed here.</string>
+    <string name="envelope_saving_hidden_hint">Investment categories have no limit, so they are not listed here.</string>
     <string name="envelope_leaves_other">Leaves %1$s</string>
     <string name="envelope_delete">Delete group</string>
     <string name="envelope_deleted">Group deleted</string>
     <string name="envelope_error_name_blank">Enter a name</string>
-    <string name="envelope_error_name_duplicate">An group with this name already exists</string>
+    <string name="envelope_error_name_duplicate">A group with this name already exists</string>
     <string name="envelope_card_funded">Funded by %1$s</string>
     <string name="envelope_funded_overflow">%1$s covers %2$s; %3$s comes from other income.</string>
     <string name="salary_setup_done">Salary saved</string>
@@ -584,7 +582,7 @@
     <string name="home_start_done">Done</string>
     <string name="home_start_step_salary">Set your salary or income</string>
     <string name="home_start_step_bills">Add recurring</string>
-    <string name="home_start_step_payday">Set your pay day</string>
+    <string name="home_start_step_payday">Set your payday</string>
     <string name="home_start_step_payday_hint">Choose the day your income is recorded automatically</string>
     <string name="home_start_step_expense">Record your first expense</string>
     <string name="salary_setup_title">Salary set-up</string>
@@ -615,7 +613,7 @@
     <string name="backup_restore_partial_title">Restore incomplete</string>
     <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish — retrying doesn\'t duplicate anything.</string>
     <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
-    <string name="activity_total_out_includes_saving">includes %1$s saved</string>
+    <string name="activity_total_out_includes_saving">Invested %1$s</string>
     <string name="pending_more_options">More options</string>
     <string name="pending_change_amount">Change amount</string>
     <string name="pending_automatic">Automatic · %1$s</string>
@@ -638,7 +636,7 @@
     <string name="activity_since_january">Since January</string>
     <string name="activity_ytd_spent">Spent</string>
     <string name="activity_ytd_received">Received</string>
-    <string name="activity_ytd_saved">Saved</string>
+    <string name="activity_ytd_saved">Invested</string>
     <string name="activity_ytd_leftover">Left over until %1$s</string>
     <string name="activity_leftover_average">Average per month: %1$s</string>
     <string name="activity_evolution">Evolution</string>
@@ -662,11 +660,10 @@
     <string name="detail_not_found">This item no longer exists.</string>
     <string name="detail_context_envelope">In: %1$s</string>
     <string name="detail_context_no_envelope">No group</string>
-    <string name="detail_context_limit">Limit %1$s</string>
     <string name="detail_context_expected">Expected %1$s</string>
     <string name="detail_source_unknown">Income</string>
-    <string name="detail_salary_vs_spent">Received at the end of %1$s: %2$s · Spent in %3$s: %4$s</string>
-    <string name="detail_salary_vs_spent_partial">Received at the end of %1$s: %2$s · Spent so far in %3$s: %4$s</string>
+    <string name="detail_salary_vs_spent">Received in %1$s: %2$s · Spent in %3$s: %4$s</string>
+    <string name="detail_salary_vs_spent_partial">Received in %1$s: %2$s · Spent so far in %3$s: %4$s</string>
     <string name="home_income_title">Income</string>
     <string name="home_income_of_expected">of %1$s expected</string>
     <string name="home_spending_title">Spending</string>

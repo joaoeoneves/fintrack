@@ -13,11 +13,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.TabScaffold
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.history.SpendingHistory
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
+import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
@@ -34,6 +36,8 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 fun SpendingTabScreen(
     onOpenSettings: () -> Unit,
     navigation: SpendingTabNavigation,
+    onAddExpense: (Period) -> Unit,
+    onAddIncome: (Period) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SpendingTabViewModel = hiltViewModel(),
 ) {
@@ -42,6 +46,15 @@ fun SpendingTabScreen(
         title = stringResource(R.string.nav_spending),
         onOpenSettings = onOpenSettings,
         modifier = modifier,
+        floatingActionButton = {
+            (state as? SpendingTabUiState.Content)?.let { content ->
+                AddTransactionPill(
+                    visible = true,
+                    onAddExpense = { onAddExpense(content.period) },
+                    onAddIncome = { onAddIncome(content.period) },
+                )
+            }
+        },
     ) { innerPadding ->
         StateCrossfade(state) { current ->
             when (current) {
@@ -62,7 +75,7 @@ fun SpendingTabScreen(
                                 .padding(innerPadding)
                                 .verticalScroll(rememberScrollState())
                                 .navigationBarsPadding()
-                                .padding(bottom = Dimens.Space24),
+                                .padding(bottom = Dimens.AddPillClearance),
                     ) {
                         PeriodSelector(
                             period = current.period,
