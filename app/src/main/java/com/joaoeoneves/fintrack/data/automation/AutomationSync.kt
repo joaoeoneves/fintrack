@@ -15,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.usecase.AutoPostRecurring
+import com.joaoeoneves.fintrack.domain.usecase.AutomationOutcome
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -152,18 +153,22 @@ class AutomationSync
 
         // Steps run in order and are independent: one failing must not stop the next. True when all succeeded.
         private suspend fun runSteps(today: LocalDate): Boolean {
-            val recurring = step("auto-post recurring") { autoPostRecurring(today, clock.zone) }
-            val payday = step("record payday") { recordPayday.runDue(today, clock.zone) }
+            val recurring = step("auto-post recurring") { autoPostRecurring.run(today, clock.zone) }
+            val payday = step("record payday") { recordPayday.runDueOutcome(today, clock.zone) }
             return recurring && payday
         }
 
         private suspend fun step(
             name: String,
-            block: suspend () -> Unit,
+            block: suspend () -> AutomationOutcome,
         ): Boolean =
             runCatchingCancellable {
                 block()
             }.onFailure { e ->
                 Log.w(TAG, "Automation step failed: $name", e)
-            }.isSuccess
+            }.map { outcome ->
+                // A step reports a failed read/write by its result, not only by throwing.
+                if (outcome.failed) Log.w(TAG, "Automation step incomplete (will retry): $name")
+                !outcome.failed
+            }.getOrDefault(false)
     }
