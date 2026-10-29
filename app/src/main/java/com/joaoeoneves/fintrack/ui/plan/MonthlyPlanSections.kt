@@ -96,6 +96,8 @@ data class ExpectedIncomeModel(
     val rows: List<IncomeRow>,
     val canAdd: Boolean,
     val workingDays: WorkingDaysState,
+    /** The working days of the month that pays [workingDays]'s month (the previous one with the salary shift). */
+    val payWorkingDays: WorkingDaysState = workingDays,
     val receipts: IncomeReceipts,
     /** Keys of the manual rows that look like a repeat of the salary the profile already generates. */
     val duplicateKeys: Set<String> = emptySet(),
@@ -122,8 +124,9 @@ fun ExpectedIncomeCard(
     var undoing by remember { mutableStateOf<IncomeRow?>(null) }
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
         receipts.payday?.let { payday ->
+            val textRes = if (payday <= receipts.today) R.string.plan_payday_received else R.string.plan_payday_upcoming
             Text(
-                text = stringResource(R.string.plan_payday, rememberPaydayText(payday)),
+                text = stringResource(textRes, rememberPaydayText(payday)),
                 style = MaterialTheme.typography.bodySmall,
                 color = FinTrackTheme.colors.textSecondary,
             )
@@ -134,7 +137,7 @@ fun ExpectedIncomeCard(
             showChevron = true,
         )
         Hairline()
-        WorkingDaysRow(state = workingDays, onClick = actions.onEditWorkingDays)
+        WorkingDaysRow(state = model.payWorkingDays, onClick = actions.onEditWorkingDays)
         Hairline()
         val (managed, manual) = rows.partition { it.component != null }
         if (managed.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_from_salary_profile))

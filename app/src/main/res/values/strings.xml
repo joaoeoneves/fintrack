@@ -622,6 +622,8 @@
     <string name="income_undo_received">Undo received</string>
     <string name="income_undo_title">Undo received?</string>
     <string name="plan_payday">Payday: %1$s</string>
+    <string name="plan_payday_received">Salary received on %1$s</string>
+    <string name="plan_payday_upcoming">You get paid on %1$s</string>
     <string name="plan_received_amount">Amount received</string>
     <string name="envelopes_title">Envelopes</string>
     <string name="envelopes_new">New envelope</string>

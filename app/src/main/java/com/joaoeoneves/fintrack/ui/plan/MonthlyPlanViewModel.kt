@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -18,7 +19,6 @@ import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
-import com.joaoeoneves.fintrack.domain.model.commonPayDateIn
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
@@ -29,7 +29,9 @@ import com.joaoeoneves.fintrack.domain.model.isExtra
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.looksLikeSalary
 import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
+import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
+import com.joaoeoneves.fintrack.domain.model.paysForNextMonth
 import com.joaoeoneves.fintrack.domain.model.receivedOn
 import com.joaoeoneves.fintrack.domain.model.salaryComponent
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
@@ -332,6 +334,7 @@ private fun planFlow(
     ) { lines, _, categories, overview, (settings, editorState, goals) ->
         val workingDays = workingDaysOf(overview.budgetMonth, settings)
         val funding = overview.funding
+        val payMonth = payingMonthOf(lines, overview.budgetMonth, funding)
         val rows = incomeRowsIn(lines, overview.budgetMonth, funding)
         val content: MonthlyPlanUiState =
             MonthlyPlanUiState.Content(
@@ -343,6 +346,7 @@ private fun planFlow(
                 canGoToNextMonth = selected.canGoToNextMonth,
                 canAddIncomeLine = lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
                 workingDays = workingDays,
+                payWorkingDays = workingDaysOf(payMonth, settings),
                 editor = editorState,
                 envelopes = overview.envelopes,
                 figures = overview.figures,
@@ -392,7 +396,8 @@ private fun receiptsOf(
             row.receivedOn(month, funding, overview.monthIncome, selected.zone)?.let { row.key to it }
         }
     return IncomeReceipts(
-        payday = commonPayDateIn(rows, month, funding),
+        // The latest pay date of the rows that pay this month (last month's with the shift); none without rows.
+        payday = rows.filter { it.cents > 0L }.maxOfOrNull { it.payDateIn(month, funding) },
         today = selected.today,
         canReceive = month <= YearMonth.from(selected.today),
         receivedOn = received.toMap(),
@@ -406,6 +411,13 @@ private fun duplicateKeysOf(
     rows
         .filter { row -> row.component == null && row.lines.any { it.looksLikeSalary(lines) } }
         .mapTo(mutableSetOf()) { it.key }
+
+/** The month whose working days the salary of [month] is paid on: the month before when the shift applies. */
+private fun payingMonthOf(
+    lines: List<PlannedIncome>,
+    month: YearMonth,
+    funding: IncomeFunding,
+): YearMonth = lines.firstOrNull { it.paysForNextMonth }?.let { funding.payMonthOf(it, month) } ?: month
 
 private fun workingDaysOf(
     month: YearMonth,

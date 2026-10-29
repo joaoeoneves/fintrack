@@ -106,6 +106,7 @@ private fun IncomeContent(
                         rows = state.incomeRows,
                         canAdd = state.canAddIncomeLine,
                         workingDays = state.workingDays,
+                        payWorkingDays = state.payWorkingDays,
                         receipts = state.receipts,
                         duplicateKeys = state.duplicateKeys,
                         funding = state.funding,
@@ -143,7 +144,7 @@ private fun IncomeDialogs(
 ) {
     if (editingWorkingDays) {
         WorkingDaysDialog(
-            state = state.workingDays,
+            state = state.payWorkingDays,
             onSave = viewModel::onSetWorkingDays,
             onDismiss = { onDismissWorkingDays() },
         )
