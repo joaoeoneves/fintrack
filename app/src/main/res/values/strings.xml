@@ -707,5 +707,6 @@
     <string name="income_outlook_partial">Received so far + expected</string>
     <string name="income_outlook_total">Total for the year</string>
     <string name="income_outlook_total_detail">Received %1$s · expected %2$s</string>
-    <string name="error_write_rejected">Couldn\'t save to the server: %1$s</string>
+    <string name="error_write_rejected">Couldn\'t save a change to the server.</string>
+    <string name="error_write_permission">The server did not accept a change. Check that you are signed in with the right account.</string>
 </resources>

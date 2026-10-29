@@ -84,9 +84,13 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
             }
         }
     val showRecurringDeleted = rememberRecurringDeletedHandler(snackbarHostState, undoLabel)
-    val writeFailedFormat = stringResource(R.string.error_write_rejected)
-    LaunchedEffect(writeFailedFormat) {
-        WriteErrors.events.collect { reason -> snackbarHostState.showSnackbar(writeFailedFormat.format(reason)) }
+    val writePermissionMessage = stringResource(writeErrorMessageRes(WriteErrorKind.PERMISSION))
+    val writeFailedMessage = stringResource(writeErrorMessageRes(WriteErrorKind.OTHER))
+    LaunchedEffect(writePermissionMessage, writeFailedMessage) {
+        WriteErrors.events.collect { reason ->
+            val permission = writeErrorKindOf(reason) == WriteErrorKind.PERMISSION
+            snackbarHostState.showSnackbar(if (permission) writePermissionMessage else writeFailedMessage)
+        }
     }
     Scaffold(
         modifier = modifier,

@@ -721,5 +721,6 @@
     <string name="income_outlook_partial">Recebido até agora + previsto</string>
     <string name="income_outlook_total">Total do ano</string>
     <string name="income_outlook_total_detail">Recebido %1$s · previsto %2$s</string>
-    <string name="error_write_rejected">Não foi possível guardar no servidor: %1$s</string>
+    <string name="error_write_rejected">Não foi possível guardar uma alteração no servidor.</string>
+    <string name="error_write_permission">O servidor não aceitou uma alteração. Confirma que entraste com a conta certa.</string>
 </resources>
