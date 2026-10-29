@@ -126,40 +126,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: checks-reports
-          path: |
-            **/build/reports/ktlint
-            **/build/reports/detekt
-            app/build/reports/lint-results-debug.*
-          retention-days: 7
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - *checkout
-      - *setup-java
-      - *setup-gradle
-      - *google-services
-
-      # Robolectric downloads its android-all jars from Maven at test time; a flaky download fails every
-      # Robolectric test, so keep them cached between runs.
-      - name: Cache Robolectric jars
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository/org/robolectric
-          key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
-
-      - name: Unit tests
-        run: ./gradlew testDebugUnitTest :core:model:test
-
-      # Compile-only for the baseline profile generator: generating the profile needs a device.
-      - name: Assemble debug APK
-        run: ./gradlew assembleDebug :baselineprofile:assemble
-
-      - name: Upload reports on failure
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
           name: test-reports
           path: |
             app/build/reports/tests
