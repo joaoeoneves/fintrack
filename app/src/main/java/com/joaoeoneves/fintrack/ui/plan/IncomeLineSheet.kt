@@ -73,7 +73,11 @@ fun IncomeLineSheet(
             },
         )
     val preview = incomePreview(schedule.basis, amountCents, workingDays.days)
-    FinTrackBottomSheet(onDismissRequest = onDismiss) {
+    val dirty =
+        label != editor.initialLabel ||
+            amountCents != (editor.initialAmountCents ?: 0L) ||
+            schedule != editor.initialSchedule
+    FinTrackBottomSheet(onDismissRequest = onDismiss, dirty = dirty) {
         Text(
             text = stringResource(incomeLineTitle(editor.editingId)),
             style = MaterialTheme.typography.titleMedium,
