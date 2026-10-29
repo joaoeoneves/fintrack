@@ -106,8 +106,10 @@ class AddEditIncomeViewModel
         }
 
         /** The loaded [form] with what was typed before the process died, if anything. */
-        private fun readyWithSaved(form: IncomeFormState) =
-            AddEditIncomeUiState.Ready(form.restoredFrom(snapshots.read()))
+        private fun readyWithSaved(form: IncomeFormState): AddEditIncomeUiState.Ready {
+            val restored = form.restoredFrom(snapshots.read())
+            return AddEditIncomeUiState.Ready(restored)
+        }
 
         fun onRetry() = loadIncome()
 

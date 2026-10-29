@@ -121,8 +121,10 @@ class AddEditRecurringViewModel
         }
 
         /** What was typed before the process died, when it belongs to this item. */
-        private fun saved(catalog: List<Category>): RecurringForm? =
-            snapshots.read()?.toForm(route.recurringId, catalog)
+        private fun saved(catalog: List<Category>): RecurringForm? {
+            val snapshot = snapshots.read()
+            return snapshot?.toForm(route.recurringId, catalog)
+        }
 
         fun onRetry() = load()
 

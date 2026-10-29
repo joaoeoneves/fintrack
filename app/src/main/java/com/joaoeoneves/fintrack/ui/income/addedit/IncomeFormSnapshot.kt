@@ -13,8 +13,10 @@ data class IncomeFormSnapshot(
     val note: String,
 )
 
-internal fun IncomeFormState.toSnapshot() =
-    IncomeFormSnapshot(incomeId, source, amountCents, date.toEpochMilli(), note)
+internal fun IncomeFormState.toSnapshot(): IncomeFormSnapshot {
+    val dateEpochMillis = date.toEpochMilli()
+    return IncomeFormSnapshot(incomeId, source, amountCents, dateEpochMillis, note)
+}
 
 /** This form with the saved [snapshot]'s fields, when it belongs to the same income (or both are new). */
 internal fun IncomeFormState.restoredFrom(snapshot: IncomeFormSnapshot?): IncomeFormState =
