@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.common.period
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
+import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackMenuItem
@@ -88,6 +90,49 @@ fun PeriodSelector(
     alignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     monthOnly: Boolean = false,
     monthsAhead: Int = 0,
+    showScaleSwitch: Boolean = false,
+) {
+    Column(modifier = modifier) {
+        if (showScaleSwitch) {
+            PeriodScaleSwitch(selected = period.scale, onSelect = actions.onSelectScale)
+        }
+        if (period is Period.Year) {
+            YearHeader(period, actions, alignment)
+        } else {
+            MonthHeader(period, canGoToNextMonth, actions, alignment, monthOnly, monthsAhead)
+        }
+    }
+}
+
+/** The header of a [Period.Year]: arrows move by year around the plain year label. */
+@Composable
+private fun YearHeader(
+    period: Period.Year,
+    actions: PeriodActions,
+    alignment: Alignment.Horizontal,
+) {
+    val now = Instant.now()
+    PeriodHeader(
+        navigation =
+            PeriodNavigation(
+                onPrevious = actions.onPrevious,
+                onNext = actions.onNext,
+                canGoNext = period.canGoToNextYear(now, ZoneId.systemDefault()),
+                isYear = true,
+            ),
+        alignment = alignment,
+    ) { PeriodHeaderText(periodLabel(period)) }
+}
+
+@Suppress("LongParameterList") // splits PeriodSelector; mirrors its options
+@Composable
+private fun MonthHeader(
+    period: Period,
+    canGoToNextMonth: Boolean,
+    actions: PeriodActions,
+    alignment: Alignment.Horizontal,
+    monthOnly: Boolean,
+    monthsAhead: Int,
 ) {
     var dialog by rememberSaveable { mutableStateOf(PeriodDialog.NONE) }
     val isMonthPeriod = period is Period.CurrentMonth || period is Period.Month
@@ -99,7 +144,6 @@ fun PeriodSelector(
                 onNext = actions.onNext.takeIf { isMonthPeriod },
                 canGoNext = canGoToNextMonth,
             ),
-        modifier = modifier,
         alignment = alignment,
     ) {
         PeriodMenuButton(

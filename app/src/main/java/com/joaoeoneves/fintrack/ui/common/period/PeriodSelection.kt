@@ -5,7 +5,9 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.nextMonth
+import com.joaoeoneves.fintrack.domain.model.nextYear
 import com.joaoeoneves.fintrack.domain.model.previousMonth
+import com.joaoeoneves.fintrack.domain.model.previousYear
 import kotlinx.coroutines.flow.StateFlow
 import java.time.Clock
 
@@ -37,14 +39,26 @@ class PeriodSelection(
         savedStateHandle[key] = normalized.encode()
     }
 
-    /** Moves a month selection one month back; no-op for rolling/custom periods. */
-    fun previous() = select(current().previousMonth(clock.instant(), clock.zone))
+    /** Moves a month selection one month back (a year selection one year); no-op for rolling/custom periods. */
+    fun previous() =
+        current().let { select(if (it is Period.Year) it.previousYear() else it.previousMonth(clock.instant(), clock.zone)) }
 
-    /** Moves a month selection one month forward, never past the current month (plus [monthsAhead]). */
-    fun next() = select(current().nextMonth(clock.instant(), clock.zone, monthsAhead))
+    /** Moves a selection forward by its scale, never past the current month or year (plus [monthsAhead]). */
+    fun next() =
+        current().let {
+            select(
+                if (it is Period.Year) it.nextYear(clock.instant(), clock.zone) else it.nextMonth(clock.instant(), clock.zone, monthsAhead),
+            )
+        }
+
+    /** Switches to [scale] keeping the anchor, see [switchedTo]. */
+    fun selectScale(scale: PeriodScale) = select(current().switchedTo(scale, clock.instant(), clock.zone, monthsAhead))
 
     private fun current(): Period = decodePeriod(token.value, clock.instant(), clock.zone, monthsAhead)
 }
+
+/** This period if it is a month or a year, otherwise the current month: for screens with the "Mês | Ano" switch. */
+fun Period.asMonthOrYearPeriod(): Period = if (this is Period.Year) this else asMonthPeriod()
 
 /** This period if it is a month, otherwise the current month: for screens that only know months. */
 fun Period.asMonthPeriod(): Period {

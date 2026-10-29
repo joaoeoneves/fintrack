@@ -78,6 +78,8 @@
 
     <!-- Period selector -->
     <string name="period_this_month">This month</string>
+    <string name="period_scale_month">Month</string>
+    <string name="period_scale_year">Year</string>
     <string name="period_choose_month">Choose month…</string>
     <string name="period_last_3_months">Last 3 months</string>
     <string name="period_last_6_months">Last 6 months</string>
@@ -756,7 +758,8 @@
     <string name="salary_shift_effective_note">The salary received at the end of %1$s counts for %2$s</string>
     <string name="activity_summary_spent">Spent %1$s</string>
     <string name="activity_summary_received">Received %1$s</string>
-    <string name="cd_open_evolution">Open evolution</string>
+    <string name="cd_open_spending">Open spending</string>
+    <string name="cd_open_income">Open income</string>
     <string name="activity_source_all">All</string>
     <string name="detail_vs_average">%1$s vs average</string>
     <string name="detail_edit">Edit</string>

@@ -78,6 +78,8 @@
 
     <!-- Seletor de período -->
     <string name="period_this_month">Este mês</string>
+    <string name="period_scale_month">Mês</string>
+    <string name="period_scale_year">Ano</string>
     <string name="period_choose_month">Escolher mês…</string>
     <string name="period_last_3_months">Últimos 3 meses</string>
     <string name="period_last_6_months">Últimos 6 meses</string>
@@ -773,7 +775,8 @@
     <string name="salary_shift_effective_note">O salário recebido no fim de %1$s conta para %2$s</string>
     <string name="activity_summary_spent">Gasto %1$s</string>
     <string name="activity_summary_received">Recebido %1$s</string>
-    <string name="cd_open_evolution">Abrir evolução</string>
+    <string name="cd_open_spending">Abrir gastos</string>
+    <string name="cd_open_income">Abrir rendimentos</string>
     <string name="activity_source_all">Todas</string>
     <string name="detail_vs_average">%1$s vs média</string>
     <string name="detail_edit">Editar</string>
