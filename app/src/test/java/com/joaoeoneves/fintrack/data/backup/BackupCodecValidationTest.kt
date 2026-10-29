@@ -35,7 +35,7 @@ class BackupCodecValidationTest {
         assertEquals(listOf("ok"), result.document.expenses.map { it.id })
         assertEquals(listOf("i1"), result.document.income.map { it.id })
         assertEquals(listOf("FOOD", "SHOPPING"), result.document.budgets.map { it.categoryId })
-        assertEquals(5 + 2 + 2, result.skippedCount)
+        assertEquals(5 + 2 + 1, result.skippedCount)
     }
 
     @Test

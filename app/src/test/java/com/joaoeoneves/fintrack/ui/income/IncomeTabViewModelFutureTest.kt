@@ -143,16 +143,9 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
             collect(vm)
 
             val outlook = vm.content().outlook!!
-            println(
-                "DEBUG " +
-                    vm
-                        .content()
-                        .history
-                        ?.monthly
-                        ?.months
-                        ?.map { it.month to it.incomeCents } + " " + actualIncomeRepo.getAllIncome(),
-            )
-            assertEquals(10, outlook.months.count { it.received })
+            // October is the current month: partial, not yet received.
+            assertEquals(9, outlook.months.count { it.received })
+            assertTrue(outlook.months[9].partial)
             assertEquals(95_000L, outlook.months[1].cents)
             assertEquals(0L, outlook.months[0].cents)
             assertFalse(outlook.months[10].received)
