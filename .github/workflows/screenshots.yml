@@ -79,8 +79,14 @@ jobs:
           sudo apt-get update && sudo apt-get install -y imagemagick
           mkdir -p docs/screenshots
           rm -f docs/screenshots/*.png
+          # Maestro resolves takeScreenshot paths against the flow file, so the files land under .maestro/.
+          # Where Maestro writes takeScreenshot files depends on its version (workspace, flow dir or ~/.maestro).
+          shot=$(find "$GITHUB_WORKSPACE" "$HOME" /tmp -name home.png -path '*screens*' 2>/dev/null | head -1)
+          [ -n "$shot" ] || { echo "::error::No screenshots found"; find "$GITHUB_WORKSPACE" "$HOME" -name '*.png' -newer app/build.gradle.kts 2>/dev/null | head -40; exit 1; }
+          src=$(dirname "$shot")
+          echo "Screenshots from $src"
           for f in home activity income spending investments add-expense; do
-            convert "maestro-out/screens/$f.png" -resize 540x "docs/screenshots/$f.png"
+            convert "$src/$f.png" -resize 540x "docs/screenshots/$f.png"
           done
 
       - name: Open pull request
