@@ -81,7 +81,7 @@ class FirestoreEnvelopeRepository
                     ) + planTimingFields(saved.startMonth, saved.versions),
                     SetOptions.merge(),
                 )
-                edit.fundedByLineId?.let { line ->
+                edit.fundedByLineId?.takeIf { it != existing?.fundedByLineId }?.let { line ->
                     envelopes.filter { it.id != docRef.id && it.fundedByLineId == line }.forEach {
                         batch.set(
                             collection(uid).document(it.id),
@@ -117,7 +117,7 @@ class FirestoreEnvelopeRepository
                 }
         }
 
-        // The limits to set or clear; a fixed amount then clears every member's budget.
+        // The limits to set or clear; none are touched when the edit lists none.
         private fun writeLimits(
             batch: WriteBatch,
             uid: String,
@@ -144,7 +144,6 @@ class FirestoreEnvelopeRepository
                     )
                 }
             }
-            if (edit.amountCents != null) edit.categoryIds.forEach { batch.delete(budgets.document(it.value)) }
         }
 
         override suspend fun reorderEnvelopes(orderedIds: List<String>): Result<Unit> =
@@ -174,7 +173,6 @@ class FirestoreEnvelopeRepository
                             category.copy(groupId = null).toFirestoreMap(),
                             SetOptions.merge(),
                         )
-                        batch.delete(userDoc(uid).collection("budgets").document(category.id.value))
                     }
                 batch.delete(collection(uid).document(id))
                 batch.commit().addOnFailureListener { Log.w(TAG, "Delete envelope $id write failed", it) }

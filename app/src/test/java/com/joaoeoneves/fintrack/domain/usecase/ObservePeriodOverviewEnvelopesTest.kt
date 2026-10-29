@@ -76,7 +76,7 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
         }
 
     @Test
-    fun fixedAmountAndFunding_flowIntoTheOverview() =
+    fun fixedAmountAndSpend_flowIntoTheOverview() =
         runTest {
             val food = groups.saveEnvelope(envelopeEdit("Food", amount = 20_000L, fundedBy = "meal")).getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, food)
@@ -87,10 +87,9 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
             val result = overview(Period.CurrentMonth)
 
             val progress = result.envelopes.envelopes.single()
-            assertEquals(20_000L, progress.fundingCents)
-            assertEquals(5_000L, progress.overflowCents)
-            assertEquals(100_000L - 5_000L, result.envelopes.freeCents)
-            assertEquals(100_000L + 20_000L - 25_000L, result.plan.safeToSpendCents)
+            assertEquals(20_000L, progress.amountCents)
+            assertEquals(25_000L, progress.spentCents)
+            assertTrue(progress.isOver)
         }
 
     @Test

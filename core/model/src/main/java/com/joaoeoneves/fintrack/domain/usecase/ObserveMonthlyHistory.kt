@@ -2,7 +2,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.IncomeFunding
+import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceHistory
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.Leftover
@@ -14,7 +14,6 @@ import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.incomeHistoryOf
 import com.joaoeoneves.fintrack.domain.model.leftoverOf
 import com.joaoeoneves.fintrack.domain.model.monthlyTotalsOf
-import com.joaoeoneves.fintrack.domain.model.salaryShiftEnabled
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.model.yearToDateOf
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
@@ -39,8 +38,8 @@ data class MonthlyHistory(
 )
 
 /**
- * Observes the [MonthlyHistory] of the `months` months ending at `endMonth` (inclusive). Transactions are read from
- * one extra month before the window so a salary paid at the end of that month is attributed to the first month.
+ * Observes the [MonthlyHistory] of the `months` months ending at `endMonth` (inclusive); income and spending are
+ * attributed by date.
  */
 class ObserveMonthlyHistory
     @Inject
@@ -65,17 +64,16 @@ class ObserveMonthlyHistory
                     sources.plannedIncome.observePlannedIncome(),
                     sources.categories.observeCategories(),
                     sources.monthSettings.observeMonthSettings(),
-                    sources.planSettings.observeSalaryPaysNextMonth(),
-                ) { lines, categories, settings, shift ->
-                    HistoryInputs(lines, categories, IncomeFunding.of(salaryShiftEnabled(shift, lines), settings))
+                ) { lines, categories, settings ->
+                    HistoryInputs(lines, categories, IncomeMonth.of(settings))
                 }
             return combine(transactionRepository.observeTransactions(range), inputs) { tx, plan ->
                 val totals =
-                    monthlyTotalsOf(window, tx.expenses, tx.income, plan.categories, plan.lines, plan.funding, zone)
+                    monthlyTotalsOf(window, tx.expenses, tx.income, plan.categories, zone)
                 MonthlyHistory(
                     months = totals,
                     categoryMonthly = categoryMonthlyOf(window, tx.expenses, plan.categories, zone),
-                    incomeSources = incomeHistoryOf(window, tx.income, plan.lines, plan.funding, zone, today),
+                    incomeSources = incomeHistoryOf(window, tx.income, plan.lines, plan.incomeMonth, zone, today),
                     yearToDate = yearToDateOf(totals, endMonth),
                     leftover = leftoverOf(totals, endMonth, today),
                 )
@@ -90,5 +88,5 @@ class ObserveMonthlyHistory
 private class HistoryInputs(
     val lines: List<PlannedIncome>,
     val categories: List<Category>,
-    val funding: IncomeFunding,
+    val incomeMonth: IncomeMonth,
 )

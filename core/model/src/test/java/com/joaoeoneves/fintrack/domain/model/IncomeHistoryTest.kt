@@ -11,8 +11,7 @@ import java.time.ZoneOffset
 
 class IncomeHistoryTest {
     private val zone = ZoneOffset.UTC
-    private val off = IncomeFunding(false) { 20 }
-    private val on = IncomeFunding(true) { 20 }
+    private val off = IncomeMonth { 20 }
     private val salary = PlannedIncome("sal", "Salário líquido", 100_000L, 0, managedKey = MANAGED_NET_SALARY)
     private val rent = PlannedIncome("rent", "Rent", 20_000L, 1)
 
@@ -130,11 +129,11 @@ class IncomeHistoryTest {
     }
 
     @Test
-    fun history_shiftedSalary_countsInFundingMonth() {
+    fun history_endOfMonthSalary_countsInItsOwnMonth() {
         val pay = income("pay_sal_202509", "Salário líquido", 100_000L, at(2025, 9, 30))
         val months = listOf(ym(2025, 9), ym(2025, 10))
-        val row = incomeHistoryOf(months, listOf(pay), listOf(salary), on, zone, ym(2025, 10)).single()
-        assertEquals(listOf(0L, 100_000L), row.months.map { it.receivedCents })
+        val row = incomeHistoryOf(months, listOf(pay), listOf(salary), off, zone, ym(2025, 10)).single()
+        assertEquals(listOf(100_000L, 0L), row.months.map { it.receivedCents })
     }
 
     @Test

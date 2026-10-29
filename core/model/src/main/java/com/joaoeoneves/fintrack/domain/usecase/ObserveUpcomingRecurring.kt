@@ -5,11 +5,9 @@ import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.upcomingOf
-import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -28,15 +26,11 @@ class ObserveUpcomingRecurring
     @Inject
     constructor(
         private val recurringRepository: RecurringRepository,
-        private val goalRepository: GoalRepository? = null,
     ) {
         operator fun invoke(today: LocalDate): Flow<RecurringOverview> =
-            combine(
-                recurringRepository.observeRecurring(),
-                goalRepository?.observeGoals() ?: flowOf(emptyList()),
-            ) { items, goals ->
-                // A savings plan's contribution is not a bill: the annual figure matches the Recurring screen.
-                val bills = billsOf(items, goals)
+            recurringRepository.observeRecurring().map { items ->
+                // Investment items count too, so the annual figure matches the Recurring screen.
+                val bills = billsOf(items)
                 RecurringOverview(
                     upcoming = upcomingOf(bills, today, UPCOMING_WINDOW_DAYS),
                     annualExpenseCents = annualizedCents(bills, RecurringType.EXPENSE, today),

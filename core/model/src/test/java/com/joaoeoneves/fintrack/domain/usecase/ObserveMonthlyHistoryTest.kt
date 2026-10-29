@@ -97,26 +97,21 @@ class ObserveMonthlyHistoryTest {
         }
 
     @Test
-    fun nullShiftPref_isOnIffManagedLineExists() =
+    fun endOfMonthSalary_landsInItsOwnMonth_regardlessOfShiftPref() =
         runTest {
             val pay = testIncome("pay_sal_202609", 100_000L, at(2026, 9, 30))
-            val withManaged = useCase(Transactions(emptyList(), listOf(pay)), listOf(salary), null)
-            assertEquals(listOf(0L, 100_000L), withManaged(end, 2, zone, end).first().months.map { it.incomeCents })
-            val manual = PlannedIncome("m", "Rent", 1L, 0)
-            val withoutManaged = useCase(Transactions(emptyList(), listOf(pay)), listOf(manual), null)
-            assertEquals(
-                listOf(100_000L, 0L),
-                withoutManaged(end, 2, zone, end).first().months.map { it.incomeCents },
-            )
+            listOf(null, true, false).forEach { pref ->
+                val history = useCase(Transactions(emptyList(), listOf(pay)), listOf(salary), pref)
+                assertEquals(listOf(100_000L, 0L), history(end, 2, zone, end).first().months.map { it.incomeCents })
+            }
         }
 
     @Test
-    fun previousMonthEndSalary_landsInFirstMonth() =
+    fun expenseOn29October_isOctober() =
         runTest {
-            val pay = testIncome("pay_sal_202607", 100_000L, at(2026, 7, 31))
-            val tx = Transactions(emptyList(), listOf(pay))
-            val history = useCase(tx, listOf(salary), true)(end, 3, zone, end).first()
-            assertEquals(listOf(100_000L, 0L, 0L), history.months.map { it.incomeCents })
+            val tx = Transactions(listOf(testExpense("late", 700L, at(2026, 10, 29))), emptyList())
+            val history = useCase(tx)(end, 2, zone, end).first()
+            assertEquals(listOf(0L, 700L), history.months.map { it.spendingCents })
         }
 
     @Test

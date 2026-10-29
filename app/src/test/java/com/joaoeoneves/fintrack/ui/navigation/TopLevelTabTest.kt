@@ -13,9 +13,9 @@ import org.junit.Test
  */
 class TopLevelTabTest {
     @Test
-    fun tabs_areHomeActivityPlanSavings_inOrder() {
+    fun tabs_areHomeActivityIncomeSpending_inOrder() {
         assertEquals(
-            listOf(TopLevelTab.HOME, TopLevelTab.ACTIVITY, TopLevelTab.PLAN, TopLevelTab.SAVINGS),
+            listOf(TopLevelTab.HOME, TopLevelTab.ACTIVITY, TopLevelTab.INCOME, TopLevelTab.SPENDING),
             TopLevelTab.entries,
         )
     }
@@ -32,8 +32,8 @@ class TopLevelTabTest {
     fun tabGraphs_areTheNestedGraphRoutes() {
         assertEquals(HomeGraph, TopLevelTab.HOME.graph)
         assertEquals(ActivityGraph, TopLevelTab.ACTIVITY.graph)
-        assertEquals(PlanGraph, TopLevelTab.PLAN.graph)
-        assertEquals(SavingsGraph, TopLevelTab.SAVINGS.graph)
+        assertEquals(IncomeGraph, TopLevelTab.INCOME.graph)
+        assertEquals(SpendingGraph, TopLevelTab.SPENDING.graph)
     }
 
     @Test

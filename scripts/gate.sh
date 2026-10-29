@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Quality gate shared by humans, Claude agents and CI.
 #   scripts/gate.sh fast [test-filter...]  compile + ktlint + detekt + unit tests (optionally filtered)
-#   scripts/gate.sh full                   everything CI checks: + lintDebug, release build, androidTest compile
+#   scripts/gate.sh full                   everything CI and the release check: + lintDebug, R8 release build,
+#                                          androidTest compile
 # Examples:
 #   scripts/gate.sh fast 'com.joaoeoneves.fintrack.ui.recurring.*'
 #   scripts/gate.sh full

@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.domain.model
 
+import java.text.Normalizer
 import java.time.YearMonth
 import java.time.ZoneId
 
@@ -63,14 +64,14 @@ data class IncomeSourceHistory(
 
 private fun IncomeRow.key(): IncomeSourceKey = lines.first().rowKey()
 
-private class FundedIncome(
+private class DatedIncome(
     val income: Income,
     val key: IncomeSourceKey,
     val month: YearMonth,
 )
 
 /**
- * Per-source income history over [months]: received by funding month (see [fundingMonthOf]), expected from
+ * Per-source income history over [months]: received by the month of its date, expected from
  * [incomeRowsIn] only for months up to [today], and only in months where the row exists (a line not yet valid
  * in a month has no row there, so no expected value). Line rows come first in list order, then named sources by
  * received
@@ -81,15 +82,15 @@ fun incomeHistoryOf(
     months: List<YearMonth>,
     income: List<Income>,
     lines: List<PlannedIncome>,
-    funding: IncomeFunding,
+    incomeMonth: IncomeMonth,
     zone: ZoneId,
     today: YearMonth,
 ): List<IncomeSourceHistory> {
     val received =
         income
-            .map { FundedIncome(it, incomeSourceOf(it, lines), fundingMonthOf(it, lines, funding, zone)) }
+            .map { DatedIncome(it, incomeSourceOf(it, lines), YearMonth.from(it.date.atZone(zone))) }
             .filter { it.month in months }
-    val rowsByMonth = months.associateWith { incomeRowsIn(lines, it, funding) }
+    val rowsByMonth = months.associateWith { incomeRowsIn(lines, it, incomeMonth) }
     val lineKeys =
         rowsByMonth.values
             .flatten()
@@ -127,4 +128,29 @@ fun incomeHistoryOf(
             }
         IncomeSourceHistory(key, label, sourceMonths).takeIf { it.receivedCents != 0L || it.expectedCents != 0L }
     }
+}
+
+internal fun normalisedWords(text: String): List<String> =
+    Normalizer
+        .normalize(text.trim().lowercase(), Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}+"), "")
+        .split(Regex("\\s+"))
+        .filter { it.isNotEmpty() }
+
+/**
+ * The line a [source] (as normalised words) belongs to: a label equal to it wins; otherwise a label the source is a
+ * whole-word prefix of ("salario" of "salario liquido"). A label that is a prefix of the source never matches
+ * ("salary bonus" is not "salary"). Among several qualifying labels the exact one, then the shortest, wins; a tie
+ * there means no match.
+ */
+internal fun matchingLine(
+    source: List<String>,
+    lines: List<PlannedIncome>,
+): PlannedIncome? {
+    if (source.isEmpty()) return null
+    val labelled = lines.map { it to normalisedWords(it.label) }.filter { (_, words) -> words.isNotEmpty() }
+    val exact = labelled.filter { (_, words) -> words == source }
+    val candidates = exact.ifEmpty { labelled.filter { (_, words) -> words.take(source.size) == source } }
+    val shortest = candidates.minOfOrNull { (_, words) -> words.size }
+    return candidates.filter { (_, words) -> words.size == shortest }.singleOrNull()?.first
 }

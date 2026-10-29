@@ -69,7 +69,7 @@ class IncomeAnalyticsTest {
     }
 
     @Test
-    fun analytics_differenceOnlyOverExpectingSources() {
+    fun analytics_unplannedIncomeCountsTowardsTheDifference() {
         val h =
             history(
                 listOf(source(salary, 80L to 100L, 80L to 100L), source(gift, 500L to null, 0L to null)),
@@ -78,10 +78,58 @@ class IncomeAnalyticsTest {
         val a = h.incomeAnalytics()
         assertEquals(660L, a.receivedCents)
         assertEquals(200L, a.expectedCents)
-        // Unplanned gift income does not hide the 40 shortfall.
-        assertEquals(-40L, a.differenceCents)
+        // Received (all sources) minus expected, as the shown figures read.
+        assertEquals(460L, a.differenceCents)
         assertEquals(2, a.sources.size)
         assertNull(a.sources[1].expectedCents)
+    }
+
+    @Test
+    fun difference_isReceivedMinusExpected_3727() {
+        val h = history(listOf(source(salary, 0L to 0L, 140_000L to 136_273L)), income = listOf(0L, 140_000L))
+
+        val a = h.incomeAnalytics()
+
+        assertEquals(140_000L, a.receivedCents)
+        assertEquals(136_273L, a.expectedCents)
+        assertEquals(3_727L, a.differenceCents)
+    }
+
+    @Test
+    fun difference_belowExpected_isNegative() {
+        val h = history(listOf(source(salary, 0L to 0L, 100_000L to 136_273L)), income = listOf(0L, 100_000L))
+
+        assertEquals(-36_273L, h.incomeAnalytics().differenceCents)
+    }
+
+    @Test
+    fun difference_includesIncomeFromUnplannedSources() {
+        val h =
+            history(
+                listOf(source(salary, 0L to 0L, 100_000L to 100_000L), source(gift, 0L to null, 5_000L to null)),
+                income = listOf(0L, 105_000L),
+            )
+
+        val a = h.incomeAnalytics()
+
+        assertEquals(105_000L, a.receivedCents)
+        assertEquals(100_000L, a.expectedCents)
+        assertEquals(5_000L, a.differenceCents)
+    }
+
+    @Test
+    fun yearPeriod_sumsEveryMonth_andTheDifferenceMatchesTheShownFigures() {
+        val h =
+            history(
+                listOf(source(salary, 90_000L to 100_000L, 110_000L to 100_000L)),
+                income = listOf(90_000L, 110_000L),
+            )
+
+        val a = h.incomeAnalytics()
+
+        assertEquals(200_000L, a.receivedCents)
+        assertEquals(200_000L, a.expectedCents)
+        assertEquals(a.receivedCents - a.expectedCents!!, a.differenceCents)
     }
 
     @Test

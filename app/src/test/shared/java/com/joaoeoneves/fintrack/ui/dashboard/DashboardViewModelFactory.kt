@@ -13,10 +13,9 @@ import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
-import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
-import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
+import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import java.time.Clock
@@ -48,7 +47,6 @@ data class DashboardRepositories(
     val monthSettingsRepository: MonthSettingsRepository = FakeMonthSettingsRepository(),
     val envelopeRepository: EnvelopeRepository = FakeEnvelopeRepository(),
     val recurringRepository: RecurringRepository = FakeRecurringRepository(),
-    val planSettings: PlanSettingsRepository = NoPlanSettings,
 )
 
 /** Like the five-parameter overload, but with an explicit [DashboardRepositories.categoryRepository]. */
@@ -59,23 +57,29 @@ fun dashboardViewModel(
 ): DashboardViewModel =
     DashboardViewModel(
         observePeriodOverview = observePeriodOverviewOf(repositories),
+        observeMonthlyHistory = observeMonthlyHistoryOf(repositories),
         savedStateHandle = savedStateHandle,
         clock = clock,
     )
 
+/** The data sources of [repositories], as the Hilt graph bundles them. */
+fun planDataSourcesOf(repositories: DashboardRepositories): PlanDataSources =
+    PlanDataSources(
+        budgets = repositories.budgetRepository,
+        plannedIncome = repositories.plannedIncomeRepository,
+        monthSettings = repositories.monthSettingsRepository,
+        categories = repositories.categoryRepository,
+        envelopes = repositories.envelopeRepository,
+        recurring = repositories.recurringRepository,
+    )
+
+private fun transactionsOf(repositories: DashboardRepositories) =
+    CombinedTransactionRepository(repositories.expenseRepository, repositories.incomeRepository)
+
 /** The real [ObservePeriodOverview] use case on top of [repositories], as the Hilt graph wires it. */
 fun observePeriodOverviewOf(repositories: DashboardRepositories): ObservePeriodOverview =
-    ObservePeriodOverview(
-        transactionRepository =
-            CombinedTransactionRepository(repositories.expenseRepository, repositories.incomeRepository),
-        sources =
-            PlanDataSources(
-                budgets = repositories.budgetRepository,
-                plannedIncome = repositories.plannedIncomeRepository,
-                monthSettings = repositories.monthSettingsRepository,
-                categories = repositories.categoryRepository,
-                envelopes = repositories.envelopeRepository,
-                recurring = repositories.recurringRepository,
-                planSettings = repositories.planSettings,
-            ),
-    )
+    ObservePeriodOverview(transactionsOf(repositories), planDataSourcesOf(repositories))
+
+/** The real [ObserveMonthlyHistory] use case on top of [repositories]. */
+fun observeMonthlyHistoryOf(repositories: DashboardRepositories): ObserveMonthlyHistory =
+    ObserveMonthlyHistory(transactionsOf(repositories), planDataSourcesOf(repositories))

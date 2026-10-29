@@ -22,10 +22,12 @@ sealed interface RecurringListUiState {
     /**
      * @property active items that are on and not ended.
      * @property inactive paused or ended items.
+     * @property investments the items of SAVING-kind categories (any state), shown under their own heading.
      */
     data class Content(
         val active: List<RecurringRow>,
         val inactive: List<RecurringRow>,
+        val investments: List<RecurringRow> = emptyList(),
         val annualExpenseCents: Long,
     ) : RecurringListUiState
 

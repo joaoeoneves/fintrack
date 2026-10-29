@@ -24,7 +24,7 @@ class EnvelopesSavingTest : MonthlyPlanTestBase() {
         buckets: List<CategoryBudget>,
         categories: List<Category>,
         envelopes: List<Envelope> = listOf(env),
-    ) = envelopesOf(buckets, categories, envelopes, listOf(line(200_000L)), emptyList(), PlanMonth(oct, 20))
+    ) = envelopesOf(buckets, categories, envelopes, PlanMonth(oct, 20))
 
     @Test
     fun savingCategory_leavesTheEnvelopeCard_andCommitsPlanned() {
@@ -39,8 +39,6 @@ class EnvelopesSavingTest : MonthlyPlanTestBase() {
         )
         assertEquals(10_000L, result.envelopes.single().amountCents)
         assertEquals(50_000L, result.savingCommittedCents)
-        assertEquals(60_000L, result.committedCents)
-        assertEquals(140_000L, result.freeCents)
     }
 
     private fun savingCommitted(b: CategoryBudget) = summary(listOf(b), listOf(invest)).savingCommittedCents
@@ -69,17 +67,10 @@ class EnvelopesSavingTest : MonthlyPlanTestBase() {
     }
 
     @Test
-    fun livre_isUnchanged_whetherSavingSitsInAnUnfundedEnvelopeOrLoose() {
-        val buckets = listOf(bucket(food, 10_000), bucket(invest, 50_000))
-        val looseBuckets = listOf(bucket(food, 10_000), bucket(investLoose, 50_000))
+    fun looseSaving_isNotListedAmongTheUnenveloped() {
+        val loose = summary(listOf(bucket(food, 10_000), bucket(investLoose, 50_000)), listOf(food, investLoose))
 
-        val inEnvelope = summary(buckets, listOf(food, invest))
-        val loose = summary(looseBuckets, listOf(food, investLoose))
-        // What the old math gave: one unfunded envelope committing 10 000 + 50 000.
-        val old = 200_000L - 60_000L
-
-        assertEquals(old, inEnvelope.freeCents)
-        assertEquals(old, loose.freeCents)
+        assertEquals(50_000L, loose.savingCommittedCents)
         assertTrue(loose.unenveloped.none { it.category.kind == CategoryKind.SAVING })
     }
 

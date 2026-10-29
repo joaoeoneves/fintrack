@@ -78,6 +78,8 @@
 
     <!-- Period selector -->
     <string name="period_this_month">This month</string>
+    <string name="period_scale_month">Month</string>
+    <string name="period_scale_year">Year</string>
     <string name="period_choose_month">Choose month…</string>
     <string name="period_last_3_months">Last 3 months</string>
     <string name="period_last_6_months">Last 6 months</string>
@@ -87,16 +89,12 @@
 
     <!-- Dashboard -->
     <string name="dashboard_no_income">No income in this period yet.</string>
-    <string name="dashboard_net_balance">Net balance</string>
     <string name="dashboard_income_label">Income</string>
     <string name="dashboard_expenses_label">Expenses</string>
     <string name="dashboard_no_expenses">No expenses in this period yet.</string>
     <string name="dashboard_total_outflow">Total outflow</string>
-    <string name="dashboard_saved_label">Saved &amp; invested</string>
-    <string name="dashboard_savings_rate">Savings rate this month: %1$s</string>
 
     <!-- Limits -->
-    <string name="budget_spent_of_limit">%1$s / %2$s</string>
 
     <!-- Add/edit expense -->
     <string name="expense_edit_title">Edit expense</string>
@@ -125,7 +123,6 @@
     <string name="activity_empty">No activity in this period yet.</string>
     <string name="activity_spent_total">Spent</string>
     <string name="activity_envelope_all">All</string>
-    <string name="cd_envelope_bar">Spending by envelope: %1$s</string>
     <string name="cd_envelope_chip">%1$s, %2$s spent</string>
 
     <!-- Sort options -->
@@ -244,8 +241,8 @@
     <string name="cd_category_icon_option">Icon %1$d</string>
     <string name="cd_category_color_option">Color %1$d</string>
     <string name="category_deleted">Category deleted</string>
-    <string name="category_in_use_message">“%1$s” is used by expenses, envelopes or recurring. Archive it instead?</string>
-    <string name="category_in_use_archived_message">“%1$s” is used by expenses, envelopes or recurring and can\'t be deleted.</string>
+    <string name="category_in_use_message">“%1$s” is used by expenses, groups or recurring. Archive it instead?</string>
+    <string name="category_in_use_archived_message">“%1$s” is used by expenses, groups or recurring and can\'t be deleted.</string>
     <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
     <string name="category_cannot_verify_archived_message">Can\'t check usage while offline. Try again when you\'re online.</string>
     <string name="error_category_name_required">Enter a name</string>
@@ -274,13 +271,12 @@
     <string name="category_move_moving">Moving…</string>
     <string name="category_move_done">Items moved</string>
     <string name="error_category_move_failed">Couldn\'t move all the items. Check your connection and try again.</string>
-    <string name="dashboard_fixed_variable">Fixed %1$s\nVariable %2$s</string>
 
     <!-- Backup -->
     <string name="settings_export_backup">Export backup (JSON)</string>
     <string name="settings_restore_backup">Restore backup (JSON)</string>
     <string name="action_restore">Restore</string>
-    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nEnvelopes: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring: %6$d\nSavings plans: %7$d\nSalary profile: %8$s</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nGroups: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring: %6$d\nSavings plans: %7$d\nSalary profile: %8$s</string>
     <string name="backup_salary_no">No</string>
     <string name="backup_salary_yes">Yes</string>
     <string name="backup_export_done_title">Backup exported</string>
@@ -332,19 +328,8 @@
         <item quantity="other">%d records could not be copied and were skipped.</item>
     </plurals>
 
-    <string name="plan_safe_to_spend">Safe to spend</string>
-    <string name="plan_safe_to_spend_month">Safe to spend (%1$s)</string>
-    <string name="plan_over_by">Over plan by %1$s</string>
     <string name="plan_expected_income">Expected income</string>
     <string name="home_to_receive_title">To receive</string>
-    <plurals name="plan_daily_allowance">
-        <item quantity="one">≈ %1$s/day for %2$d day</item>
-        <item quantity="other">≈ %1$s/day for %2$d days</item>
-    </plurals>
-    <string name="plan_current_plan_caption">Based on your current plan</string>
-    <string name="plan_edit">See plan</string>
-    <string name="plan_setup_title">Plan your month</string>
-    <string name="plan_setup_message">Add your expected income to see what you can spend.</string>
     <string name="plan_add_income_line">Add income</string>
     <string name="plan_income_line_new">New income</string>
     <string name="plan_income_line_edit">Edit income</string>
@@ -378,6 +363,7 @@
     <string name="recurring_added">Added “%1$s”</string>
     <string name="recurring_next_due">Next: %1$s</string>
     <string name="recurring_section_active">Active</string>
+    <string name="recurring_section_investments">Investments</string>
     <string name="recurring_section_inactive">Paused and ended</string>
     <string name="recurring_list_empty">No recurring yet</string>
     <string name="recurring_paused">Paused</string>
@@ -406,15 +392,17 @@
 
     <!-- Dashboard redesign -->
     <string name="action_see_all">See all</string>
-    <string name="cd_balance_chart">Balance over the period, from %1$s to %2$s</string>
     <string name="nav_home">Home</string>
     <string name="nav_activity">Activity</string>
-    <string name="nav_plan">Plan</string>
+    <string name="nav_income">Income</string>
+    <string name="nav_spending">Spending</string>
+    <string name="tab_configure">Configure</string>
+    <string name="spending_new_group">New group</string>
     <string name="insights_split_title">Fixed vs variable</string>
     <string name="insights_split_fixed">Fixed</string>
     <string name="insights_split_variable">Variable</string>
     <string name="insights_by_category">By category</string>
-    <string name="insights_by_group">By envelope</string>
+    <string name="insights_by_group">By group</string>
     <string name="cd_insights_split">Spending split: %1$s fixed, %2$s variable</string>
     <string name="home_recent_title">Recent activity</string>
     <string name="home_recent_empty">No activity yet</string>
@@ -457,11 +445,8 @@
     <string name="cd_fewer_working_days">Fewer working days</string>
     <string name="cd_more_working_days">More working days</string>
 
-    <string name="plan_envelopes_title">Envelopes</string>
-    <string name="plan_group_other">No envelope</string>
-    <string name="error_group_save_failed">Couldn\'t save the envelope</string>
-    <string name="plan_pot_left">%1$s · funded by %2$s; %3$s left</string>
-    <string name="annual_funding_overflow">%1$s · %2$s covers %3$s; %4$s comes from other income</string>
+    <string name="plan_group_other">No group</string>
+    <string name="error_group_save_failed">Couldn\'t save the group</string>
 
     <string name="plan_salary_profile_row">Salary profile</string>
     <string name="plan_from_salary_profile">From salary profile</string>
@@ -536,58 +521,11 @@
     <string name="salary_line_net">Net salary</string>
     <string name="salary_line_holiday">Holiday subsidy</string>
     <string name="salary_line_christmas">Christmas subsidy</string>
-    <string name="plan_tab_month">Month</string>
-    <string name="plan_tab_year">Year</string>
-    <string name="annual_income_title">Income for the year</string>
-    <string name="annual_income_total">Total income</string>
-    <string name="annual_actual_of_planned">%1$s of %2$s</string>
-    <string name="annual_funding_title">Funded envelopes over the year</string>
-    <string name="annual_subscriptions_title">Yearly recurring</string>
-    <string name="annual_subscription_row">%1$s · %2$s</string>
-    <string name="annual_leftover_title">Left over this year</string>
-    <string name="annual_leftover_caption">Income minus planned spending, %1$s</string>
-    <string name="annual_empty_title">Nothing planned for %1$s</string>
-    <string name="annual_empty_message">Add income and envelopes in the Month view to see the year.</string>
 
-    <string name="goal_field_name">Name</string>
-    <string name="goal_field_target_date">Target date</string>
-    <string name="goal_field_initial">Already saved (optional)</string>
-    <string name="goal_target_date_add">Add a target date</string>
-    <string name="goal_target_date_clear">Remove target date</string>
-    <string name="goal_error_dates">The target date is before the start date</string>
-    <string name="goal_status_on_track">On track</string>
-    <string name="goal_status_not_started">Just started</string>
-    <string name="goal_status_behind">Behind</string>
-    <string name="goal_status_done">Done</string>
-    <string name="goal_status_no_monthly">No monthly amount</string>
-    <string name="error_goal_save_failed">Couldn\'t save the savings plan</string>
-    <string name="error_goal_delete_failed">Couldn\'t delete the savings plan</string>
-    <string name="nav_savings">Savings</string>
-    <string name="savings_saved_in_year">Saved in %1$d</string>
-    <string name="savings_rate_of_income">Savings rate this year: %1$s of income</string>
-    <string name="savings_target_year">%1$s / %2$s this year</string>
-    <string name="savings_target_by">%1$s / %2$s by %3$s</string>
-    <string name="savings_schedule">%1$s · %2$s/month · day %3$d</string>
-    <string name="savings_suggestion">Suggested: %1$s/month</string>
-    <string name="savings_new_plan">New plan</string>
-    <string name="savings_edit_plan">Edit plan</string>
-    <string name="savings_monthly_amount">Monthly amount</string>
-    <string name="savings_day">Day of month</string>
-    <string name="savings_target">Target</string>
-    <string name="savings_auto_post">Record automatically</string>
-    <string name="savings_per_year">Per year</string>
-    <string name="savings_total">Total</string>
-    <string name="savings_empty">No savings plans yet</string>
-    <string name="savings_delete_plan">Delete plan</string>
-    <string name="savings_plan_deleted">Savings plan deleted</string>
-    <string name="recurring_no_saving_hint">For savings use the Savings tab</string>
-    <string name="annual_goals_title">Savings plans</string>
-    <string name="annual_goal_planned_of_target">%1$s planned of %2$s</string>
-    <string name="annual_goal_planned">%1$s planned</string>
     <string name="settings_delete_all_data">Delete all data</string>
     <string name="delete_all_data_title">Delete all data?</string>
-    <string name="delete_all_data_message_account">This permanently deletes all your expenses, income, plan, categories, envelopes, recurring and savings plans from your account, on all your devices. Export a backup first if you might need it.</string>
-    <string name="delete_all_data_message_device">This permanently deletes all your expenses, income, plan, categories, envelopes, recurring and savings plans on this device. Export a backup first if you might need it.</string>
+    <string name="delete_all_data_message_account">This permanently deletes all your expenses, income, plan, categories, groups, recurring and savings plans from your account, on all your devices. Export a backup first if you might need it.</string>
+    <string name="delete_all_data_message_device">This permanently deletes all your expenses, income, plan, categories, groups, recurring and savings plans on this device. Export a backup first if you might need it.</string>
     <string name="delete_all_data_export_backup">Export backup</string>
     <string name="delete_all_data_confirm">Delete everything</string>
     <string name="delete_all_data_progress">Deleting your data…</string>
@@ -613,74 +551,28 @@
     <string name="plan_payday_received">Salary received on %1$s</string>
     <string name="plan_payday_upcoming">You get paid on %1$s</string>
     <string name="plan_received_amount">Amount received</string>
-    <string name="envelopes_title">Envelopes</string>
-    <string name="envelopes_new">New envelope</string>
-    <string name="envelopes_empty">No envelopes yet</string>
-    <string name="envelope_edit_title">Edit envelope</string>
-    <string name="envelope_new_title">New envelope</string>
+    <string name="envelope_edit_title">Edit group</string>
+    <string name="envelope_new_title">New group</string>
     <string name="envelope_name">Name</string>
-    <string name="envelope_mode_single">Single amount</string>
-    <string name="envelope_mode_per_category">Per category</string>
-    <string name="envelope_mode_none">No limit</string>
-    <string name="envelope_mode_none_hint">Only tracks what you spend</string>
-    <string name="envelope_limits_dropped_hint">Saving drops the limits set per category.</string>
-    <string name="envelope_amount">Monthly amount</string>
     <string name="envelope_categories">Categories</string>
     <string name="envelope_add_category">Add category</string>
     <string name="envelope_saving_hidden_hint">Savings categories belong to the savings plan, so they are not listed here.</string>
-    <string name="envelope_in_other">in %1$s</string>
     <string name="envelope_leaves_other">Leaves %1$s</string>
-    <string name="envelope_paid_by">Funded by</string>
-    <string name="envelope_paid_by_empty">Add a regular monthly income to choose what funds this envelope.</string>
-    <string name="envelope_paid_by_none">None</string>
-    <string name="envelope_delete">Delete envelope</string>
-    <string name="envelope_deleted">Envelope deleted</string>
+    <string name="envelope_delete">Delete group</string>
+    <string name="envelope_deleted">Group deleted</string>
     <string name="envelope_error_name_blank">Enter a name</string>
-    <string name="envelope_error_name_duplicate">An envelope with this name already exists</string>
-    <string name="envelope_error_amount">Enter an amount</string>
-    <string name="envelope_row_status">%1$d categories · %2$s/month</string>
-    <string name="envelope_row_tracking">Tracking only</string>
-    <string name="envelope_row_empty">No categories</string>
-    <string name="envelope_card_of">%1$s of %2$s</string>
-    <string name="envelope_card_over">Over by %1$s</string>
-    <string name="envelope_card_paid">Recurring: %1$s paid of %2$s</string>
-    <string name="envelope_card_spent">Spent this month: %1$s</string>
-    <string name="annual_envelope_spent">Spent: %1$s</string>
+    <string name="envelope_error_name_duplicate">An group with this name already exists</string>
     <string name="envelope_card_funded">Funded by %1$s</string>
     <string name="envelope_funded_overflow">%1$s covers %2$s; %3$s comes from other income.</string>
-    <plurals name="envelopes_status">
-        <item quantity="one">%d envelope</item>
-        <item quantity="other">%d envelopes</item>
-    </plurals>
-    <string name="plan_tile_income">Income</string>
-    <string name="plan_tile_bills">Recurring</string>
-    <string name="plan_tile_saving">Savings</string>
-    <string name="plan_tile_envelopes">Envelopes</string>
-    <string name="plan_tile_free">Safe to spend</string>
-    <string name="plan_configure">Set up</string>
     <string name="salary_setup_done">Salary saved</string>
-    <string name="plan_configure_income">Income</string>
-    <string name="plan_configure_envelopes">Envelopes</string>
     <string name="plan_configure_bills">Recurring</string>
     <string name="plan_configure_categories">Categories</string>
-    <string name="plan_configure_income_status">%1$s a month · %2$d income</string>
-    <string name="plan_configure_bills_status">%1$d recurring · %2$s/month</string>
-    <plurals name="plan_configure_categories_status">
-        <item quantity="one">%d category</item>
-        <item quantity="other">%d categories</item>
-    </plurals>
-    <string name="plan_configure_not_set">Not set</string>
-    <string name="plan_configure_none_yet">None yet</string>
-    <string name="plan_envelopes_empty_cta">Create envelopes to split your money</string>
-    <string name="income_title">Income</string>
     <string name="home_start_title">Get started</string>
     <string name="home_start_progress">%1$d of %2$d</string>
     <string name="home_start_dismiss">Dismiss</string>
     <string name="home_start_done">Done</string>
     <string name="home_start_step_salary">Set your salary or income</string>
-    <string name="home_start_step_envelopes">Create envelopes</string>
     <string name="home_start_step_bills">Add recurring</string>
-    <string name="home_start_step_savings">Create a savings plan</string>
     <string name="home_start_step_payday">Set your pay day</string>
     <string name="home_start_step_payday_hint">Choose the day your income is recorded automatically</string>
     <string name="home_start_step_expense">Record your first expense</string>
@@ -712,9 +604,6 @@
     <string name="backup_restore_partial_title">Restore incomplete</string>
     <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish — retrying doesn\'t duplicate anything.</string>
     <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
-    <string name="plan_salary_next_month">Salary pays the next month</string>
-    <string name="plan_salary_next_month_hint">Salary paid in the last days of a month funds the next month\'s plan.</string>
-    <string name="plan_summary_extras_note">%1$s of extra income does not count until it is received</string>
     <string name="activity_total_out_includes_saving">includes %1$s saved</string>
     <string name="pending_more_options">More options</string>
     <string name="pending_change_amount">Change amount</string>
@@ -730,7 +619,6 @@
     <string name="settings_show_start_hint">The setup checklist on Home</string>
     <string name="home_start_dismissed">Get started hidden</string>
     <string name="recurring_deleted">Recurring deleted; its past entries stay</string>
-    <string name="envelope_no_limit">No limit</string>
     <string name="recurring_pause_hint">Nothing is added until you resume</string>
     <string name="income_line_deleted">Income line deleted</string>
     <string name="activity_vs_previous_month">vs previous month</string>
@@ -748,24 +636,35 @@
     <string name="activity_by_source">By source</string>
     <string name="activity_source_expected">of %1$s expected</string>
     <string name="activity_source_other">Other</string>
-    <string name="activity_income_counts_for">Counts for %1$s</string>
     <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
-    <string name="income_view_history">View history</string>
+    <string name="advanced_title">Advanced</string>
     <string name="effective_from_title">Valid from</string>
     <string name="effective_from_history">%1$s until %2$s</string>
-    <string name="salary_shift_effective_note">The salary received at the end of %1$s counts for %2$s</string>
     <string name="activity_summary_spent">Spent %1$s</string>
     <string name="activity_summary_received">Received %1$s</string>
-    <string name="cd_open_evolution">Open evolution</string>
+    <string name="cd_open_spending">Open spending</string>
+    <string name="cd_open_income">Open income</string>
     <string name="activity_source_all">All</string>
     <string name="detail_vs_average">%1$s vs average</string>
     <string name="detail_edit">Edit</string>
     <string name="detail_no_movements">No movements</string>
     <string name="detail_not_found">This item no longer exists.</string>
     <string name="detail_context_envelope">In: %1$s</string>
-    <string name="detail_context_no_envelope">No envelope</string>
+    <string name="detail_context_no_envelope">No group</string>
     <string name="detail_context_limit">Limit %1$s</string>
-    <string name="detail_context_next_month">Counts for the next month</string>
     <string name="detail_context_expected">Expected %1$s</string>
     <string name="detail_source_unknown">Income</string>
+    <string name="home_income_title">Income</string>
+    <string name="home_income_of_expected">of %1$s expected</string>
+    <string name="home_spending_title">Spending</string>
+    <string name="home_invested_month">Invested: %1$s this month · %2$s in %3$s</string>
+    <string name="home_invested_other_month">Invested: %1$s in %2$s · %3$s in %4$s</string>
+    <string name="home_invested_year">Invested in %1$s: %2$s</string>
+    <string name="home_leftover">Left over until %1$s: average %2$s a month</string>
+    <string name="investments_title">Investments</string>
+    <string name="investments_this_month">This month</string>
+    <string name="investments_all_time">All time</string>
+    <string name="investments_by_instrument">By instrument</string>
+    <string name="investments_movements">Movements</string>
+    <string name="investments_no_movements">No investments in this month</string>
 </resources>

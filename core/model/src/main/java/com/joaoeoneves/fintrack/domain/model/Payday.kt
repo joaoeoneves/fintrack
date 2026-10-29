@@ -61,8 +61,7 @@ fun IncomeRow.receivedIncomes(
     incomes: Collection<Income>,
 ): List<Income>? {
     val byId = incomes.associateBy { it.id }
-    val funding = IncomeFunding.unshifted(month, workingDays)
-    val paying = lines.filter { funding.amountIn(it, month) > 0L }
+    val paying = lines.filter { IncomeMonth.forMonth(month, workingDays).amountIn(it, month) > 0L }
     val found = paying.mapNotNull { byId[paydayIncomeId(it.id, month)] ?: legacyRecurringIncome(it, month, incomes) }
     return found.takeIf { paying.isNotEmpty() && found.size == paying.size }
 }
@@ -105,13 +104,13 @@ data class ExpectedIncome(
     val payday: LocalDate,
     val rows: List<IncomeRow>,
     val entries: List<ExpectedIncomeEntry> = emptyList(),
-    val funding: IncomeFunding = IncomeFunding.unshifted(month, workingDays),
+    val incomeMonth: IncomeMonth = IncomeMonth.forMonth(month, workingDays),
 )
 
-/** One row offered on the dashboard: [row] funds [planMonth]'s plan and is paid on [payDate] (maybe last month). */
+/** One row offered on the dashboard: [row] is paid in [month] on [payDate] (this month or last). */
 data class ExpectedIncomeEntry(
     val row: IncomeRow,
-    val planMonth: YearMonth,
+    val month: YearMonth,
     val payDate: LocalDate,
 )
 

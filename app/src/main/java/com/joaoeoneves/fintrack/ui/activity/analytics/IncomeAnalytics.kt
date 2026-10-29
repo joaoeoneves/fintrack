@@ -37,7 +37,7 @@ data class IncomeAnalytics(
 
 /**
  * The period's income by funding month. [IncomeAnalytics.expectedCents] is `null` unless some source expects
- * something; the difference only compares sources that expect something, so unplanned income does not hide a shortfall.
+ * something; the difference is the received total minus [IncomeAnalytics.expectedCents], matching the shown figures.
  */
 fun ActivityHistory.incomeAnalytics(): IncomeAnalytics {
     val rows =
@@ -48,12 +48,13 @@ fun ActivityHistory.incomeAnalytics(): IncomeAnalytics {
             IncomeSourceRow(source.key.encode(), source.label, received, expected)
                 .takeIf { received != 0L || (expected ?: 0L) != 0L }
         }
+    val receivedCents = monthly.months.filter { it.month in periodMonths }.sumOf { it.incomeCents }
     val expecting = rows.filter { it.expectedCents != null }
     val expected = expecting.sumOf { it.expectedCents ?: 0L }.takeIf { it > 0L }
     return IncomeAnalytics(
-        receivedCents = monthly.months.filter { it.month in periodMonths }.sumOf { it.incomeCents },
+        receivedCents = receivedCents,
         expectedCents = expected,
-        differenceCents = expected?.let { expecting.sumOf { row -> row.receivedCents } - it },
+        differenceCents = expected?.let { receivedCents - it },
         sources = rows,
     )
 }

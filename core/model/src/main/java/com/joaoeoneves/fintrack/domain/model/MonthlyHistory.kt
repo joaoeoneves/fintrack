@@ -4,7 +4,7 @@ import java.time.YearMonth
 import java.time.ZoneId
 
 /**
- * One month of the history, standing alone: [incomeCents] is what FUNDS the month (see [fundingMonthOf]),
+ * One month of the history, standing alone: [incomeCents] is the income dated in the month,
  * [spendingCents] the net outflow of SPENDING categories by expense date and [savedCents] the net outflow of SAVING
  * categories (the same definition as the Savings tab's "saved this year").
  */
@@ -19,21 +19,18 @@ data class MonthTotals(
 }
 
 /**
- * The totals of every month in [months], in the given order. Incomes are attributed by the month they fund, expenses
- * by their own date in [zone]; refunds net; transactions outside [months] are ignored.
+ * The totals of every month in [months], in the given order. Incomes and expenses are attributed by their own date
+ * in [zone]; refunds net; transactions outside [months] are ignored.
  */
-@Suppress("LongParameterList") // The inputs of one month attribution, mirrors the other *Of functions.
 fun monthlyTotalsOf(
     months: List<YearMonth>,
     expenses: List<Expense>,
     income: List<Income>,
     categories: List<Category>,
-    lines: List<PlannedIncome>,
-    funding: IncomeFunding,
     zone: ZoneId,
 ): List<MonthTotals> {
     val expensesByMonth = expenses.groupBy { YearMonth.from(it.date.atZone(zone)) }
-    val incomeByMonth = income.groupBy { fundingMonthOf(it, lines, funding, zone) }
+    val incomeByMonth = income.groupBy { YearMonth.from(it.date.atZone(zone)) }
     return months.map { month ->
         val summary = cashFlowSummaryOf(expensesByMonth[month].orEmpty(), incomeByMonth[month].orEmpty(), categories)
         MonthTotals(month, summary.incomeCents, summary.spendingCents, summary.savedCents)
@@ -140,18 +137,22 @@ fun yearToDateOf(
 }
 
 /**
- * What was left over in the closed months of [upTo]'s year: per month income - spending - saved (income by the month
- * it funds), summed. [months] counts the months summed and [averageCents] is the per-month average, `null` for none.
+ * What was left over in the closed months of [upTo]'s year: per month income - spending - saved (income by its
+ * date), summed. [months] counts the months summed, [averageCents] is the per-month average (`null` for none) and
+ * [until] the last month summed (`null` for none).
  */
 data class Leftover(
     val totalCents: Long,
     val averageCents: Long?,
     val months: Int,
+    val until: YearMonth? = null,
 )
 
 /**
  * The [Leftover] of the CLOSED months from January of [upTo]'s year through the earlier of [upTo] and the month
- * before [today]'s month; the running month is never counted. Only months present in [totals] count.
+ * before [today]'s month; the running month is never counted. Only months present in [totals] count, and the
+ * count starts at the first month of that year with any record (income, spending or saving): empty months before it
+ * are not averaged in. With no closed month from there on, [Leftover.months] is 0 and [Leftover.averageCents] `null`.
  */
 fun leftoverOf(
     totals: List<MonthTotals>,
@@ -159,9 +160,16 @@ fun leftoverOf(
     today: YearMonth = YearMonth.now(),
 ): Leftover {
     val last = minOf(upTo, today.minusMonths(1))
-    val closed = totals.filter { it.month.year == upTo.year && it.month <= last }
+    val inYear = totals.filter { it.month.year == upTo.year && it.month <= last }
+    val firstWithData = totals.filter { it.month.year == upTo.year && it.hasData }.minOfOrNull { it.month }
+    val closed = if (firstWithData == null) emptyList() else inYear.filter { it.month >= firstWithData }
     val total = closed.sumOf { it.incomeCents - it.spendingCents - it.savedCents }
-    return Leftover(total, closed.takeIf { it.isNotEmpty() }?.let { total / it.size }, closed.size)
+    return Leftover(
+        totalCents = total,
+        averageCents = closed.takeIf { it.isNotEmpty() }?.let { total / it.size },
+        months = closed.size,
+        until = closed.maxOfOrNull { it.month },
+    )
 }
 
 /** The percentage change from [base] to [current], rounded; `null` when [base] is missing or not positive. */

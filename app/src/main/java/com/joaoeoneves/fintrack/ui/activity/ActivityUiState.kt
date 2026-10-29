@@ -7,7 +7,6 @@ import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeSourceChip
 import com.joaoeoneves.fintrack.ui.common.DaySection
 import com.joaoeoneves.fintrack.ui.common.UiText
-import java.time.YearMonth
 
 /** Which kinds of transaction the Activity list shows. */
 enum class ActivityType {
@@ -63,7 +62,6 @@ sealed interface ActivityUiState {
         val categoryScope: Set<CategoryId>? = null,
         val incomeSources: List<IncomeSourceChip> = emptyList(),
         val summary: ActivitySummary = ActivitySummary(0L, 0L, 0L),
-        val shiftedIncomes: Map<String, YearMonth> = emptyMap(),
     ) : ActivityUiState
 
     data class Error(

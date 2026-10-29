@@ -253,7 +253,7 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
 
             assertEquals(expenseObserves, fixture.expenseRepo.listeners.observedRanges.size)
             assertEquals(incomeObserves, fixture.incomeRepo.listeners.observedRanges.size)
-            assertEquals(2, fixture.expenseRepo.listeners.active)
-            assertEquals(2, fixture.incomeRepo.listeners.active)
+            assertEquals(1, fixture.expenseRepo.listeners.active)
+            assertEquals(1, fixture.incomeRepo.listeners.active)
         }
 }

@@ -1,76 +1,13 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import com.joaoeoneves.fintrack.domain.model.Earmark
-import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
-import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.MonthFigures
-import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
-import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.LocalDate
 import java.time.YearMonth
-
-sealed interface MonthlyPlanUiState {
-    data object Loading : MonthlyPlanUiState
-
-    /**
-     * @property incomeLines the expected-income lines, in display order.
-     * @property incomeRows the same income as one row per salary component or manual line, for [period]'s month.
-     * @property summary the plan's totals; it has no actual income or spend side, only planned amounts.
-     * @property period the selected month (month periods only) the envelope cards are measured on.
-     * @property canAddIncomeLine whether the line cap has not been reached yet.
-     * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
-     * @property payWorkingDays the working days of the month that pays [period]'s salary: [period]'s own, or the
-     *   month before when the salary shift is on and a profile line pays for the next month.
-     * @property editor the income-line sheet, or `null` when it is closed.
-     * @property envelopes the month's envelopes (amounts, spend, funding) and free money.
-     * @property figures the month's subtraction (income - recurring - envelopes - savings = available).
-     * @property extraIncomeCents yearly and one-off income planned this month, not counted until received.
-     * @property funding how income is attributed to months (salary paying the next month).
-     * @property envelopeCards one card per envelope of the month, then the one for the unenveloped categories.
-     * @property configure what the "Set up" section says about each part of the plan.
-     * @property receipts payday and which [incomeRows] were already received.
-     * @property duplicateKeys the [key]s of the manual rows that look like a repeat of the profile's salary.
-     */
-    data class Content(
-        val incomeLines: List<PlannedIncome>,
-        val incomeRows: List<IncomeRow>,
-        val summary: MonthlyPlanSummary,
-        val period: Period,
-        val canGoToNextMonth: Boolean,
-        val canAddIncomeLine: Boolean,
-        val workingDays: WorkingDaysState,
-        val payWorkingDays: WorkingDaysState = workingDays,
-        val editor: IncomeLineEditorState?,
-        val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
-        val figures: MonthFigures,
-        val extraIncomeCents: Long = 0L,
-        val envelopeCards: List<EnvelopeCardUi> = emptyList(),
-        val configure: ConfigureStatus,
-        val receipts: IncomeReceipts,
-        val duplicateKeys: Set<String> = emptySet(),
-        val funding: IncomeFunding = IncomeFunding.unshifted(YearMonth.now(), 0),
-    ) : MonthlyPlanUiState
-
-    data class Error(
-        val message: UiText,
-    ) : MonthlyPlanUiState
-}
-
-/** What the "Set up" rows say: the plan's income, envelopes, bills and categories in numbers. */
-data class ConfigureStatus(
-    val incomeMonthlyCents: Long,
-    val incomeLineCount: Int,
-    val envelopeCount: Int,
-    val billCount: Int,
-    val billsMonthlyCents: Long,
-    val categoryCount: Int,
-)
 
 /**
  * The common payday (`null` when rows pay on different days) and the receipts of [Content.period]'s month:

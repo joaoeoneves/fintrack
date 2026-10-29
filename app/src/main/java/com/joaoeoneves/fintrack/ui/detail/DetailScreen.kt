@@ -20,6 +20,8 @@ import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.formatPercent
+import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.DetailDelta
 import com.joaoeoneves.fintrack.ui.designsystem.DetailScaffold
@@ -56,6 +58,7 @@ fun DetailScreen(
                 state = current,
                 onBack = onBack,
                 onSelectMonth = { viewModel.onSelectMonth(current.months[it].month) },
+                periodActions = viewModel.periodActions,
                 actions = actions,
                 modifier = modifier,
             )
@@ -75,11 +78,13 @@ private fun PlaceholderPage(
     }
 }
 
+@Suppress("LongParameterList") // page callbacks; each one is independent
 @Composable
 private fun DetailContent(
     state: DetailUiState.Content,
     onBack: () -> Unit,
     onSelectMonth: (Int) -> Unit,
+    periodActions: PeriodActions,
     actions: DetailActions,
     modifier: Modifier = Modifier,
 ) {
@@ -98,7 +103,7 @@ private fun DetailContent(
         }
     DetailScaffold(
         title = titleOf(state.subject),
-        amount = formatAmountCents(state.selected.valueCents),
+        amount = formatAmountCents(state.amountCents),
         bars = bars,
         selectedIndex = state.selectedIndex,
         onBack = onBack,
@@ -108,6 +113,16 @@ private fun DetailContent(
         menuActionLabel = state.editTarget?.let { stringResource(R.string.detail_edit) },
         onMenuAction = { state.editTarget?.let(actions.onEdit) },
         onBarClick = onSelectMonth,
+        header = {
+            PeriodSelector(
+                period = state.period,
+                canGoToNextMonth = state.canGoToNextMonth,
+                actions = periodActions,
+                monthOnly = true,
+                showScaleSwitch = true,
+                modifier = Modifier.padding(horizontal = Dimens.Space8),
+            )
+        },
     ) {
         if (state.movements.isEmpty()) {
             item(key = "empty") { EmptyState(title = stringResource(R.string.detail_no_movements)) }
@@ -119,7 +134,6 @@ private fun DetailContent(
                 is Income ->
                     IncomeRow(
                         transaction,
-                        countsFor = state.shiftedIncomes[transaction.id],
                         onClick = { actions.onOpenIncome(transaction.id) },
                     )
             }
@@ -149,7 +163,6 @@ private fun contextOf(subject: DetailSubject): String? =
             ).joinToString(CONTEXT_SEPARATOR)
         is DetailSubject.OfSource ->
             listOfNotNull(
-                stringResource(R.string.detail_context_next_month).takeIf { subject.shifted },
                 subject.expectedCents?.let { stringResource(R.string.detail_context_expected, formatAmountCents(it)) },
             ).takeIf { it.isNotEmpty() }?.joinToString(CONTEXT_SEPARATOR)
     }

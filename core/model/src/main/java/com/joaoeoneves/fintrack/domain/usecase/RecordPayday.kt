@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.model.IncomeFunding
+import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.amountIn
@@ -15,12 +15,9 @@ import com.joaoeoneves.fintrack.domain.model.lineMonthsDue
 import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.paydayIncome
 import com.joaoeoneves.fintrack.domain.model.paydayIncomeId
-import com.joaoeoneves.fintrack.domain.model.salaryShiftEnabled
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
-import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
-import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryLineLabelsProvider
 import kotlinx.coroutines.CancellationException
@@ -40,8 +37,6 @@ data class ReceiveRequest(
     val zone: ZoneId,
     /** Replaces the amount of the single line of [lines]; refused for several lines. */
     val amountOverrideCents: Long? = null,
-    /** The plan month the lines fund (selects the amount in force); [month] is the month they are paid in. */
-    val planMonth: YearMonth = month,
 )
 
 /**
@@ -57,7 +52,6 @@ class RecordPayday
         private val incomeRepository: IncomeRepository,
         private val automationRepository: AutomationSettingsRepository,
         private val labelsProvider: SalaryLineLabelsProvider,
-        private val planSettings: PlanSettingsRepository = NoPlanSettings,
     ) {
         /**
          * Records, for every line with automatic recording on, each month whose pay date passed since the line's
@@ -81,8 +75,7 @@ class RecordPayday
                     (fresh.isEmpty() && stale.isEmpty()) ||
                     automationRepository.updateLineCursors(fresh, stale).isSuccess
             if (!synced || lines.isEmpty()) return 0
-            val shift = salaryShiftEnabled(planSettings.observeSalaryPaysNextMonth().first(), lines)
-            return recordDue(autoLines, cursors, today, zone, shift)
+            return recordDue(autoLines, cursors, today, zone)
         }
 
         private suspend fun recordDue(
@@ -90,7 +83,6 @@ class RecordPayday
             cursors: Map<String, YearMonth>,
             today: LocalDate,
             zone: ZoneId,
-            shift: Boolean,
         ): Int {
             val due = autoLines.filter { it.id in cursors }.associateWith { lineMonthsDue(it, cursors[it.id], today) }
             val months = due.values.flatten().toSortedSet()
@@ -101,7 +93,7 @@ class RecordPayday
                 val current = monthSettings.firstOrNull { it.month == month }
                 val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
                 val monthLines = due.filterValues { month in it }.keys.toList()
-                recorded += recordMonth(month, monthLines, IncomeFunding(shift) { workingDays }, zone) ?: break
+                recorded += recordMonth(month, monthLines, IncomeMonth.forMonth(month, workingDays), zone) ?: break
             }
             return recorded
         }
@@ -110,19 +102,19 @@ class RecordPayday
         private suspend fun recordMonth(
             month: YearMonth,
             lines: List<PlannedIncome>,
-            funding: IncomeFunding,
+            incomeMonth: IncomeMonth,
             zone: ZoneId,
         ): Int? {
             val labels = labelsProvider.current()
             val existing = existingIncomes(month, zone) ?: return null
             val missing =
                 lines
-                    .filter { it.isActiveIn(month) && it.asOf(funding.planMonthOf(it, month)) != null }
+                    .filter { it.isActiveIn(month) && it.asOf(month) != null }
                     .filter { line -> existing.none { it.id == paydayIncomeId(line.id, month) } }
                     .filter { line -> legacyRecurringIncome(line, month, existing) == null }
                     .mapNotNull {
-                        val amount = funding.amountPaidIn(it, month)
-                        val days = funding.workingDays(month)
+                        val amount = incomeMonth.amountIn(it, month)
+                        val days = incomeMonth.workingDays(month)
                         it.paydayIncome(month, days, it.payDateIn(month), zone, amount)?.named(it, labels)
                     }
             val cursors = lines.associate { it.id to month }
@@ -156,7 +148,7 @@ class RecordPayday
                     val labels = labelsProvider.current()
                     val incomes =
                         lines
-                            .filter { it.isActiveIn(month) && it.asOf(planMonth) != null }
+                            .filter { it.isActiveIn(month) && it.asOf(month) != null }
                             .mapNotNull {
                                 it.paydayIncome(month, workingDays, date, zone, amountFor(it))?.named(it, labels)
                             }
@@ -203,6 +195,8 @@ class RecordPayday
             labels: SalaryLineLabels,
         ): Income = line.managedKey?.let { labels.labelFor(it) }?.let { copy(source = it) } ?: this
 
-        private fun ReceiveRequest.amountFor(l: PlannedIncome) =
-            amountOverrideCents ?: (l.asOf(planMonth)?.amountIn(month, workingDays) ?: 0L)
+        private fun ReceiveRequest.amountFor(l: PlannedIncome): Long {
+            val planned = l.asOf(month)?.amountIn(month, workingDays) ?: 0L
+            return amountOverrideCents ?: planned
+        }
     }

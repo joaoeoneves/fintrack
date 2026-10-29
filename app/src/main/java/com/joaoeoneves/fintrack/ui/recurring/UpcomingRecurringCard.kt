@@ -179,14 +179,14 @@ private fun ExpectedIncomeGroup(
                         null
                     },
                 onChangeAmount = {
-                    val paying = row.payingLines(entry.planMonth, expected.funding)
+                    val paying = row.payingLines(entry.month, expected.incomeMonth)
                     feedback?.open(
                         ReceiveChange(
                             title = title,
                             today = today,
                             date = receiveDate,
                             editableAmountCents =
-                                paying.singleOrNull()?.let { expected.funding.amountIn(it, entry.planMonth) },
+                                paying.singleOrNull()?.let { expected.incomeMonth.amountIn(it, entry.month) },
                             onConfirm = { date, cents -> onReceive(row, date, cents) },
                         ),
                     )

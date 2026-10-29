@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.detail
 
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import java.time.YearMonth
@@ -19,7 +20,10 @@ sealed interface DetailEditTarget {
     ) : DetailEditTarget
 }
 
-/** One bar of the 12-month chart. */
+/** [DetailUiState.Content.selectedIndex] on the year scale, where no single bar is selected. */
+const val NO_SELECTION = -1
+
+/** One bar of the chart. */
 data class DetailMonth(
     val month: YearMonth,
     val valueCents: Long,
@@ -41,7 +45,6 @@ sealed interface DetailSubject {
     data class OfSource(
         val component: SalaryComponent?,
         val label: String?,
-        val shifted: Boolean,
         val expectedCents: Long?,
     ) : DetailSubject
 }
@@ -54,14 +57,15 @@ sealed interface DetailUiState {
 
     data class Content(
         val subject: DetailSubject,
+        val period: Period,
+        val canGoToNextMonth: Boolean,
         val months: List<DetailMonth>,
         val selectedIndex: Int,
+        val amountCents: Long,
         val delta: DetailDeltaFigure?,
         val movements: List<Transaction>,
-        val shiftedIncomes: Map<String, YearMonth>,
         val editTarget: DetailEditTarget?,
     ) : DetailUiState {
-        val selected: DetailMonth get() = months[selectedIndex]
         val isIncome: Boolean get() = subject is DetailSubject.OfSource
         val hasData: Boolean get() = months.any { it.valueCents != 0L } || movements.isNotEmpty()
     }

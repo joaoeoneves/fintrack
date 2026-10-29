@@ -42,9 +42,6 @@ import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeUndoViewModel
 import com.joaoeoneves.fintrack.ui.plan.envelopes.LocalEnvelopeDeleteUndo
 import com.joaoeoneves.fintrack.ui.recurring.LocalRecurringDeleteUndo
 import com.joaoeoneves.fintrack.ui.recurring.RecurringUndoViewModel
-import com.joaoeoneves.fintrack.ui.savings.DeletedSavingsPlan
-import com.joaoeoneves.fintrack.ui.savings.LocalSavingsPlanDeleteUndo
-import com.joaoeoneves.fintrack.ui.savings.SavingsUndoViewModel
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
 import com.joaoeoneves.fintrack.ui.theme.Motion
 import kotlinx.coroutines.launch
@@ -84,7 +81,6 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
                 }
             }
         }
-    val showPlanDeleted = rememberSavingsPlanDeletedHandler(snackbarHostState, undoLabel)
     val showRecurringDeleted = rememberRecurringDeletedHandler(snackbarHostState, undoLabel)
     Scaffold(
         modifier = modifier,
@@ -98,7 +94,6 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
             LocalAppSnackbar provides showMessage,
             LocalDeleteUndo provides showDeleted,
             LocalEnvelopeDeleteUndo provides showEnvelopeDeleted,
-            LocalSavingsPlanDeleteUndo provides showPlanDeleted,
             LocalRecurringDeleteUndo provides showRecurringDeleted,
         ) {
             FinTrackNavHost(
@@ -155,24 +150,6 @@ private fun TabBar(
         selectedIndex = selected?.ordinal,
         onSelect = { onSelect(TopLevelTab.entries[it]) },
     )
-}
-
-@Composable
-private fun rememberSavingsPlanDeletedHandler(
-    snackbarHostState: SnackbarHostState,
-    undoLabel: String,
-): (DeletedSavingsPlan) -> Unit {
-    val scope = rememberCoroutineScope()
-    val undoViewModel = hiltViewModel<SavingsUndoViewModel>()
-    val message = stringResource(R.string.savings_plan_deleted)
-    return remember(message, undoLabel) {
-        { deleted ->
-            scope.launch {
-                val result = snackbarHostState.showActionSnackbar(message, undoLabel)
-                if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
-            }
-        }
-    }
 }
 
 @Composable

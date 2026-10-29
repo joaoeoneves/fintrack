@@ -17,7 +17,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
@@ -66,7 +65,7 @@ fun AddEditRecurringScreen(
                 RecurringFormContent(
                     state = state,
                     categoryOptions =
-                        categoryOptions.optionsIncluding(state.form.category).forNewItem(!state.isEditMode),
+                        categoryOptions.optionsIncluding(state.form.category),
                     onFormChanged = viewModel::onFormChanged,
                     onDelete = viewModel::onDelete,
                     modifier = contentModifier,
@@ -96,7 +95,7 @@ private fun RecurringFormContent(
         verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
     ) {
         RecurringTypeAndNameFields(form, errors, onFormChanged, autoFocusAmount = !state.isEditMode)
-        RecurringCategoryField(form, categoryOptions, errors, onFormChanged, showSavingsHint = !state.isEditMode)
+        RecurringCategoryField(form, categoryOptions, errors, onFormChanged)
         RecurringScheduleFields(form, errors, onFormChanged)
         RecurringDateFields(form, errors, onFormChanged)
         MinimalTextField(
@@ -126,9 +125,6 @@ private fun RecurringFormContent(
         }
     }
 }
-
-/** New items cannot go to a SAVING-kind category (those belong to savings plans); existing items keep theirs. */
-private fun List<Category>.forNewItem(isNew: Boolean) = if (isNew) filter { it.kind != CategoryKind.SAVING } else this
 
 /** The auto-post switch and, when editing, the pause switch. */
 @Composable

@@ -1,13 +1,13 @@
 appId: com.joaoeoneves.fintrack
 ---
-# README screenshots flow (updated for 3.2; guest mode, English, EUR, dark, demo data only). NOT a regression gate.
-# Plan > Set up is the gear icon beside the "Plan" title and opens the Set up screen (Income, Envelopes,
-# Recurring, Categories rows); the old Set up section on the Plan tab is gone.
+# README screenshots flow (updated for 5.0; guest mode, English, EUR, dark, demo data only). NOT a regression gate.
+# Four tabs: Home, Activity, Income, Spending. Groups/Recurring live in the Spending tab, the salary
+# profile in the Income tab, the investments page behind Home's "Invested" row.
 # Run locally on a 1080x2400 / 420 dpi emulator (adb shell wm size 1080x2400; adb shell wm density 420;
 # reset with wm size reset / wm density reset) with SystemUI demo mode on (clock 12:00, full battery, wifi,
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
-# Captures: home, activity (period selector + summary line, unscrolled), plan, plan-income, savings, add-expense.
+# Captures: home, activity (period selector + summary line, unscrolled), income, spending, investments, add-expense.
 # Money inputs are cash-register style: digits only ("6420" = 64.20). `back` closes only the IME when
 # it is up; Save is tapped directly.
 
@@ -41,11 +41,9 @@ appId: com.joaoeoneves.fintrack
       id: "dashboard_list"
     timeout: 10000
 
-# --- Plan > Set up (gear icon) > Income: the salary wizard (1500 gross, 15% IRS, 50% subsidies, meal allowance) ---
+# --- Income tab: the salary wizard (1500 gross, 15% IRS, 50% subsidies, meal allowance) ---
 - tapOn:
-    id: "nav_plan"
-- tapOn: "Set up"
-- tapOn: "Income"
+    id: "nav_income"
 - extendedWaitUntil:
     visible: "Salary profile"
     timeout: 10000
@@ -66,22 +64,18 @@ appId: com.joaoeoneves.fintrack
 - back
 - tapOn: "Next"
 - tapOn: "Save"
-# Back on the Income screen: one row per salary component.
 - extendedWaitUntil:
-    visible: "From salary profile"
+    visible: "Expected income"
     timeout: 10000
-- waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/plan-income
-- back
 
-# --- Set up > Envelopes: Food 300, Shopping 150, Rent 750 ---
-- tapOn: "Envelopes"
-- tapOn: "New envelope"
+# --- Spending tab > New group: Food, Shopping, Rent (name + categories) ---
+- tapOn:
+    id: "nav_spending"
+- scrollUntilVisible:
+    element: "New group"
+- tapOn: "New group"
 - tapOn: "Name"
 - inputText: "Food"
-- back
-- tapOn: "Monthly amount"
-- inputText: "30000"
 - back
 - tapOn: "Add category"
 - tapOn:
@@ -89,14 +83,13 @@ appId: com.joaoeoneves.fintrack
     index: -1
 - tapOn: "Save"
 - extendedWaitUntil:
-    visible: "New envelope"
+    visible: "By group"
     timeout: 10000
-- tapOn: "New envelope"
+- scrollUntilVisible:
+    element: "New group"
+- tapOn: "New group"
 - tapOn: "Name"
 - inputText: "Shopping"
-- back
-- tapOn: "Monthly amount"
-- inputText: "15000"
 - back
 - tapOn: "Add category"
 - tapOn:
@@ -104,26 +97,12 @@ appId: com.joaoeoneves.fintrack
     index: -1
 - tapOn: "Save"
 - extendedWaitUntil:
-    visible: "New envelope"
+    visible: "By group"
     timeout: 10000
-- tapOn: "New envelope"
-- tapOn: "Name"
-- inputText: "Rent"
-- back
-- tapOn: "Monthly amount"
-- inputText: "75000"
-- back
-- tapOn: "Add category"
-- tapOn:
-    text: "Transfer"
-    index: -1
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible: "New envelope"
-    timeout: 10000
-- back
 
-# --- Set up > Recurring: Rent and Internet ---
+# --- Spending tab > Recurring: Rent and Internet ---
+- scrollUntilVisible:
+    element: "Recurring"
 - tapOn: "Recurring"
 - tapOn: "Add recurring"
 - inputText: "75000"
@@ -146,30 +125,6 @@ appId: com.joaoeoneves.fintrack
     visible: "Internet"
     timeout: 10000
 - back
-# Back from Set up to the Plan tab.
-- back
-
-# --- Savings: one plan with a target ---
-- tapOn:
-    id: "nav_savings"
-- tapOn: "New plan"
-- tapOn: "Name"
-- inputText: "Holiday fund"
-- back
-- tapOn: "Monthly amount"
-- inputText: "10000"
-- back
-- scrollUntilVisible:
-    element: "Target"
-    centerElement: true
-- tapOn: "Target"
-- inputText: "120000"
-- back
-- tapOn: "Total"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible: "Holiday fund"
-    timeout: 10000
 
 # Rent is already booked by the Bills entry above, so it is not added again as an expense.
 # --- Income + expenses, spread over different earlier days of the month (the date picker in the form)
@@ -282,11 +237,37 @@ appId: com.joaoeoneves.fintrack
       id: "dashboard_list"
     timeout: 10000
 
-# --- Screenshots ---
-- tapOn: "Dismiss"
+# One investment (day 2) so Home shows the "Invested" row that opens the investments page.
+- tapOn: "Add expense"
+- inputText: "10000"
+- tapOn: "Name"
+- inputText: "ETF"
+- back
+- tapOn: "Investments"
 - scrollUntilVisible:
-    element: "Net balance"
-    direction: UP
+    element: "Date"
+- tapOn: "Date"
+- tapOn:
+    text: "\\w+, \\w+ 2, 20\\d\\d"
+- tapOn: "OK"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+
+# --- Screenshots ---
+- tapOn:
+    text: "Dismiss"
+    optional: true
+# Back to the very top of Home (the list keeps its scroll position).
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%,25%
+          end: 50%,85%
+          duration: 250
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/home
 - tapOn:
@@ -300,22 +281,38 @@ appId: com.joaoeoneves.fintrack
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/activity
 - tapOn:
-    id: "nav_plan"
+    id: "nav_income"
 - waitForAnimationToEnd
-# The Plan tab keeps its scroll position: swipe back to the top.
-- repeat:
-    times: 4
-    commands:
-      - swipe:
-          direction: DOWN
+- takeScreenshot: maestro-out/screens/income
+- tapOn: "Year"
 - waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/plan
+- takeScreenshot: maestro-out/screens/income-year
+- tapOn: "Month"
 - tapOn:
-    id: "nav_savings"
+    id: "nav_spending"
 - waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/savings
+- takeScreenshot: maestro-out/screens/spending
+- tapOn: "Year"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/spending-year
+- tapOn: "Month"
 - tapOn:
     id: "nav_home"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+# Investments page right after switching tabs (Spending -> Home): back must land on Home.
+- scrollUntilVisible:
+    element: "Invested.*"
+    centerElement: true
+- tapOn: "Invested.*"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/investments
+# Back from the page returns to Home (5.0 regression check: it used to exit the app after tab switches).
+- back
+- assertVisible:
+    id: "dashboard_list"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"

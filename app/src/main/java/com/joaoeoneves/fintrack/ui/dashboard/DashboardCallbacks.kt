@@ -19,10 +19,14 @@ data class DashboardCallbacks(
     val onOpenIncome: (String) -> Unit,
     /** Opens the Activity tab on the given period ("See all"). */
     val onOpenActivity: (Period) -> Unit,
-    /** Opens the Plan tab on the given period's month. */
-    val onOpenPlan: (Period) -> Unit,
     /** Opens the Plan tab with the recurring items list on top. */
     val onOpenRecurring: () -> Unit,
     /** Opens the screen of a "Get started" checklist step. */
     val onOpenStartStep: (StartStep) -> Unit,
+    /** Opens the Income tab on the given period (the "Income" card). */
+    val onOpenIncomeTab: (Period) -> Unit = {},
+    /** Opens the Spending tab on the given period (the "Spending" card). */
+    val onOpenSpendingTab: (Period) -> Unit = {},
+    /** Opens the investments page on the given period (the "Invested" row). */
+    val onOpenInvestments: (Period) -> Unit = {},
 )

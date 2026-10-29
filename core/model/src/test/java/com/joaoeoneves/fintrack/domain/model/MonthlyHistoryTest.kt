@@ -15,9 +15,6 @@ import java.time.ZoneOffset
 
 class MonthlyHistoryTest {
     private val zone = ZoneOffset.UTC
-    private val off = IncomeFunding(false) { 20 }
-    private val on = IncomeFunding(true) { 20 }
-    private val salary = PlannedIncome("sal", "Salário líquido", 100_000L, 0, managedKey = MANAGED_NET_SALARY)
     private val saving = userCategory("save", kind = CategoryKind.SAVING)
     private val food = userCategory("food")
     private val categories = listOf(saving, food)
@@ -37,9 +34,7 @@ class MonthlyHistoryTest {
         months: List<YearMonth>,
         expenses: List<Expense> = emptyList(),
         income: List<Income> = emptyList(),
-        lines: List<PlannedIncome> = emptyList(),
-        funding: IncomeFunding = off,
-    ) = monthlyTotalsOf(months, expenses, income, categories, lines, funding, zone)
+    ) = monthlyTotalsOf(months, expenses, income, categories, zone)
 
     @Test
     fun totals_noHistory_zerosAndNoData() {
@@ -71,27 +66,43 @@ class MonthlyHistoryTest {
     }
 
     @Test
-    fun totals_shiftOn_endOfMonthSalaryFundsNextMonth_acrossYear() {
+    fun totals_endOfMonthIncome_countsInItsOwnMonth() {
         val pay = testIncome("pay_sal_202512", 100_000L, at(2025, 12, 31))
-        val result =
-            totals(listOf(ym(2025, 12), ym(2026, 1)), income = listOf(pay), lines = listOf(salary), funding = on)
-        assertEquals(0L, result[0].incomeCents)
-        assertEquals(100_000L, result[1].incomeCents)
+        val result = totals(listOf(ym(2025, 12), ym(2026, 1)), income = listOf(pay))
+        assertEquals(listOf(100_000L, 0L), result.map { it.incomeCents })
     }
 
     @Test
-    fun totals_shiftOn_salaryInLastWindowMonth_isDropped() {
-        val pay = testIncome("pay_sal_202610", 100_000L, at(2026, 10, 30))
+    fun totals_expenseOn29October_isOctober_notNovember() {
         val result =
-            totals(listOf(ym(2026, 9), ym(2026, 10)), income = listOf(pay), lines = listOf(salary), funding = on)
-        assertEquals(listOf(0L, 0L), result.map { it.incomeCents })
+            totals(
+                listOf(ym(2026, 10), ym(2026, 11)),
+                listOf(testExpense("late", 4_200L, at(2026, 10, 29), food)),
+            )
+        assertEquals(listOf(4_200L, 0L), result.map { it.spendingCents })
     }
 
     @Test
-    fun totals_shiftOff_salaryStaysInItsOwnMonth() {
-        val pay = testIncome("pay_sal_202610", 100_000L, at(2026, 10, 30))
-        val result = totals(listOf(ym(2026, 10)), income = listOf(pay), lines = listOf(salary))
-        assertEquals(100_000L, result.single().incomeCents)
+    fun totals_investedIsNotSpending() {
+        val result =
+            totals(
+                listOf(ym(2026, 10)),
+                listOf(
+                    testExpense("inv", 50_000L, at(2026, 10, 29), saving),
+                    testExpense("f", 1_000L, at(2026, 10, 29), food),
+                ),
+            )
+        assertEquals(1_000L, result.single().spendingCents)
+        assertEquals(50_000L, result.single().savedCents)
+    }
+
+    @Test
+    fun totals_incomeAtMidnightBoundary_usesZone() {
+        val lisbon = java.time.ZoneId.of("Europe/Lisbon")
+
+        val pay = testIncome("p", 100L, java.time.Instant.parse("2026-10-31T23:30:00Z"))
+        val result = monthlyTotalsOf(listOf(ym(2026, 10), ym(2026, 11)), emptyList(), listOf(pay), categories, lisbon)
+        assertEquals(listOf(100L, 0L), result.map { it.incomeCents })
     }
 
     @Test

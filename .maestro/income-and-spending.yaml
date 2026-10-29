@@ -1,0 +1,94 @@
+appId: com.joaoeoneves.fintrack
+tags:
+  - release
+---
+# Income and Spending tabs (release smoke): guest start -> Income tab: add a manual income line and mark
+# it received (receive check), set days off for the month -> Spending tab: add a group (name + categories),
+# see it under "By group", open Recurring. Starts from a fresh guest install (see _guest-start.yaml), so
+# nothing needs cleaning up afterwards.
+
+- runFlow: _guest-start.yaml
+
+# Pin English (fresh installs default to Portuguese). The account/settings entry point is the avatar.
+- tapOn:
+    id: "account_avatar"
+- tapOn: "Language|Idioma"
+# Index -1 = the open menu's option (the row's own value can also read "English").
+- tapOn:
+    text: "English"
+    index: -1
+- back
+- assertVisible:
+    id: "dashboard_list"
+
+# --- Income tab: expected vs received per line ---
+- tapOn:
+    id: "nav_income"
+- assertVisible: "Expected income"
+- scrollUntilVisible:
+    element: "Salary profile"
+- assertVisible: "Working days in.*"
+- scrollUntilVisible:
+    element: "Add income"
+    direction: UP
+- tapOn: "Add income"
+- assertVisible: "New income"
+- tapOn: "Name"
+- inputText: "Freelance"
+- tapOn: "Amount"
+- inputText: "50000"
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "Freelance"
+    timeout: 10000
+- assertVisible: "Payday: .*"
+# Receive check: mark as received, the row switches to "Received on ..." and the by-source block appears.
+- tapOn:
+    id: "recurring_confirm"
+- extendedWaitUntil:
+    visible: "Received on .*"
+    timeout: 10000
+- assertVisible: "Expected .* Difference .*"
+
+# --- Working days / days off (Configure group at the bottom of the tab) ---
+- scrollUntilVisible:
+    element: "Working days in.*"
+- tapOn: "Working days in.*"
+- assertVisible: "Days off this month"
+- tapOn: "More days off"
+- tapOn: "More days off"
+- tapOn: "Save"
+- scrollUntilVisible:
+    element: "Working days in.*"
+- assertVisible: "19.*"
+
+# --- Spending tab: add a group ---
+- tapOn:
+    id: "nav_spending"
+- assertVisible: "By category"
+- scrollUntilVisible:
+    element: "New group"
+- tapOn: "New group"
+- tapOn: "Name"
+- inputText: "Essentials"
+- back
+- tapOn: "Add category"
+- tapOn:
+    text: "Food"
+    index: -1
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "By group"
+    timeout: 10000
+
+# --- Recurring ---
+- scrollUntilVisible:
+    element: "Recurring"
+- tapOn: "Recurring"
+- extendedWaitUntil:
+    visible: "No recurring yet"
+    timeout: 10000
+- assertVisible: "Add recurring"
+- back
+- assertVisible:
+    id: "nav_spending"

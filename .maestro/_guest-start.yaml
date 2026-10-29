@@ -22,6 +22,10 @@ appId: com.joaoeoneves.fintrack
             id: "continue_as_guest"
           timeout: 5000
           optional: true
+- extendedWaitUntil:
+    visible:
+      id: "continue_as_guest"
+    timeout: 30000
 - tapOn:
     id: "continue_as_guest"
 - extendedWaitUntil:

@@ -33,7 +33,7 @@ private const val TAG = "StartChecklistVM"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 /** At least this many steps done on first sight means the user is already set up: the card is retired. */
-private const val RETIRE_THRESHOLD = 4
+private const val RETIRE_THRESHOLD = 3
 
 /** One checklist row: [step] and whether it is [done]. */
 data class StartStepUi(

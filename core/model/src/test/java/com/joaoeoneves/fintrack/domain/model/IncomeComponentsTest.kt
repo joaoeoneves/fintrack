@@ -174,31 +174,4 @@ class IncomeComponentsTest {
     fun emptyLines_noRows() {
         assertTrue(rowsIn(1, emptyList()).isEmpty())
     }
-
-    @Test
-    fun annualRows_sumTheYear_andListPayingMonths() {
-        val year = (1..12).associate { YearMonth.of(2026, it) to days }
-
-        val rows = annualIncomeRowsOf(all(), year)
-
-        assertEquals(12 * 79_000L, rows.of(SalaryComponent.SALARY).cents)
-        assertEquals((1..12).toList(), rows.of(SalaryComponent.SALARY).months)
-        assertEquals(12 * 7_000L + 79_000, rows.of(SalaryComponent.SUBSIDIES).cents)
-        assertEquals(12 * 900L * days, rows.of(SalaryComponent.MEAL).cents)
-        assertEquals(listOf(1, 4, 7, 10), rows.extra("flex").months)
-        assertEquals(listOf(4, 10), rows.extra("profit").months)
-        assertEquals(listOf(5), rows.extra("bonus").months)
-        assertEquals(listOf(null, null), rows.takeLast(2).map { it.component })
-        assertEquals(12 * 10_000L, rows[rows.size - 2].cents)
-    }
-
-    @Test
-    fun annualRows_dropRowsWithNothingInTheYear() {
-        val once =
-            PlannedIncome("once", "Once", 100, 0, frequency = IncomeFrequency.ONCE, yearMonth = YearMonth.of(2027, 3))
-        val lines = listOf(once)
-        val year = (1..12).associate { YearMonth.of(2026, it) to days }
-
-        assertTrue(annualIncomeRowsOf(lines, year).isEmpty())
-    }
 }

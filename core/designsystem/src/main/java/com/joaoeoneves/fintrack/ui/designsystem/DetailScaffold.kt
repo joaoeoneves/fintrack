@@ -34,8 +34,8 @@ data class DetailDelta(
 
 /**
  * A detail page: [title] with an optional ⋮ menu (one [menuActionLabel] action, e.g. "Edit"), the big [amount] with an
- * optional [delta], the [bars] chart (tap selects a month through [onBarClick]), a [contextLine] and then the list
- * built by [list].
+ * optional [delta], the [bars] chart (tap selects a month through [onBarClick]; a negative [selectedIndex] highlights
+ * none), a [contextLine] and then the list built by [list]. [header] (e.g. the period selector) sits above the amount.
  */
 @Suppress("LongParameterList") // page slots; each one is independently optional
 @Composable
@@ -51,62 +51,83 @@ fun DetailScaffold(
     menuActionLabel: String? = null,
     onMenuAction: () -> Unit = {},
     onBarClick: (Int) -> Unit = {},
+    header: (@Composable () -> Unit)? = null,
     list: LazyListScope.() -> Unit,
 ) {
-    var menuOpen by remember { mutableStateOf(false) }
     LargeTitleScaffold(
         title = title,
         onBack = onBack,
         modifier = modifier,
         actions = {
             if (menuActionLabel != null) {
-                Box {
-                    FinTrackIconButton(
-                        icon = Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.cd_more_options),
-                        onClick = { menuOpen = true },
-                    )
-                    FinTrackDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        FinTrackMenuItem(
-                            text = menuActionLabel,
-                            onClick = {
-                                menuOpen = false
-                                onMenuAction()
-                            },
-                        )
-                    }
-                }
+                DetailMenu(menuActionLabel, onMenuAction)
             }
         },
     ) { padding: PaddingValues ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space16),
-            verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
-        ) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space4)) {
-                    Text(text = amount, style = AmountLarge)
-                    delta?.let {
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            header?.invoke()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space16),
+                verticalArrangement = Arrangement.spacedBy(Dimens.Space16),
+            ) {
+                item { DetailAmount(amount, delta) }
+                item {
+                    val highlighted = setOfNotNull(selectedIndex.takeIf { it >= 0 })
+                    MonthlyBars(bars = bars, highlighted = highlighted, onBarClick = onBarClick)
+                }
+                contextLine?.let {
+                    item {
                         Text(
-                            text = it.text,
+                            text = it,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (it.good) FinTrackTheme.colors.positive else FinTrackTheme.colors.negative,
+                            color = FinTrackTheme.colors.textSecondary,
                         )
                     }
                 }
+                list()
             }
-            item { MonthlyBars(bars = bars, highlighted = setOf(selectedIndex), onBarClick = onBarClick) }
-            contextLine?.let {
-                item {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = FinTrackTheme.colors.textSecondary,
-                    )
-                }
-            }
-            list()
+        }
+    }
+}
+
+@Composable
+private fun DetailMenu(
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box {
+        FinTrackIconButton(
+            icon = Icons.Default.MoreVert,
+            contentDescription = stringResource(R.string.cd_more_options),
+            onClick = { menuOpen = true },
+        )
+        FinTrackDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            FinTrackMenuItem(
+                text = actionLabel,
+                onClick = {
+                    menuOpen = false
+                    onAction()
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailAmount(
+    amount: String,
+    delta: DetailDelta?,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space4)) {
+        Text(text = amount, style = AmountLarge)
+        delta?.let {
+            Text(
+                text = it.text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (it.good) FinTrackTheme.colors.positive else FinTrackTheme.colors.negative,
+            )
         }
     }
 }

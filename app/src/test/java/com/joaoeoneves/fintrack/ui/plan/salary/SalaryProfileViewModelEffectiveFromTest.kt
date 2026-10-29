@@ -7,13 +7,10 @@ import com.joaoeoneves.fintrack.domain.model.AmountVersion
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
-import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -24,7 +21,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -46,21 +42,13 @@ class SalaryProfileViewModelEffectiveFromTest {
     private val clock = MutableClock(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
     private val labels = SalaryLineLabels()
 
-    private class Shift(
-        private val value: Boolean?,
-    ) : PlanSettingsRepository {
-        override fun observeSalaryPaysNextMonth(): Flow<Boolean?> = flowOf(value)
-
-        override suspend fun setSalaryPaysNextMonth(enabled: Boolean) = Unit
-    }
-
     @Before
     fun setUp() = Dispatchers.setMain(dispatcher)
 
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun TestScope.started(shift: Boolean? = null): SalaryProfileViewModel {
+    private fun TestScope.started(): SalaryProfileViewModel {
         val vm =
             SalaryProfileViewModel(
                 profiles,
@@ -68,7 +56,6 @@ class SalaryProfileViewModelEffectiveFromTest {
                 income,
                 clock,
                 idGenerator = { "id1" },
-                planSettings = Shift(shift),
             )
         backgroundScope.launch { vm.uiState.collect {} }
         vm.start('.')
@@ -84,14 +71,6 @@ class SalaryProfileViewModelEffectiveFromTest {
             val vm = started()
             assertEquals(YearMonth.of(2026, 10), vm.content().effectiveFrom)
             assertTrue(vm.content().showEffectiveFrom)
-        }
-
-    @Test
-    fun shiftSource_isThePreviousMonthWhenOnOrUnset_nullWhenOff() =
-        runTest(dispatcher) {
-            assertEquals(YearMonth.of(2026, 9), started(null).content().shiftSource)
-            assertEquals(YearMonth.of(2026, 9), started(true).content().shiftSource)
-            assertNull(started(false).content().shiftSource)
         }
 
     @Test

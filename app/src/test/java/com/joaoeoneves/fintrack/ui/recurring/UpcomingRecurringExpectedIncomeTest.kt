@@ -50,7 +50,8 @@ import java.time.ZoneOffset
 class UpcomingRecurringExpectedIncomeTest {
     private val dispatcher = StandardTestDispatcher()
     private val clock = MutableClock(Instant.parse("2026-10-28T10:00:00Z"), ZoneOffset.UTC)
-    private val plan = FakePlannedIncomeRepository(listOf(PlannedIncome("p1", "Salary", 150_000L, 0)))
+    private val salary = PlannedIncome("p1", "Salary", 150_000L, 0, startMonth = YearMonth.of(2026, 10))
+    private val plan = FakePlannedIncomeRepository(listOf(salary))
     private val incomes = FakeIncomeRepository()
 
     @Before

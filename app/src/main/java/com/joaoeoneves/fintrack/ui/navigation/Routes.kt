@@ -14,10 +14,10 @@ object HomeGraph
 object ActivityGraph
 
 @Serializable
-object PlanGraph
+object IncomeGraph
 
 @Serializable
-object SavingsGraph
+object SpendingGraph
 
 /** Start destination of [HomeGraph]. */
 @Serializable
@@ -36,30 +36,16 @@ data class Activity(
     val envelope: String? = null,
 )
 
-/**
- * The Evolution screen, pushed on top of whichever tab is current; [period] is an encoded `Period` token (null: the
- * current month) and [type] is `"INCOME"` or anything else for expenses; both are only initial values.
- */
+/** Start destination of [IncomeGraph]; [period] is an encoded `Period` token (month or year; null: this month). */
 @Serializable
-data class Evolution(
+data class IncomeHome(
     val period: String? = null,
-    val type: String? = null,
 )
 
-/** Start destination of [PlanGraph]; [month] is an encoded `Period` token (null: the current month). */
+/** Start destination of [SpendingGraph]; [period] is an encoded `Period` token (month or year; null: this month). */
 @Serializable
-data class PlanHome(
-    val month: String? = null,
-)
-
-/** Start destination of [SavingsGraph]. */
-@Serializable
-object SavingsHome
-
-/** The savings plan editor, full screen; a null [id] creates a new plan. */
-@Serializable
-data class EditSavingsPlan(
-    val id: String? = null,
+data class SpendingHome(
+    val period: String? = null,
 )
 
 /** The expense form; [period] is the encoded past month it was opened from (a new expense then defaults to it). */
@@ -87,23 +73,6 @@ data class Categories(
 
 @Serializable
 object RecurringList
-
-/** The global set-up screen (income, envelopes, recurring, categories), opened from the Plan tab's gear icon. */
-@Serializable
-object Configure
-
-/** The envelopes list, pushed on top of whichever tab is current. */
-@Serializable
-object PlanEnvelopes
-
-/**
- * The income screen, pushed on top of whichever tab is current; [month] is an encoded `Period` token (null: the
- * current month).
- */
-@Serializable
-data class PlanIncome(
-    val month: String? = null,
-)
 
 /** The envelope editor; a null [envelopeId] creates a new envelope. */
 @Serializable

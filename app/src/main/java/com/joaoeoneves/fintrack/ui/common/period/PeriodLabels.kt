@@ -73,6 +73,7 @@ fun periodLabel(
     return when (period) {
         Period.CurrentMonth -> formatMonthLabel(currentYearMonth(now, zone), locale)
         is Period.Month -> formatMonthLabel(period.yearMonth, locale)
+        is Period.Year -> period.year.toString()
         is Period.Rolling -> rollingRangeLabel(period.range)
         is Period.Custom -> formatCustomRangeLabel(period.start, period.endInclusive, locale)
     }

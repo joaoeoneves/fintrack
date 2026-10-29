@@ -13,8 +13,6 @@ import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
-import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
-import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
@@ -54,7 +52,6 @@ class SalaryProfileViewModel
         private val plannedIncome: PlannedIncomeRepository,
         private val clock: Clock,
         private val idGenerator: IdGenerator,
-        private val planSettings: PlanSettingsRepository = NoPlanSettings,
     ) : ViewModel() {
         // `null` until the stored profile has been read into the form.
         private val form = MutableStateFlow<SalaryForm?>(null)
@@ -62,7 +59,6 @@ class SalaryProfileViewModel
         private val saving = MutableStateFlow(false)
         private val extraForm = MutableStateFlow<SalaryExtraForm?>(null)
         private val effectiveFrom = MutableStateFlow<YearMonth?>(null)
-        private val shiftEnabled = MutableStateFlow(false)
 
         // The stored profile as the form round-trips it, to tell whether the user changed anything.
         private var originalProfile: SalaryProfile? = null
@@ -80,9 +76,8 @@ class SalaryProfileViewModel
             combine(
                 combine(form, hasSavedProfile, saving, extraForm, ::FormState),
                 effectiveFrom,
-                shiftEnabled,
-            ) { typed, from, shift ->
-                typed.form?.let { contentOf(it, typed, from, shift) } ?: SalaryProfileUiState.Loading
+            ) { typed, from ->
+                typed.form?.let { contentOf(it, typed, from) } ?: SalaryProfileUiState.Loading
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -98,8 +93,6 @@ class SalaryProfileViewModel
                 hasSavedProfile.value = stored != null
                 form.value = stored?.toForm(decimalSeparator) ?: SalaryForm()
                 originalProfile = stored?.let { form.value?.toResult()?.profile }
-                // The shift follows the user's choice, else it is on as soon as a salary profile exists.
-                shiftEnabled.value = planSettings.observeSalaryPaysNextMonth().first() != false
             }
         }
 
@@ -234,7 +227,6 @@ class SalaryProfileViewModel
             current: SalaryForm,
             typed: FormState,
             from: YearMonth?,
-            shift: Boolean,
         ): SalaryProfileUiState.Content {
             val (saved, busy, editing) = Triple(typed.saved, typed.busy, typed.editing)
             val result = current.toResult()
@@ -252,7 +244,6 @@ class SalaryProfileViewModel
                 canAddExtra = current.extras.size < MAX_SALARY_EXTRAS,
                 effectiveFrom = effective,
                 showEffectiveFrom = !saved || result.profile != originalProfile,
-                shiftSource = effective.minusMonths(1).takeIf { shift },
             )
         }
 

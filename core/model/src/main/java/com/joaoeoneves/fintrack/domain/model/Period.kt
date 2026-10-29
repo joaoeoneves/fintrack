@@ -22,6 +22,11 @@ sealed interface Period {
         val yearMonth: YearMonth,
     ) : Period
 
+    /** A whole calendar year (January to December), see [previousYear] / [nextYear]. */
+    data class Year(
+        val year: Int,
+    ) : Period
+
     /** A rolling window ending today, see [TimeRange]. */
     data class Rolling(
         val range: TimeRange,
@@ -81,6 +86,11 @@ fun Period.toInstantRange(
     when (this) {
         Period.CurrentMonth -> currentYearMonth(now, zone).toInstantRange(zone)
         is Period.Month -> yearMonth.toInstantRange(zone)
+        is Period.Year ->
+            InstantRange(
+                startInclusive = LocalDate.of(year, 1, 1).atStartOfDay(zone).toInstant(),
+                endExclusive = LocalDate.of(year + 1, 1, 1).atStartOfDay(zone).toInstant(),
+            )
         is Period.Rolling -> range.toInstantRange(now, zone)
         is Period.Custom ->
             InstantRange(
@@ -97,8 +107,26 @@ fun Period.anchorMonth(
     when (this) {
         Period.CurrentMonth -> currentYearMonth(now, zone)
         is Period.Month -> yearMonth
-        is Period.Rolling, is Period.Custom -> null
+        is Period.Year, is Period.Rolling, is Period.Custom -> null
     }
+
+/** The calendar year a [Period.Year] represents, `null` for any other period. */
+val Period.yearOrNull: Int? get() = (this as? Period.Year)?.year
+
+/** The year before this [Period.Year]; any other period is returned unchanged. */
+fun Period.previousYear(): Period = if (this is Period.Year) Period.Year(year - 1) else this
+
+/** The year after this [Period.Year], never past the current year; any other period is returned unchanged. */
+fun Period.nextYear(
+    now: Instant,
+    zone: ZoneId,
+): Period = if (this is Period.Year && year < currentYearMonth(now, zone).year) Period.Year(year + 1) else this
+
+/** Whether [nextYear] would move forward: a [Period.Year] strictly before the current year. */
+fun Period.canGoToNextYear(
+    now: Instant,
+    zone: ZoneId,
+): Boolean = this is Period.Year && year < currentYearMonth(now, zone).year
 
 /** The month before this month period. Rolling/custom periods are returned unchanged. */
 fun Period.previousMonth(

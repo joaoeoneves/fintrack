@@ -24,9 +24,9 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
+import com.joaoeoneves.fintrack.ui.common.TabScaffold
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.displayName
@@ -34,7 +34,6 @@ import com.joaoeoneves.fintrack.ui.common.rememberDeletedMessage
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
-import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
@@ -63,10 +62,10 @@ fun ActivityScreen(
     OnResumeEffect(onResume = viewModel::onRetry)
     DeletedSnackbar(viewModel, snackbarHostState)
 
-    LargeTitleScaffold(
+    TabScaffold(
         title = stringResource(R.string.activity_title),
+        onOpenSettings = callbacks.onOpenSettings,
         modifier = modifier,
-        navigationIcon = { AccountAvatar(onClick = callbacks.onOpenSettings) },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         StateCrossfade(uiState) { state ->
@@ -78,7 +77,7 @@ fun ActivityScreen(
                         state = state,
                         query = query,
                         categories = categories,
-                        actions = viewModel.activityActions(callbacks, state.period, state.filters.type),
+                        actions = viewModel.activityActions(callbacks, state.period),
                         contentPadding = innerPadding,
                     )
                 }
@@ -116,7 +115,6 @@ private fun DeletedSnackbar(
 private fun ActivityViewModel.activityActions(
     callbacks: ActivityCallbacks,
     period: Period,
-    type: ActivityType,
 ): ActivityActions =
     ActivityActions(
         period = periodActions,
@@ -135,7 +133,8 @@ private fun ActivityViewModel.activityActions(
         onDelete = ::onDelete,
         onAddExpense = { callbacks.onAddExpense(period) },
         onAddIncome = { callbacks.onAddIncome(period) },
-        onOpenEvolution = { callbacks.onOpenEvolution(period, type) },
+        onOpenSpending = { callbacks.onOpenSpending(period) },
+        onOpenIncomeTab = { callbacks.onOpenIncomeTab(period) },
     )
 
 @Composable

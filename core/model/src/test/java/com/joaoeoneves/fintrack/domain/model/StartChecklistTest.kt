@@ -17,11 +17,9 @@ class StartChecklistTest {
     private fun checklist(
         profile: SalaryProfile? = null,
         lines: List<PlannedIncome> = emptyList(),
-        envelopes: List<Envelope> = emptyList(),
         recurring: List<RecurringItem> = emptyList(),
-        goals: List<SavingsGoal> = emptyList(),
         hasExpense: Boolean = false,
-    ) = startChecklistOf(profile, lines, envelopes, recurring, goals, hasExpense)
+    ) = startChecklistOf(profile, lines, recurring, hasExpense)
 
     @Test
     fun emptyState_hasNothingDone() {
@@ -29,21 +27,14 @@ class StartChecklistTest {
 
         assertTrue(result.done.isEmpty())
         assertEquals(0, result.doneCount)
-        assertEquals(6, result.total)
+        assertEquals(4, result.total)
         assertFalse(result.isComplete)
     }
 
     @Test
     fun stepOrder_isTheDisplayOrder() {
         assertEquals(
-            listOf(
-                StartStep.SALARY,
-                StartStep.ENVELOPES,
-                StartStep.BILLS,
-                StartStep.SAVINGS_PLAN,
-                StartStep.PAYDAY,
-                StartStep.FIRST_EXPENSE,
-            ),
+            listOf(StartStep.SALARY, StartStep.BILLS, StartStep.PAYDAY, StartStep.FIRST_EXPENSE),
             StartStep.entries,
         )
     }
@@ -59,49 +50,22 @@ class StartChecklistTest {
     }
 
     @Test
-    fun envelopes_doneByAnyEnvelope() {
-        assertEquals(setOf(StartStep.ENVELOPES), checklist(envelopes = listOf(Envelope("e1", "Home", 0))).done)
-    }
-
-    @Test
     fun bills_doneByAnActiveExpenseItem() {
         assertEquals(setOf(StartStep.BILLS), checklist(recurring = listOf(recurringItem())).done)
     }
 
     @Test
-    fun bills_ignoreInactiveIncomeAndPlanOwnedItems() {
+    fun bills_ignoreInactiveAndIncomeItems() {
         val result =
             checklist(
                 recurring =
                     listOf(
                         recurringItem(id = "off", active = false),
                         recurringItem(id = "pay", type = RecurringType.INCOME),
-                        recurringItem(id = "plan"),
                     ),
-                goals = listOf(savingsGoal(id = "g", recurringId = "plan", archived = true)),
             )
 
         assertFalse(StartStep.BILLS in result.done)
-    }
-
-    @Test
-    fun bills_planOwnedItemIgnoredEvenWhenGoalIsArchived_butAnotherBillCounts() {
-        val result =
-            checklist(
-                recurring = listOf(recurringItem(id = "plan"), recurringItem(id = "rent")),
-                goals = listOf(savingsGoal(recurringId = "plan")),
-            )
-
-        assertTrue(StartStep.BILLS in result.done)
-    }
-
-    @Test
-    fun savingsPlan_ignoresArchivedGoals() {
-        assertTrue(StartStep.SAVINGS_PLAN !in checklist(goals = listOf(savingsGoal(archived = true))).done)
-        assertTrue(
-            StartStep.SAVINGS_PLAN in
-                checklist(goals = listOf(savingsGoal(id = "a", archived = true), savingsGoal(id = "b"))).done,
-        )
     }
 
     @Test
@@ -124,22 +88,20 @@ class StartChecklistTest {
             checklist(
                 profile = SalaryProfile(baseGrossCents = 1L),
                 lines = listOf(line(autoRecord = true)),
-                envelopes = listOf(Envelope("e1", "Home", 0)),
                 recurring = listOf(recurringItem()),
-                goals = listOf(savingsGoal()),
                 hasExpense = true,
             )
 
         assertEquals(StartStep.entries.toSet(), result.done)
-        assertEquals(6, result.doneCount)
+        assertEquals(4, result.doneCount)
         assertTrue(result.isComplete)
     }
 
     @Test
-    fun fiveOfSix_isNotComplete() {
+    fun threeOfFour_isNotComplete() {
         val result = StartChecklist(StartStep.entries.toSet() - StartStep.PAYDAY)
 
-        assertEquals(5, result.doneCount)
+        assertEquals(3, result.doneCount)
         assertFalse(result.isComplete)
     }
 }

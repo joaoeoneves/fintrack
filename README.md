@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml"><img src="https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml"><img src="https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml/badge.svg?event=pull_request" alt="CI"></a>
   <a href="https://github.com/joaoeoneves/fintrack/releases/latest"><img src="https://img.shields.io/github/v/release/joaoeoneves/fintrack" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/min%20SDK-26-3DDC84?logo=android&logoColor=white" alt="Min SDK 26">
@@ -143,12 +143,12 @@ the reasoning behind the main choices is in [docs/DECISIONS.md](docs/DECISIONS.m
   class is unavoidable).
 - **JVM screen tests** (Robolectric + Compose) drive the main flows on every PR, with no emulator.
 - **Maestro E2E flows** (`.maestro/`, guest mode) can be run on demand from the E2E workflow or by hand.
-- **CI** on every push and PR to `main`: ktlint, detekt, Android lint, unit tests, debug and (unsigned)
-  release builds, and compilation of the baseline-profile generator.
+- **CI** once per pull request, as two parallel jobs: ktlint, detekt and Android lint; unit tests, the debug
+  build and compilation of the baseline-profile generator. Nothing runs twice: main doesn't re-run CI.
 - **Baseline profile** generated on a CI emulator and committed.
-- **Signed releases**: the Release workflow (run it with a version, or push a tag `vX.Y`) builds, tests
-  and signs the APK, verifies the signature, and publishes a GitHub release with the APK and the R8
-  mapping file.
+- **Signed releases**: the Release workflow (run it with a version, or push a tag `vX.Y`) checks that
+  CI passed on the merged pull request, builds (R8) and signs the APK, verifies the signature, and
+  publishes a GitHub release with the APK and the R8 mapping file.
 
 Run the same checks locally with the shared gate script:
 
