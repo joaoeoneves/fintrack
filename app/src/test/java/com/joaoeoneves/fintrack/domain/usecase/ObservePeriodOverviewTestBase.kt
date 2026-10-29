@@ -6,7 +6,6 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
-import com.joaoeoneves.fintrack.domain.model.CARRY_LOOKBACK_MONTHS
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
@@ -31,12 +30,11 @@ abstract class ObservePeriodOverviewTestBase {
         day: Int,
     ): Instant = month.atDay(day).atTime(12, 0).toInstant(ZoneOffset.UTC)
 
-    /** The extra range every overview reads: the 12 months before [month], for the carry-over. */
-    protected fun history(month: YearMonth): InstantRange =
-        InstantRange(
-            month.minusMonths(CARRY_LOOKBACK_MONTHS).toInstantRange(zone).startInclusive,
-            month.toInstantRange(zone).startInclusive,
-        )
+    /** The month before [range]'s start, up to its start: where a salary funding the range's first month is paid. */
+    protected fun monthBefore(range: InstantRange): InstantRange =
+        InstantRange(range.startInclusive.atZone(zone).minusMonths(1).toInstant(), range.startInclusive)
+
+    protected fun monthBefore(month: YearMonth): InstantRange = monthBefore(month.toInstantRange(zone))
 
     protected val expenses = CountingExpenseRepository()
     protected val income = CountingIncomeRepository()
