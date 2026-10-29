@@ -39,4 +39,12 @@ class PeriodScaleTest {
         assertEquals(month, month.switchedTo(PeriodScale.MONTH, now, zone))
         assertEquals(Period.Year(2025), Period.Year(2025).switchedTo(PeriodScale.YEAR, now, zone))
     }
+
+    @Test
+    fun futureYearToMonth_withMonthsAhead_isJanuaryOfThatYear() {
+        assertEquals(
+            Period.Month(YearMonth.of(2028, 1)),
+            Period.Year(2028).switchedTo(PeriodScale.MONTH, now, zone, monthsAhead = 120),
+        )
+    }
 }
