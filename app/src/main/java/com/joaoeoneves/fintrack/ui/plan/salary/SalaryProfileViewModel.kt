@@ -70,6 +70,9 @@ class SalaryProfileViewModel
         /** The user's own monthly lines found after a save, to offer removing; empty = no dialog. */
         val duplicates: StateFlow<List<PlannedIncome>> = duplicateCandidates
 
+        /** Whether the form being saved has a meal allowance (the duplicates dialog mentions it only then). */
+        val hasMeal: Boolean get() = (form.value?.meal ?: 0L) > 0L
+
         val eventFlow: Flow<SalaryProfileEvent> = events.receiveAsFlow()
 
         val uiState: StateFlow<SalaryProfileUiState> =

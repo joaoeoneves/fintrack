@@ -484,12 +484,12 @@
     <string name="salary_ss_hint">11 se vazio</string>
     <string name="salary_group_net">Valores líquidos</string>
     <string name="salary_field_net_monthly">Salário líquido mensal</string>
-    <string name="salary_net_monthly_hint">Tal como recebes, com duodécimos</string>
+    <string name="salary_net_monthly_hint">Tal como recebes todos os meses</string>
     <string name="salary_field_net_holiday">Subsídio de férias (líquido)</string>
     <string name="salary_field_net_christmas">Subsídio de Natal (líquido)</string>
     <string name="salary_group_subsidy_months">Meses dos subsídios</string>
     <string name="salary_subsidy_months">Subsídios pagos em</string>
-    <string name="salary_meal_hint">Pago por cada dia útil; marca as férias nos dias úteis do Plano.</string>
+    <string name="salary_meal_hint">Pago por cada dia útil; define as férias e os dias sem trabalho nos dias úteis do separador Rendimentos.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
     <string name="salary_extras_add">Adicionar extra</string>
@@ -545,7 +545,8 @@
     <string name="delete_all_data_error_title">Falha ao apagar</string>
     <string name="delete_all_data_error">Não foi possível apagar todos os teus dados. Alguns podem já ter sido apagados. Verifica a ligação e tenta novamente.</string>
     <string name="plan_other_income">Outro rendimento</string>
-    <string name="salary_duplicates_message">Tens outros rendimentos mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-los para não contar a dobrar?</string>
+    <string name="salary_duplicates_message">Tens outros rendimentos mensais. O perfil salarial já inclui o salário — removê-los para não contar a dobrar?</string>
+    <string name="salary_duplicates_message_meal">Tens outros rendimentos mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-los para não contar a dobrar?</string>
     <string name="salary_duplicates_remove">Remover selecionadas</string>
     <string name="salary_duplicates_keep">Manter</string>
     <string name="plan_income_salary">Salário</string>
@@ -560,7 +561,7 @@
     <string name="income_undo_received">Desfazer recebido</string>
     <string name="income_undo_title">Desfazer recebido?</string>
     <string name="plan_payday">Dia de pagamento: %1$s</string>
-    <string name="plan_payday_received">Salário recebido a %1$s</string>
+    <string name="plan_payday_received">Recebido a %1$s</string>
     <string name="plan_payday_upcoming">Recebes a %1$s</string>
     <string name="plan_received_amount">Valor recebido</string>
     <string name="envelope_edit_title">Editar grupo</string>

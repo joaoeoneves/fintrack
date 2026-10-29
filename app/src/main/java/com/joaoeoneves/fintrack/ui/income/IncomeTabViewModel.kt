@@ -40,6 +40,7 @@ import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
 import com.joaoeoneves.fintrack.ui.common.period.asMonthOrYearPeriod
 import com.joaoeoneves.fintrack.ui.plan.IncomeLineEditorState
 import com.joaoeoneves.fintrack.ui.plan.IncomeReceipts
+import com.joaoeoneves.fintrack.ui.plan.receivedPaydayOf
 import com.joaoeoneves.fintrack.ui.plan.IncomeSchedule
 import com.joaoeoneves.fintrack.ui.plan.PlanRepositories
 import com.joaoeoneves.fintrack.ui.plan.WorkingDaysState
@@ -430,6 +431,7 @@ private fun receiptsOf(
         today = today,
         canReceive = month <= YearMonth.from(today),
         receivedOn = received.toMap(),
+        receivedPayday = receivedPaydayOf(rows, received.toMap()),
     )
 }
 

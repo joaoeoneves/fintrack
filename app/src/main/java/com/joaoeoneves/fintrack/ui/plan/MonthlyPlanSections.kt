@@ -121,8 +121,9 @@ fun ExpectedIncomeCard(
     val receipts = model.receipts
     var undoing by remember { mutableStateOf<IncomeRow?>(null) }
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
-        receipts.payday?.let { payday ->
-            val textRes = if (payday <= receipts.today) R.string.plan_payday_received else R.string.plan_payday_upcoming
+        (receipts.receivedPayday ?: receipts.payday)?.let { payday ->
+            val textRes =
+                if (receipts.receivedPayday != null) R.string.plan_payday_received else R.string.plan_payday_upcoming
             Text(
                 text = stringResource(textRes, rememberPaydayText(payday)),
                 style = MaterialTheme.typography.bodySmall,

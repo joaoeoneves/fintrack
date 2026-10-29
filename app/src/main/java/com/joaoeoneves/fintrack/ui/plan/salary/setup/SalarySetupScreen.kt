@@ -100,6 +100,7 @@ fun SalarySetupScreen(
     if (duplicates.isNotEmpty()) {
         SalaryDuplicatesDialog(
             lines = duplicates,
+            hasMeal = viewModel.hasMeal,
             onRemove = viewModel::onRemoveDuplicates,
             onKeep = viewModel::onKeepDuplicates,
         )
