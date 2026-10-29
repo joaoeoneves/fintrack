@@ -8,6 +8,8 @@ data class Income(
     override val amountCents: Long,
     override val date: Instant,
     override val note: String?,
+    /** Recorded automatically (missing payday) and not yet confirmed by the user; see [Expense.needsReview]. */
+    val needsReview: Boolean = false,
 ) : Transaction {
     /** Balance effect: income always raises the balance. */
     override val cashFlowCents: Long get() = amountCents

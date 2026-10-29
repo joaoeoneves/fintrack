@@ -33,6 +33,13 @@ class FakeIncomeRepository(
         }
     }
 
+    override fun observeNeedingReview(): Flow<List<Income>> = incomeFlow.map { all -> all.filter { it.needsReview } }
+
+    override suspend fun markReviewed(ids: Collection<String>): Result<Unit> {
+        incomeFlow.value = incomeFlow.value.map { if (it.id in ids) it.copy(needsReview = false) else it }
+        return Result.success(Unit)
+    }
+
     override suspend fun addIncome(income: Income): Result<String> {
         val id = income.id.ifBlank { UUID.randomUUID().toString() }
         val toStore = income.copy(id = id)

@@ -23,8 +23,9 @@ data class YearIncomeOutlook(
 
 /**
  * The income outlook of [year]: each month up to [today] shows what was received ([receivedByMonth]), each later month
- * what the planned [lines] expect (versions per month, working days of [incomeMonth]). The current month is partial:
- * what was received so far plus the expected amount of the lines not in [receivedLineIds] yet.
+ * what the planned [lines] expect (versions per month, working days of [incomeMonth]). The current month is partial
+ * (received so far plus the expected amount of the lines not in [receivedLineIds] yet) only while such a line is
+ * still pending; once everything due is received it is shown like a past month.
  */
 @Suppress("LongParameterList") // the year's plain inputs; grouping them would only move the list
 fun yearIncomeOutlook(
@@ -39,10 +40,7 @@ fun yearIncomeOutlook(
         (1..MONTHS_IN_YEAR).map { value ->
             val month = YearMonth.of(year, value)
             if (month == today) {
-                val got = receivedByMonth[month] ?: 0L
-                val pending =
-                    lines.filter { it.id !in receivedLineIds }.sumOf { incomeMonth.amountIn(it, month) }
-                MonthOutlook(month, got + pending, received = false, partial = true, receivedPartCents = got)
+                currentMonthOutlook(month, lines, incomeMonth, receivedByMonth[month] ?: 0L, receivedLineIds)
             } else if (month < today) {
                 MonthOutlook(month, receivedByMonth[month] ?: 0L, received = true)
             } else {
@@ -50,5 +48,20 @@ fun yearIncomeOutlook(
             }
         },
     )
+
+private fun currentMonthOutlook(
+    month: YearMonth,
+    lines: List<PlannedIncome>,
+    incomeMonth: IncomeMonth,
+    got: Long,
+    receivedLineIds: Set<String>,
+): MonthOutlook {
+    val pending = lines.filter { it.id !in receivedLineIds }.map { incomeMonth.amountIn(it, month) }.filter { it > 0L }
+    return if (pending.isEmpty()) {
+        MonthOutlook(month, got, received = true)
+    } else {
+        MonthOutlook(month, got + pending.sum(), received = false, partial = true, receivedPartCents = got)
+    }
+}
 
 private const val MONTHS_IN_YEAR = 12

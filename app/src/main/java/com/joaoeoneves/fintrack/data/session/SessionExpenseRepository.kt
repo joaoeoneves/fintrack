@@ -32,6 +32,12 @@ class SessionExpenseRepository
 
         override fun observeHasAnyExpense(): Flow<Boolean> = switch.flow(false) { it.observeHasAnyExpense() }
 
+        private val needingReview: Flow<List<Expense>> = switch.flow(emptyList()) { it.observeNeedingReview() }
+
+        override fun observeNeedingReview(): Flow<List<Expense>> = needingReview
+
+        override suspend fun markReviewed(ids: Collection<String>): Result<Unit> = switch.call { it.markReviewed(ids) }
+
         override suspend fun addExpense(expense: Expense): Result<String> = switch.call { it.addExpense(expense) }
 
         override suspend fun updateExpense(expense: Expense): Result<Unit> = switch.call { it.updateExpense(expense) }

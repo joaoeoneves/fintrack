@@ -91,7 +91,7 @@ class AutoPostRecurring
             var failed = false
             val created =
                 item.missingOccurrences(candidates, existing).count { date ->
-                    val expense = item.transactionFor(date, zone, catalog) as Expense
+                    val expense = (item.transactionFor(date, zone, catalog) as Expense).copy(needsReview = true)
                     expenseRepository.addExpense(expense).isSuccess.also { if (!it) failed = true }
                 }
             return AutomationOutcome(created, failed)
@@ -111,7 +111,9 @@ class AutoPostRecurring
                     if (exists) {
                         recurringRepository.setHandledThrough(item.id, occurrence)
                     } else {
-                        handleOccurrence.confirm(item.id, occurrence, today, zone).onSuccess { posted++ }
+                        handleOccurrence
+                            .confirm(item.id, occurrence, today, zone, forReview = true)
+                            .onSuccess { posted++ }
                     }
                 if (result.isFailure) {
                     failed = true

@@ -1,11 +1,9 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -21,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TabScaffold
@@ -44,7 +41,6 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 
 private val SectionSpacing = Dimens.SectionGap
 
@@ -72,7 +68,8 @@ fun DashboardScreen(
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
     val start = StartChecklistModel(startState, callbacks.onOpenStartStep, startViewModel::onDismiss)
-    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, start, callbacks)
+    val blocks = rememberHomeBlocks(start, callbacks, snackbarHostState)
+    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, blocks, callbacks)
 
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
@@ -171,7 +168,7 @@ private fun dashboardActions(
     viewModel: DashboardViewModel,
     upcomingViewModel: UpcomingRecurringViewModel,
     upcomingState: UpcomingRecurringUiState,
-    start: StartChecklistModel,
+    blocks: HomeBlocks,
     callbacks: DashboardCallbacks,
 ) = DashboardActions(
     period =
@@ -189,7 +186,7 @@ private fun dashboardActions(
             onReceiveIncome = upcomingViewModel::onReceiveIncome,
             onManage = callbacks.onOpenRecurring,
         ),
-    start = start,
+    blocks = blocks,
     onRetry = viewModel::onRetry,
 )
 
@@ -197,15 +194,8 @@ private fun dashboardActions(
 private data class DashboardActions(
     val period: PeriodActions,
     val upcoming: UpcomingRecurringModel,
-    val start: StartChecklistModel,
+    val blocks: HomeBlocks,
     val onRetry: () -> Unit,
-)
-
-/** The "Get started" card's state and callbacks. */
-private data class StartChecklistModel(
-    val state: StartChecklistUiState,
-    val onOpenStep: (StartStep) -> Unit,
-    val onDismiss: () -> Unit,
 )
 
 @Composable
@@ -230,35 +220,17 @@ private fun DashboardContent(
         contentPadding =
             PaddingValues(bottom = Dimens.AddPillClearance + Dimens.Space16 + contentPadding.calculateBottomPadding()),
     ) {
-        startItems(start = actions.start)
+        startItems(start = actions.blocks.start)
+        reviewItems(review = actions.blocks.review, visible = state.showsCurrentMonthBlocks)
         summaryItems(state = state, callbacks = callbacks)
+        quickAddItems(blocks = actions.blocks, visible = state.showsCurrentMonthBlocks, callbacks = callbacks)
         item(key = "upcoming") {
             ScreenItem {
                 UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
             }
         }
+        recurringSuggestionItems(recurring = actions.blocks.recurring, visible = state.showsCurrentMonthBlocks)
         activityItems(state = state, callbacks = callbacks)
-    }
-}
-
-/** A list item padded to the screen margin, with the standard reorder animation. */
-@Composable
-private fun LazyItemScope.ScreenItem(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = motionAnimateItem(Modifier.padding(horizontal = Dimens.ScreenPadding).then(modifier)),
-    ) { content() }
-}
-
-private fun LazyListScope.startItems(start: StartChecklistModel) {
-    if (start.state is StartChecklistUiState.Visible) {
-        item(key = "start_checklist") {
-            ScreenItem(Modifier.padding(top = Dimens.Space8)) {
-                StartChecklistCard(state = start.state, onOpenStep = start.onOpenStep, onDismiss = start.onDismiss)
-            }
-        }
     }
 }
 

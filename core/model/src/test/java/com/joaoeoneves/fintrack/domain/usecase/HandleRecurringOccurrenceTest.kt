@@ -50,6 +50,34 @@ class HandleRecurringOccurrenceTest {
         }
 
     @Test
+    fun confirm_forReview_flagsTheExpense_andTheDefaultDoesNot() =
+        runBlocking {
+            useCase.confirm("r1", march15, today, zone)
+            val plain = repo.confirmedTransactions.single() as Expense
+            assertEquals(false, plain.needsReview)
+
+            val other = FakeRecurringRepository(listOf(item))
+            HandleRecurringOccurrence(other, FakeCategoryRepository())
+                .confirm("r1", march15, today, zone, forReview = true)
+
+            assertEquals(true, (other.confirmedTransactions.single() as Expense).needsReview)
+        }
+
+    @Test
+    fun confirm_forReview_flagsTheIncome_keepingAnAmountOverride() =
+        runBlocking {
+            val salary = recurringItem(id = "s", type = RecurringType.INCOME, name = "Salary")
+            val incomeRepo = FakeRecurringRepository(listOf(salary))
+
+            HandleRecurringOccurrence(incomeRepo, FakeCategoryRepository())
+                .confirm("s", day(2026, 1, 15), today, zone, amountOverrideCents = 7_000L, forReview = true)
+
+            val income = incomeRepo.confirmedTransactions.single() as Income
+            assertEquals(true, income.needsReview)
+            assertEquals(7_000L, income.amountCents)
+        }
+
+    @Test
     fun confirm_today_isAllowed() =
         runBlocking {
             assertTrue(useCase.confirm("r1", march15, march15, zone).isSuccess)

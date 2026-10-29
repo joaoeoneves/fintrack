@@ -64,7 +64,7 @@ service cloud.firestore {
 
     function isValidExpense(userId, data) {
       return data.keys().hasOnly(['name', 'amountCents', 'category', 'date', 'note', 'isRefund', 'paidWithMealCard',
-          'createdAt', 'updatedAt'])
+          'needsReview', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
@@ -72,16 +72,18 @@ service cloud.firestore {
         && data.date is timestamp
         && (!('isRefund' in data) || data.isRefund is bool)
         && (!('paidWithMealCard' in data) || data.paidWithMealCard is bool)
+        && (!('needsReview' in data) || data.needsReview is bool)
         && isValidAuditTimestamps(data)
         && isValidNote(data);
     }
 
     function isValidIncome(data) {
-      return data.keys().hasOnly(['source', 'amountCents', 'date', 'note', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['source', 'amountCents', 'date', 'note', 'needsReview', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['source', 'amountCents', 'date'])
         && data.source is string && data.source.size() > 0 && data.source.size() <= 200
         && isValidAmountCents(data.amountCents)
         && data.date is timestamp
+        && (!('needsReview' in data) || data.needsReview is bool)
         && isValidAuditTimestamps(data)
         && isValidNote(data);
     }
@@ -391,6 +393,19 @@ service cloud.firestore {
     match /users/{userId}/settings/preferences {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidPreferences(request.resource.data);
+    }
+
+    // Dismissed "make it recurring?" suggestions: the normalized expense names, one list in a single document.
+    match /users/{userId}/settings/suggestions {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidSuggestions(request.resource.data);
+    }
+
+    function isValidSuggestions(data) {
+      return data.keys().hasOnly(['dismissedRecurring', 'updatedAt'])
+        && (!('dismissedRecurring' in data)
+          || (data.dismissedRecurring is list && data.dismissedRecurring.size() <= 500))
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
   }
 }

@@ -136,30 +136,30 @@ class FirestoreBudgetRepository
                 sourceDoc.exists()
             }
         }
-
-        private fun QuerySnapshot.toBudgets(): List<Budget> = documents.mapNotNull { it.toBudgetOrNull() }
-
-        // The doc id is the category id. Any id is kept (even one matching no known category), so a
-        // budget left behind by a deleted category still shows up and can be cleared.
-        private fun DocumentSnapshot.toBudgetOrNull(): Budget? = mapOrNull("budget") { parseBudget() }
-
-        private fun DocumentSnapshot.parseBudget(): Budget? {
-            val limitCents = getLong("limitCents")
-            if (limitCents == null) {
-                Log.w(TAG, "Dropping malformed budget doc $id: missing or invalid 'limitCents'")
-            }
-            return limitCents?.let {
-                Budget(
-                    categoryId = CategoryId(id),
-                    limitCents = it,
-                    skipMonths = skipMonths(),
-                    startMonth = startMonthOrNull(),
-                    versions = versionsOrEmpty(),
-                )
-            }
-        }
-
-        // Optional list of month numbers; anything that isn't a number is ignored.
-        private fun DocumentSnapshot.skipMonths(): Set<Int> =
-            (get("skipMonths") as? List<*>).orEmpty().mapNotNull { (it as? Number)?.toInt() }.toSet()
     }
+
+internal fun QuerySnapshot.toBudgets(): List<Budget> = documents.mapNotNull { it.toBudgetOrNull() }
+
+// The doc id is the category id. Any id is kept (even one matching no known category), so a
+// budget left behind by a deleted category still shows up and can be cleared.
+private fun DocumentSnapshot.toBudgetOrNull(): Budget? = mapOrNull("budget") { parseBudget() }
+
+private fun DocumentSnapshot.parseBudget(): Budget? {
+    val limitCents = getLong("limitCents")
+    if (limitCents == null) {
+        Log.w("FirestoreBudgetRepo", "Dropping malformed budget doc $id: missing or invalid 'limitCents'")
+    }
+    return limitCents?.let {
+        Budget(
+            categoryId = CategoryId(id),
+            limitCents = it,
+            skipMonths = skipMonths(),
+            startMonth = startMonthOrNull(),
+            versions = versionsOrEmpty(),
+        )
+    }
+}
+
+// Optional list of month numbers; anything that isn't a number is ignored.
+private fun DocumentSnapshot.skipMonths(): Set<Int> =
+    (get("skipMonths") as? List<*>).orEmpty().mapNotNull { (it as? Number)?.toInt() }.toSet()

@@ -136,7 +136,7 @@ private fun MutableMap<String, Any?>.putIfSet(
     if (value != null) put(key, value)
 }
 
-private fun DocumentSnapshot.toSalaryProfileOrNull() = mapOrNull("salaryProfile") { parseSalaryProfile() }
+internal fun DocumentSnapshot.toSalaryProfileOrNull() = mapOrNull("salaryProfile") { parseSalaryProfile() }
 
 private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
     val defaults = SalaryProfile()

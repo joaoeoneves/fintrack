@@ -68,13 +68,22 @@ data class Evolution(
 )
 
 /**
- * The last `max(6, period months)` entries of [valuesCents] (aligned to the history months), ending at the period's
- * last month; `null` when every value is zero (nothing to draw).
+ * The bars of a period of [MIN_EVOLUTION_MONTHS] months or more are exactly the history months inside it (a year
+ * shows January to December, up to the current month); a shorter period shows its last `max(6, period months)`
+ * entries of [valuesCents] (aligned to the history months), ending at the period's last month. `null` when every
+ * value is zero (nothing to draw).
  */
 fun ActivityHistory.evolutionOf(valuesCents: List<Long>): Evolution? {
     val count = maxOf(MIN_EVOLUTION_MONTHS, periodMonths.size)
-    val months = monthly.months.map { it.month }.takeLast(count)
-    val values = valuesCents.takeLast(count)
+    val all = monthly.months.map { it.month }
+    val keep =
+        if (periodMonths.size >= MIN_EVOLUTION_MONTHS) {
+            all.indices.filter { all[it] in periodMonths }
+        } else {
+            all.indices.toList().takeLast(count)
+        }
+    val months = keep.map { all[it] }
+    val values = keep.map { valuesCents.getOrElse(it) { 0L } }
     return if (values.all { it == 0L }) {
         null
     } else {

@@ -43,8 +43,8 @@ class IncomeComponentsTest {
     fun component_mapsEveryKey() {
         assertEquals(SalaryComponent.SALARY, managed(MANAGED_NET_SALARY).salaryComponent)
         assertEquals(SalaryComponent.MEAL, managed(MANAGED_MEAL).salaryComponent)
-        assertEquals(SalaryComponent.SUBSIDIES, managed(MANAGED_HOLIDAY).salaryComponent)
-        assertEquals(SalaryComponent.SUBSIDIES, managed(MANAGED_CHRISTMAS).salaryComponent)
+        assertEquals(SalaryComponent.HOLIDAY, managed(MANAGED_HOLIDAY).salaryComponent)
+        assertEquals(SalaryComponent.CHRISTMAS, managed(MANAGED_CHRISTMAS).salaryComponent)
         assertEquals(SalaryComponent.SUBSIDIES, managed(MANAGED_DUODECIMOS).salaryComponent)
         assertEquals(SalaryComponent.EXTRA, managed(managedExtraKey("abc", 7)).salaryComponent)
         assertNull(own1.salaryComponent)
@@ -67,12 +67,11 @@ class IncomeComponentsTest {
     private fun lines() = all()
 
     @Test
-    fun june_withHalfSpread_mergesDuoAndLumpIntoOneSubsidiesRow() {
+    fun june_withHalfSpread_keepsDuoAndHolidayLumpAsSeparateRows() {
         val rows = rowsIn(6)
 
-        // duo 7000 + lump 39500
-        assertEquals(46_500, rows.of(SalaryComponent.SUBSIDIES).cents)
-        assertEquals(3, rows.of(SalaryComponent.SUBSIDIES).lines.size)
+        assertEquals(7_000, rows.of(SalaryComponent.SUBSIDIES).cents)
+        assertEquals(39_500, rows.of(SalaryComponent.HOLIDAY).cents)
     }
 
     @Test
@@ -84,11 +83,12 @@ class IncomeComponentsTest {
     fun noSpread_subsidiesRowIsZeroOutsideJuneAndDecember() {
         val lines = all(profile.copy(subsidySpreadPpm = SPREAD_NONE_PPM))
 
-        assertEquals(0, rowsIn(8, lines).of(SalaryComponent.SUBSIDIES).cents)
+        assertEquals(0, rowsIn(8, lines).filter { it.component == SalaryComponent.SUBSIDIES }.sumOf { it.cents })
+        assertEquals(0, rowsIn(8, lines).of(SalaryComponent.HOLIDAY).cents)
         assertEquals(79_000, rowsIn(8, lines).of(SalaryComponent.SALARY).cents)
         assertEquals(
             requireNotNull(salaryBreakdownOf(profile.copy(subsidySpreadPpm = SPREAD_NONE_PPM))).holidayLumpNetCents,
-            rowsIn(6, lines).of(SalaryComponent.SUBSIDIES).cents,
+            rowsIn(6, lines).of(SalaryComponent.HOLIDAY).cents,
         )
     }
 
@@ -108,6 +108,8 @@ class IncomeComponentsTest {
                 SalaryComponent.SALARY,
                 SalaryComponent.MEAL,
                 SalaryComponent.SUBSIDIES,
+                SalaryComponent.HOLIDAY,
+                SalaryComponent.CHRISTMAS,
                 SalaryComponent.EXTRA,
                 SalaryComponent.EXTRA,
                 SalaryComponent.EXTRA,

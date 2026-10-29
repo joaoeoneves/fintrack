@@ -14,6 +14,7 @@ import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
+import com.joaoeoneves.fintrack.data.FakeSuggestionRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
@@ -75,6 +76,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         goals: List<SavingsGoal> = emptyList(),
         automation: AutomationSettings = AutomationSettings(),
         deletedCategoryName: String = "Deleted category",
+        dismissed: Set<String> = emptySet(),
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
@@ -94,6 +96,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         FakeCategoryRepository(categoryDocs),
         prefsStore,
         restorer,
+        suggestionRepository = FakeSuggestionRepository(dismissed),
     )
 }
 

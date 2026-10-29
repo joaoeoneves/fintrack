@@ -2,6 +2,7 @@ appId: com.joaoeoneves.fintrack
 ---
 # Helper (not a standalone flow): starts from a fresh install in guest mode, so a flow never depends
 # on a signed-in account or on data left by another flow (CI has no Google account).
+- stopApp
 - clearState
 - launchApp
 # The CI emulator's launcher sometimes ANRs on boot and its dialog covers the app: keep dismissing

@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.data
 
 import android.app.Application
 import com.google.firebase.Timestamp
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.TestDocumentSnapshots
@@ -28,19 +27,12 @@ import java.time.Instant
 @Config(application = Application::class)
 class DocumentMappingWrongTypeTest {
     private lateinit var firestore: FirebaseFirestore
-    private lateinit var budgetRepository: FirestoreBudgetRepository
 
     @Before
     fun setUp() {
         ShadowLog.clear()
         val app = FirebaseTestApp.ensureInitialized(RuntimeEnvironment.getApplication())
         firestore = FirebaseFirestore.getInstance(app)
-        budgetRepository =
-            FirestoreBudgetRepository(
-                firestore,
-                com.google.firebase.auth.FirebaseAuth
-                    .getInstance(app),
-            )
     }
 
     private fun str(v: String) = TestDocumentSnapshots.stringValue(v)
@@ -115,12 +107,13 @@ class DocumentMappingWrongTypeTest {
 
     @Test
     fun budget_stringLimitCents_isDropped_andValidDocStillMaps() {
-        val m = FirestoreBudgetRepository::class.java.getDeclaredMethod("toBudgetOrNull", DocumentSnapshot::class.java)
-        m.isAccessible = true
+        val bad = doc("budgets", mapOf("limitCents" to str("100")))
 
-        assertNull(m.invoke(budgetRepository, doc("budgets", mapOf("limitCents" to str("100")))))
+        assertNull(callTop("FirestoreBudgetRepositoryKt", "toBudgetOrNull", bad))
         assertDroppedAndLogged()
-        assertNotNull(m.invoke(budgetRepository, doc("budgets", mapOf("limitCents" to lng(100L)))))
+        assertNotNull(
+            callTop("FirestoreBudgetRepositoryKt", "toBudgetOrNull", doc("budgets", mapOf("limitCents" to lng(100L)))),
+        )
     }
 
     @Test

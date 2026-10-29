@@ -8,8 +8,8 @@ appId: com.joaoeoneves.fintrack
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
 # Captures: home, activity (period selector + summary line, unscrolled), income, spending, investments, add-expense.
-# Money inputs are cash-register style: digits only ("6420" = 64.20). `back` closes only the IME when
-# it is up; Save is tapped directly.
+# Money inputs are cash-register style: digits only ("6420" = 64.20); no `back` is pressed after typing (the CI emulator has no IME);
+# Save is tapped directly.
 
 - runFlow: _guest-start.yaml
 
@@ -41,27 +41,31 @@ appId: com.joaoeoneves.fintrack
       id: "dashboard_list"
     timeout: 10000
 
-# --- Income tab: the salary wizard (1500 gross, 15% IRS, 50% subsidies, meal allowance) ---
+# --- Income tab: the salary wizard (5 steps: sector, salary, subsidies, meal allowance, summary) ---
+# Private sector, 1500 gross, 15% IRS, 50% subsidies, meal allowance on a card with vacation days.
+# No `back` after typing: the CI emulator has no IME, so Next is scrolled into view instead.
 - tapOn:
     id: "nav_income"
 - extendedWaitUntil:
     visible: "Salary profile"
     timeout: 10000
 - tapOn: "Salary profile"
+- tapOn: "Private sector"
 - tapOn: "Gross base salary \\(monthly\\)"
 - inputText: "150000"
-- back
 - tapOn: "IRS withholding rate \\(%\\)"
 - inputText: "15"
-- back
-- tapOn: "Next"
 - scrollUntilVisible:
     element: "Next"
     centerElement: true
 - tapOn: "Next"
+- tapOn: "50%"
+- tapOn: "Next"
+- tapOn: "Yes, on a card"
 - tapOn: "Meal allowance per working day"
 - inputText: "763"
-- back
+- tapOn: "Vacation days per year"
+- inputText: "22"
 - tapOn: "Next"
 - tapOn: "Save"
 - extendedWaitUntil:
@@ -106,7 +110,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "75000"
 - tapOn: "Name"
 - inputText: "Rent"
-- back
 - tapOn: "Transfer"
 - tapOn: "Save"
 - extendedWaitUntil:
@@ -116,7 +119,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "3999"
 - tapOn: "Name"
 - inputText: "Internet"
-- back
 - tapOn: "Shopping"
 - tapOn: "Save"
 - extendedWaitUntil:
@@ -137,7 +139,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "140000"
 - tapOn: "Name"
 - inputText: "Freelance"
-- back
 - scrollUntilVisible:
     element: "Date"
 - tapOn: "Date"
@@ -153,7 +154,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "6420"
 - tapOn: "Name"
 - inputText: "Groceries"
-- back
 - tapOn: "Food"
 - scrollUntilVisible:
     element: "Date"
@@ -170,7 +170,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "1850"
 - tapOn: "Name"
 - inputText: "Cinema"
-- back
 - tapOn: "Shopping"
 - scrollUntilVisible:
     element: "Date"
@@ -187,7 +186,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "5130"
 - tapOn: "Name"
 - inputText: "Groceries"
-- back
 - tapOn: "Food"
 - scrollUntilVisible:
     element: "Date"
@@ -204,7 +202,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "1280"
 - tapOn: "Name"
 - inputText: "Lunch"
-- back
 - tapOn: "Food"
 - scrollUntilVisible:
     element: "Date"
@@ -221,7 +218,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "3600"
 - tapOn: "Name"
 - inputText: "Dinner out"
-- back
 - tapOn: "Food"
 - scrollUntilVisible:
     element: "Date"
@@ -240,7 +236,6 @@ appId: com.joaoeoneves.fintrack
 - inputText: "10000"
 - tapOn: "Name"
 - inputText: "ETF"
-- back
 - tapOn: "Investments"
 - scrollUntilVisible:
     element: "Date"
@@ -320,6 +315,5 @@ appId: com.joaoeoneves.fintrack
 - inputText: "4200"
 - tapOn: "Name"
 - inputText: "Dinner"
-- back
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/add-expense

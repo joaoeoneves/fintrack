@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.domain.model
 import java.time.YearMonth
 
 /** The user-facing income components the salary profile's managed lines are grouped into, in display order. */
-enum class SalaryComponent { SALARY, MEAL, SUBSIDIES, EXTRA }
+enum class SalaryComponent { SALARY, MEAL, SUBSIDIES, HOLIDAY, CHRISTMAS, EXTRA }
 
 /** The component of a managed line (the net salary, meal, subsidies, ...); `null` for a manual line. */
 val PlannedIncome.salaryComponent: SalaryComponent?
@@ -12,7 +12,9 @@ val PlannedIncome.salaryComponent: SalaryComponent?
             null -> null
             MANAGED_NET_SALARY -> SalaryComponent.SALARY
             MANAGED_MEAL -> SalaryComponent.MEAL
-            MANAGED_HOLIDAY, MANAGED_CHRISTMAS, MANAGED_DUODECIMOS -> SalaryComponent.SUBSIDIES
+            MANAGED_DUODECIMOS -> SalaryComponent.SUBSIDIES
+            MANAGED_HOLIDAY -> SalaryComponent.HOLIDAY
+            MANAGED_CHRISTMAS -> SalaryComponent.CHRISTMAS
             else -> if (isValidManagedKey(key)) SalaryComponent.EXTRA else null
         }
 

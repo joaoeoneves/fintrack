@@ -55,6 +55,24 @@ class BackupRestoreTest : BackupRepositoryTestBase() {
         }
 
     @Test
+    fun restore_guest_keepsTheReviewFlagsAndDismissals() =
+        runStoreTest {
+            val flagged =
+                doc
+                    .copy(
+                        expenses = listOf(doc.expenses.single().copy(needsReview = true)),
+                        income = listOf(doc.income.single().copy(needsReview = true)),
+                    ).copy(dismissedRecurringSuggestions = listOf("netflix"))
+
+            assertTrue(repository().restoreAsGuest(flagged).isSuccess)
+
+            val stored = localStore.data.first()
+            assertTrue(stored.expenses.single().needsReview)
+            assertTrue(stored.income.single().needsReview)
+            assertEquals(listOf("netflix"), stored.dismissedRecurringSuggestions)
+        }
+
+    @Test
     fun restore_guest_appliesPreferences() =
         runStoreTest {
             repository().restoreAsGuest(doc)

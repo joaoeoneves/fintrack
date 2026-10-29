@@ -153,7 +153,7 @@ internal fun AutomationSettings.toFirestoreMap(): Map<String, Any?> =
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
-private fun DocumentSnapshot.toAutomationSettings(): AutomationSettings =
+internal fun DocumentSnapshot.toAutomationSettings(): AutomationSettings =
     AutomationSettings(
         lineRecordedThrough =
             (get("lineThrough") as? Map<*, *>)

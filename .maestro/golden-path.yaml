@@ -206,8 +206,10 @@ tags:
     id: "nav_spending"
 - takeScreenshot: build/maestro/golden-path-spending
 # A category row opens its detail page (the only expense is the one created above).
+# centerElement keeps the row clear of the floating "+ Expense / + Income" pill that overlaps the list bottom.
 - scrollUntilVisible:
     element: "Shopping.*"
+    centerElement: true
 - tapOn: "Shopping.*"
 - extendedWaitUntil:
     visible: ".*Maestro E2E Test Expense.*"

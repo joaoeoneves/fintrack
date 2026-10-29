@@ -11,6 +11,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
+import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "AddEditRecurringVM"
@@ -90,7 +92,9 @@ class AddEditRecurringViewModel
                 _uiState.value =
                     if (id == null) {
                         // No preselected category: recurrence isn't a category, so the user must choose one.
-                        AddEditRecurringUiState.Ready(saved(catalog) ?: newRecurringForm(LocalDate.now(clock)))
+                        AddEditRecurringUiState.Ready(
+                            saved(catalog) ?: prefilled(catalog) ?: newRecurringForm(LocalDate.now(clock)),
+                        )
                     } else {
                         loadExisting(id, catalog)
                     }
@@ -117,6 +121,26 @@ class AddEditRecurringViewModel
                     val category = item.categoryId?.let { catalog.resolve(it) }
                     AddEditRecurringUiState.Ready(saved(catalog) ?: item.toForm(category), isEditMode = true)
                 }
+            }
+        }
+
+        /** The route's "make it recurring?" prefill as a new monthly expense form, if it carries one. */
+        private fun prefilled(catalog: List<Category>): RecurringForm? {
+            val name = route.prefillName
+            val amount = route.prefillAmountCents
+            val today = LocalDate.now(clock)
+            val lastMonth = route.prefillLastMonth?.let { runCatching { YearMonth.parse(it) }.getOrNull() }
+            val category = route.prefillCategoryId?.let { id -> catalog.active().find { it.id.value == id } }
+            return if (name == null || amount == null) {
+                null
+            } else {
+                prefilledRecurringForm(
+                    name = name,
+                    amountCents = amount,
+                    category = category,
+                    day = route.prefillDay ?: today.dayOfMonth,
+                    lastMonth = lastMonth ?: YearMonth.from(today),
+                )
             }
         }
 

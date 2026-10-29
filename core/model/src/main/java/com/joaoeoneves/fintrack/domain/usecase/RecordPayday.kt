@@ -137,7 +137,10 @@ class RecordPayday
             return absent.mapNotNull {
                 val amount = incomeMonth.amountIn(it, month)
                 val days = incomeMonth.workingDays(month)
-                it.paydayIncome(month, days, it.payDateIn(month), zone, amount)?.named(it, labels)
+                it
+                    .paydayIncome(month, days, it.payDateIn(month), zone, amount)
+                    ?.named(it, labels)
+                    ?.copy(needsReview = true)
             }
         }
 

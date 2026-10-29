@@ -49,6 +49,13 @@ class FakeExpenseRepository(
         }
     }
 
+    override fun observeNeedingReview(): Flow<List<Expense>> = expensesFlow.map { all -> all.filter { it.needsReview } }
+
+    override suspend fun markReviewed(ids: Collection<String>): Result<Unit> {
+        expensesFlow.value = expensesFlow.value.map { if (it.id in ids) it.copy(needsReview = false) else it }
+        return Result.success(Unit)
+    }
+
     override suspend fun addExpense(expense: Expense): Result<String> {
         val id = expense.id.ifBlank { UUID.randomUUID().toString() }
         val toStore = expense.copy(id = id)

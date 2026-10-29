@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import com.joaoeoneves.fintrack.data.backup.PLACEHOLDER_CATEGORY_NAME
+import com.joaoeoneves.fintrack.data.backup.dismissalsKept
 import com.joaoeoneves.fintrack.data.backup.namingPlaceholders
 import com.joaoeoneves.fintrack.data.backup.withPlaceholderCategories
 import com.joaoeoneves.fintrack.data.local.LocalAutomation
@@ -75,11 +76,13 @@ data class MigrationPlan(
     val goals: List<LocalSavingsGoal> = emptyList(),
     /** The guest's automation settings, only when the account has none. */
     val automation: LocalAutomation? = null,
+    /** The guest's dismissed recurring suggestions, merged into the account's list (never replacing it). */
+    val dismissedRecurring: List<String> = emptyList(),
 ) {
     val total: Int get() =
         categories.size + budgets.size + expenses.size + income.size + plannedIncome.size + recurring.size +
             monthSettings.size + categoryGroups.size + goals.size + (if (salaryProfile != null) 1 else 0) +
-            (if (automation != null) 1 else 0)
+            (if (automation != null) 1 else 0) + (if (dismissedRecurring.isNotEmpty()) 1 else 0)
 }
 
 private class CategoryResolution(
@@ -112,6 +115,7 @@ private class CategoryResolution(
  * - savings goals keep their ids; ids already in the account are skipped, the linked category is remapped like an
  *   expense's (an unresolvable one is dropped, the goal stays) and the linked recurring ids are kept as they are
  *   (recurring items keep their ids); invalid ones count as skipped;
+ * - dismissed recurring suggestions are unioned into the account's list;
  * - the automation settings are a singleton too: copied only when the account has none and they are valid;
  * - month settings keep their month id; a month the account already has wins and is skipped silently;
  * - recurring items keep their ids; ids already in the account are skipped, an expense template's
@@ -178,6 +182,7 @@ fun planMigration(
         salaryProfile,
         goals,
         automationToCopy(local.automation, remote, copiedLineIds),
+        local.dismissedRecurringSuggestions.dismissalsKept(),
     )
 }
 

@@ -63,6 +63,23 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
         }
 
     @Test
+    fun export_includesReviewFlagsAndSortedDismissals() =
+        runStoreTest {
+            val repo =
+                repository(
+                    expenses = listOf(testExpense("e1", 500, march).copy(needsReview = true)),
+                    income = listOf(testIncome("i1", 9000, march).copy(needsReview = true)),
+                    dismissed = setOf("netflix", "gym"),
+                )
+
+            val doc = repo.build()
+
+            assertTrue(doc.expenses.single().needsReview)
+            assertTrue(doc.income.single().needsReview)
+            assertEquals(listOf("gym", "netflix"), doc.dismissedRecurringSuggestions)
+        }
+
+    @Test
     fun export_includesCurrentPreferences() =
         runStoreTest {
             prefsStore.update { it.copy(theme = ThemePreference.LIGHT, currency = CurrencyOption.GBP) }

@@ -7,6 +7,7 @@ import com.joaoeoneves.fintrack.data.session.SessionMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.session.SessionPlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.session.SessionRecurringRepository
 import com.joaoeoneves.fintrack.data.session.SessionSalaryProfileRepository
+import com.joaoeoneves.fintrack.data.session.SessionSuggestionRepository
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
@@ -14,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
+import com.joaoeoneves.fintrack.domain.repository.SuggestionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -46,4 +48,7 @@ interface PlanRepositoryModule {
 
     @Binds
     fun bindAutomationSettingsRepository(impl: SessionAutomationSettingsRepository): AutomationSettingsRepository
+
+    @Binds
+    fun bindSuggestionRepository(impl: SessionSuggestionRepository): SuggestionRepository
 }

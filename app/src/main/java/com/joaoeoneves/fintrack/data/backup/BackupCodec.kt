@@ -107,6 +107,7 @@ object BackupCodec {
         // 19 -> 20 salaryProfile sector/mealPayment/otherDeductionsPpm, plannedIncome payDayEarlierIfClosed, expense
         // paidWithMealCard and category mealCardByDefault (absent = private / card / 0 / off / off / off).
         // 20 -> 21 salaryProfile vacationDaysPerYear (absent = the default of 22).
+        // 21 -> 22 expense/income needsReview and dismissedRecurringSuggestions (absent = reviewed / none).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION ->
                 sanitize(document.upgradedToStartMonths(YearMonth.now(clock), clock.zone))
@@ -156,6 +157,7 @@ object BackupCodec {
                 salaryProfile = salaryProfile,
                 goals = goals,
                 automation = automation,
+                dismissedRecurringSuggestions = document.dismissedRecurringSuggestions.dismissalsKept(),
             ),
             skipped,
         )
@@ -210,4 +212,12 @@ internal fun BackupDocument.upgradedToStartMonths(
         plannedIncome = upgraded.plannedIncome,
         categoryGroups = upgraded.categoryGroups,
     )
+}
+
+private const val MAX_DISMISSED_SUGGESTIONS = 500
+
+/** Non-blank, distinct dismissal keys, at most the number the account document may hold. */
+internal fun List<String>.dismissalsKept(): List<String> {
+    val usable = filter { it.isNotBlank() }.distinct()
+    return usable.take(MAX_DISMISSED_SUGGESTIONS)
 }

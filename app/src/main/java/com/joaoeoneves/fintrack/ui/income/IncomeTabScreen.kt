@@ -274,13 +274,20 @@ private fun MealCardRow(view: MealCardView) {
         label = stringResource(R.string.income_meal_card),
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(top = Dimens.Space16),
     ) {
-        SettingsRow(
-            title =
-                view.plafondFrom?.let {
-                    stringResource(R.string.income_meal_card_plafond_from, formatShortMonthName(it, locale))
-                } ?: stringResource(R.string.income_meal_card_plafond),
-            value = formatAmountCents(view.plafondCents),
-        )
+        val from = view.plafondFrom
+        if (from != null && view.noAllowanceReceived) {
+            SettingsRow(
+                title = stringResource(R.string.income_meal_card_no_allowance, formatShortMonthName(from, locale)),
+            )
+        } else {
+            SettingsRow(
+                title =
+                    from?.let {
+                        stringResource(R.string.income_meal_card_plafond_from, formatShortMonthName(it, locale))
+                    } ?: stringResource(R.string.income_meal_card_plafond),
+                value = formatAmountCents(view.plafondCents),
+            )
+        }
         Hairline()
         SettingsRow(title = stringResource(R.string.income_meal_card_spent), value = formatAmountCents(view.spentCents))
         Hairline()

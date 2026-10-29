@@ -42,7 +42,7 @@ class IncomeRowsInManagedTest {
             )
         val row = incomeRowsIn(listOf(holiday), mar, income).single()
         assertEquals(0L, row.cents)
-        assertEquals(SalaryComponent.SUBSIDIES, row.component)
+        assertEquals(SalaryComponent.HOLIDAY, row.component)
     }
 
     @Test

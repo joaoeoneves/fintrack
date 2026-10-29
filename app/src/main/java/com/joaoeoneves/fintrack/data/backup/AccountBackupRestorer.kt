@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.data.automationSettingsDoc
 import com.joaoeoneves.fintrack.data.awaitServer
@@ -176,7 +177,10 @@ class AccountBackupRestorer
             writes: List<PendingWrite>,
         ) {
             val batch = firestore.batch()
-            writes.forEach { batch.set(user.collection(it.collection).document(it.id), it.data) }
+            writes.forEach {
+                val doc = user.collection(it.collection).document(it.id)
+                if (it.merge) batch.set(doc, it.data, SetOptions.merge()) else batch.set(doc, it.data)
+            }
             awaitServer {
                 batch.commit().await()
                 Unit

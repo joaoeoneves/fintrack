@@ -77,6 +77,11 @@ private fun managedPlanOf(
             .groupBy { baseManagedKey(it.managedKey.orEmpty()) }
             .mapValues { (_, group) -> group.maxBy { it.startMonth ?: EARLIEST_MONTH } }
     val salaryLine = currents[MANAGED_NET_SALARY]
+    val duplicates =
+        managed.filter { line ->
+            line.id != line.managedKey &&
+                line.id != currents[baseManagedKey(line.managedKey.orEmpty())]?.id
+        }
     var nextOrder = (existing.maxOfOrNull { it.order } ?: -1) + 1
     val wantedAll = wantedLines(profile, breakdown, labels)
     val lines = mutableListOf<PlannedIncome>()
@@ -124,6 +129,8 @@ private fun managedPlanOf(
     // Lines of a key the profile does not produce at all (an extra removed or moved to another month).
     val wantedKeys = wantedAll.mapTo(mutableSetOf()) { it.key }
     currents.filterKeys { it !in wantedKeys }.values.forEach { retireOrDelete(it, effectiveFrom, lines, deletes) }
+    // A second line of a key whose id is not the deterministic one (the current line and the scheduled ones are).
+    duplicates.forEach { retireOrDelete(it, effectiveFrom, lines, deletes) }
     return ManagedPlan(lines, deletes)
 }
 

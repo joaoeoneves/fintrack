@@ -51,7 +51,7 @@ class LocalDataStoreStartMonthTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun v18File_nextWritePersistsV21() =
+    fun v18File_nextWritePersistsV22() =
         runStoreTest {
             dataFile.writeText(v18File)
             val store = newStore()
@@ -59,7 +59,7 @@ class LocalDataStoreStartMonthTest : LocalStoreTestBase() {
             assertTrue(store.update { it.copy(budgets = it.budgets + LocalBudget("RENT", 1)) to Unit }.isSuccess)
 
             val onDisk = diskDoc()
-            assertEquals(21, onDisk.schemaVersion)
+            assertEquals(22, onDisk.schemaVersion)
             assertEquals("2026-04", onDisk.budgets.first { it.categoryId == "FOOD" }.startMonth)
         }
 

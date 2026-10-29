@@ -49,10 +49,11 @@ class FirestoreBudgetRepositoryTest {
 
     private fun toBudgetOrNull(snapshot: DocumentSnapshot): Budget? {
         val method =
-            FirestoreBudgetRepository::class.java
+            Class
+                .forName("com.joaoeoneves.fintrack.data.FirestoreBudgetRepositoryKt")
                 .getDeclaredMethod("toBudgetOrNull", DocumentSnapshot::class.java)
         method.isAccessible = true
-        return method.invoke(repository, snapshot) as Budget?
+        return method.invoke(null, snapshot) as Budget?
     }
 
     @Test

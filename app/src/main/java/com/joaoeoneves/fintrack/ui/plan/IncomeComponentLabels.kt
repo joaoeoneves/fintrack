@@ -16,6 +16,8 @@ fun SalaryComponent.label(): String =
             SalaryComponent.SALARY -> R.string.plan_income_salary
             SalaryComponent.MEAL -> R.string.plan_income_meal
             SalaryComponent.SUBSIDIES -> R.string.plan_income_subsidies
+            SalaryComponent.HOLIDAY -> R.string.salary_line_holiday
+            SalaryComponent.CHRISTMAS -> R.string.salary_line_christmas
             SalaryComponent.EXTRA -> R.string.salary_group_extras
         },
     )

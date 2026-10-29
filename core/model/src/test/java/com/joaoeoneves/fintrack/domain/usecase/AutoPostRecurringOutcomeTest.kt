@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.testutil.day
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -33,6 +34,17 @@ class AutoPostRecurringOutcomeTest : AutoPostRecurringTestBase() {
             val outcome = build(FakeRecurringRepository(listOf(auto()))).run(today, zone)
 
             assertEquals(AutomationOutcome(2), outcome)
+        }
+
+    @Test
+    fun postedOccurrences_areConfirmedForReview() =
+        runBlocking {
+            val repo = FakeRecurringRepository(listOf(auto()))
+
+            build(repo).run(today, zone)
+
+            assertEquals(2, repo.confirmedTransactions.size)
+            assertEquals(true, repo.confirmedTransactions.all { (it as Expense).needsReview })
         }
 
     @Test

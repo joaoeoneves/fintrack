@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 
@@ -45,6 +46,12 @@ interface ExpenseRepository {
         firstId: String,
         lastId: String,
     ): Result<Set<String>> = getAllExpenses().map { all -> all.map { it.id }.filter { it in firstId..lastId }.toSet() }
+
+    /** The expenses flagged [Expense.needsReview], across all months. */
+    fun observeNeedingReview(): Flow<List<Expense>> = flowOf(emptyList())
+
+    /** Clears [Expense.needsReview] on the expenses with these [ids] (missing ids are ignored). */
+    suspend fun markReviewed(ids: Collection<String>): Result<Unit> = Result.success(Unit)
 
     suspend fun addExpense(expense: Expense): Result<String>
 

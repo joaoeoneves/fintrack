@@ -103,7 +103,7 @@ private fun PlannedIncome.automationFields(): Map<String, Any?> =
         if (payDayEarlierIfClosed) put("payDayEarlierIfClosed", true)
     }
 
-private fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
+internal fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
     documents.mapNotNull { it.toPlannedIncomeOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
 
 private fun DocumentSnapshot.toPlannedIncomeOrNull() = mapOrNull("plannedIncome") { parsePlannedIncome() }

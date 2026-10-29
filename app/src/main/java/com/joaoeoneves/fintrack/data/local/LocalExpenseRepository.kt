@@ -42,6 +42,21 @@ class LocalExpenseRepository
             return hasAny.distinctUntilChanged()
         }
 
+        override fun observeNeedingReview(): Flow<List<Expense>> =
+            store.data.map { doc ->
+                doc.expenses
+                    .filter { it.needsReview }
+                    .mapNotNull { it.toDomainOrNull() }
+                    .sortedBy { it.date }
+            }
+
+        override suspend fun markReviewed(ids: Collection<String>): Result<Unit> =
+            store.update { doc ->
+                val wanted = ids.toSet()
+                val expenses = doc.expenses.map { if (it.id in wanted) it.copy(needsReview = false) else it }
+                doc.copy(expenses = expenses) to Unit
+            }
+
         override suspend fun addExpense(expense: Expense): Result<String> =
             store.update { doc ->
                 val record = expense.toLocal().let { it.copy(id = it.id.ifBlank { idGenerator.newId() }) }

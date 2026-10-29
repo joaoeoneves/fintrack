@@ -4,6 +4,9 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
+import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
+import com.joaoeoneves.fintrack.domain.model.NameSuggestion
+import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.Instant
 
@@ -23,6 +26,8 @@ data class ExpenseFormState(
     val mealCardPlafondUsed: Boolean = false,
     val categoryTouched: Boolean = false,
     val suggestedCategory: Boolean = false,
+    /** Earlier names matching what is typed (new forms only); not part of the saved snapshot. */
+    val nameSuggestions: List<NameSuggestion> = emptyList(),
     val nameError: UiText? = null,
     val amountError: UiText? = null,
     val categoryError: UiText? = null,
@@ -69,6 +74,26 @@ fun ExpenseFormState.withMealCardPrefill(): ExpenseFormState =
             paidWithMealCard = mealCardPrefill(category, isRefund, mealCardAvailable, mealCardPlafondUsed),
         )
     }
+
+/**
+ * This new-expense form with a quick-add / name prefill: the [name], the [amountCents] when positive, and the category
+ * [categoryId] when it is an active one of [catalog] (then marked as suggested). Anything else stays as it was.
+ * The date is never part of a prefill.
+ */
+fun ExpenseFormState.withPrefill(
+    name: String?,
+    amountCents: Long?,
+    categoryId: String?,
+    catalog: List<Category>,
+): ExpenseFormState {
+    val category = categoryId?.let { id -> catalog.active().find { it.id.value == id } }
+    return copy(
+        name = name?.take(MAX_NAME_LENGTH) ?: this.name,
+        amountCents = amountCents?.takeIf { it in 1..MAX_AMOUNT_CENTS } ?: this.amountCents,
+        category = category ?: this.category,
+        suggestedCategory = category != null,
+    )
+}
 
 sealed interface AddEditUiState {
     data object Loading : AddEditUiState

@@ -16,6 +16,11 @@ data class Expense(
     val isRefund: Boolean = false,
     /** Paid from the meal card rather than the bank; only meaningful while the profile pays meals on a card. */
     val paidWithMealCard: Boolean = false,
+    /**
+     * Recorded automatically (recurring auto-post or healing) and not yet looked at by the user; shown in the
+     * "to review" inbox until confirmed or edited. Absent in stored data means reviewed.
+     */
+    val needsReview: Boolean = false,
 ) : Transaction {
     /** [amountCents] with its sign applied: negative for refunds, positive otherwise. */
     val signedAmountCents: Long get() = if (isRefund) -amountCents else amountCents

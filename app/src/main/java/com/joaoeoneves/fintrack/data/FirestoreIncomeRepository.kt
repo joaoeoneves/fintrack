@@ -22,6 +22,7 @@ import javax.inject.Inject
 
 private const val TAG = "FirestoreIncomeRepo"
 private const val BATCH_CHUNK_SIZE = 400
+private const val REVIEW_BATCH_SIZE = 500
 
 class FirestoreIncomeRepository
     @Inject
@@ -54,6 +55,42 @@ class FirestoreIncomeRepository
                         }
                     }
                 awaitClose { registration.remove() }
+            }
+        }
+
+        override fun observeNeedingReview(): Flow<List<Income>> {
+            val uid = firebaseAuth.currentUser?.uid ?: return flowOf(emptyList())
+            val query = incomeCollection(uid).whereEqualTo("needsReview", true)
+            return callbackFlow {
+                val registration =
+                    query.addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            trySend(snapshot.toIncomeList())
+                        }
+                    }
+                awaitClose { registration.remove() }
+            }
+        }
+
+        override suspend fun markReviewed(ids: Collection<String>): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                for (chunk in ids.distinct().chunked(REVIEW_BATCH_SIZE)) {
+                    val batch = firestore.batch()
+                    chunk.forEach { id ->
+                        val changes =
+                            mapOf("needsReview" to FieldValue.delete(), "updatedAt" to FieldValue.serverTimestamp())
+                        batch.update(incomeCollection(uid).document(id), changes)
+                    }
+                    // Not awaited: lands in the local cache at once and syncs later (see addIncome).
+                    batch.commit().addOnFailureListener(onFail(TAG, "Mark income reviewed failed"))
+                }
             }
         }
 
@@ -188,10 +225,16 @@ internal fun Income.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?>
     if (includeCreatedAt) {
         map["createdAt"] = FieldValue.serverTimestamp()
     }
+    // Written only when true. Updates merge, so a false flag must delete the key explicitly.
+    if (needsReview) {
+        map["needsReview"] = true
+    } else if (!includeCreatedAt) {
+        map["needsReview"] = FieldValue.delete()
+    }
     return map
 }
 
-private fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
+internal fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
 
 private fun DocumentSnapshot.toIncomeOrNull(): Income? = mapOrNull("income") { parseIncome() }
 
@@ -200,6 +243,7 @@ private fun DocumentSnapshot.parseIncome(): Income? {
     val amountCents = getLong("amountCents")
     val date = getTimestamp("date")
     val note = getString("note")
+    val needsReview = get("needsReview") as? Boolean ?: false
 
     return when {
         source == null -> {
@@ -221,6 +265,7 @@ private fun DocumentSnapshot.parseIncome(): Income? {
                 amountCents = amountCents,
                 date = Instant.ofEpochSecond(date.seconds, date.nanoseconds.toLong()),
                 note = note,
+                needsReview = needsReview,
             )
     }
 }

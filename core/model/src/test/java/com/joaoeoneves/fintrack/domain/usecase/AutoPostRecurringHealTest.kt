@@ -41,6 +41,18 @@ class AutoPostRecurringHealTest : AutoPostRecurringTestBase() {
         }
 
     @Test
+    fun healedRecords_areFlaggedForReview_theExistingOnesAreNot() =
+        runBlocking {
+            val repo = FakeRecurringRepository(listOf(auto(handled = mar15)))
+            val expenses = expensesFor(jan15)
+
+            build(repo, expenses)(today, zone)
+
+            assertEquals(false, expenses.getExpense("rec_r1_20260115").getOrThrow()!!.needsReview)
+            assertEquals(true, expenses.getExpense("rec_r1_20260215").getOrThrow()!!.needsReview)
+        }
+
+    @Test
     fun doesNotRecreate_skippedOccurrences() =
         runBlocking {
             val repo = FakeRecurringRepository(listOf(auto(handled = mar15, skipped = setOf(feb15))))
