@@ -10,8 +10,11 @@ import com.joaoeoneves.fintrack.domain.model.SalaryExtra
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
+import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
+import com.joaoeoneves.fintrack.domain.repository.NoPlanSettings
+import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
@@ -33,6 +36,13 @@ import javax.inject.Inject
 private const val TAG = "SalaryProfileViewModel"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
+private class FormState(
+    val form: SalaryForm?,
+    val saved: Boolean,
+    val busy: Boolean,
+    val editing: SalaryExtraForm?,
+)
+
 /** Edits the salary profile and keeps the plan's managed income lines in sync with it. */
 @Suppress("TooManyFunctions") // the screen's form actions plus the extra editor's
 @HiltViewModel
@@ -44,12 +54,18 @@ class SalaryProfileViewModel
         private val plannedIncome: PlannedIncomeRepository,
         private val clock: Clock,
         private val idGenerator: IdGenerator,
+        private val planSettings: PlanSettingsRepository = NoPlanSettings,
     ) : ViewModel() {
         // `null` until the stored profile has been read into the form.
         private val form = MutableStateFlow<SalaryForm?>(null)
         private val hasSavedProfile = MutableStateFlow(false)
         private val saving = MutableStateFlow(false)
         private val extraForm = MutableStateFlow<SalaryExtraForm?>(null)
+        private val effectiveFrom = MutableStateFlow<YearMonth?>(null)
+        private val shiftEnabled = MutableStateFlow(false)
+
+        // The stored profile as the form round-trips it, to tell whether the user changed anything.
+        private var originalProfile: SalaryProfile? = null
         private var decimalSeparator = '.'
         private val events = Channel<SalaryProfileEvent>(Channel.BUFFERED)
 
@@ -61,8 +77,12 @@ class SalaryProfileViewModel
         val eventFlow: Flow<SalaryProfileEvent> = events.receiveAsFlow()
 
         val uiState: StateFlow<SalaryProfileUiState> =
-            combine(form, hasSavedProfile, saving, extraForm) { current, saved, busy, editing ->
-                current?.let { contentOf(it, saved, busy, editing) } ?: SalaryProfileUiState.Loading
+            combine(
+                combine(form, hasSavedProfile, saving, extraForm, ::FormState),
+                effectiveFrom,
+                shiftEnabled,
+            ) { typed, from, shift ->
+                typed.form?.let { contentOf(it, typed, from, shift) } ?: SalaryProfileUiState.Loading
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -77,7 +97,14 @@ class SalaryProfileViewModel
                 val stored = profiles.observeSalaryProfile().first()
                 hasSavedProfile.value = stored != null
                 form.value = stored?.toForm(decimalSeparator) ?: SalaryForm()
+                originalProfile = stored?.let { form.value?.toResult()?.profile }
+                // The shift follows the user's choice, else it is on as soon as a salary profile exists.
+                shiftEnabled.value = planSettings.observeSalaryPaysNextMonth().first() != false
             }
+        }
+
+        fun onEffectiveFromChange(month: YearMonth) {
+            effectiveFrom.value = month
         }
 
         fun onFormChange(new: SalaryForm) {
@@ -156,7 +183,7 @@ class SalaryProfileViewModel
             viewModelScope.launch {
                 saving.value = true
                 manageProfile
-                    .save(result.profile, labels, YearMonth.now(clock))
+                    .save(result.profile, labels, effectiveFrom.value ?: YearMonth.now(clock))
                     .onSuccess { finishSave() }
                     .onFailure { reportFailure(it) }
                 saving.value = false
@@ -205,12 +232,14 @@ class SalaryProfileViewModel
 
         private fun contentOf(
             current: SalaryForm,
-            saved: Boolean,
-            busy: Boolean,
-            editing: SalaryExtraForm?,
+            typed: FormState,
+            from: YearMonth?,
+            shift: Boolean,
         ): SalaryProfileUiState.Content {
+            val (saved, busy, editing) = Triple(typed.saved, typed.busy, typed.editing)
             val result = current.toResult()
             val month = YearMonth.now(clock)
+            val effective = from ?: month
             return SalaryProfileUiState.Content(
                 form = current,
                 invalid = result.invalid,
@@ -221,6 +250,9 @@ class SalaryProfileViewModel
                 workingDays = workingDaysIn(month),
                 extraEditor = editing?.let { editorStateOf(it, current.mode) },
                 canAddExtra = current.extras.size < MAX_SALARY_EXTRAS,
+                effectiveFrom = effective,
+                showEffectiveFrom = !saved || result.profile != originalProfile,
+                shiftSource = effective.minusMonths(1).takeIf { shift },
             )
         }
 
