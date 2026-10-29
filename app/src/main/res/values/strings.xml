@@ -546,7 +546,8 @@
     <string name="salary_delete_title">Delete the salary profile?</string>
     <string name="salary_delete_message">The expected income generated from it is removed too. What you added by hand stays.</string>
     <string name="salary_line_net">Net salary</string>
-    <string name="salary_line_subsidy">Subsidy</string>
+    <string name="salary_line_holiday">Holiday allowance</string>
+    <string name="salary_line_christmas">Christmas allowance</string>
     <string name="plan_tab_month">Month</string>
     <string name="plan_tab_year">Year</string>
     <string name="annual_income_title">Income for the year</string>

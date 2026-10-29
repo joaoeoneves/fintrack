@@ -101,7 +101,8 @@ fun SalaryLineLabels.labelFor(managedKey: String): String? =
         MANAGED_NET_SALARY -> netSalary
         MANAGED_DUODECIMOS -> duodecimos
         MANAGED_MEAL -> meal
-        MANAGED_HOLIDAY, MANAGED_CHRISTMAS -> subsidy
+        MANAGED_HOLIDAY -> holidaySubsidy
+        MANAGED_CHRISTMAS -> christmasSubsidy
         else -> null
     }
 
@@ -134,13 +135,13 @@ private fun wantedLines(
         ),
         WantedLine(
             MANAGED_HOLIDAY,
-            labels.subsidy,
+            labels.holidaySubsidy,
             breakdown.holidayLumpNetCents,
             monthOfYear = firstSubsidyMonth,
         ),
         WantedLine(
             MANAGED_CHRISTMAS,
-            labels.subsidy,
+            labels.christmasSubsidy,
             breakdown.christmasLumpNetCents,
             monthOfYear = secondSubsidyMonth,
         ),

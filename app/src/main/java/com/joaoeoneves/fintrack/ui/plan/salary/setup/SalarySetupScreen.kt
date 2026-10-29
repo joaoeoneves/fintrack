@@ -287,5 +287,6 @@ private fun setupLineLabels() =
         netSalary = stringResource(R.string.salary_line_net),
         duodecimos = stringResource(R.string.salary_line_duodecimos),
         meal = stringResource(R.string.salary_group_meal),
-        subsidy = stringResource(R.string.salary_line_subsidy),
+        holidaySubsidy = stringResource(R.string.salary_line_holiday),
+        christmasSubsidy = stringResource(R.string.salary_line_christmas),
     )

@@ -561,7 +561,8 @@
     <string name="salary_delete_title">Eliminar o perfil salarial?</string>
     <string name="salary_delete_message">O rendimento previsto gerado por ele também é removido. O que adicionaste à mão fica.</string>
     <string name="salary_line_net">Salário líquido</string>
-    <string name="salary_line_subsidy">Subsídio</string>
+    <string name="salary_line_holiday">Subsídio de férias</string>
+    <string name="salary_line_christmas">Subsídio de Natal</string>
     <string name="plan_tab_month">Mês</string>
     <string name="plan_tab_year">Ano</string>
     <string name="annual_income_title">Rendimento do ano</string>

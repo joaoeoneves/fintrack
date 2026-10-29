@@ -56,7 +56,8 @@ data class SalaryLineLabels(
     val netSalary: String = "Net salary",
     val duodecimos: String = "Subsidies (twelfths)",
     val meal: String = "Meal allowance",
-    val subsidy: String = "Subsidy",
+    val holidaySubsidy: String = "Holiday allowance",
+    val christmasSubsidy: String = "Christmas allowance",
 )
 
 /**
