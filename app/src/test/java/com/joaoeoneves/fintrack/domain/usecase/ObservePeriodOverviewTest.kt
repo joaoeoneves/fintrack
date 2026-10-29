@@ -24,7 +24,7 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
 
             val expected = listOf(october.toInstantRange(zone))
             assertEquals(expected, expenses.listeners.observedRanges)
-            assertEquals(expected, income.listeners.observedRanges)
+            assertEquals(expected.map(::incomeWindow), income.listeners.observedRanges)
             assertEquals(1, budgets.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
@@ -35,7 +35,7 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
             val result = overview(Period.Month(september))
 
             assertEquals(listOf(september.toInstantRange(zone)), expenses.listeners.observedRanges)
-            assertEquals(listOf(september.toInstantRange(zone)), income.listeners.observedRanges)
+            assertEquals(listOf(incomeWindow(september.toInstantRange(zone))), income.listeners.observedRanges)
             assertEquals(september, result.budgetMonth)
         }
 
@@ -47,7 +47,7 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
             val rolling = TimeRange.THREE_MONTHS.toInstantRange(now, zone)
             val expected = listOf(rolling, october.toInstantRange(zone))
             assertEquals(expected, expenses.listeners.observedRanges)
-            assertEquals(expected, income.listeners.observedRanges)
+            assertEquals(expected.map(::incomeWindow), income.listeners.observedRanges)
             assertEquals(1, budgets.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }

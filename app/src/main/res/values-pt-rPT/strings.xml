@@ -9,6 +9,7 @@
     <string name="plan_payday_last_working_day">Último dia útil</string>
     <string name="plan_payday_fixed">Dia fixo</string>
     <string name="plan_auto_day">Automático · dia %d</string>
+    <string name="plan_auto_day_earlier">Automático · dia %d (ou dia útil anterior)</string>
     <string name="plan_auto_last_working_day">Automático · último dia útil</string>
     <string name="plan_looks_like_salary_warning">Isto parece ser o teu salário, que já vem do perfil salarial.</string>
     <string name="plan_looks_like_salary">Parece repetir o salário</string>
@@ -445,6 +446,8 @@
         <item quantity="other">%1$d dias de folga</item>
     </plurals>
     <string name="plan_days_off_title">Dias de férias/folga neste mês</string>
+    <string name="plan_days_off_carnival">Terça-feira de Carnaval (dia %d)</string>
+    <string name="plan_days_off_carnival_hint">Feriado facultativo: conta como um dia de folga quando marcado.</string>
     <string name="cd_fewer_days_off">Menos dias de folga</string>
     <string name="cd_more_days_off">Mais dias de folga</string>
     <string name="plan_working_days_edited">%1$d (alterado)</string>
@@ -486,6 +489,7 @@
     <string name="salary_group_subsidy_months">Meses dos subsídios</string>
     <string name="salary_subsidy_months">Subsídios pagos em</string>
     <string name="salary_meal_hint">Pago por cada dia útil; define as férias e os dias sem trabalho nos dias úteis do separador Rendimentos.</string>
+    <string name="salary_meal_tax_warning">Acima de ~6 €/dia, o subsídio de refeição pago com o salário paga IRS e SS.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
     <string name="salary_extras_add">Adicionar extra</string>
@@ -510,7 +514,10 @@
     <string name="salary_year_meal">Subsídio de refeição</string>
     <string name="salary_year_meal_day">%1$s por dia útil</string>
     <string name="salary_year_meal_year">≈ %1$s por ano</string>
-    <string name="salary_year_title">No ano</string>
+    <string name="salary_year_meal_vacation">com %1$d dias de férias</string>
+    <string name="salary_field_vacation_days">Dias de férias por ano</string>
+    <string name="salary_vacation_days_hint">Opcional. Serve para estimar o subsídio de refeição do ano; os meses com dias sem trabalho já definidos contam esses.</string>
+    <string name="salary_year_title">No ano (estimativa)</string>
     <string name="salary_year_net">Total anual líquido estimado</string>
     <string name="salary_year_gross">Bruto no ano</string>
     <string name="salary_year_ss">Segurança Social no ano</string>
@@ -708,11 +715,15 @@
     <string name="category_field_meal_card">Normalmente pago com cartão refeição</string>
     <string name="income_meal_card">Cartão refeição</string>
     <string name="income_meal_card_balance">Saldo</string>
-    <string name="income_meal_card_detail">Recebido %1$s · gasto %2$s</string>
+    <string name="income_meal_card_plafond">Plafond</string>
+    <string name="income_meal_card_plafond_from">Plafond (subsídio de %1$s)</string>
+    <string name="income_meal_card_spent">Gasto</string>
     <string name="income_outlook">Rendimentos por mês</string>
     <string name="income_outlook_received">Recebido</string>
     <string name="income_outlook_expected">Previsto</string>
+    <string name="income_outlook_partial">Recebido até agora + previsto</string>
     <string name="income_outlook_total">Total do ano</string>
     <string name="income_outlook_total_detail">Recebido %1$s · previsto %2$s</string>
-    <string name="error_write_rejected">Não foi possível guardar no servidor: %1$s</string>
+    <string name="error_write_rejected">Não foi possível guardar uma alteração no servidor.</string>
+    <string name="error_write_permission">O servidor não aceitou uma alteração. Confirma que entraste com a conta certa.</string>
 </resources>

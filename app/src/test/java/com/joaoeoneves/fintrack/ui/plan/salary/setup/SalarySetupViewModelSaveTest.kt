@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.plan.salary.setup
 
+import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
@@ -222,6 +223,7 @@ class SalarySetupViewModelSaveTest : SalarySetupViewModelTestBase() {
                     com.joaoeoneves.fintrack.domain.usecase
                         .ManageSalaryProfile(fullProfiles, fullIncome),
                     fullIncome,
+                    FakeMonthSettingsRepository(),
                     clock,
                     idGenerator = { "id1" },
                 )

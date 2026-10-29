@@ -17,15 +17,19 @@ private data class WantedLine(
 val PlannedIncome.isManaged: Boolean get() = managedKey != null
 
 /**
- * The managed income lines [profile] produces, with the deterministic id = managedKey. A line whose input is
- * empty is not returned (so the caller removes it), and a line already in [existing] keeps the user's label
- * and order (a label that is still a default of some language, see [knownDefaults], is replaced by
- * the wanted one). The result is the same when applied again (idempotent). Empty when the profile's required
- * amount (base / net salary) is missing.
+ * The managed income lines [profile] produces, with the deterministic id = managedKey. A line already in [existing]
+ * keeps the user's label and order (a label that is still a default of some language, see [knownDefaults], is
+ * replaced by the wanted one). The result is the same when applied again (idempotent). Empty when the profile's
+ * required amount (base / net salary) is missing.
  *
  * A line already in [existing] keeps its start month and amount history; when the profile's amount differs from
  * the line's latest one, a version with the new amount is added from [effectiveFrom] (a raise from January). A new
- * line starts at [effectiveFrom]. Skip months and the month of year are not versioned.
+ * line starts at [effectiveFrom].
+ *
+ * A line the profile no longer pays (amount 0 or an extra gone) that has history is not dropped: it is versioned to
+ * 0 from [effectiveFrom] and stays in the result, so earlier months keep what it paid (see [staleManagedIds] for
+ * the ones without history). A subsidy whose month of year changed keeps the old line (ended from [effectiveFrom])
+ * and adds a new one under [scheduledManagedKey] that carries the new schedule from [effectiveFrom].
  */
 fun salaryProfileLines(
     profile: SalaryProfile,
@@ -33,16 +37,61 @@ fun salaryProfileLines(
     labels: SalaryLineLabels = SalaryLineLabels(),
     knownDefaults: List<SalaryLineLabels> = emptyList(),
     effectiveFrom: YearMonth = YearMonth.now(),
-): List<PlannedIncome> {
-    val breakdown = salaryBreakdownOf(profile) ?: return emptyList()
-    val byKey = existing.filter { it.managedKey != null }.associateBy { it.managedKey }
-    val salaryLine = byKey[MANAGED_NET_SALARY]
+): List<PlannedIncome> = managedPlanOf(profile, existing, labels, knownDefaults, effectiveFrom).lines
+
+/**
+ * The ids of the managed lines in [existing] to delete: all of them when [profile] is null or has no base amount,
+ * else those it no longer pays that have no history before [effectiveFrom] (the others are ended instead, see
+ * [salaryProfileLines]).
+ */
+fun staleManagedIds(
+    profile: SalaryProfile?,
+    existing: List<PlannedIncome>,
+    effectiveFrom: YearMonth = YearMonth.now(),
+): List<String> =
+    if (profile == null) {
+        existing.filter { it.isManaged }.map { it.id }
+    } else {
+        managedPlanOf(profile, existing, SalaryLineLabels(), emptyList(), effectiveFrom).deletes
+    }
+
+private class ManagedPlan(
+    val lines: List<PlannedIncome>,
+    val deletes: List<String>,
+)
+
+// One pass over the wanted lines; splitting it would scatter the rules.
+@Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
+private fun managedPlanOf(
+    profile: SalaryProfile,
+    existing: List<PlannedIncome>,
+    labels: SalaryLineLabels,
+    knownDefaults: List<SalaryLineLabels>,
+    effectiveFrom: YearMonth,
+): ManagedPlan {
+    val managed = existing.filter { it.managedKey != null }
+    val breakdown = salaryBreakdownOf(profile) ?: return ManagedPlan(emptyList(), managed.map { it.id })
+    // Per fixed key the line in force: the one that started last (a scheduled subsidy replaces the older ones).
+    val currents =
+        managed
+            .groupBy { baseManagedKey(it.managedKey.orEmpty()) }
+            .mapValues { (_, group) -> group.maxBy { it.startMonth ?: EARLIEST_MONTH } }
+    val salaryLine = currents[MANAGED_NET_SALARY]
     var nextOrder = (existing.maxOfOrNull { it.order } ?: -1) + 1
-    return wantedLines(profile, breakdown, labels).filter { it.amountCents > 0L }.map { wanted ->
-        val current = byKey[wanted.key]
+    val wantedAll = wantedLines(profile, breakdown, labels)
+    val lines = mutableListOf<PlannedIncome>()
+    val deletes = mutableListOf<String>()
+    for (wanted in wantedAll) {
+        val current = currents[wanted.key]
+        if (wanted.amountCents <= 0L) {
+            current?.let { retireOrDelete(it, effectiveFrom, lines, deletes) }
+            continue
+        }
+        val scheduleChanged =
+            current != null && (wanted.monthOfYear != current.monthOfYear || wanted.skipMonths != current.skipMonths)
         val line =
             PlannedIncome(
-                id = wanted.key,
+                id = current?.id ?: wanted.key,
                 label = keptLabel(wanted, current, knownDefaults),
                 amountCents = current?.amountCents ?: wanted.amountCents,
                 order = current?.order ?: nextOrder++,
@@ -50,7 +99,7 @@ fun salaryProfileLines(
                 frequency = wanted.frequency,
                 monthOfYear = wanted.monthOfYear,
                 skipMonths = wanted.skipMonths,
-                managedKey = wanted.key,
+                managedKey = current?.managedKey ?: wanted.key,
                 autoRecord = (current ?: salaryLine)?.autoRecord ?: false,
                 payDay = (current ?: salaryLine)?.payDay,
                 payDayEarlierIfClosed = (current ?: salaryLine)?.payDayEarlierIfClosed ?: false,
@@ -58,20 +107,24 @@ fun salaryProfileLines(
                 versions = current?.versions.orEmpty(),
             )
         when {
-            current == null -> line.startingAt(effectiveFrom)
-            current.amountCents != wanted.amountCents -> line.editedFrom(effectiveFrom, wanted.amountCents)
-            else -> line
+            current == null -> lines += line.startingAt(effectiveFrom)
+            scheduleChanged && current.hasHistoryBefore(effectiveFrom) -> {
+                // The old line keeps its schedule for the months before; a new one carries the new schedule on.
+                lines += ended(current, effectiveFrom)
+                val key = scheduledManagedKey(wanted.key, effectiveFrom)
+                lines +=
+                    line
+                        .copy(id = key, managedKey = key, amountCents = wanted.amountCents, versions = emptyList())
+                        .startingAt(effectiveFrom)
+            }
+            current.amountCents != wanted.amountCents -> lines += line.editedFrom(effectiveFrom, wanted.amountCents)
+            else -> lines += line
         }
     }
-}
-
-/** The ids of the managed lines in [existing] that [profile] no longer produces (to delete). */
-fun staleManagedIds(
-    profile: SalaryProfile?,
-    existing: List<PlannedIncome>,
-): List<String> {
-    val keep = profile?.let { salaryProfileLines(it, existing) }.orEmpty().mapTo(mutableSetOf()) { it.id }
-    return existing.filter { it.isManaged && it.id !in keep }.map { it.id }
+    // Lines of a key the profile does not produce at all (an extra removed or moved to another month).
+    val wantedKeys = wantedAll.mapTo(mutableSetOf()) { it.key }
+    currents.filterKeys { it !in wantedKeys }.values.forEach { retireOrDelete(it, effectiveFrom, lines, deletes) }
+    return ManagedPlan(lines, deletes)
 }
 
 /** The writes that bring the stored managed lines in line with the profile: [upserts] (new first) and [deletes]. */
@@ -95,7 +148,7 @@ fun managedLinesSync(
         salaryProfileLines(profile, existing, labels, knownDefaults, effectiveFrom)
             .filter { byId[it.id] != it }
             .partition { it.id in byId }
-    return ManagedLinesSync(upserts = created + changed, deletes = staleManagedIds(profile, existing))
+    return ManagedLinesSync(upserts = created + changed, deletes = staleManagedIds(profile, existing, effectiveFrom))
 }
 
 /** The existing line's own label, unless it is an extra (named after the extra) or still an untouched default. */
@@ -112,7 +165,7 @@ private fun keptLabel(
 
 /** The label of the fixed managed line [managedKey]; `null` for an extra's line (named after the extra) or unknown. */
 fun SalaryLineLabels.labelFor(managedKey: String): String? =
-    when (managedKey) {
+    when (baseManagedKey(managedKey)) {
         MANAGED_NET_SALARY -> netSalary
         MANAGED_DUODECIMOS -> duodecimos
         MANAGED_MEAL -> meal

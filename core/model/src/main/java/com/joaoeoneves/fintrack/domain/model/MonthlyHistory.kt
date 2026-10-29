@@ -30,7 +30,7 @@ fun monthlyTotalsOf(
     zone: ZoneId,
 ): List<MonthTotals> {
     val expensesByMonth = expenses.groupBy { YearMonth.from(it.date.atZone(zone)) }
-    val incomeByMonth = income.groupBy { YearMonth.from(it.date.atZone(zone)) }
+    val incomeByMonth = income.groupBy { it.ownerMonth(zone) }
     return months.map { month ->
         val summary = cashFlowSummaryOf(expensesByMonth[month].orEmpty(), incomeByMonth[month].orEmpty(), categories)
         MonthTotals(month, summary.incomeCents, summary.spendingCents, summary.savedCents)

@@ -170,7 +170,10 @@ class SalaryProfileLinesSyncTest {
     @Test
     fun sync_legacyFlexProfitAndBonusLines_areDeleted() {
         val legacyKeys = listOf("profile_flex_q1", "profile_profit_share_4", "profile_bonus", "profile_profit_share")
-        val legacy = legacyKeys.mapIndexed { i, k -> PlannedIncome(k, "old", 5, 80 + i, managedKey = k) }
+        val legacy =
+            legacyKeys.mapIndexed { i, k ->
+                PlannedIncome(k, "old", 5, 80 + i, managedKey = k, startMonth = YearMonth.now())
+            }
 
         val sync = managedLinesSync(profile, lines() + legacy)
 
@@ -178,15 +181,21 @@ class SalaryProfileLinesSyncTest {
     }
 
     @Test
-    fun sync_deletesLegacyProfitShareAndMismatchedIds() {
-        val legacy = PlannedIncome(LEGACY_PROFIT_SHARE_KEY, "Profit", 5, 90, managedKey = LEGACY_PROFIT_SHARE_KEY)
-        val oddId = PlannedIncome("random-id", "Odd", 5, 91, managedKey = MANAGED_MEAL)
+    fun sync_deletesLegacyProfitShare() {
+        val legacy =
+            PlannedIncome(
+                LEGACY_PROFIT_SHARE_KEY,
+                "Profit",
+                5,
+                90,
+                managedKey = LEGACY_PROFIT_SHARE_KEY,
+                startMonth = YearMonth.now(),
+            )
         val own = PlannedIncome("own", "Own", 5, 92)
 
-        val sync = managedLinesSync(profile, lines() + legacy + oddId + own)
+        val sync = managedLinesSync(profile, lines() + legacy + own)
 
         assertTrue(LEGACY_PROFIT_SHARE_KEY in sync.deletes)
-        assertTrue("random-id" in sync.deletes)
         assertFalse("own" in sync.deletes)
     }
 

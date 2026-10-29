@@ -54,7 +54,7 @@ fun IncomeLineSheet(
     var label by remember { mutableStateOf(editor.initialLabel) }
     var amountCents by remember { mutableLongStateOf(editor.initialAmountCents ?: 0L) }
     var amountError by remember { mutableStateOf(false) }
-    var effectiveFrom by remember { mutableStateOf(YearMonth.now()) }
+    var effectiveFrom by remember { mutableStateOf(defaultEffectiveFrom(workingDays.month, YearMonth.now())) }
     var schedule by remember { mutableStateOf(editor.initialSchedule) }
     // The VM's label error is shown only while the text still equals the last submitted text.
     var submittedLabel by remember { mutableStateOf<String?>(null) }
@@ -201,7 +201,7 @@ private fun SheetFields(
             fallbackMonth = fallbackMonth,
             preview = models.preview,
         )
-        IncomePayFields(schedule = schedule, onChange = onScheduleChange)
+        IncomePayFields(schedule = schedule, onChange = onScheduleChange, isNewLine = editor.editingId == null)
         if (editor.looksLikeSalary) {
             Text(
                 text = stringResource(R.string.plan_looks_like_salary_warning),

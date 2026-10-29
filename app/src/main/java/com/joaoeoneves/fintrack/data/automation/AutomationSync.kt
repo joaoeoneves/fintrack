@@ -15,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.usecase.AutoPostRecurring
+import com.joaoeoneves.fintrack.domain.usecase.AutomationOutcome
 import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -32,6 +33,7 @@ private const val TAG = "AutomationSync"
 private const val BACKOFF_BASE_MS = 5_000L
 private const val BACKOFF_MAX_SHIFT = 7
 private const val BACKOFF_MAX_MS = 600_000L
+private const val MAX_TRACKED_ATTEMPTS = 64
 
 /** The repositories the sync observes besides the session, bundled for detekt's LongParameterList. */
 class PaydayData
@@ -47,8 +49,8 @@ class PaydayData
  * Runs the automatic steps (posting due auto-post recurring items and recording income on payday) whenever the
  * session, the data they read or the app coming to the foreground changes, so a new day is picked up without a
  * background job. Every step only fills what is due; a failing step is logged and never crashes the app, and an
- * identical situation (same step inputs and day) is attempted once per process, so a failing write is not retried
- * in a loop.
+ * identical situation (same step inputs and day) is attempted until a pass succeeds, then not again; a failed pass
+ * (offline) is retried on the next foreground tick or emission, with a growing backoff for repeats.
  */
 @Singleton
 class AutomationSync
@@ -89,7 +91,8 @@ class AutomationSync
             fun paydayKey() =
                 listOf(
                     settings.lineRecordedThrough,
-                    lines.map { listOf(it.id, it.amountCents, it.autoRecord, it.payDay, it.frequency, it.monthOfYear) },
+                    // The whole line: anything that moves a pay date or an amount must re-run the pass.
+                    lines,
                 )
         }
 
@@ -119,9 +122,13 @@ class AutomationSync
                         val today = LocalDate.now(clock)
                         val attempt = Attempt(current, today, inputs.recurringKey(), inputs.paydayKey())
                         if (attempt == lastAttempted) return@collectLatest
-                        lastAttempted = attempt
                         backOffIfRepeated(attempt)
-                        runSteps(today)
+                        // Marked only once the pass ran to the end with every step succeeded: a pass cancelled by a
+                        // newer emission (or by the backoff), or one that failed (offline, a rejected read), must not
+                        // suppress the next identical one (the next foreground tick or emission retries it).
+                        val succeeded = runSteps(today)
+                        countAttempt(attempt)
+                        if (succeeded) lastAttempted = attempt
                     }
             }
         }
@@ -129,8 +136,14 @@ class AutomationSync
         // A situation that comes back after being attempted means the server rejected the write and the cursor
         // rolled back: wait longer each time (cancelled by any new emission) instead of looping on the rejection.
         private suspend fun backOffIfRepeated(attempt: Attempt) {
-            val repeats = attemptCounts.merge(attempt, 1, Int::plus)!! - 1
+            val repeats = attemptCounts[attempt] ?: 0
             if (repeats > 0) delay(minOf(BACKOFF_BASE_MS shl minOf(repeats, BACKOFF_MAX_SHIFT), BACKOFF_MAX_MS))
+        }
+
+        private fun countAttempt(attempt: Attempt) {
+            // Bounded: a long-lived process sees many situations; forgetting old ones only drops their backoff.
+            if (attemptCounts.size >= MAX_TRACKED_ATTEMPTS && attempt !in attemptCounts) attemptCounts.clear()
+            attemptCounts[attempt] = minOf((attemptCounts[attempt] ?: 0) + 1, BACKOFF_MAX_SHIFT)
         }
 
         /** Re-checks what is due; called when the app returns to the foreground (the day may have changed). */
@@ -138,20 +151,24 @@ class AutomationSync
             foregroundTicks.value++
         }
 
-        // Steps run in order and are independent: one failing must not stop the next.
-        private suspend fun runSteps(today: LocalDate) {
-            step("auto-post recurring") { autoPostRecurring(today, clock.zone) }
-            step("record payday") { recordPayday.runDue(today, clock.zone) }
+        // Steps run in order and are independent: one failing must not stop the next. True when all succeeded.
+        private suspend fun runSteps(today: LocalDate): Boolean {
+            val recurring = step("auto-post recurring") { autoPostRecurring.run(today, clock.zone) }
+            val payday = step("record payday") { recordPayday.runDueOutcome(today, clock.zone) }
+            return recurring && payday
         }
 
         private suspend fun step(
             name: String,
-            block: suspend () -> Unit,
-        ) {
+            block: suspend () -> AutomationOutcome,
+        ): Boolean =
             runCatchingCancellable {
                 block()
             }.onFailure { e ->
                 Log.w(TAG, "Automation step failed: $name", e)
-            }
-        }
+            }.map { outcome ->
+                // A step reports a failed read/write by its result, not only by throwing.
+                if (outcome.failed) Log.w(TAG, "Automation step incomplete (will retry): $name")
+                !outcome.failed
+            }.getOrDefault(false)
     }

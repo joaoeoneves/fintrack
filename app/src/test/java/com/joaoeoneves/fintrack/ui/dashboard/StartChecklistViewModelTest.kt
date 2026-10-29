@@ -293,28 +293,13 @@ class StartChecklistViewModelTest {
         }
 
     @Test
-    fun lateData_thatReachesThreeSteps_withinTheWindow_retiresTheCard() =
+    fun lateData_thatReachesThreeSteps_neverRetiresAShownCard() =
         runTest(dispatcher) {
             setUpSteps(2)
             started(viewModel())
             advanceTimeBy(settleMillis + 1)
             runCurrent()
             assertEquals(StartChecklistState.ACTIVE, store.state.first())
-
-            expenses.addExpense(expense())
-            advanceTimeBy(1_000)
-            runCurrent()
-
-            assertEquals(StartChecklistState.RETIRED, store.state.first())
-        }
-
-    @Test
-    fun lateData_afterTheWindow_leavesTheCardActive() =
-        runTest(dispatcher) {
-            setUpSteps(2)
-            started(viewModel())
-            advanceTimeBy(settleMillis + 31_000)
-            runCurrent()
 
             expenses.addExpense(expense())
             advanceTimeBy(1_000)

@@ -52,7 +52,7 @@ class SalarySetupViewModelSectorTest : SalarySetupViewModelTestBase() {
             assertEquals(listOf(6, 11), state.form.subsidyMonths)
             assertEquals(MealPayment.WITH_SALARY, state.form.mealPayment)
             assertEquals(MealAnswer.WITH_SALARY, state.mealAnswer)
-            assertEquals(PayDayDraft(fixed = true), state.payDay)
+            assertEquals(PayDayDraft(fixed = true, earlierIfClosed = true), state.payDay)
         }
 
     @Test
@@ -102,7 +102,7 @@ class SalarySetupViewModelSectorTest : SalarySetupViewModelTestBase() {
             assertEquals(SalarySetupStep.PAY, second.uiState.value.step)
             assertEquals(EmploymentSector.PUBLIC, second.uiState.value.sector)
             assertEquals(MealPayment.WITH_SALARY, second.uiState.value.form.mealPayment)
-            assertEquals(PayDayDraft(fixed = true), second.uiState.value.payDay)
+            assertEquals(PayDayDraft(fixed = true, earlierIfClosed = true), second.uiState.value.payDay)
         }
 
     @Test

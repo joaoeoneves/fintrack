@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.MealCardBalance
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.YearIncomeOutlook
 import com.joaoeoneves.fintrack.ui.common.ErrorState
@@ -240,7 +239,7 @@ private fun YearOutlook(outlook: YearIncomeOutlook) {
         outlook.months.forEach { entry ->
             SettingsRow(
                 title = formatShortMonthName(entry.month, locale),
-                supportingText = stringResource(outlookLabel(entry.received)),
+                supportingText = stringResource(outlookLabel(entry.received, entry.partial)),
                 value = formatAmountCents(entry.cents),
             )
             Hairline()
@@ -258,28 +257,36 @@ private fun YearOutlook(outlook: YearIncomeOutlook) {
     }
 }
 
-private fun outlookLabel(done: Boolean) =
-    when (done) {
-        true -> R.string.income_outlook_received
-        false -> R.string.income_outlook_expected
-    }
+private fun outlookLabel(
+    done: Boolean,
+    partial: Boolean,
+) = when {
+    partial -> R.string.income_outlook_partial
+    done -> R.string.income_outlook_received
+    else -> R.string.income_outlook_expected
+}
 
-/** The meal card: what it received and what was paid with it in the period, and what is left (may be negative). */
+/** The meal card: its plafond, what was paid with it and what is left (may be negative). */
 @Composable
-private fun MealCardRow(balance: MealCardBalance) {
+private fun MealCardRow(view: MealCardView) {
+    val locale = currentLocale()
     SettingsGroup(
         label = stringResource(R.string.income_meal_card),
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(top = Dimens.Space16),
     ) {
         SettingsRow(
+            title =
+                view.plafondFrom?.let {
+                    stringResource(R.string.income_meal_card_plafond_from, formatShortMonthName(it, locale))
+                } ?: stringResource(R.string.income_meal_card_plafond),
+            value = formatAmountCents(view.plafondCents),
+        )
+        Hairline()
+        SettingsRow(title = stringResource(R.string.income_meal_card_spent), value = formatAmountCents(view.spentCents))
+        Hairline()
+        SettingsRow(
             title = stringResource(R.string.income_meal_card_balance),
-            supportingText =
-                stringResource(
-                    R.string.income_meal_card_detail,
-                    formatAmountCents(balance.receivedCents),
-                    formatAmountCents(balance.spentCents),
-                ),
-            value = formatAmountCents(balance.balanceCents),
+            value = formatAmountCents(view.balanceCents),
         )
     }
 }

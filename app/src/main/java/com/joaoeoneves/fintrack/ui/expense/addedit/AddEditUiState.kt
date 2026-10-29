@@ -19,6 +19,8 @@ data class ExpenseFormState(
     /** Whether the meal-card switch applies: meals are paid on a card and the meal rate is above 0. */
     val mealCardAvailable: Boolean = false,
     val mealCardTouched: Boolean = false,
+    /** The expense month's meal-card plafond is already used up: new expenses then default to the bank. */
+    val mealCardPlafondUsed: Boolean = false,
     val categoryTouched: Boolean = false,
     val suggestedCategory: Boolean = false,
     val nameError: UiText? = null,
@@ -42,20 +44,30 @@ data class ExpenseFormState(
 
 /**
  * Whether a new expense starts as paid with the meal card: the switch applies, the expense is not a refund (refunds
- * go back to the bank) and the [category] is a spending one usually paid that way.
+ * go back to the bank), the month's card plafond is not used up yet ([plafondUsed], the user can still switch it)
+ * and the [category] is a spending one usually paid that way.
  */
 fun mealCardPrefill(
     category: Category,
     isRefund: Boolean,
     available: Boolean,
-): Boolean = available && !isRefund && category.kind == CategoryKind.SPENDING && category.mealCardByDefault
+    plafondUsed: Boolean = false,
+): Boolean {
+    val spending = category.kind == CategoryKind.SPENDING && category.mealCardByDefault
+    return available && !plafondUsed && !isRefund && spending
+}
+
+/** Whether the meal-card switch shows: the card applies, or the expense being edited is already flagged (N13). */
+val ExpenseFormState.showsMealCardSwitch: Boolean get() = mealCardAvailable || (isEditMode && paidWithMealCard)
 
 /** This form with the meal-card switch prefilled from its category (new, untouched expenses only). */
 fun ExpenseFormState.withMealCardPrefill(): ExpenseFormState =
     if (isEditMode || mealCardTouched) {
         this
     } else {
-        copy(paidWithMealCard = mealCardPrefill(category, isRefund, mealCardAvailable))
+        copy(
+            paidWithMealCard = mealCardPrefill(category, isRefund, mealCardAvailable, mealCardPlafondUsed),
+        )
     }
 
 sealed interface AddEditUiState {

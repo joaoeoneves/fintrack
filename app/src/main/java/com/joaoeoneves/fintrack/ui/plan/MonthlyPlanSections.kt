@@ -177,10 +177,10 @@ fun IncomeSetupGroup(
 private fun autoRecordText(row: IncomeRow): String? {
     val line = row.lines.firstOrNull { it.autoRecord } ?: return null
     val payDay = line.payDay
-    return if (payDay == null) {
-        stringResource(R.string.plan_auto_last_working_day)
-    } else {
-        stringResource(R.string.plan_auto_day, payDay)
+    return when {
+        payDay == null -> stringResource(R.string.plan_auto_last_working_day)
+        line.payDayEarlierIfClosed -> stringResource(R.string.plan_auto_day_earlier, payDay)
+        else -> stringResource(R.string.plan_auto_day, payDay)
     }
 }
 
@@ -214,7 +214,7 @@ private fun IncomeRowItem(
     val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.incomeMonth), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val undoLabel = stringResource(R.string.action_undo)
-    val showCheck = paysThisMonth && (received || receipts.canReceive)
+    val showCheck = paysThisMonth && (received || row.key in receipts.canReceive)
     if (showCheck && !received) {
         PendingIncomeRow(
             row = row,

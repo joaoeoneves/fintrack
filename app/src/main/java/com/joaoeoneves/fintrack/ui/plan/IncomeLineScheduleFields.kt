@@ -168,6 +168,7 @@ internal fun MonthChips(
 internal fun IncomePayFields(
     schedule: IncomeSchedule,
     onChange: (IncomeSchedule) -> Unit,
+    isNewLine: Boolean = false,
 ) {
     SettingsSwitchRow(
         title = stringResource(R.string.plan_auto_record),
@@ -184,14 +185,7 @@ internal fun IncomePayFields(
         options = listOf(false, true),
         selected = schedule.payDay != null,
         label = { stringResource(if (it) R.string.plan_payday_fixed else R.string.plan_payday_last_working_day) },
-        onSelect = { fixed ->
-            onChange(
-                schedule.copy(
-                    payDay = if (fixed) schedule.payDay ?: DEFAULT_PAY_DAY else null,
-                    payDayEarlierIfClosed = fixed && schedule.payDayEarlierIfClosed,
-                ),
-            )
-        },
+        onSelect = { fixed -> onChange(schedule.withFixedPayDay(fixed, isNewLine)) },
     )
     schedule.payDay?.let { day ->
         var text by remember { mutableStateOf(day.toString()) }
@@ -213,3 +207,16 @@ internal fun IncomePayFields(
         )
     }
 }
+
+/**
+ * The schedule with the fixed pay day turned on or off. A new line that gets a fixed day starts with "earlier if
+ * closed" on (a day on a weekend would otherwise pay on a closed day); an existing line keeps its own choice.
+ */
+internal fun IncomeSchedule.withFixedPayDay(
+    fixed: Boolean,
+    isNewLine: Boolean,
+): IncomeSchedule =
+    copy(
+        payDay = if (fixed) payDay ?: DEFAULT_PAY_DAY else null,
+        payDayEarlierIfClosed = fixed && (payDayEarlierIfClosed || (isNewLine && payDay == null)),
+    )

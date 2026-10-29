@@ -44,13 +44,17 @@ class IncomeMonth(
     }
 }
 
-/** The month's income rows like [incomeRowsIn] with each line's amount from [income]. */
+/**
+ * The month's income rows like [incomeRowsIn] with each line's amount from [income]. A managed line whose amount in
+ * [month] is 0 (one the salary profile ended, which keeps a 0 version from then on) has no row there; a manual line
+ * of 0 stays so it can still be edited.
+ */
 fun incomeRowsIn(
     lines: List<PlannedIncome>,
     month: YearMonth,
     income: IncomeMonth,
 ): List<IncomeRow> =
-    rowsOf(lines.asOf(month)) { component, extraId, group ->
+    rowsOf(lines.asOf(month).filterNot { it.isManaged && it.amountCents == 0L }) { component, extraId, group ->
         IncomeRow(component, group, group.sumOf { income.amountIn(it, month) }, extraId = extraId)
     }
 
