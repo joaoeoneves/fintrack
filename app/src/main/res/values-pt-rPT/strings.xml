@@ -485,7 +485,6 @@
         <item quantity="other">%1$d dias de folga</item>
     </plurals>
     <string name="plan_days_off_title">Dias de férias/folga neste mês</string>
-    <string name="plan_carnival_chip">Carnaval, %1$s</string>
     <string name="cd_fewer_days_off">Menos dias de folga</string>
     <string name="cd_more_days_off">Mais dias de folga</string>
     <string name="plan_working_days_edited">%1$d (alterado)</string>
@@ -680,8 +679,9 @@
     <string name="envelope_row_empty">Sem categorias</string>
     <string name="envelope_card_of">%1$s de %2$s</string>
     <string name="envelope_card_over">Excedido em %1$s</string>
-    <string name="envelope_card_paid">%1$s de %2$s pagos</string>
+    <string name="envelope_card_paid">Recorrentes: %1$s pagos de %2$s</string>
     <string name="envelope_card_spent">Gasto este mês: %1$s</string>
+    <string name="annual_envelope_spent">Gasto: %1$s</string>
     <string name="envelope_card_funded">Financiado por %1$s</string>
     <string name="envelope_funded_overflow">%1$s cobre %2$s; %3$s vêm de outro rendimento.</string>
     <plurals name="envelopes_status">

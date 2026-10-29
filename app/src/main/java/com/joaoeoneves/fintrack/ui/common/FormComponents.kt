@@ -29,7 +29,9 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.designsystem.CategoryChipIcon
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.rememberLeaveGuard
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -126,12 +128,12 @@ fun CategoryChipFlow(
                     label = category.displayName,
                     selected = category.id == selected?.id,
                     onClick = { onSelected(category) },
-                    icon = category.icon,
+                    leading = { tint -> CategoryChipIcon(category.icon, tint) },
                 )
             }
         }
         if (error != null) {
-            Text(text = error, style = MaterialTheme.typography.bodySmall, color = FinTrackTheme.colors.negative)
+            FieldErrorText(text = error)
         }
     }
 }

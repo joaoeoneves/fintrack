@@ -23,9 +23,10 @@ import com.joaoeoneves.fintrack.domain.model.AnnualSubscription
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
+import com.joaoeoneves.fintrack.ui.designsystem.EnvelopeRow
+import com.joaoeoneves.fintrack.ui.designsystem.EnvelopeRowData
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
-import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.plan.displayLabel
 import com.joaoeoneves.fintrack.ui.plan.fundingLabel
 import com.joaoeoneves.fintrack.ui.theme.Amount
@@ -85,26 +86,36 @@ fun AnnualIncomeCard(
     }
 }
 
-/** Planned vs year-to-date actual per envelope, with a thin bar; envelopes with nothing at all are left out. */
+/**
+ * Planned vs year-to-date actual per envelope, as the same row as the month (tap an envelope to edit it);
+ * envelopes with nothing at all are left out, and one without a limit shows what was spent, never a zero limit.
+ */
 @Composable
 fun AnnualEnvelopesCard(
     envelopes: List<AnnualEnvelope>,
     modifier: Modifier = Modifier,
     savings: AnnualSavings = AnnualSavings(0L, 0L),
+    onOpenEnvelope: (String) -> Unit = {},
 ) {
     val shown = envelopes.filter { it.plannedCents > 0 || it.actualCents > 0 }
     val hasSavings = savings.plannedCents > 0 || savings.actualCents > 0
     if (shown.isEmpty() && !hasSavings) return
     SettingsGroup(label = stringResource(R.string.plan_envelopes_title), modifier = modifier) {
         shown.forEach { group ->
-            AnnualEnvelopeRow(group, group.envelope?.name ?: stringResource(R.string.plan_group_other))
+            val id = group.envelope?.id
+            AnnualEnvelopeRow(
+                group = group,
+                name = group.envelope?.name ?: stringResource(R.string.plan_group_other),
+                onClick = id?.let { { onOpenEnvelope(it) } },
+            )
             Hairline()
         }
         // Savings read the same as in the month: one "Savings" line, never an envelope.
         if (hasSavings) {
             AnnualEnvelopeRow(
-                AnnualEnvelope(null, savings.plannedCents, savings.actualCents),
-                stringResource(R.string.plan_tile_saving),
+                group = AnnualEnvelope(null, savings.plannedCents, savings.actualCents),
+                name = stringResource(R.string.plan_tile_saving),
+                onClick = null,
             )
             Hairline()
         }
@@ -115,36 +126,32 @@ fun AnnualEnvelopesCard(
 private fun AnnualEnvelopeRow(
     group: AnnualEnvelope,
     name: String,
+    onClick: (() -> Unit)?,
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space12)) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+    val data =
+        if (group.plannedCents > 0L) {
+            val actual = formatAmountCents(group.actualCents)
+            EnvelopeRowData(
+                name = name,
+                amountText =
+                    stringResource(R.string.annual_actual_of_planned, actual, formatAmountCents(group.plannedCents)),
+                isOver = group.isOver,
+                progress = group.fraction(),
+                overText =
+                    if (group.isOver) {
+                        val over = formatAmountCents(group.actualCents - group.plannedCents)
+                        stringResource(R.string.envelope_card_over, over)
+                    } else {
+                        null
+                    },
             )
-            Text(
-                text =
-                    stringResource(
-                        R.string.annual_actual_of_planned,
-                        formatAmountCents(group.actualCents),
-                        formatAmountCents(group.plannedCents),
-                    ),
-                style = Amount,
-                color = if (group.isOver) FinTrackTheme.colors.negative else MaterialTheme.colorScheme.onSurface,
+        } else {
+            EnvelopeRowData(
+                name = name,
+                caption = stringResource(R.string.annual_envelope_spent, formatAmountCents(group.actualCents)),
             )
         }
-        ThinProgressBar(
-            progress = group.fraction(),
-            isOver = group.isOver,
-            modifier = Modifier.padding(top = Dimens.Space8),
-        )
-    }
+    EnvelopeRow(data = data, onClick = onClick)
 }
 
 private fun AnnualEnvelope.fraction(): Float {

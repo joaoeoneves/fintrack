@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
+import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
@@ -304,5 +305,6 @@ class RecurringListViewModelTest {
         assertEquals(1_000L, monthlyEquivalentCents(12_000L))
         assertEquals(0L, monthlyEquivalentCents(0L))
         assertEquals(8L, monthlyEquivalentCents(100L))
+        assertEquals(9L, monthlyEquivalentCents(103L))
     }
 }

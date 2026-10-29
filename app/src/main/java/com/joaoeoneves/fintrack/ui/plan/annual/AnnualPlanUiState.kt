@@ -51,4 +51,5 @@ data class AnnualPlanActions(
     val onPreviousYear: () -> Unit,
     val onNextYear: () -> Unit,
     val onRetry: () -> Unit,
+    val onOpenEnvelope: (String) -> Unit = {},
 )

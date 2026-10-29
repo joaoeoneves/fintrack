@@ -63,7 +63,7 @@ import com.joaoeoneves.fintrack.ui.theme.motionSpec
 import java.time.LocalDate
 import java.time.ZoneId
 
-private val SectionSpacing = Dimens.Space32
+private val SectionSpacing = Dimens.SectionGap
 
 @Composable
 fun DashboardScreen(

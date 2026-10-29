@@ -11,6 +11,10 @@ object Dimens {
     val Space24 = 24.dp
     val Space32 = 32.dp
     val ScreenPadding = 20.dp
+
+    /** Vertical gap between distinct blocks/sections of a screen (a hero, a group of rows, a card). */
+    val SectionGap = Space32
+
     val RowHeight = 64.dp
     val SettingsRowMinHeight = 56.dp
     val IconBubble = 40.dp

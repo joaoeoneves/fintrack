@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.ui.migration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +18,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
 import com.joaoeoneves.fintrack.ui.backup.countsText
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.ThinProgressBar
 import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
@@ -73,10 +73,10 @@ private fun ErrorDialog(
         title = { Text(stringResource(R.string.migration_error_title)) },
         text = { Text(state.message.asString()) },
         confirmButton = {
-            TextButton(onClick = actions.onRetry) { Text(stringResource(R.string.action_retry)) }
+            DialogTextButton(text = stringResource(R.string.action_retry), onClick = actions.onRetry)
         },
         dismissButton = {
-            TextButton(onClick = actions.onDismiss) { Text(stringResource(R.string.migration_action_not_now)) }
+            DialogTextButton(text = stringResource(R.string.migration_action_not_now), onClick = actions.onDismiss)
         },
     )
 }
@@ -98,10 +98,10 @@ private fun OfferDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = actions.onAccept) { Text(stringResource(R.string.migration_action_copy)) }
+            DialogTextButton(text = stringResource(R.string.migration_action_copy), onClick = actions.onAccept)
         },
         dismissButton = {
-            TextButton(onClick = actions.onDecline) { Text(stringResource(R.string.migration_action_not_now)) }
+            DialogTextButton(text = stringResource(R.string.migration_action_not_now), onClick = actions.onDecline)
         },
     )
 }
@@ -146,10 +146,10 @@ private fun PartialFailureDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = actions.onRetry) { Text(stringResource(R.string.action_retry)) }
+            DialogTextButton(text = stringResource(R.string.action_retry), onClick = actions.onRetry)
         },
         dismissButton = {
-            TextButton(onClick = actions.onDismiss) { Text(stringResource(R.string.migration_action_not_now)) }
+            DialogTextButton(text = stringResource(R.string.migration_action_not_now), onClick = actions.onDismiss)
         },
     )
 }
@@ -166,10 +166,10 @@ private fun DoneDialog(
             title = { Text(stringResource(R.string.migration_remove_confirm_title)) },
             text = { Text(stringResource(R.string.migration_remove_confirm_message)) },
             confirmButton = {
-                TextButton(onClick = actions.onRemoveLocal) { Text(stringResource(R.string.action_delete)) }
+                DialogTextButton(text = stringResource(R.string.action_delete), onClick = actions.onRemoveLocal)
             },
             dismissButton = {
-                TextButton(onClick = { confirmRemove = false }) { Text(stringResource(R.string.action_cancel)) }
+                DialogTextButton(text = stringResource(R.string.action_cancel), onClick = { confirmRemove = false })
             },
         )
         return
@@ -189,12 +189,13 @@ private fun DoneDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { confirmRemove = true }) {
-                Text(stringResource(R.string.migration_action_remove_local))
-            }
+            DialogTextButton(
+                text = stringResource(R.string.migration_action_remove_local),
+                onClick = { confirmRemove = true },
+            )
         },
         dismissButton = {
-            TextButton(onClick = actions.onKeepLocal) { Text(stringResource(R.string.migration_action_keep)) }
+            DialogTextButton(text = stringResource(R.string.migration_action_keep), onClick = actions.onKeepLocal)
         },
     )
 }

@@ -27,12 +27,12 @@ import com.joaoeoneves.fintrack.domain.model.MAX_WORKING_DAYS
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import java.time.LocalDate
 import java.time.YearMonth
 
 /**
@@ -71,13 +71,11 @@ internal fun monthName(state: WorkingDaysState): String = formatShortMonthName(s
 /**
  * Dialog for the month's working days and days off. The working-days stepper (0 to [MAX_WORKING_DAYS]) follows
  * "calendar count minus days off" until it is edited by hand; saving a value equal to that automatic count
- * clears the override, and "Reset to automatic" is offered while one is set. Carnival is only a
- * shortcut that adds a day off; they are never subtracted on their own.
+ * clears the override, and "Reset to automatic" is offered while one is set.
  */
 @Composable
 fun WorkingDaysDialog(
     state: WorkingDaysState,
-    carnival: LocalDate?,
     onSave: (month: YearMonth, override: Int?, daysOff: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -112,7 +110,6 @@ fun WorkingDaysDialog(
                 DaysOffFields(
                     daysOff = daysOff,
                     onChange = { daysOff = it },
-                    carnival = carnival,
                 )
             }
         },
@@ -124,7 +121,7 @@ fun WorkingDaysDialog(
                 },
             ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }
 

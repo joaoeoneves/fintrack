@@ -105,3 +105,17 @@ fun MinimalTextField(
         modifier = modifier,
     )
 }
+
+/** The error line under a field or chip group: small, negative colour. */
+@Composable
+fun FieldErrorText(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = FinTrackTheme.colors.negative,
+        modifier = modifier,
+    )
+}

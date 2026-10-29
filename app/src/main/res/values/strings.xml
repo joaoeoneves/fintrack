@@ -470,7 +470,6 @@
         <item quantity="other">%1$d days off</item>
     </plurals>
     <string name="plan_days_off_title">Days off this month</string>
-    <string name="plan_carnival_chip">Carnival, %1$s</string>
     <string name="cd_fewer_days_off">Fewer days off</string>
     <string name="cd_more_days_off">More days off</string>
     <string name="plan_working_days_edited">%1$d (edited)</string>
@@ -665,8 +664,9 @@
     <string name="envelope_row_empty">No categories</string>
     <string name="envelope_card_of">%1$s of %2$s</string>
     <string name="envelope_card_over">Over by %1$s</string>
-    <string name="envelope_card_paid">%1$s of %2$s paid</string>
+    <string name="envelope_card_paid">Recurring: %1$s paid of %2$s</string>
     <string name="envelope_card_spent">Spent this month: %1$s</string>
+    <string name="annual_envelope_spent">Spent: %1$s</string>
     <string name="envelope_card_funded">Funded by %1$s</string>
     <string name="envelope_funded_overflow">%1$s covers %2$s; %3$s comes from other income.</string>
     <plurals name="envelopes_status">

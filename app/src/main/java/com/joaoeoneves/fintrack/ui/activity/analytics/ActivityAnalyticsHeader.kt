@@ -130,12 +130,28 @@ private fun EnvelopeFilterSection(
     val noEnvelope = stringResource(R.string.plan_group_other)
     val spoken = chips.map { "${it.name ?: noEnvelope} ${formatAmountCents(it.spentCents, false)}" }.joinToString("; ")
     val description = stringResource(R.string.cd_envelope_bar, spoken)
+    val colors = chips.indices.map { sliceColorFor(it, dark) }
+    val selectedIndex = chips.indexOfFirst { it.id == selected }.takeIf { it >= 0 }
     EnvelopeSpendBar(
-        segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, sliceColorFor(index, dark)) },
+        segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, colors[index]) },
         description = description,
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
+        selectedIndex = selectedIndex,
+        onSegmentClick = { index ->
+            val id = chips[index].id
+            onSelected(if (id == selected) null else id)
+        },
     )
-    EnvelopeFilterRow(chips = chips, selected = selected, onSelected = onSelected)
+    val shown = selectedIndex?.let { chips[it] }
+    if (shown != null) {
+        Text(
+            text = "${shown.name ?: noEnvelope} · ${formatAmountCents(shown.spentCents)}",
+            style = MaterialTheme.typography.labelMedium,
+            color = colors[selectedIndex],
+            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(bottom = Dimens.Space8),
+        )
+    }
+    EnvelopeFilterRow(chips = chips, selected = selected, onSelected = onSelected, dotColors = colors)
 }
 
 /** The breakdown with a Category | Envelope switch (only when envelopes exist; otherwise just by category). */
