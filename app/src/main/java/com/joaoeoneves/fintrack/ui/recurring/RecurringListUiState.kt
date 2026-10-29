@@ -39,7 +39,6 @@ sealed interface RecurringListUiState {
 /** Callbacks of the recurring list, bundled to keep the composables' parameter lists short. */
 internal data class RecurringListActions(
     val onOpenEditor: (String?) -> Unit,
-    val onTogglePaused: (String) -> Unit,
     val onDeleteRequested: (String) -> Unit,
     val onConfirmDelete: () -> Unit,
     val onDismissDelete: () -> Unit,

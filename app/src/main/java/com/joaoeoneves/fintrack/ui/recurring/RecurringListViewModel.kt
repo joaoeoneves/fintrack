@@ -11,9 +11,7 @@ import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.firstPendingOccurrence
 import com.joaoeoneves.fintrack.domain.model.isEnded
-import com.joaoeoneves.fintrack.domain.model.paused
 import com.joaoeoneves.fintrack.domain.model.resolve
-import com.joaoeoneves.fintrack.domain.model.resumed
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -87,19 +85,6 @@ class RecurringListViewModel
 
         fun onRetry() {
             retryTrigger.value++
-        }
-
-        /**
-         * Pauses an active item (see [paused]); resuming one (see [resumed]) skips the occurrences of the
-         * paused period rather than offering them as overdue.
-         */
-        fun onTogglePaused(id: String) {
-            viewModelScope.launch {
-                val item = latest(id) ?: return@launch
-                val today = LocalDate.now(clock)
-                val updated = if (item.active) item.paused(today) else item.resumed(today)
-                recurringRepository.saveRecurring(updated).onFailure { reportFailure(it) }
-            }
         }
 
         /** Deletes the item at once; the screen offers to undo (its past transactions are never touched). */

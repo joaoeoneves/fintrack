@@ -72,7 +72,6 @@ fun RecurringListScreen(
         actions =
             RecurringListActions(
                 onOpenEditor = onOpenEditor,
-                onTogglePaused = viewModel::onTogglePaused,
                 onDeleteRequested = viewModel::onDeleteRequested,
                 onConfirmDelete = viewModel::onConfirmDelete,
                 onDismissDelete = viewModel::onDismissDelete,
