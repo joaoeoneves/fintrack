@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
@@ -84,6 +87,7 @@ fun ActivityAnalyticsHeader(
                     ),
                 onClick = { expanded = !expanded },
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+                startPadding = 0.dp,
             )
         }
         if (hasDetails && expanded) {
@@ -150,7 +154,9 @@ private fun EnvelopeFilterSection(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(bottom = Dimens.Space8),
         )
     }
+    Spacer(Modifier.height(Dimens.Space12))
     EnvelopeFilterRow(chips = chips, selected = selected, onSelected = onSelected, dotColors = colors)
+    Spacer(Modifier.height(Dimens.Space16))
 }
 
 /** The breakdown with a Category | Envelope switch (only when envelopes exist; otherwise just by category). */
