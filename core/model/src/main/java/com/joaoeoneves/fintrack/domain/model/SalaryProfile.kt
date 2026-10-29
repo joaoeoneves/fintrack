@@ -27,29 +27,11 @@ const val MANAGED_HOLIDAY = "profile_holiday"
 const val MANAGED_CHRISTMAS = "profile_christmas"
 const val MANAGED_DUODECIMOS = "profile_duodecimos"
 
-/** Legacy managed keys (before extras were user-defined); only recognised so stale lines can be cleaned up. */
-const val MANAGED_PROFIT_SHARE = "profile_profit_share"
-const val MANAGED_BONUS = "profile_bonus"
-private const val LEGACY_FLEX_PAYMENTS = 4
-
-/** The legacy managed key of the flexible-benefit payment [index] (0..3). */
-fun managedFlexKey(index: Int): String = "profile_flex_q${index + 1}"
-
-/** The legacy managed key of the profit-share line paid in [month] (1..12). */
-fun managedProfitShareKey(month: Int): String = "${MANAGED_PROFIT_SHARE}_$month"
-
 private val FIXED_MANAGED_KEYS =
     setOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS, MANAGED_MEAL, MANAGED_HOLIDAY, MANAGED_CHRISTMAS)
 
-private val LEGACY_MANAGED_KEYS: Set<String> =
-    setOf(MANAGED_PROFIT_SHARE, MANAGED_BONUS) +
-        List(LEGACY_FLEX_PAYMENTS, ::managedFlexKey) + List(MAX_MONTH_OF_YEAR) { managedProfitShareKey(it + 1) }
-
-/** Whether [key] is a `managedKey` the app can generate: a fixed one, a legacy one or an extra's per-month key. */
-fun isValidManagedKey(key: String): Boolean {
-    val known = key in FIXED_MANAGED_KEYS || key in LEGACY_MANAGED_KEYS
-    return known || parseManagedExtraKey(key) != null
-}
+/** Whether [key] is a `managedKey` the app can generate: a fixed one or an extra's per-month key. */
+fun isValidManagedKey(key: String): Boolean = key in FIXED_MANAGED_KEYS || parseManagedExtraKey(key) != null
 
 /** Default (English) labels of the generated lines; the UI passes localized ones. Existing lines keep theirs. */
 data class SalaryLineLabels(

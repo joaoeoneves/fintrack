@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.joaoeoneves.fintrack.data.preferences.PREFERENCES_DATASTORE_NAME
-import com.joaoeoneves.fintrack.data.preferences.preferencesMigrations
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,7 +29,6 @@ object DataStoreModule {
     ): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(
             corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
-            migrations = preferencesMigrations(context),
             scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
             produceFile = { context.preferencesDataStoreFile(PREFERENCES_DATASTORE_NAME) },
         )

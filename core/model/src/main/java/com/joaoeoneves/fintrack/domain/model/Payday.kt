@@ -52,8 +52,7 @@ fun PlannedIncome.paydayIncome(
 
 /**
  * The incomes already recorded for every paying line of this row in [month], or `null` when the row pays nothing
- * or any of its lines is missing one (a partly received row counts as not received). A line migrated from a
- * recurring income also matches that item's old `rec_<itemId>_<yyyyMMdd>` incomes dated in [month].
+ * or any of its lines is missing one (a partly received row counts as not received).
  */
 fun IncomeRow.receivedIncomes(
     month: YearMonth,
@@ -62,26 +61,8 @@ fun IncomeRow.receivedIncomes(
 ): List<Income>? {
     val byId = incomes.associateBy { it.id }
     val paying = lines.filter { IncomeMonth.forMonth(month, workingDays).amountIn(it, month) > 0L }
-    val found = paying.mapNotNull { byId[paydayIncomeId(it.id, month)] ?: legacyRecurringIncome(it, month, incomes) }
+    val found = paying.mapNotNull { byId[paydayIncomeId(it.id, month)] }
     return found.takeIf { paying.isNotEmpty() && found.size == paying.size }
-}
-
-private val LEGACY_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE
-private const val LEGACY_DATE_LENGTH = 8
-
-/** The old recurring-income income (`rec_<itemId>_<yyyyMMdd>`) of a migrated [line] dated in [month], if any. */
-fun legacyRecurringIncome(
-    line: PlannedIncome,
-    month: YearMonth,
-    incomes: Collection<Income>,
-): Income? {
-    val prefix = line.legacyRecurringItemId()?.let { occurrenceIdPrefix(it) } ?: return null
-    return incomes.firstOrNull { income ->
-        val suffix = income.id.removePrefix(prefix)
-        income.id.startsWith(prefix) &&
-            suffix.length == LEGACY_DATE_LENGTH &&
-            runCatching { YearMonth.from(LocalDate.parse(suffix, LEGACY_DATE_FORMAT)) }.getOrNull() == month
-    }
 }
 
 /** The day the row was received on (the latest of its incomes' local days), or `null` when not received. */

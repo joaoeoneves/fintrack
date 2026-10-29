@@ -9,7 +9,6 @@ import org.junit.Test
 class LegacySalaryExtrasTest {
     private val gross = SalaryInputMode.GROSS
     private val net = SalaryInputMode.NET
-    private val names = LegacyExtraNames("F", "P", "B")
 
     private fun List<SalaryExtra>.byId(id: String) = single { it.id == id }
 
@@ -43,17 +42,20 @@ class LegacySalaryExtrasTest {
                 bonusMonth = 5,
             )
 
-        val result = legacy.toExtras(gross, names)
+        val result = legacy.toExtras(gross)
 
         assertEquals(listOf("flex", "profitshare", "bonus"), result.map { it.id })
-        assertEquals(listOf("F", "P", "B"), result.map { it.name })
+        assertEquals(listOf("Flexible benefits", "Profit share", "Bonus"), result.map { it.name })
         assertEquals(
-            testExtra(id = "flex", name = "F", months = setOf(2, 5, 8, 11), feePpm = 5_000),
+            testExtra(id = "flex", name = "Flexible benefits", months = setOf(2, 5, 8, 11), feePpm = 5_000),
             result.byId("flex"),
         )
-        assertEquals(multipleExtra(id = "profitshare", name = "P", months = setOf(4, 10)), result.byId("profitshare"))
         assertEquals(
-            fixedExtra(id = "bonus", name = "B", deductions = SalaryExtraDeductions.IRS_SS),
+            multipleExtra(id = "profitshare", name = "Profit share", months = setOf(4, 10)),
+            result.byId("profitshare"),
+        )
+        assertEquals(
+            fixedExtra(id = "bonus", name = "Bonus", deductions = SalaryExtraDeductions.IRS_SS),
             result.byId("bonus"),
         )
     }
@@ -70,7 +72,7 @@ class LegacySalaryExtrasTest {
                 bonusMonth = 5,
             )
 
-        val result = legacy.toExtras(net, names)
+        val result = legacy.toExtras(net)
 
         assertEquals(listOf("flex", "bonus"), result.map { it.id })
         assertEquals(SalaryExtraAmountType.FIXED_CENTS, result.byId("flex").amountType)

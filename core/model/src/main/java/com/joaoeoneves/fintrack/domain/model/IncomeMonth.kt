@@ -103,10 +103,7 @@ fun IncomeRow.receivedIncomes(
 ): List<Income>? {
     val byId = incomes.associateBy { it.id }
     val paying = payingLines(month, income)
-    val found =
-        paying.mapNotNull {
-            byId[paydayIncomeId(it.id, month)] ?: legacyRecurringIncome(it, month, incomes)
-        }
+    val found = paying.mapNotNull { byId[paydayIncomeId(it.id, month)] }
     return found.takeIf { paying.isNotEmpty() && found.size == paying.size }
 }
 

@@ -67,7 +67,7 @@ class SalaryProfileViewModel
 
         private val duplicateCandidates = MutableStateFlow<List<PlannedIncome>>(emptyList())
 
-        /** The user's own monthly lines (no earmark) found after a save, to offer removing; empty = no dialog. */
+        /** The user's own monthly lines found after a save, to offer removing; empty = no dialog. */
         val duplicates: StateFlow<List<PlannedIncome>> = duplicateCandidates
 
         val eventFlow: Flow<SalaryProfileEvent> = events.receiveAsFlow()

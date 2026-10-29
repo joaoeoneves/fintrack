@@ -8,19 +8,18 @@ class BackupCodecRecurringTest {
     private val header = """"format":"fintrack-backup","exportedAt":"$EXPORTED_AT""""
 
     @Test
-    fun v3RoundTrip_keepsRecurringIncludingNullEndAndCursorAndCategorylessIncome() {
+    fun v3RoundTrip_keepsRecurringIncludingNullEndAndCursor() {
         val items =
             listOf(
                 backupRecurring("r1"),
                 backupRecurring("r2", endDate = "2027-01-01", handledThrough = "2026-03-15"),
-                backupRecurring("r3", type = "INCOME"),
             )
         val doc = backupDoc().copy(recurring = items)
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
 
         assertEquals(doc, result.document)
-        assertEquals(3, result.document.counts().recurring)
+        assertEquals(2, result.document.counts().recurring)
         assertEquals(0, result.skippedCount)
     }
 

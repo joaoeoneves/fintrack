@@ -261,8 +261,8 @@ private fun DocumentSnapshot.parseRecurring(): RecurringItem? {
             skipped = parseSkipped(),
             pausedAt = parseDate("pausedAt"),
         )
-    val consistent = item.hasValidSchedule && (item.type == RecurringType.INCOME || item.categoryId != null)
-    return if (consistent) item else dropped("schedule/category")
+    val consistent = item.hasValidSchedule && item.type == RecurringType.EXPENSE && item.categoryId != null
+    return if (consistent) item else dropped("type/schedule/category")
 }
 
 private fun DocumentSnapshot.dropped(field: String): RecurringItem? {

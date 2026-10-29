@@ -22,15 +22,11 @@ class LocalAutomationSettingsRepository
         override suspend fun updateLineCursors(
             set: Map<String, YearMonth>,
             remove: Set<String>,
-            clearLegacyPayday: Boolean,
         ): Result<Unit> =
             store.update { doc ->
                 val current = doc.automation ?: LocalAutomation()
                 val cursors = current.lineThrough - remove + set.mapValues { it.value.toString() }
-                val updated = current.copy(lineThrough = cursors)
-                doc.copy(
-                    automation = if (clearLegacyPayday) updated.copy(paydayEnabled = false) else updated,
-                ) to Unit
+                doc.copy(automation = current.copy(lineThrough = cursors)) to Unit
             }
 
         override suspend fun setSalaryPaysNextMonth(enabled: Boolean): Result<Unit> =

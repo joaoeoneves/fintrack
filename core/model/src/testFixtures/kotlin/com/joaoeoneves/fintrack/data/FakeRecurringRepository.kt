@@ -16,6 +16,7 @@ import java.time.LocalDate
  * the transaction in [confirmedTransactions] and moves the item's cursor, as the real one does
  * atomically. Each `next*Error` fails exactly the next call of that kind.
  */
+@Suppress("TooManyFunctions") // implements a wide repository interface
 class FakeRecurringRepository(
     initialItems: List<RecurringItem> = emptyList(),
     var nextObserveError: Throwable? = null,

@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MigrationPlannerRecurringTest {
-    private val items = listOf(localRecurring("r1"), localRecurring("r2", categoryId = null, type = "INCOME"))
+    private val items = listOf(localRecurring("r1"), localRecurring("r2"))
 
     @Test
     fun emptyAccount_copiesAllValidItemsWithSameIds() {
@@ -64,6 +64,16 @@ class MigrationPlannerRecurringTest {
     @Test
     fun invalidItems_areSkippedAndCounted() {
         val local = localDoc(recurring = listOf(localRecurring("ok"), localRecurring("zero", amountCents = 0)))
+
+        val plan = planMigration(local, remoteSnapshot())
+
+        assertEquals(listOf("ok"), plan.recurring.map { it.id })
+        assertEquals(1, plan.skipped)
+    }
+
+    @Test
+    fun oldIncomeItem_isSkippedAndCounted() {
+        val local = localDoc(recurring = listOf(localRecurring("ok"), localRecurring("inc", null, "INCOME")))
 
         val plan = planMigration(local, remoteSnapshot())
 

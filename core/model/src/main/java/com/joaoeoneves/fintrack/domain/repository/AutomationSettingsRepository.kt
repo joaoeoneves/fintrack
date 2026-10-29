@@ -9,14 +9,10 @@ interface AutomationSettingsRepository {
     /** The automation state; the defaults (everything off) while nothing is stored. */
     fun observeAutomationSettings(): Flow<AutomationSettings>
 
-    /**
-     * Sets the per-line cursors in [set], removes those of [remove] and, with [clearLegacyPayday], switches the
-     * legacy payday flag off.
-     */
+    /** Sets the per-line cursors in [set] and removes those of [remove]. */
     suspend fun updateLineCursors(
         set: Map<String, YearMonth> = emptyMap(),
         remove: Set<String> = emptySet(),
-        clearLegacyPayday: Boolean = false,
     ): Result<Unit>
 
     /** Stores the salary-shift choice with the account (or the guest data), see `salaryShiftEnabled`. */

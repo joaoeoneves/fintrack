@@ -78,32 +78,4 @@ class EnvelopesSavingTest : MonthlyPlanTestBase() {
     fun noSaving_leavesSavingCommittedZero() {
         assertEquals(0L, summary(listOf(bucket(food, 10_000)), listOf(food)).savingCommittedCents)
     }
-
-    @Test
-    fun envelopeMigration_skipsSavingCategories() {
-        val result =
-            envelopeMigrationOf(
-                listOf(Budget(invest.id, 100), Budget(CategoryId("gym"), 100)),
-                listOf(cat("invest", CategoryKind.SAVING), cat("gym", CategoryKind.SPENDING)),
-                emptyList(),
-                emptyList(),
-            ) { "n-${it.id.value}" }
-
-        assertEquals(listOf("env_gym"), result.envelopes.map { it.id })
-    }
-
-    @Test
-    fun envelopeMigration_skipsSavingEarmarks() {
-        val earmarkedLine = PlannedIncome("meal", "Meal", 100, 0, earmark = Earmark.Category("invest"))
-
-        val result =
-            envelopeMigrationOf(
-                emptyList(),
-                listOf(cat("invest", CategoryKind.SAVING)),
-                emptyList(),
-                listOf(earmarkedLine),
-            ) { "n" }
-
-        assertTrue(result.envelopes.none { it.id == "env_invest" })
-    }
 }

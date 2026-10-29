@@ -13,7 +13,7 @@ import java.time.YearMonth
 /** Schema v12: the automation settings in the backup document, its codec and the repository export/restore. */
 class BackupAutomationTest : BackupRepositoryTestBase() {
     private val header = """"format":"fintrack-backup","exportedAt":"$EXPORTED_AT""""
-    private val automation = LocalAutomation(paydayEnabled = true, paydayThrough = "2026-09")
+    private val automation = LocalAutomation(lineThrough = mapOf("p1" to "2026-09"))
 
     @Test
     fun v11File_decodesWithoutAutomation() {
@@ -37,15 +37,15 @@ class BackupAutomationTest : BackupRepositoryTestBase() {
     }
 
     @Test
-    fun enabledWithoutCursor_isKept() {
-        val doc = backupDoc().copy(automation = LocalAutomation(paydayEnabled = true))
+    fun salaryPaysNextMonthOnly_isKept() {
+        val doc = backupDoc().copy(automation = LocalAutomation(salaryPaysNextMonth = true))
 
         assertEquals(doc, BackupCodec.decode(BackupCodec.encode(doc)).success().document)
     }
 
     @Test
     fun invalidCursor_isDropped_andCountedAsSkipped() {
-        val text = """{$header,"schemaVersion":13,"automation":{"paydayEnabled":true,"paydayThrough":"soon"}}"""
+        val text = """{$header,"schemaVersion":13,"automation":{"lineThrough":{"p1":"soon"}}}"""
 
         val result = BackupCodec.decode(text).success()
 
@@ -54,11 +54,21 @@ class BackupAutomationTest : BackupRepositoryTestBase() {
     }
 
     @Test
+    fun oldPaydaySwitch_isIgnored_andTheFileStillDecodes() {
+        val text = """{$header,"schemaVersion":12,"automation":{"paydayEnabled":true,"paydayThrough":"2026-09"}}"""
+
+        val result = BackupCodec.decode(text).success()
+
+        assertEquals(LocalAutomation(), result.document.automation)
+        assertEquals(0, result.skippedCount)
+    }
+
+    @Test
     fun decodedFile_withNewerUnknownKeys_stillWorks() {
-        val text = """{$header,"schemaVersion":13,"automation":{"paydayEnabled":false,"x":1}}"""
+        val text = """{$header,"schemaVersion":13,"automation":{"salaryPaysNextMonth":false,"x":1}}"""
 
         assertEquals(
-            LocalAutomation(false),
+            LocalAutomation(salaryPaysNextMonth = false),
             BackupCodec
                 .decode(text)
                 .success()
@@ -69,7 +79,7 @@ class BackupAutomationTest : BackupRepositoryTestBase() {
     @Test
     fun export_includesNonDefaultAutomation() =
         runStoreTest {
-            val settings = AutomationSettings(true, YearMonth.of(2026, 9))
+            val settings = AutomationSettings(mapOf("p1" to YearMonth.of(2026, 9)))
 
             val doc = repository(automation = settings).buildBackup(Instant.parse(EXPORTED_AT)).getOrThrow()
 

@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,11 +13,10 @@ class LocalSalaryProfileRepository
     @Inject
     constructor(
         private val store: LocalDataStore,
-        private val legacyNames: LegacyExtraNamesProvider,
     ) : SalaryProfileRepository {
         override fun observeSalaryProfile(): Flow<SalaryProfile?> = store.data.map { it.salaryProfile?.domain() }
 
-        private fun LocalSalaryProfile.domain() = toDomain(legacyNames.names())
+        private fun LocalSalaryProfile.domain() = toDomain()
 
         override suspend fun saveSalaryProfile(profile: SalaryProfile): Result<Unit> =
             store.update { doc ->

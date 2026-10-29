@@ -31,8 +31,8 @@ class FakeAutomationSettingsRepository(
     /** Every [recordPayday] call as (cursors, incomes), in order. */
     val recorded = mutableListOf<Pair<Map<String, YearMonth>, List<Income>>>()
 
-    /** Every [updateLineCursors] call as (set, remove, clearLegacyPayday), in order. */
-    val cursorUpdates = mutableListOf<Triple<Map<String, YearMonth>, Set<String>, Boolean>>()
+    /** Every [updateLineCursors] call as (set, remove), in order. */
+    val cursorUpdates = mutableListOf<Pair<Map<String, YearMonth>, Set<String>>>()
 
     override fun observeAutomationSettings(): Flow<AutomationSettings> {
         nextObserveError?.let { error -> return flow { throw error } }
@@ -42,14 +42,12 @@ class FakeAutomationSettingsRepository(
     override suspend fun updateLineCursors(
         set: Map<String, YearMonth>,
         remove: Set<String>,
-        clearLegacyPayday: Boolean,
     ): Result<Unit> {
         failIfRequested()?.let { return Result.failure(it) }
-        cursorUpdates += Triple(set, remove, clearLegacyPayday)
+        cursorUpdates += set to remove
         val current = settingsFlow.value
         settingsFlow.value =
             current.copy(
-                legacyPaydayEnabled = current.legacyPaydayEnabled && !clearLegacyPayday,
                 lineRecordedThrough = current.lineRecordedThrough - remove + set,
             )
         return Result.success(Unit)

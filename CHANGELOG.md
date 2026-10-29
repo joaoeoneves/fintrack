@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Removed
+- The 3.0 data migrations (envelopes, savings plans, recurring income), the old payday switch, earmarks,
+  the flex / profit-share / bonus salary fields and the old preferences migration, in the app and in the
+  Firestore rules. Pre-3.0 backups still restore, but earmarks and the payday switch are ignored and
+  recurring income items are skipped.
+
 ## [3.0] - 2026-10-28
 
 "Organise": fewer concepts, a clear place for everything, and a smoother app.

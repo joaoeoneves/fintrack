@@ -95,31 +95,12 @@ class RestoreMigrationPlanTest {
     }
 
     @Test
-    fun earmarkToAMissingTarget_isClearedAndTheLineStays() {
-        val lines =
-            listOf(
-                backupPlanned("cat-ok").copy(earmarkType = "CATEGORY", earmarkId = "gym"),
-                backupPlanned("cat-bad").copy(earmarkType = "CATEGORY", earmarkId = "nope"),
-                backupPlanned("grp-ok").copy(earmarkType = "GROUP", earmarkId = "g1"),
-                backupPlanned("grp-bad").copy(earmarkType = "GROUP", earmarkId = "nope"),
-                backupPlanned("builtin").copy(earmarkType = "CATEGORY", earmarkId = "FOOD"),
-            )
-        val local =
-            LocalDataDocument(
-                plannedIncome = lines,
-                categories = listOf(backupCategory("gym")),
-                categoryGroups = listOf(group("g1")),
-            )
+    fun orphanPlaceholder_isNamedWithTheGivenDeletedCategoryName() {
+        val local = LocalDataDocument(budgets = listOf(LocalBudget("ghost", 100)))
 
-        val byId = restoreMigrationPlanOf(local).plannedIncome.associateBy { it.id }
+        val plan = restoreMigrationPlanOf(local, "Categoria apagada")
 
-        assertEquals("gym", byId.getValue("cat-ok").earmarkId)
-        assertNull(byId.getValue("cat-bad").earmarkId)
-        assertNull(byId.getValue("cat-bad").earmarkType)
-        assertEquals("g1", byId.getValue("grp-ok").earmarkId)
-        assertNull(byId.getValue("grp-bad").earmarkId)
-        assertEquals("FOOD", byId.getValue("builtin").earmarkId)
-        assertEquals(5, byId.size)
+        assertEquals("Categoria apagada", plan.categories.single().name)
     }
 
     @Test
@@ -144,7 +125,6 @@ class RestoreMigrationPlanTest {
                 plannedIncome = listOf(backupPlanned("p1")),
                 automation =
                     LocalAutomation(
-                        paydayEnabled = true,
                         lineThrough = mapOf("p1" to "2026-03", "ghost" to "2026-02"),
                     ),
             )
@@ -153,7 +133,6 @@ class RestoreMigrationPlanTest {
 
         assertNotNull(automation)
         assertEquals(mapOf("p1" to "2026-03"), automation?.lineThrough)
-        assertTrue(automation?.paydayEnabled == true)
     }
 
     @Test

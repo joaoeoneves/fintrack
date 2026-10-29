@@ -1,8 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
 import com.joaoeoneves.fintrack.testutil.bonusExtra
 import com.joaoeoneves.fintrack.testutil.flexExtra
 import kotlinx.coroutines.flow.first
@@ -13,11 +11,7 @@ import org.junit.Test
 
 class LocalSalaryProfileRepositoryTest : LocalStoreTestBase() {
     private val store by lazy { newStore() }
-    private val names =
-        object : LegacyExtraNamesProvider {
-            override fun names() = LegacyExtraNames("Flexivel", "Lucros", "Premio")
-        }
-    private val repo by lazy { LocalSalaryProfileRepository(store, names) }
+    private val repo by lazy { LocalSalaryProfileRepository(store) }
 
     private suspend fun current() = repo.observeSalaryProfile().first()
 
@@ -50,7 +44,7 @@ class LocalSalaryProfileRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun legacyV9File_isMigratedOnRead_withLocalizedNames() =
+    fun legacyV9File_isMigratedOnRead_withTheEnglishNames() =
         runStoreTest {
             dataFile.writeText(
                 """{"schemaVersion":9,"revision":1,"salaryProfile":""" +
@@ -60,7 +54,7 @@ class LocalSalaryProfileRepositoryTest : LocalStoreTestBase() {
             val extras = current()!!.extras
 
             assertEquals(listOf("flex", "bonus"), extras.map { it.id })
-            assertEquals(listOf("Flexivel", "Premio"), extras.map { it.name })
+            assertEquals(listOf("Flexible benefits", "Bonus"), extras.map { it.name })
         }
 
     @Test

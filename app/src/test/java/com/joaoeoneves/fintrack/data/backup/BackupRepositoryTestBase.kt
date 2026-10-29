@@ -8,8 +8,8 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
-import com.joaoeoneves.fintrack.data.FakeLegacyNames
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
+import com.joaoeoneves.fintrack.data.FakePlaceholderNames
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
@@ -74,6 +74,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         salaryProfile: SalaryProfile? = null,
         goals: List<SavingsGoal> = emptyList(),
         automation: AutomationSettings = AutomationSettings(),
+        deletedCategoryName: String = "Deleted category",
     ) = BackupRepository(
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
@@ -87,7 +88,7 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
                 FakeSalaryProfileRepository(salaryProfile),
                 FakeGoalRepository(goals),
                 FakeAutomationSettingsRepository(automation),
-                FakeLegacyNames(),
+                FakePlaceholderNames(deletedCategoryName),
             ),
         ),
         FakeCategoryRepository(categoryDocs),

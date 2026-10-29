@@ -84,22 +84,14 @@ fun parseManagedExtraKey(key: String): Pair<String, Int>? {
     return if (valid) id to month else null
 }
 
-/**
- * The fixed English names written into stored data when the user supplied none (the extras migrated from the legacy
- * fields, the placeholder of a deleted category kept by a restore); the app passes localized ones.
- */
-data class LegacyExtraNames(
-    val flex: String = "Flexible benefits",
-    val profitShare: String = "Profit share",
-    val bonus: String = "Bonus",
-    val deletedCategory: String = "Deleted category",
-)
+private const val LEGACY_FLEX_ID = "flex"
+private const val LEGACY_PROFIT_SHARE_ID = "profitshare"
+private const val LEGACY_BONUS_ID = "bonus"
+private const val LEGACY_FLEX_NAME = "Flexible benefits"
+private const val LEGACY_PROFIT_SHARE_NAME = "Profit share"
+private const val LEGACY_BONUS_NAME = "Bonus"
 
-const val LEGACY_FLEX_ID = "flex"
-const val LEGACY_PROFIT_SHARE_ID = "profitshare"
-const val LEGACY_BONUS_ID = "bonus"
-
-/** The flex / profit-share / bonus fields a salary profile had before extras were user-defined. */
+/** The flex / profit-share / bonus fields of an old backup's salary profile, from before extras were user-defined. */
 data class LegacySalaryExtras(
     val flexPpm: Int? = null,
     val flexAnnualCents: Long? = null,
@@ -117,10 +109,7 @@ data class LegacySalaryExtras(
 }
 
 /** The extras equivalent to these legacy fields in [mode]; flex stays quarterly, the bonus keeps its deductions. */
-fun LegacySalaryExtras.toExtras(
-    mode: SalaryInputMode,
-    names: LegacyExtraNames = LegacyExtraNames(),
-): List<SalaryExtra> {
+fun LegacySalaryExtras.toExtras(mode: SalaryInputMode): List<SalaryExtra> {
     val gross = mode == SalaryInputMode.GROSS
     val flexMonths =
         List(LEGACY_FLEX_PAYMENTS) { (flexFirstMonth - 1 + it * EXTRA_PAYMENTS_STEP) % MAX_MONTH_OF_YEAR + 1 }
@@ -129,7 +118,7 @@ fun LegacySalaryExtras.toExtras(
             gross && (flexPpm ?: 0) > 0 ->
                 SalaryExtra(
                     LEGACY_FLEX_ID,
-                    names.flex,
+                    LEGACY_FLEX_NAME,
                     SalaryExtraAmountType.PERCENT_OF_ANNUAL_GROSS_PPM,
                     flexPpm!!.toLong(),
                     flexMonths.toSet(),
@@ -138,7 +127,7 @@ fun LegacySalaryExtras.toExtras(
             !gross && (flexAnnualCents ?: 0L) > 0 ->
                 SalaryExtra(
                     LEGACY_FLEX_ID,
-                    names.flex,
+                    LEGACY_FLEX_NAME,
                     SalaryExtraAmountType.FIXED_CENTS,
                     flexAnnualCents!!,
                     flexMonths.toSet(),
@@ -149,7 +138,7 @@ fun LegacySalaryExtras.toExtras(
         profitShareMultiplierPpm?.takeIf { gross && it > 0 }?.let {
             SalaryExtra(
                 LEGACY_PROFIT_SHARE_ID,
-                names.profitShare,
+                LEGACY_PROFIT_SHARE_NAME,
                 SalaryExtraAmountType.MULTIPLE_OF_BASE_PPM,
                 it.toLong(),
                 profitShareMonths
@@ -161,7 +150,7 @@ fun LegacySalaryExtras.toExtras(
         bonusCents?.takeIf { it > 0 }?.let {
             SalaryExtra(
                 LEGACY_BONUS_ID,
-                names.bonus,
+                LEGACY_BONUS_NAME,
                 SalaryExtraAmountType.FIXED_CENTS,
                 it,
                 setOf(bonusMonth ?: DEFAULT_EXTRA_PAY_MONTH),

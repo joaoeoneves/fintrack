@@ -48,16 +48,6 @@ class LocalAutomationSettingsRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun updateLineCursors_clearLegacyPayday_switchesTheFlagOffAndKeepsTheLegacyCursor() =
-        runStoreTest {
-            store.update { it.copy(automation = LocalAutomation(true, "2026-09")) to Unit }
-
-            repo.updateLineCursors(clearLegacyPayday = true)
-
-            assertEquals(AutomationSettings(false, sep), settings())
-        }
-
-    @Test
     fun recordPayday_storesIncomes_andMovesTheCursorsAtomically() =
         runStoreTest {
             repo.updateLineCursors(set = mapOf("a" to YearMonth.of(2026, 8), "c" to YearMonth.of(2026, 8)))
@@ -106,10 +96,10 @@ class LocalAutomationSettingsRepositoryTest : LocalStoreTestBase() {
     fun unreadableStoredCursors_readAsNever() =
         runStoreTest {
             store.update {
-                it.copy(automation = LocalAutomation(true, "garbage", mapOf("a" to "nope", "b" to "2026-09"))) to Unit
+                it.copy(automation = LocalAutomation(mapOf("a" to "nope", "b" to "2026-09"))) to Unit
             }
 
-            assertEquals(AutomationSettings(true, null, mapOf("b" to sep)), settings())
+            assertEquals(AutomationSettings(mapOf("b" to sep)), settings())
         }
 
     @Test
@@ -128,13 +118,13 @@ class LocalAutomationSettingsRepositoryTest : LocalStoreTestBase() {
     }
 
     @Test
-    fun v15File_decodesWithoutLineThrough() =
+    fun v15File_withThePaydaySwitch_decodesIgnoringIt() =
         runStoreTest {
             val automation = """{"paydayEnabled":true,"paydayThrough":"2026-09"}"""
             dataFile.writeText("""{"schemaVersion":15,"revision":3,"automation":$automation}""")
 
             val loaded = LocalAutomationSettingsRepository(newStore()).observeAutomationSettings().first()
-            assertEquals(AutomationSettings(true, sep), loaded)
+            assertEquals(AutomationSettings(), loaded)
         }
 
     @Test
@@ -146,8 +136,8 @@ class LocalAutomationSettingsRepositoryTest : LocalStoreTestBase() {
             assertTrue(newStore().data.first().isEmpty)
 
             val s = newStore()
-            s.update { it.copy(automation = LocalAutomation(true, "2026-09")) to Unit }
-            assertEquals(LocalAutomation(true, "2026-09"), diskDoc().automation)
+            s.update { it.copy(automation = LocalAutomation(mapOf("a" to "2026-09"))) to Unit }
+            assertEquals(LocalAutomation(mapOf("a" to "2026-09")), diskDoc().automation)
             assertTrue(!s.data.first().isEmpty)
         }
 }

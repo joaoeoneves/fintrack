@@ -46,29 +46,20 @@ class IncomeComponentsTest {
         assertEquals(SalaryComponent.SUBSIDIES, managed(MANAGED_HOLIDAY).salaryComponent)
         assertEquals(SalaryComponent.SUBSIDIES, managed(MANAGED_CHRISTMAS).salaryComponent)
         assertEquals(SalaryComponent.SUBSIDIES, managed(MANAGED_DUODECIMOS).salaryComponent)
-        assertEquals(SalaryComponent.EXTRA, managed(MANAGED_BONUS).salaryComponent)
-        assertEquals(SalaryComponent.EXTRA, managed(managedProfitShareKey(7)).salaryComponent)
         assertEquals(SalaryComponent.EXTRA, managed(managedExtraKey("abc", 7)).salaryComponent)
-        for (i in 0 until 4) {
-            assertEquals(SalaryComponent.EXTRA, managed(managedFlexKey(i)).salaryComponent)
-        }
         assertNull(own1.salaryComponent)
         assertNull(managed("profile_unknown").salaryComponent)
     }
 
     @Test
     fun everyValidManagedKey_hasAComponent() {
-        val keys = lines().mapNotNull { it.managedKey } + managedFlexKey(0) + MANAGED_BONUS
+        val keys = lines().mapNotNull { it.managedKey }
         assertTrue(keys.all { isValidManagedKey(it) && managed(it).salaryComponent != null })
     }
 
     @Test
-    fun extraId_mapsExtraAndLegacyKeys() {
+    fun extraId_mapsExtraKeys() {
         assertEquals("abc", managed(managedExtraKey("abc", 3)).salaryExtraId)
-        assertEquals(LEGACY_FLEX_ID, managed(managedFlexKey(2)).salaryExtraId)
-        assertEquals(LEGACY_PROFIT_SHARE_ID, managed(managedProfitShareKey(5)).salaryExtraId)
-        assertEquals(LEGACY_PROFIT_SHARE_ID, managed(MANAGED_PROFIT_SHARE).salaryExtraId)
-        assertEquals(LEGACY_BONUS_ID, managed(MANAGED_BONUS).salaryExtraId)
         assertNull(managed(MANAGED_MEAL).salaryExtraId)
         assertNull(own1.salaryExtraId)
     }
@@ -145,21 +136,6 @@ class IncomeComponentsTest {
 
         assertEquals(2, rows.extra("profit").lines.size)
         assertEquals(25_000, rows.extra("profit").cents)
-    }
-
-    @Test
-    fun legacyLines_groupWithTheirMigratedExtraId() {
-        val legacy =
-            listOf(managedFlexKey(0), managedFlexKey(1), MANAGED_BONUS, managedProfitShareKey(3))
-                .mapIndexed { i, k ->
-                    PlannedIncome(k, "old", 100, i, frequency = IncomeFrequency.MONTHLY, managedKey = k)
-                }
-
-        val rows = rowsIn(1, legacy)
-
-        assertEquals(listOf("flex", "profitshare", "bonus").toSet(), rows.mapNotNull { it.extraId }.toSet())
-        assertEquals(200, rows.extra("flex").cents)
-        assertEquals(2, rows.extra("flex").lines.size)
     }
 
     @Test

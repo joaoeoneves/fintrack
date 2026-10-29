@@ -11,7 +11,7 @@ import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
 import com.joaoeoneves.fintrack.data.toCategoryOrNull
 import com.joaoeoneves.fintrack.data.toEnvelopeOrNull
-import com.joaoeoneves.fintrack.domain.repository.LegacyExtraNamesProvider
+import com.joaoeoneves.fintrack.domain.repository.PlaceholderNamesProvider
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
@@ -32,7 +32,7 @@ class FirestoreAccountMigrator
     constructor(
         private val firestore: FirebaseFirestore,
         private val firebaseAuth: FirebaseAuth,
-        private val legacyNames: LegacyExtraNamesProvider,
+        private val placeholderNames: PlaceholderNamesProvider,
     ) : AccountMigrator {
         override suspend fun migrate(
             local: LocalDataDocument,
@@ -42,9 +42,8 @@ class FirestoreAccountMigrator
                 firebaseAuth.currentUser?.uid
                     ?: return MigrationResult(0, 0, 0, IllegalStateException("Not signed in"))
             return runCatchingCancellable {
-                val names = legacyNames.names()
-                val plan = planMigration(local, fetchSnapshot(uid), names.deletedCategory)
-                plan to plan.toBatches(names)
+                val plan = planMigration(local, fetchSnapshot(uid), placeholderNames.deletedCategory())
+                plan to plan.toBatches()
             }.fold(
                 onSuccess = { (plan, batches) ->
                     onProgress(0, plan.total)

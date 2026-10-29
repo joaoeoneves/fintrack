@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_MULTIPLE_PPM
@@ -163,7 +162,6 @@ class SalaryProfileRecordsTest {
     fun managedKey_everyKnownKeyIsValid() {
         val keys =
             listOf(MANAGED_NET_SALARY, "profile_duodecimos", "profile_meal", "profile_holiday", "profile_christmas") +
-                listOf("profile_bonus", "profile_profit_share", "profile_profit_share_3", "profile_flex_q2") +
                 listOf("profile_extra_abc_1", "profile_extra_Zz9_12")
         keys.forEach { validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0, managedKey = it)) }
     }
@@ -173,6 +171,10 @@ class SalaryProfileRecordsTest {
         validatePlannedIncome(LocalPlannedIncome("p", "Pay", 5, 0))
         listOf(
             "profile_other",
+            "profile_bonus",
+            "profile_profit_share",
+            "profile_profit_share_3",
+            "profile_flex_q2",
             "",
             "profile_extra_abc_0",
             "profile_extra_abc_13",
@@ -269,16 +271,16 @@ class SalaryProfileRecordsTest {
     }
 
     @Test
-    fun v9Document_withLegacyFields_migratesToExtras_withTheGivenNames() {
+    fun v9Document_withLegacyFields_migratesToExtras_withTheEnglishNames() {
         val json =
             """{"baseGrossCents":100000,"flexPpm":70000,"flexFirstMonth":2,"flexWithdrawalFeePpm":5000,""" +
                 """"profitShareMultiplierPpm":500000,"profitShareMonths":[4,10],"bonusCents":10000,"bonusMonth":5}"""
         val decoded = Json.decodeFromString<LocalSalaryProfile>(json)
 
-        val extras = decoded.toDomain(LegacyExtraNames("F", "P", "B")).extras
+        val extras = decoded.toDomain().extras
 
         assertEquals(listOf("flex", "profitshare", "bonus"), extras.map { it.id })
-        assertEquals(listOf("F", "P", "B"), extras.map { it.name })
+        assertEquals(listOf("Flexible benefits", "Profit share", "Bonus"), extras.map { it.name })
         assertEquals(setOf(2, 5, 8, 11), extras[0].months)
         assertEquals(5_000, extras[0].feePpm)
         assertEquals(setOf(4, 10), extras[1].months)

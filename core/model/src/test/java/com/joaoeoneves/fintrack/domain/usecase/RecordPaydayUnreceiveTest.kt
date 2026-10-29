@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
-import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -91,30 +90,6 @@ class RecordPaydayUnreceiveTest : RecordPaydayTestBase() {
             assertEquals(0, created)
             assertTrue(stored().isEmpty())
             assertEquals(oct, cursor("a"))
-        }
-
-    @Test
-    fun deletesTheLegacyRecIncomeOfAMigratedLine() =
-        runTest {
-            val migrated = line("rinc_abc")
-            incomes.addIncome(Income("rec_abc_20261005", "Old", 500L, at("2026-10-05T12:00:00Z"), null))
-            incomes.addIncome(Income("rec_abc_20260905", "Old", 500L, at("2026-09-05T12:00:00Z"), null))
-
-            assertTrue(useCase.unreceive(listOf(migrated), oct, utc).isSuccess)
-
-            assertEquals(listOf("rec_abc_20260905"), stored().map { it.id })
-        }
-
-    @Test
-    fun deletesBothThePaydayAndTheLegacyIncomeWhenBothExist() =
-        runTest {
-            val migrated = line("rinc_abc")
-            receive(migrated)
-            incomes.addIncome(Income("rec_abc_20261005", "Old", 500L, at("2026-10-05T12:00:00Z"), null))
-
-            useCase.unreceive(listOf(migrated), oct, utc)
-
-            assertTrue(stored().isEmpty())
         }
 }
 

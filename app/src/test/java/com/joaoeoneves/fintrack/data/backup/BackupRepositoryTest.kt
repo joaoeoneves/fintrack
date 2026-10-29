@@ -8,8 +8,8 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
-import com.joaoeoneves.fintrack.data.FakeLegacyNames
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
+import com.joaoeoneves.fintrack.data.FakePlaceholderNames
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
@@ -111,6 +111,21 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
         }
 
     @Test
+    fun export_orphanPlaceholders_useTheProvidedDeletedCategoryName() =
+        runStoreTest {
+            val ghost = Category.unknown(CategoryId("ghost"))
+            val repo =
+                repository(
+                    expenses = listOf(testExpense("e1", 100, march, category = ghost)),
+                    deletedCategoryName = "Categoria apagada",
+                )
+
+            val doc = repo.build()
+
+            assertEquals(listOf("Categoria apagada"), doc.categories.map { it.name })
+        }
+
+    @Test
     fun export_orphanExpenseAndBudget_getArchivedPlaceholders() =
         runStoreTest {
             val gym = userCategory("gym", order = 7)
@@ -160,7 +175,7 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
                             FakeSalaryProfileRepository(),
                             FakeGoalRepository(),
                             FakeAutomationSettingsRepository(),
-                            FakeLegacyNames(),
+                            FakePlaceholderNames(),
                         ),
                     ),
                     FakeCategoryRepository(),

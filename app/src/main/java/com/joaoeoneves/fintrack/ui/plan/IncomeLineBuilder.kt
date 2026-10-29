@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.plan
 
-import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.editedFrom
 import com.joaoeoneves.fintrack.domain.model.isManaged
@@ -28,7 +27,6 @@ internal fun incomeLineOf(
             monthOfYear = schedule.monthOfYear,
             yearMonth = schedule.yearMonth,
             skipMonths = schedule.skipMonths,
-            earmark = schedule.earmark,
             autoRecord = schedule.autoRecord,
             payDay = schedule.payDay,
         )
@@ -58,7 +56,7 @@ internal fun PlannedIncome.paysDifferently(other: PlannedIncome): Boolean =
         payDay != other.payDay
 
 /**
- * A managed line keeps the profile's amount and schedule; the label, (monthly lines') earmark, [autoRecord] and
+ * A managed line keeps the profile's amount and schedule; the label, [autoRecord] and
  * [payDay] are the user's.
  */
 private fun PlannedIncome.withUserEdits(
@@ -67,7 +65,6 @@ private fun PlannedIncome.withUserEdits(
 ): PlannedIncome =
     copy(
         label = label,
-        earmark = if (frequency == IncomeFrequency.MONTHLY) schedule.earmark else earmark,
         autoRecord = schedule.autoRecord,
         payDay = schedule.payDay,
     )

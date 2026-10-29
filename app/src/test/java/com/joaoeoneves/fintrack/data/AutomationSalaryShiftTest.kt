@@ -28,4 +28,13 @@ class AutomationSalaryShiftTest {
         assertTrue(off.containsKey("salaryPaysNextMonth"))
         assertEquals(false, off["salaryPaysNextMonth"])
     }
+
+    @Test
+    fun toFirestoreMap_hasNoPaydayKeys() {
+        val map = AutomationSettings(mapOf("p1" to java.time.YearMonth.of(2026, 9)), true).toFirestoreMap()
+
+        assertFalse(map.containsKey("paydayEnabled"))
+        assertFalse(map.containsKey("paydayThrough"))
+        assertEquals(setOf("lineThrough", "salaryPaysNextMonth", "updatedAt"), map.keys)
+    }
 }

@@ -76,7 +76,6 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "New group"
 - tapOn: "Name"
 - inputText: "Food"
-- back
 - tapOn: "Add category"
 - tapOn:
     text: "Food"
@@ -90,7 +89,6 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "New group"
 - tapOn: "Name"
 - inputText: "Shopping"
-- back
 - tapOn: "Add category"
 - tapOn:
     text: "Shopping"

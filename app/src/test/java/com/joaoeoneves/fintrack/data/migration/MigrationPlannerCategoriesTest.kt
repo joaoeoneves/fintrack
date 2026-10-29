@@ -130,6 +130,15 @@ class MigrationPlannerCategoriesTest {
     }
 
     @Test
+    fun orphanPlaceholder_isNamedWithTheGivenDeletedCategoryName() {
+        val local = localDoc(expenses = listOf(localExpense("e1", "deleted-cat")))
+
+        val plan = planMigration(local, remoteSnapshot(), "Categoria apagada")
+
+        assertEquals("Categoria apagada", plan.categories.single().name)
+    }
+
+    @Test
     fun invalidCustomCategory_isSkippedAndItsRecordsWithIt() {
         val local =
             localDoc(

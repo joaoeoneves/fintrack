@@ -17,6 +17,7 @@ import java.util.UUID
  * In-memory [ExpenseRepository] implementation intended for tests. Not wired via Hilt; construct
  * and pass it directly where a fake repository is needed.
  */
+@Suppress("TooManyFunctions") // implements a wide repository interface
 class FakeExpenseRepository(
     initialExpenses: List<Expense> = emptyList(),
     var nextObserveExpensesError: Throwable? = null,

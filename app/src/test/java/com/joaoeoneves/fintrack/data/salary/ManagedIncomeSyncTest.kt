@@ -8,11 +8,9 @@ import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.data.backup.RestoreGate
 import com.joaoeoneves.fintrack.domain.model.MANAGED_DUODECIMOS
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
-import com.joaoeoneves.fintrack.domain.model.MANAGED_PROFIT_SHARE
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.managedExtraKey
-import com.joaoeoneves.fintrack.domain.model.managedFlexKey
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.testutil.bonusExtra
 import com.joaoeoneves.fintrack.testutil.flexExtra
@@ -29,6 +27,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+
+private const val LEGACY_PROFIT_SHARE = "profile_profit_share"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -91,7 +91,7 @@ class ManagedIncomeSyncTest {
         runTest(UnconfinedTestDispatcher()) {
             // Legacy layout: the salary line holds the whole net, no duodecimos line, a legacy profit share line.
             val legacySalary = full.single { it.id == MANAGED_NET_SALARY }.copy(amountCents = 86_000, label = "Mine")
-            val legacyProfit = PlannedIncome(MANAGED_PROFIT_SHARE, "Profit", 5, 90, managedKey = MANAGED_PROFIT_SHARE)
+            val legacyProfit = PlannedIncome(LEGACY_PROFIT_SHARE, "Profit", 5, 90, managedKey = LEGACY_PROFIT_SHARE)
             val stored =
                 listOf(own, legacySalary, legacyProfit) +
                     full.filter { it.id !in setOf(MANAGED_NET_SALARY, MANAGED_DUODECIMOS) }
@@ -105,7 +105,7 @@ class ManagedIncomeSyncTest {
             assertEquals(79_000, byId.getValue(MANAGED_NET_SALARY).amountCents)
             assertEquals("Mine", byId.getValue(MANAGED_NET_SALARY).label)
             assertEquals(wantedDuo, byId.getValue(MANAGED_DUODECIMOS).amountCents)
-            assertTrue(MANAGED_PROFIT_SHARE !in byId)
+            assertTrue(LEGACY_PROFIT_SHARE !in byId)
             assertTrue("own" in byId)
             assertTrue(managedExtraKey("bonus", 5) in byId)
         }
@@ -113,7 +113,7 @@ class ManagedIncomeSyncTest {
     @Test
     fun legacyFlexAndBonusLines_areReplacedByTheExtraLines() =
         runTest(UnconfinedTestDispatcher()) {
-            val legacyKeys = listOf(managedFlexKey(0), managedFlexKey(1), "profile_bonus")
+            val legacyKeys = listOf("profile_flex_q1", "profile_flex_q2", "profile_bonus")
             val legacy = legacyKeys.mapIndexed { i, k -> PlannedIncome(k, "old", 5, 90 + i, managedKey = k) }
             val migrated = profile.copy(extras = listOf(flexExtra(), bonusExtra()))
             val income = FakePlannedIncomeRepository(listOf(own) + legacy)

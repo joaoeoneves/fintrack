@@ -13,9 +13,12 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
+import com.joaoeoneves.fintrack.domain.model.MANAGED_HOLIDAY
+import com.joaoeoneves.fintrack.domain.model.MANAGED_MEAL
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.SalarySpendComparison
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.rowKey
 import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
@@ -60,6 +63,8 @@ class DetailViewModelTest {
     private val rent = PlannedIncome("rent", "Rent", 20_000L, 1)
     private val rentKey = IncomeSourceKey.Row(null, null, "rent")
     private val salary = PlannedIncome("sal", "Salário líquido", 100_000L, 0, managedKey = MANAGED_NET_SALARY)
+    private val meal = PlannedIncome("meal", "Subsídio de refeição", 8_000L, 2, managedKey = MANAGED_MEAL)
+    private val holiday = PlannedIncome("hol", "Subsídio de férias", 70_000L, 3, managedKey = MANAGED_HOLIDAY)
 
     @Before
     fun setUp() {
@@ -82,12 +87,16 @@ class DetailViewModelTest {
             testExpense("oct", 1_000L, at(2026, 10, 3), BuiltInCategories.SHOPPING),
             testExpense("sep", 3_000L, at(2026, 9, 3), BuiltInCategories.SHOPPING),
             testExpense("aug", 5_000L, at(2026, 8, 3), BuiltInCategories.SHOPPING),
+            testExpense("oct-invest", 7_000L, at(2026, 10, 4), BuiltInCategories.INVESTMENTS),
         )
     private val incomes: List<Income> =
         listOf(
             testIncome("pay_rent_202610", 20_000L, at(2026, 10, 5)),
             testIncome("pay_rent_202609", 10_000L, at(2026, 9, 5)),
             testIncome("pay_sal_202610", 100_000L, at(2026, 10, 25)),
+            testIncome("pay_sal_202609", 90_000L, at(2026, 9, 25)),
+            testIncome("pay_meal_202609", 8_000L, at(2026, 9, 25)),
+            testIncome("pay_hol_202609", 70_000L, at(2026, 9, 25)),
             testIncome("gift", 5_000L, at(2026, 10, 6)).copy(source = "Gift"),
         )
 
@@ -97,6 +106,8 @@ class DetailViewModelTest {
         val plannedIncome = FakePlannedIncomeRepository()
         plannedIncome.savePlannedIncome(rent)
         plannedIncome.savePlannedIncome(salary)
+        plannedIncome.savePlannedIncome(meal)
+        plannedIncome.savePlannedIncome(holiday)
         val sources =
             PlanDataSources(
                 budgets = FakeBudgetRepository(),
@@ -252,5 +263,60 @@ class DetailViewModelTest {
 
             assertNull(c.editTarget)
             assertEquals(5_000L, c.amountCents)
+        }
+
+    private val september = "selectedPeriod" to "month:2026-09"
+
+    private suspend fun TestScope.comparisonOf(
+        line: PlannedIncome,
+        vararg extra: Pair<String, Any?>,
+    ): SalarySpendComparison? =
+        (state(detail("sourceKey" to line.rowKey().encode(), *extra).first) as DetailUiState.Content).salaryComparison
+
+    @Test
+    fun salarySource_comparesWithTheNextMonthsSpending_excludingSavings() =
+        runTest(testDispatcher) {
+            val comparison = comparisonOf(salary, september)
+
+            // October: 1000 shopping is spending; the 7000 investment is not.
+            assertEquals(
+                SalarySpendComparison(
+                    YearMonth.of(2026, 9),
+                    90_000L,
+                    YearMonth.of(2026, 10),
+                    1_000L,
+                    spentIsPartial = true,
+                ),
+                comparison,
+            )
+        }
+
+    @Test
+    fun salarySource_nothingReceivedInTheMonth_hasNoComparison() =
+        runTest(testDispatcher) {
+            val comparison = comparisonOf(salary, "selectedPeriod" to "month:2026-08")
+
+            // Nothing was received in August.
+            assertNull(comparison)
+        }
+
+    @Test
+    fun salarySource_currentMonth_hasNoComparisonYet() =
+        runTest(testDispatcher) {
+            assertNull(comparisonOf(salary))
+        }
+
+    @Test
+    fun salarySource_yearScale_hasNoComparison() =
+        runTest(testDispatcher) {
+            assertNull(comparisonOf(salary, "period" to "year:2026"))
+        }
+
+    @Test
+    fun mealSubsidiesAndManualSources_haveNoComparison() =
+        runTest(testDispatcher) {
+            assertNull(comparisonOf(meal, september))
+            assertNull(comparisonOf(holiday, september))
+            assertNull(comparisonOf(rent, september))
         }
 }

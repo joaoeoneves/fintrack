@@ -7,42 +7,37 @@ import org.junit.Test
 
 class MigrationPlannerIncomeLinesTest {
     @Test
-    fun rincLinesMissingFromTheAccount_areCopiedEvenWhenItHasLines() {
-        val local =
-            localDoc().copy(
-                plannedIncome = listOf(localPlanned("p1"), localPlanned("rinc_r1"), localPlanned("rinc_r2")),
-            )
-        val remote = remoteSnapshot(plannedIncomeIds = setOf("other", "rinc_r2"))
-
-        val plan = planMigration(local, remote)
-
-        assertEquals(listOf("rinc_r1"), plan.plannedIncome.map { it.id })
-    }
-
-    @Test
     fun copiedLineThrough_isFilteredToCopiedLines() {
-        val automation =
-            LocalAutomation(
-                lineThrough = mapOf("rinc_r1" to "2026-09", "p1" to "2026-09", "rinc_r2" to "2026-08"),
-            )
-        val local =
-            localDoc().copy(
-                plannedIncome = listOf(localPlanned("p1"), localPlanned("rinc_r1"), localPlanned("rinc_r2")),
-                automation = automation,
-            )
-        val remote = remoteSnapshot(plannedIncomeIds = setOf("other", "rinc_r2"))
+        val automation = LocalAutomation(lineThrough = mapOf("p1" to "2026-09", "ghost" to "2026-08"))
+        val local = localDoc().copy(plannedIncome = listOf(localPlanned("p1")), automation = automation)
 
-        val plan = planMigration(local, remote)
+        val plan = planMigration(local, remoteSnapshot())
 
-        assertEquals(mapOf("rinc_r1" to "2026-09"), plan.automation?.lineThrough)
+        assertEquals(mapOf("p1" to "2026-09"), plan.automation?.lineThrough)
     }
 
     @Test
-    fun accountAutomation_winsEvenForRincLines() {
+    fun accountWithLines_copiesNoLinesAndNoCursors() {
+        val automation = LocalAutomation(lineThrough = mapOf("p1" to "2026-09"))
+        val local = localDoc().copy(plannedIncome = listOf(localPlanned("p1")), automation = automation)
+
+        val plan = planMigration(local, remoteSnapshot(plannedIncomeIds = setOf("other")))
+
+        assertTrue(plan.plannedIncome.isEmpty())
+        assertTrue(
+            plan.automation
+                ?.lineThrough
+                .orEmpty()
+                .isEmpty(),
+        )
+    }
+
+    @Test
+    fun accountAutomation_wins() {
         val local =
             localDoc().copy(
-                plannedIncome = listOf(localPlanned("rinc_r1")),
-                automation = LocalAutomation(lineThrough = mapOf("rinc_r1" to "2026-09")),
+                plannedIncome = listOf(localPlanned("r1")),
+                automation = LocalAutomation(lineThrough = mapOf("r1" to "2026-09")),
             )
 
         val plan = planMigration(local, remoteSnapshot(plannedIncomeIds = setOf("x")).copy(hasAutomation = true))

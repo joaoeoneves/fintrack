@@ -75,7 +75,7 @@ class FirestoreRecurringMappingTest {
     }
 
     @Test
-    fun yearlyIncome_withoutCategory_parses() {
+    fun income_isSkipped() {
         val item =
             map(
                 "type" to str("INCOME"),
@@ -85,11 +85,7 @@ class FirestoreRecurringMappingTest {
                 "dayOfMonth" to TestDocumentSnapshots.longValue(29L),
             )
 
-        assertEquals(RecurringType.INCOME, item?.type)
-        assertNull(item?.categoryId)
-        assertEquals(RecurringFrequency.YEARLY, item?.frequency)
-        assertEquals(2, item?.monthOfYear)
-        assertEquals(29, item?.dayOfMonth)
+        assertNull(item)
     }
 
     @Test

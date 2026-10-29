@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
@@ -123,72 +122,15 @@ class PlannedIncomeRecordsTest {
         validatePlannedIncome(decoded)
     }
 
-    private fun earmarked(
-        type: String?,
-        id: String?,
-    ) = record().copy(earmarkType = type, earmarkId = id)
-
     @Test
-    fun earmark_validShapes_accepted() {
-        validatePlannedIncome(record())
-        validatePlannedIncome(earmarked("CATEGORY", "FOOD"))
-        validatePlannedIncome(earmarked("GROUP", "aB3_-x"))
-        validatePlannedIncome(earmarked("GROUP", "a".repeat(64)))
-    }
-
-    @Test
-    fun earmark_typeAndIdGoTogether() {
-        invalid { validatePlannedIncome(earmarked("GROUP", null)) }
-        invalid { validatePlannedIncome(earmarked(null, "g1")) }
-    }
-
-    @Test
-    fun earmark_unknownTypeOrBadId_rejected() {
-        invalid { validatePlannedIncome(earmarked("WALLET", "g1")) }
-        invalid { validatePlannedIncome(earmarked("group", "g1")) }
-        invalid { validatePlannedIncome(earmarked("GROUP", "")) }
-        invalid { validatePlannedIncome(earmarked("GROUP", "a".repeat(65))) }
-        invalid { validatePlannedIncome(earmarked("GROUP", "has space")) }
-        invalid { validatePlannedIncome(earmarked("GROUP", "a/b")) }
-    }
-
-    @Test
-    fun earmark_roundTripsThroughLocalRecord() {
-        listOf(Earmark.Category("FOOD"), Earmark.Group("g1")).forEach { earmark ->
-            val line = PlannedIncome("p", "Pay", 5, 0, earmark = earmark)
-
-            assertEquals(line, line.toLocal().toDomain())
-        }
-        assertNull(PlannedIncome("p", "Pay", 5, 0).toLocal().earmarkType)
-    }
-
-    @Test
-    fun toDomain_unknownOrIncompleteEarmark_isNone() {
-        assertNull(earmarked("WALLET", "x").toDomain().earmark)
-        assertNull(earmarked("GROUP", null).toDomain().earmark)
-        assertNull(earmarked(null, "x").toDomain().earmark)
-        assertNull(earmarked("GROUP", " ").toDomain().earmark)
-    }
-
-    @Test
-    fun oldShapeJson_hasNoEarmark() {
+    fun oldEarmarkJson_stillDecodes_andIsDropped() {
         val json = Json { ignoreUnknownKeys = true }
-        val raw = """{"id":"p","label":"Pay","amountCents":5,"order":0}"""
+        val raw = """{"id":"p","label":"Pay","amountCents":5,"order":0,"earmarkType":"GROUP","earmarkId":"g1"}"""
+
         val decoded = json.decodeFromString(LocalPlannedIncome.serializer(), raw)
 
-        assertNull(decoded.earmarkType)
-        assertNull(decoded.earmarkId)
-    }
-
-    @Test
-    fun earmarkedJson_roundTrips() {
-        val json = Json { ignoreUnknownKeys = true }
-        val line = earmarked("GROUP", "g1")
-
-        val text = json.encodeToString(LocalPlannedIncome.serializer(), line)
-        val decoded = json.decodeFromString(LocalPlannedIncome.serializer(), text)
-
-        assertEquals(line, decoded)
+        assertEquals(PlannedIncome("p", "Pay", 5, 0), decoded.toDomain())
+        validatePlannedIncome(decoded)
     }
 
     @Test

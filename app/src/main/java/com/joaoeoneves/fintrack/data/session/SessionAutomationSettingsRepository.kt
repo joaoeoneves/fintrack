@@ -36,8 +36,7 @@ class SessionAutomationSettingsRepository
         override suspend fun updateLineCursors(
             set: Map<String, YearMonth>,
             remove: Set<String>,
-            clearLegacyPayday: Boolean,
-        ): Result<Unit> = switch.call { it.updateLineCursors(set, remove, clearLegacyPayday) }
+        ): Result<Unit> = switch.call { it.updateLineCursors(set, remove) }
 
         override suspend fun setSalaryPaysNextMonth(on: Boolean) = switch.call { it.setSalaryPaysNextMonth(on) }
 

@@ -18,8 +18,8 @@ val PlannedIncome.isManaged: Boolean get() = managedKey != null
 
 /**
  * The managed income lines [profile] produces, with the deterministic id = managedKey. A line whose input is
- * empty is not returned (so the caller removes it), and a line already in [existing] keeps the user's label,
- * earmark and order (a label that is still a default of some language, see [knownDefaults], is replaced by
+ * empty is not returned (so the caller removes it), and a line already in [existing] keeps the user's label
+ * and order (a label that is still a default of some language, see [knownDefaults], is replaced by
  * the wanted one). The result is the same when applied again (idempotent). Empty when the profile's required
  * amount (base / net salary) is missing.
  *
@@ -37,7 +37,6 @@ fun salaryProfileLines(
     val breakdown = salaryBreakdownOf(profile) ?: return emptyList()
     val byKey = existing.filter { it.managedKey != null }.associateBy { it.managedKey }
     val salaryLine = byKey[MANAGED_NET_SALARY]
-    val salaryEarmark = salaryLine?.earmark
     var nextOrder = (existing.maxOfOrNull { it.order } ?: -1) + 1
     return wantedLines(profile, breakdown, labels).filter { it.amountCents > 0L }.map { wanted ->
         val current = byKey[wanted.key]
@@ -51,7 +50,6 @@ fun salaryProfileLines(
                 frequency = wanted.frequency,
                 monthOfYear = wanted.monthOfYear,
                 skipMonths = wanted.skipMonths,
-                earmark = if (wanted.key == MANAGED_DUODECIMOS) salaryEarmark else current?.earmark,
                 managedKey = wanted.key,
                 autoRecord = (current ?: salaryLine)?.autoRecord ?: false,
                 payDay = (current ?: salaryLine)?.payDay,

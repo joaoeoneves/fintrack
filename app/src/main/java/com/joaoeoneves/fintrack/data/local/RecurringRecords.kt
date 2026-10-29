@@ -148,7 +148,6 @@ private fun validateRecurringCategory(
     when (item.type) {
         RecurringType.EXPENSE.name ->
             requireKnownCategory(requireNotNull(item.categoryId) { "An expense needs a category" }, knownCategoryIds)
-        RecurringType.INCOME.name -> require(item.categoryId == null) { "An income has no category" }
         else -> throw IllegalArgumentException("Invalid recurring type ${item.type}")
     }
 }

@@ -12,7 +12,7 @@ class BackupEnvelopesTest : BackupRepositoryTestBase() {
     private val header = """"format":"fintrack-backup","exportedAt":"$EXPORTED_AT""""
 
     @Test
-    fun v13File_withEarmarks_decodesUpgraded_earmarksKept_envelopeFieldsDefault() {
+    fun v13File_withEarmarks_decodesUpgraded_earmarkIgnored_envelopeFieldsDefault() {
         val v13 =
             """{$header,"schemaVersion":13,
             "categoryGroups":[{"id":"g-food","name":"Food","order":0}],
@@ -29,10 +29,10 @@ class BackupEnvelopesTest : BackupRepositoryTestBase() {
                 .copy(startMonth = null),
         )
         assertEquals(
-            "g-food",
+            "meal",
             result.document.plannedIncome
                 .single()
-                .earmarkId,
+                .id,
         )
         assertEquals(0, result.skippedCount)
     }

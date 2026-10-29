@@ -42,11 +42,11 @@ class LocalRecurringRepositoryValidationTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun category_expenseNeedsOne_incomeMustNotHaveOne() =
+    fun category_expenseNeedsOne_incomeRejected() =
         runStoreTest {
             assertRejected(recurringItem(categoryId = null))
+            assertRejected(recurringItem(type = RecurringType.INCOME))
             assertRejected(recurringItem(type = RecurringType.INCOME, categoryId = CategoryId("FOOD")))
-            assertTrue(repo.saveRecurring(recurringItem(type = RecurringType.INCOME)).isSuccess)
         }
 
     @Test
