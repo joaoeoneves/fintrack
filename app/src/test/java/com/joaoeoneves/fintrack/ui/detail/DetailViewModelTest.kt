@@ -350,7 +350,8 @@ class DetailViewModelTest {
         }
 
     @Ignore(
-        "DetailViewModel.uiState applies .catch after retryTrigger.flatMapLatest, so a failure ends the flow and onRetry cannot recover",
+        "DetailViewModel.uiState applies .catch after retryTrigger.flatMapLatest, " +
+            "so a failure ends the flow and onRetry cannot recover",
     )
     @Test
     fun aFailingFlow_emitsError_andOnRetryRecovers() =

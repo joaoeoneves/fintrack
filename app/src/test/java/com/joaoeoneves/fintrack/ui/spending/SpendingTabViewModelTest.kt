@@ -104,8 +104,10 @@ class SpendingTabViewModelTest {
         runTest(testDispatcher) {
             // Today is February 2027: November and December 2026 are closed months with data.
             val later = Clock.fixed(Instant.parse("2027-02-10T12:00:00Z"), ZoneOffset.UTC)
-            val repo = CountingExpenseRepository(listOf<Expense>(testExpense("nov", 100L, Instant.parse("2026-11-05T12:00:00Z"))))
-            val c = content(setup("period" to Period.Month(YearMonth.of(2026, 12)).encode(), expenseRepo = repo, vmClock = later).vm)
+            val november = testExpense("nov", 100L, Instant.parse("2026-11-05T12:00:00Z"))
+            val repo = CountingExpenseRepository(listOf<Expense>(november))
+            val period = Period.Month(YearMonth.of(2026, 12)).encode()
+            val c = content(setup("period" to period, expenseRepo = repo, vmClock = later).vm)
 
             val leftover = c.history!!.monthly.leftover
             assertEquals(2, leftover.months)

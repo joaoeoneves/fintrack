@@ -33,7 +33,7 @@ class AddEditIncomeViewModelRestoreTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun snapshot(incomeId: String?) = IncomeFormSnapshot(incomeId, "Freelance", 75_000L, 1_760_000_000_000L, "invoice 7")
+    private fun snapshot(id: String?) = IncomeFormSnapshot(id, "Freelance", 75_000L, 1_760_000_000_000L, "invoice 7")
 
     private fun json(snapshot: IncomeFormSnapshot) = Json.encodeToString(IncomeFormSnapshot.serializer(), snapshot)
 

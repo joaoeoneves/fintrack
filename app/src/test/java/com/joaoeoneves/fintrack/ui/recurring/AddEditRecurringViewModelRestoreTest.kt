@@ -39,7 +39,7 @@ class AddEditRecurringViewModelRestoreTest : AddEditRecurringViewModelTestBase()
         return vm.ready().form
     }
 
-    private fun json(snapshot: RecurringFormSnapshot) = Json.encodeToString(RecurringFormSnapshot.serializer(), snapshot)
+    private fun json(s: RecurringFormSnapshot) = Json.encodeToString(RecurringFormSnapshot.serializer(), s)
 
     @Test
     fun aSnapshotOfTheSameNewItem_isRestored() {

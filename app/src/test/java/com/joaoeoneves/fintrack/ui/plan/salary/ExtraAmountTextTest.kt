@@ -37,7 +37,8 @@ class ExtraAmountTextTest {
 
     @Test
     fun multiplePayments_showEachThenTheCountAndYearlyTotal() {
-        val text = render(ExtraBreakdown("e", "Flex", 98_000, listOf(1 to 24_500L, 4 to 24_500L, 7 to 24_500L, 10 to 24_500L)))
+        val payments = listOf(1, 4, 7, 10).map { it to 24_500L }
+        val text = render(ExtraBreakdown("e", "Flex", 98_000, payments))
 
         val (first, second) = text.split("\n")
         assertTrue(first.endsWith("per payment") && first.contains("245"))

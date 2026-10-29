@@ -66,6 +66,24 @@ class ActivityViewModelSummaryTest : ActivityViewModelTestBase() {
         }
 
     @Test
+    fun summary_sourceFilter_isIgnoredOnceTheTypeIsNotIncome() =
+        runTest(testDispatcher) {
+            val f = fixture()
+            content(f.vm)
+            f.vm.onTypeSelected(ActivityType.INCOME)
+            f.vm.onIncomeSourceSelected(rentKey)
+            advanceUntilIdle()
+            assertEquals(20_000L, current(f.vm).summary.receivedCents)
+
+            f.vm.onTypeSelected(ActivityType.ALL)
+            advanceUntilIdle()
+
+            val summary = current(f.vm).summary
+            assertEquals(25_000L, summary.receivedCents)
+            assertEquals(800L, summary.spentCents)
+        }
+
+    @Test
     fun summary_customRange_countsByDate() =
         runTest(testDispatcher) {
             val f = fixture()

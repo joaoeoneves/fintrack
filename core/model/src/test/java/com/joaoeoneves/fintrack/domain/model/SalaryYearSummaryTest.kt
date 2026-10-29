@@ -24,7 +24,10 @@ class SalaryYearSummaryTest {
         extras = extras,
     )
 
-    private fun summary(profile: SalaryProfile) = salaryYearSummaryOf(profile, requireNotNull(salaryBreakdownOf(profile)), year)
+    private fun summary(profile: SalaryProfile): SalaryYearSummary {
+        val breakdown = requireNotNull(salaryBreakdownOf(profile))
+        return salaryYearSummaryOf(profile, breakdown, year)
+    }
 
     @Test
     fun grossHalfSpread_hasTwoLumps_andYearTotalsAddTwelveMonthsToTheLumps() {
@@ -79,7 +82,16 @@ class SalaryYearSummaryTest {
     @Test
     fun extraWithTaxAndFee_isListedNet_andItsGrossIsWorkedBack() {
         // 10000 gross, 21% IRS+SS, 10% fee: 10000 * 0.79 * 0.90 = 7110 net.
-        val bonus = testExtra("b", "Bonus", SalaryExtraAmountType.FIXED_CENTS, 10_000, setOf(5), SalaryExtraDeductions.IRS_SS, 100_000)
+        val bonus =
+            testExtra(
+                "b",
+                "Bonus",
+                SalaryExtraAmountType.FIXED_CENTS,
+                10_000,
+                setOf(5),
+                SalaryExtraDeductions.IRS_SS,
+                100_000,
+            )
         val base = summary(gross(spread = SPREAD_FULL_PPM))
         val s = summary(gross(spread = SPREAD_FULL_PPM, extras = listOf(bonus)))
 
@@ -95,7 +107,10 @@ class SalaryYearSummaryTest {
         // 7% of the annual gross (1000 x 14) over four months, untaxed.
         val s = summary(gross(extras = listOf(testExtra())))
 
-        assertEquals(listOf(YearPaymentKind.HOLIDAY, YearPaymentKind.CHRISTMAS, YearPaymentKind.EXTRA), s.payments.map { it.kind })
+        assertEquals(
+            listOf(YearPaymentKind.HOLIDAY, YearPaymentKind.CHRISTMAS, YearPaymentKind.EXTRA),
+            s.payments.map { it.kind },
+        )
         val extra = s.payments.last()
         assertEquals(listOf(1, 4, 7, 10), extra.months)
         assertEquals(24_500L, extra.eachCents)
