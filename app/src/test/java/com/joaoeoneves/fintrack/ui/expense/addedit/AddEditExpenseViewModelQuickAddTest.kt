@@ -83,8 +83,8 @@ class AddEditExpenseViewModelQuickAddTest {
 
             vm.onNameChanged("pingo")
 
-            assertEquals(2, vm.form().nameSuggestions.size)
-            assertEquals("Pingo Doce", vm.form().nameSuggestions.first().name)
+            val chips = vm.form().nameSuggestions
+            assertEquals(listOf("Pingo Doce", "Pingo Doce Express"), chips.map { it.name })
         }
 
     @Test
