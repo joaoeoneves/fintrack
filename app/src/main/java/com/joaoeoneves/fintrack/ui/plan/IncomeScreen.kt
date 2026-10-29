@@ -14,9 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.asString
@@ -24,6 +26,7 @@ import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
+import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -36,6 +39,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 fun IncomeScreen(
     onBack: () -> Unit,
     onOpenSalaryProfile: (hasProfile: Boolean) -> Unit,
+    onOpenHistory: (Period) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
 ) {
@@ -66,7 +70,7 @@ fun IncomeScreen(
                         )
 
                     is MonthlyPlanUiState.Content ->
-                        IncomeContent(current, viewModel, onOpenSalaryProfile, contentModifier)
+                        IncomeContent(current, viewModel, onOpenSalaryProfile, onOpenHistory, contentModifier)
                 }
             }
         }
@@ -78,6 +82,7 @@ private fun IncomeContent(
     state: MonthlyPlanUiState.Content,
     viewModel: MonthlyPlanViewModel,
     onOpenSalaryProfile: (hasProfile: Boolean) -> Unit,
+    onOpenHistory: (Period) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var editingWorkingDays by remember { mutableStateOf(false) }
@@ -117,13 +122,30 @@ private fun IncomeContent(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        item {
+            SectionAction(
+                text = stringResource(R.string.income_view_history),
+                onClick = { onOpenHistory(state.period) },
+                startPadding = 0.dp,
+            )
+        }
     }
 
+    IncomeDialogs(state, viewModel, editingWorkingDays) { editingWorkingDays = false }
+}
+
+@Composable
+private fun IncomeDialogs(
+    state: MonthlyPlanUiState.Content,
+    viewModel: MonthlyPlanViewModel,
+    editingWorkingDays: Boolean,
+    onDismissWorkingDays: () -> Unit,
+) {
     if (editingWorkingDays) {
         WorkingDaysDialog(
             state = state.workingDays,
             onSave = viewModel::onSetWorkingDays,
-            onDismiss = { editingWorkingDays = false },
+            onDismiss = { onDismissWorkingDays() },
         )
     }
     state.editor?.let {

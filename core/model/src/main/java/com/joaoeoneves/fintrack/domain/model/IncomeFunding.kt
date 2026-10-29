@@ -206,16 +206,29 @@ internal fun normalisedWords(text: String): List<String> =
         .split(Regex("\\s+"))
         .filter { it.isNotEmpty() }
 
-/** Whether one word list equals the other or is a leading-words prefix of it ("salario" of "salario liquido"). */
-internal fun isWordPrefixMatch(
-    a: List<String>,
-    b: List<String>,
-): Boolean = b.isNotEmpty() && (a.take(b.size) == b || b.take(a.size) == a)
+/**
+ * The line a [source] (as normalised words) belongs to: a label equal to it wins; otherwise a label the source is a
+ * whole-word prefix of ("salario" of "salario liquido"). A label that is a prefix of the source never matches
+ * ("salary bonus" is not "salary"). Among several qualifying labels the exact one, then the shortest, wins; a tie
+ * there means no match.
+ */
+internal fun matchingLine(
+    source: List<String>,
+    lines: List<PlannedIncome>,
+): PlannedIncome? {
+    if (source.isEmpty()) return null
+    val labelled = lines.map { it to normalisedWords(it.label) }.filter { (_, words) -> words.isNotEmpty() }
+    val exact = labelled.filter { (_, words) -> words == source }
+    val candidates = exact.ifEmpty { labelled.filter { (_, words) -> words.take(source.size) == source } }
+    val shortest = candidates.minOfOrNull { (_, words) -> words.size }
+    return candidates.filter { (_, words) -> words.size == shortest }.singleOrNull()?.first
+}
 
 /**
  * Whether [income] is a salary payment that funds the next month: its source matches the label of a salary-profile
- * line that [paysForNextMonth] (trimmed, case- and accent-insensitive, equal or one is a whole-word prefix of the
- * other: "Salário" matches "Salário líquido"), and it was received on the last working day of its month or on
+ * line that [paysForNextMonth] (trimmed, case- and accent-insensitive, equal to the label or a whole-word prefix of
+ * it: "Salário" matches "Salário líquido" but "Salary bonus" does not match "Salary"; see [matchingLine]), and it
+ * was received on the last working day of its month or on
  * day [NEXT_MONTH_PAY_DAY] or later (in [zone]).
  */
 fun isSalaryPayment(
@@ -224,9 +237,7 @@ fun isSalaryPayment(
     zone: ZoneId,
 ): Boolean {
     val source = normalisedWords(income.source)
-    val matches =
-        source.isNotEmpty() &&
-            lines.any { it.paysForNextMonth && isWordPrefixMatch(source, normalisedWords(it.label)) }
+    val matches = matchingLine(source, lines)?.paysForNextMonth == true
     val date = income.date.atZone(zone).toLocalDate()
     return matches && (date.dayOfMonth >= NEXT_MONTH_PAY_DAY || date == lastWorkingDayOf(YearMonth.from(date)))
 }

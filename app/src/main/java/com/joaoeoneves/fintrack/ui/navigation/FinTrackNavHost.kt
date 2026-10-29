@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -12,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
@@ -197,6 +199,7 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
             onOpenSalaryProfile = { hasProfile ->
                 navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
             },
+            onOpenHistory = { period -> navController.openIncomeHistory(period) },
         )
     }
     composable<Categories> {
@@ -269,4 +272,9 @@ private fun NavGraphBuilder.formRoutes(
             onCancel = dropUnlessResumed { navController.popBackStack() },
         )
     }
+}
+
+/** Opens Activity on the Income tab for the month of [period] (the income screen's "View history"). */
+private fun NavController.openIncomeHistory(period: Period) {
+    navigateToTabWith(Activity(period = period.encode(), type = ACTIVITY_TYPE_INCOME))
 }

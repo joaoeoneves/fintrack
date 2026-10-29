@@ -759,4 +759,20 @@
     <string name="envelope_no_limit">Sem limite</string>
     <string name="recurring_pause_hint">Nada é adicionado até retomares</string>
     <string name="income_line_deleted">Linha de rendimento eliminada</string>
+    <string name="activity_vs_previous_month">vs mês anterior</string>
+    <string name="activity_vs_average">vs média %1$d meses</string>
+    <string name="activity_monthly_average">Média mensal %1$s</string>
+    <string name="activity_since_january">Desde janeiro</string>
+    <string name="activity_ytd_spent">Gasto</string>
+    <string name="activity_ytd_received">Recebido</string>
+    <string name="activity_ytd_saved">Poupado</string>
+    <string name="activity_evolution">Evolução</string>
+    <string name="activity_received_total">Recebido</string>
+    <string name="activity_expected_difference">Esperado %1$s · Diferença %2$s</string>
+    <string name="activity_by_source">Por fonte</string>
+    <string name="activity_source_expected">de %1$s esperado</string>
+    <string name="activity_source_other">Outro</string>
+    <string name="activity_income_counts_for">Conta para %1$s</string>
+    <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
+    <string name="income_view_history">Ver histórico</string>
 </resources>
