@@ -25,7 +25,6 @@ import com.joaoeoneves.fintrack.domain.model.MAX_PLAN_LABEL_LENGTH
 import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.limitInput
-import com.joaoeoneves.fintrack.ui.common.ConfirmRemoveDialog
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -104,34 +103,20 @@ fun IncomeLineSheet(
             },
             modifier = Modifier.padding(top = Dimens.Space16),
         )
-        if (!editor.managed) RemoveLineButton(editor.editingId, editor.initialLabel, onDelete)
+        if (!editor.managed) RemoveLineButton(editor.editingId, onDelete)
     }
 }
 
 @Composable
 private fun ColumnScope.RemoveLineButton(
     editingId: String?,
-    label: String,
     onDelete: (String) -> Unit,
 ) {
-    var confirming by remember { mutableStateOf(false) }
     if (editingId != null) {
         DestructiveTextButton(
-            text = stringResource(R.string.action_remove),
-            onClick = { confirming = true },
+            text = stringResource(R.string.action_delete),
+            onClick = { onDelete(editingId) },
             modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
-    }
-    if (confirming && editingId != null) {
-        ConfirmRemoveDialog(
-            title = stringResource(R.string.confirm_remove_title, label),
-            message = stringResource(R.string.income_line_remove_message),
-            confirmLabel = stringResource(R.string.action_remove),
-            onConfirm = {
-                confirming = false
-                onDelete(editingId)
-            },
-            onDismiss = { confirming = false },
         )
     }
 }

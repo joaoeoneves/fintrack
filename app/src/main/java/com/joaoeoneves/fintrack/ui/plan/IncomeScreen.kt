@@ -41,6 +41,7 @@ fun IncomeScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     CollectPlanErrors(snackbarHostState = snackbarHostState, events = listOf(viewModel.errorEvent))
+    CollectDeletedIncomeLines(viewModel, snackbarHostState)
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
     val state by viewModel.uiState.collectAsStateWithLifecycle()

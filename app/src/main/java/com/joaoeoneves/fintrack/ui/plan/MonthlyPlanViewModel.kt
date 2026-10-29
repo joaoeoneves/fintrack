@@ -90,6 +90,10 @@ class MonthlyPlanViewModel
             )
         private val editor = MutableStateFlow<IncomeLineEditorState?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
+        private val deletedLines = Channel<PlannedIncome>(Channel.BUFFERED)
+
+        /** Each manual income line just deleted, for an undo snackbar. */
+        val deletedLineEvent: Flow<PlannedIncome> = deletedLines.receiveAsFlow()
 
         /** One-shot user-facing messages for plan writes that failed, shown as a snackbar. */
         val errorEvent: Flow<UiText> = errors.receiveAsFlow()
@@ -256,17 +260,25 @@ class MonthlyPlanViewModel
             }
         }
 
+        /** Deletes a manual income line at once; [deletedLineEvent] lets the screen offer to undo. */
         fun onDeleteIncomeLine(id: String) {
             viewModelScope.launch {
+                val line = repositories.currentLines().firstOrNull { it.id == id }
                 // A managed line goes away with its salary profile, not by hand.
-                if (repositories.currentLines().firstOrNull { it.id == id }?.isManaged == true) return@launch
+                if (line == null || line.isManaged) return@launch
                 repositories.plannedIncome
                     .deletePlannedIncome(id)
                     .onSuccess {
                         dropCursor(id)
                         editor.value = null
+                        deletedLines.send(line)
                     }.onFailure { reportFailure(it) }
             }
+        }
+
+        /** Puts back a line deleted a moment ago. */
+        fun onUndoDeleteIncomeLine(line: PlannedIncome) {
+            viewModelScope.launch { repositories.plannedIncome.savePlannedIncome(line).onFailure { reportFailure(it) } }
         }
 
         /**

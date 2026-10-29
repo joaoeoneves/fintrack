@@ -50,6 +50,7 @@ fun PlanScreen(
         snackbarHostState = snackbarHostState,
         events = listOf(viewModel.errorEvent),
     )
+    CollectDeletedIncomeLines(viewModel, snackbarHostState)
     PlanScaffold(
         onOpenSettings = onOpenSettings,
         onOpenConfigure = onOpenConfigure,

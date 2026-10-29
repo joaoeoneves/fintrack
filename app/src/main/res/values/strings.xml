@@ -754,4 +754,5 @@
     <string name="recurring_deleted">Recurring deleted; its past entries stay</string>
     <string name="envelope_no_limit">No limit</string>
     <string name="recurring_pause_hint">Nothing is added until you resume</string>
+    <string name="income_line_deleted">Income line deleted</string>
 </resources>
