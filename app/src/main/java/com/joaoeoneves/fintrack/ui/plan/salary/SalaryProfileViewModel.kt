@@ -156,7 +156,7 @@ class SalaryProfileViewModel
             viewModelScope.launch {
                 saving.value = true
                 manageProfile
-                    .save(result.profile, labels)
+                    .save(result.profile, labels, YearMonth.now(clock))
                     .onSuccess { finishSave() }
                     .onFailure { reportFailure(it) }
                 saving.value = false

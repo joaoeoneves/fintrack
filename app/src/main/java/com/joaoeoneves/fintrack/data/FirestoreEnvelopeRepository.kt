@@ -68,7 +68,8 @@ class FirestoreEnvelopeRepository
                     envelopes.find { it.id == docRef.id }?.order ?: ((envelopes.maxOfOrNull { it.order } ?: -1) + 1)
                 val batch = firestore.batch()
                 val template = Envelope(docRef.id, edit.name, order, edit.amountCents, edit.fundedByLineId)
-                val saved = envelopes.find { it.id == docRef.id }.savedAs(template, edit.amountCents, edit.effectiveFrom)
+                val existing = envelopes.find { it.id == docRef.id }
+                val saved = existing.savedAs(template, edit.amountCents, edit.effectiveFrom)
                 batch.set(
                     docRef,
                     mapOf(

@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.domain.model
 
+import java.time.YearMonth
+
 /** A managed line wanted by the profile, before the user's edits of an existing line are applied. */
 private data class WantedLine(
     val key: String,
@@ -20,12 +22,17 @@ val PlannedIncome.isManaged: Boolean get() = managedKey != null
  * earmark and order (a label that is still a default of some language, see [knownDefaults], is replaced by
  * the wanted one). The result is the same when applied again (idempotent). Empty when the profile's required
  * amount (base / net salary) is missing.
+ *
+ * A line already in [existing] keeps its start month and amount history; when the profile's amount differs from
+ * the line's latest one, a version with the new amount is added from [effectiveFrom] (a raise from January). A new
+ * line starts at [effectiveFrom]. Skip months and the month of year are not versioned.
  */
 fun salaryProfileLines(
     profile: SalaryProfile,
     existing: List<PlannedIncome>,
     labels: SalaryLineLabels = SalaryLineLabels(),
     knownDefaults: List<SalaryLineLabels> = emptyList(),
+    effectiveFrom: YearMonth = YearMonth.now(),
 ): List<PlannedIncome> {
     val breakdown = salaryBreakdownOf(profile) ?: return emptyList()
     val byKey = existing.filter { it.managedKey != null }.associateBy { it.managedKey }
@@ -34,20 +41,28 @@ fun salaryProfileLines(
     var nextOrder = (existing.maxOfOrNull { it.order } ?: -1) + 1
     return wantedLines(profile, breakdown, labels).filter { it.amountCents > 0L }.map { wanted ->
         val current = byKey[wanted.key]
-        PlannedIncome(
-            id = wanted.key,
-            label = keptLabel(wanted, current, knownDefaults),
-            amountCents = wanted.amountCents,
-            order = current?.order ?: nextOrder++,
-            basis = wanted.basis,
-            frequency = wanted.frequency,
-            monthOfYear = wanted.monthOfYear,
-            skipMonths = wanted.skipMonths,
-            earmark = if (wanted.key == MANAGED_DUODECIMOS) salaryEarmark else current?.earmark,
-            managedKey = wanted.key,
-            autoRecord = (current ?: salaryLine)?.autoRecord ?: false,
-            payDay = (current ?: salaryLine)?.payDay,
-        )
+        val line =
+            PlannedIncome(
+                id = wanted.key,
+                label = keptLabel(wanted, current, knownDefaults),
+                amountCents = current?.amountCents ?: wanted.amountCents,
+                order = current?.order ?: nextOrder++,
+                basis = wanted.basis,
+                frequency = wanted.frequency,
+                monthOfYear = wanted.monthOfYear,
+                skipMonths = wanted.skipMonths,
+                earmark = if (wanted.key == MANAGED_DUODECIMOS) salaryEarmark else current?.earmark,
+                managedKey = wanted.key,
+                autoRecord = (current ?: salaryLine)?.autoRecord ?: false,
+                payDay = (current ?: salaryLine)?.payDay,
+                startMonth = current?.startMonth,
+                versions = current?.versions.orEmpty(),
+            )
+        when {
+            current == null -> line.startingAt(effectiveFrom)
+            current.amountCents != wanted.amountCents -> line.editedFrom(effectiveFrom, wanted.amountCents)
+            else -> line
+        }
     }
 }
 
@@ -74,10 +89,11 @@ fun managedLinesSync(
     existing: List<PlannedIncome>,
     labels: SalaryLineLabels = SalaryLineLabels(),
     knownDefaults: List<SalaryLineLabels> = emptyList(),
+    effectiveFrom: YearMonth = YearMonth.now(),
 ): ManagedLinesSync {
     val byId = existing.associateBy { it.id }
     val (changed, created) =
-        salaryProfileLines(profile, existing, labels, knownDefaults)
+        salaryProfileLines(profile, existing, labels, knownDefaults, effectiveFrom)
             .filter { byId[it.id] != it }
             .partition { it.id in byId }
     return ManagedLinesSync(upserts = created + changed, deletes = staleManagedIds(profile, existing))
