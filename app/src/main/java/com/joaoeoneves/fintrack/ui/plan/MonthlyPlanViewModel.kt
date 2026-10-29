@@ -89,6 +89,7 @@ class MonthlyPlanViewModel
                 // The income screen is opened for a month (route argument); the Plan tab has none.
                 savedStateHandle.get<String>(ROUTE_MONTH_ARG) ?: Period.CurrentMonth.encode(),
                 clock,
+                PLAN_MONTHS_AHEAD,
             )
         private val editor = MutableStateFlow<IncomeLineEditorState?>(null)
         private val errors = Channel<UiText>(Channel.BUFFERED)
@@ -108,14 +109,14 @@ class MonthlyPlanViewModel
                 // re-resolves CurrentMonth and canGoToNextMonth.
                 .flatMapLatest { token ->
                     val now = clock.instant()
-                    val period = decodePeriod(token, now, clock.zone)
+                    val period = decodePeriod(token, now, clock.zone, PLAN_MONTHS_AHEAD)
                     val overview = observePeriodOverview(period, now, clock.zone, recentLimit = 0)
                     planFlow(
                         repositories = repositories,
                         selected =
                             SelectedMonth(
                                 period = period,
-                                canGoToNextMonth = period.canGoToNextMonth(now, clock.zone),
+                                canGoToNextMonth = period.canGoToNextMonth(now, clock.zone, PLAN_MONTHS_AHEAD),
                                 overview = overview,
                                 today = LocalDate.now(clock),
                                 zone = clock.zone,
@@ -436,3 +437,6 @@ private fun workingDaysOf(
         overridden = override != null,
     )
 }
+
+/** The plan views can open this many months after the current one: a salary paid now funds next month. */
+internal const val PLAN_MONTHS_AHEAD = 1

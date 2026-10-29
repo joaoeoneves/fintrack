@@ -97,6 +97,7 @@ private fun IncomeContent(
                 canGoToNextMonth = state.canGoToNextMonth,
                 actions = viewModel.periodActions,
                 monthOnly = true,
+                monthsAhead = PLAN_MONTHS_AHEAD,
             )
         }
         item {

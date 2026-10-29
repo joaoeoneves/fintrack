@@ -76,7 +76,7 @@ private fun PeriodMenuOption.label(): String =
 /**
  * Period picker shared by the dashboard and the expense/income lists: previous/next month arrows
  * (month periods only) around a tappable label that opens a menu of every period kind (only the two
- * month entries when [monthOnly]).
+ * month entries when [monthOnly]). [monthsAhead] lets planning screens go that many months past the current one.
  */
 @Suppress("LongParameterList") // shared picker API; every option is independent and defaulted
 @Composable
@@ -87,6 +87,7 @@ fun PeriodSelector(
     modifier: Modifier = Modifier,
     alignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     monthOnly: Boolean = false,
+    monthsAhead: Int = 0,
 ) {
     var dialog by rememberSaveable { mutableStateOf(PeriodDialog.NONE) }
     val isMonthPeriod = period is Period.CurrentMonth || period is Period.Month
@@ -120,6 +121,7 @@ fun PeriodSelector(
     PeriodPickerDialogs(
         dialog = dialog,
         period = period,
+        monthsAhead = monthsAhead,
         onSelect = actions.onSelect,
         onDismiss = { dialog = PeriodDialog.NONE },
     )
@@ -172,6 +174,7 @@ private fun PeriodMenuButton(
 private fun PeriodPickerDialogs(
     dialog: PeriodDialog,
     period: Period,
+    monthsAhead: Int,
     onSelect: (Period) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -183,9 +186,9 @@ private fun PeriodPickerDialogs(
             val currentMonth = currentYearMonth(now, zone)
             MonthPickerDialog(
                 initialMonth = period.anchorMonth(now, zone) ?: currentMonth,
-                currentMonth = currentMonth,
+                currentMonth = currentMonth.plusMonths(monthsAhead.toLong()),
                 onMonthSelected = { month ->
-                    onSelect(Period.ofMonth(month, Instant.now(), zone))
+                    onSelect(Period.ofMonth(month, Instant.now(), zone, monthsAhead))
                     onDismiss()
                 },
                 onDismiss = onDismiss,
