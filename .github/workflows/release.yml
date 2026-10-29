@@ -40,30 +40,31 @@ jobs:
             echo "VERSION_CODE=$((10#$major * 100 + 10#$minor))"
           } >> "$GITHUB_ENV"
 
-      # CI (ci.yml, job "build") already ran ktlint, detekt, lint and the unit tests on this exact commit; the release
-      # only checks that it passed (waiting while it still runs) instead of running them a second time.
-      - name: Require green CI on this commit
+      # CI (ci.yml, jobs "checks" and "build") runs only on pull requests, so main never runs it a second time. The
+      # release checks that both passed on the head of the merged PR this commit came from (waiting while they run).
+      - name: Require green CI on the merged PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for _ in $(seq 1 60); do
-            run=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?check_name=build" \
-              --jq '.check_runs | sort_by(.started_at) | last | "\(.status) \(.conclusion)"')
-            case "$run" in
-              "completed success") echo "CI passed on $GITHUB_SHA"; exit 0 ;;
-              completed*) echo "::error::CI on $GITHUB_SHA did not pass ($run)"; exit 1 ;;
-              # Right after a merge the CI run may not exist yet; give it a few minutes to appear.
-              "null null")
-                missing=$((${missing:-0} + 1))
-                if (( missing > 10 )); then
-                  echo "::error::No CI run found for $GITHUB_SHA; release a commit that went through CI"; exit 1
-                fi
-                echo "No CI run yet for $GITHUB_SHA, waiting…"; sleep 30 ;;
-              *) echo "CI still running ($run), waiting…"; sleep 60 ;;
-            esac
+          head=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+            --jq '[.[] | select(.merged_at != null)] | first | .head.sha // empty')
+          if [ -z "$head" ]; then
+            echo "::error::$GITHUB_SHA did not come from a merged pull request; release a commit that went through CI"
+            exit 1
+          fi
+          for check in checks build; do
+            for i in $(seq 1 60); do
+              run=$(gh api "repos/$GITHUB_REPOSITORY/commits/$head/check-runs?check_name=$check" \
+                --jq '.check_runs | sort_by(.started_at) | last | "\(.status) \(.conclusion)"')
+              case "$run" in
+                "completed success") echo "CI '$check' passed on PR head $head"; break ;;
+                completed*) echo "::error::CI '$check' on PR head $head did not pass ($run)"; exit 1 ;;
+                "null null") echo "::error::No CI '$check' run on PR head $head"; exit 1 ;;
+                *) echo "CI '$check' still running ($run), waiting…"; sleep 30 ;;
+              esac
+              if [ "$i" = 60 ]; then echo "::error::Timed out waiting for CI '$check'"; exit 1; fi
+            done
           done
-          echo "::error::Timed out waiting for CI on $GITHUB_SHA"
-          exit 1
 
       - name: Set up JDK 21
         uses: actions/setup-java@v6
@@ -105,9 +106,10 @@ jobs:
             echo "FINTRACK_KEY_PASSWORD=$KS_KEY_PASSWORD"
           } >> "$GITHUB_ENV"
 
+      # lintVital would lint the code a second time; the PR's CI already ran Android lint on it.
       - name: Build signed release
         run: >
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -x lintVitalRelease
           -PversionName="$VERSION_NAME" -PversionCode="$VERSION_CODE"
 
       - name: Verify APK signature
