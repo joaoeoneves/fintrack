@@ -12,10 +12,12 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.NameSuggestion
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.model.categorySuggestionIndex
 import com.joaoeoneves.fintrack.domain.model.defaultCategory
 import com.joaoeoneves.fintrack.domain.model.limitInput
+import com.joaoeoneves.fintrack.domain.model.nameSuggestions
 import com.joaoeoneves.fintrack.domain.model.normalizedMerchantName
 import com.joaoeoneves.fintrack.domain.model.usesMealCard
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
@@ -123,6 +125,8 @@ class AddEditExpenseViewModel(
     // The expense as loaded in edit mode, kept so a deletion can be undone.
     private var loaded: Expense? = null
 
+    // The last year of expenses, loaded once when a new form opens; the category index derives from it.
+    private var history: List<Expense> = emptyList()
     private var suggestionIndex: Map<String, CategoryId> = emptyMap()
 
     // Whether the meal-card switch applies right now; forms built after the profile loaded start with it.
@@ -202,7 +206,8 @@ class AddEditExpenseViewModel(
                         ).withMealCardPrefill(),
                         categoryOptions.value,
                     )
-                suggestionIndex = loadSuggestionIndex(expenseRepository, clock)
+                history = loadHistory(expenseRepository, clock)
+                suggestionIndex = categorySuggestionIndex(history)
             }
         }
     }
@@ -218,11 +223,29 @@ class AddEditExpenseViewModel(
     fun onNameChanged(name: String) =
         updateForm {
             val limited = limitInput(it.name, name, MAX_NAME_LENGTH)
-            val updated = it.copy(name = limited, nameError = null, saveError = null)
+            val updated =
+                it.copy(
+                    name = limited,
+                    nameError = null,
+                    saveError = null,
+                    nameSuggestions = if (it.isEditMode) emptyList() else nameSuggestions(history, limited),
+                )
             if (it.isEditMode || it.categoryTouched) {
                 updated
             } else {
                 updated.withSuggestion(suggestionIndex, categoryOptions.value).withMealCardPrefill()
+            }
+        }
+
+    /** Fills in the name of a suggested earlier expense, with its category; never touches the amount. */
+    fun onNameSuggestionPicked(suggestion: NameSuggestion) =
+        updateForm {
+            val named =
+                it.copy(name = suggestion.name, nameError = null, saveError = null, nameSuggestions = emptyList())
+            if (it.categoryTouched) {
+                named
+            } else {
+                named.withSuggestion(suggestionIndex, categoryOptions.value).withMealCardPrefill()
             }
         }
 
@@ -358,15 +381,14 @@ private fun ExpenseFormState.withSuggestion(
     }
 }
 
-/** The category suggestions from the last year of expenses; any failure just means no suggestions. */
-private suspend fun loadSuggestionIndex(
+/** The last year of expenses, for the category and name suggestions; any failure just means no suggestions. */
+private suspend fun loadHistory(
     repository: ExpenseRepository,
     clock: Clock,
-): Map<String, CategoryId> =
+): List<Expense> =
     runCatching {
         val now = clock.instant()
         val start = now.atZone(clock.zone).minusMonths(SUGGESTION_HISTORY_MONTHS).toInstant()
-        val expenses = repository.observeExpenses(start, now.plusSeconds(DAY_SECONDS)).first()
-        categorySuggestionIndex(expenses)
-    }.onFailure { Log.w(TAG, "Failed to load category suggestions", it) }
-        .getOrDefault(emptyMap())
+        repository.observeExpenses(start, now.plusSeconds(DAY_SECONDS)).first()
+    }.onFailure { Log.w(TAG, "Failed to load suggestion history", it) }
+        .getOrDefault(emptyList())

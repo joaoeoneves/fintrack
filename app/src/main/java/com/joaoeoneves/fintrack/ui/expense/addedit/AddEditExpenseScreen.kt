@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,12 +15,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.NameSuggestion
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
@@ -35,6 +39,7 @@ import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
 import com.joaoeoneves.fintrack.ui.common.symbol
 import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
+import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
@@ -101,6 +106,7 @@ fun AddEditExpenseScreen(
 /** Bundles [ExpenseForm]'s field-change callbacks to keep its own parameter list short. */
 private data class ExpenseFormActions(
     val onNameChanged: (String) -> Unit,
+    val onNameSuggestionPicked: (NameSuggestion) -> Unit,
     val onAmountChanged: (Long) -> Unit,
     val onCategorySelected: (Category) -> Unit,
     val onDateSelected: (Instant) -> Unit,
@@ -113,6 +119,7 @@ private data class ExpenseFormActions(
 private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
     ExpenseFormActions(
         onNameChanged = ::onNameChanged,
+        onNameSuggestionPicked = ::onNameSuggestionPicked,
         onAmountChanged = ::onAmountChanged,
         onCategorySelected = ::onCategorySelected,
         onDateSelected = ::onDateSelected,
@@ -164,6 +171,7 @@ private fun ExpenseForm(
             },
             modifier = Modifier.fillMaxWidth(),
         )
+        NameSuggestionRow(form.nameSuggestions, actions.onNameSuggestionPicked)
 
         CategoryChipFlow(
             options = categoryOptions,
@@ -185,6 +193,25 @@ private fun ExpenseForm(
 
         form.saveError?.let { FormSaveError(it.asString()) }
         if (form.canDelete) FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
+    }
+}
+
+/** The earlier names matching what is typed, one tap each; shows nothing when there are none. */
+@Composable
+private fun NameSuggestionRow(
+    suggestions: List<NameSuggestion>,
+    onPicked: (NameSuggestion) -> Unit,
+) {
+    if (suggestions.isEmpty()) return
+    val label = stringResource(R.string.expense_name_suggestions)
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().semantics { contentDescription = label },
+        horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
+    ) {
+        suggestions.forEach { suggestion ->
+            CategoryChip(label = suggestion.name, selected = false, onClick = { onPicked(suggestion) })
+        }
     }
 }
 

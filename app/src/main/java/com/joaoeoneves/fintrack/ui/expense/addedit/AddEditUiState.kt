@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
+import com.joaoeoneves.fintrack.domain.model.NameSuggestion
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.Instant
 
@@ -23,6 +24,8 @@ data class ExpenseFormState(
     val mealCardPlafondUsed: Boolean = false,
     val categoryTouched: Boolean = false,
     val suggestedCategory: Boolean = false,
+    /** Earlier names matching what is typed (new forms only); not part of the saved snapshot. */
+    val nameSuggestions: List<NameSuggestion> = emptyList(),
     val nameError: UiText? = null,
     val amountError: UiText? = null,
     val categoryError: UiText? = null,
