@@ -672,6 +672,7 @@
     <string name="plan_tile_envelopes">Envelopes</string>
     <string name="plan_tile_free">Safe to spend</string>
     <string name="plan_configure">Set up</string>
+    <string name="salary_setup_done">Salary saved</string>
     <string name="plan_configure_income">Income</string>
     <string name="plan_configure_envelopes">Envelopes</string>
     <string name="plan_configure_bills">Recurring</string>

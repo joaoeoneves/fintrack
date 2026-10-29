@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -10,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.StartStep
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.ui.activity.ActivityCallbacks
@@ -17,11 +19,14 @@ import com.joaoeoneves.fintrack.ui.activity.ActivityScreen
 import com.joaoeoneves.fintrack.ui.common.newTransactionArg
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardCallbacks
 import com.joaoeoneves.fintrack.ui.dashboard.DashboardScreen
+import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
 import com.joaoeoneves.fintrack.ui.expense.addedit.AddEditExpenseScreen
 import com.joaoeoneves.fintrack.ui.income.addedit.AddEditIncomeScreen
+import com.joaoeoneves.fintrack.ui.plan.ConfigureActions
 import com.joaoeoneves.fintrack.ui.plan.IncomeScreen
 import com.joaoeoneves.fintrack.ui.plan.PlanNavigation
 import com.joaoeoneves.fintrack.ui.plan.PlanScreen
+import com.joaoeoneves.fintrack.ui.plan.configure.ConfigureScreen
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeEditorScreen
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopesScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
@@ -123,6 +128,7 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
         composable<PlanHome> {
             PlanScreen(
                 onOpenSettings = { navController.navigate(Settings) },
+                onOpenConfigure = { navController.navigate(Configure) },
                 navigation =
                     PlanNavigation(
                         onOpenIncome = { period -> navController.navigate(PlanIncome(month = period.encode())) },
@@ -131,14 +137,6 @@ private fun NavGraphBuilder.planRoutes(navController: NavHostController) {
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenCategories = { navController.navigate(Categories) },
                     ),
-            )
-        }
-        composable<PlanIncome> {
-            IncomeScreen(
-                onBack = dropUnlessResumed { navController.popBackStack() },
-                onOpenSalaryProfile = { hasProfile ->
-                    navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
-                },
             )
         }
     }
@@ -155,7 +153,7 @@ private fun NavGraphBuilder.savingsRoutes(navController: NavHostController) {
     }
 }
 
-/** The envelope list and editor, pushed from the Plan tab. */
+/** The envelope list and editors, pushed on top of whichever tab is current. */
 private fun NavGraphBuilder.envelopeRoutes(navController: NavHostController) {
     composable<PlanEnvelopes> {
         EnvelopesScreen(
@@ -177,6 +175,27 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
+            onOpenCategories = { navController.navigate(Categories) },
+        )
+    }
+    composable<Configure> {
+        ConfigureScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            actions =
+                ConfigureActions(
+                    onOpenIncome = { navController.navigate(PlanIncome()) },
+                    onOpenEnvelopes = { navController.navigate(PlanEnvelopes) },
+                    onOpenRecurring = { navController.navigate(RecurringList) },
+                    onOpenCategories = { navController.navigate(Categories) },
+                ),
+        )
+    }
+    composable<PlanIncome> {
+        IncomeScreen(
+            onBack = dropUnlessResumed { navController.popBackStack() },
+            onOpenSalaryProfile = { hasProfile ->
+                navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
+            },
         )
     }
     composable<Categories> {
@@ -193,9 +212,15 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
         SalaryProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
     composable<SalarySetup> {
+        val showMessage = LocalAppSnackbar.current
+        val doneMessage = stringResource(R.string.salary_setup_done)
         SalarySetupScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
-            onDone = dropUnlessResumed { navController.popBackStack() },
+            onDone =
+                dropUnlessResumed {
+                    navController.popBackStack()
+                    showMessage(doneMessage)
+                },
             onOpenAdvanced = {
                 navController.navigate(EditSalaryProfile) { popUpTo<SalarySetup> { inclusive = true } }
             },
