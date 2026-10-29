@@ -25,8 +25,12 @@ tags:
 - tapOn:
     id: "nav_income"
 - assertVisible: "Expected income"
-- assertVisible: "Salary profile"
+- scrollUntilVisible:
+    element: "Salary profile"
 - assertVisible: "Working days in.*"
+- scrollUntilVisible:
+    element: "Add income"
+    direction: UP
 - tapOn: "Add income"
 - assertVisible: "New income"
 - tapOn: "Name"
@@ -46,13 +50,16 @@ tags:
     timeout: 10000
 - assertVisible: "Expected .* Difference .*"
 
-# --- Working days / days off ---
+# --- Working days / days off (Configure group at the bottom of the tab) ---
+- scrollUntilVisible:
+    element: "Working days in.*"
 - tapOn: "Working days in.*"
 - assertVisible: "Days off this month"
 - tapOn: "More days off"
 - tapOn: "More days off"
 - tapOn: "Save"
-- assertVisible: "Working days in.*"
+- scrollUntilVisible:
+    element: "Working days in.*"
 - assertVisible: "19.*"
 
 # --- Spending tab: add a group ---
