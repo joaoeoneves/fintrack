@@ -25,7 +25,6 @@ class IncomeYearlyShiftTest {
         label: String = id,
         month: Int = 11,
         cents: Long = 66_330L,
-        payDay: Int? = null,
         key: String? = MANAGED_CHRISTMAS,
     ) = PlannedIncome(
         id,
@@ -35,7 +34,6 @@ class IncomeYearlyShiftTest {
         frequency = IncomeFrequency.YEARLY,
         monthOfYear = month,
         managedKey = key,
-        payDay = payDay,
     )
 
     private val duodecimos =
@@ -55,16 +53,16 @@ class IncomeYearlyShiftTest {
 
     @Test
     fun paysForNextMonth_managedYearly_noPayDayOrFrom26() {
-        assertTrue(yearly(payDay = null).paysForNextMonth)
-        assertTrue(yearly(payDay = 26).paysForNextMonth)
-        assertTrue(yearly(payDay = 31).paysForNextMonth)
+        assertTrue(yearly().copy(payDay = null).paysForNextMonth)
+        assertTrue(yearly().copy(payDay = 26).paysForNextMonth)
+        assertTrue(yearly().copy(payDay = 31).paysForNextMonth)
     }
 
     @Test
     fun paysForNextMonth_falseBefore26_unmanagedAndOnce() {
-        assertFalse(yearly(payDay = 25).paysForNextMonth)
+        assertFalse(yearly().copy(payDay = 25).paysForNextMonth)
         assertFalse(yearly(key = null).paysForNextMonth)
-        assertFalse(yearly(key = null, payDay = 30).paysForNextMonth)
+        assertFalse(yearly(key = null).copy(payDay = 30).paysForNextMonth)
         val once = yearly().copy(frequency = IncomeFrequency.ONCE, monthOfYear = null, yearMonth = nov)
         assertFalse(once.paysForNextMonth)
     }
@@ -91,7 +89,7 @@ class IncomeYearlyShiftTest {
 
     @Test
     fun yearlyWithPayDayBefore26_staysInItsOwnMonth() {
-        val xmas = yearly(payDay = 15)
+        val xmas = yearly().copy(payDay = 15)
 
         assertEquals(66_330L, on.amountIn(xmas, nov))
         assertEquals(0L, on.amountIn(xmas, dec))
