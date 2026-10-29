@@ -20,4 +20,7 @@ data class PeriodOverview(
     val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
     val recurring: List<RecurringItem> = emptyList(),
     val periodEnvelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
+    val figures: MonthFigures = MonthFigures(0L, 0L, 0L, 0L, 0L),
+    val funding: IncomeFunding = IncomeFunding.unshifted(budgetMonth, 0),
+    val monthIncome: List<Income> = emptyList(),
 )

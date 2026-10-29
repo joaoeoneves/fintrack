@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.annualPlanOf
 import com.joaoeoneves.fintrack.domain.model.resolvedWith
+import com.joaoeoneves.fintrack.domain.model.salaryShiftEnabled
 import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +49,7 @@ class ObserveAnnualPlan
                     sources.monthSettings.observeMonthSettings(),
                     sources.categories.observeCategories(),
                 ) { budgets, lines, settings, catalog -> AnnualPlanSources(budgets, lines, settings, catalog) }
+            val shift = sources.planSettings.observeSalaryPaysNextMonth()
             val extraInputs =
                 combine(
                     sources.envelopes.observeEnvelopes(),
@@ -55,10 +57,10 @@ class ObserveAnnualPlan
                     goalRepository.observeGoals(),
                 ) { envelopes, recurring, goals -> Triple(envelopes, recurring, goals) }
             return combine(
-                planInputs,
+                combine(planInputs, shift) { plan, pref -> plan to pref },
                 extraInputs,
                 transactionRepository.observeTransactions(InstantRange(start, end)),
-            ) { plan, (envelopes, recurring, goals), transactions ->
+            ) { (plan, pref), (envelopes, recurring, goals), transactions ->
                 annualPlanOf(
                     year,
                     AnnualPlanInputs(
@@ -70,6 +72,7 @@ class ObserveAnnualPlan
                         monthSettings = plan.monthSettings,
                         yearExpenses = transactions.expenses.resolvedWith(plan.categories),
                         goals = goals,
+                        shiftSalary = salaryShiftEnabled(pref, plan.plannedIncome),
                     ),
                 )
             }
