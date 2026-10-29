@@ -1,17 +1,21 @@
 package com.joaoeoneves.fintrack.ui.activity
 
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.domain.model.netCents
+import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
 import com.joaoeoneves.fintrack.ui.common.amountMatchesQuery
 import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
 
 /**
  * Applies the type, category, envelope and search filters (all must match). The [category] and [envelope] only
- * narrow expenses: with [ActivityType.INCOME] they are ignored, and with [ActivityType.ALL] a selection hides
- * income (income has neither). [envelope] is an envelope id or [NO_ENVELOPE]; [envelopeOf] maps a category to its
+ * exist on the Expenses tab ([ActivityType.EXPENSE]): under [ActivityType.ALL] and [ActivityType.INCOME] they are
+ * ignored, so a leftover selection never silently hides income. [envelope] is an envelope id or [NO_ENVELOPE]; [envelopeOf] maps a category to its
  * existing envelope (`null`: none). A blank [query] matches everything; [labels] are the localized category names
  * the query is also matched against.
  */
@@ -97,7 +101,7 @@ private fun Transaction.matchesType(type: ActivityType): Boolean =
 private fun Transaction.matchesCategory(
     type: ActivityType,
     category: CategoryId?,
-): Boolean = category == null || type == ActivityType.INCOME || (this is Expense && this.category.id == category)
+): Boolean = category == null || type != ActivityType.EXPENSE || (this is Expense && this.category.id == category)
 
 private fun Transaction.matchesEnvelope(
     type: ActivityType,
@@ -105,7 +109,7 @@ private fun Transaction.matchesEnvelope(
     envelopeOf: (CategoryId) -> String?,
 ): Boolean =
     envelope == null ||
-        type == ActivityType.INCOME ||
+        type != ActivityType.EXPENSE ||
         (this is Expense && (envelopeOf(category.id) ?: NO_ENVELOPE) == envelope)
 
 private fun Transaction.sortAmountCents(): Long =
@@ -113,3 +117,23 @@ private fun Transaction.sortAmountCents(): Long =
         is Expense -> signedAmountCents
         is Income -> amountCents
     }
+
+/**
+ * The totals of exactly the [items] the list shows: income received, and the net outflow of the expenses
+ * ([ActivityTotals.outCents], refunds netted, savings included) split into what is spending and what was saved by
+ * the [categories] catalog. Filters and the type tab therefore always move the totals with the list.
+ */
+fun activityTotalsOf(
+    items: List<Transaction>,
+    categories: List<Category>,
+): ActivityTotals {
+    val expenses = items.filterIsInstance<Expense>()
+    val saved = expenses.filter { categories.resolve(it.category.id).kind == CategoryKind.SAVING }.netCents()
+    val out = expenses.netCents()
+    return ActivityTotals(
+        inCents = items.filterIsInstance<Income>().sumOf { it.amountCents },
+        outCents = out,
+        spendingCents = out - saved,
+        savedCents = saved,
+    )
+}

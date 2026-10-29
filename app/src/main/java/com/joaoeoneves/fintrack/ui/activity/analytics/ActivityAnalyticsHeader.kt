@@ -43,6 +43,7 @@ fun ActivityAnalyticsHeader(
     selectedEnvelope: String?,
     actions: ActivityAnalyticsActions,
     modifier: Modifier = Modifier,
+    showSpent: Boolean = true,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
@@ -61,15 +62,17 @@ fun ActivityAnalyticsHeader(
             alignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
         )
-        Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
-            Text(
-                text = stringResource(R.string.activity_spent_total),
-                style = MaterialTheme.typography.labelMedium,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-            Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
-            if (analytics.split.spendingCents > 0) {
-                SpendingSplitCard(split = analytics.split, modifier = Modifier.padding(top = Dimens.Space16))
+        if (showSpent) {
+            Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
+                Text(
+                    text = stringResource(R.string.activity_spent_total),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+                Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
+                if (analytics.split.spendingCents > 0) {
+                    SpendingSplitCard(split = analytics.split, modifier = Modifier.padding(top = Dimens.Space16))
+                }
             }
         }
         if (analytics.envelopeChips.isNotEmpty()) {
