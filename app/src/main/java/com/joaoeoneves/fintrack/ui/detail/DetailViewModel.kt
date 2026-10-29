@@ -148,7 +148,7 @@ class DetailViewModel
                     period.canGoToNextMonth(now, clock.zone)
                 }
             return combine(
-                observeMonthlyHistory(months.last(), months.size, clock.zone),
+                observeMonthlyHistory(months.last(), months.size, clock.zone, currentYearMonth(now, clock.zone)),
                 observePeriodOverview(period, now, clock.zone, recentLimit = 0),
                 categoryRepository.observeCategories(),
                 nextMonthSpendingOf(period, now),

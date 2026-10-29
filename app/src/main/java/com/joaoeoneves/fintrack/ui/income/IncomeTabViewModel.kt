@@ -252,16 +252,19 @@ class IncomeTabViewModel(
             ) { transactions, available, settings -> YearExtras(available, transactions, settings) }
         }
 
-    // The window ends at the period's last month and is at least a year long.
+    // The window ends at the period's last month (at most the current one) and is at least a year long.
     private fun historyOf(
         period: Period,
         now: Instant,
     ): Flow<ActivityHistory?> {
         val months = periodMonthsOf(period, now, clock.zone)
         val calendarMonth = period is Period.CurrentMonth || period is Period.Month
-        // A period after the current month has nothing recorded yet: no history, only the plan's expectations.
-        if (months.last() > currentYearMonth(now, clock.zone)) return flowOf(null)
-        return observeMonthlyHistory(months.last(), maxOf(HISTORY_MONTHS, months.size), clock.zone)
+        val today = currentYearMonth(now, clock.zone)
+        // A period that starts after the current month has nothing recorded yet: no history, only expectations.
+        if (months.first() > today) return flowOf(null)
+        // A current Year ends in the future: its history stops at the current month, the rest is only expected.
+        val end = minOf(months.last(), today)
+        return observeMonthlyHistory(end, maxOf(HISTORY_MONTHS, months.size), clock.zone, today)
             .map<MonthlyHistory, ActivityHistory?> { ActivityHistory(months, calendarMonth, it) }
             .catch { e ->
                 Log.w(TAG, "History flow failed", e)

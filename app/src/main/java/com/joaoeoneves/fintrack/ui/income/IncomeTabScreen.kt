@@ -51,7 +51,6 @@ import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.WorkingDaysDialog
 import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import java.time.YearMonth
 
 // How many months past the current one the tab can show (kept in step with the ViewModel's limit).
 private const val INCOME_MONTHS_AHEAD = 120
@@ -170,11 +169,12 @@ private fun IncomeContent(
         )
     }
     state.editor?.let {
+        val workingDays = workingDaysMonth ?: viewModel.fallbackWorkingDays()
         IncomeLineSheet(
             editor = it,
-            workingDays = workingDaysMonth ?: viewModel.fallbackWorkingDays(),
+            workingDays = workingDays,
             onSave = { label, cents, schedule, from ->
-                viewModel.onSaveIncomeLine(label, cents, schedule, workingDaysMonth?.month ?: YearMonth.now(), from)
+                viewModel.onSaveIncomeLine(label, cents, schedule, workingDays.month, from)
             },
             onDelete = viewModel::onDeleteIncomeLine,
             onDismiss = viewModel::onDismissEditor,

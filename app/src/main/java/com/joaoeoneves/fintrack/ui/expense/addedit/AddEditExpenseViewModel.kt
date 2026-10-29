@@ -40,8 +40,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.Instant
-import java.time.ZoneId
 import javax.inject.Inject
 
 private const val TAG = "AddEditExpenseViewModel"
@@ -62,6 +62,7 @@ class AddEditExpenseViewModel(
     savedStateHandle: SavedStateHandle,
     /** Whether the meal-card switch applies (see `usesMealCard`); the switch is hidden while it does not. */
     private val mealCardAvailable: Flow<Boolean> = flowOf(false),
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
     @Inject
     constructor(
@@ -70,12 +71,14 @@ class AddEditExpenseViewModel(
         deleteTransaction: DeleteTransaction,
         savedStateHandle: SavedStateHandle,
         salaryProfiles: SalaryProfileRepository,
+        clock: Clock,
     ) : this(
         expenseRepository,
         categoryRepository,
         deleteTransaction,
         savedStateHandle,
         salaryProfiles.observeSalaryProfile().map { it.usesMealCard() }.catch { emit(false) },
+        clock,
     )
 
     private val route = savedStateHandle.toRoute<AddEditExpense>()
@@ -160,11 +163,11 @@ class AddEditExpenseViewModel(
                     AddEditUiState.Ready(
                         ExpenseFormState(
                             category = category,
-                            date = defaultNewTransactionDate(route.period, Instant.now(), ZoneId.systemDefault()),
+                            date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
                             mealCardAvailable = mealAvailable,
                         ).withMealCardPrefill(),
                     )
-                suggestionIndex = loadSuggestionIndex(expenseRepository)
+                suggestionIndex = loadSuggestionIndex(expenseRepository, clock)
             }
         }
     }
@@ -311,10 +314,13 @@ private fun ExpenseFormState.withSuggestion(
 }
 
 /** The category suggestions from the last year of expenses; any failure just means no suggestions. */
-private suspend fun loadSuggestionIndex(repository: ExpenseRepository): Map<String, CategoryId> =
+private suspend fun loadSuggestionIndex(
+    repository: ExpenseRepository,
+    clock: Clock,
+): Map<String, CategoryId> =
     runCatching {
-        val now = Instant.now()
-        val start = now.atZone(ZoneId.systemDefault()).minusMonths(SUGGESTION_HISTORY_MONTHS).toInstant()
+        val now = clock.instant()
+        val start = now.atZone(clock.zone).minusMonths(SUGGESTION_HISTORY_MONTHS).toInstant()
         val expenses = repository.observeExpenses(start, now.plusSeconds(DAY_SECONDS)).first()
         categorySuggestionIndex(expenses)
     }.onFailure { Log.w(TAG, "Failed to load category suggestions", it) }
