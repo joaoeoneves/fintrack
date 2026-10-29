@@ -240,7 +240,7 @@ private fun YearOutlook(outlook: YearIncomeOutlook) {
         outlook.months.forEach { entry ->
             SettingsRow(
                 title = formatShortMonthName(entry.month, locale),
-                supportingText = stringResource(outlookLabel(entry.received)),
+                supportingText = stringResource(outlookLabel(entry.received, entry.partial)),
                 value = formatAmountCents(entry.cents),
             )
             Hairline()
@@ -258,11 +258,14 @@ private fun YearOutlook(outlook: YearIncomeOutlook) {
     }
 }
 
-private fun outlookLabel(done: Boolean) =
-    when (done) {
-        true -> R.string.income_outlook_received
-        false -> R.string.income_outlook_expected
-    }
+private fun outlookLabel(
+    done: Boolean,
+    partial: Boolean,
+) = when {
+    partial -> R.string.income_outlook_partial
+    done -> R.string.income_outlook_received
+    else -> R.string.income_outlook_expected
+}
 
 /** The meal card: what it received and what was paid with it in the period, and what is left (may be negative). */
 @Composable

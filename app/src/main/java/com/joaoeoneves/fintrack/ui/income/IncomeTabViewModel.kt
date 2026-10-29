@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
@@ -15,6 +16,7 @@ import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.YearIncomeOutlook
+import com.joaoeoneves.fintrack.domain.model.attributeIncomes
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
@@ -27,6 +29,7 @@ import com.joaoeoneves.fintrack.domain.model.isManaged
 import com.joaoeoneves.fintrack.domain.model.looksLikeSalary
 import com.joaoeoneves.fintrack.domain.model.mealCardBalanceOf
 import com.joaoeoneves.fintrack.domain.model.mealCardReceivedCents
+import com.joaoeoneves.fintrack.domain.model.parsePaydayIncomeId
 import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
 import com.joaoeoneves.fintrack.domain.model.receivedIncomes
@@ -481,7 +484,15 @@ private fun outlookOf(
             .orEmpty()
             .associate { it.month to it.incomeCents }
     val incomeMonth = IncomeMonth.of(sources.extras.settings)
-    return yearIncomeOutlook(year, sources.lines, incomeMonth, received, YearMonth.from(today))
+    val thisMonth = YearMonth.from(today)
+    // TODO(5.3-merge): attribute by the owner month once Track A's rule lands (a pay_ id belongs to its own month).
+    val receivedLineIds =
+        sources.extras.transactions
+            ?.income
+            ?.filter { monthOfIncome(it) == thisMonth }
+            ?.let { attributeIncomes(thisMonth, it, sources.lines).keys }
+            .orEmpty()
+    return yearIncomeOutlook(year, sources.lines, incomeMonth, received, thisMonth, receivedLineIds)
 }
 
 /** The meal-card balance of the tab's period (its month's overview or the year's transactions); `null` when off. */
@@ -564,3 +575,6 @@ private fun workingDaysOf(
         overridden = override != null,
     )
 }
+
+private fun monthOfIncome(income: Income): YearMonth =
+    parsePaydayIncomeId(income.id)?.second ?: YearMonth.from(income.date.atZone(ZoneId.systemDefault()))

@@ -701,6 +701,7 @@
     <string name="income_outlook">Income by month</string>
     <string name="income_outlook_received">Received</string>
     <string name="income_outlook_expected">Expected</string>
+    <string name="income_outlook_partial">Received so far + expected</string>
     <string name="income_outlook_total">Total for the year</string>
     <string name="income_outlook_total_detail">Received %1$s · expected %2$s</string>
     <string name="error_write_rejected">Couldn\'t save to the server: %1$s</string>
