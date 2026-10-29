@@ -91,10 +91,10 @@ class LocalPlannedIncomeRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun save_zeroOrNegativeAmount_fails_oneCentAccepted() =
+    fun save_negativeAmount_fails_zeroAndOneCentAccepted() =
         runStoreTest {
-            assertTrue(repo.savePlannedIncome(line(amount = 0)).exceptionOrNull() is IllegalArgumentException)
-            assertTrue(repo.savePlannedIncome(line(amount = -5)).isFailure)
+            assertTrue(repo.savePlannedIncome(line(amount = -5)).exceptionOrNull() is IllegalArgumentException)
+            assertTrue(repo.savePlannedIncome(line(id = "z", amount = 0)).isSuccess)
             assertTrue(repo.savePlannedIncome(line(amount = 1)).isSuccess)
         }
 

@@ -33,7 +33,8 @@ class LocalDataStoreStartMonthTest : LocalStoreTestBase() {
 
             assertEquals("2026-04", doc.budgets.single().startMonth)
             assertEquals("2026-04", doc.plannedIncome.single().startMonth)
-            assertEquals(20, doc.schemaVersion)
+            // Only upgraded in memory to the start-month schema; the next write stamps the current version.
+            assertEquals(START_MONTH_SCHEMA_VERSION, doc.schemaVersion)
             assertEquals(4L, doc.revision)
             assertEquals(1, doc.expenses.size)
             assertTrue(filesInDir().none { it.contains("corrupt") })

@@ -24,6 +24,7 @@ internal fun remoteSnapshot(
     categories: List<Category> = emptyList(),
     monthSettingsIds: Set<String> = emptySet(),
     categoryGroups: List<Envelope> = emptyList(),
+    plannedIncomeLabels: Set<String> = emptySet(),
 ) = RemoteAccountSnapshot(
     expenseIds,
     incomeIds,
@@ -33,6 +34,7 @@ internal fun remoteSnapshot(
     categories,
     monthSettingsIds,
     categoryGroups,
+    plannedIncomeLabels = plannedIncomeLabels,
 )
 
 @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.

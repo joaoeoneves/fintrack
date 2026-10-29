@@ -18,7 +18,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -135,7 +134,6 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
         }
 
     // Production bug: historyOf() returns null for the current year (its last month is after today).
-    @Ignore("IncomeTabViewModel.historyOf drops the current year history, so received months show 0")
     @Test
     fun currentYear_mixesReceivedAndExpected() =
         runTest(testDispatcher) {

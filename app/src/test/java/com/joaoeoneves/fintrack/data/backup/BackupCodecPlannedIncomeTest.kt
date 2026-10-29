@@ -55,8 +55,9 @@ class BackupCodecPlannedIncomeTest {
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
 
-        assertEquals(listOf("ok"), result.document.plannedIncome.map { it.id })
-        assertEquals(5, result.skippedCount)
+        // A zero amount is valid (a line that pays nothing yet); negative is not.
+        assertEquals(listOf("ok", "zero"), result.document.plannedIncome.map { it.id })
+        assertEquals(4, result.skippedCount)
     }
 
     @Test
