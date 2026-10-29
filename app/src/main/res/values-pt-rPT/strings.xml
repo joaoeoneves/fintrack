@@ -20,7 +20,6 @@
     <string name="action_ok">OK</string>
     <string name="action_retry">Tentar novamente</string>
     <string name="action_undo">Desfazer</string>
-    <string name="action_change">Alterar</string>
     <string name="action_import">Importar</string>
     <string name="action_sign_out">Terminar sessão</string>
     <string name="action_add_expense">Adicionar despesa</string>
@@ -173,8 +172,6 @@
     <string name="error_source_required">O nome é obrigatório</string>
     <string name="error_failed_save_income">Não foi possível guardar o rendimento</string>
     <string name="error_failed_delete_income">Não foi possível eliminar o rendimento</string>
-    <string name="confirm_remove_title">Remover “%1$s”?</string>
-    <string name="income_line_remove_message">Deixa de contar como rendimento previsto. Os rendimentos já registados mantêm-se.</string>
 
 
     <!-- Definições -->
@@ -353,9 +350,6 @@
     <string name="plan_over_by">Acima do plano em %1$s</string>
     <string name="plan_expected_income">Rendimento previsto</string>
     <string name="home_to_receive_title">A receber</string>
-    <string name="plan_received">recebido %1$s</string>
-    <string name="plan_planned_allocations">Planeado</string>
-    <string name="plan_left_in_budgets">Restante nos envelopes</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/dia durante %2$d dia</item>
         <item quantity="many">≈ %1$s/dia durante %2$d dias</item>
@@ -405,8 +399,6 @@
     <string name="recurring_list_empty">Ainda não há recorrentes</string>
     <string name="recurring_paused">Em pausa</string>
     <string name="recurring_ended">Terminado</string>
-    <string name="recurring_pause">Pausar</string>
-    <string name="recurring_resume">Retomar</string>
     <string name="recurring_frequency_monthly">Mensal</string>
     <string name="recurring_frequency_yearly">Anual</string>
     <string name="recurring_day_of_month">Dia do mês</string>
@@ -615,7 +607,6 @@
     <string name="savings_total">Total</string>
     <string name="savings_empty">Ainda não há planos de poupança</string>
     <string name="savings_delete_plan">Eliminar plano</string>
-    <string name="savings_delete_message">“%1$s” e o seu valor mensal são removidos. As despesas já registadas mantêm-se.</string>
     <string name="savings_plan_deleted">Plano de poupança eliminado</string>
     <string name="recurring_no_saving_hint">Para poupança usa o separador Poupança</string>
     <string name="annual_goals_title">Planos de poupança</string>
@@ -669,7 +660,6 @@
     <string name="envelope_paid_by_empty">Adiciona um rendimento mensal regular para escolheres o que financia este envelope.</string>
     <string name="envelope_paid_by_none">Nenhum</string>
     <string name="envelope_delete">Eliminar envelope</string>
-    <string name="envelope_delete_confirm">Eliminar “%1$s”? As categorias ficam; o envelope e o seu valor são removidos.</string>
     <string name="envelope_deleted">Envelope eliminado</string>
     <string name="envelope_error_name_blank">Escreve um nome</string>
     <string name="envelope_error_name_duplicate">Já existe um envelope com este nome</string>

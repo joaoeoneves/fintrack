@@ -20,7 +20,6 @@
     <string name="action_ok">OK</string>
     <string name="action_retry">Retry</string>
     <string name="action_undo">Undo</string>
-    <string name="action_change">Change</string>
     <string name="action_import">Import</string>
     <string name="action_sign_out">Sign out</string>
     <string name="action_add_expense">Add expense</string>
@@ -172,8 +171,6 @@
     <string name="error_source_required">Name is required</string>
     <string name="error_failed_save_income">Couldn\'t save the income</string>
     <string name="error_failed_delete_income">Couldn\'t delete the income</string>
-    <string name="confirm_remove_title">Remove “%1$s”?</string>
-    <string name="income_line_remove_message">It stops counting as expected income. Income already recorded is kept.</string>
 
 
     <!-- Settings -->
@@ -344,9 +341,6 @@
     <string name="plan_over_by">Over plan by %1$s</string>
     <string name="plan_expected_income">Expected income</string>
     <string name="home_to_receive_title">To receive</string>
-    <string name="plan_received">received %1$s</string>
-    <string name="plan_planned_allocations">Planned</string>
-    <string name="plan_left_in_budgets">Left in envelopes</string>
     <plurals name="plan_daily_allowance">
         <item quantity="one">≈ %1$s/day for %2$d day</item>
         <item quantity="other">≈ %1$s/day for %2$d days</item>
@@ -394,8 +388,6 @@
     <string name="recurring_list_empty">No recurring yet</string>
     <string name="recurring_paused">Paused</string>
     <string name="recurring_ended">Ended</string>
-    <string name="recurring_pause">Pause</string>
-    <string name="recurring_resume">Resume</string>
     <string name="recurring_frequency_monthly">Monthly</string>
     <string name="recurring_frequency_yearly">Yearly</string>
     <string name="recurring_day_of_month">Day of month</string>
@@ -600,7 +592,6 @@
     <string name="savings_total">Total</string>
     <string name="savings_empty">No savings plans yet</string>
     <string name="savings_delete_plan">Delete plan</string>
-    <string name="savings_delete_message">“%1$s” and its monthly amount are removed. Expenses already recorded are kept.</string>
     <string name="savings_plan_deleted">Savings plan deleted</string>
     <string name="recurring_no_saving_hint">For savings use the Savings tab</string>
     <string name="annual_goals_title">Savings plans</string>
@@ -654,7 +645,6 @@
     <string name="envelope_paid_by_empty">Add a regular monthly income to choose what funds this envelope.</string>
     <string name="envelope_paid_by_none">None</string>
     <string name="envelope_delete">Delete envelope</string>
-    <string name="envelope_delete_confirm">Delete “%1$s”? Its categories stay; the envelope and its amount are removed.</string>
     <string name="envelope_deleted">Envelope deleted</string>
     <string name="envelope_error_name_blank">Enter a name</string>
     <string name="envelope_error_name_duplicate">An envelope with this name already exists</string>
