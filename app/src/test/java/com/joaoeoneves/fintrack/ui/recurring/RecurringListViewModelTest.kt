@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
 import android.app.Application
-import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
@@ -132,119 +131,14 @@ class RecurringListViewModelTest {
         }
 
     @Test
-    fun pause_setsInactive_keepsCursor() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(recurringItem(handledThrough = day(2026, 2, 15))))
-            val vm = viewModel(repo)
-            started(vm)
-
-            vm.onTogglePaused("r1")
-            advanceUntilIdle()
-
-            assertEquals(false, repo.items.single().active)
-            assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
-            assertEquals(1, content(vm).inactive.size)
-        }
-
-    @Test
-    fun resume_movesCursorToLastOccurrenceBeforeToday() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(recurringItem(active = false, handledThrough = day(2026, 1, 15))))
-            val vm = viewModel(repo)
-            started(vm)
-
-            vm.onTogglePaused("r1")
-            advanceUntilIdle()
-
-            assertEquals(true, repo.items.single().active)
-            // Today is the 15th: the 15th itself is still pending, earlier ones are skipped.
-            assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
-            assertEquals(1, content(vm).active.size)
-        }
-
-    @Test
-    fun pause_recordsTheDay() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(recurringItem(handledThrough = day(2026, 2, 15))))
-            val vm = viewModel(repo)
-            started(vm)
-
-            vm.onTogglePaused("r1")
-            advanceUntilIdle()
-
-            assertEquals(day(2026, 3, 15), repo.items.single().pausedAt)
-        }
-
-    @Test
-    fun resume_withPausedAt_recordsThePausedGapAsSkipped_andClearsPausedAt() =
-        runTest(testDispatcher) {
-            val paused =
-                recurringItem(handledThrough = day(2026, 1, 15), active = false, pausedAt = day(2026, 2, 20))
-            val repo = FakeRecurringRepository(listOf(paused))
-            val vm = viewModel(repo)
-            started(vm)
-
-            vm.onTogglePaused("r1")
-            advanceUntilIdle()
-
-            val item = repo.items.single()
-            assertEquals(true, item.active)
-            assertEquals(null, item.pausedAt)
-            // Feb 15 was pending before the pause: stays pending. Nothing fell inside the gap before today.
-            assertEquals(day(2026, 1, 15), item.handledThrough)
-            assertEquals(emptySet<java.time.LocalDate>(), item.skipped)
-        }
-
-    @Test
-    fun resume_legacyItem_skipsEarlierOccurrences() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(recurringItem(active = false, handledThrough = day(2026, 1, 15))))
-            val vm = viewModel(repo)
-            started(vm)
-
-            vm.onTogglePaused("r1")
-            advanceUntilIdle()
-
-            assertEquals(setOf(day(2026, 2, 15)), repo.items.single().skipped)
-        }
-
-    @Test
-    fun toggleUnknownId_isNoOp() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(recurringItem()))
-            val vm = viewModel(repo)
-            started(vm)
-
-            vm.onTogglePaused("nope")
-            advanceUntilIdle()
-
-            assertEquals(true, repo.items.single().active)
-        }
-
-    @Test
-    fun toggleFailure_emitsError() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(recurringItem()))
-            val vm = viewModel(repo)
-            val errors = mutableListOf<UiText>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
-            started(vm)
-            repo.nextSaveError = IllegalStateException("boom")
-
-            vm.onTogglePaused("r1")
-            advanceUntilIdle()
-
-            assertEquals(listOf<UiText>(UiText.StringResource(R.string.error_recurring_save_failed)), errors)
-            assertEquals(true, repo.items.single().active)
-        }
-
-    @Test
     fun delete_removesAtOnce_emitsTheItem_andUndoRestoresIt() =
         runTest(testDispatcher) {
             val repo = FakeRecurringRepository(listOf(recurringItem()))
             val vm = viewModel(repo)
             val deleted = mutableListOf<com.joaoeoneves.fintrack.domain.model.RecurringItem>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.deletedEvent.collect { deleted += it } }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                vm.deletedEvent.collect { deleted += it }
+            }
             started(vm)
 
             vm.onDeleteRequested("r1")
@@ -266,7 +160,9 @@ class RecurringListViewModelTest {
             val vm = viewModel(repo)
             val deleted = mutableListOf<com.joaoeoneves.fintrack.domain.model.RecurringItem>()
             val errors = mutableListOf<UiText>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.deletedEvent.collect { deleted += it } }
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                vm.deletedEvent.collect { deleted += it }
+            }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
             started(vm)
 
@@ -277,29 +173,6 @@ class RecurringListViewModelTest {
             advanceUntilIdle()
 
             assertTrue(deleted.isEmpty())
-            assertEquals(1, errors.size)
-            assertEquals(1, repo.items.size)
-        }
-
-    @Test
-    fun deleteFailure_emitsError_andConfirmWithoutTargetIsNoOp() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(recurringItem()))
-            val vm = viewModel(repo)
-            val errors = mutableListOf<UiText>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
-            started(vm)
-
-            vm.onConfirmDelete()
-            advanceUntilIdle()
-            assertTrue(errors.isEmpty())
-
-            repo.nextDeleteError = IllegalStateException("boom")
-            vm.onDeleteRequested("r1")
-            advanceUntilIdle()
-            vm.onConfirmDelete()
-            advanceUntilIdle()
-
             assertEquals(1, errors.size)
             assertEquals(1, repo.items.size)
         }

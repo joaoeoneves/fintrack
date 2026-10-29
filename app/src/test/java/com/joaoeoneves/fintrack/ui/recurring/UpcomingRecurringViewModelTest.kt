@@ -241,7 +241,12 @@ class UpcomingRecurringViewModelTest {
             vm.onUndo(undos.single())
             advanceUntilIdle()
 
-            assertTrue(repo.items.single().skipped.isEmpty())
+            assertTrue(
+                repo.items
+                    .single()
+                    .skipped
+                    .isEmpty(),
+            )
             assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
         }
 
