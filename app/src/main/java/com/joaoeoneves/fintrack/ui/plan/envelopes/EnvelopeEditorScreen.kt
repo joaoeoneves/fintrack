@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -45,16 +44,16 @@ import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.icon
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.EditorScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
-import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
-import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.plan.label
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -116,27 +115,18 @@ fun EnvelopeEditorScreen(
             )
         }
     val content = state as? EnvelopeEditorUiState.Content
-    LargeTitleScaffold(
+    EditorScaffold(
         title =
             stringResource(
                 if (content?.isNew == false) R.string.envelope_edit_title else R.string.envelope_new_title,
             ),
+        dirty = rememberIsDirty(content?.draft),
         onBack = onBack,
+        onSave = actions.onSave,
+        saving = content?.saving == true,
+        showSave = content != null,
         modifier = modifier,
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (content != null) {
-                PrimaryPillButton(
-                    text = stringResource(R.string.action_save),
-                    onClick = actions.onSave,
-                    loading = content.saving,
-                    modifier =
-                        Modifier
-                            .navigationBarsPadding()
-                            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12),
-                )
-            }
-        },
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (val current = state) {

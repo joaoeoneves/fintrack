@@ -31,6 +31,7 @@ import com.joaoeoneves.fintrack.ui.common.symbol
 import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
@@ -57,6 +58,7 @@ fun AddEditIncomeScreen(
         saveEnabled = readyForm != null && !readyForm.isBusy,
         onSave = viewModel::onSave,
         showSave = readyForm != null,
+        dirty = rememberIsDirty(readyForm?.copy(sourceError = null, amountError = null, saveError = null)),
         modifier = modifier,
     ) { innerPadding ->
         when (val state = uiState) {

@@ -31,6 +31,7 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 
@@ -55,6 +56,7 @@ fun AddEditRecurringScreen(
         saveEnabled = ready != null && !ready.isSaving,
         onSave = viewModel::onSave,
         showSave = ready != null,
+        dirty = rememberIsDirty(ready?.form),
         modifier = modifier,
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
