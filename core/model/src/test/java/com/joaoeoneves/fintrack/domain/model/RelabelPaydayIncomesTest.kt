@@ -8,7 +8,6 @@ import java.time.Instant
 import java.time.YearMonth
 
 class RelabelPaydayIncomesTest {
-    private val en = FakeSalaryLineLabelsProvider.ENGLISH
     private val pt = FakeSalaryLineLabelsProvider.PORTUGUESE
     private val defaults = FakeSalaryLineLabelsProvider().knownDefaults()
     private val oct = YearMonth.of(2026, 10)

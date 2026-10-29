@@ -3,13 +3,16 @@ package com.joaoeoneves.fintrack.data
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.repository.SalaryLineLabelsProvider
 
-/** [SalaryLineLabelsProvider] for tests: [current] in [language], defaults of both English and pt-PT plus the legacy shared subsidy label. */
+/**
+ * [SalaryLineLabelsProvider] for tests: [current] in [language], defaults of both English and pt-PT plus the
+ * legacy shared subsidy label.
+ */
 class FakeSalaryLineLabelsProvider(
     var language: SalaryLineLabels = ENGLISH,
 ) : SalaryLineLabelsProvider {
     override fun current(): SalaryLineLabels = language
 
-    override fun knownDefaults(): List<SalaryLineLabels> = listOf(ENGLISH, PORTUGUESE, LEGACY_ENGLISH, LEGACY_PORTUGUESE)
+    override fun knownDefaults(): List<SalaryLineLabels> = allDefaults
 
     companion object {
         val ENGLISH = SalaryLineLabels()
@@ -25,5 +28,7 @@ class FakeSalaryLineLabelsProvider(
         // The single label both subsidy lines shared before they were told apart.
         val LEGACY_ENGLISH = SalaryLineLabels(holidaySubsidy = "Subsidy", christmasSubsidy = "Subsidy")
         val LEGACY_PORTUGUESE = SalaryLineLabels(holidaySubsidy = "Subsídio", christmasSubsidy = "Subsídio")
+
+        private val allDefaults = listOf(ENGLISH, PORTUGUESE, LEGACY_ENGLISH, LEGACY_PORTUGUESE)
     }
 }

@@ -89,8 +89,8 @@ class SalaryProfileLinesLabelsTest {
     fun legacySharedSubsidyLabel_isRelabelledByTheSync() {
         val legacy = FakeSalaryLineLabelsProvider.LEGACY_ENGLISH.holidaySubsidy
         listOf(legacy, FakeSalaryLineLabelsProvider.LEGACY_PORTUGUESE.holidaySubsidy).forEach { old ->
-            val existing =
-                stored.map { if (it.managedKey in setOf(MANAGED_HOLIDAY, MANAGED_CHRISTMAS)) it.copy(label = old) else it }
+            val subsidies = setOf(MANAGED_HOLIDAY, MANAGED_CHRISTMAS)
+            val existing = stored.map { if (it.managedKey in subsidies) it.copy(label = old) else it }
             val sync = managedLinesSync(profile, existing, en, FakeSalaryLineLabelsProvider().knownDefaults())
 
             val byId = sync.upserts.associateBy { it.id }
