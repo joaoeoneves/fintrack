@@ -8,4 +8,5 @@ data class ActivityAnalyticsActions(
     val period: PeriodActions,
     val onEnvelopeSelected: (String?) -> Unit,
     val onCategorySelected: (Category) -> Unit,
+    val onIncomeSourceSelected: (String?) -> Unit = {},
 )
