@@ -62,7 +62,6 @@ fun LazyListScope.activityHeaderItems(
             period = state.period,
             canGoToNextMonth = state.canGoToNextMonth,
             actions = actions.period,
-            alignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
             showScaleSwitch = true,
         )

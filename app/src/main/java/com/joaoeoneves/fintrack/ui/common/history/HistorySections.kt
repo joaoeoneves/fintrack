@@ -99,6 +99,7 @@ fun IncomeHeadline(
                 )
                 Text(text = formatAmountCents(analytics.receivedCents), style = AmountLarge, maxLines = 1)
                 if (analytics.expectedCents != null && analytics.differenceCents != null) {
+                    val colors = FinTrackTheme.colors
                     Text(
                         text =
                             stringResource(
@@ -107,7 +108,12 @@ fun IncomeHeadline(
                                 signedAmount(analytics.differenceCents),
                             ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = FinTrackTheme.colors.textSecondary,
+                        color =
+                            when {
+                                analytics.differenceCents > 0L -> colors.positive
+                                analytics.differenceCents < 0L -> colors.negative
+                                else -> colors.textSecondary
+                            },
                     )
                 }
             }

@@ -15,6 +15,9 @@ fun NavController.navigateToTab(tab: TopLevelTab) {
         tabGraph?.let { popBackStack(it.findStartDestination().id, inclusive = false) }
         return
     }
+    // Home is the bottom of the stack: pop back to it (saving the tab left behind) instead of navigating to its graph,
+    // which could leave a second Home entry under a detail page and make back leave the app.
+    if (tab == TopLevelTab.HOME && popBackStack<Home>(inclusive = false, saveState = true)) return
     navigate(tab.graph) { tabOptions(this@navigateToTab, restoreState = true) }
 }
 
