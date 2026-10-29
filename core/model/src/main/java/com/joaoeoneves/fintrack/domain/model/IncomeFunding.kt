@@ -123,7 +123,10 @@ fun commonPayDateIn(
 fun IncomeRow.payingLinesByPayMonth(
     planMonth: YearMonth,
     funding: IncomeFunding,
-): Map<YearMonth, List<PlannedIncome>> = payingLines(planMonth, funding).groupBy { funding.payMonthOf(it, planMonth) }.toSortedMap()
+): Map<YearMonth, List<PlannedIncome>> {
+    val byMonth = payingLines(planMonth, funding).groupBy { funding.payMonthOf(it, planMonth) }
+    return byMonth.toSortedMap()
+}
 
 /**
  * The incomes already recorded for every paying line of this row for [planMonth], or `null` when the row pays
