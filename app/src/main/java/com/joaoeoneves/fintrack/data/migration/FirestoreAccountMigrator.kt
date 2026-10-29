@@ -70,6 +70,7 @@ class FirestoreAccountMigrator
                 incomeIds = ids("income"),
                 budgetCategoryIds = ids("budgets"),
                 plannedIncomeIds = ids("plannedIncome"),
+                plannedIncomeLabels = plannedIncomeLabels(uid),
                 recurringIds = ids("recurring"),
                 goalIds = ids("goals"),
                 monthSettingsIds = ids("monthSettings"),
@@ -79,6 +80,11 @@ class FirestoreAccountMigrator
                 hasAutomation = serverGet { automationSettingsDoc(firestore, uid).get(Source.SERVER).await() }.exists(),
             )
         }
+
+        private suspend fun plannedIncomeLabels(uid: String): Set<String> =
+            serverGet { userDoc(uid).collection("plannedIncome").get(Source.SERVER).await() }
+                .documents
+                .mapNotNullTo(mutableSetOf()) { it.getString("label") }
 
         private suspend fun hasSalaryProfile(uid: String): Boolean =
             serverGet { salaryProfileDoc(firestore, uid).get(Source.SERVER).await() }.exists()

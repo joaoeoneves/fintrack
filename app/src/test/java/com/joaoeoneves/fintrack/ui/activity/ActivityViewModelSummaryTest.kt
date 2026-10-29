@@ -32,12 +32,13 @@ class ActivityViewModelSummaryTest : ActivityViewModelTestBase() {
     }
 
     @Test
-    fun summary_monthWithoutFilters_receivedIsTheMonthIncome_spentIncludesSavings() =
+    fun summary_monthWithoutFilters_receivedIsTheMonthIncome_spentExcludesInvestments() =
         runTest(testDispatcher) {
             val summary = content(fixture().vm).summary
 
             assertEquals(25_000L, summary.receivedCents)
-            assertEquals(3_800L, summary.spentCents)
+            // 1000 shop - 200 refund; the 3000 investment is saved, not spent.
+            assertEquals(800L, summary.spentCents)
             assertEquals(3_000L, summary.savedCents)
         }
 
@@ -62,6 +63,24 @@ class ActivityViewModelSummaryTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertEquals(20_000L, current(f.vm).summary.receivedCents)
+        }
+
+    @Test
+    fun summary_sourceFilter_isIgnoredOnceTheTypeIsNotIncome() =
+        runTest(testDispatcher) {
+            val f = fixture()
+            content(f.vm)
+            f.vm.onTypeSelected(ActivityType.INCOME)
+            f.vm.onIncomeSourceSelected(rentKey)
+            advanceUntilIdle()
+            assertEquals(20_000L, current(f.vm).summary.receivedCents)
+
+            f.vm.onTypeSelected(ActivityType.ALL)
+            advanceUntilIdle()
+
+            val summary = current(f.vm).summary
+            assertEquals(25_000L, summary.receivedCents)
+            assertEquals(800L, summary.spentCents)
         }
 
     @Test

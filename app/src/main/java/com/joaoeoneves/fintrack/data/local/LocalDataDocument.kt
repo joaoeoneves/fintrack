@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 19
+internal const val LOCAL_SCHEMA_VERSION = 20
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -58,6 +58,8 @@ data class LocalExpense(
     val date: String,
     val note: String? = null,
     val isRefund: Boolean = false,
+    /** Paid from the meal card (schema v20; absent = bank). */
+    val paidWithMealCard: Boolean = false,
 )
 
 @Serializable
@@ -108,6 +110,8 @@ data class LocalPlannedIncome(
     val autoRecord: Boolean = false,
     /** Fixed pay day 1..31 (schema v16); absent = the month's last working day. */
     val payDay: Int? = null,
+    /** A fixed pay day on a weekend or holiday moves to the previous working day (schema v20; absent = off). */
+    val payDayEarlierIfClosed: Boolean = false,
     /** First plan month the line applies in, ISO `yyyy-MM`; absent = always (schema v19). */
     val startMonth: String? = null,
     /** Amount history (schema v19); [amountCents] is the latest. */
@@ -137,6 +141,8 @@ data class LocalCategory(
     val archived: Boolean = false,
     /** Id of the [LocalCategoryGroup] this category is filed under (absent in schema v1 to v4 files). */
     val groupId: String? = null,
+    /** New expenses in this category default to the meal card (schema v20; absent = off). */
+    val mealCardByDefault: Boolean = false,
 )
 
 /**
@@ -205,6 +211,12 @@ data class LocalSalaryProfile(
     val netHolidayLumpCents: Long? = null,
     val netChristmasLumpCents: Long? = null,
     val mealRatePerDayCents: Long? = null,
+    /** An [com.joaoeoneves.fintrack.domain.model.EmploymentSector] name (schema v20); absent = private. */
+    val sector: String? = null,
+    /** A [com.joaoeoneves.fintrack.domain.model.MealPayment] name (schema v20); absent = card. */
+    val mealPayment: String = "CARD",
+    /** ADSE / other deductions rate in ppm (schema v20). */
+    val otherDeductionsPpm: Int = 0,
     val mealSkipMonths: List<Int> = emptyList(),
     val holidaySubsidyMonth: Int = 6,
     val christmasSubsidyMonth: Int = 12,

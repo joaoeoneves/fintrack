@@ -57,7 +57,7 @@ internal fun SavingsGoal.toLocal(): LocalSavingsGoal =
 
 /** Mirror of the firestore.rules check (plus `targetDate >= startDate`); throws [IllegalArgumentException]. */
 internal fun validateGoal(goal: LocalSavingsGoal) {
-    require(goal.id.isNotBlank()) { "Goal id is blank" }
+    requireIdShape(goal.id, "goal")
     requireText(goal.name, MAX_GOAL_NAME_LENGTH, "Goal name")
     require(goal.targetCents in 0..MAX_AMOUNT_CENTS) { "Goal target must be 0..$MAX_AMOUNT_CENTS cents" }
     require(goal.initialCents in 0..MAX_AMOUNT_CENTS) { "Goal initial amount must be 0..$MAX_AMOUNT_CENTS cents" }
@@ -66,8 +66,8 @@ internal fun validateGoal(goal: LocalSavingsGoal) {
     val end = goal.targetDate?.let(::requireGoalDate)
     require(end == null || end >= start) { "Target date is before start date" }
     require(goal.linkedRecurringIds.size <= MAX_GOAL_LINKED_RECURRING) { "Too many linked recurring items" }
-    goal.linkedCategoryId?.let(::requireCategoryIdShape)
-    goal.recurringId?.let(::requireCategoryIdShape)
+    goal.linkedCategoryId?.let { requireIdShape(it) }
+    goal.recurringId?.let { requireIdShape(it) }
 }
 
 private fun parseGoalDate(raw: String): LocalDate? =

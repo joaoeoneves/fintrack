@@ -25,6 +25,8 @@ data class CategoryDraft(
     val iconKey: String,
     val colorKey: String,
     val kind: CategoryKind,
+    /** Prefills new expenses of the category as paid with the meal card. */
+    val mealCardByDefault: Boolean = false,
 )
 
 /** [editingId] is `null` when creating a new category. */
@@ -33,6 +35,8 @@ data class CategoryEditorState(
     val isBuiltIn: Boolean,
     val initial: CategoryDraft,
     val nameError: UiText? = null,
+    /** Whether the "usually paid with the meal card" switch applies (see `usesMealCard`). */
+    val mealCardAvailable: Boolean = false,
 )
 
 sealed interface DeleteDialogState {

@@ -36,7 +36,7 @@ data class ActivityTotals(
     val savedCents: Long = 0L,
 )
 
-/** The summary line: [spentCents] out (of which [savedCents] put into savings) and [receivedCents] in. */
+/** The summary line: [spentCents] spending (investments are [savedCents], shown apart) and [receivedCents] in. */
 data class ActivitySummary(
     val spentCents: Long,
     val savedCents: Long,

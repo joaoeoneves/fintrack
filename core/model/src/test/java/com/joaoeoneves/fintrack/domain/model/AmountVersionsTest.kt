@@ -49,13 +49,13 @@ class AmountVersionsTest {
     @Test
     fun withVersion_appendsAndSorts() {
         val result = withVersion(listOf(v(8, 3), v(2, 1)), ym(2026, 5), 2)
-        assertEquals(listOf(v(2, 1), v(5, 2), v(8, 3)).filter { it.from <= ym(2026, 5) }, result)
+        assertEquals(listOf(v(2, 1), v(5, 2), v(8, 3)), result)
     }
 
     @Test
-    fun withVersion_dropsVersionsAtOrAfterFrom() {
+    fun withVersion_replacesSameMonthAndKeepsLaterVersions() {
         val result = withVersion(listOf(v(2, 1), v(5, 2), v(8, 3)), ym(2026, 5), 9)
-        assertEquals(listOf(v(2, 1), v(5, 9)), result)
+        assertEquals(listOf(v(2, 1), v(5, 9), v(8, 3)), result)
     }
 
     @Test
@@ -63,14 +63,15 @@ class AmountVersionsTest {
         val existing = (1..12).map { AmountVersion(ym(2025, it), it.toLong()) }
         val result = withVersion(existing, ym(2026, 1), 99)
         assertEquals(MAX_AMOUNT_VERSIONS, result.size)
-        assertEquals(ym(2025, 2), result.first().from)
+        // The two oldest fold into one floor: oldest dropped month, newest dropped amount.
+        assertEquals(AmountVersion(ym(2025, 1), 2), result.first())
         assertEquals(AmountVersion(ym(2026, 1), 99), result.last())
     }
 
     @Test
     fun withVersion_customCap() {
         val result = withVersion(listOf(v(1, 1), v(2, 2)), ym(2026, 3), 3, cap = 2)
-        assertEquals(listOf(v(2, 2), v(3, 3)), result)
+        assertEquals(listOf(v(1, 2), v(3, 3)), result)
     }
 
     @Test
@@ -173,7 +174,9 @@ class AmountVersionsTest {
         val edited = line.copy(startMonth = ym(2026, 6)).editedFrom(ym(2026, 3), 90_000L)
         assertEquals(ym(2026, 3), edited.startMonth)
         assertEquals(90_000L, edited.asOf(ym(2026, 3))?.amountCents)
-        assertEquals(90_000L, edited.amountCents)
+        // The later version is kept, so the latest amount is still the old one.
+        assertEquals(100_000L, edited.asOf(ym(2026, 6))?.amountCents)
+        assertEquals(100_000L, edited.amountCents)
     }
 
     @Test

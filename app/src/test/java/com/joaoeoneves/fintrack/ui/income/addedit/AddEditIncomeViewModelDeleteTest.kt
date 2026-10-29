@@ -55,6 +55,7 @@ class AddEditIncomeViewModelDeleteTest {
         repository,
         deleteTransactionFor(incomes = repository),
         SavedStateHandle(if (id == null) emptyMap() else mapOf("incomeId" to id)),
+        java.time.Clock.systemDefaultZone(),
     )
 
     private fun AddEditIncomeViewModel.form() = (uiState.value as AddEditIncomeUiState.Ready).form

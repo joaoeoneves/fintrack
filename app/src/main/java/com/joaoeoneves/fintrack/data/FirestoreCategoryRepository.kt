@@ -84,7 +84,7 @@ class FirestoreCategoryRepository
                         groupId = groupId,
                     )
                 val data = category.toFirestoreMap() + ("createdAt" to FieldValue.serverTimestamp())
-                docRef.set(data).addOnFailureListener { Log.w(TAG, "Add category write ${docRef.id} failed", it) }
+                docRef.set(data).addOnFailureListener(onFail(TAG, "Add category write ${docRef.id} failed"))
                 category.id
             }
 
@@ -122,14 +122,14 @@ class FirestoreCategoryRepository
                         SetOptions.merge(),
                     )
                 }
-                batch.commit().addOnFailureListener { Log.w(TAG, "Reorder categories write failed", it) }
+                batch.commit().addOnFailureListener(onFail(TAG, "Reorder categories write failed"))
             }
 
         override suspend fun deleteCategory(id: CategoryId): Result<Unit> =
             withUid { uid ->
                 require(!BuiltInCategories.isBuiltIn(id)) { "Built-in category ${id.value} can't be deleted" }
                 val docRef = collection(uid).document(id.value)
-                docRef.delete().addOnFailureListener { Log.w(TAG, "Delete category write ${docRef.id} failed", it) }
+                docRef.delete().addOnFailureListener(onFail(TAG, "Delete category write ${docRef.id} failed"))
             }
 
         private fun write(
@@ -139,7 +139,7 @@ class FirestoreCategoryRepository
             val docRef = collection(uid).document(category.id.value)
             docRef
                 .set(category.toFirestoreMap(), SetOptions.merge())
-                .addOnFailureListener { Log.w(TAG, "Category write ${docRef.id} failed", it) }
+                .addOnFailureListener(onFail(TAG, "Category write ${docRef.id} failed"))
         }
 
         private inline fun <T> withUid(block: (String) -> T): Result<T> {

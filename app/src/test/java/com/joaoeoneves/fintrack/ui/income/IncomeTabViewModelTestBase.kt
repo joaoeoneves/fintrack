@@ -24,6 +24,8 @@ import com.joaoeoneves.fintrack.ui.dashboard.observePeriodOverviewOf
 import com.joaoeoneves.fintrack.ui.plan.PlanRepositories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -68,6 +70,7 @@ open class IncomeTabViewModelTestBase {
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         expenses: ExpenseRepository = expenseRepo,
         incomes: IncomeRepository = actualIncomeRepo,
+        mealCardAvailable: Flow<Boolean> = flowOf(false),
     ): IncomeTabViewModel {
         val repositories =
             DashboardRepositories(
@@ -87,6 +90,7 @@ open class IncomeTabViewModelTestBase {
             RecordPayday(incomeRepo, monthSettingsRepo, incomes, automationRepo, FakeSalaryLineLabelsProvider()),
             savedStateHandle,
             clock,
+            mealCardAvailable,
         )
     }
 

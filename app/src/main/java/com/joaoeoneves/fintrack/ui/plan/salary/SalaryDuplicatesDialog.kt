@@ -19,12 +19,13 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackCheckboxRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /**
- * Asks whether the user's own monthly [lines] should be removed now that the salary profile covers salary and
- * meal allowance. All are ticked at first; [onRemove] gets the ticked ids.
+ * Asks whether the user's own monthly [lines] should be removed now that the salary profile covers the salary (and,
+ * with [hasMeal], the meal allowance). All are ticked at first; [onRemove] gets the ticked ids.
  */
 @Composable
 internal fun SalaryDuplicatesDialog(
     lines: List<PlannedIncome>,
+    hasMeal: Boolean,
     onRemove: (Set<String>) -> Unit,
     onKeep: () -> Unit,
 ) {
@@ -33,7 +34,11 @@ internal fun SalaryDuplicatesDialog(
         onDismissRequest = onKeep,
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
-                Text(stringResource(R.string.salary_duplicates_message))
+                Text(
+                    stringResource(
+                        if (hasMeal) R.string.salary_duplicates_message_meal else R.string.salary_duplicates_message,
+                    ),
+                )
                 lines.forEach { line ->
                     val checked = line.id in selected
                     FinTrackCheckboxRow(

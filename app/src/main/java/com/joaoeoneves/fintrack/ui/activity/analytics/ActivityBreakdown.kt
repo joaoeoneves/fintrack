@@ -9,22 +9,20 @@ import com.joaoeoneves.fintrack.ui.dashboard.CategoryTotal
 const val NO_ENVELOPE = ""
 
 /**
- * What the category breakdown needs: [categoryTotals] actually spent in the period, the
- * [plannedSlices] of the plan, and whether the period has any expense at all ([hasExpenses]). [envelopes] is the
- * spend per envelope over the period (the implicit "no envelope" row is its unenveloped part); the envelope view
- * needs a real envelope.
+ * What the category breakdown needs: [categoryTotals] actually spent in the period, and whether the period has any
+ * expense at all ([hasExpenses]). [envelopes] is the spend per envelope over the period (the implicit "no envelope"
+ * row is its unenveloped part); the envelope view needs a real envelope.
  */
 data class ActivityBreakdown(
     val categoryTotals: List<CategoryTotal>,
-    val plannedSlices: List<CategoryTotal>,
     val hasExpenses: Boolean,
     val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
 ) {
     /** Whether the user has defined any envelope (otherwise the envelope view would only say "No envelope"). */
     val hasEnvelopes: Boolean get() = envelopes.envelopes.isNotEmpty()
 
-    /** `true` when there is neither spending nor a plan to show. */
-    val isEmpty: Boolean get() = !hasExpenses && plannedSlices.isEmpty()
+    /** `true` when there is no spending to show. */
+    val isEmpty: Boolean get() = !hasExpenses
 }
 
 /** One envelope filter chip: [id] is the envelope id or [NO_ENVELOPE]; [name] is `null` for the no-envelope bucket. */

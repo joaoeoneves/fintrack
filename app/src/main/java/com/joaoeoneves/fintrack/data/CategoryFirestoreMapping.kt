@@ -44,6 +44,7 @@ private fun DocumentSnapshot.parseCategory(): Category? {
         archived = getBoolean("archived") ?: builtIn?.archived ?: false,
         builtIn = builtIn != null,
         groupId = getString("groupId")?.takeIf { it.isNotBlank() },
+        mealCardByDefault = getBoolean("mealCardByDefault") ?: false,
     )
 }
 
@@ -61,5 +62,6 @@ internal fun Category.toFirestoreMap(): Map<String, Any?> =
         "archived" to archived,
         "builtIn" to BuiltInCategories.isBuiltIn(id),
         "groupId" to groupId,
+        "mealCardByDefault" to mealCardByDefault,
         "updatedAt" to FieldValue.serverTimestamp(),
     )

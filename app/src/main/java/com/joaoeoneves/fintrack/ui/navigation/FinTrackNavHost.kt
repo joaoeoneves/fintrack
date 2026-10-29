@@ -135,6 +135,8 @@ private fun NavGraphBuilder.incomeRoutes(navController: NavHostController) {
                     navController.navigate(if (hasProfile) EditSalaryProfile else SalarySetup)
                 },
                 onOpenSource = { key, period -> navController.navigate(IncomeSourceDetail(key, period.encode())) },
+                onAddExpense = { navController.navigate(AddEditExpense(period = it.newTransactionArg())) },
+                onAddIncome = { navController.navigate(AddEditIncome(period = it.newTransactionArg())) },
             )
         }
     }
@@ -145,6 +147,8 @@ private fun NavGraphBuilder.spendingRoutes(navController: NavHostController) {
         composable<SpendingHome> {
             SpendingTabScreen(
                 onOpenSettings = { navController.navigate(Settings) },
+                onAddExpense = { navController.navigate(AddEditExpense(period = it.newTransactionArg())) },
+                onAddIncome = { navController.navigate(AddEditIncome(period = it.newTransactionArg())) },
                 navigation =
                     SpendingTabNavigation(
                         onOpenCategory = { id, period -> navController.navigate(CategoryDetail(id, period.encode())) },

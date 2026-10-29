@@ -14,6 +14,8 @@ data class Expense(
     override val date: Instant,
     override val note: String?,
     val isRefund: Boolean = false,
+    /** Paid from the meal card rather than the bank; only meaningful while the profile pays meals on a card. */
+    val paidWithMealCard: Boolean = false,
 ) : Transaction {
     /** [amountCents] with its sign applied: negative for refunds, positive otherwise. */
     val signedAmountCents: Long get() = if (isRefund) -amountCents else amountCents

@@ -52,7 +52,7 @@ class PeriodSelection(
         val period = current()
         select(
             if (period is Period.Year) {
-                period.nextYear(now, clock.zone)
+                period.nextYear(now, clock.zone, monthsAhead)
             } else {
                 period.nextMonth(now, clock.zone, monthsAhead)
             },

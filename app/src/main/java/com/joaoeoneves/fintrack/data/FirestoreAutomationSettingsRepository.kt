@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data
 
-import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
@@ -57,7 +56,7 @@ class FirestoreAutomationSettingsRepository
                 // Not awaited (see FirestoreSalaryProfileRepository): the write lands in the local cache at once.
                 automationSettingsDoc(firestore, uid)
                     .set(data, SetOptions.merge())
-                    .addOnFailureListener { Log.w(TAG, "Update line cursors failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Update line cursors failed"))
                 Unit
             }
         }
@@ -69,7 +68,7 @@ class FirestoreAutomationSettingsRepository
                 // Not awaited, like the other settings writes.
                 automationSettingsDoc(firestore, uid)
                     .set(data, SetOptions.merge())
-                    .addOnFailureListener { Log.w(TAG, "Set salary shift failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Set salary shift failed"))
                 Unit
             }
         }
@@ -92,7 +91,7 @@ class FirestoreAutomationSettingsRepository
                     }
                 batch.set(automationSettingsDoc(firestore, uid), data, SetOptions.merge())
                 // Not awaited: the batch is applied to the local cache at once and syncs when online.
-                batch.commit().addOnFailureListener { Log.w(TAG, "Record payday failed", it) }
+                batch.commit().addOnFailureListener(onFail(TAG, "Record payday failed"))
                 Unit
             }
         }

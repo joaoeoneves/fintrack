@@ -23,6 +23,9 @@ internal fun SalaryProfile.toForm(decimalSeparator: Char): SalaryForm {
         meal = mealRatePerDayCents ?: 0L,
         subsidyMonths = listOf(holidaySubsidyMonth, christmasSubsidyMonth).distinct().sorted(),
         extras = extras,
+        sector = sector,
+        mealPayment = mealPayment,
+        otherDeductions = percent(otherDeductionsPpm),
     )
 }
 

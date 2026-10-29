@@ -121,8 +121,9 @@ fun ExpectedIncomeCard(
     val receipts = model.receipts
     var undoing by remember { mutableStateOf<IncomeRow?>(null) }
     SettingsGroup(label = stringResource(R.string.plan_expected_income), modifier = modifier) {
-        receipts.payday?.let { payday ->
-            val textRes = if (payday <= receipts.today) R.string.plan_payday_received else R.string.plan_payday_upcoming
+        (receipts.receivedPayday ?: receipts.payday)?.let { payday ->
+            val textRes =
+                if (receipts.receivedPayday != null) R.string.plan_payday_received else R.string.plan_payday_upcoming
             Text(
                 text = stringResource(textRes, rememberPaydayText(payday)),
                 style = MaterialTheme.typography.bodySmall,
@@ -213,7 +214,7 @@ private fun IncomeRowItem(
     val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.incomeMonth), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val undoLabel = stringResource(R.string.action_undo)
-    val showCheck = paysThisMonth && (received || canReceive(row, model))
+    val showCheck = paysThisMonth && (received || receipts.canReceive)
     if (showCheck && !received) {
         PendingIncomeRow(
             row = row,
@@ -244,7 +245,7 @@ private fun IncomeRowItem(
                 autoRecordText(row),
                 stringResource(R.string.plan_looks_like_salary).takeIf { row.key in model.duplicateKeys },
             ).joinToString("\n").ifEmpty { null },
-        value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
+        value = rowValueText(row, receipts),
         valueColor = valueColor,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
         modifier = rowTapModifier(tappable, row, actions),
@@ -270,18 +271,6 @@ private fun IncomeRowItem(
             },
     )
     Hairline()
-}
-
-/**
- * Whether [row] can be marked received: always in a past or current month, and in a future plan month once its pay
- * date has passed (a shifted salary paid last month funds it).
- */
-private fun canReceive(
-    row: IncomeRow,
-    model: ExpectedIncomeModel,
-): Boolean {
-    val payDate = row.payDateIn(model.workingDays.month, model.incomeMonth)
-    return model.receipts.canReceive || payDate <= model.receipts.today
 }
 
 /** An income row still to be received: the shared pending row, tapping it opens its editor. */

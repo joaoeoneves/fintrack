@@ -56,6 +56,9 @@ sealed interface DetailUiState {
     /** The id or key matches nothing (stale link). */
     data object NotFound : DetailUiState
 
+    /** Loading failed (not the same as [NotFound]); the screen offers a retry. */
+    data object Error : DetailUiState
+
     data class Content(
         val subject: DetailSubject,
         val period: Period,

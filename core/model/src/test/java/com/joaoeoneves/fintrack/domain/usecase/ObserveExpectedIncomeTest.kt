@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneOffset
@@ -187,5 +189,44 @@ class ObserveExpectedIncomeTest {
             val months = expected(LocalDate.of(2026, 10, 28)).entries.map { it.month }
 
             assertTrue(YearMonth.of(2026, 11) !in months)
+        }
+}
+
+/** [ObserveExpectedIncome] hides a line the Month view calls received: both use the one attribution rule. */
+class ObserveExpectedIncomeAttributionTest {
+    private val utc = ZoneOffset.UTC
+    private val plan = FakePlannedIncomeRepository()
+    private val incomes = FakeIncomeRepository()
+    private val useCase = ObserveExpectedIncome(plan, FakeMonthSettingsRepository(), incomes)
+    private val today = LocalDate.of(2026, 10, 30)
+
+    private suspend fun pendingIds() =
+        useCase(today, utc)
+            .first()
+            .entries
+            .filter { it.month == YearMonth.of(2026, 10) }
+            .map {
+                it.row.lines
+                    .single()
+                    .id
+            }
+
+    @Test
+    fun manualIncomeWithTheLabel_countsAsReceived() =
+        runTest {
+            plan.savePlannedIncome(PlannedIncome("p1", "Salário", 100_000L, 0))
+            plan.savePlannedIncome(PlannedIncome("p2", "Bonus", 5_000L, 1))
+            incomes.addIncome(Income("m1", "salario", 99_000L, Instant.parse("2026-10-29T12:00:00Z"), null))
+
+            assertEquals(listOf("p2"), pendingIds())
+        }
+
+    @Test
+    fun anotherMonthsPayId_doesNotCount() =
+        runTest {
+            plan.savePlannedIncome(PlannedIncome("p1", "Salário", 100_000L, 0))
+            incomes.addIncome(Income("pay_p1_202609", "Salário", 100_000L, Instant.parse("2026-10-02T12:00:00Z"), null))
+
+            assertEquals(listOf("p1"), pendingIds())
         }
 }

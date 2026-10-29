@@ -26,6 +26,7 @@ import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeSourceRow
 import com.joaoeoneves.fintrack.ui.activity.analytics.MonthlyAverageLine
 import com.joaoeoneves.fintrack.ui.activity.analytics.SpendingComparisonLines
 import com.joaoeoneves.fintrack.ui.activity.analytics.SpendingSplitCard
+import com.joaoeoneves.fintrack.ui.activity.analytics.YearToDateFigure
 import com.joaoeoneves.fintrack.ui.activity.analytics.YearToDateRow
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeFigures
@@ -78,7 +79,7 @@ fun SpendingHistory(
                 )
             }
         }
-        figures.yearToDate?.let { YearToDateRow(it, padding, figures.leftover) }
+        figures.yearToDate?.let { YearToDateRow(it, YearToDateFigure.SPENT, padding) }
     }
 }
 
@@ -134,7 +135,7 @@ fun IncomeHistory(
     Column(modifier = modifier.fillMaxWidth()) {
         figures.evolution?.let { EvolutionSection(it, padding) }
         analytics?.sources?.takeIf { it.isNotEmpty() }?.let { SourceRows(it, onSourceClick, padding) }
-        figures.yearToDate?.let { YearToDateRow(it, padding, figures.leftover) }
+        figures.yearToDate?.let { YearToDateRow(it, YearToDateFigure.RECEIVED, padding) }
     }
 }
 

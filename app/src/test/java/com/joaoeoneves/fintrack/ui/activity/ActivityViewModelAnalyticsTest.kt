@@ -1,12 +1,9 @@
 package com.joaoeoneves.fintrack.ui.activity
 
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryTotal
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.SpendingSplit
 import com.joaoeoneves.fintrack.domain.model.TimeRange
@@ -161,55 +158,6 @@ class ActivityViewModelAnalyticsTest : ActivityViewModelTestBase() {
             assertTrue(content.analytics.breakdown.hasExpenses)
             assertEquals(0L, content.analytics.spentCents)
             assertEquals(0L, content.total(BuiltInCategories.SHOPPING))
-        }
-
-    @Test
-    fun plannedSlices_listOnlyCategoriesWithALimit() =
-        runTest(testDispatcher) {
-            val budgets =
-                FakeBudgetRepository(
-                    listOf(
-                        Budget(BuiltInCategories.SHOPPING.id, 24_000L),
-                        Budget(savings.id, 10_000L),
-                        Budget(food.id, 0L),
-                    ),
-                )
-
-            val breakdown = content(Fixture(budgets = budgets).vm).analytics.breakdown
-
-            assertEquals(
-                setOf(CategoryTotal(savings, 10_000L), CategoryTotal(BuiltInCategories.SHOPPING, 24_000L)),
-                breakdown.plannedSlices.toSet(),
-            )
-            assertEquals(2, breakdown.plannedSlices.size)
-        }
-
-    @Test
-    fun planWithoutExpenses_isNotEmpty() =
-        runTest(testDispatcher) {
-            val budgets = FakeBudgetRepository(listOf(Budget(BuiltInCategories.SHOPPING.id, 5_000L)))
-
-            val breakdown = content(Fixture(budgets = budgets).vm).analytics.breakdown
-
-            assertFalse(breakdown.hasExpenses)
-            assertFalse(breakdown.isEmpty)
-        }
-
-    @Test
-    fun plannedSlices_followBudgetChangesLive() =
-        runTest(testDispatcher) {
-            val budgets = FakeBudgetRepository()
-            val vm = Fixture(budgets = budgets).vm
-            assertTrue(
-                content(vm)
-                    .analytics.breakdown.plannedSlices
-                    .isEmpty(),
-            )
-
-            budgets.setBudget(food.id, 7_000L)
-            advanceUntilIdle()
-
-            assertEquals(listOf(CategoryTotal(food, 7_000L)), current(vm).analytics.breakdown.plannedSlices)
         }
 
     @Test

@@ -74,7 +74,7 @@ class FirestoreBudgetRepository
                 // the device is online. Awaiting would hang indefinitely while offline.
                 docRef
                     .set(data, SetOptions.merge())
-                    .addOnFailureListener { Log.w(TAG, "Set budget write ${docRef.id} failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Set budget write ${docRef.id} failed"))
                 Result.success(Unit)
             } catch (e: CancellationException) {
                 throw e
@@ -93,7 +93,7 @@ class FirestoreBudgetRepository
             return try {
                 val docRef = budgetsCollection(uid).document(categoryId.value)
                 // Not awaited (see setBudget above); deleting a missing document is a no-op.
-                docRef.delete().addOnFailureListener { Log.w(TAG, "Clear budget write ${docRef.id} failed", it) }
+                docRef.delete().addOnFailureListener(onFail(TAG, "Clear budget write ${docRef.id} failed"))
                 Result.success(Unit)
             } catch (e: CancellationException) {
                 throw e

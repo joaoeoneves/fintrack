@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.LegacySalaryExtras
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_MULTIPLE_PPM
@@ -7,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.MAX_EXTRA_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_SALARY_EXTRAS
 import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
+import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.PPM_SCALE
 import com.joaoeoneves.fintrack.domain.model.SALARY_EXTRA_ID_PATTERN
 import com.joaoeoneves.fintrack.domain.model.SUBSIDY_SPREADS_PPM
@@ -49,6 +51,9 @@ internal fun LocalSalaryProfile.toDomain(): SalaryProfile {
         netHolidayLumpCents = netHolidayLumpCents,
         netChristmasLumpCents = netChristmasLumpCents,
         mealRatePerDayCents = mealRatePerDayCents,
+        sector = EmploymentSector.entries.find { it.name == sector },
+        mealPayment = MealPayment.entries.find { it.name == mealPayment } ?: MealPayment.CARD,
+        otherDeductionsPpm = otherDeductionsPpm.coerceIn(0, PPM_SCALE),
         mealSkipMonths = mealSkipMonths.toSet(),
         holidaySubsidyMonth = holidaySubsidyMonth,
         christmasSubsidyMonth = christmasSubsidyMonth,
@@ -83,6 +88,9 @@ internal fun SalaryProfile.toLocal(): LocalSalaryProfile =
         netHolidayLumpCents = netHolidayLumpCents,
         netChristmasLumpCents = netChristmasLumpCents,
         mealRatePerDayCents = mealRatePerDayCents,
+        sector = sector?.name,
+        mealPayment = mealPayment.name,
+        otherDeductionsPpm = otherDeductionsPpm,
         mealSkipMonths = mealSkipMonths.sorted(),
         holidaySubsidyMonth = holidaySubsidyMonth,
         christmasSubsidyMonth = christmasSubsidyMonth,
@@ -104,6 +112,12 @@ internal fun SalaryProfile.toLocal(): LocalSalaryProfile =
 /** Mirror of the firestore.rules check; throws [IllegalArgumentException] for a violation. */
 internal fun validateSalaryProfile(profile: LocalSalaryProfile) {
     require(SalaryInputMode.entries.any { it.name == profile.inputMode }) { "Invalid input mode ${profile.inputMode}" }
+    require(profile.sector == null || EmploymentSector.entries.any { it.name == profile.sector }) {
+        "Invalid sector ${profile.sector}"
+    }
+    require(MealPayment.entries.any { it.name == profile.mealPayment }) {
+        "Invalid meal payment ${profile.mealPayment}"
+    }
     require(profile.subsidySpreadPpm in SUBSIDY_SPREADS_PPM) { "Subsidy spread must be 0, 50% or 100%" }
     val rates =
         listOfNotNull(
@@ -111,6 +125,7 @@ internal fun validateSalaryProfile(profile: LocalSalaryProfile) {
             profile.irsSubsidiesPpm,
             profile.ssPpm,
             profile.irsJovemExemptPpm,
+            profile.otherDeductionsPpm,
             profile.flexPpm,
             profile.flexWithdrawalFeePpm,
         )

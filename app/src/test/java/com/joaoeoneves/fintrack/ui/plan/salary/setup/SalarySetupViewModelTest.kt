@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan.salary.setup
 
 import androidx.lifecycle.SavedStateHandle
+import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
@@ -8,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryField
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryForm
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -21,6 +23,12 @@ import java.time.YearMonth
 /** The wizard's navigation, validation and the form it builds; saving is in [SalarySetupViewModelSaveTest]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
+    /** Picks the private sector (the first step) and leaves the wizard on the PAY step. */
+    private fun TestScope.onPay(vm: SalarySetupViewModel) {
+        vm.onSectorSelected(EmploymentSector.PRIVATE)
+        advanceUntilIdle()
+    }
+
     @Test
     fun existingProfile_opensAdvanced_andNeverOverwrites() =
         runTest(dispatcher) {
@@ -33,15 +41,15 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
         }
 
     @Test
-    fun noProfile_emitsNoEvent_andStartsOnPay() =
+    fun noProfile_emitsNoEvent_andStartsOnSector() =
         runTest(dispatcher) {
             val vm = viewModel()
             val events = started(vm)
 
             assertTrue(events.isEmpty())
-            assertEquals(SalarySetupStep.PAY, vm.uiState.value.step)
+            assertEquals(SalarySetupStep.SECTOR, vm.uiState.value.step)
             assertEquals(1, vm.uiState.value.stepNumber)
-            assertEquals(4, vm.uiState.value.stepCount)
+            assertEquals(5, vm.uiState.value.stepCount)
             assertEquals(YearMonth.of(2026, 10), vm.uiState.value.month)
         }
 
@@ -50,10 +58,11 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
+            onPay(vm)
             vm.onFormChange(SalaryForm(base = 100_000L))
             advanceUntilIdle()
 
-            val forward = mutableListOf(vm.uiState.value.step)
+            val forward = mutableListOf(SalarySetupStep.SECTOR, vm.uiState.value.step)
             repeat(3) {
                 vm.onNext()
                 advanceUntilIdle()
@@ -70,17 +79,20 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
                 advanceUntilIdle()
                 backward += vm.uiState.value.step
             }
-            assertEquals(listOf(SalarySetupStep.MEAL, SalarySetupStep.SUBSIDIES, SalarySetupStep.PAY), backward)
+            assertEquals(
+                listOf(SalarySetupStep.MEAL, SalarySetupStep.SUBSIDIES, SalarySetupStep.PAY, SalarySetupStep.SECTOR),
+                backward,
+            )
         }
 
     @Test
-    fun onBack_onPay_returnsFalse_andStays() =
+    fun onBack_onSector_returnsFalse_andStays() =
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
 
             assertFalse(vm.onBack())
-            assertEquals(SalarySetupStep.PAY, vm.uiState.value.step)
+            assertEquals(SalarySetupStep.SECTOR, vm.uiState.value.step)
         }
 
     @Test
@@ -88,6 +100,7 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
+            onPay(vm)
             vm.onFormChange(SalaryForm(base = 100_000L, meal = 800L))
             advanceUntilIdle()
             vm.onNext()
@@ -107,6 +120,8 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
             val handle = SavedStateHandle()
             val first = viewModel(handle)
             started(first)
+            first.onSectorSelected(EmploymentSector.PRIVATE)
+            advanceUntilIdle()
             first.onFormChange(SalaryForm(base = 100_000L))
             advanceUntilIdle()
             first.onNext()
@@ -123,6 +138,7 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
+            onPay(vm)
             assertFalse(vm.uiState.value.canContinue)
 
             vm.onFormChange(SalaryForm(base = 0L))
@@ -139,6 +155,7 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
+            onPay(vm)
 
             vm.onFormChange(SalaryForm(mode = SalaryInputMode.NET, base = 100_000L))
             advanceUntilIdle()
@@ -154,6 +171,7 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
+            onPay(vm)
 
             vm.onFormChange(SalaryForm(base = 100_000L, irsBase = "abc"))
             advanceUntilIdle()
@@ -171,6 +189,7 @@ class SalarySetupViewModelTest : SalarySetupViewModelTestBase() {
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
+            onPay(vm)
 
             vm.onNext()
             advanceUntilIdle()

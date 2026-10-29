@@ -11,6 +11,7 @@ import com.joaoeoneves.fintrack.data.backup.BackupCodec
 import com.joaoeoneves.fintrack.data.backup.BackupDecodeResult
 import com.joaoeoneves.fintrack.data.backup.BackupDocument
 import com.joaoeoneves.fintrack.data.backup.BackupRepository
+import com.joaoeoneves.fintrack.data.backup.ServerUnreachableException
 import com.joaoeoneves.fintrack.data.backup.counts
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.di.IoDispatcher
@@ -80,7 +81,13 @@ class BackupViewModel
                             onSuccess = { document -> writeBackup(uri, document) },
                             onFailure = {
                                 Log.w(TAG, "Failed to build backup", it)
-                                BackupExportState.Error(UiText.StringResource(R.string.backup_error_export_failed))
+                                val message =
+                                    if (it is ServerUnreachableException) {
+                                        R.string.backup_error_export_offline
+                                    } else {
+                                        R.string.backup_error_export_failed
+                                    }
+                                BackupExportState.Error(UiText.StringResource(message))
                             },
                         )
             }
@@ -154,7 +161,7 @@ class BackupViewModel
         }
 
         private suspend fun stageDecoded(text: String): BackupImportState =
-            when (val result = withContext(ioDispatcher) { BackupCodec.decode(text) }) {
+            when (val result = withContext(ioDispatcher) { BackupCodec.decode(text, clock) }) {
                 is BackupDecodeResult.Success -> {
                     pending = result.document
                     BackupImportState.Confirm(

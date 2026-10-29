@@ -97,7 +97,7 @@ fun PeriodSelector(
             PeriodScaleSwitch(selected = period.scale, onSelect = actions.onSelectScale)
         }
         if (period is Period.Year) {
-            YearHeader(period, actions, alignment)
+            YearHeader(period, actions, alignment, monthsAhead)
         } else {
             MonthHeader(period, canGoToNextMonth, actions, alignment, monthOnly, monthsAhead)
         }
@@ -110,6 +110,7 @@ private fun YearHeader(
     period: Period.Year,
     actions: PeriodActions,
     alignment: Alignment.Horizontal,
+    monthsAhead: Int,
 ) {
     val now = Instant.now()
     PeriodHeader(
@@ -117,7 +118,7 @@ private fun YearHeader(
             PeriodNavigation(
                 onPrevious = actions.onPrevious,
                 onNext = actions.onNext,
-                canGoNext = period.canGoToNextYear(now, ZoneId.systemDefault()),
+                canGoNext = period.canGoToNextYear(now, ZoneId.systemDefault(), monthsAhead),
                 isYear = true,
             ),
         alignment = alignment,

@@ -57,7 +57,7 @@ class FirestorePlannedIncomeRepository
                 // the device is online. Awaiting would hang indefinitely while offline.
                 docRef
                     .set(line.toFirestoreMap())
-                    .addOnFailureListener { Log.w(TAG, "Save planned income write ${docRef.id} failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Save planned income write ${docRef.id} failed"))
                 docRef.id
             }
         }
@@ -67,7 +67,7 @@ class FirestorePlannedIncomeRepository
             return runCatchingCancellable {
                 val docRef = collection(uid).document(id)
                 // Not awaited (see savePlannedIncome); deleting a missing document is a no-op.
-                docRef.delete().addOnFailureListener { Log.w(TAG, "Delete planned income failed: $id", it) }
+                docRef.delete().addOnFailureListener(onFail(TAG, "Delete planned income failed: $id"))
                 Unit
             }
         }
@@ -100,6 +100,7 @@ private fun PlannedIncome.automationFields(): Map<String, Any?> =
     buildMap {
         if (autoRecord) put("autoRecord", true)
         payDay?.let { put("payDay", it) }
+        if (payDayEarlierIfClosed) put("payDayEarlierIfClosed", true)
     }
 
 private fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
@@ -132,6 +133,7 @@ private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
                 managedKey = getString("managedKey"),
                 autoRecord = getBoolean("autoRecord") ?: false,
                 payDay = getLong("payDay")?.toInt()?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
+                payDayEarlierIfClosed = getBoolean("payDayEarlierIfClosed") ?: false,
                 startMonth = startMonthOrNull(),
                 versions = versionsOrEmpty(),
             )

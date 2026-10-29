@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.domain.model
 
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 
@@ -37,7 +38,7 @@ fun plannedForCategory(
     if (active != null && month.monthValue !in active.skipMonths) {
         return PlannedAmount(active.limitCents, PlannedSource.BUDGET)
     }
-    val due = recurring.filter { it.type == RecurringType.EXPENSE && it.active && it.occursIn(month) }
+    val due = recurring.filter { it.type == RecurringType.EXPENSE && it.countsIn(month) }
     return if (due.isEmpty()) {
         PlannedAmount(null, PlannedSource.NONE)
     } else {
@@ -45,12 +46,25 @@ fun plannedForCategory(
     }
 }
 
+/**
+ * Whether the item's occurrence in [month] is planned: it exists, was not skipped, and the item is active or was
+ * paused after that occurrence's date (an occurrence before the pause was already posted or due).
+ */
+private fun RecurringItem.countsIn(month: YearMonth): Boolean {
+    val date = occurrenceIn(month) ?: return false
+    return date !in skipped && (active || (pausedAt != null && date < pausedAt))
+}
+
 /** Whether this item has an occurrence in [month]: start/end dates respected, yearly only in its month. */
-internal fun RecurringItem.occursIn(month: YearMonth): Boolean {
-    if (!hasValidSchedule) return false
+internal fun RecurringItem.occursIn(month: YearMonth): Boolean = occurrenceIn(month) != null
+
+/** The date of this item's occurrence in [month], or `null` when it has none. */
+internal fun RecurringItem.occurrenceIn(month: YearMonth): LocalDate? {
     val step = if (frequency == RecurringFrequency.YEARLY) MONTHS_PER_YEAR else 1
-    val months = YearMonth.from(firstScheduled()).until(month, ChronoUnit.MONTHS)
-    return months >= 0 &&
-        months % step == 0L &&
-        occurrence((months / step).toInt()).let { endDate == null || it <= endDate }
+    val months = if (hasValidSchedule) YearMonth.from(firstScheduled()).until(month, ChronoUnit.MONTHS) else -1L
+    return if (months < 0 || months % step != 0L) {
+        null
+    } else {
+        occurrence((months / step).toInt()).takeIf { endDate == null || it <= endDate }
+    }
 }

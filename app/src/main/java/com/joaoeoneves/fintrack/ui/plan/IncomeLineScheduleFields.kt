@@ -185,7 +185,12 @@ internal fun IncomePayFields(
         selected = schedule.payDay != null,
         label = { stringResource(if (it) R.string.plan_payday_fixed else R.string.plan_payday_last_working_day) },
         onSelect = { fixed ->
-            onChange(schedule.copy(payDay = if (fixed) schedule.payDay ?: DEFAULT_PAY_DAY else null))
+            onChange(
+                schedule.copy(
+                    payDay = if (fixed) schedule.payDay ?: DEFAULT_PAY_DAY else null,
+                    payDayEarlierIfClosed = fixed && schedule.payDayEarlierIfClosed,
+                ),
+            )
         },
     )
     schedule.payDay?.let { day ->
@@ -200,6 +205,11 @@ internal fun IncomePayFields(
             label = stringResource(R.string.plan_payday_label),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
+        )
+        SettingsSwitchRow(
+            title = stringResource(R.string.plan_payday_earlier_if_closed),
+            checked = schedule.payDayEarlierIfClosed,
+            onCheckedChange = { onChange(schedule.copy(payDayEarlierIfClosed = it)) },
         )
     }
 }

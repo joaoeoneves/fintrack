@@ -116,17 +116,22 @@ val Period.yearOrNull: Int? get() = (this as? Period.Year)?.year
 /** The year before this [Period.Year]; any other period is returned unchanged. */
 fun Period.previousYear(): Period = if (this is Period.Year) Period.Year(year - 1) else this
 
-/** The year after this [Period.Year], never past the current year; any other period is returned unchanged. */
+/**
+ * The year after this [Period.Year], never past the current year (plus [monthsAhead] months for planning screens);
+ * any other period is returned unchanged.
+ */
 fun Period.nextYear(
     now: Instant,
     zone: ZoneId,
-): Period = if (this is Period.Year && year < currentYearMonth(now, zone).year) Period.Year(year + 1) else this
+    monthsAhead: Int = 0,
+): Period = if (canGoToNextYear(now, zone, monthsAhead)) Period.Year((this as Period.Year).year + 1) else this
 
 /** Whether [nextYear] would move forward: a [Period.Year] strictly before the current year. */
 fun Period.canGoToNextYear(
     now: Instant,
     zone: ZoneId,
-): Boolean = this is Period.Year && year < currentYearMonth(now, zone).year
+    monthsAhead: Int = 0,
+): Boolean = this is Period.Year && year < currentYearMonth(now, zone).plusMonths(monthsAhead.toLong()).year
 
 /** The month before this month period. Rolling/custom periods are returned unchanged. */
 fun Period.previousMonth(

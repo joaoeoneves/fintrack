@@ -33,7 +33,8 @@ class SalaryMathTest {
         assertEquals(11_917, b.ssCents)
         assertEquals(10_000, b.irsBaseCents)
         assertEquals(417, b.irsSubsidiesCents)
-        assertEquals(10_417, b.irsCents)
+        // IRS is derived as gross - SS - net so the rows reconcile exactly (exact IRS is 10416.67).
+        assertEquals(10_416, b.irsCents)
         // Exact: 108333.33 - 11916.67 - 10416.67 = 86000.00; deriving it from the rounded parts would give 85999.
         assertEquals(86_000, b.netMonthlyCents)
         assertEquals(50_000, b.lumpGrossCents)
@@ -43,11 +44,11 @@ class SalaryMathTest {
     }
 
     @Test
-    fun netIsRoundedOnceFromExactValues_notFromRoundedComponents() {
+    fun netIsRoundedOnce_andIrsRowReconcilesExactly() {
         val b = breakdown(gross())
 
-        // The displayed components do not add up to the net: that is deliberate (a single rounding).
-        assertEquals(85_999, b.grossCents - b.ssCents - b.irsCents)
+        // Net is rounded once from exact values and IRS absorbs the rounding, so the rows add up exactly.
+        assertEquals(86_000, b.grossCents - b.ssCents - b.irsCents)
         assertEquals(86_000, b.netMonthlyCents)
     }
 
@@ -83,6 +84,7 @@ class SalaryMathTest {
 
         assertEquals(5_208, half.irsCents)
         assertEquals(91_208, half.netMonthlyCents)
+        // Reconciled row would be 108333 - 11917 - 96417 = -1 (net rounded once from 96416.67); clamped at 0.
         assertEquals(0, full.irsCents)
         assertEquals(96_417, full.netMonthlyCents)
         // The lump's IRS is exempt too: 50000 * (1 - 0.11).

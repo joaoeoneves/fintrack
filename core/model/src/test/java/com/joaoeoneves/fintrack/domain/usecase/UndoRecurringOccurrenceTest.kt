@@ -148,10 +148,12 @@ class UndoRecurringOccurrenceTest {
         }
 
     @Test
-    fun undo_missingItem_fails() =
+    fun undo_missingItem_skipFails_confirmRewindsNothing() =
         runBlocking {
+            // Unskipping an unknown item fails; the rewind guard only moves a cursor that sits at the occurrence.
             assertTrue(undo.undoSkip("nope", march15, null).isFailure)
-            assertTrue(undo.undoConfirm("nope", march15, null).isFailure)
+            assertTrue(undo.undoConfirm("nope", march15, null).isSuccess)
+            assertEquals(feb15, cursor())
         }
 }
 

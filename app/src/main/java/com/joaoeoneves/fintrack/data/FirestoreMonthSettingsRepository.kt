@@ -76,13 +76,13 @@ class FirestoreMonthSettingsRepository
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when
                 // the device is online. Awaiting would hang indefinitely while offline.
                 if (value == null && !otherFieldIsSet(docRef, otherField)) {
-                    docRef.delete().addOnFailureListener { Log.w(TAG, "Clear month settings ${docRef.id} failed", it) }
+                    docRef.delete().addOnFailureListener(onFail(TAG, "Clear month settings ${docRef.id} failed"))
                 } else {
                     val data =
                         mapOf(field to (value ?: FieldValue.delete()), "updatedAt" to FieldValue.serverTimestamp())
                     docRef
                         .set(data, SetOptions.merge())
-                        .addOnFailureListener { Log.w(TAG, "Set month settings ${docRef.id} failed", it) }
+                        .addOnFailureListener(onFail(TAG, "Set month settings ${docRef.id} failed"))
                 }
                 Unit
             }

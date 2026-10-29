@@ -29,6 +29,7 @@ internal fun LocalPlannedIncome.toDomain(): PlannedIncome =
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
+        payDayEarlierIfClosed = payDayEarlierIfClosed,
         startMonth = startMonth.toYearMonthOrNull(),
         versions = versions.toDomainVersions(),
     )
@@ -47,6 +48,7 @@ internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay,
+        payDayEarlierIfClosed = payDayEarlierIfClosed,
         startMonth = startMonth?.toString(),
         versions = versions.toLocalVersions(),
     )
@@ -60,11 +62,12 @@ internal fun parseYearMonthOrNull(raw: String): YearMonth? =
 
 /** Mirror of the firestore.rules check; throws [IllegalArgumentException] for a violation. */
 internal fun validatePlannedIncome(line: LocalPlannedIncome) {
-    require(line.id.isNotBlank()) { "Planned income id is blank" }
+    requireIdShape(line.id, "planned income")
     require(line.label.isNotBlank() && line.label.codePointLength() <= MAX_PLAN_LABEL_LENGTH) {
         "Planned income label must be 1..$MAX_PLAN_LABEL_LENGTH characters"
     }
-    require(line.amountCents in 1..MAX_AMOUNT_CENTS) { "Planned income amount must be 1..$MAX_AMOUNT_CENTS cents" }
+    // 0 is allowed: an amount version "stops" the line from a month, and the top-level amount may follow it.
+    require(line.amountCents in 0..MAX_AMOUNT_CENTS) { "Planned income amount must be 0..$MAX_AMOUNT_CENTS cents" }
     require(IncomeBasis.entries.any { it.name == line.basis }) { "Invalid income basis ${line.basis}" }
     val frequency = IncomeFrequency.entries.find { it.name == line.frequency }
     requireNotNull(frequency) { "Invalid income frequency ${line.frequency}" }

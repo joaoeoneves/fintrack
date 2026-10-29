@@ -392,22 +392,16 @@ class AddEditExpenseViewModelTest {
         }
 
     @Test
-    fun editMode_expenseNotFound_isReadyEditModeWithBlankForm() =
+    fun editMode_expenseNotFound_isErrorState() =
         runTest(testDispatcher) {
-            // Regression guard: a genuinely-missing id (Result.success(null), i.e. confirmed
-            // not-found -- e.g. a stale deep link) must still fall through to the pre-existing
-            // blank-but-editable form, exactly as before the Error-state bug fix. This must NOT
-            // collapse into AddEditUiState.Error; only an actual read *failure* should.
+            // A confirmed not-found (Result.success(null), e.g. a stale deep link) is an Error, not a blank
+            // editable form: saving it would create a new expense under the old id.
             val repo = FakeExpenseRepository()
             val viewModel = editModeViewModel(repo, "does-not-exist")
 
             advanceUntilIdle()
 
-            val state = viewModel.uiState.value as AddEditUiState.Ready
-            assertTrue(state.form.isEditMode)
-            assertEquals("does-not-exist", state.form.expenseId)
-            assertEquals("", state.form.name)
-            assertEquals(0L, state.form.amountCents)
+            assertTrue(viewModel.uiState.value is AddEditUiState.Error)
         }
 
     // ---- edit mode: load failure -> Error state (the data-loss bug fix) ----

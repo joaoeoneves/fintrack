@@ -5,8 +5,8 @@
 <h1 align="center">FinTrack</h1>
 
 <p align="center">
-  A monthly money-planning app for Android: plan the month, see what is safe to spend, and keep
-  recurring bills under control.
+  A monthly money-tracking app for Android: track what you earn and spend, month by month, and keep
+  recurring bills and investments under control.
 </p>
 
 <p align="center">
@@ -18,62 +18,64 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="200" alt="Home with the month's balance, income, expenses and savings">
+  <img src="docs/screenshots/home.png" width="200" alt="Home: income and spending cards, invested, left over, upcoming bills and recent activity">
   <img src="docs/screenshots/activity.png" width="200" alt="Activity: spending summary and the list of expenses and income">
-  <img src="docs/screenshots/plan.png" width="200" alt="Plan tab for the month">
-  <img src="docs/screenshots/plan-income.png" width="200" alt="Expected income, one row per salary component">
-  <img src="docs/screenshots/savings.png" width="200" alt="Savings plans with progress rings">
+  <img src="docs/screenshots/income.png" width="200" alt="Income: received versus expected, income lines and history">
+  <img src="docs/screenshots/spending.png" width="200" alt="Spending: spent, fixed versus variable, evolution and categories">
+  <img src="docs/screenshots/investments.png" width="200" alt="Investments per month, per year and per instrument">
   <img src="docs/screenshots/add-expense.png" width="200" alt="Add expense form">
 </p>
 
 ## Why
 
-FinTrack started as a personal replacement for a monthly budgeting spreadsheet. The spreadsheet answered
-one question: *given what I earn and what is already committed, how much can I still spend this month?*
-The app keeps that idea at its centre: you list expected income, split spending into envelopes, add
-the recurring bills, and the dashboard shows what is safe to spend and a daily allowance. It works fully
-offline-first, and it can be used without an account at all (guest mode).
+FinTrack started as a personal replacement for a monthly budgeting spreadsheet. The app keeps its
+focus on real numbers: what came in, what went out, what was invested, and how each month compares.
+Income and spending are tracked separately and each month stands on its own: there is no rollover and
+no "available to spend". It works offline-first, and it can be used without an account at all (guest
+mode).
 
 ## Features
 
+**Tabs**
+- Home, Activity, Income and Spending, plus an avatar with your initial that opens Account & settings.
+  Every tab has the same Month | Year switch (calendar year).
+- **Home**: an income card (received of expected), a spending card, an *Invested* row that opens the
+  investments page (per month, per year, all time and per instrument), *Left over* (an average over
+  closed months), upcoming recurring bills and recent activity. A **Get started** checklist walks through
+  the set-up and hides when done.
+- **Activity**: one list of expenses and income with search, sorting and period filters, delete by
+  swiping or from the edit screen (with undo), and a summary header with the total spent, fixed versus
+  variable and a breakdown by category.
+- **Income**: received versus expected with the difference, income lines, working days and days off,
+  and history. Income counts by the date it was received.
+- **Spending**: spent, fixed versus variable, evolution, spending by category and groups (a name plus
+  its categories). Recurring bills and investments are managed here.
+- Detail pages per category and per income source. For the net salary source it shows what was received
+  at the end of a month against what was spent in the next one.
+
 **Tracking**
-- Expenses (name, amount, category, date, note) and income (free-text source), each with search, sorting,
-  period filters and swipe-to-delete with undo. Refunds subtract from their category.
-- Dashboard with net balance, a cumulative-balance chart you can scrub, 1M / 3M / 6M / 1Y tabs, month
-  navigation and custom ranges, and a category breakdown.
-- Categories: five built-ins plus your own (name, icon, colour, spending or saving), with rename,
-  reorder, archive and delete.
+- Expenses (name, amount, category, date, note) and income (source, amount, date, note). Refunds
+  subtract from their category. When you add an expense, the category you used last time for that name
+  is suggested.
+- Categories: built-ins plus your own (name, icon, colour, spending or saving), with rename, reorder,
+  archive and delete.
+- Amounts that change over time (income lines, groups, limits) keep their history: a new amount applies
+  from the month you choose (*Valid from*) and earlier months keep the old one.
 - CSV import/export for expenses.
 
-**Planning**
-- Tabs: Home, Activity, Plan and Savings. An avatar with your initial opens Account & settings.
-- **Envelopes**: a name, its categories and a monthly amount (one amount or the sum of per-category
-  limits), with progress on Plan. An envelope can also be "no budget" and only track spending. What is
-  left after income, bills, savings and envelopes is shown as *Free*, with a daily allowance. A yearly
-  view shows all twelve months.
-- **Income** in one place: the salary profile plus your own income lines. Any line can be recorded
-  automatically on its pay day (last working day, with Portuguese holidays, or a fixed day). Income can
-  be per working day, with days off and a Carnival shortcut.
-- Salary profile (optional): a three-step set-up (gross or net, subsidies, meal allowance), with the full
-  form under Advanced for youth IRS, deductions and your own extras (a fixed amount, a multiple of the
-  base or a share of the annual gross, paid in the months you choose). Each component gets its own income
-  row.
-- **Savings plans** on the Savings tab: a monthly amount, a day and a category, recorded automatically,
-  with an optional target per year or in total. A goal is a plan without a monthly amount. The tab also
-  shows the amount saved this year and the savings rate.
-- A **Get started** checklist on Home walks through the set-up and hides when done.
-- When you add an expense, the category you used last time for that name is suggested.
+**Income lines**
+- The salary profile (optional) and your own lines, one row per component. Salary set-up is three steps
+  (gross or net, subsidies, meal allowance); the full form under Advanced covers youth IRS, deductions
+  and extras (a fixed amount, a multiple of the base or a share of the annual gross, paid in the months
+  you choose).
+- Any line can be recorded automatically on its pay day (last working day, with Portuguese holidays, or
+  a fixed day). Income can be per working day, with days off and a Carnival shortcut.
 
-**Activity**
-- One list of expenses and income with search, sorting and period filters. Delete by swiping, or from
-  the edit screen, with undo.
-- A summary header: 1M / 3M / 6M / 1Y tabs or a custom range, the total spent, fixed versus variable,
-  spending by envelope with filter chips, and a breakdown by category or envelope.
-
-**Bills**
-- Monthly or yearly recurring expenses (rent, subscriptions) with start and end dates and pause/resume.
-- An Upcoming card lists the bills that are due. Confirm records the expense and Skip moves on. Confirming
-  twice (a double tap, or a second device) never creates a duplicate. A bill can also be posted
+**Bills and investments**
+- Monthly or yearly recurring expenses (rent, subscriptions) and recurring investments, with start and
+  end dates and pause/resume.
+- An Upcoming card lists what is due. Confirm records the expense and Skip moves on. Confirming twice
+  (a double tap, or a second device) never creates a duplicate. An item can also be posted
   automatically on its due date.
 
 **Guest mode and backup**
@@ -180,8 +182,8 @@ Guest mode works without any Firebase sign-in, but the build still needs a `goog
 
 ```
 app/src/main/java/com/joaoeoneves/fintrack/
-├── ui/        Compose screens by feature (dashboard, expense, income, plan, recurring, settings, ...),
-│              designsystem/, theme/, navigation/
+├── ui/        Compose screens by feature (dashboard, activity, income, spending, detail, expense,
+│              recurring, settings, ...), designsystem/, theme/, navigation/
 ├── data/      Firestore repositories, local/ (guest JSON store), session/ (switching), backup/,
 │              migration/, preferences/, csv/, automation/ and salary/ (app-start syncs)
 └── di/        Hilt modules
@@ -197,7 +199,7 @@ scripts/gate.sh        shared quality gate
 ## Roadmap
 
 - Income CSV import/export (expenses are supported today).
-- Further polish of the planning and recurring screens based on day-to-day use.
+- Further polish of the income and spending screens based on day-to-day use.
 - Broader instrumented-test coverage.
 
 ## Contributing

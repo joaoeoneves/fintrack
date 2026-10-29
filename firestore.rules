@@ -30,8 +30,8 @@ service cloud.firestore {
     // name null (= the built-in's localized default name); a user category must have one.
     function isValidCategoryDoc(categoryId, data) {
       let name = data.get('name', null);
-      return data.keys().hasOnly(['name', 'iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn', 'groupId', 'createdAt',
-          'updatedAt'])
+      return data.keys().hasOnly(['name', 'iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn', 'groupId', 'mealCardByDefault',
+          'createdAt', 'updatedAt'])
         && data.keys().hasAll(['iconKey', 'colorKey', 'kind', 'order', 'archived', 'builtIn'])
         && (name == null || (name is string && name.size() > 0 && name.size() <= 50))
         && isValidKey(data.iconKey) && isValidKey(data.colorKey)
@@ -39,11 +39,17 @@ service cloud.firestore {
         && data.order is int && data.archived is bool && data.builtIn is bool
         && data.builtIn == (categoryId in builtInCategoryIds())
         && (data.builtIn || name != null)
-        && (data.get('groupId', null) == null || isCategoryIdShape(data.groupId));
+        && (data.get('groupId', null) == null || isCategoryIdShape(data.groupId))
+        && (!('mealCardByDefault' in data) || data.mealCardByDefault is bool);
     }
 
     function isValidAmountCents(amountCents) {
       return amountCents is int && amountCents > 0 && amountCents <= 100000000000;
+    }
+
+    // A planned income line may be 0: an amount version "stops" it from a month and the line's own amount follows.
+    function isValidLineAmountCents(amountCents) {
+      return amountCents is int && amountCents >= 0 && amountCents <= 100000000000;
     }
 
     function isValidAuditTimestamps(data) {
@@ -57,13 +63,15 @@ service cloud.firestore {
     }
 
     function isValidExpense(userId, data) {
-      return data.keys().hasOnly(['name', 'amountCents', 'category', 'date', 'note', 'isRefund', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['name', 'amountCents', 'category', 'date', 'note', 'isRefund', 'paidWithMealCard',
+          'createdAt', 'updatedAt'])
         && data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
         && isKnownCategory(userId, data.category)
         && data.date is timestamp
         && (!('isRefund' in data) || data.isRefund is bool)
+        && (!('paidWithMealCard' in data) || data.paidWithMealCard is bool)
         && isValidAuditTimestamps(data)
         && isValidNote(data);
     }
@@ -88,15 +96,17 @@ service cloud.firestore {
 
     function isValidPlannedIncome(data) {
       return data.keys().hasOnly(['label', 'amountCents', 'order', 'basis', 'frequency', 'monthOfYear',
-          'yearMonth', 'skipMonths', 'managedKey', 'autoRecord', 'payDay', 'startMonth', 'versions', 'updatedAt'])
+          'yearMonth', 'skipMonths', 'managedKey', 'autoRecord', 'payDay', 'payDayEarlierIfClosed', 'startMonth', 'versions',
+          'updatedAt'])
         && data.keys().hasAll(['label', 'amountCents', 'order'])
         && data.label is string && data.label.size() > 0 && data.label.size() <= 50
-        && isValidAmountCents(data.amountCents)
+        && isValidLineAmountCents(data.amountCents)
         && data.order is int
         && (!('basis' in data) || data.basis in ['FIXED', 'PER_WORKING_DAY'])
         && isValidIncomeFrequency(data)
         && (!('managedKey' in data) || data.managedKey.matches(managedKeyPattern()))
         && (!('autoRecord' in data) || data.autoRecord is bool)
+        && (!('payDayEarlierIfClosed' in data) || data.payDayEarlierIfClosed is bool)
         && (!('payDay' in data) || (data.payDay is int && data.payDay >= 1 && data.payDay <= 31))
         && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12))
         && isValidPlanTiming(data);
@@ -246,12 +256,15 @@ service cloud.firestore {
       return data.keys().hasOnly(['inputMode', 'baseGrossCents', 'subsidySpreadPpm', 'irsBasePpm', 'irsSubsidiesPpm',
           'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
           'mealRatePerDayCents', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth',
-          'extras', 'updatedAt'])
+          'extras', 'sector', 'mealPayment', 'otherDeductionsPpm', 'updatedAt'])
         && data.keys().hasAll(['inputMode'])
         && data.inputMode in ['GROSS', 'NET']
         && (!('subsidySpreadPpm' in data) || data.subsidySpreadPpm in [0, 500000, 1000000])
         && isOptionalInt(data, 'irsBasePpm', 0, 1000000) && isOptionalInt(data, 'irsSubsidiesPpm', 0, 1000000)
         && isOptionalInt(data, 'ssPpm', 0, 1000000) && isOptionalInt(data, 'irsJovemExemptPpm', 0, 1000000)
+        && isOptionalInt(data, 'otherDeductionsPpm', 0, 1000000)
+        && (!('sector' in data) || data.sector in ['PRIVATE', 'PUBLIC'])
+        && (!('mealPayment' in data) || data.mealPayment in ['CARD', 'WITH_SALARY'])
         && isOptionalInt(data, 'baseGrossCents', 1, 100000000000)
         && isOptionalInt(data, 'netMonthlyCents', 1, 100000000000)
         && isOptionalInt(data, 'netHolidayLumpCents', 1, 100000000000)

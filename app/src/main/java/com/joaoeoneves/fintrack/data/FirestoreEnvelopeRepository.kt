@@ -92,7 +92,7 @@ class FirestoreEnvelopeRepository
                 }
                 fileCategories(batch, uid, docRef.id, edit)
                 writeLimits(batch, uid, edit, budgetRepository.observeBudgets().first())
-                batch.commit().addOnFailureListener { Log.w(TAG, "Save envelope ${docRef.id} write failed", it) }
+                batch.commit().addOnFailureListener(onFail(TAG, "Save envelope ${docRef.id} write failed"))
                 docRef.id
             }
 
@@ -156,7 +156,7 @@ class FirestoreEnvelopeRepository
                         SetOptions.merge(),
                     )
                 }
-                batch.commit().addOnFailureListener { Log.w(TAG, "Reorder envelopes write failed", it) }
+                batch.commit().addOnFailureListener(onFail(TAG, "Reorder envelopes write failed"))
                 Unit
             }
 
@@ -175,7 +175,7 @@ class FirestoreEnvelopeRepository
                         )
                     }
                 batch.delete(collection(uid).document(id))
-                batch.commit().addOnFailureListener { Log.w(TAG, "Delete envelope $id write failed", it) }
+                batch.commit().addOnFailureListener(onFail(TAG, "Delete envelope $id write failed"))
                 Unit
             }
 

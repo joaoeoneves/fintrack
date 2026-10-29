@@ -22,6 +22,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.time.Clock
 import java.time.YearMonth
 import java.time.ZoneId
 
@@ -55,7 +56,10 @@ object BackupCodec {
 
     fun encode(document: BackupDocument): String = json.encodeToString(BackupDocument.serializer(), document)
 
-    fun decode(text: String): BackupDecodeResult {
+    fun decode(
+        text: String,
+        clock: Clock = Clock.systemDefaultZone(),
+    ): BackupDecodeResult {
         val root =
             try {
                 json.parseToJsonElement(text).jsonObject
@@ -63,7 +67,7 @@ object BackupCodec {
                 // SerializationException and "not an object" both land here.
                 return BackupDecodeResult.Invalid(e.message ?: "Not a JSON object")
             }
-        return checkHeader(root) ?: decodeBody(root)
+        return checkHeader(root) ?: decodeBody(root, clock)
     }
 
     /** A failure result when the format marker or version is wrong, else `null`. */
@@ -78,7 +82,10 @@ object BackupCodec {
         }
     }
 
-    private fun decodeBody(root: JsonObject): BackupDecodeResult {
+    private fun decodeBody(
+        root: JsonObject,
+        clock: Clock,
+    ): BackupDecodeResult {
         val document =
             try {
                 json.decodeFromJsonElement(BackupDocument.serializer(), root)
@@ -97,8 +104,11 @@ object BackupCodec {
         // 16 -> 17 recurring skipped/pausedAt (absent = empty / none).
         // 17 -> 18 automation salaryPaysNextMonth (absent = not chosen).
         // 18 -> 19 plan startMonth / versions (absent = the earliest month with data, see upgradedToStartMonths).
+        // 19 -> 20 salaryProfile sector/mealPayment/otherDeductionsPpm, plannedIncome payDayEarlierIfClosed, expense
+        // paidWithMealCard and category mealCardByDefault (absent = private / card / 0 / off / off / off).
         return when (document.schemaVersion) {
-            in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.upgradedToStartMonths())
+            in 1 until BACKUP_SCHEMA_VERSION ->
+                sanitize(document.upgradedToStartMonths(YearMonth.now(clock), clock.zone))
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
         }

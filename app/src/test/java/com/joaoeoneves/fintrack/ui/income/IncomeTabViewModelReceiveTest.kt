@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -148,7 +149,7 @@ class IncomeTabViewModelReceiveTest : IncomeTabViewModelTestBase() {
         }
 
     @Test
-    fun futureMonthIsClampedToTheCurrentOne_pastMonthIsReceivable() =
+    fun futureMonthIsKept_notReceivable_pastMonthIsReceivable() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(line("a"))
             val vm = viewModel()
@@ -162,9 +163,9 @@ class IncomeTabViewModelReceiveTest : IncomeTabViewModelTestBase() {
             advanceUntilIdle()
             val past = vm.content()
 
-            // The month picker clamps a future month to the current one, so nothing future is ever receivable.
-            assertEquals(oct, future.workingDays.month)
-            assertTrue(future.receipts.canReceive)
+            // The Income tab reaches future months (display only), but nothing future is receivable.
+            assertEquals(YearMonth.of(2026, 12), future.workingDays.month)
+            assertFalse(future.receipts.canReceive)
             assertTrue(past.receipts.canReceive)
             assertEquals(LocalDate.of(2026, 8, 31), past.receipts.payday)
         }

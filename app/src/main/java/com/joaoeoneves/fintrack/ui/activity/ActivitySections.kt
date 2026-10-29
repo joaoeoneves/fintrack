@@ -296,6 +296,8 @@ private fun emptyTitle(filters: ActivityFilters): String =
         filters.query.isNotBlank() -> stringResource(R.string.activity_no_match, filters.query)
         (filters.category != null || filters.envelope != null) && filters.type == ActivityType.EXPENSE ->
             stringResource(R.string.activity_no_match_filter)
+        filters.incomeSource != null && filters.type == ActivityType.INCOME ->
+            stringResource(R.string.activity_no_match_filter)
         filters.type == ActivityType.EXPENSE -> stringResource(R.string.dashboard_no_expenses)
         filters.type == ActivityType.INCOME -> stringResource(R.string.dashboard_no_income)
         else -> stringResource(R.string.activity_empty)

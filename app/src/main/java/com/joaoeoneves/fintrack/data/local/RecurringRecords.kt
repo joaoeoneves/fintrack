@@ -123,7 +123,7 @@ internal fun validateRecurring(
     item: LocalRecurringItem,
     knownCategoryIds: Set<String>,
 ) {
-    require(item.id.isNotBlank()) { "Recurring id is blank" }
+    requireIdShape(item.id, "recurring")
     requireText(item.name, MAX_NAME_LENGTH, "Recurring name")
     require(item.amountCents in 1..MAX_AMOUNT_CENTS) { "Recurring amount must be 1..$MAX_AMOUNT_CENTS cents" }
     validateRecurringCategory(item, knownCategoryIds)

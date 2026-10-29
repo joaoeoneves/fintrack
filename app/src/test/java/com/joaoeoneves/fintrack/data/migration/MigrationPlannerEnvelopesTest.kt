@@ -21,11 +21,11 @@ class MigrationPlannerEnvelopesTest {
     }
 
     @Test
-    fun fundingLine_isDropped_whenTheAccountAlreadyHasIncomeLines_amountKept() {
+    fun fundingLine_isDropped_whenTheAccountAlreadyHasThatLine_amountKept() {
         val plan =
             planMigration(
                 doc(LocalCategoryGroup("g1", "Food", 0, 5_000, "meal")),
-                remoteSnapshot(plannedIncomeIds = setOf("other")),
+                remoteSnapshot(plannedIncomeIds = setOf("meal")),
             )
 
         val written = plan.categoryGroups.single()

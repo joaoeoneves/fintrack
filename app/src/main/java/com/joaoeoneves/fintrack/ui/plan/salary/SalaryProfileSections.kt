@@ -119,11 +119,17 @@ internal fun GrossSections(
             invalid = SalaryField.EXEMPT in invalid,
         )
         SalaryTextField(
-            label = stringResource(R.string.salary_field_ss),
+            label = stringResource(ssFieldLabel(form.effectiveSector)),
             value = form.ss,
             onChange = { onChange(form.copy(ss = it)) },
             invalid = SalaryField.SS in invalid,
-            hint = stringResource(R.string.salary_ss_hint),
+            hint = stringResource(ssHint(form.effectiveSector)),
+        )
+        SalaryTextField(
+            label = stringResource(R.string.salary_field_other_deductions),
+            value = form.otherDeductions,
+            onChange = { onChange(form.copy(otherDeductions = it)) },
+            invalid = SalaryField.OTHER_DEDUCTIONS in invalid,
         )
     }
 }

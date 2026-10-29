@@ -18,6 +18,7 @@ import javax.inject.Inject
  * Builds backups from the current (session-switched) data and restores them into the guest store or the
  * signed-in account.
  */
+@Suppress("LongParameterList") // one collaborator per data source; bundling them would only hide the list
 class BackupRepository
     @Inject
     constructor(
@@ -27,10 +28,13 @@ class BackupRepository
         private val categoryRepository: CategoryRepository,
         private val preferencesStore: UserPreferencesStore,
         private val restorer: BackupRestorer,
+        private val serverSync: ServerSync = LocalOnlyServerSync,
     ) {
         /** Snapshot of the current mode's data plus preferences; works signed in and as a guest. */
         suspend fun buildBackup(exportedAt: Instant): Result<BackupDocument> =
             runCatchingCancellable {
+                // A signed-in export never uses cache or error-fallback data: read the server first or fail.
+                serverSync.refresh().getOrThrow()
                 val expenses = expenseRepository.getAllExpenses().getOrThrow()
                 val income = incomeRepository.getAllIncome().getOrThrow()
                 val plan = planBackupSource.read()
@@ -87,3 +91,8 @@ class BackupRepository
         /** User categories and changed built-ins are stored; untouched built-ins and placeholders are not. */
         private fun Category.needsStoring(): Boolean = !isUnknown && (!builtIn || this != BuiltInCategories.byId(id))
     }
+
+/** No server to read: the default for guest-only use and tests. */
+private object LocalOnlyServerSync : ServerSync {
+    override suspend fun refresh(): Result<Unit> = Result.success(Unit)
+}

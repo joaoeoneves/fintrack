@@ -206,11 +206,12 @@ class SalaryProfileLinesTest {
     }
 
     @Test
-    fun subsidyLines_orderedEarlierFirst_distinctLabels() {
+    fun subsidyLines_useProfileMonths_distinctLabels() {
         val result = lines(full.copy(holidaySubsidyMonth = 11, christmasSubsidyMonth = 2))
 
-        assertEquals(2, result.byKey(MANAGED_HOLIDAY).monthOfYear)
-        assertEquals(11, result.byKey(MANAGED_CHRISTMAS).monthOfYear)
+        // The lines use the profile's months directly, no reordering.
+        assertEquals(11, result.byKey(MANAGED_HOLIDAY).monthOfYear)
+        assertEquals(2, result.byKey(MANAGED_CHRISTMAS).monthOfYear)
         assertEquals("Holiday subsidy", result.byKey(MANAGED_HOLIDAY).label)
         assertEquals("Christmas subsidy", result.byKey(MANAGED_CHRISTMAS).label)
     }

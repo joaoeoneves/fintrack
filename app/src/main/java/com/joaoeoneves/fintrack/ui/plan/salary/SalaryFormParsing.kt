@@ -100,6 +100,9 @@ private fun SalaryForm.grossProfile(reader: FieldReader): SalaryProfile =
         holidaySubsidyMonth = subsidyMonthPair().first,
         christmasSubsidyMonth = subsidyMonthPair().second,
         extras = extras,
+        sector = sector,
+        mealPayment = mealPayment,
+        otherDeductionsPpm = reader.percent(SalaryField.OTHER_DEDUCTIONS, otherDeductions) ?: 0,
     )
 
 private fun SalaryForm.netProfile(reader: FieldReader): SalaryProfile =
@@ -112,6 +115,8 @@ private fun SalaryForm.netProfile(reader: FieldReader): SalaryProfile =
         holidaySubsidyMonth = subsidyMonthPair().first,
         christmasSubsidyMonth = subsidyMonthPair().second,
         extras = extras,
+        sector = sector,
+        mealPayment = mealPayment,
     )
 
 /**

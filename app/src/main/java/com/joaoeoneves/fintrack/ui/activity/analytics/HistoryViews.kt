@@ -14,13 +14,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.Leftover
 import com.joaoeoneves.fintrack.domain.model.SpendingComparison
 import com.joaoeoneves.fintrack.domain.model.YearToDate
 import com.joaoeoneves.fintrack.domain.model.percentChange
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.formatPercent
+import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.MonthlyBar
 import com.joaoeoneves.fintrack.ui.designsystem.MonthlyBars
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
@@ -69,7 +69,7 @@ fun SpendingComparisonLines(
 }
 
 @Composable
-private fun ChangeLine(
+internal fun ChangeLine(
     label: String,
     percent: Int,
 ) {
@@ -103,34 +103,24 @@ fun MonthlyAverageLine(
     )
 }
 
-/** "Since January": spent, received and saved of the calendar year up to the period's last month. */
+/** Which year-to-date figure a tab shows: each tab only its own. */
+enum class YearToDateFigure { SPENT, RECEIVED }
+
+/** "Since January": the tab's own year-to-date figure, up to the period's last month. */
 @Composable
 fun YearToDateRow(
     yearToDate: YearToDate,
+    figure: YearToDateFigure,
     modifier: Modifier = Modifier,
-    leftover: Leftover? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionTitle(title = stringResource(R.string.activity_since_january))
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space8),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.Space16),
-        ) {
-            YearCell(stringResource(R.string.activity_ytd_spent), yearToDate.spentCents)
-            YearCell(stringResource(R.string.activity_ytd_received), yearToDate.incomeCents)
-            YearCell(stringResource(R.string.activity_ytd_saved), yearToDate.savedCents)
-            if (leftover != null && leftover.months > 0) {
-                val until = monthName(leftover.until ?: YearMonth.of(yearToDate.year, leftover.months), currentLocale())
-                YearCell(stringResource(R.string.activity_ytd_leftover, until), leftover.totalCents)
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space8)) {
+            when (figure) {
+                YearToDateFigure.SPENT -> YearCell(stringResource(R.string.activity_ytd_spent), yearToDate.spentCents)
+                YearToDateFigure.RECEIVED ->
+                    YearCell(stringResource(R.string.activity_ytd_received), yearToDate.incomeCents)
             }
-        }
-        val average = leftover?.averageCents
-        if (average != null) {
-            Text(
-                text = stringResource(R.string.activity_leftover_average, formatAmountCents(average)),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-            )
         }
     }
 }
@@ -154,7 +144,6 @@ fun EvolutionSection(
     modifier: Modifier = Modifier,
 ) {
     val locale = currentLocale()
-    val short = remember(locale) { DateTimeFormatter.ofPattern("MMM", locale) }
     val long = remember(locale) { DateTimeFormatter.ofPattern("LLLL yyyy", locale) }
     val resources = LocalContext.current.resources
     val spoken = { month: String, amount: String ->
@@ -164,7 +153,7 @@ fun EvolutionSection(
         evolution.months.mapIndexed { i, month ->
             val value = evolution.valuesCents[i]
             MonthlyBar(
-                label = month.format(short).take(MAX_BAR_LABEL),
+                label = formatShortMonthName(month, locale),
                 valueCents = value,
                 accessibilityText = spoken(month.format(long), formatAmountCents(value, false)),
             )
@@ -174,8 +163,6 @@ fun EvolutionSection(
         MonthlyBars(bars = bars, highlighted = evolution.highlighted, modifier = Modifier.padding(top = Dimens.Space8))
     }
 }
-
-private const val MAX_BAR_LABEL = 3
 
 /** The month's name for the "Counts for" badge, in the app's language. */
 fun monthName(

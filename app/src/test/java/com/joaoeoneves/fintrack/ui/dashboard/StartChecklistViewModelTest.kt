@@ -274,4 +274,69 @@ class StartChecklistViewModelTest {
             assertEquals(StartChecklistState.RETIRED, store.state.first())
             assertEquals(StartChecklistUiState.Hidden, vm.uiState.value)
         }
+
+    @Test
+    fun aFailedDecision_isRetriedAfterAPause_andDecidesOnceTheDataLoads() =
+        runTest(dispatcher) {
+            profiles.nextObserveError = IllegalStateException("offline")
+            started(viewModel())
+            advanceTimeBy(settleMillis + 1_000)
+            assertNull(store.state.first())
+
+            profiles.nextObserveError = null
+            advanceTimeBy(5_000)
+            runCurrent()
+            advanceTimeBy(settleMillis + 1)
+            runCurrent()
+
+            assertEquals(StartChecklistState.ACTIVE, store.state.first())
+        }
+
+    @Test
+    fun lateData_thatReachesThreeSteps_withinTheWindow_retiresTheCard() =
+        runTest(dispatcher) {
+            setUpSteps(2)
+            started(viewModel())
+            advanceTimeBy(settleMillis + 1)
+            runCurrent()
+            assertEquals(StartChecklistState.ACTIVE, store.state.first())
+
+            expenses.addExpense(expense())
+            advanceTimeBy(1_000)
+            runCurrent()
+
+            assertEquals(StartChecklistState.RETIRED, store.state.first())
+        }
+
+    @Test
+    fun lateData_afterTheWindow_leavesTheCardActive() =
+        runTest(dispatcher) {
+            setUpSteps(2)
+            started(viewModel())
+            advanceTimeBy(settleMillis + 31_000)
+            runCurrent()
+
+            expenses.addExpense(expense())
+            advanceTimeBy(1_000)
+            runCurrent()
+
+            assertEquals(StartChecklistState.ACTIVE, store.state.first())
+        }
+
+    @Test
+    fun lateData_afterADismissal_doesNotOverrideIt() =
+        runTest(dispatcher) {
+            setUpSteps(2)
+            val vm = started(viewModel())
+            advanceTimeBy(settleMillis + 1)
+            runCurrent()
+            vm.onDismiss()
+            runCurrent()
+
+            expenses.addExpense(expense())
+            advanceTimeBy(1_000)
+            runCurrent()
+
+            assertEquals(StartChecklistState.DISMISSED, store.state.first())
+        }
 }

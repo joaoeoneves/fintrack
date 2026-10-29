@@ -63,6 +63,7 @@ class AddEditIncomeViewModelTest {
             repository,
             deleteTransactionFor(incomes = repository),
             SavedStateHandle(),
+            java.time.Clock.systemDefaultZone(),
         )
 
     private fun editModeViewModel(
@@ -72,6 +73,7 @@ class AddEditIncomeViewModelTest {
         repository,
         deleteTransactionFor(incomes = repository),
         SavedStateHandle(mapOf("incomeId" to incomeId)),
+        java.time.Clock.systemDefaultZone(),
     )
 
     // ---- add mode: initial state ----
@@ -359,22 +361,14 @@ class AddEditIncomeViewModelTest {
         }
 
     @Test
-    fun editMode_incomeNotFound_isReadyEditModeWithBlankForm() =
+    fun editMode_incomeNotFound_isNotFoundErrorState_notABlankEditableForm() =
         runTest(testDispatcher) {
-            // Regression guard: a genuinely-missing id (Result.success(null), i.e. confirmed
-            // not-found -- e.g. a stale deep link) must still fall through to the pre-existing
-            // blank-but-editable form, exactly as before the Error-state bug fix. This must NOT
-            // collapse into AddEditIncomeUiState.Error; only an actual read *failure* should.
-            val repo = FakeIncomeRepository()
-            val viewModel = editModeViewModel(repo, "does-not-exist")
+            val viewModel = editModeViewModel(FakeIncomeRepository(), "does-not-exist")
 
             advanceUntilIdle()
 
-            val state = viewModel.uiState.value as AddEditIncomeUiState.Ready
-            assertTrue(state.form.isEditMode)
-            assertEquals("does-not-exist", state.form.incomeId)
-            assertEquals("", state.form.source)
-            assertEquals(0L, state.form.amountCents)
+            val state = viewModel.uiState.value as AddEditIncomeUiState.Error
+            assertEquals(UiText.StringResource(R.string.detail_not_found), state.message)
         }
 
     // ---- edit mode: load failure -> Error state (the data-loss bug fix) ----

@@ -20,12 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +46,6 @@ import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
-import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -66,7 +61,6 @@ private val BarHeight = 10.dp
 private val SegmentGap = 2.dp
 private val DotSize = 8.dp
 private val PercentColumnWidth = 48.dp
-private val TabsWidth = 176.dp
 
 /**
  * Plain (non-composable), unit-testable computation of a slice's share of the total, rounded to
@@ -118,10 +112,9 @@ fun rankedBreakdown(slices: List<CategoryTotal>): List<BreakdownEntry> {
 }
 
 /**
- * The Activity header's breakdown block: total outflow (or the planned total), an "Actual | Planned"
- * switch when the plan has planned allocations, and the stateless [CategoryBreakdown] below it. When
- * [onCategoryClick] is set, each category row is tappable. With [showTotal] false (the Spending tab, which already
- * shows "Spent") the heading is "By category" and the big total is left out.
+ * The Activity header's breakdown block: the optional total outflow and the stateless [CategoryBreakdown] below it.
+ * When [onCategoryClick] is set, each category row is tappable. With [showTotal] false (the Spending tab, which
+ * already shows "Spent") the heading is "By category", the big total is left out and the chart reads as spending.
  */
 @Composable
 fun CategoryBreakdownSection(
@@ -130,61 +123,27 @@ fun CategoryBreakdownSection(
     showTotal: Boolean = true,
     onCategoryClick: ((Category) -> Unit)? = null,
 ) {
-    val hasPlanned = breakdown.plannedSlices.isNotEmpty()
-    var showPlanned by rememberSaveable { mutableStateOf(false) }
-    val planned = showPlanned && hasPlanned
-    val slices = if (planned) breakdown.plannedSlices else breakdown.categoryTotals
-
-    if (!breakdown.hasExpenses && !hasPlanned) {
+    if (!breakdown.hasExpenses) {
         BreakdownEmpty(modifier)
         return
     }
+    val slices = breakdown.categoryTotals
     Column(modifier = modifier.fillMaxWidth()) {
-        SectionTitle(
-            title =
-                stringResource(breakdownTitleRes(planned, showTotal)),
-            trailing =
-                if (hasPlanned) {
-                    { ActualPlannedTabs(planned = planned, onSelect = { showPlanned = it }) }
-                } else {
-                    null
-                },
-        )
-        if (!planned && !breakdown.hasExpenses) {
-            BreakdownEmpty()
-        } else {
-            val bigTotal = showTotal || planned
-            if (bigTotal) {
-                Text(
-                    text = formatAmountCents(slices.clampedForChart().sumOf { it.totalCents }),
-                    style = AmountLarge,
-                    maxLines = 1,
-                )
-            }
-            CategoryBreakdown(
-                slices = slices,
-                totalDescriptionRes = if (planned) R.string.cd_pie_chart_planned_total else R.string.cd_pie_chart_total,
-                onCategoryClick = onCategoryClick,
-                modifier = Modifier.padding(top = if (bigTotal) Dimens.Space16 else Dimens.Space8),
+        SectionTitle(title = stringResource(breakdownTitleRes(showTotal)))
+        if (showTotal) {
+            Text(
+                text = formatAmountCents(slices.clampedForChart().sumOf { it.totalCents }),
+                style = AmountLarge,
+                maxLines = 1,
             )
         }
+        CategoryBreakdown(
+            slices = slices,
+            totalDescriptionRes = if (showTotal) R.string.cd_pie_chart_total else R.string.cd_pie_chart_spending_total,
+            onCategoryClick = onCategoryClick,
+            modifier = Modifier.padding(top = if (showTotal) Dimens.Space16 else Dimens.Space8),
+        )
     }
-}
-
-@Composable
-private fun ActualPlannedTabs(
-    planned: Boolean,
-    onSelect: (Boolean) -> Unit,
-) {
-    SegmentedTextTabs(
-        options = listOf(false, true),
-        selected = planned,
-        label = {
-            stringResource(if (it) R.string.dashboard_breakdown_planned else R.string.dashboard_breakdown_actual)
-        },
-        onSelect = onSelect,
-        modifier = Modifier.width(TabsWidth),
-    )
 }
 
 @Composable

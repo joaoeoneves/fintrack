@@ -1,19 +1,24 @@
 package com.joaoeoneves.fintrack.ui.plan.salary
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExtraBreakdown
+import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /** The meal allowance per working day (paid every month; days off are set in the Plan's working days). */
 @Composable
@@ -28,8 +33,24 @@ internal fun MealSection(
             onChange = { onChange(form.copy(meal = it)) },
             hint = stringResource(R.string.salary_meal_hint),
         )
+        if (form.meal > 0L) {
+            Text(
+                text = stringResource(R.string.salary_meal_payment),
+                style = MaterialTheme.typography.labelLarge,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+            SegmentedTextTabs(
+                options = MealPayment.entries,
+                selected = form.mealPayment,
+                label = { stringResource(mealPaymentLabel(it)) },
+                onSelect = { onChange(form.copy(mealPayment = it)) },
+            )
+        }
     }
 }
+
+internal fun mealPaymentLabel(payment: MealPayment): Int =
+    if (payment == MealPayment.CARD) R.string.salary_meal_payment_card else R.string.salary_meal_payment_salary
 
 /** The user's extras: one tappable row each (its name and what it pays per year) and a button to add one. */
 @Composable
@@ -69,15 +90,17 @@ internal fun SalaryExtrasSection(
     }
 }
 
-/** What an extra pays: its yearly total, or the amount of each payment and the total when it has several. */
+/** What an extra pays: the amount of one payment, then (with several) the count and the yearly total below. */
 @Composable
 internal fun extraAmountText(breakdown: ExtraBreakdown): String =
     if (breakdown.payments.size > 1) {
-        stringResource(
-            R.string.salary_extra_per_payment_and_year,
-            formatAmountCents(breakdown.payments.first().second),
-            formatAmountCents(breakdown.totalCents),
-        )
+        stringResource(R.string.salary_extra_per_payment, formatAmountCents(breakdown.payments.first().second)) +
+            "\n" +
+            stringResource(
+                R.string.salary_extra_payments_total,
+                breakdown.payments.size,
+                formatAmountCents(breakdown.totalCents),
+            )
     } else {
         formatAmountCents(breakdown.totalCents)
     }

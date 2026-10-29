@@ -18,7 +18,29 @@ data class IncomeReceipts(
     val today: LocalDate,
     val canReceive: Boolean,
     val receivedOn: Map<String, LocalDate> = emptyMap(),
+    /** The day the month's salary (or, without a salary line, every due line) was actually received; else `null`. */
+    val receivedPayday: LocalDate? = null,
+    /** What each received row (keyed by [key]) actually brought in; may differ from its planned amount. */
+    val receivedCents: Map<String, Long> = emptyMap(),
 )
+
+/**
+ * The day the month's pay was actually received: the salary row's received day, or, when there is no salary row
+ * paying this month, the latest received day once every paying row is received. `null` while not received.
+ */
+fun receivedPaydayOf(
+    rows: List<IncomeRow>,
+    receivedOn: Map<String, LocalDate>,
+): LocalDate? {
+    val paying = rows.filter { it.cents > 0L }
+    val salary = paying.firstOrNull { it.component == SalaryComponent.SALARY }
+    return if (salary != null) {
+        receivedOn[salary.key]
+    } else {
+        val days = paying.map { receivedOn[it.key] }
+        if (days.isNotEmpty() && days.all { it != null }) days.filterNotNull().max() else null
+    }
+}
 
 /** The row's identity within a month's list: the id of its first line. */
 val IncomeRow.key: String get() = lines.first().id
@@ -46,6 +68,8 @@ data class IncomeSchedule(
     val skipMonths: Set<Int> = emptySet(),
     val autoRecord: Boolean = false,
     val payDay: Int? = null,
+    /** With a fixed [payDay]: a weekend or holiday moves the pay date to the previous working day. */
+    val payDayEarlierIfClosed: Boolean = false,
 ) {
     /**
      * Keeps only the fields that belong to [frequency]; a missing month
