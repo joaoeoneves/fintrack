@@ -57,7 +57,7 @@ internal fun SavingsGoal.toLocal(): LocalSavingsGoal =
 
 /** Mirror of the firestore.rules check (plus `targetDate >= startDate`); throws [IllegalArgumentException]. */
 internal fun validateGoal(goal: LocalSavingsGoal) {
-    require(goal.id.isNotBlank()) { "Goal id is blank" }
+    requireIdShape(goal.id, "goal")
     requireText(goal.name, MAX_GOAL_NAME_LENGTH, "Goal name")
     require(goal.targetCents in 0..MAX_AMOUNT_CENTS) { "Goal target must be 0..$MAX_AMOUNT_CENTS cents" }
     require(goal.initialCents in 0..MAX_AMOUNT_CENTS) { "Goal initial amount must be 0..$MAX_AMOUNT_CENTS cents" }

@@ -28,7 +28,7 @@ internal fun validateExpense(
     expense: LocalExpense,
     knownCategoryIds: Set<String>,
 ) {
-    require(expense.id.isNotBlank()) { "Expense id is blank" }
+    requireIdShape(expense.id, "expense")
     requireText(expense.name, MAX_NAME_LENGTH, "Expense name")
     require(expense.amountCents in 1..MAX_AMOUNT_CENTS) { "Expense amount must be 1..$MAX_AMOUNT_CENTS cents" }
     requireKnownCategory(expense.categoryId, knownCategoryIds)
@@ -37,7 +37,7 @@ internal fun validateExpense(
 }
 
 internal fun validateIncome(income: LocalIncome) {
-    require(income.id.isNotBlank()) { "Income id is blank" }
+    requireIdShape(income.id, "income")
     requireText(income.source, MAX_NAME_LENGTH, "Income source")
     require(income.amountCents in 1..MAX_AMOUNT_CENTS) { "Income amount must be 1..$MAX_AMOUNT_CENTS cents" }
     requireValidDate(income.date)
@@ -74,9 +74,15 @@ internal fun validateCategory(category: LocalCategory) {
     require(builtIn || !name.isNullOrBlank()) { "A user category needs a name" }
 }
 
-internal fun requireCategoryIdShape(id: String) {
+internal fun requireCategoryIdShape(id: String) = requireIdShape(id, "category")
+
+/** The shape firestore.rules' `isCategoryIdShape` demands of an id: 1..64 characters of `[A-Za-z0-9_-]`. */
+internal fun requireIdShape(
+    id: String,
+    what: String,
+) {
     require(id.isNotEmpty() && id.length <= MAX_CATEGORY_ID_LENGTH && CATEGORY_ID_REGEX.matches(id)) {
-        "Invalid category id"
+        "Invalid $what id"
     }
 }
 
