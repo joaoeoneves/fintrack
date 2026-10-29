@@ -39,6 +39,7 @@ internal fun MealSection(
             onChange = { onChange(form.copy(meal = it)) },
             hint = stringResource(R.string.salary_meal_hint),
         )
+        if (form.mealTaxableWarning()) MealTaxWarning()
         if (form.meal > 0L) {
             VacationDaysField(form, invalid, onChange)
             Text(
@@ -54,6 +55,25 @@ internal fun MealSection(
             )
         }
     }
+}
+
+/** About the daily meal allowance paid with the salary that stays free of IRS and SS (a hint, no tax math). */
+internal const val MEAL_CASH_LIMIT_CENTS = 600L
+
+/** Whether the meal is paid with the salary above [MEAL_CASH_LIMIT_CENTS] a day. */
+internal fun SalaryForm.mealTaxableWarning(): Boolean {
+    val withSalary = mealPayment == MealPayment.WITH_SALARY
+    return withSalary && meal > MEAL_CASH_LIMIT_CENTS
+}
+
+/** The warning shown under the meal rate; it only informs. */
+@Composable
+internal fun MealTaxWarning() {
+    Text(
+        text = stringResource(R.string.salary_meal_tax_warning),
+        style = MaterialTheme.typography.bodySmall,
+        color = FinTrackTheme.colors.negative,
+    )
 }
 
 /** The optional "vacation days per year" field (placeholder: the default of 22). */

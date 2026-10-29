@@ -475,6 +475,7 @@
     <string name="salary_group_subsidy_months">Subsidy months</string>
     <string name="salary_subsidy_months">Subsidies paid in</string>
     <string name="salary_meal_hint">Paid for each working day; set vacation and days off in the working days of the Income tab.</string>
+    <string name="salary_meal_tax_warning">Above about €6 a day, a meal allowance paid with the salary is subject to IRS and social security.</string>
     <string name="salary_group_meal">Meal allowance</string>
     <string name="salary_field_meal">Meal allowance per working day</string>
     <string name="salary_extras_add">Add extra</string>

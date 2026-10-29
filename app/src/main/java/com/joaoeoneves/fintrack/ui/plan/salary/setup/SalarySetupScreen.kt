@@ -42,6 +42,8 @@ import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
+import com.joaoeoneves.fintrack.ui.plan.salary.MEAL_CASH_LIMIT_CENTS
+import com.joaoeoneves.fintrack.ui.plan.salary.MealTaxWarning
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryDuplicatesDialog
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryEffectiveFrom
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryField
@@ -350,6 +352,7 @@ private fun MealStep(
                 onChange = { onChange(form.copy(meal = it)) },
                 hint = stringResource(R.string.salary_meal_hint),
             )
+            if (state.mealAnswer == MealAnswer.WITH_SALARY && form.meal > MEAL_CASH_LIMIT_CENTS) MealTaxWarning()
             VacationDaysField(form, state.invalid, onChange)
         }
     }

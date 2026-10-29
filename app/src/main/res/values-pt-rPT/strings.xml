@@ -489,6 +489,7 @@
     <string name="salary_group_subsidy_months">Meses dos subsídios</string>
     <string name="salary_subsidy_months">Subsídios pagos em</string>
     <string name="salary_meal_hint">Pago por cada dia útil; define as férias e os dias sem trabalho nos dias úteis do separador Rendimentos.</string>
+    <string name="salary_meal_tax_warning">Acima de ~6 €/dia, o subsídio de refeição pago com o salário paga IRS e SS.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
     <string name="salary_extras_add">Adicionar extra</string>
