@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
 import com.joaoeoneves.fintrack.domain.model.Budget
@@ -49,11 +50,7 @@ class FirestoreEnvelopeRepository
                             return@addSnapshotListener
                         }
                         if (snapshot != null) {
-                            trySend(
-                                snapshot.documents
-                                    .mapNotNull { it.toEnvelopeOrNull() }
-                                    .sortedWith(compareBy({ it.order }, { it.id })),
-                            )
+                            trySend(snapshot.toEnvelopeList())
                         }
                     }
                 awaitClose { registration.remove() }
@@ -195,6 +192,9 @@ internal fun Envelope.toFirestoreMap(): Map<String, Any?> =
         putAll(planTimingFields(startMonth, versions))
         put("updatedAt", FieldValue.serverTimestamp())
     }
+
+internal fun QuerySnapshot.toEnvelopeList(): List<Envelope> =
+    documents.mapNotNull { it.toEnvelopeOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
 
 /** Lenient: an amount outside 1..[MAX_AMOUNT_CENTS] and a blank funding line count as absent. */
 internal fun DocumentSnapshot.toEnvelopeOrNull(): Envelope? =

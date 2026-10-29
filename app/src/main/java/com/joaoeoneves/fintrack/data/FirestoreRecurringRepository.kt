@@ -213,7 +213,7 @@ internal fun RecurringItem.toFirestoreMap(): Map<String, Any?> =
         "updatedAt" to FieldValue.serverTimestamp(),
     )
 
-private fun QuerySnapshot.toRecurringList(): List<RecurringItem> =
+internal fun QuerySnapshot.toRecurringList(): List<RecurringItem> =
     documents.mapNotNull { it.toRecurringOrNull() }.sortedWith(compareBy({ it.startDate }, { it.id }))
 
 /** Maps a document, or drops it (logged) when a required field is missing or invalid. */

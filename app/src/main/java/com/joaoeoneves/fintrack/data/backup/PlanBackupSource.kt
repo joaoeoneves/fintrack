@@ -58,6 +58,9 @@ class PlanBackupSource
         private val categoryGroupRepository: EnvelopeRepository,
         private val singletons: PlanSingletonSources,
     ) {
+        /** The name for the placeholder of a category a record references but that no longer exists. */
+        fun deletedCategoryName(): String = singletons.names.deletedCategory()
+
         suspend fun read(): PlanBackupData =
             PlanBackupData(
                 budgets = budgetRepository.observeBudgets().first(),

@@ -234,7 +234,7 @@ internal fun Income.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?>
     return map
 }
 
-private fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
+internal fun QuerySnapshot.toIncomeList(): List<Income> = documents.mapNotNull { it.toIncomeOrNull() }
 
 private fun DocumentSnapshot.toIncomeOrNull(): Income? = mapOrNull("income") { parseIncome() }
 
