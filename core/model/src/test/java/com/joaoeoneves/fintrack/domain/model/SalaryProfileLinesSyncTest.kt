@@ -170,9 +170,10 @@ class SalaryProfileLinesSyncTest {
     @Test
     fun sync_legacyFlexProfitAndBonusLines_areDeleted() {
         val legacyKeys = listOf("profile_flex_q1", "profile_profit_share_4", "profile_bonus", "profile_profit_share")
-        val legacy = legacyKeys.mapIndexed { i, k ->
-            PlannedIncome(k, "old", 5, 80 + i, managedKey = k, startMonth = YearMonth.now())
-        }
+        val legacy =
+            legacyKeys.mapIndexed { i, k ->
+                PlannedIncome(k, "old", 5, 80 + i, managedKey = k, startMonth = YearMonth.now())
+            }
 
         val sync = managedLinesSync(profile, lines() + legacy)
 
@@ -181,7 +182,8 @@ class SalaryProfileLinesSyncTest {
 
     @Test
     fun sync_deletesLegacyProfitShare() {
-        val legacy = PlannedIncome(
+        val legacy =
+            PlannedIncome(
                 LEGACY_PROFIT_SHARE_KEY,
                 "Profit",
                 5,
