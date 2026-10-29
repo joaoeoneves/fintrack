@@ -116,12 +116,7 @@ private fun RecurringFormContent(
             singleLine = false,
             modifier = Modifier.fillMaxWidth(),
         )
-        SettingsSwitchRow(
-            title = stringResource(R.string.recurring_auto_post),
-            checked = form.autoPost,
-            onCheckedChange = { onFormChanged(form.copy(autoPost = it)) },
-            supportingText = stringResource(R.string.recurring_auto_post_hint),
-        )
+        RecurringToggles(form, state.isEditMode, onFormChanged)
         state.saveError?.let { error ->
             FormSaveError(error.asString())
         }
@@ -148,3 +143,26 @@ private fun RecurringFormContent(
 
 /** New items cannot go to a SAVING-kind category (those belong to savings plans); existing items keep theirs. */
 private fun List<Category>.forNewItem(isNew: Boolean) = if (isNew) filter { it.kind != CategoryKind.SAVING } else this
+
+/** The auto-post switch and, when editing, the pause switch. */
+@Composable
+private fun RecurringToggles(
+    form: RecurringForm,
+    isEditMode: Boolean,
+    onFormChanged: (RecurringForm) -> Unit,
+) {
+    SettingsSwitchRow(
+        title = stringResource(R.string.recurring_auto_post),
+        checked = form.autoPost,
+        onCheckedChange = { onFormChanged(form.copy(autoPost = it)) },
+        supportingText = stringResource(R.string.recurring_auto_post_hint),
+    )
+    if (isEditMode) {
+        SettingsSwitchRow(
+            title = stringResource(R.string.recurring_paused),
+            checked = form.paused,
+            onCheckedChange = { onFormChanged(form.copy(paused = it)) },
+            supportingText = stringResource(R.string.recurring_pause_hint),
+        )
+    }
+}

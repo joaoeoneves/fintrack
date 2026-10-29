@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,7 +14,6 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
-import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
@@ -75,12 +72,6 @@ internal fun RecurringRowItem(
             amountColor = MaterialTheme.colorScheme.onSurface,
             onClick = { actions.onOpenEditor(item.id) },
             modifier = Modifier.weight(1f),
-        )
-        val toggleLabel = stringResource(if (item.active) R.string.recurring_pause else R.string.recurring_resume)
-        LabeledIconButton(
-            icon = if (item.active) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-            contentDescription = toggleLabel,
-            onClick = { actions.onTogglePaused(item.id) },
         )
     }
 }

@@ -35,6 +35,7 @@ import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
+import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
@@ -44,7 +45,6 @@ import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -239,7 +239,7 @@ private fun TotalFields(
             labelRes = R.string.goal_field_target_date,
         )
         if (draft.showErrors && !draft.datesValid) {
-            Text(stringResource(R.string.goal_error_dates), color = FinTrackTheme.colors.negative)
+            FieldErrorText(stringResource(R.string.goal_error_dates))
         }
         GhostButton(
             text = stringResource(R.string.goal_target_date_clear),

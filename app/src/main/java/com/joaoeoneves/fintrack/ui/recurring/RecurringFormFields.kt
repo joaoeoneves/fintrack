@@ -32,6 +32,7 @@ import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
 import com.joaoeoneves.fintrack.ui.common.symbol
 import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
+import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
@@ -69,7 +70,7 @@ internal fun RecurringTypeAndNameFields(
         autoFocus = autoFocusAmount,
         modifier = Modifier.padding(vertical = Dimens.Space16),
     )
-    errors?.amount?.let { Text(it.asString(), color = FinTrackTheme.colors.negative) }
+    errors?.amount?.let { FieldErrorText(it.asString()) }
     MinimalTextField(
         value = form.name,
         onValueChange = { onChange(form.copy(name = it)) },
@@ -177,7 +178,7 @@ internal fun RecurringDateFields(
             zone = zone,
             labelRes = R.string.recurring_end_date,
         )
-        errors?.endDate?.let { Text(it.asString(), color = FinTrackTheme.colors.negative) }
+        errors?.endDate?.let { FieldErrorText(it.asString()) }
         GhostButton(
             text = stringResource(R.string.recurring_end_date_clear),
             onClick = { onChange(form.copy(endDate = null)) },
@@ -231,5 +232,5 @@ private fun <T> ChoiceDropdown(
             }
         }
     }
-    error?.let { Text(it, color = FinTrackTheme.colors.negative) }
+    error?.let { FieldErrorText(it) }
 }

@@ -753,4 +753,5 @@
     <string name="home_start_dismissed">Get started hidden</string>
     <string name="recurring_deleted">Recurring deleted; its past entries stay</string>
     <string name="envelope_no_limit">No limit</string>
+    <string name="recurring_pause_hint">Nothing is added until you resume</string>
 </resources>
