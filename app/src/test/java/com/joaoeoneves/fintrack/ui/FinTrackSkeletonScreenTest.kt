@@ -85,13 +85,20 @@ class FinTrackSkeletonScreenTest {
         stepUntilSkeleton()
     }
 
-    /** Steps frames (paused clock) until a skeleton host is composed; fails if none ever shows. */
+    /**
+     * Steps frames (paused clock) until a skeleton host is composed; fails if none shows within [SKELETON_DEADLINE_MS].
+     * Frames alone are not enough: the guest-session switch and navigation hop through real background threads, so
+     * a fixed frame count can be exhausted in microseconds before they deliver. Sleeping between frames bounds the
+     * wait in wall-clock time instead, independent of runner speed.
+     */
     private fun stepUntilSkeleton() {
-        repeat(MAX_FRAMES) {
+        val deadline = System.nanoTime() + SKELETON_DEADLINE_MS * NANOS_PER_MS
+        while (System.nanoTime() < deadline) {
             if (count(skeleton) > 0) return
             composeRule.mainClock.advanceTimeByFrame()
+            Thread.sleep(FRAME_PAUSE_MS)
         }
-        throw AssertionError("No skeleton appeared within $MAX_FRAMES frames")
+        throw AssertionError("No skeleton appeared within $SKELETON_DEADLINE_MS ms")
     }
 
     @Test
@@ -140,6 +147,8 @@ class FinTrackSkeletonScreenTest {
     private companion object {
         const val WAIT_MS = 5_000L
         const val FRAMES = 3
-        const val MAX_FRAMES = 120
+        const val SKELETON_DEADLINE_MS = 20_000L
+        const val FRAME_PAUSE_MS = 5L
+        const val NANOS_PER_MS = 1_000_000L
     }
 }
