@@ -119,7 +119,7 @@
     <string name="activity_deleted_snackbar">Eliminado “%1$s”</string>
     <string name="activity_deleted_occurrence_snackbar">Eliminado. “%1$s” de %2$s fica ignorado.</string>
     <string name="activity_no_match">Nada corresponde a “%1$s”.</string>
-    <string name="activity_no_match_filter">Nenhuma despesa corresponde ao filtro selecionado.</string>
+    <string name="activity_no_match_filter">Nada corresponde ao filtro selecionado.</string>
     <string name="activity_empty">Ainda não há movimentos neste período.</string>
     <string name="activity_spent_total">Gasto</string>
     <string name="activity_envelope_all">Todos</string>
@@ -346,10 +346,7 @@
     <string name="error_plan_label_required">Indica um nome</string>
     <string name="error_plan_label_too_long">Máximo de 50 caracteres</string>
     <string name="error_plan_save_failed">Não foi possível guardar</string>
-    <string name="dashboard_breakdown_actual">Real</string>
-    <string name="dashboard_breakdown_planned">Planeado</string>
-    <string name="dashboard_planned_per_month">Planeado / mês</string>
-    <string name="cd_pie_chart_planned_total">Alocação planeada. Total: %1$s (gastos %2$s, investido %3$s).</string>
+    <string name="cd_pie_chart_spending_total">Gastos por categoria. Total: %1$s.</string>
 
     <!-- Recorrentes -->
     <string name="recurring_title">Recorrentes</string>
@@ -649,9 +646,6 @@
     <string name="activity_since_january">Desde janeiro</string>
     <string name="activity_ytd_spent">Gasto</string>
     <string name="activity_ytd_received">Recebido</string>
-    <string name="activity_ytd_saved">Investido</string>
-    <string name="activity_ytd_leftover">Sobrou até %1$s</string>
-    <string name="activity_leftover_average">Média por mês: %1$s</string>
     <string name="activity_evolution">Evolução</string>
     <string name="activity_received_total">Recebido</string>
     <string name="activity_expected_difference">Esperado %1$s · Diferença %2$s</string>
@@ -677,9 +671,9 @@
     <string name="detail_source_unknown">Rendimento</string>
     <string name="detail_salary_vs_spent">Recebido em %1$s: %2$s · Gasto em %3$s: %4$s</string>
     <string name="detail_salary_vs_spent_partial">Recebido em %1$s: %2$s · Gasto até agora em %3$s: %4$s</string>
-    <string name="home_income_title">Rendimentos</string>
+    <string name="home_income_title">Recebido</string>
     <string name="home_income_of_expected">de %1$s esperado</string>
-    <string name="home_spending_title">Gastos</string>
+    <string name="home_spending_title">Gasto</string>
     <string name="home_invested_month">Investido: %1$s este mês · %2$s em %3$s</string>
     <string name="home_invested_other_month">Investido: %1$s em %2$s · %3$s em %4$s</string>
     <string name="home_invested_year">Investido em %1$s: %2$s</string>

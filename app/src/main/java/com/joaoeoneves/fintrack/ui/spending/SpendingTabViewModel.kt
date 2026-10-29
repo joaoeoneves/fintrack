@@ -169,14 +169,13 @@ class SpendingTabViewModel
         }
     }
 
-/** The analytics of spending only: SAVING-kind categories leave the category list; planned slices are not shown. */
+/** The analytics of spending only: SAVING-kind categories leave the category list. */
 private fun ActivityAnalytics.withoutSaving(): ActivityAnalytics =
     copy(
         split = split.copy(savingCents = 0L),
         breakdown =
             breakdown.copy(
                 categoryTotals = breakdown.categoryTotals.filter { it.category.kind != CategoryKind.SAVING },
-                plannedSlices = emptyList(),
                 hasExpenses = breakdown.categoryTotals.any { it.category.kind != CategoryKind.SAVING },
             ),
     )

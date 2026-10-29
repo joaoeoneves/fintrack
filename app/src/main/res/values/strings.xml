@@ -58,7 +58,7 @@
     <string name="error_guest_start_failed">Couldn\'t start guest mode</string>
 
     <!-- Expense/income row shared -->
-    <string name="row_category_date">%1$s • %2$s</string>
+    <string name="row_category_date">%1$s · %2$s</string>
 
     <!-- Categories -->
     <string name="category_transfer">Transfer</string>
@@ -119,7 +119,7 @@
     <string name="activity_deleted_snackbar">Deleted “%1$s”</string>
     <string name="activity_deleted_occurrence_snackbar">Deleted. “%1$s” for %2$s is now skipped.</string>
     <string name="activity_no_match">Nothing matches “%1$s”.</string>
-    <string name="activity_no_match_filter">No expenses match the selected filter.</string>
+    <string name="activity_no_match_filter">Nothing matches the selected filter.</string>
     <string name="activity_empty">No activity in this period yet.</string>
     <string name="activity_spent_total">Spent</string>
     <string name="activity_envelope_all">All</string>
@@ -337,10 +337,7 @@
     <string name="error_plan_label_required">Enter a name</string>
     <string name="error_plan_label_too_long">At most 50 characters</string>
     <string name="error_plan_save_failed">Couldn\'t save</string>
-    <string name="dashboard_breakdown_actual">Actual</string>
-    <string name="dashboard_breakdown_planned">Planned</string>
-    <string name="dashboard_planned_per_month">Planned / month</string>
-    <string name="cd_pie_chart_planned_total">Planned allocation. Total: %1$s (spending %2$s, saving %3$s).</string>
+    <string name="cd_pie_chart_spending_total">Spending by category. Total: %1$s.</string>
 
     <!-- Recurring -->
     <string name="recurring_title">Recurring</string>
@@ -635,9 +632,6 @@
     <string name="activity_since_january">Since January</string>
     <string name="activity_ytd_spent">Spent</string>
     <string name="activity_ytd_received">Received</string>
-    <string name="activity_ytd_saved">Invested</string>
-    <string name="activity_ytd_leftover">Left over until %1$s</string>
-    <string name="activity_leftover_average">Average per month: %1$s</string>
     <string name="activity_evolution">Evolution</string>
     <string name="activity_received_total">Received</string>
     <string name="activity_expected_difference">Expected %1$s · Difference %2$s</string>
@@ -663,9 +657,9 @@
     <string name="detail_source_unknown">Income</string>
     <string name="detail_salary_vs_spent">Received in %1$s: %2$s · Spent in %3$s: %4$s</string>
     <string name="detail_salary_vs_spent_partial">Received in %1$s: %2$s · Spent so far in %3$s: %4$s</string>
-    <string name="home_income_title">Income</string>
+    <string name="home_income_title">Received</string>
     <string name="home_income_of_expected">of %1$s expected</string>
-    <string name="home_spending_title">Spending</string>
+    <string name="home_spending_title">Spent</string>
     <string name="home_invested_month">Invested: %1$s this month · %2$s in %3$s</string>
     <string name="home_invested_other_month">Invested: %1$s in %2$s · %3$s in %4$s</string>
     <string name="home_invested_year">Invested in %1$s: %2$s</string>

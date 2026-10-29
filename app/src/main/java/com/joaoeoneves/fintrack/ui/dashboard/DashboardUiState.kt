@@ -41,6 +41,7 @@ sealed interface DashboardUiState {
      *   or without earlier data.
      * @property invested the "Invested" row, `null` when nothing was ever invested.
      * @property leftover the "Left over until" row, `null` without closed months.
+     * @property spendingAverageMonths how many earlier months the average covers.
      * @property recent the latest expenses and income merged, newest first, at most [RECENT_ITEMS_LIMIT].
      */
     data class Content(
@@ -55,6 +56,7 @@ sealed interface DashboardUiState {
         val invested: InvestedFigure?,
         val leftover: LeftoverFigure?,
         val recent: List<Transaction>,
+        val spendingAverageMonths: Int = 0,
     ) : DashboardUiState
 
     data class Error(

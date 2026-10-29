@@ -214,7 +214,7 @@ private fun IncomeRowItem(
     val receiveDate = minOf(row.payDateIn(model.workingDays.month, model.incomeMonth), receipts.today)
     val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
     val undoLabel = stringResource(R.string.action_undo)
-    val showCheck = paysThisMonth && (received || canReceive(row, model))
+    val showCheck = paysThisMonth && (received || receipts.canReceive)
     if (showCheck && !received) {
         PendingIncomeRow(
             row = row,
@@ -271,18 +271,6 @@ private fun IncomeRowItem(
             },
     )
     Hairline()
-}
-
-/**
- * Whether [row] can be marked received: always in a past or current month, and in a future plan month once its pay
- * date has passed (a shifted salary paid last month funds it).
- */
-private fun canReceive(
-    row: IncomeRow,
-    model: ExpectedIncomeModel,
-): Boolean {
-    val payDate = row.payDateIn(model.workingDays.month, model.incomeMonth)
-    return model.receipts.canReceive || payDate <= model.receipts.today
 }
 
 /** An income row still to be received: the shared pending row, tapping it opens its editor. */

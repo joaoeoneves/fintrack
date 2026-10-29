@@ -15,9 +15,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.activity.analytics.ChangeLine
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
-import com.joaoeoneves.fintrack.ui.common.formatPercent
 import com.joaoeoneves.fintrack.ui.designsystem.AnimatedAmountText
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
@@ -28,7 +28,6 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.math.abs
 
 private const val MIN_AMOUNT_SP = 20
 private const val MAX_AMOUNT_SP = 32
@@ -78,14 +77,7 @@ fun SpendingSummaryCard(
         modifier = modifier.testTag(DashboardTags.SPENDING_CARD),
     ) {
         state.spendingVsAveragePercent?.let { percent ->
-            val locale = currentLocale()
-            val arrow = if (percent >= 0) "▲" else "▼"
-            Text(
-                text = stringResource(R.string.detail_vs_average, "$arrow ${formatPercent(abs(percent), locale)}"),
-                style = MaterialTheme.typography.bodyMedium,
-                // Spending up is bad.
-                color = if (percent > 0) FinTrackTheme.colors.negative else FinTrackTheme.colors.positive,
-            )
+            ChangeLine(stringResource(R.string.activity_vs_average, state.spendingAverageMonths), percent)
         }
     }
 }
