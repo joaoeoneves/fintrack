@@ -60,7 +60,9 @@ class ActivityViewModelAnalyticsTest : ActivityViewModelTestBase() {
 
             assertEquals(700L, analytics.spentCents)
             assertEquals(analytics.split.spendingCents, analytics.spentCents)
-            assertEquals(5_000L, analytics.split.savingCents)
+            // Savings are reported in the list totals, not in the header's spending split.
+            assertEquals(0L, analytics.split.savingCents)
+            assertEquals(5_000L, content(fixture.vm).totals.savedCents)
         }
 
     @Test
@@ -88,7 +90,7 @@ class ActivityViewModelAnalyticsTest : ActivityViewModelTestBase() {
 
             val analytics = content(fixture.vm).analytics
 
-            assertEquals(SpendingSplit(1_200L, 200L, 500L), analytics.split)
+            assertEquals(SpendingSplit(1_200L, 200L, 0L), analytics.split)
             assertEquals(1_400L, analytics.spentCents)
         }
 
@@ -243,7 +245,7 @@ class ActivityViewModelAnalyticsTest : ActivityViewModelTestBase() {
         }
 
     @Test
-    fun analytics_useTheWholePeriod_beforeTheListFilters() =
+    fun analytics_spentFollowsTheList_butBreakdownStaysWholePeriod() =
         runTest(testDispatcher) {
             val fixture =
                 Fixture(
@@ -259,8 +261,9 @@ class ActivityViewModelAnalyticsTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertTrue(current(vm).items.isEmpty())
-            assertEquals(before, current(vm).analytics)
-            assertEquals(1_500L, current(vm).analytics.spentCents)
+            assertEquals(before.breakdown, current(vm).analytics.breakdown)
+            assertEquals(0L, current(vm).analytics.spentCents)
+            assertEquals(1_500L, before.spentCents)
         }
 
     @Test
