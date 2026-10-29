@@ -18,11 +18,14 @@ class YearIncomeOutlookTest {
     fun receivedUpToToday_expectedAfter() {
         val line = PlannedIncome("s", "Salary", 100_000L, 0)
         val received = mapOf(YearMonth.of(2026, 1) to 90_000L, today to 95_000L)
-        val o = yearIncomeOutlook(2026, listOf(line), im, received, today)
+        val o = yearIncomeOutlook(2026, listOf(line), im, received, today, setOf("s"))
 
         assertEquals(12, o.months.size)
-        assertTrue(o.months.take(10).all { it.received })
-        assertTrue(o.months.drop(10).none { it.received })
+        assertTrue(o.months.take(9).all { it.received })
+        // The current month is partial: what came in so far, the salary line already received.
+        assertTrue(o.months[9].partial)
+        assertEquals(95_000L, o.months[9].receivedPartCents)
+        assertTrue(o.months.drop(9).none { it.received })
         assertEquals(90_000L, o.months[0].cents)
         assertEquals(0L, o.months[1].cents)
         assertEquals(95_000L, o.months[9].cents)

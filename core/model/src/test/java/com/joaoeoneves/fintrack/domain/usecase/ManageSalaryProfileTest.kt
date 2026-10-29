@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.asOf
 import com.joaoeoneves.fintrack.domain.model.managedExtraKey
 import com.joaoeoneves.fintrack.testutil.bonusExtra
 import com.joaoeoneves.fintrack.testutil.flexExtra
@@ -16,6 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.YearMonth
 
 class ManageSalaryProfileTest {
     private val labels = SalaryLineLabels()
@@ -43,7 +45,7 @@ class ManageSalaryProfileTest {
         }
 
     @Test
-    fun save_withLegacyLines_upsertsTheExtraLines_andDeletesTheLegacyOnes() =
+    fun save_withLegacyLines_upsertsTheExtraLines_andEndsTheLegacyOnes() =
         runTest {
             val legacyKeys = listOf("profile_flex_q1", "profile_flex_q3", "profile_bonus")
             legacyKeys.forEach { income.savePlannedIncome(PlannedIncome(it, "old", 5, 50, managedKey = it)) }
@@ -51,7 +53,9 @@ class ManageSalaryProfileTest {
             assertTrue(useCase.save(profile.copy(extras = listOf(flexExtra(), bonusExtra())), labels).isSuccess)
 
             val ids = income.lines.map { it.id }.toSet()
-            assertTrue(legacyKeys.none { it in ids })
+            // Legacy lines have history, so they are ended (versioned to 0), not deleted.
+            val byId = income.lines.associateBy { it.id }
+            assertTrue(legacyKeys.all { byId.getValue(it).asOf(YearMonth.of(2099, 1))?.amountCents == 0L })
             assertTrue(bonusKey in ids)
             assertTrue(managedExtraKey("flex", 7) in ids)
         }
