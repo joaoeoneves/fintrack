@@ -10,7 +10,10 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
+import com.joaoeoneves.fintrack.domain.repository.SuggestionRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 import javax.inject.Inject
 
@@ -29,6 +32,7 @@ class BackupRepository
         private val preferencesStore: UserPreferencesStore,
         private val restorer: BackupRestorer,
         private val serverSync: ServerSync = LocalOnlyServerSync,
+        private val suggestionRepository: SuggestionRepository = NoDismissedSuggestions,
     ) {
         /** Snapshot of the current mode's data plus preferences; works signed in and as a guest. */
         suspend fun buildBackup(exportedAt: Instant): Result<BackupDocument> =
@@ -45,6 +49,7 @@ class BackupRepository
                 val localExpenses = expenses.map { it.toLocal() }
                 val localBudgets = budgets.map { it.toLocal() }
                 val localRecurring = plan.recurring.map { it.toLocal() }
+                val dismissed = suggestionRepository.observeDismissedRecurring().first().sorted()
                 val maxOrder = categories.map { it.order }.filter { it != Int.MAX_VALUE }.maxOrNull() ?: 0
                 BackupDocument(
                     exportedAt = exportedAt.toString(),
@@ -65,6 +70,7 @@ class BackupRepository
                     salaryProfile = plan.salaryProfile?.toLocal(),
                     goals = plan.goals.map { it.toLocal() },
                     automation = plan.automation.takeIf { it != AutomationSettings() }?.toLocal(),
+                    dismissedRecurringSuggestions = dismissed,
                     categories =
                         withPlaceholderCategories(
                             categories = stored,
@@ -95,4 +101,13 @@ class BackupRepository
 /** No server to read: the default for guest-only use and tests. */
 private object LocalOnlyServerSync : ServerSync {
     override suspend fun refresh(): Result<Unit> = Result.success(Unit)
+}
+
+/** No dismissed suggestions: the default for tests that do not care. */
+private object NoDismissedSuggestions : SuggestionRepository {
+    override fun observeDismissedRecurring(): Flow<Set<String>> = flowOf(emptySet())
+
+    override suspend fun dismissRecurring(key: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun undismissRecurring(key: String): Result<Unit> = Result.success(Unit)
 }

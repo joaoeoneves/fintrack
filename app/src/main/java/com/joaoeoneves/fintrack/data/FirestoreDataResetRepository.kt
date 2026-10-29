@@ -26,8 +26,10 @@ private const val PAGE_SIZE = 400L
 
 /**
  * Deletes everything under `users/{uid}`: each collection is paged through the server and removed in
- * batches of at most [PAGE_SIZE] deletes, then the `plan/salaryProfile` and `plan/automation` singletons. The
- * `settings/preferences` document is left to the preferences sync, which overwrites it with the defaults. Calls are
+ * batches of at most [PAGE_SIZE] deletes, then the `plan/salaryProfile`, `plan/automation` and
+ * `settings/suggestions` singletons. The
+ * `settings/preferences` document is left to the preferences sync, which overwrites it with the defaults. Calls
+ * are
  * awaited (unlike the normal repositories) so a failure surfaces and a retry resumes where the first run stopped.
  */
 class FirestoreDataResetRepository
@@ -46,6 +48,7 @@ class FirestoreDataResetRepository
                     listOf(
                         user.collection("plan").document("salaryProfile"),
                         user.collection("plan").document("automation"),
+                        user.collection("settings").document("suggestions"),
                     ),
                 )
             }

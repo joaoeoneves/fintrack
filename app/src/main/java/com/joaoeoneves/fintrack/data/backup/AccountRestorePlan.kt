@@ -147,6 +147,7 @@ internal fun restoreMigrationPlanOf(
         salaryProfile = profile,
         goals = goals,
         automation = automation,
+        dismissedRecurring = local.dismissedRecurringSuggestions.dismissalsKept(),
     )
 }
 
