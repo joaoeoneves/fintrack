@@ -76,8 +76,10 @@ jobs:
 
       - name: Resize to 540 px
         run: |
+          sudo apt-get update && sudo apt-get install -y imagemagick
           mkdir -p docs/screenshots
-          for f in home activity plan plan-income savings add-expense; do
+          rm -f docs/screenshots/*.png
+          for f in home activity income spending investments add-expense; do
             convert "maestro-out/screens/$f.png" -resize 540x "docs/screenshots/$f.png"
           done
 
@@ -90,7 +92,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add docs/screenshots
+          git add -A docs/screenshots
           if git diff --cached --quiet; then echo "No changes"; exit 0; fi
           git commit -m "docs: refresh README screenshots"
           git push -u origin "$branch"
