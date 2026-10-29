@@ -16,9 +16,9 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.categoryColorFor
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
-import com.joaoeoneves.fintrack.ui.common.sliceColorFor
 import com.joaoeoneves.fintrack.ui.dashboard.CategoryBreakdownSection
 import com.joaoeoneves.fintrack.ui.dashboard.PeriodTab
 import com.joaoeoneves.fintrack.ui.dashboard.toPeriod
@@ -130,7 +130,7 @@ private fun EnvelopeFilterSection(
     val noEnvelope = stringResource(R.string.plan_group_other)
     val spoken = chips.map { "${it.name ?: noEnvelope} ${formatAmountCents(it.spentCents, false)}" }.joinToString("; ")
     val description = stringResource(R.string.cd_envelope_bar, spoken)
-    val colors = chips.indices.map { sliceColorFor(it, dark) }
+    val colors = chips.map { categoryColorFor(it.colorKey, dark) }
     // Tapping a bar segment only highlights it (and names it below); the chips are what filter.
     var highlightedRaw by rememberSaveable { mutableStateOf<Int?>(null) }
     val highlighted = highlightedRaw?.takeIf { it in chips.indices }

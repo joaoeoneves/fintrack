@@ -28,6 +28,8 @@ import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
 import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeChip
 import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
+import com.joaoeoneves.fintrack.ui.activity.analytics.envelopeColorKeyOf
+import com.joaoeoneves.fintrack.ui.activity.analytics.envelopeColorKeysOf
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.groupByDay
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
@@ -296,7 +298,7 @@ private fun PeriodItems.Loaded.toContent(
     catalog: List<Category>,
     zone: ZoneId,
 ): ActivityUiState.Content {
-    val analytics = analyticsOf(requested.envelope)
+    val analytics = analyticsOf(requested.envelope, catalog)
     // An envelope id that no longer exists filters nothing.
     val envelope = requested.envelope?.takeIf { it == NO_ENVELOPE || it in analytics.envelopeIds }
     val activeFilters = requested.copy(envelope = envelope)
@@ -353,16 +355,20 @@ private fun ActivityAnalytics.following(
 }
 
 /** The analytics header's numbers over the whole period (before the list filters). */
-private fun PeriodItems.Loaded.analyticsOf(selectedEnvelope: String?): ActivityAnalytics {
+private fun PeriodItems.Loaded.analyticsOf(
+    selectedEnvelope: String?,
+    catalog: List<Category>,
+): ActivityAnalytics {
     val split = spendingSplitOf(transactions.expenses)
     val summary = overview.periodEnvelopes
+    val kept = summary.envelopes.filter { it.spentCents > 0 || it.envelope.id == selectedEnvelope }
+    val showUnenveloped = summary.unenvelopedSpentCents > 0 || selectedEnvelope == NO_ENVELOPE
+    val keys = envelopeColorKeysOf(kept.map { it.envelope.id }, catalog)
     val chips =
-        summary.envelopes
-            .filter { it.spentCents > 0 || it.envelope.id == selectedEnvelope }
-            .map { EnvelopeChip(it.envelope.id, it.envelope.name, it.spentCents) } +
+        kept.mapIndexed { i, e -> EnvelopeChip(e.envelope.id, e.envelope.name, e.spentCents, keys[i]) } +
             listOfNotNull(
-                EnvelopeChip(NO_ENVELOPE, null, summary.unenvelopedSpentCents)
-                    .takeIf { it.spentCents > 0 || selectedEnvelope == NO_ENVELOPE },
+                EnvelopeChip(NO_ENVELOPE, null, summary.unenvelopedSpentCents, envelopeColorKeyOf(NO_ENVELOPE, catalog))
+                    .takeIf { showUnenveloped },
             )
     return ActivityAnalytics(
         spentCents = split.spendingCents,

@@ -25,7 +25,7 @@ const val ENVELOPE_CHIP_ALL_TAG = "envelope_chip_all"
 /**
  * Horizontally scrollable, single-select envelope filter: an "All" chip (selected when [selected] is null)
  * followed by one chip per entry of [chips], labelled "Name · amount" with the colour dot of its bar segment
- * ([dotColors], by index).
+ * ([dotColors], colours derived from [EnvelopeChip.colorKey] by the caller).
  */
 @Composable
 fun EnvelopeFilterRow(
