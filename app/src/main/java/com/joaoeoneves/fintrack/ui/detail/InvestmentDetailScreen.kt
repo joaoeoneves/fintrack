@@ -16,6 +16,8 @@ import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.DetailScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
@@ -48,6 +50,7 @@ fun InvestmentDetailScreen(
                 state = current,
                 onBack = onBack,
                 onSelectMonth = { viewModel.onSelectMonth(current.months[it].month) },
+                periodActions = viewModel.periodActions,
                 onOpenExpense = onOpenExpense,
                 modifier = modifier,
             )
@@ -65,11 +68,13 @@ private fun Placeholder(
     }
 }
 
+@Suppress("LongParameterList") // page callbacks; each one is independent
 @Composable
 private fun InvestmentContent(
     state: InvestmentDetailUiState.Content,
     onBack: () -> Unit,
     onSelectMonth: (Int) -> Unit,
+    periodActions: PeriodActions,
     onOpenExpense: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,34 +84,32 @@ private fun InvestmentContent(
             val label = formatShortMonthName(it.month, locale)
             MonthlyBar(label, it.totalCents, "$label ${formatAmountCents(it.totalCents)}")
         }
-    val selectedLabel =
-        if (state.isCurrentMonth) {
-            stringResource(R.string.investments_this_month)
-        } else {
-            formatShortMonthName(state.selected.month, locale)
-        }
-    val allTimeLabel = stringResource(R.string.investments_all_time)
-    val summary =
-        listOf(
-            "$selectedLabel ${formatAmountCents(state.selected.totalCents)}",
-            "${state.year} ${formatAmountCents(state.yearCents)}",
-            "$allTimeLabel ${formatAmountCents(state.allTimeCents)}",
-        ).joinToString(CONTEXT_SEPARATOR)
+    val summary = summaryOf(state)
     DetailScaffold(
         title = stringResource(R.string.investments_title),
-        amount = formatAmountCents(state.selected.totalCents),
+        amount = formatAmountCents(state.amountCents),
         bars = bars,
         selectedIndex = state.selectedIndex,
         onBack = onBack,
         modifier = modifier,
         contextLine = summary,
         onBarClick = onSelectMonth,
+        header = {
+            PeriodSelector(
+                period = state.period,
+                canGoToNextMonth = state.canGoToNextMonth,
+                actions = periodActions,
+                monthOnly = true,
+                showScaleSwitch = true,
+                modifier = Modifier.padding(horizontal = Dimens.Space8),
+            )
+        },
     ) {
         if (state.movements.isEmpty()) {
             item(key = "empty") { EmptyState(title = stringResource(R.string.investments_no_movements)) }
         } else {
             item(key = "instruments_title") { SectionTitle(title = stringResource(R.string.investments_by_instrument)) }
-            items(state.selected.instruments, key = { "instrument_${it.key.value}" }) { instrument ->
+            items(state.instruments, key = { "instrument_${it.key.value}" }) { instrument ->
                 SettingsRow(
                     title = instrument.labelIn(state),
                     value = formatAmountCents(instrument.cents),
@@ -119,6 +122,27 @@ private fun InvestmentContent(
         }
         item(key = "end") { Box(Modifier.padding(bottom = Dimens.Space32)) }
     }
+}
+
+/** The "month · year · all time" line (the year scale has no month figure). */
+@Composable
+private fun summaryOf(state: InvestmentDetailUiState.Content): String {
+    val selected = state.selected
+    val parts =
+        listOfNotNull(
+            selected?.let {
+                val label =
+                    if (state.isCurrentMonth) {
+                        stringResource(R.string.investments_this_month)
+                    } else {
+                        formatShortMonthName(it.month, currentLocale())
+                    }
+                "$label ${formatAmountCents(it.totalCents)}"
+            },
+            "${state.year} ${formatAmountCents(state.yearCents)}",
+            "${stringResource(R.string.investments_all_time)} ${formatAmountCents(state.allTimeCents)}",
+        )
+    return parts.joinToString(CONTEXT_SEPARATOR)
 }
 
 /** The instrument's own name, else the name of its category (found on the month's movements). */

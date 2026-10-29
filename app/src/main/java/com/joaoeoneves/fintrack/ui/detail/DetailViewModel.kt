@@ -11,7 +11,8 @@ import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
-import com.joaoeoneves.fintrack.domain.model.currentYearMonth
+import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
+import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.incomeSourceOf
@@ -22,14 +23,19 @@ import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
+import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
+import com.joaoeoneves.fintrack.ui.common.period.PeriodSelection
+import com.joaoeoneves.fintrack.ui.common.period.asMonthOrYearPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
 import java.time.YearMonth
@@ -40,111 +46,152 @@ private const val ARG_CATEGORY_ID = "categoryId"
 private const val ARG_SOURCE_KEY = "sourceKey"
 private const val ARG_PERIOD = "period"
 
-// The selected month ("yyyy-MM"), kept across process death.
-private const val KEY_MONTH = "month"
+// The selected period (a month or a year), kept across process death.
+private const val KEY_SELECTED_PERIOD = "selectedPeriod"
 
-/** Months of the chart. */
+/** Months of the chart on the month scale. */
 const val DETAIL_MONTHS = 12
 
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
+/** What one emission of the page is built from. */
+private class DetailSources(
+    val period: Period,
+    val months: List<YearMonth>,
+    val history: MonthlyHistory,
+    val overview: PeriodOverview,
+    val categories: List<Category>,
+    val canGoNext: Boolean,
+)
+
 /**
- * The detail page of one category or one income source (decided by the route arguments): 12 months of bars ending at
- * the route's month, the movements of the selected month and how that month compares with the earlier ones.
+ * The detail page of one category or one income source (decided by the route arguments), on the "Mês | Ano" switch.
+ * Month: 12 months of bars (tap or the arrows pick the month), that month's figures and movements and how it compares
+ * with the earlier ones. Year: the months of the calendar year as bars, the year's total and movements. The selection
+ * starts at the route's period.
  */
+@Suppress("TooManyFunctions") // one small builder per figure of the page
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DetailViewModel
     @Inject
     constructor(
-        private val savedStateHandle: SavedStateHandle,
-        observeMonthlyHistory: ObserveMonthlyHistory,
+        savedStateHandle: SavedStateHandle,
+        private val observeMonthlyHistory: ObserveMonthlyHistory,
         private val observePeriodOverview: ObservePeriodOverview,
-        categoryRepository: CategoryRepository,
+        private val categoryRepository: CategoryRepository,
         private val clock: Clock,
     ) : ViewModel() {
         private val categoryId: String? = savedStateHandle[ARG_CATEGORY_ID]
         private val sourceToken: String? = savedStateHandle[ARG_SOURCE_KEY]
         private val sourceKey: IncomeSourceKey? = sourceToken?.let(::decodeIncomeSourceKey)
-        private val periodToken: String = savedStateHandle[ARG_PERIOD] ?: Period.CurrentMonth.encode()
-        private val endMonth: YearMonth = monthOf(periodToken)
-        private val window: List<YearMonth> = (DETAIL_MONTHS - 1 downTo 0).map { endMonth.minusMonths(it.toLong()) }
+        private val routePeriod: Period =
+            decodePeriod(savedStateHandle[ARG_PERIOD] ?: Period.CurrentMonth.encode(), clock.instant(), clock.zone)
+                .asMonthOrYearPeriod()
+        private val routeEnd: YearMonth = routeEndOf(routePeriod, clock.instant(), clock.zone)
+        private val selection =
+            PeriodSelection(savedStateHandle, KEY_SELECTED_PERIOD, routePeriod.encode(), clock)
 
-        private val selectedMonth =
-            savedStateHandle.getStateFlow(KEY_MONTH, endMonth.toString())
+        /** The period selector's callbacks (month and year scales). */
+        val periodActions: PeriodActions =
+            PeriodActions(
+                onPrevious = selection::previous,
+                onNext = selection::next,
+                onSelect = { selection.select(it.asMonthOrYearPeriod()) },
+                onSelectScale = selection::selectScale,
+            )
 
         val uiState: StateFlow<DetailUiState> =
             if (categoryId == null && sourceKey == null) {
                 flowOf<DetailUiState>(DetailUiState.NotFound)
             } else {
-                combine(
-                    observeMonthlyHistory(endMonth, DETAIL_MONTHS, clock.zone),
-                    selectedMonth.flatMapLatest { overviewOf(selectedOf(it)) },
-                    categoryRepository.observeCategories(),
-                    selectedMonth,
-                ) { history, overview, categories, selected ->
-                    contentOf(history, overview, categories, selectedOf(selected))
-                }.catch { emit(DetailUiState.NotFound) }
+                selection.token
+                    .flatMapLatest { token -> sourcesOf(token).map(::contentOf) }
+                    .catch { emit(DetailUiState.NotFound) }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), DetailUiState.Loading)
 
-        /** Selects [month] (one of the chart's months; anything else is ignored). */
+        /** Selects [month] on the month scale (one of the chart's months; anything else is ignored). */
         fun onSelectMonth(month: YearMonth) {
-            if (month in window) savedStateHandle[KEY_MONTH] = month.toString()
+            val now = clock.instant()
+            val period = decodePeriod(selection.token.value, now, clock.zone)
+            val charted = chartMonthsOf(period, routeEnd, DETAIL_MONTHS, now, clock.zone)
+            if (period is Period.Year || month !in charted) return
+            selection.select(Period.ofMonth(month, now, clock.zone))
         }
 
-        private fun monthOf(token: String): YearMonth {
+        private fun sourcesOf(token: String): Flow<DetailSources> {
             val now = clock.instant()
             val period = decodePeriod(token, now, clock.zone)
-            return period.anchorMonth(now, clock.zone) ?: currentYearMonth(now, clock.zone)
-        }
-
-        private fun selectedOf(token: String): YearMonth =
-            runCatching { YearMonth.parse(token) }.getOrNull()?.takeIf { it in window } ?: endMonth
-
-        private fun overviewOf(month: YearMonth) =
-            clock.instant().let { now ->
-                observePeriodOverview(Period.ofMonth(month, now, clock.zone), now, clock.zone, recentLimit = 0)
-            }
-
-        private fun contentOf(
-            history: MonthlyHistory,
-            overview: PeriodOverview,
-            categories: List<Category>,
-            selected: YearMonth,
-        ): DetailUiState {
-            val index = window.indexOf(selected).coerceAtLeast(0)
-            return if (categoryId != null) {
-                categoryContent(history, overview, categories, index)
-            } else {
-                sourceContent(history, overview, requireNotNull(sourceKey), index)
+            val months = chartMonthsOf(period, routeEnd, DETAIL_MONTHS, now, clock.zone)
+            val canGoNext =
+                if (period is Period.Year) {
+                    period.canGoToNextYear(now, clock.zone)
+                } else {
+                    period.canGoToNextMonth(now, clock.zone)
+                }
+            return combine(
+                observeMonthlyHistory(months.last(), months.size, clock.zone),
+                observePeriodOverview(period, now, clock.zone, recentLimit = 0),
+                categoryRepository.observeCategories(),
+            ) { history, overview, categories ->
+                DetailSources(period, months, history, overview, categories, canGoNext)
             }
         }
 
-        private fun categoryContent(
-            history: MonthlyHistory,
-            overview: PeriodOverview,
-            categories: List<Category>,
-            index: Int,
-        ): DetailUiState {
+        private fun contentOf(sources: DetailSources): DetailUiState =
+            if (categoryId != null) categoryContent(sources) else sourceContent(sources, requireNotNull(sourceKey))
+
+        private fun selectedMonthOf(sources: DetailSources): YearMonth? {
+            val period = sources.period
+            return period.anchorMonth(clock.instant(), clock.zone)
+        }
+
+        private fun selectedIndexOf(sources: DetailSources): Int =
+            selectedMonthOf(sources)?.let { sources.months.indexOf(it) } ?: NO_SELECTION
+
+        /** The figure above the chart: the selected month's value, or the year's total. */
+        private fun amountOf(
+            sources: DetailSources,
+            values: List<Long>,
+        ): Long = selectedIndexOf(sources).takeIf { it >= 0 }?.let { values[it] } ?: values.sum()
+
+        /** The change against the earlier months, on the month scale only. */
+        private fun deltaOf(
+            sources: DetailSources,
+            values: List<Long>,
+        ): DetailDeltaFigure? {
+            val index = selectedIndexOf(sources)
+            if (index < 0) return null
+            val comparison = seriesComparisonOf(values, index)
+            return percentChange(comparison.currentCents, comparison.averageCents)?.let(::DetailDeltaFigure)
+        }
+
+        private fun categoryContent(sources: DetailSources): DetailUiState {
+            val overview = sources.overview
             val id = CategoryId(requireNotNull(categoryId))
-            val category = categories.resolve(id)
-            val values = history.categoryMonthly[id] ?: List(DETAIL_MONTHS) { 0L }
+            val category = sources.categories.resolve(id)
+            val values = sources.history.categoryMonthly[id] ?: List(sources.months.size) { 0L }
             val movements = overview.transactions.expenses.filter { it.category.id == id }
             return if (category.isUnknown && values.all { it == 0L } && movements.isEmpty()) {
                 DetailUiState.NotFound
             } else {
                 val rows = overview.envelopes.envelopes.flatMap { it.rows } + overview.envelopes.unenveloped
                 val envelope = overview.envelopes.envelopes.firstOrNull { it.envelope.id == category.groupId }
+                val isMonth = sources.period !is Period.Year
                 DetailUiState.Content(
                     subject =
                         DetailSubject.OfCategory(
                             category = category,
                             envelopeName = envelope?.envelope?.name,
-                            limitCents = rows.firstOrNull { it.category.id == id }?.limitOf(),
+                            // The limit is a monthly figure: not shown on the year scale.
+                            limitCents = rows.firstOrNull { it.category.id == id }?.limitOf()?.takeIf { isMonth },
                         ),
-                    months = window.zip(values) { month, value -> DetailMonth(month, value) },
-                    selectedIndex = index,
-                    delta = deltaOf(values, index),
+                    period = sources.period,
+                    canGoToNextMonth = sources.canGoNext,
+                    months = sources.months.zip(values) { month, value -> DetailMonth(month, value) },
+                    selectedIndex = selectedIndexOf(sources),
+                    amountCents = amountOf(sources, values),
+                    delta = deltaOf(sources, values),
                     movements = movements.sortedByDescending { it.date },
                     editTarget =
                         DetailEditTarget
@@ -157,54 +204,53 @@ class DetailViewModel
         private fun CategoryBudget.limitOf(): Long? = limitCents?.takeIf { it > 0L }
 
         private fun sourceContent(
-            history: MonthlyHistory,
-            overview: PeriodOverview,
+            sources: DetailSources,
             key: IncomeSourceKey,
-            index: Int,
         ): DetailUiState {
-            val source = history.incomeSources.firstOrNull { it.key == key }
-            val values = window.map { month -> source?.months?.firstOrNull { it.month == month }?.receivedCents ?: 0L }
+            val source = sources.history.incomeSources.firstOrNull { it.key == key }
+            val values =
+                sources.months.map { month -> source?.months?.firstOrNull { it.month == month }?.receivedCents ?: 0L }
             val movements: List<Income> =
-                overview.monthIncome
-                    .filter { incomeSourceOf(it, overview.plannedIncome) == key }
+                sources.overview.transactions.income
+                    .filter { incomeSourceOf(it, sources.overview.plannedIncome) == key }
                     .sortedByDescending { it.date }
             val component = (key as? IncomeSourceKey.Row)?.component
+            val selected = selectedMonthOf(sources)
             return DetailUiState.Content(
                 subject =
                     DetailSubject.OfSource(
                         component = component,
                         label = source?.label ?: (key as? IncomeSourceKey.Named)?.normalised,
+                        // The expected amount is a monthly figure: not shown on the year scale.
                         expectedCents =
                             source
                                 ?.months
-                                ?.firstOrNull { it.month == window[index] }
+                                ?.firstOrNull { it.month == selected }
                                 ?.expectedCents
                                 ?.takeIf { it > 0L },
                     ),
-                months = window.zip(values) { month, value -> DetailMonth(month, value) },
-                selectedIndex = index,
-                delta = deltaOf(values, index),
+                period = sources.period,
+                canGoToNextMonth = sources.canGoNext,
+                months = sources.months.zip(values) { month, value -> DetailMonth(month, value) },
+                selectedIndex = selectedIndexOf(sources),
+                amountCents = amountOf(sources, values),
+                delta = deltaOf(sources, values),
                 movements = movements,
-                editTarget = editTargetOf(key),
+                editTarget = editTargetOf(key, sources.period),
             )
         }
 
-        private fun editTargetOf(key: IncomeSourceKey): DetailEditTarget? =
+        private fun editTargetOf(
+            key: IncomeSourceKey,
+            period: Period,
+        ): DetailEditTarget? =
             when (key) {
                 is IncomeSourceKey.Named -> null
                 is IncomeSourceKey.Row ->
                     if (key.component != null) {
                         DetailEditTarget.SalaryProfile
                     } else {
-                        DetailEditTarget.IncomeLines(periodToken)
+                        DetailEditTarget.IncomeLines(period.encode())
                     }
             }
-
-        private fun deltaOf(
-            values: List<Long>,
-            index: Int,
-        ): DetailDeltaFigure? {
-            val comparison = seriesComparisonOf(values, index)
-            return percentChange(comparison.currentCents, comparison.averageCents)?.let(::DetailDeltaFigure)
-        }
     }
