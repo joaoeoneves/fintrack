@@ -41,7 +41,12 @@ class AddEditIncomeViewModelLimitsTest {
     private val emoji = "😀"
 
     private fun viewModel() =
-        AddEditIncomeViewModel(FakeIncomeRepository(), deleteTransactionFor(), SavedStateHandle(), java.time.Clock.systemDefaultZone())
+        AddEditIncomeViewModel(
+            FakeIncomeRepository(),
+            deleteTransactionFor(),
+            SavedStateHandle(),
+            java.time.Clock.systemDefaultZone(),
+        )
 
     private fun AddEditIncomeViewModel.form() = (uiState.value as AddEditIncomeUiState.Ready).form
 

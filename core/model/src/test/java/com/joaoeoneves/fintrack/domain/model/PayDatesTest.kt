@@ -164,7 +164,15 @@ class PayDatesTest {
 
     // --- payDayEarlierIfClosed ---
 
-    private fun early(payDay: Int?): PlannedIncome = PlannedIncome("e", "Early", 100_000L, 0, payDay = payDay, payDayEarlierIfClosed = true)
+    private fun early(payDay: Int?): PlannedIncome =
+        PlannedIncome(
+            "e",
+            "Early",
+            100_000L,
+            0,
+            payDay = payDay,
+            payDayEarlierIfClosed = true,
+        )
 
     private fun d(
         y: Int,

@@ -70,7 +70,16 @@ class AddEditExpenseViewModelMealCardTest {
         card: Boolean,
         category: Category = other,
         refund: Boolean = false,
-    ) = Expense("e1", "Lunch", 500L, category, Instant.parse("2026-10-01T10:00:00Z"), null, refund, paidWithMealCard = card)
+    ) = Expense(
+        "e1",
+        "Lunch",
+        500L,
+        category,
+        Instant.parse("2026-10-01T10:00:00Z"),
+        null,
+        refund,
+        paidWithMealCard = card,
+    )
 
     @Test
     fun unavailable_hidesTheSwitch_andNeverPrefills() =

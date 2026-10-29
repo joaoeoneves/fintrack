@@ -53,7 +53,17 @@ class YearIncomeOutlookTest {
                 "Salary",
                 120_000L,
                 0,
-                versions = listOf(AmountVersion(YearMonth.of(2026, 12), 120_000L), AmountVersion(YearMonth.of(2020, 1), 100_000L)),
+                versions =
+                    listOf(
+                        AmountVersion(YearMonth.of(2026, 12), 120_000L),
+                        AmountVersion(
+                            YearMonth.of(
+                                2020,
+                                1,
+                            ),
+                            100_000L,
+                        ),
+                    ),
             )
         val o = yearIncomeOutlook(2026, listOf(line), im, emptyMap(), YearMonth.of(2026, 9))
 

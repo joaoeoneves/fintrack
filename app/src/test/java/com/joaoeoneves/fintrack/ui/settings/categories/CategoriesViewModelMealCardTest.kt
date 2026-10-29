@@ -44,7 +44,15 @@ class CategoriesViewModelMealCardTest : CategoriesViewModelTestBase() {
             val repo = FakeCategoryRepository()
             val viewModel = vm(repo)
             viewModel.onAdd()
-            viewModel.onSaveEditor(CategoryDraft("Lunch", "home", "teal", CategoryKind.SPENDING, mealCardByDefault = true))
+            viewModel.onSaveEditor(
+                CategoryDraft(
+                    "Lunch",
+                    "home",
+                    "teal",
+                    CategoryKind.SPENDING,
+                    mealCardByDefault = true,
+                ),
+            )
             advanceUntilIdle()
 
             assertTrue(repo.docs.single().mealCardByDefault)
@@ -88,13 +96,29 @@ class CategoriesViewModelMealCardTest : CategoriesViewModelTestBase() {
                     .editor!!
                     .initial.mealCardByDefault,
             )
-            viewModel.onSaveEditor(CategoryDraft("Lunch", "home", "teal", CategoryKind.SPENDING, mealCardByDefault = true))
+            viewModel.onSaveEditor(
+                CategoryDraft(
+                    "Lunch",
+                    "home",
+                    "teal",
+                    CategoryKind.SPENDING,
+                    mealCardByDefault = true,
+                ),
+            )
             advanceUntilIdle()
             assertTrue(repo.docs.single().mealCardByDefault)
 
             viewModel.onEdit(lunch.id)
             advanceUntilIdle()
-            viewModel.onSaveEditor(CategoryDraft("Lunch", "home", "teal", CategoryKind.SAVING, mealCardByDefault = true))
+            viewModel.onSaveEditor(
+                CategoryDraft(
+                    "Lunch",
+                    "home",
+                    "teal",
+                    CategoryKind.SAVING,
+                    mealCardByDefault = true,
+                ),
+            )
             advanceUntilIdle()
             assertFalse(repo.docs.single().mealCardByDefault)
         }

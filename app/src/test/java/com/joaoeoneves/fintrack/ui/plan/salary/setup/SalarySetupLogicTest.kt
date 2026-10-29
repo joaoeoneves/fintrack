@@ -58,7 +58,10 @@ class SalarySetupLogicTest {
         val base = SalaryForm(meal = 900L)
 
         assertEquals(0L, base.withMealAnswer(MealAnswer.NO).meal)
-        assertEquals(MealPayment.CARD, base.copy(mealPayment = MealPayment.WITH_SALARY).withMealAnswer(MealAnswer.CARD).mealPayment)
+        assertEquals(
+            MealPayment.CARD,
+            base.copy(mealPayment = MealPayment.WITH_SALARY).withMealAnswer(MealAnswer.CARD).mealPayment,
+        )
         val withSalary = base.withMealAnswer(MealAnswer.WITH_SALARY)
         assertEquals(MealPayment.WITH_SALARY, withSalary.mealPayment)
         assertEquals(900L, withSalary.meal)

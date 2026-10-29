@@ -35,7 +35,11 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
 
     private fun at(period: Period) = viewModel(SavedStateHandle(mapOf("period" to period.encode())))
 
-    private fun meal(rate: Long = 1_000L) = line("meal", rate).copy(managedKey = MANAGED_MEAL, basis = IncomeBasis.PER_WORKING_DAY)
+    private fun meal(rate: Long = 1_000L) =
+        line("meal", rate).copy(
+            managedKey = MANAGED_MEAL,
+            basis = IncomeBasis.PER_WORKING_DAY,
+        )
 
     @Test
     fun futureMonth_hasExpectedRows_noHistory_andCannotReceive() =

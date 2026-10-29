@@ -134,7 +134,17 @@ class PendingWriteTest {
         assertEquals("expenses", write.collection)
         assertEquals("e1", write.id)
         assertEquals(
-            setOf("name", "amountCents", "category", "date", "note", "isRefund", "paidWithMealCard", "updatedAt", "createdAt"),
+            setOf(
+                "name",
+                "amountCents",
+                "category",
+                "date",
+                "note",
+                "isRefund",
+                "paidWithMealCard",
+                "updatedAt",
+                "createdAt",
+            ),
             write.data.keys,
         )
         assertEquals("Item e1", write.data["name"])

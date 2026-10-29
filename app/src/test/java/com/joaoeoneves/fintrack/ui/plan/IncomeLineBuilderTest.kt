@@ -13,7 +13,17 @@ class IncomeLineBuilderTest {
 
     @Test
     fun earlierFlag_isKeptWithAFixedDay() {
-        val line = incomeLineOf(null, emptyList(), "Side", 1L, IncomeSchedule(payDay = 31, payDayEarlierIfClosed = true))
+        val line =
+            incomeLineOf(
+                null,
+                emptyList(),
+                "Side",
+                1L,
+                IncomeSchedule(
+                    payDay = 31,
+                    payDayEarlierIfClosed = true,
+                ),
+            )
 
         assertEquals(31, line.payDay)
         assertTrue(line.payDayEarlierIfClosed)
@@ -21,19 +31,49 @@ class IncomeLineBuilderTest {
 
     @Test
     fun earlierFlag_isClearedWhenPayDayIsNull() {
-        val line = incomeLineOf(null, emptyList(), "Side", 1L, IncomeSchedule(payDay = null, payDayEarlierIfClosed = true))
+        val line =
+            incomeLineOf(
+                null,
+                emptyList(),
+                "Side",
+                1L,
+                IncomeSchedule(
+                    payDay = null,
+                    payDayEarlierIfClosed = true,
+                ),
+            )
 
         assertFalse(line.payDayEarlierIfClosed)
     }
 
     @Test
     fun managedLine_takesPayDayAndFlag_butKeepsItsAmount() {
-        val edited = incomeLineOf(managed, listOf(managed), "Pay", 1L, IncomeSchedule(payDay = 25, payDayEarlierIfClosed = true))
+        val edited =
+            incomeLineOf(
+                managed,
+                listOf(managed),
+                "Pay",
+                1L,
+                IncomeSchedule(
+                    payDay = 25,
+                    payDayEarlierIfClosed = true,
+                ),
+            )
 
         assertEquals(100_000L, edited.amountCents)
         assertEquals(25, edited.payDay)
         assertTrue(edited.payDayEarlierIfClosed)
-        val cleared = incomeLineOf(edited, listOf(edited), "Pay", 1L, IncomeSchedule(payDay = null, payDayEarlierIfClosed = true))
+        val cleared =
+            incomeLineOf(
+                edited,
+                listOf(edited),
+                "Pay",
+                1L,
+                IncomeSchedule(
+                    payDay = null,
+                    payDayEarlierIfClosed = true,
+                ),
+            )
         assertFalse(cleared.payDayEarlierIfClosed)
     }
 
