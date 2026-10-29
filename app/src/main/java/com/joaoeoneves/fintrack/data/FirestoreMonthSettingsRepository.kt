@@ -6,6 +6,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
@@ -42,7 +43,7 @@ class FirestoreMonthSettingsRepository
                             return@addSnapshotListener
                         }
                         if (snapshot != null) {
-                            trySend(snapshot.documents.mapNotNull { it.toMonthSettingsOrNull() })
+                            trySend(snapshot.toMonthSettings())
                         }
                     }
                 awaitClose { registration.remove() }
@@ -105,6 +106,8 @@ internal fun MonthSettings.toFirestoreMap(): Map<String, Any?> =
         if (daysOff > 0) put(FIELD_DAYS_OFF, daysOff)
         put("updatedAt", FieldValue.serverTimestamp())
     }
+
+internal fun QuerySnapshot.toMonthSettings(): List<MonthSettings> = documents.mapNotNull { it.toMonthSettingsOrNull() }
 
 private fun DocumentSnapshot.toMonthSettingsOrNull(): MonthSettings? =
     mapOrNull("monthSettings") {

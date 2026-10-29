@@ -352,7 +352,7 @@ internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?
     return map
 }
 
-private fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
+internal fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
 
 private fun DocumentSnapshot.toExpenseOrNull(): Expense? = mapOrNull("expense") { parseExpense() }
 

@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.GoalTargetType
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
@@ -42,11 +43,7 @@ class FirestoreGoalRepository
                             return@addSnapshotListener
                         }
                         if (snapshot != null) {
-                            trySend(
-                                snapshot.documents
-                                    .mapNotNull { it.toGoalOrNull() }
-                                    .sortedWith(compareBy({ it.order }, { it.id })),
-                            )
+                            trySend(snapshot.toGoalList())
                         }
                     }
                 awaitClose { registration.remove() }
@@ -98,6 +95,9 @@ internal fun SavingsGoal.toFirestoreMap(): Map<String, Any?> =
     )
 
 /** Maps a document, or drops it (logged) when a required field is missing or invalid. */
+internal fun QuerySnapshot.toGoalList(): List<SavingsGoal> =
+    documents.mapNotNull { it.toGoalOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
+
 internal fun DocumentSnapshot.toGoalOrNull(): SavingsGoal? = mapOrNull("goal") { parseGoal() }
 
 private fun DocumentSnapshot.parseGoal(): SavingsGoal? {

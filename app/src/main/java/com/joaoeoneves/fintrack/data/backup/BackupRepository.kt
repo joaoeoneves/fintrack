@@ -34,12 +34,13 @@ class BackupRepository
         suspend fun buildBackup(exportedAt: Instant): Result<BackupDocument> =
             runCatchingCancellable {
                 // A signed-in export never uses cache or error-fallback data: read the server first or fail.
-                serverSync.refresh().getOrThrow()
-                val expenses = expenseRepository.getAllExpenses().getOrThrow()
-                val income = incomeRepository.getAllIncome().getOrThrow()
-                val plan = planBackupSource.read()
+                // The server read feeds the export directly (no second read); a guest reads its local repositories.
+                val server = serverSync.readAll().getOrThrow()
+                val expenses = server?.expenses ?: expenseRepository.getAllExpenses().getOrThrow()
+                val income = server?.income ?: incomeRepository.getAllIncome().getOrThrow()
+                val plan = server?.let(::planFrom) ?: planBackupSource.read()
                 val budgets = plan.budgets
-                val categories = categoryRepository.observeCategories().first()
+                val categories = server?.categories ?: categoryRepository.observeCategories().first()
                 val prefs = preferencesStore.data.first()
                 val stored = categories.filter { it.needsStoring() }.map { it.toLocal() }
                 val localExpenses = expenses.map { it.toLocal() }
@@ -75,6 +76,19 @@ class BackupRepository
                         ).namingPlaceholders(stored.size, plan.deletedCategoryName),
                 )
             }
+
+        private fun planFrom(server: ServerData) =
+            PlanBackupData(
+                budgets = server.budgets,
+                plannedIncome = server.plannedIncome,
+                recurring = server.recurring,
+                monthSettings = server.monthSettings,
+                categoryGroups = server.categoryGroups,
+                salaryProfile = server.salaryProfile,
+                goals = server.goals,
+                automation = server.automation,
+                deletedCategoryName = planBackupSource.deletedCategoryName(),
+            )
 
         /** Whether a restore would replace existing data (an account always has some to replace). */
         suspend fun localHasData(): Boolean = restorer.hasData()
