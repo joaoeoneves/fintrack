@@ -19,6 +19,8 @@ object TestTags {
     const val RECURRING_CARD = "recurring_card"
     const val RECURRING_CONFIRM = "recurring_confirm"
     const val RECURRING_SKIP = "recurring_skip"
+    const val RECURRING_MORE = "recurring_more"
+    const val RECURRING_CHANGE = "recurring_change"
     const val RECURRING_ADD = "recurring_add"
     const val START_CHECKLIST = "start_checklist"
     const val SKELETON = "skeleton"

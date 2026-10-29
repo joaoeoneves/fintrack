@@ -1,27 +1,25 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,30 +29,32 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
-import com.joaoeoneves.fintrack.domain.model.amountIn
-import com.joaoeoneves.fintrack.domain.model.payDateIn
+import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
+import com.joaoeoneves.fintrack.domain.model.payingLines
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.rememberDayMonthText
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
+import com.joaoeoneves.fintrack.ui.designsystem.PendingOccurrenceRow
+import com.joaoeoneves.fintrack.ui.designsystem.PendingTone
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
-import com.joaoeoneves.fintrack.ui.designsystem.pressScale
 import com.joaoeoneves.fintrack.ui.designsystem.rememberFinTrackHaptics
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.ReceiveChange
-import com.joaoeoneves.fintrack.ui.plan.ReceivedCheckButton
 import com.joaoeoneves.fintrack.ui.plan.displayLabel
 import com.joaoeoneves.fintrack.ui.plan.rememberPaydayText
+import com.joaoeoneves.fintrack.ui.plan.rememberPendingLabels
 import com.joaoeoneves.fintrack.ui.plan.rememberReceivedText
-import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
@@ -65,13 +65,14 @@ const val DASHBOARD_UPCOMING_LIMIT = 5
 /** The card's state plus its callbacks, bundled to keep the dashboard's parameter lists short. */
 data class UpcomingRecurringModel(
     val state: UpcomingRecurringUiState,
-    val onConfirm: (UpcomingOccurrence) -> Unit,
+    val onConfirm: (UpcomingOccurrence, amountCents: Long?) -> Unit,
     val onSkip: (UpcomingOccurrence) -> Unit,
     val onManage: () -> Unit,
-    val onReceiveIncome: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
+    /** Records the income as received; returns what takes it back. */
+    val onReceiveIncome: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> () -> Unit,
 )
 
-/** Shows the upcoming-recurring view model's failure and "Added ..." events in [snackbarHostState]. */
+/** Shows the view model's failures and its confirm/skip snackbars (with "Undo") in [snackbarHostState]. */
 @Composable
 fun UpcomingRecurringSnackbars(
     viewModel: UpcomingRecurringViewModel,
@@ -82,8 +83,15 @@ fun UpcomingRecurringSnackbars(
         viewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
     }
     LaunchedEffect(Unit) {
-        viewModel.messageEvent.collect {
-            snackbarHostState.showSnackbar(resources.getString(R.string.recurring_added, it))
+        viewModel.undoEvent.collect { undo ->
+            val message =
+                when (undo.kind) {
+                    RecurringUndo.Kind.CONFIRMED -> resources.getString(R.string.recurring_added, undo.itemName)
+                    RecurringUndo.Kind.SKIPPED -> resources.getString(R.string.recurring_skipped, undo.itemName)
+                }
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result = snackbarHostState.showActionSnackbar(message, resources.getString(R.string.action_undo))
+            if (result == SnackbarResult.ActionPerformed) viewModel.onUndo(undo)
         }
     }
 }
@@ -124,7 +132,7 @@ fun UpcomingRecurringCard(
             }
             Hairline()
         }
-        state.expectedIncome?.takeIf { it.rows.isNotEmpty() }?.let {
+        state.expectedIncome?.takeIf { it.entries.isNotEmpty() }?.let {
             ExpectedIncomeGroup(expected = it, today = state.today, onReceive = model.onReceiveIncome)
         }
     }
@@ -138,62 +146,49 @@ fun UpcomingRecurringCard(
 private fun ExpectedIncomeGroup(
     expected: ExpectedIncome,
     today: LocalDate,
-    onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> Unit,
+    onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> () -> Unit,
 ) {
     val feedback = LocalReceiveFeedback.current
     val haptics = rememberFinTrackHaptics()
-    val changeLabel = stringResource(R.string.action_change)
+    val undoLabel = stringResource(R.string.action_undo)
+    val labels = rememberPendingLabels(income = true)
     SectionTitle(title = stringResource(R.string.home_to_receive_title))
-    expected.rows.forEachIndexed { index, row ->
+    expected.entries.forEachIndexed { index, entry ->
         if (index > 0) Hairline()
+        val row = entry.row
         val title = row.displayLabel()
-        val payDate = row.payDateIn(expected.month)
+        val payDate = entry.payDate
         val receiveDate = minOf(payDate, today)
         val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
-        Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space4)) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(text = formatAmountCents(row.cents), style = Amount, maxLines = 1)
+        PendingOccurrenceRow(
+            title = title,
+            amountText = formatAmountCents(row.cents),
+            statusText = stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
+            labels = labels,
+            onConfirm =
                 if (row.cents > 0L) {
-                    ReceivedCheckButton(
-                        received = false,
-                        onClick = {
-                            haptics.success()
-                            onReceive(row, receiveDate, null)
-                            val paying = row.lines.filter { it.amountIn(expected.month, expected.workingDays) > 0L }
-                            feedback?.announce(
-                                message = snackbarText,
-                                actionLabel = changeLabel,
-                                change =
-                                    ReceiveChange(
-                                        title = title,
-                                        today = today,
-                                        date = receiveDate,
-                                        editableAmountCents =
-                                            paying.singleOrNull()?.amountIn(expected.month, expected.workingDays),
-                                        onConfirm = { date, cents -> onReceive(row, date, cents) },
-                                    ),
-                            )
-                        },
-                    )
-                }
-            }
-            Text(
-                text = stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-                modifier = Modifier.padding(bottom = Dimens.Space8),
-            )
-        }
+                    {
+                        haptics.success()
+                        val undo = onReceive(row, receiveDate, null)
+                        feedback?.announce(snackbarText, undoLabel, undo)
+                    }
+                } else {
+                    null
+                },
+            onChangeAmount = {
+                val paying = row.payingLines(entry.planMonth, expected.funding)
+                feedback?.open(
+                    ReceiveChange(
+                        title = title,
+                        today = today,
+                        date = receiveDate,
+                        editableAmountCents =
+                            paying.singleOrNull()?.let { expected.funding.amountIn(it, entry.planMonth) },
+                        onConfirm = { date, cents -> onReceive(row, date, cents) },
+                    ),
+                )
+            },
+        )
     }
 }
 
@@ -241,92 +236,90 @@ private fun UpcomingRow(
     model: UpcomingRecurringModel,
 ) {
     val haptics = rememberFinTrackHaptics()
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space12)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.Space12)) {
-            Text(
-                text = row.item.name,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Text(text = formatAmountCents(row.item.amountCents), style = Amount, maxLines = 1)
+    var changingAmount by remember { mutableStateOf(false) }
+    // A future auto-posted bill posts itself: informational, no controls.
+    val automatic = row.item.autoPost && !row.isDue
+    val status =
+        when {
+            automatic ->
+                stringResource(R.string.pending_automatic, rememberDayMonthText(row.date))
+            row.date < today -> stringResource(R.string.recurring_overdue)
+            row.date == today -> stringResource(R.string.recurring_due_today)
+            else -> rememberLocaleAwareDateFormatter().format(row.date)
         }
-        Text(
-            text = occurrenceLabel(row.date, today),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (row.isDue) FinTrackTheme.colors.accentText else FinTrackTheme.colors.textSecondary,
-        )
-        if (row.overdueCount > 0) {
-            Text(
-                text = pluralStringResource(R.plurals.recurring_more_overdue, row.overdueCount, row.overdueCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.negative,
-            )
-        }
-        Row(
-            modifier = Modifier.padding(top = Dimens.Space12),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-        ) {
-            CompactPill(
-                text = stringResource(R.string.recurring_confirm),
-                onClick = {
+    PendingOccurrenceRow(
+        title = row.item.name,
+        amountText = formatAmountCents(row.item.amountCents),
+        statusText = status,
+        statusTone =
+            when {
+                row.date < today -> PendingTone.NEGATIVE
+                row.isDue -> PendingTone.ACCENT
+                else -> PendingTone.NEUTRAL
+            },
+        extraText =
+            if (row.overdueCount > 0) {
+                pluralStringResource(R.plurals.recurring_more_overdue, row.overdueCount, row.overdueCount)
+            } else {
+                null
+            },
+        labels = rememberPendingLabels(),
+        onConfirm =
+            if (automatic) {
+                null
+            } else {
+                {
                     haptics.confirm()
-                    model.onConfirm(row)
-                },
-                enabled = row.isDue,
-                modifier = Modifier.testTag(TestTags.RECURRING_CONFIRM),
-            )
-            CompactPill(
-                text = stringResource(R.string.recurring_skip),
-                onClick = {
-                    haptics.reject()
-                    model.onSkip(row)
-                },
-                modifier = Modifier.testTag(TestTags.RECURRING_SKIP),
-            )
-        }
+                    model.onConfirm(row, null)
+                }
+            },
+        confirmEnabled = row.isDue,
+        onSkip =
+            {
+                haptics.reject()
+                model.onSkip(row)
+            },
+        onChangeAmount = { changingAmount = true }.takeIf { row.isDue },
+    )
+    if (changingAmount) {
+        ChangeAmountDialog(
+            title = stringResource(R.string.recurring_amount_title, row.item.name),
+            initialCents = row.item.amountCents,
+            onConfirm = {
+                changingAmount = false
+                haptics.confirm()
+                model.onConfirm(row, it)
+            },
+            onDismiss = { changingAmount = false },
+        )
     }
 }
 
-/** A small surface-toned pill button, sized for in-row actions. */
+/** Asks for the amount actually billed before confirming a bill whose amount varies. */
 @Composable
-private fun CompactPill(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+private fun ChangeAmountDialog(
+    title: String,
+    initialCents: Long,
+    onConfirm: (Long) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        interactionSource = interactionSource,
-        shape = CircleShape,
-        contentPadding = PaddingValues(horizontal = Dimens.Space16, vertical = 0.dp),
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = FinTrackTheme.colors.surface2,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor = FinTrackTheme.colors.surface2,
-                disabledContentColor = FinTrackTheme.colors.textSecondary.copy(alpha = DISABLED_ALPHA),
-            ),
-        modifier = modifier.height(PillHeight).pressScale(interactionSource),
-    ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
-    }
+    var cents by remember { mutableLongStateOf(initialCents) }
+    FinTrackAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            MoneyTextField(
+                cents = cents,
+                onCentsChange = { cents = it },
+                label = stringResource(R.string.field_amount),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { if (cents > 0L) onConfirm(cents) }) {
+                Text(stringResource(R.string.recurring_confirm))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }
-
-private val PillHeight = 36.dp
-private const val DISABLED_ALPHA = 0.7f
-
-@Composable
-private fun occurrenceLabel(
-    date: LocalDate,
-    today: LocalDate,
-): String =
-    when {
-        date < today -> stringResource(R.string.recurring_overdue)
-        date == today -> stringResource(R.string.recurring_due_today)
-        else -> rememberLocaleAwareDateFormatter().format(date)
-    }

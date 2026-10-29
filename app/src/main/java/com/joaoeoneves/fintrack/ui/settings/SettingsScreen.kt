@@ -35,6 +35,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 fun SettingsScreen(
     onBack: () -> Unit,
     onDataDeleted: () -> Unit,
+    onOpenCategories: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -69,6 +70,7 @@ fun SettingsScreen(
                 onSignInToSync = { viewModel.signInToSync(context) },
                 onLeaveGuestMode = viewModel::leaveGuestMode,
                 onDataDeleted = onDataDeleted,
+                onOpenCategories = onOpenCategories,
             ),
         modifier = modifier,
     )
@@ -110,6 +112,7 @@ private data class SettingsActions(
     val onSignInToSync: () -> Unit,
     val onLeaveGuestMode: () -> Unit,
     val onDataDeleted: () -> Unit,
+    val onOpenCategories: () -> Unit,
 )
 
 @Composable
@@ -134,6 +137,7 @@ private fun SettingsScaffold(
                     .padding(bottom = Dimens.Space32),
         ) {
             AccountCard(uiState = uiState, actions = actions)
+            PlanSection(onOpenCategories = actions.onOpenCategories)
             PreferencesSection(
                 uiState = uiState,
                 onThemeSelected = actions.onThemeSelected,
@@ -141,6 +145,7 @@ private fun SettingsScaffold(
                 onCurrencySelected = actions.onCurrencySelected,
                 onMotionSelected = actions.onMotionSelected,
             )
+            StartChecklistSection()
             BackupFlow(signedIn = !uiState.isGuest) { onExport, onRestore ->
                 DeleteAllDataFlow(
                     isGuest = uiState.isGuest,

@@ -1,15 +1,11 @@
 package com.joaoeoneves.fintrack.ui.common.period
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.DropdownMenu
@@ -34,7 +30,6 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
-import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.Instant
@@ -98,21 +93,16 @@ fun PeriodSelector(
     var dialog by rememberSaveable { mutableStateOf(PeriodDialog.NONE) }
     val isMonthPeriod = period is Period.CurrentMonth || period is Period.Month
 
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(vertical = Dimens.Space4),
-        horizontalArrangement = alignment.toArrangement(),
-        verticalAlignment = Alignment.CenterVertically,
+    PeriodHeader(
+        navigation =
+            PeriodNavigation(
+                onPrevious = actions.onPrevious.takeIf { isMonthPeriod },
+                onNext = actions.onNext.takeIf { isMonthPeriod },
+                canGoNext = canGoToNextMonth,
+            ),
+        modifier = modifier,
+        alignment = alignment,
     ) {
-        if (isMonthPeriod) {
-            LabeledIconButton(
-                icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = stringResource(R.string.cd_previous_month),
-                onClick = actions.onPrevious,
-            )
-        }
         PeriodMenuButton(
             period = period,
             options = if (monthOnly) MONTH_ONLY_OPTIONS else PeriodMenuOption.entries,
@@ -126,16 +116,7 @@ fun PeriodSelector(
                     PeriodMenuOption.CUSTOM_RANGE -> dialog = PeriodDialog.DATE_RANGE
                 }
             },
-            modifier = Modifier.weight(1f, fill = false),
         )
-        if (isMonthPeriod) {
-            LabeledIconButton(
-                icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(R.string.cd_next_month),
-                onClick = actions.onNext,
-                enabled = canGoToNextMonth,
-            )
-        }
     }
 
     PeriodPickerDialogs(
@@ -145,13 +126,6 @@ fun PeriodSelector(
         onDismiss = { dialog = PeriodDialog.NONE },
     )
 }
-
-private fun Alignment.Horizontal.toArrangement(): Arrangement.Horizontal =
-    when (this) {
-        Alignment.Start -> Arrangement.Start
-        Alignment.End -> Arrangement.End
-        else -> Arrangement.Center
-    }
 
 @Composable
 private fun PeriodMenuButton(

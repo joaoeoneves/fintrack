@@ -38,6 +38,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /** The Activity tab: one filterable, searchable, day-grouped list of expenses and income. */
@@ -104,10 +105,7 @@ private fun DeletedSnackbar(
     LaunchedEffect(Unit) {
         viewModel.undoEvent.collect { deleted ->
             val result =
-                snackbarHostState.showSnackbar(
-                    message = deletedMessage(deleted),
-                    actionLabel = undoLabel,
-                )
+                snackbarHostState.showActionSnackbar(deletedMessage(deleted), undoLabel)
             if (result == SnackbarResult.ActionPerformed) {
                 viewModel.onUndoDelete(deleted)
             }

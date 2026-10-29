@@ -6,4 +6,6 @@ data class UserPreferences(
     val currency: CurrencyOption = CurrencyOption.EUR,
     val language: AppLanguage = AppLanguage.SYSTEM,
     val reducedMotion: MotionPreference = MotionPreference.SYSTEM,
+    /** Device-local: whether the salary pays the next month's plan; `null` until chosen (then follows the profile). */
+    val salaryPaysNextMonth: Boolean? = null,
 )

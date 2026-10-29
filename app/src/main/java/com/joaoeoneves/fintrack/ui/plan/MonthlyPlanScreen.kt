@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,7 +19,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.AccountAvatar
 import com.joaoeoneves.fintrack.ui.common.ErrorState
+import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.common.period.PeriodHeader
+import com.joaoeoneves.fintrack.ui.common.period.PeriodHeaderText
+import com.joaoeoneves.fintrack.ui.common.period.PeriodNavigation
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
@@ -25,6 +31,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanActions
+import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanUiState
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanView
 import com.joaoeoneves.fintrack.ui.plan.annual.AnnualPlanViewModel
 import com.joaoeoneves.fintrack.ui.plan.annual.PlanTab
@@ -34,6 +41,7 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 @Composable
 fun PlanScreen(
     onOpenSettings: () -> Unit,
+    onOpenConfigure: () -> Unit,
     navigation: PlanNavigation,
     viewModel: MonthlyPlanViewModel = hiltViewModel(),
 ) {
@@ -42,8 +50,10 @@ fun PlanScreen(
         snackbarHostState = snackbarHostState,
         events = listOf(viewModel.errorEvent),
     )
+    CollectDeletedIncomeLines(viewModel, snackbarHostState)
     PlanScaffold(
         onOpenSettings = onOpenSettings,
+        onOpenConfigure = onOpenConfigure,
         snackbarHostState = snackbarHostState,
         viewModel = viewModel,
         navigation = navigation,
@@ -53,6 +63,7 @@ fun PlanScreen(
 @Composable
 private fun PlanScaffold(
     onOpenSettings: () -> Unit,
+    onOpenConfigure: () -> Unit,
     snackbarHostState: SnackbarHostState,
     viewModel: MonthlyPlanViewModel,
     navigation: PlanNavigation,
@@ -61,6 +72,13 @@ private fun PlanScaffold(
     LargeTitleScaffold(
         title = stringResource(R.string.nav_plan),
         navigationIcon = { AccountAvatar(onClick = onOpenSettings) },
+        actions = {
+            LabeledIconButton(
+                icon = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.plan_configure),
+                onClick = onOpenConfigure,
+            )
+        },
         snackbarHost = { FinTrackSnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val annualViewModel: AnnualPlanViewModel = hiltViewModel()
@@ -73,29 +91,70 @@ private fun PlanScaffold(
                 onSelect = annualViewModel::onSelectTab,
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
             )
-            val contentModifier = Modifier.fillMaxSize()
             if (tab == PlanTab.YEAR) {
-                val annualState by annualViewModel.uiState.collectAsStateWithLifecycle()
-                AnnualPlanView(
-                    state = annualState,
-                    actions =
-                        AnnualPlanActions(
-                            onPreviousYear = annualViewModel::onPreviousYear,
-                            onNextYear = annualViewModel::onNextYear,
-                            onRetry = annualViewModel::onRetry,
-                        ),
-                    modifier = contentModifier,
-                )
+                PlanYearView(annualViewModel, navigation)
             } else {
-                MonthPlanBody(
-                    state = uiState,
-                    viewModel = viewModel,
-                    navigation = navigation,
-                    modifier = contentModifier,
-                )
+                PlanMonthView(uiState, viewModel, navigation)
             }
         }
     }
+}
+
+/** The sticky year header and the Year view. */
+@Composable
+private fun PlanYearView(
+    annualViewModel: AnnualPlanViewModel,
+    navigation: PlanNavigation,
+) {
+    val annualState by annualViewModel.uiState.collectAsStateWithLifecycle()
+    (annualState as? AnnualPlanUiState.Content)?.let { content ->
+        PeriodHeader(
+            navigation =
+                PeriodNavigation(
+                    onPrevious = annualViewModel::onPreviousYear,
+                    onNext = annualViewModel::onNextYear,
+                    canGoPrevious = content.canGoPrevious,
+                    canGoNext = content.canGoNext,
+                    isYear = true,
+                ),
+            modifier = Modifier.padding(horizontal = Dimens.Space8),
+        ) { PeriodHeaderText(content.year.toString()) }
+    }
+    AnnualPlanView(
+        state = annualState,
+        actions =
+            AnnualPlanActions(
+                onPreviousYear = annualViewModel::onPreviousYear,
+                onNextYear = annualViewModel::onNextYear,
+                onRetry = annualViewModel::onRetry,
+                onOpenEnvelope = navigation.onOpenEnvelope,
+            ),
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
+/** The sticky month header and the Month view. */
+@Composable
+private fun PlanMonthView(
+    uiState: MonthlyPlanUiState,
+    viewModel: MonthlyPlanViewModel,
+    navigation: PlanNavigation,
+) {
+    (uiState as? MonthlyPlanUiState.Content)?.let { content ->
+        PeriodSelector(
+            period = content.period,
+            canGoToNextMonth = content.canGoToNextMonth,
+            actions = viewModel.periodActions,
+            monthOnly = true,
+            modifier = Modifier.padding(horizontal = Dimens.Space8),
+        )
+    }
+    MonthPlanBody(
+        state = uiState,
+        viewModel = viewModel,
+        navigation = navigation,
+        modifier = Modifier.fillMaxSize(),
+    )
 }
 
 @Composable
@@ -115,7 +174,6 @@ private fun MonthPlanBody(
             is MonthlyPlanUiState.Content ->
                 MonthlyPlanContent(
                     state = state,
-                    viewModel = viewModel,
                     navigation = navigation,
                     modifier = modifier,
                 )
@@ -126,7 +184,6 @@ private fun MonthPlanBody(
 @Composable
 private fun MonthlyPlanContent(
     state: MonthlyPlanUiState.Content,
-    viewModel: MonthlyPlanViewModel,
     navigation: PlanNavigation,
     modifier: Modifier = Modifier,
 ) {
@@ -137,14 +194,20 @@ private fun MonthlyPlanContent(
             PaddingValues(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.Space32),
     ) {
         item {
-            PeriodSelector(
-                period = state.period,
-                canGoToNextMonth = state.canGoToNextMonth,
-                actions = viewModel.periodActions,
-                monthOnly = true,
+            MonthSummarySection(
+                figures = state.figures,
+                previousMonth = state.workingDays.month.minusMonths(1),
+                extraIncomeCents = state.extraIncomeCents,
+                actions =
+                    MonthSummaryActions(
+                        onOpenIncome = { navigation.onOpenIncome(state.period) },
+                        onOpenRecurring = navigation.onOpenRecurring,
+                        onOpenEnvelopes = navigation.onOpenEnvelopes,
+                        onOpenSavings = navigation.onOpenSavings,
+                    ),
+                modifier = cardModifier.padding(top = Dimens.Space16),
             )
         }
-        item { PlanTilesRow(tiles = state.tiles, modifier = cardModifier) }
         item {
             EnvelopeCardsSection(
                 cards = state.envelopeCards,
@@ -152,19 +215,6 @@ private fun MonthlyPlanContent(
                     EnvelopeCardActions(
                         onOpenEnvelope = navigation.onOpenEnvelope,
                         onOpenEnvelopes = navigation.onOpenEnvelopes,
-                        onOpenCategories = navigation.onOpenCategories,
-                    ),
-                modifier = cardModifier,
-            )
-        }
-        item {
-            ConfigureSection(
-                status = state.configure,
-                actions =
-                    ConfigureActions(
-                        onOpenIncome = { navigation.onOpenIncome(state.period) },
-                        onOpenEnvelopes = navigation.onOpenEnvelopes,
-                        onOpenRecurring = navigation.onOpenRecurring,
                         onOpenCategories = navigation.onOpenCategories,
                     ),
                 modifier = cardModifier,

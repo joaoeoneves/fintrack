@@ -30,6 +30,9 @@ data class EnvelopeProgress(
     /** What its funding line leaves after the spend; `null` when unfunded. */
     val leftoverCents: Long? get() = fundingCents?.let { it - spentCents }
 
+    /** The money this envelope takes out of the month: its funding plus overflow when funded, else [committedCents]. */
+    val reservedCents: Long get() = fundingCents?.let { it + overflowCents } ?: committedCents
+
     /** How much of [committedCents] the funding line does not cover (taken from the free money); 0 when unfunded. */
     val overflowCents: Long get() = fundingCents?.let { maxOf(committedCents - it, 0L) } ?: 0L
 
@@ -50,6 +53,14 @@ data class EnvelopesSummary(
     val committedCents: Long = 0L,
     /** The part of [committedCents] set aside in SAVING-kind categories (not part of any envelope). */
     val savingCommittedCents: Long = 0L,
+    /** The month's income basis: the larger of the expected regular income and what was actually received. */
+    val incomeCents: Long = 0L,
+    /**
+     * The part of the money set aside for envelopes and loose categories that is recurring bills (each unit's
+     * recurring planned-or-spent amount, capped at what the unit reserves), so "recurring" and "envelopes" never
+     * count the same euro twice. See [MonthFigures].
+     */
+    val recurringCents: Long = 0L,
 ) {
     /** The funded envelopes whose commitment exceeds their funding. */
     val overflowing: List<EnvelopeProgress> get() = envelopes.filter { it.overflowCents > 0 }
@@ -99,8 +110,10 @@ fun envelopesOf(
     plannedIncome: List<PlannedIncome>,
     monthIncome: List<Income>,
     planMonth: PlanMonth,
+    funding: IncomeFunding? = null,
 ): EnvelopesSummary {
     val (month, workingDays) = planMonth
+    val income = funding ?: IncomeFunding.unshifted(month, workingDays)
     val groupById = categories.associate { it.id to it.groupId }
     val kindById = categories.associate { it.id to it.kind }
     val (saving, others) = buckets.partition { (kindById[it.category.id] ?: it.category.kind) == CategoryKind.SAVING }
@@ -117,18 +130,40 @@ fun envelopesOf(
                 amountCents = monthAmountOf(envelope, rows),
                 spentCents = rows.sumOf { it.spentCents },
                 rows = rows,
-                fundingCents = line?.amountIn(month, workingDays),
+                fundingCents = line?.let { income.amountIn(it, month) },
                 fundingLine = line,
             )
         }
     val loose = split.loose.filter { it.planned != null || it.spentCents > 0 }
-    val funding = progress.sumOf { it.fundingCents ?: 0L }
-    val expected = regular.sumOf { it.amountIn(month, workingDays) }
+    val fundedCents = progress.sumOf { it.fundingCents ?: 0L }
+    val expected = regular.sumOf { income.amountIn(it, month) }
     val actual = monthIncome.sumOf { it.amountCents }
-    val base = maxOf(expected - funding, actual - funding)
+    val base = maxOf(expected - fundedCents, actual - fundedCents)
     val committed =
         progress.filter { it.fundingCents == null }.sumOf { it.committedCents } +
             loose.sumOf { maxOf(it.planned ?: 0L, it.spentCents) } +
             progress.sumOf { it.overflowCents } + savingCommitted
-    return EnvelopesSummary(progress, loose, base - committed, base, committed, savingCommitted)
+    val recurring =
+        progress.sumOf { recurringPartOf(it.rows, it.reservedCents) } +
+            loose.sumOf { recurringPartOf(listOf(it), maxOf(it.planned ?: 0L, it.spentCents)) }
+    return EnvelopesSummary(
+        envelopes = progress,
+        unenveloped = loose,
+        freeCents = base - committed,
+        baseCents = base,
+        committedCents = committed,
+        savingCommittedCents = savingCommitted,
+        incomeCents = base + fundedCents,
+        recurringCents = recurring,
+    )
 }
+
+// The recurring planned-or-spent of [rows], never more than the [reserved] money of the unit they sit in.
+private fun recurringPartOf(
+    rows: List<CategoryBudget>,
+    reserved: Long,
+): Long =
+    minOf(
+        rows.filter { it.plannedSource == PlannedSource.RECURRING }.sumOf { maxOf(it.planned ?: 0L, it.spentCents) },
+        reserved,
+    )

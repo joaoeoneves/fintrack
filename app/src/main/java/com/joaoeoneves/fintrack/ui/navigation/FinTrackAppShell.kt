@@ -27,6 +27,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.ui.common.LocalDeleteUndo
 import com.joaoeoneves.fintrack.ui.common.TransactionUndoViewModel
@@ -35,9 +36,12 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackNavigationBar
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
 import com.joaoeoneves.fintrack.ui.designsystem.NavigationBarEntry
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.plan.envelopes.DeletedEnvelope
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeUndoViewModel
 import com.joaoeoneves.fintrack.ui.plan.envelopes.LocalEnvelopeDeleteUndo
+import com.joaoeoneves.fintrack.ui.recurring.LocalRecurringDeleteUndo
+import com.joaoeoneves.fintrack.ui.recurring.RecurringUndoViewModel
 import com.joaoeoneves.fintrack.ui.savings.DeletedSavingsPlan
 import com.joaoeoneves.fintrack.ui.savings.LocalSavingsPlanDeleteUndo
 import com.joaoeoneves.fintrack.ui.savings.SavingsUndoViewModel
@@ -64,7 +68,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
         remember(deletedMessage, undoLabel) {
             { deleted ->
                 scope.launch {
-                    val result = snackbarHostState.showSnackbar(deletedMessage(deleted), actionLabel = undoLabel)
+                    val result = snackbarHostState.showActionSnackbar(deletedMessage(deleted), undoLabel)
                     if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
                 }
             }
@@ -75,12 +79,13 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
         remember(envelopeDeletedMessage, undoLabel) {
             { deleted ->
                 scope.launch {
-                    val result = snackbarHostState.showSnackbar(envelopeDeletedMessage, actionLabel = undoLabel)
+                    val result = snackbarHostState.showActionSnackbar(envelopeDeletedMessage, undoLabel)
                     if (result == SnackbarResult.ActionPerformed) envelopeUndoViewModel.restore(deleted)
                 }
             }
         }
     val showPlanDeleted = rememberSavingsPlanDeletedHandler(snackbarHostState, undoLabel)
+    val showRecurringDeleted = rememberRecurringDeletedHandler(snackbarHostState, undoLabel)
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
@@ -94,6 +99,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
             LocalDeleteUndo provides showDeleted,
             LocalEnvelopeDeleteUndo provides showEnvelopeDeleted,
             LocalSavingsPlanDeleteUndo provides showPlanDeleted,
+            LocalRecurringDeleteUndo provides showRecurringDeleted,
         ) {
             FinTrackNavHost(
                 navController = navController,
@@ -162,7 +168,26 @@ private fun rememberSavingsPlanDeletedHandler(
     return remember(message, undoLabel) {
         { deleted ->
             scope.launch {
-                val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel)
+                val result = snackbarHostState.showActionSnackbar(message, undoLabel)
+                if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberRecurringDeletedHandler(
+    snackbarHostState: SnackbarHostState,
+    undoLabel: String,
+): (RecurringItem) -> Unit {
+    val scope = rememberCoroutineScope()
+    val undoViewModel = hiltViewModel<RecurringUndoViewModel>()
+    val message = stringResource(R.string.recurring_deleted)
+    return remember(message, undoLabel) {
+        { deleted ->
+            scope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                val result = snackbarHostState.showActionSnackbar(message, undoLabel)
                 if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
             }
         }

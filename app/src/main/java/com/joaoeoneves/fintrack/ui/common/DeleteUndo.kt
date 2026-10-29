@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.common
 
-import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -18,7 +17,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
@@ -57,8 +55,7 @@ fun deletedMessage(
     return if (ignored == null) {
         String.format(locale, plainTemplate, deleted.transaction.title())
     } else {
-        val pattern = DateFormat.getBestDateTimePattern(locale, "ddMM")
-        val day = DateTimeFormatter.ofPattern(pattern, locale).format(ignored.date)
+        val day = formatDayMonth(ignored.date, locale)
         String.format(locale, occurrenceTemplate, ignored.itemName, day)
     }
 }

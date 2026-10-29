@@ -27,12 +27,12 @@ import com.joaoeoneves.fintrack.domain.model.MAX_WORKING_DAYS
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import java.time.LocalDate
 import java.time.YearMonth
 
 /**
@@ -71,24 +71,28 @@ internal fun monthName(state: WorkingDaysState): String = formatShortMonthName(s
 /**
  * Dialog for the month's working days and days off. The working-days stepper (0 to [MAX_WORKING_DAYS]) follows
  * "calendar count minus days off" until it is edited by hand; saving a value equal to that automatic count
- * clears the override, and "Reset to automatic" is offered while one is set. Carnival is only a
- * shortcut that adds a day off; they are never subtracted on their own.
+ * clears the override, and "Reset to automatic" is offered while one is set.
  */
 @Composable
 fun WorkingDaysDialog(
     state: WorkingDaysState,
-    carnival: LocalDate?,
     onSave: (month: YearMonth, override: Int?, daysOff: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var override by remember { mutableStateOf(state.days.takeIf { state.overridden }) }
     var daysOff by remember { mutableIntStateOf(state.daysOff) }
     val automatic = maxOf(0, state.calendarDays - daysOff)
+    val hintRes = if (override == null) R.string.plan_working_days_hint_auto else R.string.plan_working_days_hint
     FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.plan_working_days_title, monthName(state))) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space12)) {
+                Text(
+                    text = stringResource(R.string.plan_working_days_label),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
                 Stepper(
                     value = override ?: automatic,
                     onChange = { override = it.takeIf { value -> value != automatic } },
@@ -96,7 +100,7 @@ fun WorkingDaysDialog(
                     labels = StepperLabels(R.string.cd_fewer_working_days, R.string.cd_more_working_days),
                 )
                 Text(
-                    text = stringResource(R.string.plan_working_days_hint),
+                    text = stringResource(hintRes),
                     style = MaterialTheme.typography.bodySmall,
                     color = FinTrackTheme.colors.textSecondary,
                 )
@@ -106,7 +110,6 @@ fun WorkingDaysDialog(
                 DaysOffFields(
                     daysOff = daysOff,
                     onChange = { daysOff = it },
-                    carnival = carnival,
                 )
             }
         },
@@ -118,7 +121,7 @@ fun WorkingDaysDialog(
                 },
             ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }
 

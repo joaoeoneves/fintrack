@@ -149,9 +149,10 @@ class RecurringFormTest {
     @Test
     fun toItem_keepsExistingIdCursorAndActive_andYearlyMonth() {
         val existing = recurringItem(id = "r9", handledThrough = day(2026, 2, 15), active = false)
-        val form = validForm().copy(frequency = RecurringFrequency.YEARLY, monthOfYear = 4, note = " n ")
+        val form =
+            validForm().copy(frequency = RecurringFrequency.YEARLY, monthOfYear = 4, note = " n ", paused = true)
 
-        val item = form.toItem(existing)
+        val item = form.toItem(existing, day(2026, 3, 20))
 
         assertEquals("r9", item.id)
         assertEquals(day(2026, 2, 15), item.handledThrough)
@@ -166,7 +167,7 @@ class RecurringFormTest {
         val existing =
             recurringItem(id = "r9", active = false, skipped = setOf(day(2026, 2, 15)), pausedAt = day(2026, 3, 1))
 
-        val item = validForm().toItem(existing)
+        val item = validForm().copy(paused = true).toItem(existing, day(2026, 3, 20))
 
         assertEquals(setOf(day(2026, 2, 15)), item.skipped)
         assertEquals(day(2026, 3, 1), item.pausedAt)
@@ -216,5 +217,50 @@ class RecurringFormTest {
     fun toForm_keepsStoredAutoPost_includingOff() {
         assertEquals(false, recurringItem(autoPost = false).toForm(null).autoPost)
         assertEquals(true, recurringItem(autoPost = true).toForm(null).autoPost)
+    }
+
+    @Test
+    fun toItem_pausedSwitchOnAnActiveItem_pausesToday() {
+        val existing = recurringItem(id = "r9", handledThrough = day(2026, 2, 15))
+
+        val item = validForm().copy(paused = true).toItem(existing, day(2026, 3, 20))
+
+        assertEquals(false, item.active)
+        assertEquals(day(2026, 3, 20), item.pausedAt)
+    }
+
+    @Test
+    fun toItem_pausedSwitchOnANewItem_createsItPaused() {
+        val item = validForm().copy(paused = true).toItem(null, day(2026, 3, 20))
+
+        assertEquals(false, item.active)
+        assertEquals(day(2026, 3, 20), item.pausedAt)
+    }
+
+    @Test
+    fun toItem_switchOffOnAPausedItem_resumesAndSkipsThePausedPeriod() {
+        val existing =
+            recurringItem(id = "r9", active = false, pausedAt = day(2026, 2, 20), handledThrough = day(2026, 2, 15))
+
+        val item = validForm().copy(paused = false).toItem(existing, day(2026, 4, 1))
+
+        assertEquals(true, item.active)
+        assertTrue(day(2026, 3, 15) in item.skipped)
+    }
+
+    @Test
+    fun toItem_unchangedActiveItem_staysActiveWithoutPauseDay() {
+        val existing = recurringItem(id = "r9")
+
+        val item = validForm().copy(paused = false).toItem(existing, day(2026, 4, 1))
+
+        assertEquals(true, item.active)
+        assertEquals(null, item.pausedAt)
+    }
+
+    @Test
+    fun toForm_pausedReflectsInactive() {
+        assertEquals(true, recurringItem(active = false).toForm(BuiltInCategories.FOOD).paused)
+        assertEquals(false, recurringItem(active = true).toForm(BuiltInCategories.FOOD).paused)
     }
 }

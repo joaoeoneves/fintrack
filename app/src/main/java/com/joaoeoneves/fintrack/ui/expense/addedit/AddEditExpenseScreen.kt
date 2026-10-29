@@ -37,6 +37,7 @@ import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
@@ -64,6 +65,7 @@ fun AddEditExpenseScreen(
         saveEnabled = readyForm != null && !readyForm.isBusy,
         onSave = viewModel::onSave,
         showSave = readyForm != null,
+        dirty = rememberIsDirty(readyForm?.untouchedByErrors()),
         modifier = modifier,
     ) { innerPadding ->
         when (val state = uiState) {
@@ -211,3 +213,14 @@ private fun ExpenseDateAndNoteFields(
         modifier = Modifier.fillMaxWidth(),
     )
 }
+
+/** The form without its transient validation/saving state, so only the user's edits count as changes. */
+private fun ExpenseFormState.untouchedByErrors() =
+    copy(
+        nameError = null,
+        amountError = null,
+        categoryError = null,
+        saveError = null,
+        isSaving = false,
+        isDeleting = false,
+    )

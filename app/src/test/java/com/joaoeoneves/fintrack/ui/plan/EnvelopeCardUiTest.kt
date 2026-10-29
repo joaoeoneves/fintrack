@@ -212,4 +212,33 @@ class EnvelopeCardUiTest {
         assertEquals(1, envelopeCardsOf(summary).size)
         assertTrue(envelopeCardsOf(EnvelopesSummary(emptyList(), emptyList(), 0L)).isEmpty())
     }
+
+    @Test
+    fun amountZero_isTracking_evenWithAnOwnAmountOrBudgetRow() {
+        val own = envelopeCardOf(progress(0L, 500L, emptyList(), own = 0L))
+        val budget = envelopeCardOf(progress(0L, 0L, listOf(row(0L, PlannedSource.BUDGET))))
+
+        assertTrue(own is EnvelopeCardUi.Tracking)
+        assertTrue(budget is EnvelopeCardUi.Tracking)
+        assertEquals(500L, (own as EnvelopeCardUi.Tracking).spentCents)
+    }
+
+    @Test
+    fun amountZero_withRecurringRows_isTracking() {
+        val card = envelopeCardOf(progress(0L, 0L, listOf(row(0L, PlannedSource.RECURRING))))
+
+        assertTrue(card is EnvelopeCardUi.Tracking)
+    }
+
+    @Test
+    fun oneCentAmount_isBudgeted() {
+        val card = envelopeCardOf(progress(1L, 0L, emptyList(), own = 1L))
+
+        assertTrue(card is EnvelopeCardUi.Budgeted)
+    }
+
+    @Test
+    fun nullAmount_isTracking() {
+        assertTrue(envelopeCardOf(progress(null, 0L, emptyList())) is EnvelopeCardUi.Tracking)
+    }
 }

@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import android.text.format.DateFormat
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -42,13 +41,13 @@ import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.formatDayMonth
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
 import com.joaoeoneves.fintrack.ui.theme.Motion
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
 import com.joaoeoneves.fintrack.ui.theme.motionSpec
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 private val ChartHeight = 140.dp
 private val LabelBand = 24.dp
@@ -193,9 +192,7 @@ private fun Modifier.scrubGestures(scrub: ScrubState): Modifier {
 @Composable
 private fun rememberScrubLabelFormatter(): (LocalDate) -> String {
     val locale = currentLocale()
-    val formatter =
-        remember(locale) { DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "dMMM"), locale) }
-    return { date -> formatter.format(date) }
+    return { date -> formatDayMonth(date, locale) }
 }
 
 /**

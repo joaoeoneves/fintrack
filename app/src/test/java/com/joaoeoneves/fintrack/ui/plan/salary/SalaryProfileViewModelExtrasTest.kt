@@ -20,6 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -215,6 +216,68 @@ class SalaryProfileViewModelExtrasTest {
                     .map { it.id },
             )
             assertNull(vm.content().extraEditor)
+        }
+
+    @Test
+    fun deleteExtra_emitsExtraDeletedWithIndex_andUndoRestoresAtOldPositionOnce() =
+        runTest(dispatcher) {
+            val vm = started(SalaryProfile(baseGrossCents = 100_000, extras = listOf(flexExtra(), bonusExtra())))
+            val events = mutableListOf<SalaryProfileEvent>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { events += it } }
+
+            vm.onDeleteExtra("flex")
+            advanceUntilIdle()
+            val deleted = events.single() as SalaryProfileEvent.ExtraDeleted
+            assertEquals("flex", deleted.extra.id)
+            assertEquals(0, deleted.index)
+
+            vm.onUndoDeleteExtra(deleted.extra, deleted.index)
+            vm.onUndoDeleteExtra(deleted.extra, deleted.index) // no duplicate
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("flex", "bonus"),
+                vm
+                    .content()
+                    .form.extras
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun deleteExtra_unknownId_emitsNothing() =
+        runTest(dispatcher) {
+            val vm = started(SalaryProfile(baseGrossCents = 100_000, extras = listOf(flexExtra())))
+            val events = mutableListOf<SalaryProfileEvent>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { events += it } }
+
+            vm.onDeleteExtra("nope")
+            advanceUntilIdle()
+
+            assertTrue(events.isEmpty())
+            assertEquals(
+                1,
+                vm
+                    .content()
+                    .form.extras.size,
+            )
+        }
+
+    @Test
+    fun undoDeleteExtra_indexBeyondEnd_appends() =
+        runTest(dispatcher) {
+            val vm = started(SalaryProfile(baseGrossCents = 100_000, extras = listOf(bonusExtra())))
+
+            vm.onUndoDeleteExtra(flexExtra(), 99)
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("bonus", "flex"),
+                vm
+                    .content()
+                    .form.extras
+                    .map { it.id },
+            )
         }
 
     @Test

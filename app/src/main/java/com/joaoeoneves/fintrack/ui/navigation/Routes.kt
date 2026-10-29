@@ -75,11 +75,18 @@ object Categories
 @Serializable
 object RecurringList
 
-/** The envelopes list, pushed from the Plan tab. */
+/** The global set-up screen (income, envelopes, recurring, categories), opened from the Plan tab's gear icon. */
+@Serializable
+object Configure
+
+/** The envelopes list, pushed on top of whichever tab is current. */
 @Serializable
 object PlanEnvelopes
 
-/** The income screen, pushed from the Plan tab; [month] is an encoded `Period` token (null: the current month). */
+/**
+ * The income screen, pushed on top of whichever tab is current; [month] is an encoded `Period` token (null: the
+ * current month).
+ */
 @Serializable
 data class PlanIncome(
     val month: String? = null,
@@ -91,7 +98,7 @@ data class EditEnvelope(
     val envelopeId: String? = null,
 )
 
-/** The salary profile editor, pushed from the Plan tab; it takes no arguments. */
+/** The salary profile editor, pushed on top of whichever tab is current; it takes no arguments. */
 @Serializable
 object EditSalaryProfile
 

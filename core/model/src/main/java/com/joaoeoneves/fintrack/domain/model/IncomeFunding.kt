@@ -1,0 +1,197 @@
+@file:Suppress("TooManyFunctions") // The one place funding rules live.
+
+package com.joaoeoneves.fintrack.domain.model
+
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+/**
+ * First pay day of the month from which a salary-profile line pays for the NEXT month. A line paid on the last
+ * working day (no fixed pay day) or on the 26th or later funds the following month's plan: the salary paid on the
+ * last working day of September is what October is planned and spent on. A fixed pay day before the 26th stays in
+ * its own month.
+ */
+const val NEXT_MONTH_PAY_DAY = 26
+
+/**
+ * Whether this line, when paid in month X, is the money for month X+1. Only the lines generated from the salary
+ * profile (salary, meal allowance, subsidies) that pay every month qualify; manual lines and yearly or one-off
+ * extras always belong to the month they are paid in. See [NEXT_MONTH_PAY_DAY].
+ */
+val PlannedIncome.paysForNextMonth: Boolean
+    get() = isManaged && frequency == IncomeFrequency.MONTHLY && (payDay == null || payDay >= NEXT_MONTH_PAY_DAY)
+
+/** Whether the salary pays for the next month: the user's choice, else on exactly when a salary profile exists. */
+fun salaryShiftEnabled(
+    preference: Boolean?,
+    lines: List<PlannedIncome>,
+): Boolean = preference ?: lines.any { it.isManaged }
+
+/**
+ * How the plan's income is attributed to months: the single place that knows about "salary pays the next month".
+ * With [shift] on, a line that [paysForNextMonth] funds plan month M with what it pays in month M-1 (its amount,
+ * working days, pay date and payday income all belong to M-1); every other line funds the month it pays in.
+ * [workingDaysOf] gives a month's effective working days.
+ */
+class IncomeFunding(
+    val shift: Boolean,
+    private val workingDaysOf: (YearMonth) -> Int,
+) {
+    /** The month [line] is paid in when it funds [planMonth]. */
+    fun payMonthOf(
+        line: PlannedIncome,
+        planMonth: YearMonth,
+    ): YearMonth = if (shift && line.paysForNextMonth) planMonth.minusMonths(1) else planMonth
+
+    /** What [line] adds to [planMonth]'s plan. */
+    fun amountIn(
+        line: PlannedIncome,
+        planMonth: YearMonth,
+    ): Long = payMonthOf(line, planMonth).let { line.amountIn(it, workingDaysOf(it)) }
+
+    /** The day [line] is paid for [planMonth] (in [payMonthOf]). */
+    fun payDateOf(
+        line: PlannedIncome,
+        planMonth: YearMonth,
+    ): LocalDate = line.payDateIn(payMonthOf(line, planMonth))
+
+    /** The working days of [month] this funding uses. */
+    fun workingDays(month: YearMonth): Int = workingDaysOf(month)
+
+    companion object {
+        /** No shift: every line funds the month it pays in, with [workingDays] for [month] only. */
+        fun unshifted(
+            month: YearMonth,
+            workingDays: Int,
+        ): IncomeFunding = IncomeFunding(false) { if (it == month) workingDays else 0 }
+
+        /** A funding for the given [settings], shifted or not. */
+        fun of(
+            shift: Boolean,
+            settings: List<MonthSettings>,
+        ): IncomeFunding =
+            IncomeFunding(shift) { month ->
+                val current = settings.firstOrNull { it.month == month }
+                effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
+            }
+    }
+}
+
+/** The month's income rows like [incomeRowsIn] with each line's amount attributed by [funding]. */
+fun incomeRowsIn(
+    lines: List<PlannedIncome>,
+    month: YearMonth,
+    funding: IncomeFunding,
+): List<IncomeRow> =
+    rowsOf(lines) { component, extraId, group ->
+        IncomeRow(component, group, group.sumOf { funding.amountIn(it, month) }, extraId = extraId)
+    }
+
+/** The lines of this row that pay something for [planMonth] under [funding]. */
+fun IncomeRow.payingLines(
+    planMonth: YearMonth,
+    funding: IncomeFunding,
+): List<PlannedIncome> = lines.filter { funding.amountIn(it, planMonth) > 0L }
+
+/**
+ * The day this row is paid for [planMonth]: the latest pay date of its paying lines (any line when none pays).
+ * Without a shift this is [IncomeRow.payDateIn].
+ */
+fun IncomeRow.payDateIn(
+    planMonth: YearMonth,
+    funding: IncomeFunding,
+): LocalDate =
+    payingLines(planMonth, funding).ifEmpty { lines }.maxOfOrNull { funding.payDateOf(it, planMonth) }
+        ?: paydayOf(planMonth)
+
+/** The single day every paying row of [rows] is paid for [planMonth]; `null` when they differ or none pays. */
+fun commonPayDateIn(
+    rows: List<IncomeRow>,
+    planMonth: YearMonth,
+    funding: IncomeFunding,
+): LocalDate? =
+    rows
+        .filter { it.cents > 0L }
+        .map { it.payDateIn(planMonth, funding) }
+        .distinct()
+        .singleOrNull()
+
+/**
+ * The paying lines of this row for [planMonth] grouped by the month they are paid in, oldest first; what the
+ * payday incomes are recorded and removed per (`pay_<lineId>_<yyyyMM>`).
+ */
+fun IncomeRow.payingLinesByPayMonth(
+    planMonth: YearMonth,
+    funding: IncomeFunding,
+): Map<YearMonth, List<PlannedIncome>> {
+    val byMonth = payingLines(planMonth, funding).groupBy { funding.payMonthOf(it, planMonth) }
+    return byMonth.toSortedMap()
+}
+
+/**
+ * The incomes already recorded for every paying line of this row for [planMonth], or `null` when the row pays
+ * nothing or any paying line is missing one. Each line is looked up in its own pay month.
+ */
+fun IncomeRow.receivedIncomes(
+    planMonth: YearMonth,
+    funding: IncomeFunding,
+    incomes: Collection<Income>,
+): List<Income>? {
+    val byId = incomes.associateBy { it.id }
+    val paying = payingLines(planMonth, funding)
+    val found =
+        paying.mapNotNull {
+            val payMonth = funding.payMonthOf(it, planMonth)
+            byId[paydayIncomeId(it.id, payMonth)] ?: legacyRecurringIncome(it, payMonth, incomes)
+        }
+    return found.takeIf { paying.isNotEmpty() && found.size == paying.size }
+}
+
+/** The day this row was received (the latest of its incomes' local days), or `null` when not received. */
+fun IncomeRow.receivedOn(
+    planMonth: YearMonth,
+    funding: IncomeFunding,
+    incomes: Collection<Income>,
+    zone: ZoneId,
+): LocalDate? = receivedIncomes(planMonth, funding, incomes)?.maxOf { it.date }?.atZone(zone)?.toLocalDate()
+
+/** The line id and pay month a payday income id (`pay_<lineId>_<yyyyMM>`) stands for; `null` for any other id. */
+fun parsePaydayIncomeId(id: String): Pair<String, YearMonth>? {
+    val body = id.takeIf(::isPaydayIncomeId)?.removePrefix(PAYDAY_ID_PREFIX_VALUE)
+    val lineId = body?.substringBeforeLast('_', missingDelimiterValue = "")?.takeIf { it.isNotEmpty() }
+    val suffix = body?.substringAfterLast('_')
+    val month = suffix?.let { runCatching { YearMonth.parse(it, PAYDAY_MONTH_PARSER) }.getOrNull() }
+    return if (lineId != null && month != null) lineId to month else null
+}
+
+private const val PAYDAY_ID_PREFIX_VALUE = "pay_"
+private val PAYDAY_MONTH_PARSER = DateTimeFormatter.ofPattern("yyyyMM")
+
+/**
+ * The month [income] funds: a payday income of a line that [paysForNextMonth] (with [funding] shifted) funds the
+ * month after the one in its id; everything else funds the month of its date in [zone].
+ */
+fun fundingMonthOf(
+    income: Income,
+    lines: List<PlannedIncome>,
+    funding: IncomeFunding,
+    zone: ZoneId,
+): YearMonth {
+    val payday = if (funding.shift) parsePaydayIncomeId(income.id) else null
+    val line = payday?.let { (lineId, _) -> lines.firstOrNull { it.id == lineId } }
+    return if (payday != null && line != null && line.paysForNextMonth) {
+        payday.second.plusMonths(1)
+    } else {
+        YearMonth.from(income.date.atZone(zone))
+    }
+}
+
+/** The incomes among [this] that fund [month] (see [fundingMonthOf]). */
+fun Collection<Income>.fundingIn(
+    month: YearMonth,
+    lines: List<PlannedIncome>,
+    funding: IncomeFunding,
+    zone: ZoneId,
+): List<Income> = filter { fundingMonthOf(it, lines, funding, zone) == month }

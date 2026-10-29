@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
@@ -39,3 +41,17 @@ fun FinTrackSnackbarHost(
  * navigates away straight after). A no-op outside the shell.
  */
 val LocalAppSnackbar = staticCompositionLocalOf<(String) -> Unit> { {} }
+
+/**
+ * Shows an action snackbar (e.g. "Desfazer") that times out. Material's default for a snackbar with an action
+ * is Indefinite, which would leave undo prompts on screen forever.
+ */
+suspend fun SnackbarHostState.showActionSnackbar(
+    message: String,
+    actionLabel: String,
+): SnackbarResult =
+    showSnackbar(
+        message = message,
+        actionLabel = actionLabel,
+        duration = SnackbarDuration.Long,
+    )

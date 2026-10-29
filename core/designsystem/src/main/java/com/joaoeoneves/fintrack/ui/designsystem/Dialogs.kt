@@ -10,6 +10,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -56,12 +57,19 @@ fun FinTrackAlertDialog(
 fun FinTrackBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    dirty: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    // While [dirty], scrim taps and back ask "Descartar alterações?" first and a swipe down snaps back.
+    val requestDismiss = rememberLeaveGuard(dirty, onDismissRequest)
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = requestDismiss,
         modifier = modifier,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState =
+            rememberModalBottomSheetState(
+                skipPartiallyExpanded = true,
+                confirmValueChange = { !(dirty && it == SheetValue.Hidden) },
+            ),
         shape = RoundedCornerShape(topStart = SheetTopRadius, topEnd = SheetTopRadius),
         containerColor = FinTrackTheme.colors.surface1,
         contentColor = MaterialTheme.colorScheme.onSurface,

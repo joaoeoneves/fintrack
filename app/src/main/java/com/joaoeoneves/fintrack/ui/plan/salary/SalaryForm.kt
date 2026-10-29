@@ -102,4 +102,10 @@ sealed interface SalaryProfileEvent {
     data object Done : SalaryProfileEvent
 
     data object Failed : SalaryProfileEvent
+
+    /** A draft extra was removed from the form; the screen offers to put it back at [index]. */
+    data class ExtraDeleted(
+        val extra: SalaryExtra,
+        val index: Int,
+    ) : SalaryProfileEvent
 }

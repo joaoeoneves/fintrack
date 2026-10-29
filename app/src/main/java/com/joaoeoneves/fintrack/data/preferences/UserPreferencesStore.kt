@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.preferences
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -21,6 +22,7 @@ private val themeKey = stringPreferencesKey(KEY_THEME)
 private val currencyKey = stringPreferencesKey(KEY_CURRENCY)
 private val languageKey = stringPreferencesKey(KEY_LANGUAGE)
 private val reducedMotionKey = stringPreferencesKey(KEY_REDUCED_MOTION)
+private val salaryPaysNextMonthKey = booleanPreferencesKey("salaryPaysNextMonth")
 
 /**
  * Typed view over the single preferences [DataStore]. Missing or unrecognized stored values read
@@ -47,6 +49,7 @@ class UserPreferencesStore
                 prefs[currencyKey] = result.currency.name
                 prefs[languageKey] = result.language.name
                 prefs[reducedMotionKey] = result.reducedMotion.name
+                result.salaryPaysNextMonth?.let { prefs[salaryPaysNextMonthKey] = it }
             }
             return result
         }
@@ -59,6 +62,7 @@ class UserPreferencesStore
                 language = AppLanguage.entries.find { it.name == this[languageKey] } ?: defaults.language,
                 reducedMotion =
                     MotionPreference.entries.find { it.name == this[reducedMotionKey] } ?: defaults.reducedMotion,
+                salaryPaysNextMonth = this[salaryPaysNextMonthKey],
             )
         }
     }

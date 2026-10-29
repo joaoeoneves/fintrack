@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +19,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -62,6 +62,6 @@ internal fun SalaryDuplicatesDialog(
                 onClick = { onRemove(selected) },
             )
         },
-        dismissButton = { TextButton(onClick = onKeep) { Text(stringResource(R.string.salary_duplicates_keep)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.salary_duplicates_keep), onClick = onKeep) },
     )
 }

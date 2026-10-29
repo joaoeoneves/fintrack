@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -15,6 +16,7 @@ import androidx.compose.ui.semantics.semantics
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.designsystem.LegendDot
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
 /** Test tag of the "All" envelope chip; the per-envelope chips use `envelope_chip_<id>`. */
@@ -22,7 +24,8 @@ const val ENVELOPE_CHIP_ALL_TAG = "envelope_chip_all"
 
 /**
  * Horizontally scrollable, single-select envelope filter: an "All" chip (selected when [selected] is null)
- * followed by one chip per entry of [chips], labelled "Name · amount".
+ * followed by one chip per entry of [chips], labelled "Name · amount" with the colour dot of its bar segment
+ * ([dotColors], by index).
  */
 @Composable
 fun EnvelopeFilterRow(
@@ -30,6 +33,7 @@ fun EnvelopeFilterRow(
     selected: String?,
     onSelected: (String?) -> Unit,
     modifier: Modifier = Modifier,
+    dotColors: List<Color> = emptyList(),
 ) {
     val noEnvelope = stringResource(R.string.plan_group_other)
     Row(
@@ -46,7 +50,7 @@ fun EnvelopeFilterRow(
             onClick = { onSelected(null) },
             modifier = Modifier.testTag(ENVELOPE_CHIP_ALL_TAG),
         )
-        chips.forEach { chip ->
+        chips.forEachIndexed { index, chip ->
             val name = chip.name ?: noEnvelope
             val spoken =
                 stringResource(
@@ -57,6 +61,7 @@ fun EnvelopeFilterRow(
             CategoryChip(
                 label = "$name · ${formatAmountCents(chip.spentCents)}",
                 selected = selected == chip.id,
+                leading = dotColors.getOrNull(index)?.let { dot -> { LegendDot(dot) } },
                 onClick = { onSelected(chip.id) },
                 modifier =
                     Modifier

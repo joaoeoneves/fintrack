@@ -44,6 +44,7 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 data class MemberUi(
     val category: Category,
     val limitCents: Long?,
+    val movedFromName: String? = null,
 )
 
 /** A category that can be added; [inEnvelopeName] is the other envelope it would be moved out of. */
@@ -178,6 +179,7 @@ class EnvelopeEditorViewModel
             val others = data.envelopes.filter { it.id != current.id }
             val error = if (flags.submitted) validateEnvelope(current, others.map { it.name }) else null
             val byId = data.categories.associateBy { it.id }
+            val envelopeNames = data.envelopes.associate { it.id to it.name }
             return EnvelopeEditorUiState.Content(
                 draft = current,
                 nameError =
@@ -193,7 +195,10 @@ class EnvelopeEditorViewModel
                     },
                 members =
                     current.categoryIds.mapNotNull { id ->
-                        byId[id]?.let { MemberUi(it, current.limits[id]) }
+                        byId[id]?.let { category ->
+                            val from = category.groupId?.takeIf { group -> group != current.id }
+                            MemberUi(category, current.limits[id], from?.let(envelopeNames::get))
+                        }
                     },
                 addable = addableOf(current, data),
                 fundingOptions = fundingOptionsOf(data, others),

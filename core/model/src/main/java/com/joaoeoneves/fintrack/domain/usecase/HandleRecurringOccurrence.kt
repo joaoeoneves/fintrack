@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
+import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.transactionFor
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
@@ -21,7 +23,8 @@ class HandleRecurringOccurrence
         private val categoryRepository: CategoryRepository,
     ) {
         /**
-         * Creates the expense/income for [occurrence] and advances the item's cursor in one atomic
+         * Creates the expense/income for [occurrence] (with [amountOverrideCents] instead of the item's amount,
+         * when set) and advances the item's cursor in one atomic
          * write. Refused when [occurrence] is after [today]; fails when the item no longer exists.
          */
         suspend fun confirm(
@@ -29,15 +32,22 @@ class HandleRecurringOccurrence
             occurrence: LocalDate,
             today: LocalDate,
             zone: ZoneId,
+            amountOverrideCents: Long? = null,
         ): Result<Unit> =
             runNonCancelling {
                 val item = latest(itemId)
                 if (isHandled(item, occurrence)) return@runNonCancelling
                 require(occurrence <= today) { "Occurrence $occurrence is in the future" }
                 val catalog = categoryRepository.observeCategories().first()
-                recurringRepository
-                    .confirmOccurrence(itemId, occurrence, item.transactionFor(occurrence, zone, catalog))
-                    .getOrThrow()
+                val transaction = item.transactionFor(occurrence, zone, catalog)
+                val posted =
+                    when {
+                        amountOverrideCents == null -> transaction
+                        transaction is Expense -> transaction.copy(amountCents = amountOverrideCents)
+                        transaction is Income -> transaction.copy(amountCents = amountOverrideCents)
+                        else -> transaction
+                    }
+                recurringRepository.confirmOccurrence(itemId, occurrence, posted).getOrThrow()
             }
 
         /** Records [occurrence] as skipped and moves the cursor to it, without creating a transaction. */

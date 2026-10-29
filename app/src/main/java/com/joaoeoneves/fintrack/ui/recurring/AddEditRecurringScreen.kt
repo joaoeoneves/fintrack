@@ -10,8 +10,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -31,6 +29,7 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
+import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 
@@ -48,6 +47,7 @@ fun AddEditRecurringScreen(
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collectLatest { onSaved() }
     }
+    DeletedRecurringEffect(viewModel.deletedEvent, onSaved)
 
     FormScaffold(
         title = stringResource(if (viewModel.isEditRoute) R.string.recurring_edit_title else R.string.recurring_add),
@@ -55,6 +55,7 @@ fun AddEditRecurringScreen(
         saveEnabled = ready != null && !ready.isSaving,
         onSave = viewModel::onSave,
         showSave = ready != null,
+        dirty = rememberIsDirty(ready?.form),
         modifier = modifier,
     ) { innerPadding ->
         val contentModifier = Modifier.fillMaxSize().padding(innerPadding)
@@ -87,8 +88,6 @@ private fun RecurringFormContent(
 ) {
     val form = state.form
     val errors = state.errors
-    var confirmDelete by remember { mutableStateOf(false) }
-
     Column(
         modifier =
             modifier
@@ -114,35 +113,42 @@ private fun RecurringFormContent(
             singleLine = false,
             modifier = Modifier.fillMaxWidth(),
         )
-        SettingsSwitchRow(
-            title = stringResource(R.string.recurring_auto_post),
-            checked = form.autoPost,
-            onCheckedChange = { onFormChanged(form.copy(autoPost = it)) },
-            supportingText = stringResource(R.string.recurring_auto_post_hint),
-        )
+        RecurringToggles(form, state.isEditMode, onFormChanged)
         state.saveError?.let { error ->
             FormSaveError(error.asString())
         }
         if (state.isEditMode) {
             DestructiveTextButton(
                 text = stringResource(R.string.cd_delete),
-                onClick = { confirmDelete = true },
+                onClick = onDelete,
                 enabled = !state.isSaving,
             )
         }
-    }
-
-    if (confirmDelete) {
-        RecurringDeleteDialog(
-            name = form.name,
-            onConfirm = {
-                confirmDelete = false
-                onDelete()
-            },
-            onDismiss = { confirmDelete = false },
-        )
     }
 }
 
 /** New items cannot go to a SAVING-kind category (those belong to savings plans); existing items keep theirs. */
 private fun List<Category>.forNewItem(isNew: Boolean) = if (isNew) filter { it.kind != CategoryKind.SAVING } else this
+
+/** The auto-post switch and, when editing, the pause switch. */
+@Composable
+private fun RecurringToggles(
+    form: RecurringForm,
+    isEditMode: Boolean,
+    onFormChanged: (RecurringForm) -> Unit,
+) {
+    SettingsSwitchRow(
+        title = stringResource(R.string.recurring_auto_post),
+        checked = form.autoPost,
+        onCheckedChange = { onFormChanged(form.copy(autoPost = it)) },
+        supportingText = stringResource(R.string.recurring_auto_post_hint),
+    )
+    if (isEditMode) {
+        SettingsSwitchRow(
+            title = stringResource(R.string.recurring_paused),
+            checked = form.paused,
+            onCheckedChange = { onFormChanged(form.copy(paused = it)) },
+            supportingText = stringResource(R.string.recurring_pause_hint),
+        )
+    }
+}

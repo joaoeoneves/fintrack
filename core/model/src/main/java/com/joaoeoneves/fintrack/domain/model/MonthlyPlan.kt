@@ -39,7 +39,8 @@ data class MonthlyPlanSummary(
  * Evaluates the plan for [month]: [buckets] are the month's budget rows, [monthIncome] only that month's
  * income and [workingDays] the working days of the month (per-working-day lines multiply by it). With
  * [envelopes] the buckets filed under one commit pooled (the larger of its amount and its spend); an
- * envelope with a fixed amount counts as spending.
+ * envelope with a fixed amount counts as spending. With [funding] the income is attributed to months by it (see
+ * [IncomeFunding]); without it every line counts in the month it pays in.
  */
 @Suppress("LongParameterList") // The plan's inputs, one per source.
 fun monthlyPlanOf(
@@ -49,7 +50,9 @@ fun monthlyPlanOf(
     month: YearMonth,
     workingDays: Int,
     envelopes: List<Envelope> = emptyList(),
+    funding: IncomeFunding? = null,
 ): MonthlyPlanSummary {
+    val income = funding ?: IncomeFunding.unshifted(month, workingDays)
     val (extras, regular) = plannedIncome.partition { it.isExtra }
     val split = splitBuckets(buckets, envelopes)
     val fixed = split.byEnvelope.filter { it.first.amountCents != null }
@@ -65,8 +68,8 @@ fun monthlyPlanOf(
             monthAmountOf(envelope, rows)?.let { maxOf(it - rows.sumOf { row -> row.spentCents }, 0L) } ?: 0L
         }
     return MonthlyPlanSummary(
-        expectedIncomeCents = regular.sumOf { it.amountIn(month, workingDays) },
-        extrasExpectedCents = extras.sumOf { it.amountIn(month, workingDays) },
+        expectedIncomeCents = regular.sumOf { income.amountIn(it, month) },
+        extrasExpectedCents = extras.sumOf { income.amountIn(it, month) },
         actualIncomeCents = monthIncome.sumOf { it.amountCents },
         plannedSpendingCents = spendingLimited.sumOf { it.planned ?: 0L } + fixed.sumOf { it.first.amountCents ?: 0L },
         plannedSavingCents = limited.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.planned ?: 0L },

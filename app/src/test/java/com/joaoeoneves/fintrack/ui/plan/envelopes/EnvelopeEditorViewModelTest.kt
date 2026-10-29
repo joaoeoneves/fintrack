@@ -349,4 +349,56 @@ class EnvelopeEditorViewModelTest {
             assertEquals(listOf(c), vm.content().draft.categoryIds)
             assertNull(vm.content().draft.amountCents)
         }
+
+    @Test
+    fun members_namePreviousEnvelope_onlyForCategoriesFiledElsewhere() =
+        runTest(dispatcher) {
+            val vm = start("env")
+            vm.onAddCategory(b)
+            vm.onAddCategory(c)
+            advanceUntilIdle()
+
+            val members = vm.content().members.associate { it.category.id to it.movedFromName }
+            // a already belongs to this envelope, b is moved out of "Fun", c is in none.
+            assertEquals(mapOf(a to null, b to "Fun", c to null), members)
+        }
+
+    @Test
+    fun members_newEnvelope_hasNoMovedFromForUngroupedCategories() =
+        runTest(dispatcher) {
+            val vm = start(null)
+            vm.onAddCategory(a)
+            vm.onAddCategory(c)
+            advanceUntilIdle()
+
+            val members = vm.content().members.associate { it.category.id to it.movedFromName }
+            assertEquals(mapOf(a to "Food", c to null), members)
+        }
+
+    @Test
+    fun switchingAwayFromPerCategory_keepsLimits_soTheDroppedLimitsHintApplies() =
+        runTest(dispatcher) {
+            val vm = start("env")
+            assertEquals(EnvelopeBudgetMode.PER_CATEGORY, vm.content().draft.mode)
+
+            vm.onModeChange(EnvelopeBudgetMode.NONE)
+            advanceUntilIdle()
+
+            val draft = vm.content().draft
+            val hasLimit = draft.limits.values.any { (it ?: 0L) > 0L }
+            val dropsLimits = draft.mode != EnvelopeBudgetMode.PER_CATEGORY && hasLimit
+            assertTrue(dropsLimits)
+        }
+
+    @Test
+    fun noPositiveLimit_meansNothingIsDropped() =
+        runTest(dispatcher) {
+            val vm = start("env")
+            vm.onLimitChange(a, null)
+            vm.onModeChange(EnvelopeBudgetMode.NONE)
+            advanceUntilIdle()
+
+            val draft = vm.content().draft
+            assertFalse(draft.limits.values.any { (it ?: 0L) > 0L })
+        }
 }

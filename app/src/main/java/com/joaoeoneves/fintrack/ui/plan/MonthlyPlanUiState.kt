@@ -4,7 +4,9 @@ import com.joaoeoneves.fintrack.domain.model.Earmark
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.IncomeBasis
 import com.joaoeoneves.fintrack.domain.model.IncomeFrequency
+import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
+import com.joaoeoneves.fintrack.domain.model.MonthFigures
 import com.joaoeoneves.fintrack.domain.model.MonthlyPlanSummary
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
@@ -25,7 +27,9 @@ sealed interface MonthlyPlanUiState {
      * @property workingDays the working days of [period]'s month, which per-working-day lines multiply by.
      * @property editor the income-line sheet, or `null` when it is closed.
      * @property envelopes the month's envelopes (amounts, spend, funding) and free money.
-     * @property tiles the five figures at the top of the Plan tab.
+     * @property figures the month's subtraction (carry + income - recurring - envelopes - savings = available).
+     * @property extraIncomeCents yearly and one-off income planned this month, not counted until received.
+     * @property funding how income is attributed to months (salary paying the next month).
      * @property envelopeCards one card per envelope of the month, then the one for the unenveloped categories.
      * @property configure what the "Set up" section says about each part of the plan.
      * @property receipts payday and which [incomeRows] were already received.
@@ -41,26 +45,19 @@ sealed interface MonthlyPlanUiState {
         val workingDays: WorkingDaysState,
         val editor: IncomeLineEditorState?,
         val envelopes: EnvelopesSummary = EnvelopesSummary(emptyList(), emptyList(), 0L),
-        val tiles: PlanTiles,
+        val figures: MonthFigures,
+        val extraIncomeCents: Long = 0L,
         val envelopeCards: List<EnvelopeCardUi> = emptyList(),
         val configure: ConfigureStatus,
         val receipts: IncomeReceipts,
         val duplicateKeys: Set<String> = emptySet(),
+        val funding: IncomeFunding = IncomeFunding.unshifted(YearMonth.now(), 0),
     ) : MonthlyPlanUiState
 
     data class Error(
         val message: UiText,
     ) : MonthlyPlanUiState
 }
-
-/** The figures of the Plan tab's tiles, all in cents for the selected month. */
-data class PlanTiles(
-    val incomeCents: Long,
-    val billsCents: Long,
-    val savingCents: Long,
-    val envelopesCents: Long,
-    val freeCents: Long,
-)
 
 /** What the "Set up" rows say: the plan's income, envelopes, bills and categories in numbers. */
 data class ConfigureStatus(

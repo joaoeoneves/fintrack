@@ -28,6 +28,7 @@ fun AccountSection(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var confirmSignOut by remember { mutableStateOf(false) }
     SettingsGroup(label = stringResource(R.string.settings_section_account), modifier = modifier) {
         val signedInFallback = stringResource(R.string.settings_signed_in_fallback)
         Column(modifier = Modifier.padding(vertical = Dimens.Space4)) {
@@ -44,7 +45,25 @@ fun AccountSection(
                 )
             }
         }
-        DestructiveTextButton(text = stringResource(R.string.action_sign_out), onClick = onSignOut)
+        DestructiveTextButton(text = stringResource(R.string.action_sign_out), onClick = { confirmSignOut = true })
+    }
+    if (confirmSignOut) {
+        FinTrackAlertDialog(
+            onDismissRequest = { confirmSignOut = false },
+            title = { Text(stringResource(R.string.sign_out_confirm_title)) },
+            text = { Text(stringResource(R.string.sign_out_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmSignOut = false
+                        onSignOut()
+                    },
+                ) { Text(stringResource(R.string.action_sign_out)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSignOut = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
     }
 }
 

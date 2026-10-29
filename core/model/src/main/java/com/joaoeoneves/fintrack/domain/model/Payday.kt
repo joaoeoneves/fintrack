@@ -103,6 +103,15 @@ data class ExpectedIncome(
     val workingDays: Int,
     val payday: LocalDate,
     val rows: List<IncomeRow>,
+    val entries: List<ExpectedIncomeEntry> = emptyList(),
+    val funding: IncomeFunding = IncomeFunding.unshifted(month, workingDays),
+)
+
+/** One row offered on the dashboard: [row] funds [planMonth]'s plan and is paid on [payDate] (maybe last month). */
+data class ExpectedIncomeEntry(
+    val row: IncomeRow,
+    val planMonth: YearMonth,
+    val payDate: LocalDate,
 )
 
 /**

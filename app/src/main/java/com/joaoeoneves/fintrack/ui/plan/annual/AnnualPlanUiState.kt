@@ -41,6 +41,7 @@ sealed interface AnnualPlanUiState {
                 plan.income.totalCents > 0 ||
                     plan.plannedCents > 0 ||
                     plan.envelopes.any { it.actualCents > 0 } ||
+                    plan.savings.actualCents > 0 ||
                     plan.subscriptions.isNotEmpty()
     }
 }
@@ -50,4 +51,5 @@ data class AnnualPlanActions(
     val onPreviousYear: () -> Unit,
     val onNextYear: () -> Unit,
     val onRetry: () -> Unit,
+    val onOpenEnvelope: (String) -> Unit = {},
 )

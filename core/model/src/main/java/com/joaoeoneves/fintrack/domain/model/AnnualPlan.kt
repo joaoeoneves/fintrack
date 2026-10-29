@@ -14,6 +14,8 @@ data class AnnualPlanInputs(
     val monthSettings: List<MonthSettings>,
     val yearExpenses: List<Expense> = emptyList(),
     val goals: List<SavingsGoal> = emptyList(),
+    /** Whether the salary pays for the next month (see [IncomeFunding]): the year's income is attributed so. */
+    val shiftSalary: Boolean = false,
 )
 
 /** A yearly or one-off income line paying [cents] in [month] (1..12) of the plan's year. */
@@ -73,9 +75,16 @@ data class AnnualGoal(
     val coversTarget: Boolean get() = plannedCents >= goal.targetCents
 }
 
+/** The year's savings: [plannedCents] over the 12 months and what was put in so far ([actualCents]). */
+data class AnnualSavings(
+    val plannedCents: Long,
+    val actualCents: Long,
+)
+
 /**
- * The plan of one [year]. [plannedCents] is the sum over [envelopes] (and so over every planned category) and
- * [leftoverCents] what the year's total income leaves after it.
+ * The plan of one [year]. [plannedCents] is the sum over [envelopes] and [savings] (and so over every planned
+ * category) and [leftoverCents] what the year's total income leaves after it. Savings are one "Poupança" line, as
+ * in the month, not an envelope. There is no rollover here: the year adds up its own months.
  */
 data class AnnualPlan(
     val year: Int,
@@ -84,8 +93,9 @@ data class AnnualPlan(
     val subscriptions: List<AnnualSubscription>,
     val funding: List<AnnualFunding>,
     val goals: List<AnnualGoal> = emptyList(),
+    val savings: AnnualSavings = AnnualSavings(0L, 0L),
 ) {
-    val plannedCents: Long get() = envelopes.sumOf { it.plannedCents }
+    val plannedCents: Long get() = envelopes.sumOf { it.plannedCents } + savings.plannedCents
     val leftoverCents: Long get() = income.totalCents - plannedCents
 }
 
@@ -102,15 +112,16 @@ fun annualPlanOf(
     inputs: AnnualPlanInputs,
 ): AnnualPlan {
     val months = (1..MONTHS_PER_YEAR).map { YearMonth.of(year, it) }
-    val workingDays = months.associateWith { effectiveWorkingDaysOf(it, inputs.monthSettings) }
+    val funding = IncomeFunding.of(inputs.shiftSalary, inputs.monthSettings)
     val plannedByCategory = plannedByCategory(months, inputs)
     return AnnualPlan(
         year = year,
-        income = annualIncomeOf(inputs.lines, workingDays),
+        income = annualIncomeOf(inputs.lines, months, funding),
         envelopes = annualEnvelopesOf(plannedByCategory, inputs),
         subscriptions = subscriptionsOf(year, inputs.recurring),
-        funding = annualFundingOf(inputs, workingDays, plannedByCategory),
+        funding = annualFundingOf(inputs, months, funding, plannedByCategory),
         goals = annualGoalsOf(months, inputs),
+        savings = annualSavingsOf(plannedByCategory, inputs),
     )
 }
 
@@ -133,28 +144,21 @@ private fun annualGoalsOf(
             AnnualGoal(goal, linked.sumOf { item -> item.amountCents * months.count { item.occursIn(it) } })
         }
 
-private fun effectiveWorkingDaysOf(
-    month: YearMonth,
-    settings: List<MonthSettings>,
-): Int {
-    val monthSettings = settings.firstOrNull { it.month == month }
-    return effectiveWorkingDays(month, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
-}
-
 private fun annualIncomeOf(
     lines: List<PlannedIncome>,
-    workingDays: Map<YearMonth, Int>,
+    months: List<YearMonth>,
+    funding: IncomeFunding,
 ): AnnualIncome {
     val (extraLines, regularLines) = lines.partition { it.isExtra }
-    val regular = regularLines.sumOf { line -> workingDays.entries.sumOf { (m, days) -> line.amountIn(m, days) } }
+    val regular = regularLines.sumOf { line -> months.sumOf { funding.amountIn(line, it) } }
     val extras =
         extraLines
             .flatMap { line ->
-                workingDays.mapNotNull { (month, days) ->
-                    line.amountIn(month, days).takeIf { it > 0 }?.let { AnnualExtra(line, month.monthValue, it) }
+                months.mapNotNull { month ->
+                    funding.amountIn(line, month).takeIf { it > 0 }?.let { AnnualExtra(line, month.monthValue, it) }
                 }
             }.sortedWith(compareBy({ it.month }, { it.line.order }, { it.line.id }))
-    return AnnualIncome(regular, extras, annualIncomeRowsOf(lines, workingDays))
+    return AnnualIncome(regular, extras, annualIncomeRowsOf(lines, months, funding))
 }
 
 /** Planned cents per category id over the year, only for categories with something planned. */
@@ -189,8 +193,12 @@ private fun annualEnvelopesOf(
             .resolve(id)
             .groupId
             ?.takeIf { it in envelopeIds }
-    val plannedByEnvelope = plannedByCategory.entries.groupBy({ envelopeIdOf(it.key) }, { it.value })
-    val actualByEnvelope = actualByCategory.entries.groupBy({ envelopeIdOf(it.key) }, { it.value })
+
+    fun isSaving(id: CategoryId) = inputs.categories.resolve(id).kind == CategoryKind.SAVING
+    val plannedByEnvelope =
+        plannedByCategory.entries.filterNot { isSaving(it.key) }.groupBy({ envelopeIdOf(it.key) }, { it.value })
+    val actualByEnvelope =
+        actualByCategory.entries.filterNot { isSaving(it.key) }.groupBy({ envelopeIdOf(it.key) }, { it.value })
 
     fun annualEnvelope(envelope: Envelope?) =
         AnnualEnvelope(
@@ -202,6 +210,21 @@ private fun annualEnvelopesOf(
     val defined = inputs.envelopes.sortedWith(compareBy({ it.order }, { it.id })).map(::annualEnvelope)
     val other = annualEnvelope(null).takeIf { it.plannedCents > 0 || it.actualCents > 0 }
     return defined + listOfNotNull(other)
+}
+
+/** The year's savings: what the SAVING-kind categories plan and have received, in one line. */
+private fun annualSavingsOf(
+    plannedByCategory: Map<CategoryId, Long>,
+    inputs: AnnualPlanInputs,
+): AnnualSavings {
+    fun isSaving(id: CategoryId) = inputs.categories.resolve(id).kind == CategoryKind.SAVING
+    val actual =
+        inputs.yearExpenses
+            .filter { isSaving(it.category.id) }
+            .groupBy { it.category.id }
+            .values
+            .sumOf { it.netCents().coerceAtLeast(0) }
+    return AnnualSavings(plannedByCategory.filterKeys(::isSaving).values.sum(), actual)
 }
 
 /** Active yearly recurring EXPENSE items with an occurrence in [year], by month then name. */
@@ -218,7 +241,8 @@ private fun subscriptionsOf(
 
 private fun annualFundingOf(
     inputs: AnnualPlanInputs,
-    workingDays: Map<YearMonth, Int>,
+    months: List<YearMonth>,
+    funding: IncomeFunding,
     plannedByCategory: Map<CategoryId, Long>,
 ): List<AnnualFunding> {
     val lineById = inputs.lines.filterNot { it.isExtra }.associateBy { it.id }
@@ -232,7 +256,7 @@ private fun annualFundingOf(
             AnnualFunding(
                 envelope = envelope,
                 line = line,
-                incomeCents = workingDays.entries.sumOf { (m, d) -> line.amountIn(m, d) },
+                incomeCents = months.sumOf { funding.amountIn(line, it) },
                 plannedCents =
                     envelope.amountCents?.let { it * MONTHS_PER_YEAR }
                         ?: plannedByCategory.entries

@@ -63,8 +63,8 @@ class ActivityFilteringTest {
     }
 
     @Test
-    fun category_withTypeAll_showsOnlyThatCategorysExpenses_hidingIncome() {
-        assertEquals(listOf(lunch), filter(category = BuiltInCategories.FOOD.id))
+    fun category_withTypeAll_isIgnored_soIncomeIsNeverHidden() {
+        assertEquals(all, filter(category = BuiltInCategories.FOOD.id))
     }
 
     @Test
@@ -79,7 +79,7 @@ class ActivityFilteringTest {
 
     @Test
     fun category_withNoMatchingExpense_isEmpty() {
-        assertTrue(filter(category = BuiltInCategories.INVESTMENTS.id).isEmpty())
+        assertTrue(filter(type = ActivityType.EXPENSE, category = BuiltInCategories.INVESTMENTS.id).isEmpty())
     }
 
     @Test
@@ -134,8 +134,8 @@ class ActivityFilteringTest {
     }
 
     @Test
-    fun envelope_withTypeAll_showsOnlyThatEnvelopesExpenses_hidingIncome() {
-        assertEquals(listOf(lunch), filter(envelope = "env-food"))
+    fun envelope_withTypeAll_isIgnored_soIncomeIsNeverHidden() {
+        assertEquals(all, filter(envelope = "env-food"))
     }
 
     @Test
@@ -149,8 +149,9 @@ class ActivityFilteringTest {
     }
 
     @Test
-    fun noEnvelope_keepsOnlyUnenvelopedExpenses_hidingIncome() {
-        assertEquals(listOf(coffee), filter(envelope = NO_ENVELOPE))
+    fun noEnvelope_keepsOnlyUnenvelopedExpenses_onTheExpensesTab() {
+        assertEquals(listOf(coffee), filter(type = ActivityType.EXPENSE, envelope = NO_ENVELOPE))
+        assertEquals(all, filter(envelope = NO_ENVELOPE))
     }
 
     @Test
@@ -162,13 +163,13 @@ class ActivityFilteringTest {
     fun unknownCategory_countsAsNoEnvelope() {
         val ghost = coffee.copy(id = "x", category = Category.unknown(CategoryId("ghost")))
 
-        assertEquals(listOf(ghost), filter(envelope = NO_ENVELOPE, list = listOf(ghost, lunch)))
-        assertTrue(filter(envelope = "env-food", list = listOf(ghost)).isEmpty())
+        assertEquals(listOf(ghost), filter(ActivityType.EXPENSE, envelope = NO_ENVELOPE, list = listOf(ghost, lunch)))
+        assertTrue(filter(ActivityType.EXPENSE, envelope = "env-food", list = listOf(ghost)).isEmpty())
     }
 
     @Test
     fun envelope_withNoMatchingExpense_isEmpty() {
-        assertTrue(filter(envelope = "env-other").isEmpty())
+        assertTrue(filter(ActivityType.EXPENSE, envelope = "env-other").isEmpty())
     }
 
     @Test
@@ -178,13 +179,28 @@ class ActivityFilteringTest {
 
     @Test
     fun envelopeAndCategory_areAnded() {
-        assertEquals(listOf(lunch), filter(category = BuiltInCategories.FOOD.id, envelope = "env-food"))
-        assertTrue(filter(category = BuiltInCategories.SHOPPING.id, envelope = "env-food").isEmpty())
+        val food = ActivityType.EXPENSE
+        assertEquals(listOf(lunch), filter(food, category = BuiltInCategories.FOOD.id, envelope = "env-food"))
+        assertTrue(filter(food, category = BuiltInCategories.SHOPPING.id, envelope = "env-food").isEmpty())
     }
 
     @Test
     fun envelopeAndQuery_areAnded() {
-        assertEquals(listOf(lunch), filter(query = "lunch", envelope = "env-food"))
-        assertTrue(filter(query = "coffee", envelope = "env-food").isEmpty())
+        assertEquals(listOf(lunch), filter(ActivityType.EXPENSE, query = "lunch", envelope = "env-food"))
+        assertTrue(filter(ActivityType.EXPENSE, query = "coffee", envelope = "env-food").isEmpty())
+    }
+
+    @Test
+    fun totals_followTheVisibleItems() {
+        val categories = listOf(BuiltInCategories.SHOPPING, BuiltInCategories.FOOD, BuiltInCategories.INVESTMENTS)
+        val invest = coffee.copy(id = "i", amountCents = 1_000L, category = BuiltInCategories.INVESTMENTS)
+
+        assertEquals(
+            ActivityTotals(inCents = 255_050L, outCents = 1_900L, spendingCents = 900L, savedCents = 1_000L),
+            activityTotalsOf(all + invest, categories),
+        )
+        val expensesOnly = filter(type = ActivityType.EXPENSE, list = all + invest)
+        assertEquals(ActivityTotals(0L, 1_900L, 900L, 1_000L), activityTotalsOf(expensesOnly, categories))
+        assertEquals(ActivityTotals(0L, 0L, 0L, 0L), activityTotalsOf(emptyList(), categories))
     }
 }

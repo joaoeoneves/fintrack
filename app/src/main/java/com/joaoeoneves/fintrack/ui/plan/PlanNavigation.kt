@@ -9,6 +9,7 @@ class PlanNavigation(
     val onOpenEnvelope: (String) -> Unit,
     val onOpenRecurring: () -> Unit,
     val onOpenCategories: () -> Unit,
+    val onOpenSavings: () -> Unit,
 )
 
 /** Where the "Set up" rows lead, bundled for detekt's LongParameterList. */

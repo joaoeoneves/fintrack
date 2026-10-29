@@ -48,13 +48,13 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
     private fun failingBudgets(error: Throwable) = FakeBudgetRepository(nextObserveBudgetsError = error)
 
     @Test
-    fun currentMonth_usesOneListenerPerRepository() =
+    fun currentMonth_usesTheMonthAndHistoryListenersPerRepository() =
         runTest(testDispatcher) {
             val viewModel = countingViewModel()
             collect(viewModel)
 
-            assertActive(expenseListeners = 1)
-            assertEquals(1, expenses.listeners.observedRanges.size)
+            assertActive(expenseListeners = 2)
+            assertEquals(2, expenses.listeners.observedRanges.size)
         }
 
     @Test
@@ -66,20 +66,20 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
             // Home is month-only: rolling/custom selections coerce to the already-selected current month.
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.SIX_MONTHS))
             advanceUntilIdle()
-            assertActive(expenseListeners = 1)
-            assertEquals(1, expenses.listeners.observedRanges.size)
+            assertActive(expenseListeners = 2)
+            assertEquals(2, expenses.listeners.observedRanges.size)
 
             viewModel.onPreviousMonth()
             advanceUntilIdle()
-            assertActive(expenseListeners = 1)
-            assertEquals(2, expenses.listeners.observedRanges.size)
+            assertActive(expenseListeners = 2)
+            assertEquals(4, expenses.listeners.observedRanges.size)
 
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.ONE_YEAR))
             advanceUntilIdle()
-            assertActive(expenseListeners = 1)
+            assertActive(expenseListeners = 2)
             assertEquals(currentMonth, viewModel.content().budgetMonth)
-            // CurrentMonth, then Month(previous), then CurrentMonth again.
-            assertEquals(3, expenses.listeners.observedRanges.size)
+            // CurrentMonth, then Month(previous), then CurrentMonth again (each: the month and its history).
+            assertEquals(6, expenses.listeners.observedRanges.size)
         }
 
     @Test
