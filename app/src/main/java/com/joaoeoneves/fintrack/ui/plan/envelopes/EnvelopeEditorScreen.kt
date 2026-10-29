@@ -3,13 +3,10 @@ package com.joaoeoneves.fintrack.ui.plan.envelopes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,13 +31,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
-import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.icon
-import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.EditorScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
@@ -49,44 +44,26 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackIconButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
-import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
-import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
-import com.joaoeoneves.fintrack.ui.plan.AmountHistoryText
-import com.joaoeoneves.fintrack.ui.plan.EffectiveFromRow
-import com.joaoeoneves.fintrack.ui.plan.label
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
-import java.time.YearMonth
-
-private val LimitFieldWidth = 140.dp
 
 /** What the editor's controls trigger, bundled for detekt's LongParameterList. */
 private class EditorActions(
     val onNameChange: (String) -> Unit,
-    val budget: BudgetActions,
-    val onFundedByChange: (String?) -> Unit,
     val onSave: () -> Unit,
     val onDelete: () -> Unit,
     val categories: CategoryActions,
-)
-
-/** What the editor's budget mode and amount trigger. */
-private class BudgetActions(
-    val onModeChange: (EnvelopeBudgetMode) -> Unit,
-    val onAmountChange: (Long?) -> Unit,
-    val onEffectiveFromChange: (YearMonth) -> Unit,
 )
 
 /** What the editor's category list triggers. */
 private class CategoryActions(
     val onAdd: (CategoryId) -> Unit,
     val onRemove: (CategoryId) -> Unit,
-    val onLimitChange: (CategoryId, Long?) -> Unit,
 )
 
-/** The full-screen envelope editor: name, budget mode, categories, funding line, save and delete. */
+/** The full-screen group editor: name, categories, save and delete. */
 @Composable
 fun EnvelopeEditorScreen(
     onBack: () -> Unit,
@@ -105,20 +82,12 @@ fun EnvelopeEditorScreen(
         remember(viewModel) {
             EditorActions(
                 onNameChange = viewModel::onNameChange,
-                budget =
-                    BudgetActions(
-                        viewModel::onModeChange,
-                        viewModel::onAmountChange,
-                        viewModel::onEffectiveFromChange,
-                    ),
-                onFundedByChange = viewModel::onFundedByChange,
                 onSave = viewModel::onSave,
                 onDelete = viewModel::onDelete,
                 categories =
                     CategoryActions(
                         onAdd = viewModel::onAddCategory,
                         onRemove = viewModel::onRemoveCategory,
-                        onLimitChange = viewModel::onLimitChange,
                     ),
             )
         }
@@ -175,72 +144,13 @@ private fun EditorBody(
             },
             modifier = Modifier.fillMaxWidth(),
         )
-        BudgetModeSection(state, actions)
         CategoriesSection(state, actions)
-        if (state.showEffectiveFrom && state.draft.mode != EnvelopeBudgetMode.NONE) {
-            EffectiveFromRow(month = state.draft.effectiveFrom, onChange = actions.budget.onEffectiveFromChange)
-        }
-        FundingSection(state, actions.onFundedByChange)
         if (!state.isNew) {
             DestructiveTextButton(
                 text = stringResource(R.string.envelope_delete),
                 onClick = actions.onDelete,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
-        }
-    }
-}
-
-@Composable
-private fun EnvelopeBudgetMode.label(): String =
-    stringResource(
-        when (this) {
-            EnvelopeBudgetMode.SINGLE -> R.string.envelope_mode_single
-            EnvelopeBudgetMode.PER_CATEGORY -> R.string.envelope_mode_per_category
-            EnvelopeBudgetMode.NONE -> R.string.envelope_mode_none
-        },
-    )
-
-@Composable
-private fun BudgetModeSection(
-    state: EnvelopeEditorUiState.Content,
-    actions: EditorActions,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
-        SegmentedTextTabs(
-            options = EnvelopeBudgetMode.entries,
-            selected = state.draft.mode,
-            label = { it.label() },
-            onSelect = actions.budget.onModeChange,
-        )
-        if (state.draft.mode == EnvelopeBudgetMode.NONE) {
-            Text(
-                text = stringResource(R.string.envelope_mode_none_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-        }
-        val dropsLimits =
-            state.draft.mode != EnvelopeBudgetMode.PER_CATEGORY &&
-                state.draft.limits.values
-                    .any { (it ?: 0L) > 0L }
-        if (dropsLimits) {
-            Text(
-                text = stringResource(R.string.envelope_limits_dropped_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-        }
-        if (state.draft.mode == EnvelopeBudgetMode.SINGLE) {
-            MoneyTextField(
-                cents = state.draft.amountCents ?: 0L,
-                onCentsChange = { actions.budget.onAmountChange(it.takeIf { cents -> cents > 0L }) },
-                label = stringResource(R.string.envelope_amount),
-                isError = state.amountError != null,
-                supportingText = state.amountError?.asString(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            state.amountHistory?.let { AmountHistoryText(it) }
         }
     }
 }
@@ -256,8 +166,6 @@ private fun CategoriesSection(
         state.members.forEach { member ->
             MemberRow(
                 member = member,
-                perCategory = state.draft.mode == EnvelopeBudgetMode.PER_CATEGORY,
-                onLimitChange = { actions.categories.onLimitChange(member.category.id, it) },
                 onRemove = { actions.categories.onRemove(member.category.id) },
             )
         }
@@ -289,8 +197,6 @@ private fun CategoriesSection(
 @Composable
 private fun MemberRow(
     member: MemberUi,
-    perCategory: Boolean,
-    onLimitChange: (Long?) -> Unit,
     onRemove: () -> Unit,
 ) {
     val name = member.category.displayName
@@ -309,16 +215,6 @@ private fun MemberRow(
                     color = FinTrackTheme.colors.textSecondary,
                 )
             }
-            if (perCategory) member.history?.let { AmountHistoryText(it) }
-        }
-        if (perCategory) {
-            MoneyTextField(
-                cents = member.limitCents ?: 0L,
-                onCentsChange = { onLimitChange(it.takeIf { cents -> cents > 0L }) },
-                label = name,
-                emptyText = stringResource(R.string.envelope_no_limit),
-                modifier = Modifier.width(LimitFieldWidth),
-            )
         }
         FinTrackIconButton(
             icon = Icons.Filled.Close,
@@ -362,52 +258,6 @@ private fun AddCategorySheet(
                             text = stringResource(R.string.envelope_leaves_other, it),
                             style = MaterialTheme.typography.bodySmall,
                             color = FinTrackTheme.colors.textSecondary,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FundingSection(
-    state: EnvelopeEditorUiState.Content,
-    onFundedByChange: (String?) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
-        SectionTitle(title = stringResource(R.string.envelope_paid_by))
-        if (state.fundingOptions.isEmpty()) {
-            Text(
-                text = stringResource(R.string.envelope_paid_by_empty),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-            return
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
-            verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
-        ) {
-            CategoryChip(
-                label = stringResource(R.string.envelope_paid_by_none),
-                selected = state.draft.fundedByLineId == null,
-                onClick = { onFundedByChange(null) },
-            )
-            state.fundingOptions.forEach { option ->
-                Column {
-                    CategoryChip(
-                        label = option.component.takeIf { it != SalaryComponent.EXTRA }?.label() ?: option.label,
-                        selected = state.draft.fundedByLineId == option.lineId,
-                        onClick = { onFundedByChange(option.lineId) },
-                    )
-                    option.usedByEnvelopeName?.let {
-                        Text(
-                            text = stringResource(R.string.envelope_in_other, it),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = FinTrackTheme.colors.textSecondary,
-                            modifier = Modifier.padding(start = Dimens.Space16),
                         )
                     }
                 }

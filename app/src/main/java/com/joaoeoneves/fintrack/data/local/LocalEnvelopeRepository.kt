@@ -60,13 +60,14 @@ class LocalEnvelopeRepository
                         }
                     }
                 val touched = edit.limits.keys.mapTo(mutableSetOf()) { it.value }
-                val budgets =
-                    (doc.budgets.filterNot { it.categoryId in touched } + limitRecords)
-                        .filter { edit.amountCents == null || it.categoryId !in members }
+                val budgets = doc.budgets.filterNot { it.categoryId in touched } + limitRecords
                 val groups =
                     doc.categoryGroups
                         .map { group ->
-                            val sameLine = edit.fundedByLineId != null && group.fundedByLineId == edit.fundedByLineId
+                            val sameLine =
+                                edit.fundedByLineId != null &&
+                                    edit.fundedByLineId != existing?.fundedByLineId &&
+                                    group.fundedByLineId == edit.fundedByLineId
                             if (group.id != id && sameLine) group.copy(fundedByLineId = null) else group
                         }.upserted(record) { it.id == id }
                 val withMembers = doc.withMembers(id, members)
@@ -87,12 +88,10 @@ class LocalEnvelopeRepository
         override suspend fun deleteEnvelope(id: String): Result<Unit> =
             store.update { doc ->
                 val filed = doc.catalog().filter { it.groupId == id }
-                val members = filed.mapTo(mutableSetOf()) { it.id.value }
                 doc
                     .withCategories(filed.map { it.copy(groupId = null).toLocal() })
                     .copy(
                         categoryGroups = doc.categoryGroups.filterNot { it.id == id },
-                        budgets = doc.budgets.filterNot { it.categoryId in members },
                     ) to Unit
             }
 
