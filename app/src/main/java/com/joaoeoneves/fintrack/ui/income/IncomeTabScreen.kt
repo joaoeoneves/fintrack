@@ -46,10 +46,10 @@ import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeActions
 import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeCard
 import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeModel
 import com.joaoeoneves.fintrack.ui.plan.IncomeLineSheet
-import com.joaoeoneves.fintrack.ui.plan.WorkingDaysState
 import com.joaoeoneves.fintrack.ui.plan.IncomeSetupGroup
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.WorkingDaysDialog
+import com.joaoeoneves.fintrack.ui.plan.WorkingDaysState
 import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
