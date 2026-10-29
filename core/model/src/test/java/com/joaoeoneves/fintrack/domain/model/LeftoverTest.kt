@@ -28,19 +28,19 @@ class LeftoverTest {
     fun normal_sumsIncomeMinusSpendingMinusSaved_andAverages() {
         val data = listOf(totals(2026, 1, 1_000, 400, 100), totals(2026, 2, 1_000, 200, 0))
         val result = leftoverOf(data, ym(2026, 2), today)
-        assertEquals(Leftover(1_300L, 650L, 2), result)
+        assertEquals(Leftover(1_300L, 650L, 2, ym(2026, 2)), result)
     }
 
     @Test
     fun runningMonthIsExcluded_evenWhenUpToIsThatMonth() {
         val data = listOf(totals(2026, 9, 500), totals(2026, 10, 9_999))
-        assertEquals(Leftover(500L, 500L, 1), leftoverOf(data, ym(2026, 10), today))
+        assertEquals(Leftover(500L, 500L, 1, ym(2026, 9)), leftoverOf(data, ym(2026, 10), today))
     }
 
     @Test
     fun futureUpTo_isCappedAtTheLastClosedMonth() {
         val data = listOf(totals(2026, 9, 500), totals(2026, 10, 700), totals(2026, 12, 800))
-        assertEquals(Leftover(500L, 500L, 1), leftoverOf(data, ym(2026, 12), today))
+        assertEquals(Leftover(500L, 500L, 1, ym(2026, 9)), leftoverOf(data, ym(2026, 12), today))
     }
 
     @Test
@@ -52,18 +52,53 @@ class LeftoverTest {
     @Test
     fun otherYearsAreIgnored() {
         val data = listOf(totals(2025, 12, 5_000), totals(2026, 1, 100))
-        assertEquals(Leftover(100L, 100L, 1), leftoverOf(data, ym(2026, 3), today))
+        assertEquals(Leftover(100L, 100L, 1, ym(2026, 1)), leftoverOf(data, ym(2026, 3), today))
     }
 
     @Test
     fun negativeLeftover_isKept() {
         val data = listOf(totals(2026, 1, 100, 300), totals(2026, 2, 0, 0, 50))
-        assertEquals(Leftover(-250L, -125L, 2), leftoverOf(data, ym(2026, 2), today))
+        assertEquals(Leftover(-250L, -125L, 2, ym(2026, 2)), leftoverOf(data, ym(2026, 2), today))
     }
 
     @Test
     fun emptyTotals_isZeroWithNullAverage() {
         assertEquals(Leftover(0L, null, 0), leftoverOf(emptyList(), ym(2026, 5), today))
+    }
+
+    @Test
+    fun noData_hasZeroMonthsNullAverageAndNoUntil() {
+        val empty = listOf(totals(2026, 1, 0), totals(2026, 2, 0), totals(2026, 3, 0))
+
+        val result = leftoverOf(empty, ym(2026, 3), today)
+
+        assertEquals(0, result.months)
+        assertNull(result.averageCents)
+        assertNull(result.until)
+    }
+
+    @Test
+    fun dataOnlyFromMidYear_averagesFromThereOn() {
+        val data = listOf(totals(2026, 1, 0), totals(2026, 2, 0), totals(2026, 3, 900), totals(2026, 4, 300))
+
+        val result = leftoverOf(data, ym(2026, 4), today)
+
+        assertEquals(Leftover(1_200L, 600L, 2, ym(2026, 4)), result)
+    }
+
+    @Test
+    fun emptyMonthAfterTheFirstRecord_stillCounts() {
+        val data = listOf(totals(2026, 3, 900), totals(2026, 4, 0), totals(2026, 5, 0))
+
+        assertEquals(Leftover(900L, 300L, 3, ym(2026, 5)), leftoverOf(data, ym(2026, 5), today))
+    }
+
+    @Test
+    fun until_isTheLastClosedMonth_cappedByToday() {
+        val data = listOf(totals(2026, 8, 100), totals(2026, 9, 100), totals(2026, 10, 100))
+
+        assertEquals(ym(2026, 9), leftoverOf(data, ym(2026, 12), today).until)
+        assertEquals(ym(2026, 8), leftoverOf(data, ym(2026, 8), today).until)
     }
 
     @Test
@@ -73,8 +108,8 @@ class LeftoverTest {
         val months = listOf(ym(2026, 3), ym(2026, 4))
         val monthly = monthlyTotalsOf(months, emptyList(), listOf(pay), emptyList(), zone)
 
-        assertEquals(Leftover(100_000L, 100_000L, 1), leftoverOf(monthly, ym(2026, 3), today))
-        assertEquals(Leftover(100_000L, 50_000L, 2), leftoverOf(monthly, ym(2026, 4), today))
+        assertEquals(Leftover(100_000L, 100_000L, 1, ym(2026, 3)), leftoverOf(monthly, ym(2026, 3), today))
+        assertEquals(Leftover(100_000L, 50_000L, 2, ym(2026, 4)), leftoverOf(monthly, ym(2026, 4), today))
     }
 
     @Test

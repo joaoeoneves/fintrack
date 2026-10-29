@@ -109,8 +109,9 @@ class DashboardViewModelCardsTest : DashboardViewModelTestBase() {
                     listOf(income("i", amountCents = 4_000L, date = noonOn(previousMonth, 2))),
                 )
             collect(inOctober)
-            // January..September are closed: 3000 over 9 months.
-            assertEquals(333L, inOctober.content().leftover?.averageCents)
+            // Counting starts at the first month with a record (September).
+            assertEquals(3_000L, inOctober.content().leftover?.averageCents)
+            assertEquals(previousMonth, inOctober.content().leftover?.upTo)
         }
 
     @Test
