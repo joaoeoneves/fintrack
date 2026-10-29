@@ -260,10 +260,14 @@ appId: com.joaoeoneves.fintrack
 - tapOn:
     text: "Dismiss"
     optional: true
-- scrollUntilVisible:
-    element:
-      id: "dashboard_income_card"
-    direction: UP
+# Back to the very top of Home (the list keeps its scroll position).
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%,25%
+          end: 50%,85%
+          duration: 250
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/home
 - tapOn:
@@ -280,23 +284,20 @@ appId: com.joaoeoneves.fintrack
     id: "nav_income"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/income
+- tapOn: "Year"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/income-year
+- tapOn: "Month"
 - tapOn:
     id: "nav_spending"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/spending
-# Investments page: the "Invested" row on Home.
+- tapOn: "Year"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/spending-year
+- tapOn: "Month"
 - tapOn:
     id: "nav_home"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Invested.*"
-- tapOn: "Invested.*"
-- waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/investments
-- back
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
@@ -309,3 +310,17 @@ appId: com.joaoeoneves.fintrack
 - back
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/add-expense
+# Investments page last (relaunch drops the add-expense form; a back press from the page right after
+# switching tabs exits the app in 5.0, so the flow ends on it).
+- launchApp
+- tapOn:
+    id: "nav_home"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Invested.*"
+- tapOn: "Invested.*"
+- waitForAnimationToEnd
+- takeScreenshot: maestro-out/screens/investments
