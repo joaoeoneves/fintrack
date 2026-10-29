@@ -156,10 +156,6 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug :baselineprofile:assemble
 
-      - name: Remove private parity fixture
-        if: always()
-        run: rm -rf app/src/test/resources/private
-
       - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@v7
