@@ -22,7 +22,7 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         runTest {
             val result = overview(Period.CurrentMonth)
 
-            val expected = listOf(history(october), october.toInstantRange(zone))
+            val expected = listOf(october.toInstantRange(zone), history(october))
             assertEquals(expected, expenses.listeners.observedRanges)
             assertEquals(expected, income.listeners.observedRanges)
             assertEquals(1, budgets.listeners.observedRanges.size)
