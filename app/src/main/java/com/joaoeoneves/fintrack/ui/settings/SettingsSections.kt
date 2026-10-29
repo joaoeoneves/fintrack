@@ -1,13 +1,6 @@
 package com.joaoeoneves.fintrack.ui.settings
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,9 +16,10 @@ import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.symbol
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackMenuItem
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
 /** The preferences group (theme, language, currency) shown on [SettingsScreen]. */
 private val ThemePreference.label: String
@@ -125,16 +119,11 @@ private fun <T> SettingsPickerRow(
             showChevron = true,
             supportingText = supportingText,
         )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            shape = MaterialTheme.shapes.medium,
-            containerColor = FinTrackTheme.colors.surface2,
-        ) {
+        FinTrackDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(optionLabel(option)) },
-                    leadingIcon = if (option == selected) ({ CheckMark() }) else null,
+                FinTrackMenuItem(
+                    text = optionLabel(option),
+                    selected = option == selected,
                     onClick = {
                         onSelected(option)
                         expanded = false
@@ -143,9 +132,4 @@ private fun <T> SettingsPickerRow(
             }
         }
     }
-}
-
-@Composable
-private fun CheckMark() {
-    Icon(Icons.Default.Check, contentDescription = null, tint = FinTrackTheme.colors.accentText)
 }

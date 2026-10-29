@@ -14,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +40,7 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.rememberDayMonthText
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
@@ -320,10 +320,11 @@ private fun ChangeAmountDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = { if (cents > 0L) onConfirm(cents) }) {
-                Text(stringResource(R.string.recurring_confirm))
-            }
+            DialogTextButton(
+                text = stringResource(R.string.recurring_confirm),
+                onClick = { if (cents > 0L) onConfirm(cents) },
+            )
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
 }

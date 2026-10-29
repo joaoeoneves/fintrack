@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,8 +27,9 @@ import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.anchorMonth
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackMenuItem
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.Instant
 import java.time.ZoneId
 
@@ -155,24 +153,15 @@ private fun PeriodMenuButton(
             )
             Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.cd_change_period))
         }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            shape = MaterialTheme.shapes.medium,
-            containerColor = FinTrackTheme.colors.surface2,
-        ) {
+        FinTrackDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.label()) },
+                FinTrackMenuItem(
+                    text = option.label(),
                     onClick = {
                         expanded = false
                         onOptionSelected(option)
                     },
-                    trailingIcon = {
-                        if (option == selectedOption) {
-                            Icon(Icons.Default.Check, contentDescription = null)
-                        }
-                    },
+                    selected = option == selectedOption,
                 )
             }
         }

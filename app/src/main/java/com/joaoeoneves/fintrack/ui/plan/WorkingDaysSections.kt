@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -105,7 +104,10 @@ fun WorkingDaysDialog(
                     color = FinTrackTheme.colors.textSecondary,
                 )
                 if (override != null) {
-                    TextButton(onClick = { override = null }) { Text(stringResource(R.string.plan_working_days_reset)) }
+                    DialogTextButton(
+                        text = stringResource(R.string.plan_working_days_reset),
+                        onClick = { override = null },
+                    )
                 }
                 DaysOffFields(
                     daysOff = daysOff,
@@ -114,12 +116,13 @@ fun WorkingDaysDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            DialogTextButton(
+                text = stringResource(R.string.action_save),
                 onClick = {
                     onSave(state.month, override?.takeIf { it != automatic }, daysOff)
                     onDismiss()
                 },
-            ) { Text(stringResource(R.string.action_save)) }
+            )
         },
         dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
     )
