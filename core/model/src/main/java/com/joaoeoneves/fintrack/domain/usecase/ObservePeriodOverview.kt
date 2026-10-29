@@ -32,6 +32,7 @@ import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
@@ -77,26 +78,28 @@ class ObservePeriodOverview
                 ) { overview, shift -> overview.copy(shiftPreference = shift) }
             // The month before each range: a salary paid at its end funds the first month of the range.
             val monthHistory = transactionRepository.observeTransactions(budgetRange.monthBefore(zone))
-            // The same month before (the period is the budget month): share one listener instead of opening two.
-            val periodHistory =
+            // When both "month before" ranges are the same one listener serves both (collecting a cold flow twice
+            // would open two Firestore listeners).
+            val past =
                 if (range.monthBefore(zone) == budgetRange.monthBefore(zone)) {
-                    monthHistory
+                    monthHistory.map { it to it }
                 } else {
-                    transactionRepository.observeTransactions(range.monthBefore(zone))
+                    val periodHistory = transactionRepository.observeTransactions(range.monthBefore(zone))
+                    combine(monthHistory, periodHistory) { month, period -> month to period }
                 }
             return if (range.encloses(budgetRange)) {
-                combine(transactions, monthHistory, periodHistory, inputs) { tx, past, periodPast, plan ->
+                combine(transactions, past, inputs) { tx, (pastMonth, periodPast), plan ->
                     val month =
                         tx.copy(
                             expenses = tx.expenses.filter { it.date in budgetRange },
                             income = tx.income.filter { it.date in budgetRange },
                         )
-                    val all = OverviewTransactions(tx, month, past, periodPast, zone)
+                    val all = OverviewTransactions(tx, month, pastMonth, periodPast, zone)
                     overviewOf(budgetMonth, all, plan, recentLimit, range)
                 }
             } else {
                 val monthTransactions = transactionRepository.observeTransactions(budgetRange)
-                combine(transactions, monthTransactions, monthHistory, periodHistory, inputs) { tx, mo, ps, pp, plan ->
+                combine(transactions, monthTransactions, past, inputs) { tx, mo, (ps, pp), plan ->
                     val all = OverviewTransactions(tx, mo, ps, pp, zone)
                     overviewOf(budgetMonth, all, plan, recentLimit, range)
                 }
