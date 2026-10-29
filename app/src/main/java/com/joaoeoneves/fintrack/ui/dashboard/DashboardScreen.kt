@@ -1,11 +1,9 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -21,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.common.ErrorState
 import com.joaoeoneves.fintrack.ui.common.OnResumeEffect
 import com.joaoeoneves.fintrack.ui.common.TabScaffold
@@ -29,9 +26,6 @@ import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
-import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxCard
-import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxModel
-import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxUiState
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
 import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
@@ -47,7 +41,6 @@ import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 
 private val SectionSpacing = Dimens.SectionGap
 
@@ -230,6 +223,7 @@ private fun DashboardContent(
         startItems(start = actions.blocks.start)
         reviewItems(review = actions.blocks.review, visible = state.showsCurrentMonthBlocks)
         summaryItems(state = state, callbacks = callbacks)
+        quickAddItems(blocks = actions.blocks, visible = state.showsCurrentMonthBlocks, callbacks = callbacks)
         item(key = "upcoming") {
             ScreenItem {
                 UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
@@ -238,42 +232,6 @@ private fun DashboardContent(
         activityItems(state = state, callbacks = callbacks)
     }
 }
-
-/** A list item padded to the screen margin, with the standard reorder animation. */
-@Composable
-private fun LazyItemScope.ScreenItem(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = motionAnimateItem(Modifier.padding(horizontal = Dimens.ScreenPadding).then(modifier)),
-    ) { content() }
-}
-
-private fun LazyListScope.startItems(start: StartChecklistModel) {
-    if (start.state is StartChecklistUiState.Visible) {
-        item(key = "start_checklist") {
-            ScreenItem(Modifier.padding(top = Dimens.Space8)) {
-                StartChecklistCard(state = start.state, onOpenStep = start.onOpenStep, onDismiss = start.onDismiss)
-            }
-        }
-    }
-}
-
-private fun LazyListScope.reviewItems(
-    review: ReviewInboxModel,
-    visible: Boolean,
-) {
-    if (visible && review.state is ReviewInboxUiState.Visible) {
-        item(key = "review_inbox") {
-            ScreenItem(Modifier.padding(top = SectionSpacing)) { ReviewInboxCard(state = review.state, model = review) }
-        }
-    }
-}
-
-/** The review, quick-add and recurring-suggestion blocks only make sense for the current month. */
-private val DashboardUiState.Content.showsCurrentMonthBlocks: Boolean
-    get() = period !is Period.Year && budgetMonthIsCurrent
 
 private fun LazyListScope.summaryItems(
     state: DashboardUiState.Content,

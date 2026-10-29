@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.domain.model.QuickAddSuggestion
 import com.joaoeoneves.fintrack.domain.model.StartStep
 
 /**
@@ -29,4 +30,6 @@ data class DashboardCallbacks(
     val onOpenSpendingTab: (Period) -> Unit = {},
     /** Opens the investments page on the given period (the "Invested" row). */
     val onOpenInvestments: (Period) -> Unit = {},
+    /** Opens the new-expense form prefilled from a quick-add chip; never saves directly. */
+    val onQuickAdd: (QuickAddSuggestion) -> Unit = {},
 )

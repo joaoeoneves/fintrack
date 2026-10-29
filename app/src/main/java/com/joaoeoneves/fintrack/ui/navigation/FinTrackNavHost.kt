@@ -86,6 +86,15 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenInvestments = { period -> navController.navigate(InvestmentDetail(period.encode())) },
                         onOpenRecurring = { navController.navigate(RecurringList) },
                         onOpenStartStep = { step -> navController.navigate(routeForStartStep(step)) },
+                        onQuickAdd = { chip ->
+                            navController.navigate(
+                                AddEditExpense(
+                                    prefillName = chip.name,
+                                    prefillAmountCents = chip.amountCents,
+                                    prefillCategoryId = chip.categoryId.value,
+                                ),
+                            )
+                        },
                     ),
             )
         }
