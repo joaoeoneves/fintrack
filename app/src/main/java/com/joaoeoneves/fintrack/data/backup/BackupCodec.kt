@@ -97,6 +97,8 @@ object BackupCodec {
         // 16 -> 17 recurring skipped/pausedAt (absent = empty / none).
         // 17 -> 18 automation salaryPaysNextMonth (absent = not chosen).
         // 18 -> 19 plan startMonth / versions (absent = the earliest month with data, see upgradedToStartMonths).
+        // 19 -> 20 salaryProfile sector/mealPayment/otherDeductionsPpm, plannedIncome payDayEarlierIfClosed, expense
+        // paidWithMealCard and category mealCardByDefault (absent = private / card / 0 / off / off / off).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.upgradedToStartMonths())
             BACKUP_SCHEMA_VERSION -> sanitize(document)

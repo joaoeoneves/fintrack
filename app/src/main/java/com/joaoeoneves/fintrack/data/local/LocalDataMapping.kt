@@ -43,6 +43,7 @@ internal fun LocalExpense.toDomainOrNull(): Expense? =
             date = instant,
             note = note,
             isRefund = isRefund,
+            paidWithMealCard = paidWithMealCard,
         )
     }
 
@@ -55,6 +56,7 @@ internal fun Expense.toLocal(): LocalExpense =
         date = date.toString(),
         note = note,
         isRefund = isRefund,
+        paidWithMealCard = paidWithMealCard,
     )
 
 internal fun LocalIncome.toDomainOrNull(): Income? =
@@ -107,6 +109,7 @@ internal fun LocalCategory.toDomainOrNull(): Category? {
         archived = archived,
         builtIn = builtIn != null,
         groupId = groupId?.takeIf { it.isNotBlank() },
+        mealCardByDefault = mealCardByDefault,
     )
 }
 
@@ -120,6 +123,7 @@ internal fun Category.toLocal(): LocalCategory =
         order = order,
         archived = archived,
         groupId = groupId,
+        mealCardByDefault = mealCardByDefault,
     )
 
 /** The merged catalog (built-ins plus stored categories), never empty. */

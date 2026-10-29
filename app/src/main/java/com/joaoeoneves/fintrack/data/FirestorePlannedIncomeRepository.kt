@@ -100,6 +100,7 @@ private fun PlannedIncome.automationFields(): Map<String, Any?> =
     buildMap {
         if (autoRecord) put("autoRecord", true)
         payDay?.let { put("payDay", it) }
+        if (payDayEarlierIfClosed) put("payDayEarlierIfClosed", true)
     }
 
 private fun QuerySnapshot.toPlannedIncomeList(): List<PlannedIncome> =
@@ -132,6 +133,7 @@ private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
                 managedKey = getString("managedKey"),
                 autoRecord = getBoolean("autoRecord") ?: false,
                 payDay = getLong("payDay")?.toInt()?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
+                payDayEarlierIfClosed = getBoolean("payDayEarlierIfClosed") ?: false,
                 startMonth = startMonthOrNull(),
                 versions = versionsOrEmpty(),
             )

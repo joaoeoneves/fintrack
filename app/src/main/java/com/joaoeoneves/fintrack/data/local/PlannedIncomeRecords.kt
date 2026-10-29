@@ -29,6 +29,7 @@ internal fun LocalPlannedIncome.toDomain(): PlannedIncome =
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
+        payDayEarlierIfClosed = payDayEarlierIfClosed,
         startMonth = startMonth.toYearMonthOrNull(),
         versions = versions.toDomainVersions(),
     )
@@ -47,6 +48,7 @@ internal fun PlannedIncome.toLocal(): LocalPlannedIncome =
         managedKey = managedKey,
         autoRecord = autoRecord,
         payDay = payDay,
+        payDayEarlierIfClosed = payDayEarlierIfClosed,
         startMonth = startMonth?.toString(),
         versions = versions.toLocalVersions(),
     )

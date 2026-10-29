@@ -300,6 +300,7 @@ internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?
             // Always written (including false) so an update that turns a refund back into a regular
             // expense clears the flag.
             "isRefund" to isRefund,
+            "paidWithMealCard" to paidWithMealCard,
             "updatedAt" to FieldValue.serverTimestamp(),
         )
     if (includeCreatedAt) {
@@ -324,6 +325,7 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
     val date = getTimestamp("date")
     val note = getString("note")
     val isRefund = get("isRefund") as? Boolean ?: false
+    val paidWithMealCard = get("paidWithMealCard") as? Boolean ?: false
 
     return when {
         name == null -> {
@@ -351,6 +353,7 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
                 date = Instant.ofEpochSecond(date.seconds, date.nanoseconds.toLong()),
                 note = note,
                 isRefund = isRefund,
+                paidWithMealCard = paidWithMealCard,
             )
     }
 }
