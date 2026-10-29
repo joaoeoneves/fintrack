@@ -781,4 +781,14 @@
     <string name="effective_from_title">Válido desde</string>
     <string name="effective_from_history">%1$s até %2$s</string>
     <string name="salary_shift_effective_note">O salário recebido no fim de %1$s conta para %2$s</string>
+    <string name="detail_vs_average">%1$s vs média</string>
+    <string name="detail_edit">Editar</string>
+    <string name="detail_no_movements">Sem movimentos</string>
+    <string name="detail_not_found">Este item já não existe.</string>
+    <string name="detail_context_envelope">Em: %1$s</string>
+    <string name="detail_context_no_envelope">Sem envelope</string>
+    <string name="detail_context_limit">Limite %1$s</string>
+    <string name="detail_context_next_month">Conta para o mês seguinte</string>
+    <string name="detail_context_expected">Esperado %1$s</string>
+    <string name="detail_source_unknown">Rendimento</string>
 </resources>

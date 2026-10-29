@@ -764,4 +764,14 @@
     <string name="effective_from_title">Valid from</string>
     <string name="effective_from_history">%1$s until %2$s</string>
     <string name="salary_shift_effective_note">The salary received at the end of %1$s counts for %2$s</string>
+    <string name="detail_vs_average">%1$s vs average</string>
+    <string name="detail_edit">Edit</string>
+    <string name="detail_no_movements">No movements</string>
+    <string name="detail_not_found">This item no longer exists.</string>
+    <string name="detail_context_envelope">In: %1$s</string>
+    <string name="detail_context_no_envelope">No envelope</string>
+    <string name="detail_context_limit">Limit %1$s</string>
+    <string name="detail_context_next_month">Counts for the next month</string>
+    <string name="detail_context_expected">Expected %1$s</string>
+    <string name="detail_source_unknown">Income</string>
 </resources>

@@ -69,8 +69,11 @@ data class AddEditIncome(
 @Serializable
 object Settings
 
+/** The categories list; a non-null [editId] opens that category's editor once, on arrival. */
 @Serializable
-object Categories
+data class Categories(
+    val editId: String? = null,
+)
 
 @Serializable
 object RecurringList
@@ -109,6 +112,26 @@ object SalarySetup
 @Serializable
 data class AddEditRecurring(
     val recurringId: String? = null,
+)
+
+/**
+ * A category's detail page: 12 months of spending and the movements of one month. [period] is an encoded `Period`
+ * token (the month shown first).
+ */
+@Serializable
+data class CategoryDetail(
+    val categoryId: String,
+    val period: String,
+)
+
+/**
+ * An income source's detail page. [sourceKey] is `IncomeSourceKey.encode()`; [period] an encoded `Period` token
+ * (the month shown first).
+ */
+@Serializable
+data class IncomeSourceDetail(
+    val sourceKey: String,
+    val period: String,
 )
 
 /** [Activity.type] token selecting income; any other value (or none) means expenses. */
