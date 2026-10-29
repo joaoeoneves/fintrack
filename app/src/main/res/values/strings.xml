@@ -728,4 +728,5 @@
     <string name="home_recurring_suggestion_accept">Create recurring</string>
     <string name="home_recurring_suggestion_dismiss">Dismiss</string>
     <string name="home_recurring_suggestion_dismissed">Suggestion dismissed</string>
+    <string name="income_meal_card_no_allowance">No meal allowance received in %1$s</string>
 </resources>

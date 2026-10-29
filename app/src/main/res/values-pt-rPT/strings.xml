@@ -742,4 +742,5 @@
     <string name="home_recurring_suggestion_accept">Criar recorrente</string>
     <string name="home_recurring_suggestion_dismiss">Ignorar</string>
     <string name="home_recurring_suggestion_dismissed">Sugestão ignorada</string>
+    <string name="income_meal_card_no_allowance">Sem subsídio de refeição recebido em %1$s</string>
 </resources>
