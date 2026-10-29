@@ -292,6 +292,7 @@
     <string name="backup_error_read">Couldn\'t read the selected file</string>
     <string name="backup_error_write">Couldn\'t write the backup file</string>
     <string name="backup_error_export_failed">Couldn\'t create the backup</string>
+    <string name="backup_error_export_offline">Couldn\'t reach the server. Connect and try again; nothing was exported.</string>
     <string name="backup_error_restore_failed">Couldn\'t restore the backup. Your current data was not changed.</string>
     <plurals name="backup_restore_skipped">
         <item quantity="one">%d invalid record in the file will be skipped.</item>
@@ -705,4 +706,5 @@
     <string name="income_outlook_expected">Expected</string>
     <string name="income_outlook_total">Total for the year</string>
     <string name="income_outlook_total_detail">Received %1$s · expected %2$s</string>
+    <string name="error_write_rejected">Couldn\'t save to the server: %1$s</string>
 </resources>

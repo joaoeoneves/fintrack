@@ -97,7 +97,8 @@ private fun grossBreakdown(
         otherDeductionsCents = other.cents(),
         irsBaseCents = irsBase.cents(),
         irsSubsidiesCents = irsSubs.cents(),
-        irsCents = irs.cents(),
+        // The shown rows add up: IRS is what is left of the rounded gross after the rounded SS, other and net.
+        irsCents = gross.cents() - ss.cents() - other.cents() - netMonthly,
         netMonthlyCents = netMonthly,
         netBaseCents = netBase,
         netDuoCents = netMonthly - netBase,

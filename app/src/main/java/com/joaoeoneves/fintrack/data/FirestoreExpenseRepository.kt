@@ -93,7 +93,7 @@ class FirestoreExpenseRepository
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when
                 // the device is online. Awaiting would suspend until server acknowledgement, which
                 // hangs the save indefinitely while offline.
-                docRef.set(data).addOnFailureListener { Log.w(TAG, "Add expense write ${docRef.id} failed", it) }
+                docRef.set(data).addOnFailureListener(onFail(TAG, "Add expense write ${docRef.id} failed"))
                 Result.success(docRef.id)
             } catch (e: CancellationException) {
                 throw e
@@ -112,7 +112,7 @@ class FirestoreExpenseRepository
                 val data = expense.toFirestoreMap(includeCreatedAt = false)
                 val docRef = expensesCollection(uid).document(expense.id)
                 // Not awaited: see addExpense above.
-                docRef.update(data).addOnFailureListener { Log.w(TAG, "Update expense write ${docRef.id} failed", it) }
+                docRef.update(data).addOnFailureListener(onFail(TAG, "Update expense write ${docRef.id} failed"))
                 Result.success(Unit)
             } catch (e: CancellationException) {
                 throw e
@@ -129,7 +129,7 @@ class FirestoreExpenseRepository
             return try {
                 val docRef = expensesCollection(uid).document(id)
                 // Not awaited (see addExpense above); deleting a missing document is a no-op.
-                docRef.delete().addOnFailureListener { Log.w(TAG, "Delete expense write ${docRef.id} failed", it) }
+                docRef.delete().addOnFailureListener(onFail(TAG, "Delete expense write ${docRef.id} failed"))
                 Result.success(Unit)
             } catch (e: CancellationException) {
                 throw e

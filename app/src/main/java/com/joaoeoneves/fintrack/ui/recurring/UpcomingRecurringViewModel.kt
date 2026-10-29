@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
 import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "UpcomingRecurringVM"
@@ -61,6 +64,7 @@ data class RecurringUndo(
     val itemName: String,
     val date: LocalDate,
     val previousHandledThrough: LocalDate?,
+    val type: RecurringType = RecurringType.EXPENSE,
 ) {
     enum class Kind { CONFIRMED, SKIPPED }
 }
@@ -136,7 +140,12 @@ class UpcomingRecurringViewModel
                 val result =
                     when (undo.kind) {
                         RecurringUndo.Kind.CONFIRMED ->
-                            undoRecurringOccurrence.undoConfirm(undo.itemId, undo.date, undo.previousHandledThrough)
+                            undoRecurringOccurrence.undoConfirm(
+                                undo.itemId,
+                                undo.date,
+                                undo.previousHandledThrough,
+                                undo.type,
+                            )
                         RecurringUndo.Kind.SKIPPED ->
                             undoRecurringOccurrence.undoSkip(undo.itemId, undo.date, undo.previousHandledThrough)
                     }
@@ -156,29 +165,34 @@ class UpcomingRecurringViewModel
             // The row is paid this month or last: it is recorded under the month it is paid in.
             val payMonth = expected.entries.firstOrNull { it.row == row }?.month ?: expected.month
             val byPayMonth = row.payingLinesByPayMonth(payMonth, expected.incomeMonth)
-            viewModelScope.launch {
-                for ((month, lines) in byPayMonth) {
-                    val request =
-                        ReceiveRequest(
-                            lines = lines,
-                            month = month,
-                            workingDays = expected.incomeMonth.workingDays(month),
-                            date = date,
-                            today = content.today,
-                            zone = clock.zone,
-                            amountOverrideCents = amountCents,
-                        )
-                    val failure = recordPayday.receive(request).exceptionOrNull()
-                    if (failure != null) {
-                        Log.w(TAG, "Failed to record the received income", failure)
-                        errors.send(UiText.StringResource(R.string.error_plan_save_failed))
-                        break
-                    }
-                }
-            }
-            return {
+            // What the receive wrote, so the undo takes back exactly that (and waits for the receive to finish).
+            val written = mutableListOf<Pair<YearMonth, List<PlannedIncome>>>()
+            val receiveJob =
                 viewModelScope.launch {
                     for ((month, lines) in byPayMonth) {
+                        val request =
+                            ReceiveRequest(
+                                lines = lines,
+                                month = month,
+                                workingDays = expected.incomeMonth.workingDays(month),
+                                date = date,
+                                today = content.today,
+                                zone = clock.zone,
+                                amountOverrideCents = amountCents,
+                            )
+                        val failure = recordPayday.receive(request).exceptionOrNull()
+                        if (failure != null) {
+                            Log.w(TAG, "Failed to record the received income", failure)
+                            errors.send(UiText.StringResource(R.string.error_plan_save_failed))
+                            break
+                        }
+                        written += month to lines
+                    }
+                }
+            return {
+                viewModelScope.launch {
+                    receiveJob.join()
+                    for ((month, lines) in written.toList()) {
                         val failure = recordPayday.unreceive(lines, month).exceptionOrNull()
                         if (failure != null) {
                             Log.w(TAG, "Failed to undo the received income", failure)
@@ -206,4 +220,7 @@ class UpcomingRecurringViewModel
         }
     }
 
-private fun UpcomingOccurrence.undo(kind: Kind) = RecurringUndo(kind, item.id, item.name, date, item.handledThrough)
+private fun UpcomingOccurrence.undo(kind: Kind): RecurringUndo {
+    val handled = item.handledThrough
+    return RecurringUndo(kind, item.id, item.name, date, handled, item.type)
+}

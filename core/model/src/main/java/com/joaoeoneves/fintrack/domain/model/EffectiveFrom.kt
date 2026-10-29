@@ -24,18 +24,22 @@ fun List<AmountVersion>.amountAt(
 }
 
 /**
- * [versions] with a new version ([from], [amount]) added: versions starting at or after [from] are dropped,
- * the result is sorted by month and, above [cap], the oldest versions are dropped.
+ * [versions] with the version ([from], [amount]) set: the version at exactly [from] is replaced, the others (also
+ * later ones) are kept, sorted by month. Above [cap] the oldest versions are folded into one floor version that
+ * starts at the oldest dropped month and keeps the amount of the newest dropped one, so older months keep an
+ * amount that applied to them instead of falling back to the latest.
  */
 fun withVersion(
     versions: List<AmountVersion>,
     from: YearMonth,
     amount: Long?,
     cap: Int = MAX_AMOUNT_VERSIONS,
-): List<AmountVersion> =
-    (versions.filter { it.from < from } + AmountVersion(from, amount))
-        .sortedBy { it.from }
-        .takeLast(cap)
+): List<AmountVersion> {
+    val sorted = (versions.filter { it.from != from } + AmountVersion(from, amount)).sortedBy { it.from }
+    if (sorted.size <= cap) return sorted
+    val dropped = sorted.take(sorted.size - cap + 1)
+    return listOf(AmountVersion(dropped.first().from, dropped.last().amountCents)) + sorted.drop(dropped.size)
+}
 
 /** The month an item with no start month is treated as starting in when its first version is seeded. */
 val EARLIEST_MONTH: YearMonth = YearMonth.of(EARLIEST_YEAR, 1)

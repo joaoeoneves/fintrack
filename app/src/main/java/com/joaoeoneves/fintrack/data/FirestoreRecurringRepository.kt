@@ -67,7 +67,7 @@ class FirestoreRecurringRepository
                 // the device is online. Awaiting would hang indefinitely while offline.
                 docRef
                     .set(item.toFirestoreMap())
-                    .addOnFailureListener { Log.w(TAG, "Save recurring write ${docRef.id} failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Save recurring write ${docRef.id} failed"))
                 docRef.id
             }
         }
@@ -79,7 +79,7 @@ class FirestoreRecurringRepository
                 collection(uid)
                     .document(id)
                     .delete()
-                    .addOnFailureListener { Log.w(TAG, "Delete recurring failed: $id", it) }
+                    .addOnFailureListener(onFail(TAG, "Delete recurring failed: $id"))
                 Unit
             }
         }
@@ -119,7 +119,7 @@ class FirestoreRecurringRepository
                 collection(uid)
                     .document(id)
                     .update(handledThroughUpdate(date))
-                    .addOnFailureListener { Log.w(TAG, "Set handledThrough failed: $id", it) }
+                    .addOnFailureListener(onFail(TAG, "Set handledThrough failed: $id"))
                 Unit
             }
         }
@@ -155,7 +155,7 @@ class FirestoreRecurringRepository
                 collection(uid)
                     .document(itemId)
                     .update(changes)
-                    .addOnFailureListener { Log.w(TAG, "Update skipped occurrences failed: $itemId", it) }
+                    .addOnFailureListener(onFail(TAG, "Update skipped occurrences failed: $itemId"))
                 Unit
             }
         }
@@ -179,7 +179,7 @@ class FirestoreRecurringRepository
                 // Not awaited (see saveRecurring): the batch is applied to the local cache at once.
                 batch
                     .commit()
-                    .addOnFailureListener { Log.w(TAG, "Confirm occurrence $itemId/$occurrence failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Confirm occurrence $itemId/$occurrence failed"))
                 transaction.id
             }
         }

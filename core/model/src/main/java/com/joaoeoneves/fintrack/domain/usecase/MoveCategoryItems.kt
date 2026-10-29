@@ -2,12 +2,15 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.di.IoDispatcher
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -21,8 +24,10 @@ data class CategoryMovePreview(
     val recurringCount: Int,
     val hasBudget: Boolean,
     val targetHasBudget: Boolean,
+    /** Savings goals linked to the category (their link moves too). */
+    val goalCount: Int = 0,
 ) {
-    val isEmpty: Boolean get() = expenseCount == 0 && recurringCount == 0 && !hasBudget
+    val isEmpty: Boolean get() = expenseCount == 0 && recurringCount == 0 && !hasBudget && goalCount == 0
 }
 
 /** What a move changed; [budgetMoved] is whether the source had a budget (merged per the target's rule). */
@@ -30,6 +35,7 @@ data class CategoryMoveResult(
     val expenseCount: Int,
     val recurringCount: Int,
     val budgetMoved: Boolean,
+    val goalCount: Int = 0,
 )
 
 /**
@@ -46,6 +52,8 @@ class MoveCategoryItems
         private val budgetRepository: BudgetRepository,
         private val recurringRepository: RecurringRepository,
         @param:IoDispatcher private val dispatcher: CoroutineDispatcher,
+        // Last, with a no-goals default for callers that build the use case by hand; Hilt always injects the real one.
+        private val goalRepository: GoalRepository = NoGoalRepository,
     ) {
         /** Counts what moving [source] (optionally into [target]) would touch. */
         suspend fun preview(
@@ -61,6 +69,7 @@ class MoveCategoryItems
                         recurringCount = recurring.count { it.categoryId == source },
                         hasBudget = budgets.any { it.categoryId == source },
                         targetHasBudget = target != null && budgets.any { it.categoryId == target },
+                        goalCount = goalRepository.observeGoals().first().count { it.linkedCategoryId == source },
                     )
                 }
             }
@@ -75,10 +84,29 @@ class MoveCategoryItems
                     val expenses = expenseRepository.moveExpensesToCategory(source, target).getOrThrow()
                     val recurring = recurringRepository.moveRecurringCategory(source, target).getOrThrow()
                     val budget = budgetRepository.moveBudget(source, target).getOrThrow()
-                    CategoryMoveResult(expenses, recurring, budget)
+                    val goals = moveGoalLinks(source, target)
+                    CategoryMoveResult(expenses, recurring, budget, goals)
                 }
             }
+
+        /** Points the goals linked to [source] at [target]; returns how many. Stops at the first failure. */
+        private suspend fun moveGoalLinks(
+            source: CategoryId,
+            target: CategoryId,
+        ): Int {
+            val linked = goalRepository.observeGoals().first().filter { it.linkedCategoryId == source }
+            linked.forEach { goalRepository.saveGoal(it.copy(linkedCategoryId = target)).getOrThrow() }
+            return linked.size
+        }
     }
+
+private object NoGoalRepository : GoalRepository {
+    override fun observeGoals() = flowOf(emptyList<SavingsGoal>())
+
+    override suspend fun saveGoal(goal: SavingsGoal): Result<String> = Result.success(goal.id)
+
+    override suspend fun deleteGoal(id: String): Result<Unit> = Result.success(Unit)
+}
 
 /** Like [runCatching] but rethrows cancellation instead of capturing it. */
 private inline fun <T> catching(block: () -> T): Result<T> {

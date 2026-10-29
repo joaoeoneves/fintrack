@@ -61,7 +61,7 @@ class FirestoreSalaryProfileRepository
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when online.
                 docRef(uid)
                     .set(profile.toFirestoreMap())
-                    .addOnFailureListener { Log.w(TAG, "Save salary profile failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Save salary profile failed"))
                 Unit
             }
         }
@@ -69,7 +69,7 @@ class FirestoreSalaryProfileRepository
         override suspend fun deleteSalaryProfile(): Result<Unit> {
             val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
             return runCatchingCancellable {
-                docRef(uid).delete().addOnFailureListener { Log.w(TAG, "Delete salary profile failed", it) }
+                docRef(uid).delete().addOnFailureListener(onFail(TAG, "Delete salary profile failed"))
                 Unit
             }
         }

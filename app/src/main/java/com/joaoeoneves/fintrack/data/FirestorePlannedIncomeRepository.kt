@@ -57,7 +57,7 @@ class FirestorePlannedIncomeRepository
                 // the device is online. Awaiting would hang indefinitely while offline.
                 docRef
                     .set(line.toFirestoreMap())
-                    .addOnFailureListener { Log.w(TAG, "Save planned income write ${docRef.id} failed", it) }
+                    .addOnFailureListener(onFail(TAG, "Save planned income write ${docRef.id} failed"))
                 docRef.id
             }
         }
@@ -67,7 +67,7 @@ class FirestorePlannedIncomeRepository
             return runCatchingCancellable {
                 val docRef = collection(uid).document(id)
                 // Not awaited (see savePlannedIncome); deleting a missing document is a no-op.
-                docRef.delete().addOnFailureListener { Log.w(TAG, "Delete planned income failed: $id", it) }
+                docRef.delete().addOnFailureListener(onFail(TAG, "Delete planned income failed: $id"))
                 Unit
             }
         }
