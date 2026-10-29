@@ -15,8 +15,8 @@ import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
-import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
+import com.joaoeoneves.fintrack.domain.model.asOf
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
@@ -199,6 +199,7 @@ class MonthlyPlanViewModel
                             today = content.receipts.today,
                             zone = clock.zone,
                             amountOverrideCents = amountCents,
+                            planMonth = content.workingDays.month,
                         )
                     val result = recordPayday.receive(request)
                     if (result.isFailure) {
@@ -374,9 +375,10 @@ private fun configureOf(
     // A savings plan's monthly item is the plan's, not a bill.
     val today = overview.budgetMonth.atDay(1)
     val bills = billsOf(overview.recurring, goals).filter { it.active && !it.isEnded(today) }
-    val regular = lines.filterNot { it.isExtra }
+    val funding = IncomeFunding.unshifted(overview.budgetMonth, workingDays)
+    val regular = lines.asOf(overview.budgetMonth).filterNot { it.isExtra }
     return ConfigureStatus(
-        incomeMonthlyCents = regular.sumOf { it.amountIn(overview.budgetMonth, workingDays) },
+        incomeMonthlyCents = regular.sumOf { funding.amountIn(it, overview.budgetMonth) },
         incomeLineCount = regular.size,
         envelopeCount = overview.envelopes.envelopes.size,
         billCount = bills.size,

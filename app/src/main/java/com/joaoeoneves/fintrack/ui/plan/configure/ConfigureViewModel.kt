@@ -4,10 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.domain.model.Envelope
+import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
-import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
+import com.joaoeoneves.fintrack.domain.model.asOf
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.isEnded
@@ -83,11 +84,12 @@ class ConfigureViewModel
                 val days = effectiveWorkingDays(month, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
                 // A savings plan's monthly item is the plan's, not a bill.
                 val bills = billsOf(recurringList, goals).filter { it.active && !it.isEnded(LocalDate.now(clock)) }
-                val regular = lines.filterNot { it.isExtra }
+                val funding = IncomeFunding.unshifted(month, days)
+                val regular = lines.asOf(month).filterNot { it.isExtra }
                 ConfigureStatus(
-                    incomeMonthlyCents = regular.sumOf { it.amountIn(month, days) },
+                    incomeMonthlyCents = regular.sumOf { funding.amountIn(it, month) },
                     incomeLineCount = regular.size,
-                    envelopeCount = envelopeList.size,
+                    envelopeCount = envelopeList.asOf(month).size,
                     billCount = bills.size,
                     billsMonthlyCents =
                         monthlyEquivalentCents(annualizedCents(bills, RecurringType.EXPENSE, LocalDate.now(clock))),
