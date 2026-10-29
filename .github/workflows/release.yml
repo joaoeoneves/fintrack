@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  checks: read
 
 jobs:
   release:
@@ -38,6 +39,25 @@ jobs:
             echo "VERSION_NAME=${major}.${minor}"
             echo "VERSION_CODE=$((10#$major * 100 + 10#$minor))"
           } >> "$GITHUB_ENV"
+
+      # CI (ci.yml, job "build") already ran ktlint, detekt, lint and the unit tests on this exact commit; the release
+      # only checks that it passed (waiting while it still runs) instead of running them a second time.
+      - name: Require green CI on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for _ in $(seq 1 60); do
+            run=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?check_name=build" \
+              --jq '.check_runs | sort_by(.started_at) | last | "\(.status) \(.conclusion)"')
+            case "$run" in
+              "completed success") echo "CI passed on $GITHUB_SHA"; exit 0 ;;
+              completed*) echo "::error::CI on $GITHUB_SHA did not pass ($run)"; exit 1 ;;
+              "null null") echo "::error::No CI run found for $GITHUB_SHA; release a commit that went through CI"; exit 1 ;;
+              *) echo "CI still running ($run), waiting…"; sleep 60 ;;
+            esac
+          done
+          echo "::error::Timed out waiting for CI on $GITHUB_SHA"
+          exit 1
 
       - name: Set up JDK 21
         uses: actions/setup-java@v6
@@ -79,9 +99,9 @@ jobs:
             echo "FINTRACK_KEY_PASSWORD=$KS_KEY_PASSWORD"
           } >> "$GITHUB_ENV"
 
-      - name: Test, lint and build signed release
+      - name: Build signed release
         run: >
-          ./gradlew testDebugUnitTest lintDebug assembleRelease
+          ./gradlew assembleRelease
           -PversionName="$VERSION_NAME" -PversionCode="$VERSION_CODE"
 
       - name: Verify APK signature
