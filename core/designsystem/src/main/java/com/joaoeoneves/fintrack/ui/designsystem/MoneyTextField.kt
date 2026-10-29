@@ -57,6 +57,7 @@ fun MoneyTextField(
     isError: Boolean = false,
     supportingText: String? = null,
     maxCents: Long = MAX_AMOUNT_CENTS,
+    emptyText: String? = null,
 ) {
     val locale = currentLocale()
     val symbols = remember(locale) { moneySymbolsFor(locale) }
@@ -69,7 +70,7 @@ fun MoneyTextField(
         label = label,
         visualTransformation = transformation,
         isError = isError,
-        placeholder = { Text(formatCentsGrouped(0L, symbols)) },
+        placeholder = { Text(emptyText ?: formatCentsGrouped(0L, symbols)) },
         supportingText = supportingText?.let { { Text(it) } },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Next),
         modifier =

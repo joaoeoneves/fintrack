@@ -316,6 +316,7 @@ private fun MemberRow(
                 cents = member.limitCents ?: 0L,
                 onCentsChange = { onLimitChange(it.takeIf { cents -> cents > 0L }) },
                 label = name,
+                emptyText = stringResource(R.string.envelope_no_limit),
                 modifier = Modifier.width(LimitFieldWidth),
             )
         }

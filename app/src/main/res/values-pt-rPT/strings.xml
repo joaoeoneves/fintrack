@@ -769,4 +769,5 @@
     <string name="settings_show_start">Mostrar Começar</string>
     <string name="home_start_dismissed">Começar escondido</string>
     <string name="recurring_deleted">Recorrente eliminado; os movimentos passados ficam</string>
+    <string name="envelope_no_limit">Sem limite</string>
 </resources>
