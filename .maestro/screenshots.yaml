@@ -7,7 +7,7 @@ appId: com.joaoeoneves.fintrack
 # reset with wm size reset / wm density reset) with SystemUI demo mode on (clock 12:00, full battery, wifi,
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
-# Captures: home, activity (summary header, unscrolled), plan, plan-income, savings, add-expense.
+# Captures: home, activity (period selector + summary line, unscrolled), plan, plan-income, savings, add-expense.
 # Money inputs are cash-register style: digits only ("6420" = 64.20). `back` closes only the IME when
 # it is up; Save is tapped directly.
 
@@ -295,7 +295,7 @@ appId: com.joaoeoneves.fintrack
     visible:
       id: "activity_list"
     timeout: 10000
-# Unscrolled: the summary header (Spent, Fixed vs variable) is fully visible; the add pill only overlaps
+# Unscrolled: the period selector, the one-line "Spent X · Received Y" summary and the source chips; the add pill only overlaps
 # the category chip row, never a transaction row.
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/activity
