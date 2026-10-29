@@ -127,7 +127,7 @@
     <string name="activity_total_in">Entradas</string>
     <string name="activity_total_out">Saídas</string>
     <string name="activity_spent_total">Gasto</string>
-    <string name="activity_show_breakdown">Por categoria</string>
+    <string name="activity_show_breakdown">Mostrar detalhe</string>
     <string name="activity_hide_breakdown">Ocultar detalhe</string>
     <string name="activity_envelope_all">Todos</string>
     <string name="cd_envelope_bar">Gastos por envelope: %1$s</string>
@@ -247,6 +247,7 @@
     <string name="category_action_archive">Arquivar</string>
     <string name="category_action_unarchive">Desarquivar</string>
     <string name="category_action_delete">Eliminar</string>
+    <string name="category_delete_builtin_hint">Eliminar (predefinida)</string>
     <string name="category_move_up">Mover para cima</string>
     <string name="category_move_down">Mover para baixo</string>
     <string name="cd_category_more_actions">Mais ações para %1$s</string>
@@ -489,7 +490,9 @@
     <string name="cd_more_days_off">Mais dias de folga</string>
     <string name="plan_working_days_edited">%1$d (alterado)</string>
     <string name="plan_working_days_reset">Repor automático</string>
-    <string name="plan_working_days_hint">Substitui a contagem do calendário apenas neste mês.</string>
+    <string name="plan_working_days_hint">Definidos à mão para este mês, por isso as folgas já não os alteram.</string>
+    <string name="plan_working_days_hint_auto">Contados pelo calendário: dias úteis menos feriados e folgas.</string>
+    <string name="plan_working_days_label">Dias úteis</string>
     <string name="cd_fewer_working_days">Menos dias úteis</string>
     <string name="cd_more_working_days">Mais dias úteis</string>
 
@@ -656,11 +659,15 @@
     <string name="envelope_mode_per_category">Por categoria</string>
     <string name="envelope_mode_none">Sem limite</string>
     <string name="envelope_mode_none_hint">Só regista o que gastas</string>
+    <string name="envelope_limits_dropped_hint">Ao guardar, os limites definidos por categoria são removidos.</string>
     <string name="envelope_amount">Valor por mês</string>
     <string name="envelope_categories">Categorias</string>
     <string name="envelope_add_category">Adicionar categoria</string>
+    <string name="envelope_saving_hidden_hint">As categorias de poupança pertencem ao plano de poupança, por isso não aparecem aqui.</string>
     <string name="envelope_in_other">em %1$s</string>
+    <string name="envelope_leaves_other">Sai de %1$s</string>
     <string name="envelope_paid_by">Financiado por</string>
+    <string name="envelope_paid_by_empty">Adiciona um rendimento mensal regular para escolheres o que financia este envelope.</string>
     <string name="envelope_paid_by_none">Nenhum</string>
     <string name="envelope_delete">Eliminar envelope</string>
     <string name="envelope_delete_confirm">Eliminar “%1$s”? As categorias ficam; o envelope e o seu valor são removidos.</string>
@@ -712,7 +719,7 @@
     <string name="home_start_step_bills">Adicionar recorrentes</string>
     <string name="home_start_step_savings">Criar um plano de poupança</string>
     <string name="home_start_step_payday">Escolher o dia de pagamento</string>
-    <string name="home_start_step_payday_hint">Registar automaticamente o rendimento</string>
+    <string name="home_start_step_payday_hint">Escolhe o dia em que o rendimento é registado automaticamente</string>
     <string name="home_start_step_expense">Registar o primeiro gasto</string>
     <string name="salary_setup_title">Configurar salário</string>
     <string name="salary_setup_step">Passo %1$d de %2$d</string>
