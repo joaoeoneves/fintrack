@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.migration
 
+import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -12,8 +13,10 @@ class MigrationPaydayRekeyTest {
             plannedIncomeLabels = setOf("net salary"),
         ).copy(plannedIncomeIdsByLabel = mapOf("net salary" to "acct"))
 
-    private fun docWith(vararg incomes: String) =
-        localDoc(income = incomes.map { localIncome(it) }).copy(plannedIncome = listOf(guestLine))
+    private fun docWith(vararg ids: String): LocalDataDocument {
+        val incomes = ids.map { localIncome(it) }
+        return localDoc(income = incomes).copy(plannedIncome = listOf(guestLine))
+    }
 
     @Test
     fun labelMatchedLine_itsPaydayIncomeIsRekeyedToTheAccountLine() {

@@ -11,8 +11,8 @@ import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.backup.RestoreGate
-import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.usecase.AutoPostRecurring
 import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
