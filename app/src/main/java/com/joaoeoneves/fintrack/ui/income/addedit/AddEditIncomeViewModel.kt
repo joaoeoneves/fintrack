@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
+import com.joaoeoneves.fintrack.ui.common.FormSnapshotStore
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.defaultNewTransactionDate
 import com.joaoeoneves.fintrack.ui.navigation.AddEditIncome
@@ -29,6 +30,7 @@ import java.time.Instant
 import javax.inject.Inject
 
 private const val TAG = "AddEditIncomeViewModel"
+private const val FORM_KEY = "income_form"
 
 @HiltViewModel
 class AddEditIncomeViewModel
@@ -40,6 +42,8 @@ class AddEditIncomeViewModel
         private val clock: Clock,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditIncome>()
+
+        private val snapshots = FormSnapshotStore(savedStateHandle, FORM_KEY, IncomeFormSnapshot.serializer())
 
         val isEditRoute: Boolean = route.incomeId != null
 
@@ -72,7 +76,7 @@ class AddEditIncomeViewModel
                             loaded = existing
                             _uiState.value =
                                 if (existing != null) {
-                                    AddEditIncomeUiState.Ready(
+                                    readyWithSaved(
                                         IncomeFormState(
                                             source = existing.source,
                                             amountCents = existing.amountCents,
@@ -92,7 +96,7 @@ class AddEditIncomeViewModel
                         }
                 } else {
                     _uiState.value =
-                        AddEditIncomeUiState.Ready(
+                        readyWithSaved(
                             IncomeFormState(
                                 date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
                             ),
@@ -100,6 +104,10 @@ class AddEditIncomeViewModel
                 }
             }
         }
+
+        /** The loaded [form] with what was typed before the process died, if anything. */
+        private fun readyWithSaved(form: IncomeFormState) =
+            AddEditIncomeUiState.Ready(form.restoredFrom(snapshots.read()))
 
         fun onRetry() = loadIncome()
 
@@ -195,7 +203,9 @@ class AddEditIncomeViewModel
         private inline fun updateForm(transform: (IncomeFormState) -> IncomeFormState) {
             val current = _uiState.value
             if (current is AddEditIncomeUiState.Ready) {
-                _uiState.value = AddEditIncomeUiState.Ready(transform(current.form))
+                val updated = transform(current.form)
+                snapshots.write(updated.toSnapshot())
+                _uiState.value = AddEditIncomeUiState.Ready(updated)
             }
         }
     }

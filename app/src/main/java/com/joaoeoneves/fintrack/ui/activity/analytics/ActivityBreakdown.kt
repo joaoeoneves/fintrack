@@ -9,9 +9,9 @@ import com.joaoeoneves.fintrack.ui.dashboard.CategoryTotal
 const val NO_ENVELOPE = ""
 
 /**
- * What the category breakdown needs: [categoryTotals] actually spent in the period and whether the period has any expense at all ([hasExpenses]). [envelopes] is the
- * spend per envelope over the period (the implicit "no envelope" row is its unenveloped part); the envelope view
- * needs a real envelope.
+ * What the category breakdown needs: [categoryTotals] actually spent in the period, and whether the period has any
+ * expense at all ([hasExpenses]). [envelopes] is the spend per envelope over the period (the implicit "no envelope"
+ * row is its unenveloped part); the envelope view needs a real envelope.
  */
 data class ActivityBreakdown(
     val categoryTotals: List<CategoryTotal>,

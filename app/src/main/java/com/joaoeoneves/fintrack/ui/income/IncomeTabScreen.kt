@@ -46,6 +46,7 @@ import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeActions
 import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeCard
 import com.joaoeoneves.fintrack.ui.plan.ExpectedIncomeModel
 import com.joaoeoneves.fintrack.ui.plan.IncomeLineSheet
+import com.joaoeoneves.fintrack.ui.plan.WorkingDaysState
 import com.joaoeoneves.fintrack.ui.plan.IncomeSetupGroup
 import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
 import com.joaoeoneves.fintrack.ui.plan.WorkingDaysDialog
@@ -168,13 +169,22 @@ private fun IncomeContent(
             onDismiss = { editingWorkingDays = false },
         )
     }
+    IncomeLineEditor(state, workingDaysMonth, viewModel)
+}
+
+@Composable
+private fun IncomeLineEditor(
+    state: IncomeTabUiState.Content,
+    workingDaysMonth: WorkingDaysState?,
+    viewModel: IncomeTabViewModel,
+) {
     state.editor?.let {
-        val workingDays = workingDaysMonth ?: viewModel.fallbackWorkingDays()
         IncomeLineSheet(
             editor = it,
-            workingDays = workingDays,
+            workingDays = workingDaysMonth ?: viewModel.fallbackWorkingDays(),
             onSave = { label, cents, schedule, from ->
-                viewModel.onSaveIncomeLine(label, cents, schedule, workingDays.month, from)
+                val month = (workingDaysMonth ?: viewModel.fallbackWorkingDays()).month
+                viewModel.onSaveIncomeLine(label, cents, schedule, month, from)
             },
             onDelete = viewModel::onDeleteIncomeLine,
             onDismiss = viewModel::onDismissEditor,

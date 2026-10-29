@@ -81,10 +81,13 @@ private fun NumberFormat.formatCents(
     locale: Locale,
 ): String {
     val text = format(BigDecimal.valueOf(amountCents, CENTS_SCALE))
-    if (locale.language != "pt" || !isGroupingUsed) return text
+    val match = if (locale.language == "pt" && isGroupingUsed) FOUR_DIGITS.find(text) else null
     val separator = DecimalFormatSymbols.getInstance(locale).groupingSeparator
-    val match = FOUR_DIGITS.find(text) ?: return text
-    return text.replaceRange(match.range, "${match.groupValues[1]}$separator${match.groupValues[2]}")
+    return if (match == null) {
+        text
+    } else {
+        text.replaceRange(match.range, "${match.groupValues[1]}$separator${match.groupValues[2]}")
+    }
 }
 
 /** Typographic minus sign (U+2212), wider and better aligned with tabular figures than the ASCII hyphen. */

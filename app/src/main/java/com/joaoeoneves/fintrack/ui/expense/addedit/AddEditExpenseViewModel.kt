@@ -23,6 +23,7 @@ import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
+import com.joaoeoneves.fintrack.ui.common.FormSnapshotStore
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.defaultNewTransactionDate
 import com.joaoeoneves.fintrack.ui.navigation.AddEditExpense
@@ -45,6 +46,7 @@ import java.time.Instant
 import javax.inject.Inject
 
 private const val TAG = "AddEditExpenseViewModel"
+private const val FORM_KEY = "expense_form"
 
 // How long (in ms) the category listener is kept alive after the last collector disappears.
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
@@ -82,6 +84,8 @@ class AddEditExpenseViewModel(
     )
 
     private val route = savedStateHandle.toRoute<AddEditExpense>()
+
+    private val snapshots = FormSnapshotStore(savedStateHandle, FORM_KEY, ExpenseFormSnapshot.serializer())
 
     val isEditRoute: Boolean = route.expenseId != null
 
@@ -132,7 +136,7 @@ class AddEditExpenseViewModel(
                         loaded = existing
                         _uiState.value =
                             if (existing != null) {
-                                AddEditUiState.Ready(
+                                readyWithSaved(
                                     ExpenseFormState(
                                         name = existing.name,
                                         amountCents = existing.amountCents,
@@ -145,6 +149,7 @@ class AddEditExpenseViewModel(
                                         isEditMode = true,
                                         expenseId = existing.id,
                                     ),
+                                    BuiltInCategories.all,
                                 )
                             } else {
                                 AddEditUiState.Error(UiText.StringResource(R.string.detail_not_found))
@@ -160,17 +165,24 @@ class AddEditExpenseViewModel(
                         categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first(),
                     )
                 _uiState.value =
-                    AddEditUiState.Ready(
+                    readyWithSaved(
                         ExpenseFormState(
                             category = category,
                             date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
                             mealCardAvailable = mealAvailable,
                         ).withMealCardPrefill(),
+                        categoryOptions.value,
                     )
                 suggestionIndex = loadSuggestionIndex(expenseRepository, clock)
             }
         }
     }
+
+    /** The loaded [form] with what was typed before the process died, if anything. */
+    private fun readyWithSaved(
+        form: ExpenseFormState,
+        catalog: List<Category>,
+    ): AddEditUiState.Ready = AddEditUiState.Ready(form.restoredFrom(snapshots.read(), catalog))
 
     fun onRetry() = loadExpense()
 
@@ -295,7 +307,9 @@ class AddEditExpenseViewModel(
     private inline fun updateForm(transform: (ExpenseFormState) -> ExpenseFormState) {
         val current = _uiState.value
         if (current is AddEditUiState.Ready) {
-            _uiState.value = AddEditUiState.Ready(transform(current.form))
+            val updated = transform(current.form)
+            snapshots.write(updated.toSnapshot())
+            _uiState.value = AddEditUiState.Ready(updated)
         }
     }
 }

@@ -15,6 +15,7 @@ import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
+import com.joaoeoneves.fintrack.ui.common.FormSnapshotStore
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.navigation.AddEditRecurring
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +36,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 private const val TAG = "AddEditRecurringVM"
+private const val FORM_KEY = "recurring_form"
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 /** Creates, edits and deletes one recurring item (the id comes from the [AddEditRecurring] route). */
@@ -48,6 +50,8 @@ class AddEditRecurringViewModel
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditRecurring>()
+
+        private val snapshots = FormSnapshotStore(savedStateHandle, FORM_KEY, RecurringFormSnapshot.serializer())
 
         val isEditRoute: Boolean = route.recurringId != null
 
@@ -86,7 +90,7 @@ class AddEditRecurringViewModel
                 _uiState.value =
                     if (id == null) {
                         // No preselected category: recurrence isn't a category, so the user must choose one.
-                        AddEditRecurringUiState.Ready(newRecurringForm(LocalDate.now(clock)))
+                        AddEditRecurringUiState.Ready(saved(catalog) ?: newRecurringForm(LocalDate.now(clock)))
                     } else {
                         loadExisting(id, catalog)
                     }
@@ -111,10 +115,14 @@ class AddEditRecurringViewModel
                 else -> {
                     existing = item
                     val category = item.categoryId?.let { catalog.resolve(it) }
-                    AddEditRecurringUiState.Ready(item.toForm(category), isEditMode = true)
+                    AddEditRecurringUiState.Ready(saved(catalog) ?: item.toForm(category), isEditMode = true)
                 }
             }
         }
+
+        /** What was typed before the process died, when it belongs to this item. */
+        private fun saved(catalog: List<Category>): RecurringForm? =
+            snapshots.read()?.toForm(route.recurringId, catalog)
 
         fun onRetry() = load()
 
@@ -127,6 +135,7 @@ class AddEditRecurringViewModel
                         name = limitInput(current.form.name, form.name, MAX_NAME_LENGTH),
                         note = limitInput(current.form.note, form.note, MAX_NOTE_LENGTH),
                     )
+                snapshots.write(limited.toSnapshot(route.recurringId))
                 _uiState.value = current.copy(form = limited, errors = null, saveError = null)
             }
         }
