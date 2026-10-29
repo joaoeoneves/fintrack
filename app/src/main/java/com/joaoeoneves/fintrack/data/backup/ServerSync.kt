@@ -5,7 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.data.automationSettingsDoc
-import com.joaoeoneves.fintrack.data.awaitServerWithin
+import com.joaoeoneves.fintrack.data.awaitWithin
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
 import com.joaoeoneves.fintrack.domain.model.Session
@@ -48,7 +48,7 @@ class FirestoreServerSync
                     RESTORE_PRUNE_ORDER.map { user.collection(it).get(Source.SERVER) } +
                         salaryProfileDoc(firestore, uid).get(Source.SERVER) +
                         automationSettingsDoc(firestore, uid).get(Source.SERVER)
-                awaitServerWithin(OVERALL_TIMEOUT) {
+                awaitWithin(OVERALL_TIMEOUT) {
                     reads.map { it.await() }
                     Unit
                 }

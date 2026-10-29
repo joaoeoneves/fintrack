@@ -5,14 +5,18 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** How long one awaited server call may take before it counts as unreachable. */
 internal val FIRESTORE_SERVER_TIMEOUT = 30.seconds
 
 /** Runs [block], throwing [IOException] when it does not finish within [FIRESTORE_SERVER_TIMEOUT]. */
-internal suspend fun <T : Any> awaitServer(
-    timeout: kotlin.time.Duration = FIRESTORE_SERVER_TIMEOUT,
+internal suspend fun <T : Any> awaitServer(block: suspend () -> T): T = awaitWithin(FIRESTORE_SERVER_TIMEOUT, block)
+
+/** Like [awaitServer] with an explicit [timeout]. */
+internal suspend fun <T : Any> awaitWithin(
+    timeout: Duration,
     block: suspend () -> T,
 ): T = withTimeoutOrNull(timeout) { block() } ?: throw IOException("Firestore did not respond in time")
 
