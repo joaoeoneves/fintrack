@@ -87,7 +87,10 @@ fun commonPayDateIn(
 fun IncomeRow.payingLinesByPayMonth(
     month: YearMonth,
     income: IncomeMonth,
-): Map<YearMonth, List<PlannedIncome>> = payingLines(month, income).takeIf { it.isNotEmpty() }?.let { mapOf(month to it) }.orEmpty()
+): Map<YearMonth, List<PlannedIncome>> {
+    val paying = payingLines(month, income)
+    return if (paying.isEmpty()) emptyMap() else mapOf(month to paying)
+}
 
 /**
  * The incomes already recorded for every paying line of this row for [month], or `null` when the row pays

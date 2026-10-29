@@ -195,5 +195,8 @@ class RecordPayday
             labels: SalaryLineLabels,
         ): Income = line.managedKey?.let { labels.labelFor(it) }?.let { copy(source = it) } ?: this
 
-        private fun ReceiveRequest.amountFor(l: PlannedIncome) = amountOverrideCents ?: (l.asOf(month)?.amountIn(month, workingDays) ?: 0L)
+        private fun ReceiveRequest.amountFor(l: PlannedIncome): Long {
+            val planned = l.asOf(month)?.amountIn(month, workingDays) ?: 0L
+            return amountOverrideCents ?: planned
+        }
     }
