@@ -339,10 +339,6 @@
     <string name="plan_over_by">Over plan by %1$s</string>
     <string name="plan_expected_income">Expected income</string>
     <string name="home_to_receive_title">To receive</string>
-    <plurals name="plan_daily_allowance">
-        <item quantity="one">≈ %1$s/day for %2$d day</item>
-        <item quantity="other">≈ %1$s/day for %2$d days</item>
-    </plurals>
     <string name="plan_current_plan_caption">Based on your current plan</string>
     <string name="plan_edit">See plan</string>
     <string name="plan_setup_title">Plan your month</string>
@@ -462,10 +458,8 @@
     <string name="cd_fewer_working_days">Fewer working days</string>
     <string name="cd_more_working_days">More working days</string>
 
-    <string name="plan_envelopes_title">Envelopes</string>
     <string name="plan_group_other">No envelope</string>
     <string name="error_group_save_failed">Couldn\'t save the envelope</string>
-    <string name="plan_pot_left">%1$s · funded by %2$s; %3$s left</string>
     <string name="annual_funding_overflow">%1$s · %2$s covers %3$s; %4$s comes from other income</string>
 
     <string name="plan_salary_profile_row">Salary profile</string>
@@ -541,8 +535,6 @@
     <string name="salary_line_net">Net salary</string>
     <string name="salary_line_holiday">Holiday subsidy</string>
     <string name="salary_line_christmas">Christmas subsidy</string>
-    <string name="plan_tab_month">Month</string>
-    <string name="plan_tab_year">Year</string>
     <string name="annual_income_title">Income for the year</string>
     <string name="annual_income_total">Total income</string>
     <string name="annual_actual_of_planned">%1$s of %2$s</string>
@@ -554,37 +546,8 @@
     <string name="annual_empty_title">Nothing planned for %1$s</string>
     <string name="annual_empty_message">Add income and envelopes in the Month view to see the year.</string>
 
-    <string name="goal_field_name">Name</string>
-    <string name="goal_field_target_date">Target date</string>
-    <string name="goal_field_initial">Already saved (optional)</string>
-    <string name="goal_target_date_add">Add a target date</string>
-    <string name="goal_target_date_clear">Remove target date</string>
-    <string name="goal_error_dates">The target date is before the start date</string>
-    <string name="goal_status_on_track">On track</string>
-    <string name="goal_status_not_started">Just started</string>
-    <string name="goal_status_behind">Behind</string>
-    <string name="goal_status_done">Done</string>
-    <string name="goal_status_no_monthly">No monthly amount</string>
     <string name="error_goal_save_failed">Couldn\'t save the savings plan</string>
     <string name="error_goal_delete_failed">Couldn\'t delete the savings plan</string>
-    <string name="nav_savings">Savings</string>
-    <string name="savings_saved_in_year">Saved in %1$d</string>
-    <string name="savings_rate_of_income">Savings rate this year: %1$s of income</string>
-    <string name="savings_target_year">%1$s / %2$s this year</string>
-    <string name="savings_target_by">%1$s / %2$s by %3$s</string>
-    <string name="savings_schedule">%1$s · %2$s/month · day %3$d</string>
-    <string name="savings_suggestion">Suggested: %1$s/month</string>
-    <string name="savings_new_plan">New plan</string>
-    <string name="savings_edit_plan">Edit plan</string>
-    <string name="savings_monthly_amount">Monthly amount</string>
-    <string name="savings_day">Day of month</string>
-    <string name="savings_target">Target</string>
-    <string name="savings_auto_post">Record automatically</string>
-    <string name="savings_per_year">Per year</string>
-    <string name="savings_total">Total</string>
-    <string name="savings_empty">No savings plans yet</string>
-    <string name="savings_delete_plan">Delete plan</string>
-    <string name="savings_plan_deleted">Savings plan deleted</string>
     <string name="recurring_no_saving_hint">For savings use the Savings tab</string>
     <string name="annual_goals_title">Savings plans</string>
     <string name="annual_goal_planned_of_target">%1$s planned of %2$s</string>
@@ -618,9 +581,6 @@
     <string name="plan_payday_received">Salary received on %1$s</string>
     <string name="plan_payday_upcoming">You get paid on %1$s</string>
     <string name="plan_received_amount">Amount received</string>
-    <string name="envelopes_title">Envelopes</string>
-    <string name="envelopes_new">New envelope</string>
-    <string name="envelopes_empty">No envelopes yet</string>
     <string name="envelope_edit_title">Edit envelope</string>
     <string name="envelope_new_title">New envelope</string>
     <string name="envelope_name">Name</string>
@@ -653,30 +613,9 @@
     <string name="annual_envelope_spent">Spent: %1$s</string>
     <string name="envelope_card_funded">Funded by %1$s</string>
     <string name="envelope_funded_overflow">%1$s covers %2$s; %3$s comes from other income.</string>
-    <plurals name="envelopes_status">
-        <item quantity="one">%d envelope</item>
-        <item quantity="other">%d envelopes</item>
-    </plurals>
-    <string name="plan_tile_income">Income</string>
-    <string name="plan_tile_bills">Recurring</string>
-    <string name="plan_tile_saving">Savings</string>
-    <string name="plan_tile_envelopes">Envelopes</string>
-    <string name="plan_tile_free">Safe to spend</string>
-    <string name="plan_configure">Set up</string>
     <string name="salary_setup_done">Salary saved</string>
-    <string name="plan_configure_income">Income</string>
-    <string name="plan_configure_envelopes">Envelopes</string>
     <string name="plan_configure_bills">Recurring</string>
     <string name="plan_configure_categories">Categories</string>
-    <string name="plan_configure_income_status">%1$s a month · %2$d income</string>
-    <string name="plan_configure_bills_status">%1$d recurring · %2$s/month</string>
-    <plurals name="plan_configure_categories_status">
-        <item quantity="one">%d category</item>
-        <item quantity="other">%d categories</item>
-    </plurals>
-    <string name="plan_configure_not_set">Not set</string>
-    <string name="plan_configure_none_yet">None yet</string>
-    <string name="plan_envelopes_empty_cta">Create envelopes to split your money</string>
     <string name="income_title">Income</string>
     <string name="home_start_title">Get started</string>
     <string name="home_start_progress">%1$d of %2$d</string>
@@ -717,9 +656,6 @@
     <string name="backup_restore_partial_title">Restore incomplete</string>
     <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish — retrying doesn\'t duplicate anything.</string>
     <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
-    <string name="plan_salary_next_month">Salary pays the next month</string>
-    <string name="plan_salary_next_month_hint">Salary paid in the last days of a month funds the next month\'s plan.</string>
-    <string name="plan_summary_extras_note">%1$s of extra income does not count until it is received</string>
     <string name="activity_total_out_includes_saving">includes %1$s saved</string>
     <string name="pending_more_options">More options</string>
     <string name="pending_change_amount">Change amount</string>
@@ -755,7 +691,6 @@
     <string name="activity_source_other">Other</string>
     <string name="activity_income_counts_for">Counts for %1$s</string>
     <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
-    <string name="income_view_history">View history</string>
     <string name="effective_from_title">Valid from</string>
     <string name="effective_from_history">%1$s until %2$s</string>
     <string name="salary_shift_effective_note">The salary received at the end of %1$s counts for %2$s</string>
