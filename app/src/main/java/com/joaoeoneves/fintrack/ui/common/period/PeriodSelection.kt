@@ -22,23 +22,28 @@ class PeriodSelection(
     private val key: String,
     initialToken: String,
     private val clock: Clock,
+    private val monthsAhead: Int = 0,
 ) {
     val token: StateFlow<String> = savedStateHandle.getStateFlow(key, initialToken)
 
     /** Selects [period]; a `Month` that is current (or future) is normalized to `CurrentMonth`. */
     fun select(period: Period) {
         val normalized =
-            if (period is Period.Month) Period.ofMonth(period.yearMonth, clock.instant(), clock.zone) else period
+            if (period is Period.Month) {
+                Period.ofMonth(period.yearMonth, clock.instant(), clock.zone, monthsAhead)
+            } else {
+                period
+            }
         savedStateHandle[key] = normalized.encode()
     }
 
     /** Moves a month selection one month back; no-op for rolling/custom periods. */
     fun previous() = select(current().previousMonth(clock.instant(), clock.zone))
 
-    /** Moves a month selection one month forward, never past the current month. */
-    fun next() = select(current().nextMonth(clock.instant(), clock.zone))
+    /** Moves a month selection one month forward, never past the current month (plus [monthsAhead]). */
+    fun next() = select(current().nextMonth(clock.instant(), clock.zone, monthsAhead))
 
-    private fun current(): Period = decodePeriod(token.value, clock.instant(), clock.zone)
+    private fun current(): Period = decodePeriod(token.value, clock.instant(), clock.zone, monthsAhead)
 }
 
 /** This period if it is a month, otherwise the current month: for screens that only know months. */

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.ui.designsystem.DestructiveTextButton
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
@@ -53,15 +53,16 @@ fun AccountSection(
             title = { Text(stringResource(R.string.sign_out_confirm_title)) },
             text = { Text(stringResource(R.string.sign_out_confirm_message)) },
             confirmButton = {
-                TextButton(
+                DialogTextButton(
+                    text = stringResource(R.string.action_sign_out),
                     onClick = {
                         confirmSignOut = false
                         onSignOut()
                     },
-                ) { Text(stringResource(R.string.action_sign_out)) }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { confirmSignOut = false }) { Text(stringResource(R.string.action_cancel)) }
+                DialogTextButton(text = stringResource(R.string.action_cancel), onClick = { confirmSignOut = false })
             },
         )
     }
@@ -96,19 +97,16 @@ fun GuestAccountSection(
             title = { Text(stringResource(R.string.leave_guest_confirm_title)) },
             text = { Text(stringResource(R.string.leave_guest_confirm_message)) },
             confirmButton = {
-                TextButton(
+                DialogTextButton(
+                    text = stringResource(R.string.action_leave_guest_mode),
                     onClick = {
                         confirmLeave = false
                         onLeaveGuestMode()
                     },
-                ) {
-                    Text(stringResource(R.string.action_leave_guest_mode))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { confirmLeave = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
+                DialogTextButton(text = stringResource(R.string.action_cancel), onClick = { confirmLeave = false })
             },
         )
     }

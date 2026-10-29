@@ -18,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.Instant
@@ -118,19 +118,18 @@ private fun PickDateDialog(
         onDismissRequest = onDismiss,
         colors = finTrackDatePickerColors(),
         confirmButton = {
-            TextButton(onClick = {
-                datePickerState.selectedDateMillis?.let { millis ->
-                    onDateSelected(datePickerMillisToInstant(millis, date, zone))
-                }
-                onDismiss()
-            }) {
-                Text(stringResource(R.string.action_ok))
-            }
+            DialogTextButton(
+                text = stringResource(R.string.action_ok),
+                onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        onDateSelected(datePickerMillisToInstant(millis, date, zone))
+                    }
+                    onDismiss()
+                },
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
+            DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss)
         },
     ) {
         DatePicker(state = datePickerState, colors = finTrackDatePickerColors())

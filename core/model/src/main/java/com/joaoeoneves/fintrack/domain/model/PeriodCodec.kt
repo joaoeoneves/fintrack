@@ -34,12 +34,13 @@ fun decodePeriod(
     token: String?,
     now: Instant,
     zone: ZoneId,
+    monthsAhead: Int = 0,
 ): Period {
     val parts = token?.split(TOKEN_SEPARATOR).orEmpty()
     val decoded =
         runCatching {
             when (parts.firstOrNull()) {
-                PREFIX_MONTH -> parts.singleArg()?.let { Period.ofMonth(YearMonth.parse(it), now, zone) }
+                PREFIX_MONTH -> parts.singleArg()?.let { Period.ofMonth(YearMonth.parse(it), now, zone, monthsAhead) }
                 PREFIX_ROLLING -> parts.singleArg()?.let { Period.Rolling(TimeRange.valueOf(it)) }
                 PREFIX_CUSTOM -> parts.toCustomPeriod()
                 else -> null
