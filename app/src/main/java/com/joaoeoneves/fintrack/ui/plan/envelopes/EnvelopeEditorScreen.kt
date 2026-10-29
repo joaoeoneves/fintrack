@@ -232,6 +232,17 @@ private fun BudgetModeSection(
                 color = FinTrackTheme.colors.textSecondary,
             )
         }
+        val dropsLimits =
+            state.draft.mode != EnvelopeBudgetMode.PER_CATEGORY &&
+                state.draft.limits.values
+                    .any { (it ?: 0L) > 0L }
+        if (dropsLimits) {
+            Text(
+                text = stringResource(R.string.envelope_limits_dropped_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+        }
         if (state.draft.mode == EnvelopeBudgetMode.SINGLE) {
             MoneyTextField(
                 cents = state.draft.amountCents ?: 0L,
@@ -267,6 +278,12 @@ private fun CategoriesSection(
             enabled = state.addable.isNotEmpty(),
             modifier = Modifier.fillMaxWidth().padding(top = Dimens.Space8),
         )
+        Text(
+            text = stringResource(R.string.envelope_saving_hidden_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = FinTrackTheme.colors.textSecondary,
+            modifier = Modifier.padding(top = Dimens.Space4),
+        )
     }
     if (adding) {
         AddCategorySheet(
@@ -294,12 +311,16 @@ private fun MemberRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(imageVector = member.category.icon, contentDescription = null)
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyLarge,
-            maxLines = 1,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = name, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+            member.movedFromName?.let {
+                Text(
+                    text = stringResource(R.string.envelope_leaves_other, it),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+        }
         if (perCategory) {
             MoneyTextField(
                 cents = member.limitCents ?: 0L,
@@ -345,7 +366,7 @@ private fun AddCategorySheet(
                     )
                     item.inEnvelopeName?.let {
                         Text(
-                            text = stringResource(R.string.envelope_in_other, it),
+                            text = stringResource(R.string.envelope_leaves_other, it),
                             style = MaterialTheme.typography.bodySmall,
                             color = FinTrackTheme.colors.textSecondary,
                         )
@@ -362,9 +383,16 @@ private fun FundingSection(
     state: EnvelopeEditorUiState.Content,
     onFundedByChange: (String?) -> Unit,
 ) {
-    if (state.fundingOptions.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
         SectionTitle(title = stringResource(R.string.envelope_paid_by))
+        if (state.fundingOptions.isEmpty()) {
+            Text(
+                text = stringResource(R.string.envelope_paid_by_empty),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+            return
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
             verticalArrangement = Arrangement.spacedBy(Dimens.Space8),

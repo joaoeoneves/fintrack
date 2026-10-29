@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
-import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.rememberDayMonthText
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
@@ -34,7 +34,6 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /**
  * Bottom sheet to mark an income row as received: the day it arrived (today by default, never later) and, only
@@ -98,19 +97,13 @@ fun ReceivedIncomeSheet(
     }
 }
 
-/** A payday as "Fri 30 Oct" in the current language. */
+/** A payday as day + month in the current language. */
 @Composable
-fun rememberPaydayText(payday: LocalDate): String {
-    val locale = currentLocale()
-    return remember(payday, locale) { DateTimeFormatter.ofPattern("EEE d MMM", locale).format(payday) }
-}
+fun rememberPaydayText(payday: LocalDate): String = rememberDayMonthText(payday)
 
-/** The day an income was received as "28 Oct" in the current language. */
+/** The day an income was received as day + month in the current language. */
 @Composable
-fun rememberReceivedText(date: LocalDate): String {
-    val locale = currentLocale()
-    return remember(date, locale) { DateTimeFormatter.ofPattern("d MMM", locale).format(date) }
-}
+fun rememberReceivedText(date: LocalDate): String = rememberDayMonthText(date)
 
 /**
  * The discreet "mark as received" control of an income row: an outlined check that records the row on tap, or, once

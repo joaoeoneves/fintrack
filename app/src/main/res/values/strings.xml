@@ -127,8 +127,8 @@
     <string name="activity_total_in">In</string>
     <string name="activity_total_out">Out</string>
     <string name="activity_spent_total">Spent</string>
-    <string name="activity_show_breakdown">By category</string>
-    <string name="activity_hide_breakdown">Hide breakdown</string>
+    <string name="activity_show_breakdown">Show details</string>
+    <string name="activity_hide_breakdown">Hide details</string>
     <string name="activity_envelope_all">All</string>
     <string name="cd_envelope_bar">Spending by envelope: %1$s</string>
     <string name="cd_envelope_chip">%1$s, %2$s spent</string>
@@ -244,6 +244,7 @@
     <string name="category_action_archive">Archive</string>
     <string name="category_action_unarchive">Unarchive</string>
     <string name="category_action_delete">Delete</string>
+    <string name="category_delete_builtin_hint">Delete (built-in)</string>
     <string name="category_move_up">Move up</string>
     <string name="category_move_down">Move down</string>
     <string name="cd_category_more_actions">More actions for %1$s</string>
@@ -474,7 +475,9 @@
     <string name="cd_more_days_off">More days off</string>
     <string name="plan_working_days_edited">%1$d (edited)</string>
     <string name="plan_working_days_reset">Reset to automatic</string>
-    <string name="plan_working_days_hint">Replaces the calendar count for this month only.</string>
+    <string name="plan_working_days_hint">Set by hand for this month, so days off no longer change it.</string>
+    <string name="plan_working_days_hint_auto">Counted from the calendar: weekdays minus holidays and days off.</string>
+    <string name="plan_working_days_label">Working days</string>
     <string name="cd_fewer_working_days">Fewer working days</string>
     <string name="cd_more_working_days">More working days</string>
 
@@ -641,11 +644,15 @@
     <string name="envelope_mode_per_category">Per category</string>
     <string name="envelope_mode_none">No limit</string>
     <string name="envelope_mode_none_hint">Only tracks what you spend</string>
+    <string name="envelope_limits_dropped_hint">Saving drops the limits set per category.</string>
     <string name="envelope_amount">Monthly amount</string>
     <string name="envelope_categories">Categories</string>
     <string name="envelope_add_category">Add category</string>
+    <string name="envelope_saving_hidden_hint">Savings categories belong to the savings plan, so they are not listed here.</string>
     <string name="envelope_in_other">in %1$s</string>
+    <string name="envelope_leaves_other">Leaves %1$s</string>
     <string name="envelope_paid_by">Funded by</string>
+    <string name="envelope_paid_by_empty">Add a regular monthly income to choose what funds this envelope.</string>
     <string name="envelope_paid_by_none">None</string>
     <string name="envelope_delete">Delete envelope</string>
     <string name="envelope_delete_confirm">Delete “%1$s”? Its categories stay; the envelope and its amount are removed.</string>
@@ -696,7 +703,7 @@
     <string name="home_start_step_bills">Add recurring</string>
     <string name="home_start_step_savings">Create a savings plan</string>
     <string name="home_start_step_payday">Set your pay day</string>
-    <string name="home_start_step_payday_hint">Record income automatically</string>
+    <string name="home_start_step_payday_hint">Choose the day your income is recorded automatically</string>
     <string name="home_start_step_expense">Record your first expense</string>
     <string name="salary_setup_title">Salary set-up</string>
     <string name="salary_setup_step">Step %1$d of %2$d</string>

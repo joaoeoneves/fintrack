@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +25,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.SalaryComponent
 import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.payDateIn
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -46,6 +48,7 @@ private fun AmountRow(
     valueStyle: TextStyle = Amount,
     badge: String? = null,
     trailing: (@Composable () -> Unit)? = null,
+    showChevron: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = Dimens.SettingsRowMinHeight),
@@ -64,6 +67,13 @@ private fun AmountRow(
         }
         Text(text = value, style = valueStyle, color = valueColor)
         trailing?.invoke()
+        if (showChevron) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = FinTrackTheme.colors.textSecondary,
+            )
+        }
     }
 }
 
@@ -89,8 +99,8 @@ data class ExpectedIncomeModel(
 
 /**
  * The salary-profile entry, the working-days row and the expected-income rows with what each pays in the
- * selected month. A manual line, the salary and the meal allowance open their editor on tap; the other salary
- * components (which sum several lines) open the salary profile. The add button is hidden at the line cap. Under the
+ * selected month. A manual line opens its editor on tap; every salary-profile row opens the salary profile (a row that
+ * does not pay this month is not tappable). The add button is hidden at the line cap. Under the
  * header sits the month's payday; a paying row of a past or current month has a check that records it as received
  * today (the snackbar then offers to change the date or amount); once received it shows a green amount, the day it
  * was received and a filled check that undoes it after a confirmation.
@@ -166,9 +176,6 @@ private fun IncomeGroupHeader(text: String) {
     )
 }
 
-/** Rows opening the line editor: a manual line (no component), the salary and the meal allowance. */
-private val EDITABLE_COMPONENTS = listOf(null, SalaryComponent.SALARY, SalaryComponent.MEAL)
-
 @Composable
 private fun IncomeRowItem(
     row: IncomeRow,
@@ -177,9 +184,8 @@ private fun IncomeRowItem(
     onUndo: (IncomeRow) -> Unit,
 ) {
     val receipts = model.receipts
-    val line = row.lines.first()
-    val opensEditor = row.component in EDITABLE_COMPONENTS
     val paysThisMonth = row.cents > 0L
+    val tappable = row.component == null || paysThisMonth
     val receivedOn = receipts.receivedOn[row.key]
     val received = receivedOn != null
     val feedback = LocalReceiveFeedback.current
@@ -206,7 +212,8 @@ private fun IncomeRowItem(
         value = if (paysThisMonth) formatAmountCents(row.cents) else stringResource(R.string.plan_not_this_month),
         valueColor = valueColor,
         valueStyle = if (paysThisMonth) Amount else Amount.copy(fontWeight = FontWeight.Normal),
-        modifier = Modifier.clickable { if (opensEditor) actions.onEdit(line.id) else actions.onOpenSalaryProfile() },
+        modifier = rowTapModifier(tappable, row, actions),
+        showChevron = tappable,
         trailing =
             if (showCheck) {
                 {
@@ -233,6 +240,20 @@ private fun IncomeRowItem(
     )
     Hairline()
 }
+
+private fun rowTapModifier(
+    tappable: Boolean,
+    row: IncomeRow,
+    actions: ExpectedIncomeActions,
+): Modifier =
+    if (tappable) {
+        // A manual line opens its editor; a salary-profile row goes straight to the profile.
+        Modifier.clickable {
+            if (row.component == null) actions.onEdit(row.lines.first().id) else actions.onOpenSalaryProfile()
+        }
+    } else {
+        Modifier
+    }
 
 /** What the received snackbar's "Change" reopens for [row]: the sheet, with the amount editable for one line. */
 private fun receiveChange(

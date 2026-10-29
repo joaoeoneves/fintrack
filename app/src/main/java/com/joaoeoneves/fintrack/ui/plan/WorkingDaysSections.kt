@@ -84,11 +84,17 @@ fun WorkingDaysDialog(
     var override by remember { mutableStateOf(state.days.takeIf { state.overridden }) }
     var daysOff by remember { mutableIntStateOf(state.daysOff) }
     val automatic = maxOf(0, state.calendarDays - daysOff)
+    val hintRes = if (override == null) R.string.plan_working_days_hint_auto else R.string.plan_working_days_hint
     FinTrackAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.plan_working_days_title, monthName(state))) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space12)) {
+                Text(
+                    text = stringResource(R.string.plan_working_days_label),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
                 Stepper(
                     value = override ?: automatic,
                     onChange = { override = it.takeIf { value -> value != automatic } },
@@ -96,7 +102,7 @@ fun WorkingDaysDialog(
                     labels = StepperLabels(R.string.cd_fewer_working_days, R.string.cd_more_working_days),
                 )
                 Text(
-                    text = stringResource(R.string.plan_working_days_hint),
+                    text = stringResource(hintRes),
                     style = MaterialTheme.typography.bodySmall,
                     color = FinTrackTheme.colors.textSecondary,
                 )

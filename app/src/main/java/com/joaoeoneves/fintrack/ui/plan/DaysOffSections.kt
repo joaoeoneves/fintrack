@@ -5,16 +5,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MAX_DAYS_OFF
 import com.joaoeoneves.fintrack.ui.common.currentLocale
+import com.joaoeoneves.fintrack.ui.common.formatDayMonth
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /**
  * The "days off this month" stepper plus, when Carnival falls on a weekday of the month, a chip for it.
@@ -26,7 +26,7 @@ internal fun DaysOffFields(
     onChange: (Int) -> Unit,
     carnival: LocalDate?,
 ) {
-    var taken by remember { mutableStateOf(false) }
+    var taken by rememberSaveable { mutableStateOf(false) }
     Text(
         text = stringResource(R.string.plan_days_off_title),
         style = MaterialTheme.typography.labelLarge,
@@ -43,7 +43,7 @@ internal fun DaysOffFields(
             label =
                 stringResource(
                     R.string.plan_carnival_chip,
-                    DateTimeFormatter.ofPattern("EEE d MMM", currentLocale()).format(carnival),
+                    formatDayMonth(carnival, currentLocale()),
                 ),
             selected = taken,
             onClick = {

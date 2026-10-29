@@ -32,7 +32,7 @@ import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 
 /**
  * The top of Activity: period tabs and selector, the big "Spent" total, fixed vs variable, the envelope bar with
- * its filter chips and a collapsed "Show breakdown" with the category/envelope breakdown.
+ * its filter chips and the category/envelope breakdown; everything below the total sits behind a "Show details" toggle.
  */
 @Suppress("LongParameterList") // the header is fed straight from the screen state
 @Composable
@@ -68,26 +68,48 @@ fun ActivityAnalyticsHeader(
                 color = FinTrackTheme.colors.textSecondary,
             )
             Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
-            if (analytics.split.spendingCents > 0) {
-                SpendingSplitCard(split = analytics.split, modifier = Modifier.padding(top = Dimens.Space16))
-            }
+        }
+        val hasDetails =
+            analytics.split.spendingCents > 0 || analytics.envelopeChips.isNotEmpty() || !analytics.breakdown.isEmpty
+        if (hasDetails) {
+            SectionAction(
+                text =
+                    stringResource(
+                        if (expanded) R.string.activity_hide_breakdown else R.string.activity_show_breakdown,
+                    ),
+                onClick = { expanded = !expanded },
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+            )
+        }
+        if (hasDetails && expanded) {
+            AnalyticsDetails(analytics, selectedEnvelope, actions)
+        }
+    }
+}
+
+/** The collapsible detail: fixed vs variable, the envelope bar with its filter chips and the breakdown. */
+@Composable
+private fun AnalyticsDetails(
+    analytics: ActivityAnalytics,
+    selectedEnvelope: String?,
+    actions: ActivityAnalyticsActions,
+) {
+    Column {
+        if (analytics.split.spendingCents > 0) {
+            SpendingSplitCard(
+                split = analytics.split,
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
+            )
         }
         if (analytics.envelopeChips.isNotEmpty()) {
             EnvelopeFilterSection(analytics.envelopeChips, selectedEnvelope, actions.onEnvelopeSelected)
         }
         if (!analytics.breakdown.isEmpty) {
-            Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
-                SectionAction(
-                    text =
-                        stringResource(
-                            if (expanded) R.string.activity_hide_breakdown else R.string.activity_show_breakdown,
-                        ),
-                    onClick = { expanded = !expanded },
-                )
-                if (expanded) {
-                    BreakdownCard(breakdown = analytics.breakdown, onCategoryClick = actions.onCategorySelected)
-                }
-            }
+            BreakdownCard(
+                breakdown = analytics.breakdown,
+                onCategoryClick = actions.onCategorySelected,
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+            )
         }
     }
 }
