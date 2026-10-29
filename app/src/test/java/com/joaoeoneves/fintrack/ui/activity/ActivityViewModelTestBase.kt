@@ -14,6 +14,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
+import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
@@ -95,24 +96,24 @@ abstract class ActivityViewModelTestBase {
         val expenseRepo = CountingExpenseRepository(expenses)
         val incomeRepo = CountingIncomeRepository(incomes)
         val recurringRepo = FakeRecurringRepository()
-        private val overview =
-            ObservePeriodOverview(
-                transactionRepository = CombinedTransactionRepository(expenseRepo, incomeRepo),
-                sources =
-                    PlanDataSources(
-                        budgets = budgets,
-                        plannedIncome = FakePlannedIncomeRepository(),
-                        monthSettings = FakeMonthSettingsRepository(),
-                        categories = categories,
-                        envelopes = envelopes,
-                        recurring = recurringRepo,
-                    ),
+        val plannedIncomeRepo = FakePlannedIncomeRepository()
+        private val sources =
+            PlanDataSources(
+                budgets = budgets,
+                plannedIncome = plannedIncomeRepo,
+                monthSettings = FakeMonthSettingsRepository(),
+                categories = categories,
+                envelopes = envelopes,
+                recurring = recurringRepo,
             )
+        private val transactions = CombinedTransactionRepository(expenseRepo, incomeRepo)
+        private val overview = ObservePeriodOverview(transactionRepository = transactions, sources = sources)
+        private val history = ObserveMonthlyHistory(transactions, sources)
         val deleteTransaction = DeleteTransaction(expenseRepo, incomeRepo, recurringRepo)
-        val vm = ActivityViewModel(overview, categories, deleteTransaction, handle, clock)
+        val vm = ActivityViewModel(overview, history, categories, deleteTransaction, handle, clock)
 
         /** A fresh ViewModel over the same repositories and [SavedStateHandle] (process-death restore). */
-        fun recreate() = ActivityViewModel(overview, categories, deleteTransaction, handle, clock)
+        fun recreate() = ActivityViewModel(overview, history, categories, deleteTransaction, handle, clock)
     }
 
     protected fun TestScope.content(vm: ActivityViewModel): ActivityUiState.Content {

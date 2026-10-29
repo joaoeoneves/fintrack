@@ -123,6 +123,7 @@ private fun ActivityViewModel.activityActions(
         onQueryChanged = ::onQueryChanged,
         onCategorySelected = ::onCategorySelected,
         onEnvelopeSelected = ::onEnvelopeSelected,
+        onIncomeSourceSelected = ::onIncomeSourceSelected,
         onSortSelected = ::onSortSelected,
         onOpen = { transaction ->
             when (transaction) {

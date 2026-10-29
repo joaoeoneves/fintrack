@@ -391,8 +391,6 @@
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar recorrentes</string>
     <string name="recurring_added">Adicionado: “%1$s”</string>
-    <string name="recurring_per_month">%1$s / mês</string>
-    <string name="recurring_per_year">%1$s / ano</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
     <string name="recurring_section_active">Ativos</string>
     <string name="recurring_section_inactive">Em pausa e terminados</string>
@@ -563,7 +561,8 @@
     <string name="salary_delete_title">Eliminar o perfil salarial?</string>
     <string name="salary_delete_message">O rendimento previsto gerado por ele também é removido. O que adicionaste à mão fica.</string>
     <string name="salary_line_net">Salário líquido</string>
-    <string name="salary_line_subsidy">Subsídio</string>
+    <string name="salary_line_holiday">Subsídio de férias</string>
+    <string name="salary_line_christmas">Subsídio de Natal</string>
     <string name="plan_tab_month">Mês</string>
     <string name="plan_tab_year">Ano</string>
     <string name="annual_income_title">Rendimento do ano</string>
@@ -742,7 +741,6 @@
     <string name="backup_error_restore_offline">Sem ligação. Nada foi alterado.</string>
     <string name="plan_salary_next_month">O salário paga o mês seguinte</string>
     <string name="plan_salary_next_month_hint">O salário pago nos últimos dias do mês financia o plano do mês seguinte.</string>
-    <string name="plan_summary_carry">Transitou de %1$s</string>
     <string name="plan_summary_extras_note">%1$s de rendimento extra não conta até ser recebido</string>
     <string name="activity_total_out_includes_saving">inclui %1$s poupados</string>
     <string name="pending_more_options">Mais opções</string>
@@ -762,4 +760,20 @@
     <string name="envelope_no_limit">Sem limite</string>
     <string name="recurring_pause_hint">Nada é adicionado até retomares</string>
     <string name="income_line_deleted">Linha de rendimento eliminada</string>
+    <string name="activity_vs_previous_month">vs mês anterior</string>
+    <string name="activity_vs_average">vs média %1$d meses</string>
+    <string name="activity_monthly_average">Média mensal %1$s</string>
+    <string name="activity_since_january">Desde janeiro</string>
+    <string name="activity_ytd_spent">Gasto</string>
+    <string name="activity_ytd_received">Recebido</string>
+    <string name="activity_ytd_saved">Poupado</string>
+    <string name="activity_evolution">Evolução</string>
+    <string name="activity_received_total">Recebido</string>
+    <string name="activity_expected_difference">Esperado %1$s · Diferença %2$s</string>
+    <string name="activity_by_source">Por fonte</string>
+    <string name="activity_source_expected">de %1$s esperado</string>
+    <string name="activity_source_other">Outro</string>
+    <string name="activity_income_counts_for">Conta para %1$s</string>
+    <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
+    <string name="income_view_history">Ver histórico</string>
 </resources>

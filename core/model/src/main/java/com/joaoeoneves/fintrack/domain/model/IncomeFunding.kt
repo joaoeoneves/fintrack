@@ -2,6 +2,7 @@
 
 package com.joaoeoneves.fintrack.domain.model
 
+import java.text.Normalizer
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -170,8 +171,16 @@ private const val PAYDAY_ID_PREFIX_VALUE = "pay_"
 private val PAYDAY_MONTH_PARSER = DateTimeFormatter.ofPattern("yyyyMM")
 
 /**
- * The month [income] funds: a payday income of a line that [paysForNextMonth] (with [funding] shifted) funds the
- * month after the one in its id; everything else funds the month of its date in [zone].
+ * The month [income] funds. With [funding] shifted, a salary paid at the end of a month funds the NEXT month:
+ * - a payday income of a line that [paysForNextMonth] (`pay_<lineId>_<yyyyMM>`) funds the month after the one in
+ *   its id;
+ * - any other income (e.g. a manually recorded "Salário") is a salary payment when [isSalaryPayment]: its source
+ *   matches (see [isSalaryPayment]: case/accent-insensitive, equal or whole-word prefix) the label of a salary-profile
+ *   line that [paysForNextMonth] and it was
+ *   received on the pay-day rule (the last working day of its month, or on day [NEXT_MONTH_PAY_DAY] or later in
+ *   [zone]). It then funds the month after the one of its date.
+ * Everything else (prizes, refunds, cashback, benefits on other days, any income of a non-salary source) funds the
+ * month of its date in [zone]. Without a shift every income funds the month of its date.
  */
 fun fundingMonthOf(
     income: Income,
@@ -179,13 +188,71 @@ fun fundingMonthOf(
     funding: IncomeFunding,
     zone: ZoneId,
 ): YearMonth {
-    val payday = if (funding.shift) parsePaydayIncomeId(income.id) else null
+    val dateMonth = YearMonth.from(income.date.atZone(zone))
+    if (!funding.shift) return dateMonth
+    val payday = parsePaydayIncomeId(income.id)
     val line = payday?.let { (lineId, _) -> lines.firstOrNull { it.id == lineId } }
-    return if (payday != null && line != null && line.paysForNextMonth) {
-        payday.second.plusMonths(1)
-    } else {
-        YearMonth.from(income.date.atZone(zone))
+    return when {
+        payday != null && line != null -> if (line.paysForNextMonth) payday.second.plusMonths(1) else dateMonth
+        isSalaryPayment(income, lines, zone) -> dateMonth.plusMonths(1)
+        else -> dateMonth
     }
+}
+
+internal fun normalisedWords(text: String): List<String> =
+    Normalizer
+        .normalize(text.trim().lowercase(), Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}+"), "")
+        .split(Regex("\\s+"))
+        .filter { it.isNotEmpty() }
+
+/**
+ * The line a [source] (as normalised words) belongs to: a label equal to it wins; otherwise a label the source is a
+ * whole-word prefix of ("salario" of "salario liquido"). A label that is a prefix of the source never matches
+ * ("salary bonus" is not "salary"). Among several qualifying labels the exact one, then the shortest, wins; a tie
+ * there means no match.
+ */
+internal fun matchingLine(
+    source: List<String>,
+    lines: List<PlannedIncome>,
+): PlannedIncome? {
+    if (source.isEmpty()) return null
+    val labelled = lines.map { it to normalisedWords(it.label) }.filter { (_, words) -> words.isNotEmpty() }
+    val exact = labelled.filter { (_, words) -> words == source }
+    val candidates = exact.ifEmpty { labelled.filter { (_, words) -> words.take(source.size) == source } }
+    val shortest = candidates.minOfOrNull { (_, words) -> words.size }
+    return candidates.filter { (_, words) -> words.size == shortest }.singleOrNull()?.first
+}
+
+/**
+ * Whether [income] is a salary payment that funds the next month: its source matches the label of a salary-profile
+ * line that [paysForNextMonth] (trimmed, case- and accent-insensitive, equal to the label or a whole-word prefix of
+ * it: "Salário" matches "Salário líquido" but "Salary bonus" does not match "Salary"; see [matchingLine]), and it
+ * was received on the last working day of its month or on
+ * day [NEXT_MONTH_PAY_DAY] or later (in [zone]).
+ */
+fun isSalaryPayment(
+    income: Income,
+    lines: List<PlannedIncome>,
+    zone: ZoneId,
+): Boolean {
+    val source = normalisedWords(income.source)
+    val matches = matchingLine(source, lines)?.paysForNextMonth == true
+    val date = income.date.atZone(zone).toLocalDate()
+    return matches && (date.dayOfMonth >= NEXT_MONTH_PAY_DAY || date == lastWorkingDayOf(YearMonth.from(date)))
+}
+
+/**
+ * When [income] counts for a period: a shifted salary counts from the first moment of the month it funds, any
+ * other income at its own date. Used so period totals attribute income exactly like [fundingMonthOf].
+ */
+fun Income.fundingInstant(
+    lines: List<PlannedIncome>,
+    funding: IncomeFunding,
+    zone: ZoneId,
+): java.time.Instant {
+    val month = fundingMonthOf(this, lines, funding, zone)
+    return if (month == YearMonth.from(date.atZone(zone))) date else month.atDay(1).atStartOfDay(zone).toInstant()
 }
 
 /** The incomes among [this] that fund [month] (see [fundingMonthOf]). */

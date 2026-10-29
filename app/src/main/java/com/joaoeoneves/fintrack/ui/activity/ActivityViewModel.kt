@@ -10,23 +10,37 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.model.IncomeFunding
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
+import com.joaoeoneves.fintrack.domain.model.PlannedIncome
+import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
+import com.joaoeoneves.fintrack.domain.model.fundingMonthOf
+import com.joaoeoneves.fintrack.domain.model.incomeSourceOf
+import com.joaoeoneves.fintrack.domain.model.netCents
 import com.joaoeoneves.fintrack.domain.model.plannedSlices
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
+import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
+import com.joaoeoneves.fintrack.domain.usecase.ObserveMonthlyHistory
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
 import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeChip
 import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
+import com.joaoeoneves.fintrack.ui.activity.analytics.encode
+import com.joaoeoneves.fintrack.ui.activity.analytics.envelopeColorKeyOf
+import com.joaoeoneves.fintrack.ui.activity.analytics.envelopeColorKeysOf
+import com.joaoeoneves.fintrack.ui.activity.analytics.periodMonthsOf
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.common.groupByDay
 import com.joaoeoneves.fintrack.ui.common.period.PeriodActions
@@ -42,12 +56,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.YearMonth
 import java.time.ZoneId
 import javax.inject.Inject
 
@@ -72,6 +88,7 @@ private sealed interface PeriodItems {
         val canGoToNextMonth: Boolean,
         val transactions: TransactionsInRange,
         val overview: PeriodOverview,
+        val months: List<YearMonth>,
     ) : PeriodItems
 
     data class Failed(
@@ -85,6 +102,7 @@ class ActivityViewModel
     @Inject
     constructor(
         private val observePeriodOverview: ObservePeriodOverview,
+        private val observeMonthlyHistory: ObserveMonthlyHistory,
         categoryRepository: CategoryRepository,
         private val deleteTransaction: DeleteTransaction,
         private val savedStateHandle: SavedStateHandle,
@@ -146,6 +164,9 @@ class ActivityViewModel
             )
         val envelopeFilter: StateFlow<String?> = selectedEnvelope.asStateFlow()
 
+        // The selected income source (an encoded IncomeSourceKey) on the Income tab; null shows every source.
+        private val selectedIncomeSource = savedStateHandle.getStateFlow<String?>(KEY_SELECTED_INCOME_SOURCE, null)
+
         private val undoEvents = Channel<DeletedTransaction>(Channel.BUFFERED)
         val undoEvent: Flow<DeletedTransaction> = undoEvents.receiveAsFlow()
 
@@ -171,22 +192,55 @@ class ActivityViewModel
                     val canGoToNextMonth = period.canGoToNextMonth(now, clock.zone)
                     observePeriodOverview(period, now, clock.zone, recentLimit = 0)
                         .map<PeriodOverview, PeriodItems> {
-                            PeriodItems.Loaded(period, canGoToNextMonth, it.transactions, it)
+                            PeriodItems.Loaded(
+                                period,
+                                canGoToNextMonth,
+                                it.transactions,
+                                it,
+                                periodMonthsOf(period, now, clock.zone),
+                            )
                         }.catch { e ->
                             Log.w(TAG, "Activity flow failed", e)
                             emit(PeriodItems.Failed(UiText.StringResource(R.string.error_generic_fallback)))
                         }
                 }
 
+        // The history window ends at the period's last month and is at least a year long; it only re-subscribes when
+        // one of those two changes (not on filters, search or sort).
+        private val historyWindow: Flow<Pair<YearMonth, Int>> =
+            combine(selection.token, retryTrigger) { token, _ -> token }
+                .map { token ->
+                    val now = clock.instant()
+                    val months = periodMonthsOf(decodePeriod(token, now, clock.zone), now, clock.zone)
+                    months.last() to maxOf(HISTORY_MONTHS, months.size)
+                }.distinctUntilChanged()
+
+        private val history: StateFlow<MonthlyHistory?> =
+            historyWindow
+                .flatMapLatest { (end, months) ->
+                    observeMonthlyHistory(end, months, clock.zone)
+                        .map<MonthlyHistory, MonthlyHistory?> { it }
+                        .catch { e ->
+                            Log.w(TAG, "History flow failed", e)
+                            emit(null)
+                        }
+                }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
+
         private val filters: Flow<ActivityFilters> =
             combine(
                 combine(selectedType, selectedCategory, selectedEnvelope) { type, category, envelope ->
                     Triple(type, category, envelope)
                 },
-                query,
-                sortOption,
-            ) { (type, category, envelope), query, sort ->
-                ActivityFilters(type = type, category = category, envelope = envelope, query = query, sort = sort)
+                combine(query, sortOption, selectedIncomeSource) { query, sort, source -> Triple(query, sort, source) },
+            ) { (type, category, envelope), (query, sort, source) ->
+                ActivityFilters(
+                    type = type,
+                    category = category,
+                    envelope = envelope,
+                    query = query,
+                    sort = sort,
+                    incomeSource = source,
+                )
             }
 
         /** Period navigation for the selector; any period kind (month, rolling, custom) is allowed. */
@@ -198,9 +252,9 @@ class ActivityViewModel
             )
 
         val uiState: StateFlow<ActivityUiState> =
-            combine(periodItems, filters, categoryLabels, categories) { items, activeFilters, labels, catalog ->
+            combine(periodItems, filters, categoryLabels, categories, history) { items, active, labels, catalog, past ->
                 when (items) {
-                    is PeriodItems.Loaded -> items.toContent(activeFilters, labels, catalog, clock.zone)
+                    is PeriodItems.Loaded -> items.toContent(active, labels, catalog, clock.zone, past)
                     is PeriodItems.Failed -> ActivityUiState.Error(items.message)
                 }
             }.stateIn(
@@ -236,6 +290,11 @@ class ActivityViewModel
             }
         }
 
+        /** Selects an income source (its encoded key; `null` clears); the list and the Evolution chart follow it. */
+        fun onIncomeSourceSelected(key: String?) {
+            savedStateHandle[KEY_SELECTED_INCOME_SOURCE] = key
+        }
+
         fun onCategoryLabelsChanged(labels: Map<CategoryId, String>) {
             categoryLabels.value = labels
         }
@@ -269,6 +328,8 @@ class ActivityViewModel
             private const val KEY_SELECTED_TYPE = "selectedType"
             private const val KEY_SELECTED_PERIOD = "selectedPeriod"
             private const val KEY_SELECTED_ENVELOPE = "selectedEnvelope"
+            private const val KEY_SELECTED_INCOME_SOURCE = "selectedIncomeSource"
+            private const val HISTORY_MONTHS = 12
         }
     }
 
@@ -294,13 +355,18 @@ private fun PeriodItems.Loaded.toContent(
     labels: Map<CategoryId, String>,
     catalog: List<Category>,
     zone: ZoneId,
+    monthly: MonthlyHistory?,
 ): ActivityUiState.Content {
-    val analytics = analyticsOf(requested.envelope)
+    val analytics = analyticsOf(requested.envelope, catalog)
     // An envelope id that no longer exists filters nothing.
     val envelope = requested.envelope?.takeIf { it == NO_ENVELOPE || it in analytics.envelopeIds }
     val activeFilters = requested.copy(envelope = envelope)
     val byId = catalog.associateBy { it.id }
-    val filtered =
+    val lines = overview.plannedIncome
+    val sourceKeys = monthly?.incomeSources?.map { it.key.encode() }.orEmpty()
+    // A source that no longer exists in the history filters nothing.
+    val incomeSource = requested.incomeSource?.takeIf { it in sourceKeys }
+    val byType =
         filterTransactions(
             list = transactions.expenses + transactions.income,
             type = activeFilters.type,
@@ -310,6 +376,12 @@ private fun PeriodItems.Loaded.toContent(
             envelope = envelope,
             envelopeOf = { id -> byId[id]?.let { envelopeIdOf(it, analytics.envelopeIds) } },
         )
+    val filtered =
+        if (activeFilters.type == ActivityType.INCOME && incomeSource != null) {
+            byType.filter { it !is Income || incomeSourceOf(it, lines).encode() == incomeSource }
+        } else {
+            byType
+        }
     val sorted = sortTransactions(filtered, activeFilters.sort)
     return ActivityUiState.Content(
         period = period,
@@ -317,8 +389,13 @@ private fun PeriodItems.Loaded.toContent(
         items = sorted,
         days = if (shouldGroupByDay(activeFilters.sort)) groupByDay(sorted, zone) else emptyList(),
         totals = activityTotalsOf(sorted, catalog),
-        filters = activeFilters,
+        filters = activeFilters.copy(incomeSource = incomeSource),
         analytics = analytics.following(sorted.filterIsInstance<Expense>(), catalog),
+        history =
+            monthly
+                ?.takeIf { it.months.lastOrNull()?.month == months.last() }
+                ?.let { ActivityHistory(months, period is Period.CurrentMonth || period is Period.Month, it) },
+        shiftedIncomes = shiftedIncomesOf(sorted, lines, overview.funding, zone),
         categoryScope =
             envelope?.let { selected ->
                 catalog
@@ -329,27 +406,43 @@ private fun PeriodItems.Loaded.toContent(
     )
 }
 
-/** The header's "Spent" and fixed/variable split follow the visible [expenses] (the breakdown stays whole-period). */
+/**
+ * The header's "Spent", fixed/variable split and per-category breakdown totals follow the visible [expenses]
+ * (the planned slices and the per-envelope view stay whole-period).
+ */
 private fun ActivityAnalytics.following(
     expenses: List<Expense>,
     catalog: List<Category>,
 ): ActivityAnalytics {
     val spending = expenses.filter { catalog.resolve(it.category.id).kind == CategoryKind.SPENDING }
     val visibleSplit = spendingSplitOf(spending)
-    return copy(spentCents = visibleSplit.spendingCents, split = visibleSplit)
+    val visibleByCategory = expenses.groupBy { it.category.id }
+    val visibleTotals =
+        breakdown.categoryTotals.map { total ->
+            total.copy(totalCents = visibleByCategory[total.category.id].orEmpty().netCents())
+        }
+    return copy(
+        spentCents = visibleSplit.spendingCents,
+        split = visibleSplit,
+        breakdown = breakdown.copy(categoryTotals = visibleTotals),
+    )
 }
 
 /** The analytics header's numbers over the whole period (before the list filters). */
-private fun PeriodItems.Loaded.analyticsOf(selectedEnvelope: String?): ActivityAnalytics {
+private fun PeriodItems.Loaded.analyticsOf(
+    selectedEnvelope: String?,
+    catalog: List<Category>,
+): ActivityAnalytics {
     val split = spendingSplitOf(transactions.expenses)
     val summary = overview.periodEnvelopes
+    val kept = summary.envelopes.filter { it.spentCents > 0 || it.envelope.id == selectedEnvelope }
+    val showUnenveloped = summary.unenvelopedSpentCents > 0 || selectedEnvelope == NO_ENVELOPE
+    val keys = envelopeColorKeysOf(kept.map { it.envelope.id }, catalog)
     val chips =
-        summary.envelopes
-            .filter { it.spentCents > 0 || it.envelope.id == selectedEnvelope }
-            .map { EnvelopeChip(it.envelope.id, it.envelope.name, it.spentCents) } +
+        kept.mapIndexed { i, e -> EnvelopeChip(e.envelope.id, e.envelope.name, e.spentCents, keys[i]) } +
             listOfNotNull(
-                EnvelopeChip(NO_ENVELOPE, null, summary.unenvelopedSpentCents)
-                    .takeIf { it.spentCents > 0 || selectedEnvelope == NO_ENVELOPE },
+                EnvelopeChip(NO_ENVELOPE, null, summary.unenvelopedSpentCents, envelopeColorKeyOf(NO_ENVELOPE, catalog))
+                    .takeIf { showUnenveloped },
             )
     return ActivityAnalytics(
         spentCents = split.spendingCents,
@@ -365,3 +458,17 @@ private fun PeriodItems.Loaded.analyticsOf(selectedEnvelope: String?): ActivityA
         envelopeIds = summary.envelopes.map { it.envelope.id }.toSet(),
     )
 }
+
+/** The listed incomes whose funding month differs from their date's month (a shifted salary), by id. */
+internal fun shiftedIncomesOf(
+    items: List<Transaction>,
+    lines: List<PlannedIncome>,
+    funding: IncomeFunding,
+    zone: ZoneId,
+): Map<String, YearMonth> =
+    items
+        .filterIsInstance<Income>()
+        .mapNotNull { income ->
+            val month = fundingMonthOf(income, lines, funding, zone)
+            (income.id to month).takeIf { month != YearMonth.from(income.date.atZone(zone)) }
+        }.toMap()

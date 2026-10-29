@@ -380,8 +380,6 @@
     <string name="recurring_manage">Manage</string>
     <string name="recurring_empty_cta">Set up recurring</string>
     <string name="recurring_added">Added “%1$s”</string>
-    <string name="recurring_per_month">%1$s / month</string>
-    <string name="recurring_per_year">%1$s / year</string>
     <string name="recurring_next_due">Next: %1$s</string>
     <string name="recurring_section_active">Active</string>
     <string name="recurring_section_inactive">Paused and ended</string>
@@ -548,7 +546,8 @@
     <string name="salary_delete_title">Delete the salary profile?</string>
     <string name="salary_delete_message">The expected income generated from it is removed too. What you added by hand stays.</string>
     <string name="salary_line_net">Net salary</string>
-    <string name="salary_line_subsidy">Subsidy</string>
+    <string name="salary_line_holiday">Holiday subsidy</string>
+    <string name="salary_line_christmas">Christmas subsidy</string>
     <string name="plan_tab_month">Month</string>
     <string name="plan_tab_year">Year</string>
     <string name="annual_income_title">Income for the year</string>
@@ -725,7 +724,6 @@
     <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
     <string name="plan_salary_next_month">Salary pays the next month</string>
     <string name="plan_salary_next_month_hint">Salary paid in the last days of a month funds the next month\'s plan.</string>
-    <string name="plan_summary_carry">Carried over from %1$s</string>
     <string name="plan_summary_extras_note">%1$s of extra income does not count until it is received</string>
     <string name="activity_total_out_includes_saving">includes %1$s saved</string>
     <string name="pending_more_options">More options</string>
@@ -745,4 +743,20 @@
     <string name="envelope_no_limit">No limit</string>
     <string name="recurring_pause_hint">Nothing is added until you resume</string>
     <string name="income_line_deleted">Income line deleted</string>
+    <string name="activity_vs_previous_month">vs previous month</string>
+    <string name="activity_vs_average">vs %1$d-month average</string>
+    <string name="activity_monthly_average">Monthly average %1$s</string>
+    <string name="activity_since_january">Since January</string>
+    <string name="activity_ytd_spent">Spent</string>
+    <string name="activity_ytd_received">Received</string>
+    <string name="activity_ytd_saved">Saved</string>
+    <string name="activity_evolution">Evolution</string>
+    <string name="activity_received_total">Received</string>
+    <string name="activity_expected_difference">Expected %1$s · Difference %2$s</string>
+    <string name="activity_by_source">By source</string>
+    <string name="activity_source_expected">of %1$s expected</string>
+    <string name="activity_source_other">Other</string>
+    <string name="activity_income_counts_for">Counts for %1$s</string>
+    <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
+    <string name="income_view_history">View history</string>
 </resources>

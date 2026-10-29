@@ -48,7 +48,7 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
     private fun failingBudgets(error: Throwable) = FakeBudgetRepository(nextObserveBudgetsError = error)
 
     @Test
-    fun currentMonth_usesTheMonthAndHistoryListenersPerRepository() =
+    fun currentMonth_usesTheMonthAndMonthBeforeListenersPerRepository() =
         runTest(testDispatcher) {
             val viewModel = countingViewModel()
             collect(viewModel)
@@ -78,7 +78,7 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
             advanceUntilIdle()
             assertActive(expenseListeners = 2)
             assertEquals(currentMonth, viewModel.content().budgetMonth)
-            // CurrentMonth, then Month(previous), then CurrentMonth again (each: the month and its history).
+            // CurrentMonth, Month(previous), CurrentMonth again: two listeners each.
             assertEquals(6, expenses.listeners.observedRanges.size)
         }
 

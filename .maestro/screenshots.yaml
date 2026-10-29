@@ -1,7 +1,10 @@
 appId: com.joaoeoneves.fintrack
 ---
-# README screenshots flow for 3.0 (guest mode, English, EUR, dark, demo data only). NOT a regression gate.
-# Run locally on a ~1080x2400 emulator with SystemUI demo mode on (clock 12:00, full battery, wifi,
+# README screenshots flow (updated for 3.2; guest mode, English, EUR, dark, demo data only). NOT a regression gate.
+# Plan > Set up is the gear icon beside the "Plan" title and opens the Set up screen (Income, Envelopes,
+# Recurring, Categories rows); the old Set up section on the Plan tab is gone.
+# Run locally on a 1080x2400 / 420 dpi emulator (adb shell wm size 1080x2400; adb shell wm density 420;
+# reset with wm size reset / wm density reset) with SystemUI demo mode on (clock 12:00, full battery, wifi,
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
 # Captures: home, activity (summary header, unscrolled), plan, plan-income, savings, add-expense.
@@ -38,15 +41,11 @@ appId: com.joaoeoneves.fintrack
       id: "dashboard_list"
     timeout: 10000
 
-# --- Plan > Set up > Income: the salary wizard (1500 gross, 15% IRS, 50% subsidies, meal allowance) ---
+# --- Plan > Set up (gear icon) > Income: the salary wizard (1500 gross, 15% IRS, 50% subsidies, meal allowance) ---
 - tapOn:
     id: "nav_plan"
-- scrollUntilVisible:
-    element: "Set up"
-- scroll
-- tapOn:
-    text: "Income"
-    index: -1
+- tapOn: "Set up"
+- tapOn: "Income"
 - extendedWaitUntil:
     visible: "Salary profile"
     timeout: 10000
@@ -75,13 +74,8 @@ appId: com.joaoeoneves.fintrack
 - takeScreenshot: maestro-out/screens/plan-income
 - back
 
-# --- Plan > Set up > Envelopes: Food 300, Shopping 150, Rent 750 ---
-- scrollUntilVisible:
-    element: "Set up"
-- scroll
-- tapOn:
-    text: "Envelopes"
-    index: -1
+# --- Set up > Envelopes: Food 300, Shopping 150, Rent 750 ---
+- tapOn: "Envelopes"
 - tapOn: "New envelope"
 - tapOn: "Name"
 - inputText: "Food"
@@ -129,13 +123,8 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - back
 
-# --- Plan > Set up > Bills: Rent and Internet ---
-- scrollUntilVisible:
-    element: "Set up"
-- scroll
-- tapOn:
-    text: "Bills"
-    index: -1
+# --- Set up > Recurring: Rent and Internet ---
+- tapOn: "Recurring"
 - tapOn: "Add recurring"
 - inputText: "75000"
 - tapOn: "Name"
@@ -156,6 +145,8 @@ appId: com.joaoeoneves.fintrack
 - extendedWaitUntil:
     visible: "Internet"
     timeout: 10000
+- back
+# Back from Set up to the Plan tab.
 - back
 
 # --- Savings: one plan with a target ---
@@ -191,7 +182,7 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 - tapOn: "Add income"
 - inputText: "140000"
-- tapOn: "Source"
+- tapOn: "Name"
 - inputText: "Freelance"
 - back
 - scrollUntilVisible:

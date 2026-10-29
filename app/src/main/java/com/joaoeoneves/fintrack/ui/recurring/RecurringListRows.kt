@@ -38,9 +38,9 @@ internal fun RecurringTotals(state: RecurringListUiState.Content) {
 }
 
 /**
- * One recurring item as a transaction-style row: icon bubble, truncating name, a one-line subtitle (frequency,
- * category, automatic, status) and the amount; tap opens the editor (which also deletes). Pause/resume stays as the
- * single trailing action.
+ * One recurring item as a transaction-style row: icon bubble, truncating name, a subtitle of up to two lines
+ * (frequency, category, automatic, status) and the amount; tap opens the editor (which also deletes).
+ * Pause/resume stays as the single trailing action.
  */
 @Composable
 internal fun RecurringRowItem(
@@ -51,10 +51,14 @@ internal fun RecurringRowItem(
     val item = row.item
     val amount = formatAmountCents(item.amountCents)
     val frequencyRes =
-        if (item.frequency == RecurringFrequency.MONTHLY) R.string.recurring_per_month else R.string.recurring_per_year
+        if (item.frequency == RecurringFrequency.MONTHLY) {
+            R.string.recurring_frequency_monthly
+        } else {
+            R.string.recurring_frequency_yearly
+        }
     val subtitle =
         listOfNotNull(
-            stringResource(frequencyRes, amount),
+            stringResource(frequencyRes),
             row.category?.displayName,
             stringResource(R.string.recurring_automatic).takeIf { item.autoPost },
             statusText(row).takeIf { it.isNotEmpty() },
@@ -65,6 +69,7 @@ internal fun RecurringRowItem(
             title = item.name,
             subtitle = subtitle,
             amountText = amount,
+            subtitleMaxLines = 2,
             amountColor = MaterialTheme.colorScheme.onSurface,
             onClick = { actions.onOpenEditor(item.id) },
             modifier = Modifier.weight(1f),

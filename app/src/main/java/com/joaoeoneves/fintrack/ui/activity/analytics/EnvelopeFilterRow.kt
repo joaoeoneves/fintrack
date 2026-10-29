@@ -1,11 +1,10 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,10 +22,11 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 const val ENVELOPE_CHIP_ALL_TAG = "envelope_chip_all"
 
 /**
- * Horizontally scrollable, single-select envelope filter: an "All" chip (selected when [selected] is null)
+ * Wrapping (flow), single-select envelope filter: an "All" chip (selected when [selected] is null)
  * followed by one chip per entry of [chips], labelled "Name · amount" with the colour dot of its bar segment
- * ([dotColors], by index).
+ * ([dotColors], colours derived from [EnvelopeChip.colorKey] by the caller).
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EnvelopeFilterRow(
     chips: List<EnvelopeChip>,
@@ -36,13 +36,10 @@ fun EnvelopeFilterRow(
     dotColors: List<Color> = emptyList(),
 ) {
     val noEnvelope = stringResource(R.string.plan_group_other)
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = Dimens.ScreenPadding),
+    FlowRow(
+        modifier = modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space8),
+        verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
     ) {
         CategoryChip(
             label = stringResource(R.string.activity_envelope_all),

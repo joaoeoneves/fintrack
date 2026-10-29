@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,12 +15,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Period
+import com.joaoeoneves.fintrack.ui.common.categoryColorFor
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
-import com.joaoeoneves.fintrack.ui.common.sliceColorFor
 import com.joaoeoneves.fintrack.ui.dashboard.CategoryBreakdownSection
 import com.joaoeoneves.fintrack.ui.dashboard.PeriodTab
 import com.joaoeoneves.fintrack.ui.dashboard.toPeriod
@@ -44,24 +47,11 @@ fun ActivityAnalyticsHeader(
     actions: ActivityAnalyticsActions,
     modifier: Modifier = Modifier,
     showSpent: Boolean = true,
+    figures: HistoryFigures = HistoryFigures(),
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
-        SegmentedTextTabs(
-            options = PeriodTab.entries,
-            selected = period.toTab(),
-            label = { stringResource(it.labelRes) },
-            onSelect = { actions.period.onSelect(it.toPeriod()) },
-            tabContentDescription = { stringResource(it.descriptionRes) },
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-        )
-        PeriodSelector(
-            period = period,
-            canGoToNextMonth = canGoToNextMonth,
-            actions = actions.period,
-            alignment = Alignment.Start,
-            modifier = Modifier.padding(horizontal = Dimens.Space8),
-        )
+        AnalyticsPeriodControls(period, canGoToNextMonth, actions)
         if (showSpent) {
             Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
                 Text(
@@ -70,12 +60,15 @@ fun ActivityAnalyticsHeader(
                     color = FinTrackTheme.colors.textSecondary,
                 )
                 Text(text = formatAmountCents(analytics.spentCents), style = AmountLarge, maxLines = 1)
+                figures.comparison?.let { SpendingComparisonLines(it) }
+                figures.monthlyAverageCents?.let { MonthlyAverageLine(it) }
             }
         }
         val hasDetails =
             (showSpent && analytics.split.spendingCents > 0) ||
                 analytics.envelopeChips.isNotEmpty() ||
-                !analytics.breakdown.isEmpty
+                !analytics.breakdown.isEmpty ||
+                figures.hasDetails
         if (hasDetails) {
             SectionAction(
                 text =
@@ -84,10 +77,11 @@ fun ActivityAnalyticsHeader(
                     ),
                 onClick = { expanded = !expanded },
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+                startPadding = 0.dp,
             )
         }
         if (hasDetails && expanded) {
-            AnalyticsDetails(analytics, selectedEnvelope, actions, showSpent)
+            AnalyticsDetails(analytics, selectedEnvelope, actions, showSpent, figures)
         }
     }
 }
@@ -99,6 +93,7 @@ private fun AnalyticsDetails(
     selectedEnvelope: String?,
     actions: ActivityAnalyticsActions,
     showSpent: Boolean,
+    figures: HistoryFigures,
 ) {
     Column {
         if (showSpent && analytics.split.spendingCents > 0) {
@@ -117,6 +112,42 @@ private fun AnalyticsDetails(
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
             )
         }
+        HistoryDetails(figures)
+    }
+}
+
+/** The period tabs and the period selector, shared by the Expenses and the Income headers. */
+@Composable
+internal fun AnalyticsPeriodControls(
+    period: Period,
+    canGoToNextMonth: Boolean,
+    actions: ActivityAnalyticsActions,
+) {
+    SegmentedTextTabs(
+        options = PeriodTab.entries,
+        selected = period.toTab(),
+        label = { stringResource(it.labelRes) },
+        onSelect = { actions.period.onSelect(it.toPeriod()) },
+        tabContentDescription = { stringResource(it.descriptionRes) },
+        modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
+    )
+    PeriodSelector(
+        period = period,
+        canGoToNextMonth = canGoToNextMonth,
+        actions = actions.period,
+        alignment = Alignment.Start,
+        modifier = Modifier.padding(horizontal = Dimens.Space8),
+    )
+}
+
+/** The Evolution bars and the "Since January" row (each only when it has data). */
+@Composable
+internal fun HistoryDetails(figures: HistoryFigures) {
+    figures.evolution?.let {
+        EvolutionSection(it, modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8))
+    }
+    figures.yearToDate?.let {
+        YearToDateRow(it, modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8))
     }
 }
 
@@ -130,28 +161,29 @@ private fun EnvelopeFilterSection(
     val noEnvelope = stringResource(R.string.plan_group_other)
     val spoken = chips.map { "${it.name ?: noEnvelope} ${formatAmountCents(it.spentCents, false)}" }.joinToString("; ")
     val description = stringResource(R.string.cd_envelope_bar, spoken)
-    val colors = chips.indices.map { sliceColorFor(it, dark) }
-    val selectedIndex = chips.indexOfFirst { it.id == selected }.takeIf { it >= 0 }
+    val colors = chips.map { categoryColorFor(it.colorKey, dark) }
+    // Tapping a bar segment only highlights it (and names it below); the chips are what filter.
+    var highlightedRaw by rememberSaveable { mutableStateOf<Int?>(null) }
+    val highlighted = highlightedRaw?.takeIf { it in chips.indices }
     EnvelopeSpendBar(
         segments = chips.mapIndexed { index, chip -> BarSegmentData(chip.spentCents, colors[index]) },
         description = description,
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8),
-        selectedIndex = selectedIndex,
-        onSegmentClick = { index ->
-            val id = chips[index].id
-            onSelected(if (id == selected) null else id)
-        },
+        selectedIndex = highlighted,
+        onSegmentClick = { index -> highlightedRaw = if (highlighted == index) null else index },
     )
-    val shown = selectedIndex?.let { chips[it] }
+    val shown = highlighted?.let { chips.getOrNull(it) }
     if (shown != null) {
         Text(
             text = "${shown.name ?: noEnvelope} · ${formatAmountCents(shown.spentCents)}",
             style = MaterialTheme.typography.labelMedium,
-            color = colors[selectedIndex],
+            color = colors[highlighted ?: 0],
             modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(bottom = Dimens.Space8),
         )
     }
+    Spacer(Modifier.height(Dimens.Space12))
     EnvelopeFilterRow(chips = chips, selected = selected, onSelected = onSelected, dotColors = colors)
+    Spacer(Modifier.height(Dimens.Space16))
 }
 
 /** The breakdown with a Category | Envelope switch (only when envelopes exist; otherwise just by category). */
