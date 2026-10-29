@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -42,7 +43,7 @@ class ReceiveFeedback(
     ) {
         scope.launch {
             host.currentSnackbarData?.dismiss()
-            if (host.showSnackbar(message = message, actionLabel = actionLabel) == SnackbarResult.ActionPerformed) {
+            if (host.showActionSnackbar(message, actionLabel) == SnackbarResult.ActionPerformed) {
                 this@ReceiveFeedback.change = change
             }
         }

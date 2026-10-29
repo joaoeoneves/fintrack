@@ -35,6 +35,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackNavigationBar
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.LocalAppSnackbar
 import com.joaoeoneves.fintrack.ui.designsystem.NavigationBarEntry
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.plan.envelopes.DeletedEnvelope
 import com.joaoeoneves.fintrack.ui.plan.envelopes.EnvelopeUndoViewModel
 import com.joaoeoneves.fintrack.ui.plan.envelopes.LocalEnvelopeDeleteUndo
@@ -64,7 +65,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
         remember(deletedMessage, undoLabel) {
             { deleted ->
                 scope.launch {
-                    val result = snackbarHostState.showSnackbar(deletedMessage(deleted), actionLabel = undoLabel)
+                    val result = snackbarHostState.showActionSnackbar(deletedMessage(deleted), undoLabel)
                     if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
                 }
             }
@@ -75,7 +76,7 @@ fun FinTrackAppShell(modifier: Modifier = Modifier) {
         remember(envelopeDeletedMessage, undoLabel) {
             { deleted ->
                 scope.launch {
-                    val result = snackbarHostState.showSnackbar(envelopeDeletedMessage, actionLabel = undoLabel)
+                    val result = snackbarHostState.showActionSnackbar(envelopeDeletedMessage, undoLabel)
                     if (result == SnackbarResult.ActionPerformed) envelopeUndoViewModel.restore(deleted)
                 }
             }
@@ -162,7 +163,7 @@ private fun rememberSavingsPlanDeletedHandler(
     return remember(message, undoLabel) {
         { deleted ->
             scope.launch {
-                val result = snackbarHostState.showSnackbar(message, actionLabel = undoLabel)
+                val result = snackbarHostState.showActionSnackbar(message, undoLabel)
                 if (result == SnackbarResult.ActionPerformed) undoViewModel.restore(deleted)
             }
         }
