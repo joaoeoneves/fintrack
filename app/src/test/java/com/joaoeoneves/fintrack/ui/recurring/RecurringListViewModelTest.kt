@@ -4,11 +4,13 @@ import android.app.Application
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import com.joaoeoneves.fintrack.testutil.userCategory
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,6 +56,24 @@ class RecurringListViewModelTest {
     }
 
     private fun content(vm: RecurringListViewModel) = vm.uiState.value as RecurringListUiState.Content
+
+    @Test
+    fun savingCategoryItems_goToInvestments_notBills() =
+        runTest(testDispatcher) {
+            val etf =
+                com.joaoeoneves.fintrack.testutil
+                    .userCategory("etf", kind = com.joaoeoneves.fintrack.domain.model.CategoryKind.SAVING)
+            val invest = recurringItem(id = "inv", categoryId = etf.id, amountCents = 10_000)
+            val bill = recurringItem(id = "bill", amountCents = 1_000)
+            val repo = FakeRecurringRepository(listOf(invest, bill))
+            val vm = RecurringListViewModel(repo, FakeCategoryRepository(listOf(etf)), clock)
+            started(vm)
+
+            val state = content(vm)
+
+            assertEquals(listOf("inv"), state.investments.map { it.item.id })
+            assertEquals(listOf("bill"), state.active.map { it.item.id })
+        }
 
     @Test
     fun splitsActiveFromPausedAndEnded_withTotalsOfActiveOnly() =
