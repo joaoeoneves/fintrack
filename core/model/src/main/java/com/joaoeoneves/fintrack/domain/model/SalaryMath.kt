@@ -98,7 +98,8 @@ private fun grossBreakdown(
         irsBaseCents = irsBase.cents(),
         irsSubsidiesCents = irsSubs.cents(),
         // The shown rows add up: IRS is what is left of the rounded gross after the rounded SS, other and net.
-        irsCents = gross.cents() - ss.cents() - other.cents() - netMonthly,
+        // Clamped at 0 (a full IRS Jovem exemption can round to -1); net stays exact, so that edge case is 1 cent off.
+        irsCents = maxOf(0L, gross.cents() - ss.cents() - other.cents() - netMonthly),
         netMonthlyCents = netMonthly,
         netBaseCents = netBase,
         netDuoCents = netMonthly - netBase,
