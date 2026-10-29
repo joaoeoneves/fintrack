@@ -147,4 +147,6 @@ data class IncomeLineEditorState(
     val component: SalaryComponent? = null,
     /** Set once a save was held back because the line looks like the profile's salary; the next save goes through. */
     val looksLikeSalary: Boolean = false,
+    /** The line's previous amount ("300 until September 2026"), when it has one. */
+    val history: AmountHistoryNote? = null,
 )

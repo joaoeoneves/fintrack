@@ -154,8 +154,8 @@ private fun IncomeDialogs(
         IncomeLineSheet(
             editor = it,
             workingDays = state.workingDays,
-            onSave = { label, cents, schedule ->
-                viewModel.onSaveIncomeLine(label, cents, schedule, state.workingDays.month)
+            onSave = { label, cents, schedule, from ->
+                viewModel.onSaveIncomeLine(label, cents, schedule, state.workingDays.month, from)
             },
             onDelete = viewModel::onDeleteIncomeLine,
             onDismiss = viewModel::onDismissEditor,

@@ -47,13 +47,14 @@ import java.time.YearMonth
 fun IncomeLineSheet(
     editor: IncomeLineEditorState,
     workingDays: WorkingDaysState,
-    onSave: (label: String, amountCents: Long, schedule: IncomeSchedule) -> Unit,
+    onSave: (label: String, amountCents: Long, schedule: IncomeSchedule, effectiveFrom: YearMonth) -> Unit,
     onDelete: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var label by remember { mutableStateOf(editor.initialLabel) }
     var amountCents by remember { mutableLongStateOf(editor.initialAmountCents ?: 0L) }
     var amountError by remember { mutableStateOf(false) }
+    var effectiveFrom by remember { mutableStateOf(YearMonth.now()) }
     var schedule by remember { mutableStateOf(editor.initialSchedule) }
     // The VM's label error is shown only while the text still equals the last submitted text.
     var submittedLabel by remember { mutableStateOf<String?>(null) }
@@ -78,11 +79,7 @@ fun IncomeLineSheet(
             amountCents != (editor.initialAmountCents ?: 0L) ||
             schedule != editor.initialSchedule
     FinTrackBottomSheet(onDismissRequest = onDismiss, dirty = dirty) {
-        Text(
-            text = stringResource(incomeLineTitle(editor.editingId)),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = Dimens.Space12),
-        )
+        SheetTitle(editor.editingId)
         Column(
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.Space8),
@@ -94,21 +91,43 @@ fun IncomeLineSheet(
                 models = FieldModels(labelModel, amountModel, preview),
                 fallbackMonth = workingDays.month,
             )
+            EffectiveFromField(editor, amountCents, effectiveFrom) { effectiveFrom = it }
         }
         PrimaryPillButton(
             text = stringResource(if (editor.looksLikeSalary) R.string.action_save_anyway else R.string.action_save),
             onClick = {
                 submittedLabel = label.trim()
                 if (editor.managed) {
-                    onSave(editor.initialLabel, editor.initialAmountCents ?: 0L, schedule)
+                    onSave(editor.initialLabel, editor.initialAmountCents ?: 0L, schedule, effectiveFrom)
                 } else {
-                    if (amountCents > 0L) onSave(label, amountCents, schedule) else amountError = true
+                    if (amountCents > 0L) onSave(label, amountCents, schedule, effectiveFrom) else amountError = true
                 }
             },
             modifier = Modifier.padding(top = Dimens.Space16),
         )
         if (!editor.managed) RemoveLineButton(editor.editingId, onDelete)
     }
+}
+
+/** "Valid from": a new line always says when it starts; an existing one only once its amount changed. */
+@Composable
+private fun EffectiveFromField(
+    editor: IncomeLineEditorState,
+    amountCents: Long,
+    month: YearMonth,
+    onChange: (YearMonth) -> Unit,
+) {
+    val asked = editor.editingId == null || amountCents != (editor.initialAmountCents ?: 0L)
+    if (!editor.managed && asked) EffectiveFromRow(month = month, onChange = onChange)
+}
+
+@Composable
+private fun SheetTitle(editingId: String?) {
+    Text(
+        text = stringResource(incomeLineTitle(editingId)),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(bottom = Dimens.Space12),
+    )
 }
 
 @Composable
@@ -175,6 +194,7 @@ private fun SheetFields(
             label = models.label,
             amount = models.amount,
         )
+        editor.history?.let { AmountHistoryText(it) }
         IncomeScheduleFields(
             schedule = schedule,
             onChange = onScheduleChange,
