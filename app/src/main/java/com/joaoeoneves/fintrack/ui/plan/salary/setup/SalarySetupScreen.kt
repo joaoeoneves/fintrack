@@ -30,6 +30,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
+import com.joaoeoneves.fintrack.ui.common.moneySymbolsFor
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
@@ -82,6 +83,7 @@ fun SalarySetupScreen(
     }
     BackHandler(enabled = state.step != SalarySetupStep.SECTOR) { viewModel.onBack() }
     val labels = setupLineLabels()
+    val separator = moneySymbolsFor(currentLocale()).decimal
 
     LargeTitleScaffold(
         title = stringResource(R.string.salary_setup_title),
@@ -98,7 +100,7 @@ fun SalarySetupScreen(
                     onMealAnswerChange = viewModel::onMealAnswerChange,
                     onPayDayChange = viewModel::onPayDayChange,
                     onIrsJovemChange = viewModel::onIrsJovemChange,
-                    onAdseChange = viewModel::onAdseChange,
+                    onAdseChange = { viewModel.onAdseChange(it, separator) },
                     onEffectiveFromChange = viewModel::onEffectiveFromChange,
                     onPrimary = {
                         if (state.step == SalarySetupStep.SUMMARY) viewModel.onSave(labels) else viewModel.onNext()
@@ -361,7 +363,7 @@ private fun PayDayRow(
             options = listOf(false, true),
             selected = draft.fixed,
             label = { stringResource(if (it) R.string.plan_payday_fixed else R.string.plan_payday_last_working_day) },
-            onSelect = { onChange(draft.copy(fixed = it, earlierIfClosed = it && draft.earlierIfClosed)) },
+            onSelect = { onChange(draft.copy(fixed = it, earlierIfClosed = it)) },
         )
         if (draft.fixed) {
             MinimalTextField(

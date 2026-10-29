@@ -2,10 +2,10 @@ package com.joaoeoneves.fintrack.ui.plan.salary.setup
 
 import com.joaoeoneves.fintrack.domain.model.EmploymentSector
 import com.joaoeoneves.fintrack.domain.model.MealPayment
-import com.joaoeoneves.fintrack.domain.model.SPREAD_HALF_PPM
 import com.joaoeoneves.fintrack.domain.model.SPREAD_NONE_PPM
 import com.joaoeoneves.fintrack.ui.plan.salary.Parsed
 import com.joaoeoneves.fintrack.ui.plan.salary.SalaryForm
+import com.joaoeoneves.fintrack.ui.plan.salary.effectiveSector
 import com.joaoeoneves.fintrack.ui.plan.salary.parsePercentPpm
 
 /** The steps of the salary set-up wizard, in order. */
@@ -36,15 +36,15 @@ private const val MAX_DAY = 31
 
 /** The pay-day answer a sector starts with: the public sector pays on a fixed day the user still has to fill in. */
 fun payDayPresetFor(sector: EmploymentSector): PayDayDraft =
-    if (sector == EmploymentSector.PUBLIC) PayDayDraft(fixed = true) else PayDayDraft()
+    if (sector == EmploymentSector.PUBLIC) PayDayDraft(fixed = true, earlierIfClosed = true) else PayDayDraft()
 
 /** The meal answer a sector starts with. */
 fun mealAnswerPresetFor(sector: EmploymentSector): MealAnswer =
     if (sector == EmploymentSector.PUBLIC) MealAnswer.WITH_SALARY else MealAnswer.CARD
 
 /**
- * This form with [sector]'s presets: private keeps today's defaults (50% twelfths, subsidies in June and December,
- * meal on a card); public pays no twelfths, subsidies in June and November and meal with the salary. The amounts and
+ * This form with [sector]'s presets: private pays no twelfths (subsidies in June and December, in one go; meal on a
+ * card); public pays no twelfths, subsidies in June and November and meal with the salary. The amounts and
  * rates already typed stay.
  */
 fun SalaryForm.withSectorPreset(sector: EmploymentSector): SalaryForm =
@@ -52,7 +52,7 @@ fun SalaryForm.withSectorPreset(sector: EmploymentSector): SalaryForm =
         EmploymentSector.PRIVATE ->
             copy(
                 sector = sector,
-                spreadPpm = SPREAD_HALF_PPM,
+                spreadPpm = SPREAD_NONE_PPM,
                 subsidyMonths = listOf(PRIVATE_HOLIDAY_MONTH, PRIVATE_CHRISTMAS_MONTH),
                 mealPayment = MealPayment.CARD,
                 otherDeductions = "",
@@ -73,14 +73,36 @@ private const val PUBLIC_HOLIDAY_MONTH = 6
 private const val PUBLIC_SECOND_SUBSIDY_MONTH = 11
 
 /** What "Tenho ADSE" sets other deductions to: 3.5%. */
-const val ADSE_PERCENT_TEXT = "3.5"
+const val ADSE_PERCENT = "3.5"
 private const val ADSE_PPM = 35_000
 
 /** Whether the form's other deductions are exactly the ADSE rate (the "I have ADSE" switch is on). */
 val SalaryForm.hasAdse: Boolean get() = (parsePercentPpm(otherDeductions) as? Parsed.Value)?.value == ADSE_PPM
 
-/** The form with the ADSE switch turned [on] or off. */
-fun SalaryForm.withAdse(on: Boolean): SalaryForm = copy(otherDeductions = if (on) ADSE_PERCENT_TEXT else "")
+/** The form with the ADSE switch turned [on] or off; the rate is written with [decimalSeparator] (both parse). */
+fun SalaryForm.withAdse(
+    on: Boolean,
+    decimalSeparator: Char = '.',
+): SalaryForm = copy(otherDeductions = if (on) ADSE_PERCENT.replace('.', decimalSeparator) else "")
+
+/** The answers a sector change can affect, kept together so the change is one pure step. */
+data class SectorAnswers(
+    val form: SalaryForm,
+    val mealAnswer: MealAnswer,
+    val payDay: PayDayDraft,
+)
+
+/**
+ * These answers after picking [sector]: its presets apply, but the meal answer, the pay day and the ADSE rate the
+ * user has already changed stay; only the ones still at the previous sector's defaults follow the new sector.
+ */
+fun SectorAnswers.withSector(sector: EmploymentSector): SectorAnswers {
+    val previous = form.effectiveSector
+    val answer = if (mealAnswer == mealAnswerPresetFor(previous)) mealAnswerPresetFor(sector) else mealAnswer
+    val day = if (payDay == payDayPresetFor(previous)) payDayPresetFor(sector) else payDay
+    val preset = form.withSectorPreset(sector).copy(otherDeductions = form.otherDeductions)
+    return SectorAnswers(preset.withMealAnswer(answer), answer, day)
+}
 
 /** The form with the meal answer applied: "no" clears the rate, either "yes" sets how it is paid. */
 fun SalaryForm.withMealAnswer(answer: MealAnswer): SalaryForm =
