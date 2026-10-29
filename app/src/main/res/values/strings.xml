@@ -697,7 +697,9 @@
     <string name="category_field_meal_card">Usually paid with meal card</string>
     <string name="income_meal_card">Meal card</string>
     <string name="income_meal_card_balance">Balance</string>
-    <string name="income_meal_card_detail">Received %1$s · spent %2$s</string>
+    <string name="income_meal_card_plafond">Plafond</string>
+    <string name="income_meal_card_plafond_from">Plafond (%1$s allowance)</string>
+    <string name="income_meal_card_spent">Spent</string>
     <string name="income_outlook">Income by month</string>
     <string name="income_outlook_received">Received</string>
     <string name="income_outlook_expected">Expected</string>

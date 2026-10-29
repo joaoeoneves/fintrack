@@ -199,7 +199,7 @@ private fun RefundAndMealCardSwitches(
         onCheckedChange = actions.onRefundChanged,
         supportingText = stringResource(R.string.expense_field_refund_hint),
     )
-    if (form.mealCardAvailable) {
+    if (form.showsMealCardSwitch) {
         SettingsSwitchRow(
             title = stringResource(R.string.expense_field_meal_card),
             checked = form.paidWithMealCard,

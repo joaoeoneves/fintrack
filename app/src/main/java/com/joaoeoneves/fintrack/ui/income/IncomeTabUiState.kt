@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.ui.income
 
 import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.MealCardBalance
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.YearIncomeOutlook
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
@@ -30,8 +29,8 @@ sealed interface IncomeTabUiState {
         val editor: IncomeLineEditorState?,
         val hasProfile: Boolean,
         val canAddIncomeLine: Boolean,
-        /** The meal card's received, spent and balance over [period]; `null` when the meal card does not apply. */
-        val mealCard: MealCardBalance? = null,
+        /** The meal card's plafond, spent and balance over [period]; `null` when the meal card does not apply. */
+        val mealCard: MealCardView? = null,
         /** On a current or future Year: each month received or expected, and the totals. */
         val outlook: YearIncomeOutlook? = null,
     ) : IncomeTabUiState

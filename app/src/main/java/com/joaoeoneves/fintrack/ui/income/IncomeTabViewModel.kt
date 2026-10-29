@@ -9,7 +9,6 @@ import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeMonth
 import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.MAX_PLANNED_INCOME_LINES
-import com.joaoeoneves.fintrack.domain.model.MealCardBalance
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
@@ -288,7 +287,7 @@ class IncomeTabViewModel(
             editor = sources.editor,
             hasProfile = sources.lines.any { it.isManaged },
             canAddIncomeLine = sources.lines.count { !it.isManaged } < MAX_PLANNED_INCOME_LINES,
-            mealCard = mealCardOf(sources),
+            mealCard = mealCardOf(sources, period, currentYearMonth(clock.instant(), clock.zone)),
             outlook = outlookOf(period, sources, LocalDate.now(clock)),
         )
 
@@ -496,10 +495,15 @@ private fun outlookOf(
 }
 
 /** The meal-card balance of the tab's period (its month's overview or the year's transactions); `null` when off. */
-private fun mealCardOf(sources: TabSources): MealCardBalance? {
+private fun mealCardOf(
+    sources: TabSources,
+    period: Period,
+    today: YearMonth,
+): MealCardView? {
     val transactions = sources.inputs?.overview?.transactions ?: sources.extras.transactions
+    // TODO(5.3-merge): replace this period-wide figure with Track A's mealCardMonthOf(month) (plafond = M-1 allowance).
     return transactions?.takeIf { sources.extras.mealCard }?.let {
-        mealCardBalanceOf(mealCardReceivedCents(it.income, sources.lines), it.expenses)
+        mealCardViewOf(period, today, mealCardBalanceOf(mealCardReceivedCents(it.income, sources.lines), it.expenses))
     }
 }
 

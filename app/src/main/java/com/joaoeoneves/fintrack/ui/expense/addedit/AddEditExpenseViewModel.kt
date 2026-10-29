@@ -55,7 +55,7 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 private const val SUGGESTION_HISTORY_MONTHS = 12L
 private const val DAY_SECONDS = 86_400L
 
-@Suppress("TooManyFunctions") // One handler per form field plus load, save and delete.
+@Suppress("TooManyFunctions", "LongParameterList") // One handler per form field; the flows are test seams.
 @HiltViewModel
 class AddEditExpenseViewModel(
     private val expenseRepository: ExpenseRepository,
@@ -65,6 +65,11 @@ class AddEditExpenseViewModel(
     /** Whether the meal-card switch applies (see `usesMealCard`); the switch is hidden while it does not. */
     private val mealCardAvailable: Flow<Boolean> = flowOf(false),
     private val clock: Clock = Clock.systemDefaultZone(),
+    /**
+     * Whether the expense month's meal-card plafond is used up (new expenses then default to the bank).
+     * TODO(5.3-merge): derive it from Track A's `mealCardMonthOf(<form date's month>).balanceCents <= 0`.
+     */
+    private val mealCardPlafondUsed: Flow<Boolean> = flowOf(false),
 ) : ViewModel() {
     @Inject
     constructor(
@@ -114,6 +119,7 @@ class AddEditExpenseViewModel(
 
     // Whether the meal-card switch applies right now; forms built after the profile loaded start with it.
     private var mealAvailable = false
+    private var plafondUsed = false
 
     init {
         loadExpense()
@@ -121,6 +127,12 @@ class AddEditExpenseViewModel(
             mealCardAvailable.collect { available ->
                 mealAvailable = available
                 updateForm { it.copy(mealCardAvailable = available).withMealCardPrefill() }
+            }
+        }
+        viewModelScope.launch {
+            mealCardPlafondUsed.collect { used ->
+                plafondUsed = used
+                updateForm { it.copy(mealCardPlafondUsed = used).withMealCardPrefill() }
             }
         }
     }
@@ -170,6 +182,7 @@ class AddEditExpenseViewModel(
                             category = category,
                             date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
                             mealCardAvailable = mealAvailable,
+                            mealCardPlafondUsed = plafondUsed,
                         ).withMealCardPrefill(),
                         categoryOptions.value,
                     )
