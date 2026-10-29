@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
+import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
@@ -31,6 +32,7 @@ class FirestoreEnvelopeRepository
         private val firestore: FirebaseFirestore,
         private val firebaseAuth: FirebaseAuth,
         private val categoryRepository: FirestoreCategoryRepository,
+        private val budgetRepository: FirestoreBudgetRepository,
     ) : EnvelopeRepository {
         private fun userDoc(uid: String) = firestore.collection("users").document(uid)
 
@@ -65,15 +67,18 @@ class FirestoreEnvelopeRepository
                 val order =
                     envelopes.find { it.id == docRef.id }?.order ?: ((envelopes.maxOfOrNull { it.order } ?: -1) + 1)
                 val batch = firestore.batch()
+                val template = Envelope(docRef.id, edit.name, order, edit.amountCents, edit.fundedByLineId)
+                val existing = envelopes.find { it.id == docRef.id }
+                val saved = existing.savedAs(template, edit.amountCents, edit.effectiveFrom)
                 batch.set(
                     docRef,
                     mapOf(
                         "name" to edit.name,
                         "order" to order,
-                        "amountCents" to (edit.amountCents ?: FieldValue.delete()),
+                        "amountCents" to (saved.amountCents ?: FieldValue.delete()),
                         "fundedBy" to (edit.fundedByLineId ?: FieldValue.delete()),
                         "updatedAt" to FieldValue.serverTimestamp(),
-                    ),
+                    ) + planTimingFields(saved.startMonth, saved.versions),
                     SetOptions.merge(),
                 )
                 edit.fundedByLineId?.let { line ->
@@ -86,7 +91,7 @@ class FirestoreEnvelopeRepository
                     }
                 }
                 fileCategories(batch, uid, docRef.id, edit)
-                writeLimits(batch, uid, edit)
+                writeLimits(batch, uid, edit, budgetRepository.observeBudgets().first())
                 batch.commit().addOnFailureListener { Log.w(TAG, "Save envelope ${docRef.id} write failed", it) }
                 docRef.id
             }
@@ -117,19 +122,24 @@ class FirestoreEnvelopeRepository
             batch: WriteBatch,
             uid: String,
             edit: EnvelopeEdit,
+            existing: List<Budget>,
         ) {
             val budgets = userDoc(uid).collection("budgets")
             edit.limits.forEach { (categoryId, budget) ->
                 if (budget == null) {
                     batch.delete(budgets.document(categoryId.value))
                 } else {
+                    val saved =
+                        existing
+                            .find { it.categoryId == categoryId }
+                            .savedAs(categoryId, budget.limitCents, budget.skipMonths, edit.effectiveFrom)
                     batch.set(
                         budgets.document(categoryId.value),
                         mapOf(
-                            "limitCents" to budget.limitCents,
+                            "limitCents" to saved.limitCents,
                             "skipMonths" to budget.skipMonths.sorted(),
                             "updatedAt" to FieldValue.serverTimestamp(),
-                        ),
+                        ) + planTimingFields(saved.startMonth, saved.versions),
                         SetOptions.merge(),
                     )
                 }
@@ -184,6 +194,7 @@ internal fun Envelope.toFirestoreMap(): Map<String, Any?> =
         put("order", order)
         amountCents?.let { put("amountCents", it) }
         fundedByLineId?.let { put("fundedBy", it) }
+        putAll(planTimingFields(startMonth, versions))
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
@@ -203,6 +214,8 @@ internal fun DocumentSnapshot.toEnvelopeOrNull(): Envelope? =
                 order = clamped,
                 amountCents = getLong("amountCents")?.takeIf { it in 1..MAX_AMOUNT_CENTS },
                 fundedByLineId = getString("fundedBy")?.takeIf { it.isNotBlank() },
+                startMonth = startMonthOrNull(),
+                versions = versionsOrEmpty(),
             )
         }
     }

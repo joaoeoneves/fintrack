@@ -178,7 +178,7 @@ private fun restoredCategories(
 
 private fun LocalBudget.isValid(known: Set<String>): Boolean {
     val budget = this
-    return isValid { validateBudget(budget.categoryId, budget.limitCents, known, budget.skipMonths) }
+    return isValid { validateBudget(budget, known) }
 }
 
 // An earmark whose category / envelope is not in the backup is dropped, the line stays.

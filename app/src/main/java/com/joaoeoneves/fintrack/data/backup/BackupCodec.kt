@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalCategory
+import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
+import com.joaoeoneves.fintrack.data.local.upgradedToStartMonths
 import com.joaoeoneves.fintrack.data.local.validateAutomation
 import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
@@ -20,6 +22,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.time.YearMonth
+import java.time.ZoneId
 
 /** Result of [BackupCodec.decode]. */
 sealed interface BackupDecodeResult {
@@ -92,8 +96,9 @@ object BackupCodec {
         // 15 -> 16 plannedIncome autoRecord/payDay and automation lineThrough (absent = off / last working day / none).
         // 16 -> 17 recurring skipped/pausedAt (absent = empty / none).
         // 17 -> 18 automation salaryPaysNextMonth (absent = not chosen).
+        // 18 -> 19 plan startMonth / versions (absent = the earliest month with data, see upgradedToStartMonths).
         return when (document.schemaVersion) {
-            in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.copy(schemaVersion = BACKUP_SCHEMA_VERSION))
+            in 1 until BACKUP_SCHEMA_VERSION -> sanitize(document.upgradedToStartMonths())
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
         }
@@ -105,7 +110,7 @@ object BackupCodec {
         val known = categoryIdsWithBuiltIns(categories)
         val budgets =
             keepValid(document.budgets, { it.categoryId }) {
-                validateBudget(it.categoryId, it.limitCents, known, it.skipMonths)
+                validateBudget(it, known)
             }
         val expenses = keepValid(document.expenses, { it.id }) { validateExpense(it, known) }
         val income = keepValid(document.income, { it.id }) { validateIncome(it) }
@@ -173,4 +178,25 @@ object BackupCodec {
             valid && seen.add(id(record))
         }
     }
+}
+
+/** The 18 -> 19 upgrade of a backup: the same start-month rule as the guest file (see [upgradedToStartMonths]). */
+internal fun BackupDocument.upgradedToStartMonths(
+    now: YearMonth = YearMonth.now(),
+    zone: ZoneId = ZoneId.systemDefault(),
+): BackupDocument {
+    val upgraded =
+        LocalDataDocument(
+            expenses = expenses,
+            income = income,
+            budgets = budgets,
+            plannedIncome = plannedIncome,
+            categoryGroups = categoryGroups,
+        ).upgradedToStartMonths(now, zone)
+    return copy(
+        schemaVersion = BACKUP_SCHEMA_VERSION,
+        budgets = upgraded.budgets,
+        plannedIncome = upgraded.plannedIncome,
+        categoryGroups = upgraded.categoryGroups,
+    )
 }

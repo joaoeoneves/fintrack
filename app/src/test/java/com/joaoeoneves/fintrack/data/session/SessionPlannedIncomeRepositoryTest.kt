@@ -6,6 +6,8 @@ import com.joaoeoneves.fintrack.data.local.LocalPlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.Session
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -16,7 +18,12 @@ class SessionPlannedIncomeRepositoryTest : LocalStoreTestBase() {
     private val sessions = FakeSessionRepository(initialSession = Session.Guest)
     private val remote = CountingLazy<FirestorePlannedIncomeRepository>(null)
     private val repo by lazy {
-        SessionPlannedIncomeRepository(sessions, remote, LocalPlannedIncomeRepository(newStore(), SequenceIds("g")))
+        SessionPlannedIncomeRepository(
+            sessions,
+            CoroutineScope(Dispatchers.Unconfined),
+            remote,
+            LocalPlannedIncomeRepository(newStore(), SequenceIds("g")),
+        )
     }
     private val line = PlannedIncome("", "Salary", 100_000L, 0)
 

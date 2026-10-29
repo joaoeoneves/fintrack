@@ -2,11 +2,13 @@ package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FirestoreAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.local.LocalAutomationSettingsRepository
+import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.time.YearMonth
 import javax.inject.Inject
@@ -18,13 +20,18 @@ class SessionAutomationSettingsRepository
     @Inject
     constructor(
         sessionRepository: SessionRepository,
+        @ApplicationScope scope: CoroutineScope,
         remote: Lazy<FirestoreAutomationSettingsRepository>,
         local: LocalAutomationSettingsRepository,
     ) : AutomationSettingsRepository {
         private val switch = SessionSwitch<AutomationSettingsRepository>(sessionRepository, remote, local)
 
-        override fun observeAutomationSettings(): Flow<AutomationSettings> =
-            switch.flow(AutomationSettings()) { it.observeAutomationSettings() }
+        private val observeAutomationSettingsShared: Flow<AutomationSettings> =
+            switch.shared(scope, AutomationSettings()) {
+                it.observeAutomationSettings()
+            }
+
+        override fun observeAutomationSettings(): Flow<AutomationSettings> = observeAutomationSettingsShared
 
         override suspend fun updateLineCursors(
             set: Map<String, YearMonth>,

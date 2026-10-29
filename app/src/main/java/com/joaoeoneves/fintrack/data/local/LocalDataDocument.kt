@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 18
+internal const val LOCAL_SCHEMA_VERSION = 19
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -75,6 +75,17 @@ data class LocalBudget(
     val limitCents: Long,
     /** Month numbers 1..12 the limit does not apply to (absent in schema v1 to v4 files). */
     val skipMonths: List<Int> = emptyList(),
+    /** ISO `yyyy-MM`: first plan month the limit applies in; absent = always (schema v19). */
+    val startMonth: String? = null,
+    /** Limit history (schema v19); [limitCents] is the latest. */
+    val versions: List<LocalAmountVersion> = emptyList(),
+)
+
+/** An amount that applies from plan month [from] (ISO `yyyy-MM`); a null amount has the item's own meaning. */
+@Serializable
+data class LocalAmountVersion(
+    val from: String,
+    val amountCents: Long? = null,
 )
 
 @Serializable
@@ -100,6 +111,10 @@ data class LocalPlannedIncome(
     val autoRecord: Boolean = false,
     /** Fixed pay day 1..31 (schema v16); absent = the month's last working day. */
     val payDay: Int? = null,
+    /** First plan month the line applies in, ISO `yyyy-MM`; absent = always (schema v19). */
+    val startMonth: String? = null,
+    /** Amount history (schema v19); [amountCents] is the latest. */
+    val versions: List<LocalAmountVersion> = emptyList(),
 )
 
 /**
@@ -138,6 +153,10 @@ data class LocalCategoryGroup(
     val order: Int,
     val amountCents: Long? = null,
     val fundedByLineId: String? = null,
+    /** First plan month the envelope exists in, ISO `yyyy-MM`; absent = always (schema v19). */
+    val startMonth: String? = null,
+    /** Amount history (schema v19); a null amount = sum of categories. */
+    val versions: List<LocalAmountVersion> = emptyList(),
 )
 
 /**

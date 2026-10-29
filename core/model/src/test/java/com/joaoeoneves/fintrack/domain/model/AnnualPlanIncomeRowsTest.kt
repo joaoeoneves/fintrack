@@ -14,7 +14,7 @@ class AnnualPlanIncomeRowsTest {
 
     @Test
     fun rows_areFilled_andTotalsMatchTheLines() {
-        val lines = salaryProfileLines(profile, listOf(own)) + own
+        val lines = salaryProfileLines(profile, listOf(own), effectiveFrom = EARLIEST_MONTH) + own
 
         val income = plan(lines).income
 
@@ -29,7 +29,7 @@ class AnnualPlanIncomeRowsTest {
 
     @Test
     fun totalCents_isUnchangedByTheSplit() {
-        val split = salaryProfileLines(profile, emptyList())
+        val split = salaryProfileLines(profile, emptyList(), effectiveFrom = EARLIEST_MONTH)
         val b = requireNotNull(salaryBreakdownOf(profile))
 
         val total = plan(split).income.totalCents

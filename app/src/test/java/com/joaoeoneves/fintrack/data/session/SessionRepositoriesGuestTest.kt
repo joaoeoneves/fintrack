@@ -16,6 +16,8 @@ import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,6 +33,8 @@ class SessionRepositoriesGuestTest : LocalStoreTestBase() {
     private val from = Instant.parse("2000-01-01T00:00:00Z")
     private val to = Instant.parse("2100-01-01T00:00:00Z")
 
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
+
     private fun <T : Any> forbidden(): Lazy<T> = Lazy { error("Firestore must not be resolved as a guest") }
 
     private val expenses by lazy {
@@ -40,11 +44,17 @@ class SessionRepositoriesGuestTest : LocalStoreTestBase() {
         SessionIncomeRepository(sessions, forbidden<FirestoreIncomeRepository>(), LocalIncomeRepository(store, ids))
     }
     private val budgets by lazy {
-        SessionBudgetRepository(sessions, forbidden<FirestoreBudgetRepository>(), LocalBudgetRepository(store))
+        SessionBudgetRepository(
+            sessions,
+            testScope,
+            forbidden<FirestoreBudgetRepository>(),
+            LocalBudgetRepository(store),
+        )
     }
     private val categories by lazy {
         SessionCategoryRepository(
             sessions,
+            testScope,
             forbidden<FirestoreCategoryRepository>(),
             LocalCategoryRepository(store, ids),
         )

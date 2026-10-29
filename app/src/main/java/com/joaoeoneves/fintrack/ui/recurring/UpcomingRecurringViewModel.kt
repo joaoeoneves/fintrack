@@ -168,6 +168,7 @@ class UpcomingRecurringViewModel
                             today = content.today,
                             zone = clock.zone,
                             amountOverrideCents = amountCents,
+                            planMonth = planMonth,
                         )
                     val failure = recordPayday.receive(request).exceptionOrNull()
                     if (failure != null) {

@@ -53,9 +53,12 @@ import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
+import com.joaoeoneves.fintrack.ui.plan.AmountHistoryText
+import com.joaoeoneves.fintrack.ui.plan.EffectiveFromRow
 import com.joaoeoneves.fintrack.ui.plan.label
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.time.YearMonth
 
 private val LimitFieldWidth = 140.dp
 
@@ -73,6 +76,7 @@ private class EditorActions(
 private class BudgetActions(
     val onModeChange: (EnvelopeBudgetMode) -> Unit,
     val onAmountChange: (Long?) -> Unit,
+    val onEffectiveFromChange: (YearMonth) -> Unit,
 )
 
 /** What the editor's category list triggers. */
@@ -101,7 +105,12 @@ fun EnvelopeEditorScreen(
         remember(viewModel) {
             EditorActions(
                 onNameChange = viewModel::onNameChange,
-                budget = BudgetActions(viewModel::onModeChange, viewModel::onAmountChange),
+                budget =
+                    BudgetActions(
+                        viewModel::onModeChange,
+                        viewModel::onAmountChange,
+                        viewModel::onEffectiveFromChange,
+                    ),
                 onFundedByChange = viewModel::onFundedByChange,
                 onSave = viewModel::onSave,
                 onDelete = viewModel::onDelete,
@@ -168,6 +177,9 @@ private fun EditorBody(
         )
         BudgetModeSection(state, actions)
         CategoriesSection(state, actions)
+        if (state.showEffectiveFrom && state.draft.mode != EnvelopeBudgetMode.NONE) {
+            EffectiveFromRow(month = state.draft.effectiveFrom, onChange = actions.budget.onEffectiveFromChange)
+        }
         FundingSection(state, actions.onFundedByChange)
         if (!state.isNew) {
             DestructiveTextButton(
@@ -228,6 +240,7 @@ private fun BudgetModeSection(
                 supportingText = state.amountError?.asString(),
                 modifier = Modifier.fillMaxWidth(),
             )
+            state.amountHistory?.let { AmountHistoryText(it) }
         }
     }
 }
@@ -296,6 +309,7 @@ private fun MemberRow(
                     color = FinTrackTheme.colors.textSecondary,
                 )
             }
+            if (perCategory) member.history?.let { AmountHistoryText(it) }
         }
         if (perCategory) {
             MoneyTextField(

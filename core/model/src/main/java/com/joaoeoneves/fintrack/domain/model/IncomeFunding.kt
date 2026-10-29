@@ -50,7 +50,23 @@ class IncomeFunding(
     fun amountIn(
         line: PlannedIncome,
         planMonth: YearMonth,
-    ): Long = payMonthOf(line, planMonth).let { line.amountIn(it, workingDaysOf(it)) }
+    ): Long {
+        val active = line.asOf(planMonth) ?: return 0L
+        val pay = payMonthOf(active, planMonth)
+        return active.amountIn(pay, workingDaysOf(pay))
+    }
+
+    /** The plan month [line], when paid in [payMonth], funds (the reverse of [payMonthOf]). */
+    fun planMonthOf(
+        line: PlannedIncome,
+        payMonth: YearMonth,
+    ): YearMonth = if (shift && line.paysForNextMonth) payMonth.plusMonths(1) else payMonth
+
+    /** What [line] pays when paid in [payMonth] (the amount in force in the plan month it funds). */
+    fun amountPaidIn(
+        line: PlannedIncome,
+        payMonth: YearMonth,
+    ): Long = amountIn(line, planMonthOf(line, payMonth))
 
     /** The day [line] is paid for [planMonth] (in [payMonthOf]). */
     fun payDateOf(
@@ -86,7 +102,7 @@ fun incomeRowsIn(
     month: YearMonth,
     funding: IncomeFunding,
 ): List<IncomeRow> =
-    rowsOf(lines) { component, extraId, group ->
+    rowsOf(lines.asOf(month)) { component, extraId, group ->
         IncomeRow(component, group, group.sumOf { funding.amountIn(it, month) }, extraId = extraId)
     }
 

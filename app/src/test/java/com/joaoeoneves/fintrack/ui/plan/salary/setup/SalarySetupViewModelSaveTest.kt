@@ -223,7 +223,8 @@ class SalarySetupViewModelSaveTest : SalarySetupViewModelTestBase() {
                         .ManageSalaryProfile(fullProfiles, fullIncome),
                     fullIncome,
                     clock,
-                ) { "id1" }
+                    idGenerator = { "id1" },
+                )
             backgroundScope.launch { full.uiState.collect {} }
             full.start('.')
             advanceUntilIdle()

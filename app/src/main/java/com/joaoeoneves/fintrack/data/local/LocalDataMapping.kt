@@ -16,7 +16,7 @@ import java.time.Instant
 
 private const val TAG = "LocalDataMapping"
 
-private fun parseDateOrNull(
+internal fun parseDateOrNull(
     raw: String,
     recordKind: String,
     id: String,
@@ -66,10 +66,22 @@ internal fun Income.toLocal(): LocalIncome =
     LocalIncome(id = id, source = source, amountCents = amountCents, date = date.toString(), note = note)
 
 internal fun LocalBudget.toDomain(): Budget =
-    Budget(categoryId = CategoryId(categoryId), limitCents = limitCents, skipMonths = skipMonths.toSet())
+    Budget(
+        categoryId = CategoryId(categoryId),
+        limitCents = limitCents,
+        skipMonths = skipMonths.toSet(),
+        startMonth = startMonth.toYearMonthOrNull(),
+        versions = versions.toDomainVersions(),
+    )
 
 internal fun Budget.toLocal(): LocalBudget =
-    LocalBudget(categoryId = categoryId.value, limitCents = limitCents, skipMonths = skipMonths.sorted())
+    LocalBudget(
+        categoryId = categoryId.value,
+        limitCents = limitCents,
+        skipMonths = skipMonths.sorted(),
+        startMonth = startMonth?.toString(),
+        versions = versions.toLocalVersions(),
+    )
 
 /**
  * Leniently maps a stored category like the Firestore mapper does: unknown kind falls back to the

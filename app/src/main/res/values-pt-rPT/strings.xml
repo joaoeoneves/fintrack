@@ -778,4 +778,7 @@
     <string name="activity_income_counts_for">Conta para %1$s</string>
     <string name="cd_activity_evolution_bar">%1$s: %2$s</string>
     <string name="income_view_history">Ver histórico</string>
+    <string name="effective_from_title">Válido desde</string>
+    <string name="effective_from_history">%1$s até %2$s</string>
+    <string name="salary_shift_effective_note">O salário recebido no fim de %1$s conta para %2$s</string>
 </resources>

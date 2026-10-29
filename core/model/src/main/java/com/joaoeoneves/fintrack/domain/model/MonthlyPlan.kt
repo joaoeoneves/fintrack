@@ -53,8 +53,9 @@ fun monthlyPlanOf(
     funding: IncomeFunding? = null,
 ): MonthlyPlanSummary {
     val income = funding ?: IncomeFunding.unshifted(month, workingDays)
-    val (extras, regular) = plannedIncome.partition { it.isExtra }
-    val split = splitBuckets(buckets, envelopes)
+    val activeIncome = plannedIncome.asOf(month)
+    val (extras, regular) = activeIncome.partition { it.isExtra }
+    val split = splitBuckets(buckets, envelopes.asOf(month))
     val fixed = split.byEnvelope.filter { it.first.amountCents != null }
     val perCategory = split.byEnvelope.filter { it.first.amountCents == null }.flatMap { it.second } + split.loose
     val limited = perCategory.filter { it.planned != null }
@@ -79,7 +80,7 @@ fun monthlyPlanOf(
                 split.loose
                     .filter { it.planned != null && it.category.kind == CategoryKind.SPENDING }
                     .sumOf { maxOf((it.planned ?: 0L) - it.spentCents, 0L) },
-        isConfigured = plannedIncome.isNotEmpty(),
+        isConfigured = activeIncome.isNotEmpty(),
     )
 }
 

@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
+import java.time.YearMonth
 
 /** How an envelope's monthly budget is set in the editor. */
 enum class EnvelopeBudgetMode { SINGLE, PER_CATEGORY, NONE }
@@ -24,6 +25,8 @@ data class EnvelopeDraft(
     val categoryIds: List<CategoryId>,
     val limits: Map<CategoryId, Long?>,
     val fundedByLineId: String?,
+    /** The plan month a changed amount or limit (or a new envelope) applies from; defaults to the current month. */
+    val effectiveFrom: YearMonth = YearMonth.now(),
 )
 
 /** The draft of [envelope] (a blank single-amount draft when null) with its member categories and their budgets. */
@@ -31,9 +34,10 @@ fun draftOf(
     envelope: Envelope?,
     categories: List<Category>,
     budgets: List<Budget>,
+    effectiveFrom: YearMonth = YearMonth.now(),
 ): EnvelopeDraft {
     if (envelope == null) {
-        return EnvelopeDraft(null, "", EnvelopeBudgetMode.SINGLE, null, emptyList(), emptyMap(), null)
+        return EnvelopeDraft(null, "", EnvelopeBudgetMode.SINGLE, null, emptyList(), emptyMap(), null, effectiveFrom)
     }
     val members = categories.filter { it.groupId == envelope.id }.sortedBy { it.order }.map { it.id }
     val byCategory = budgets.associateBy { it.categoryId }
@@ -52,6 +56,7 @@ fun draftOf(
         categoryIds = members,
         limits = if (mode == EnvelopeBudgetMode.PER_CATEGORY) limits else emptyMap(),
         fundedByLineId = envelope.fundedByLineId,
+        effectiveFrom = effectiveFrom,
     )
 }
 
@@ -100,5 +105,26 @@ fun envelopeEditOf(
         fundedByLineId = draft.fundedByLineId,
         categoryIds = members,
         limits = limits,
+        effectiveFrom = draft.effectiveFrom,
     )
 }
+
+/**
+ * Whether [current]'s budget differs from [original]'s: the mode, the single amount or the per-category limits.
+ * The "Valid from" row of an existing envelope only shows once this is true.
+ */
+fun budgetChanged(
+    original: EnvelopeDraft,
+    current: EnvelopeDraft,
+): Boolean = original.budgetSignature() != current.budgetSignature()
+
+private fun EnvelopeDraft.budgetSignature(): Triple<EnvelopeBudgetMode, Long?, Map<CategoryId, Long>> =
+    Triple(
+        mode,
+        amountCents.takeIf { mode == EnvelopeBudgetMode.SINGLE },
+        if (mode == EnvelopeBudgetMode.PER_CATEGORY) {
+            limits.mapNotNull { (id, cents) -> cents?.takeIf { it > 0L }?.let { id to it } }.toMap()
+        } else {
+            emptyMap()
+        },
+    )

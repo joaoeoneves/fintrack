@@ -2,12 +2,14 @@ package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FirestoreRecurringRepository
 import com.joaoeoneves.fintrack.data.local.LocalRecurringRepository
+import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Transaction
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
@@ -19,12 +21,15 @@ class SessionRecurringRepository
     @Inject
     constructor(
         sessionRepository: SessionRepository,
+        @ApplicationScope scope: CoroutineScope,
         remote: Lazy<FirestoreRecurringRepository>,
         local: LocalRecurringRepository,
     ) : RecurringRepository {
         private val switch = SessionSwitch<RecurringRepository>(sessionRepository, remote, local)
 
-        override fun observeRecurring(): Flow<List<RecurringItem>> = switch.flow(emptyList()) { it.observeRecurring() }
+        private val observeRecurringShared = switch.shared(scope, emptyList()) { it.observeRecurring() }
+
+        override fun observeRecurring(): Flow<List<RecurringItem>> = observeRecurringShared
 
         override suspend fun saveRecurring(item: RecurringItem): Result<String> = switch.call { it.saveRecurring(item) }
 

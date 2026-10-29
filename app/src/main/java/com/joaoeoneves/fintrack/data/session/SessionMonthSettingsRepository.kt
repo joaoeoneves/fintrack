@@ -2,10 +2,12 @@ package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FirestoreMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.local.LocalMonthSettingsRepository
+import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.time.YearMonth
 import javax.inject.Inject
@@ -17,15 +19,15 @@ class SessionMonthSettingsRepository
     @Inject
     constructor(
         sessionRepository: SessionRepository,
+        @ApplicationScope scope: CoroutineScope,
         remote: Lazy<FirestoreMonthSettingsRepository>,
         local: LocalMonthSettingsRepository,
     ) : MonthSettingsRepository {
         private val switch = SessionSwitch<MonthSettingsRepository>(sessionRepository, remote, local)
 
-        override fun observeMonthSettings(): Flow<List<MonthSettings>> =
-            switch.flow(emptyList()) {
-                it.observeMonthSettings()
-            }
+        private val observeMonthSettingsShared = switch.shared(scope, emptyList()) { it.observeMonthSettings() }
+
+        override fun observeMonthSettings(): Flow<List<MonthSettings>> = observeMonthSettingsShared
 
         override suspend fun setWorkingDaysOverride(
             month: YearMonth,

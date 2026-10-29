@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
@@ -23,6 +24,8 @@ import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import com.joaoeoneves.fintrack.ui.navigation.EditEnvelope
+import com.joaoeoneves.fintrack.ui.plan.AmountHistoryNote
+import com.joaoeoneves.fintrack.ui.plan.amountHistoryNote
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +38,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "EnvelopeEditorViewModel"
@@ -45,6 +49,7 @@ data class MemberUi(
     val category: Category,
     val limitCents: Long?,
     val movedFromName: String? = null,
+    val history: AmountHistoryNote? = null,
 )
 
 /** A category that can be added; [inEnvelopeName] is the other envelope it would be moved out of. */
@@ -79,6 +84,10 @@ sealed interface EnvelopeEditorUiState {
         val fundingOptions: List<FundingOptionUi>,
         val isNew: Boolean,
         val saving: Boolean,
+        /** Whether the "Valid from" row shows: always when new, once the budget changed when existing. */
+        val showEffectiveFrom: Boolean = false,
+        /** The envelope's previous amount ("300 until September 2026"), when it has one. */
+        val amountHistory: AmountHistoryNote? = null,
     ) : EnvelopeEditorUiState
 }
 
@@ -86,6 +95,7 @@ private class EditorData(
     val envelopes: List<Envelope>,
     val categories: List<Category>,
     val income: List<PlannedIncome>,
+    val budgets: List<Budget>,
 )
 
 private class EditorFlags(
@@ -119,6 +129,10 @@ class EnvelopeEditorViewModel
         @Volatile
         private var originalMembers: Set<CategoryId> = emptySet()
 
+        // The draft as seeded, to tell whether the budget changed (which reveals the "Valid from" row).
+        @Volatile
+        private var originalDraft: EnvelopeDraft? = null
+
         /** One-shot messages for writes that failed, shown as a snackbar. */
         val errorEvent: Flow<UiText> = errors.receiveAsFlow()
 
@@ -135,6 +149,7 @@ class EnvelopeEditorViewModel
                     envelopeRepository.observeEnvelopes(),
                     categoryRepository.observeCategories(),
                     plannedIncomeRepository.observePlannedIncome(),
+                    budgetRepository.observeBudgets(),
                     ::EditorData,
                 ),
                 combine(notFound, submitted, saving, ::EditorFlags),
@@ -160,6 +175,7 @@ class EnvelopeEditorViewModel
                 } else {
                     val seeded = draftOf(envelope, categories, budgets)
                     originalMembers = seeded.categoryIds.toSet()
+                    originalDraft = seeded
                     draft.value = seeded
                 }
             }.onFailure {
@@ -180,6 +196,8 @@ class EnvelopeEditorViewModel
             val error = if (flags.submitted) validateEnvelope(current, others.map { it.name }) else null
             val byId = data.categories.associateBy { it.id }
             val envelopeNames = data.envelopes.associate { it.id to it.name }
+            val budgets = data.budgets.associateBy { it.categoryId }
+            val original = originalDraft
             return EnvelopeEditorUiState.Content(
                 draft = current,
                 nameError =
@@ -197,13 +215,24 @@ class EnvelopeEditorViewModel
                     current.categoryIds.mapNotNull { id ->
                         byId[id]?.let { category ->
                             val from = category.groupId?.takeIf { group -> group != current.id }
-                            MemberUi(category, current.limits[id], from?.let(envelopeNames::get))
+                            MemberUi(
+                                category,
+                                current.limits[id],
+                                from?.let(envelopeNames::get),
+                                budgets[id]?.let { amountHistoryNote(it.versions) },
+                            )
                         }
                     },
                 addable = addableOf(current, data),
                 fundingOptions = fundingOptionsOf(data, others),
                 isNew = current.id == null,
                 saving = flags.saving,
+                showEffectiveFrom = current.id == null || original == null || budgetChanged(original, current),
+                amountHistory =
+                    data.envelopes
+                        .firstOrNull { it.id == current.id }
+                        ?.takeIf { current.mode == EnvelopeBudgetMode.SINGLE }
+                        ?.let { amountHistoryNote(it.versions) },
             )
         }
 
@@ -256,6 +285,8 @@ class EnvelopeEditorViewModel
             id: CategoryId,
             cents: Long?,
         ) = edit { it.copy(limits = it.limits + (id to cents?.takeIf { value -> value > 0L })) }
+
+        fun onEffectiveFromChange(month: YearMonth) = edit { it.copy(effectiveFrom = month) }
 
         fun onFundedByChange(lineId: String?) = edit { it.copy(fundedByLineId = lineId) }
 

@@ -112,7 +112,7 @@ class LocalDataStoreTest : LocalStoreTestBase() {
             )
             val doc = newStore().data.first()
             assertEquals(4L, doc.revision)
-            assertEquals(listOf(LocalBudget("FOOD", 5)), doc.budgets)
+            assertEquals(listOf(LocalBudget("FOOD", 5)), doc.budgets.untimedLocal())
         }
 
     @Test
@@ -120,7 +120,7 @@ class LocalDataStoreTest : LocalStoreTestBase() {
         runStoreTest {
             newStore().replaceAll(sample)
             val text = dataFile.readText()
-            assertTrue(text.contains("\"schemaVersion\":18"))
+            assertTrue(text.contains("\"schemaVersion\":19"))
             assertTrue(text.contains("\"isRefund\":false"))
             assertFalse(text.contains("null"))
         }

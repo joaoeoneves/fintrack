@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import kotlinx.coroutines.flow.Flow
+import java.time.YearMonth
 
 /**
  * What [EnvelopeRepository.saveEnvelope] writes: [id] is null for a new envelope. [categoryIds] is the envelope's
@@ -16,6 +17,8 @@ data class EnvelopeEdit(
     val fundedByLineId: String?,
     val categoryIds: Set<CategoryId>,
     val limits: Map<CategoryId, Budget?>,
+    /** The plan month the new amount (and a new envelope's existence) applies from. */
+    val effectiveFrom: YearMonth = YearMonth.now(),
 )
 
 interface EnvelopeRepository {

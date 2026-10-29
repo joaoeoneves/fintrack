@@ -15,10 +15,11 @@ import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.SavingsGoal
-import com.joaoeoneves.fintrack.domain.model.amountIn
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
+import com.joaoeoneves.fintrack.domain.model.asOf
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
+import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.effectiveWorkingDays
 import com.joaoeoneves.fintrack.domain.model.encode
@@ -159,6 +160,7 @@ class MonthlyPlanViewModel
                             initialAmountCents = line.amountCents,
                             managed = line.isManaged,
                             component = line.salaryComponent,
+                            history = amountHistoryNote(line.versions),
                             initialSchedule =
                                 IncomeSchedule(
                                     basis = line.basis,
@@ -199,6 +201,7 @@ class MonthlyPlanViewModel
                             today = content.receipts.today,
                             zone = clock.zone,
                             amountOverrideCents = amountCents,
+                            planMonth = content.workingDays.month,
                         )
                     val result = recordPayday.receive(request)
                     if (result.isFailure) {
@@ -230,13 +233,15 @@ class MonthlyPlanViewModel
 
         /**
          * Saves the open editor's line with the trimmed [label]; a rejected label keeps the editor open.
-         * [schedule] is cleaned to the fields its frequency uses; [month] fills a missing month.
+         * [schedule] is cleaned to the fields its frequency uses; [month] fills a missing month; [effectiveFrom]
+         * is the plan month a new line starts in or a changed amount applies from.
          */
         fun onSaveIncomeLine(
             label: String,
             amountCents: Long,
             schedule: IncomeSchedule,
             month: YearMonth,
+            effectiveFrom: YearMonth = currentYearMonth(clock.instant(), clock.zone),
         ) {
             val current = editor.value ?: return
             val trimmed = label.trim()
@@ -248,7 +253,9 @@ class MonthlyPlanViewModel
             viewModelScope.launch {
                 val lines = repositories.currentLines()
                 val existing = lines.firstOrNull { it.id == current.editingId }
-                val line = incomeLineOf(existing, lines, trimmed, amountCents, schedule.normalized(month))
+                val line =
+                    incomeLineOf(existing, lines, trimmed, amountCents, schedule.normalized(month))
+                        .versionedFrom(existing, effectiveFrom)
                 if (!current.looksLikeSalary && line.looksLikeSalary(lines)) {
                     // A warning, not an error: the next tap on the sheet's button saves anyway.
                     editor.value = current.copy(looksLikeSalary = true)
@@ -374,9 +381,10 @@ private fun configureOf(
     // A savings plan's monthly item is the plan's, not a bill.
     val today = overview.budgetMonth.atDay(1)
     val bills = billsOf(overview.recurring, goals).filter { it.active && !it.isEnded(today) }
-    val regular = lines.filterNot { it.isExtra }
+    val funding = IncomeFunding.unshifted(overview.budgetMonth, workingDays)
+    val regular = lines.asOf(overview.budgetMonth).filterNot { it.isExtra }
     return ConfigureStatus(
-        incomeMonthlyCents = regular.sumOf { it.amountIn(overview.budgetMonth, workingDays) },
+        incomeMonthlyCents = regular.sumOf { funding.amountIn(it, overview.budgetMonth) },
         incomeLineCount = regular.size,
         envelopeCount = overview.envelopes.envelopes.size,
         billCount = bills.size,

@@ -79,15 +79,16 @@ service cloud.firestore {
     }
 
     function isValidBudget(data) {
-      return data.keys().hasOnly(['limitCents', 'skipMonths', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['limitCents', 'skipMonths', 'startMonth', 'versions', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['limitCents'])
         && data.limitCents is int && data.limitCents > 0 && data.limitCents <= 100000000000
-        && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
+        && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12))
+        && isValidPlanTiming(data);
     }
 
     function isValidPlannedIncome(data) {
       return data.keys().hasOnly(['label', 'amountCents', 'order', 'basis', 'frequency', 'monthOfYear',
-          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'managedKey', 'autoRecord', 'payDay', 'updatedAt'])
+          'yearMonth', 'skipMonths', 'earmarkType', 'earmarkId', 'managedKey', 'autoRecord', 'payDay', 'startMonth', 'versions', 'updatedAt'])
         && data.keys().hasAll(['label', 'amountCents', 'order'])
         && data.label is string && data.label.size() > 0 && data.label.size() <= 50
         && isValidAmountCents(data.amountCents)
@@ -98,7 +99,35 @@ service cloud.firestore {
         && (!('managedKey' in data) || data.managedKey.matches(managedKeyPattern()))
         && (!('autoRecord' in data) || data.autoRecord is bool)
         && (!('payDay' in data) || (data.payDay is int && data.payDay >= 1 && data.payDay <= 31))
-        && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12));
+        && (!('skipMonths' in data) || (data.skipMonths is list && data.skipMonths.size() <= 12))
+        && isValidPlanTiming(data);
+    }
+
+    // Optional startMonth (yyyy-MM) and amount history (at most 12 versions) shared by budgets, planned income
+    // and envelopes.
+    function isValidPlanTiming(data) {
+      return (!('startMonth' in data) || (data.startMonth is string && data.startMonth.matches('^[0-9]{4}-[0-9]{2}$')))
+        && (!('versions' in data) || isValidVersions(data.versions));
+    }
+
+    // At most 12 versions; rules have no loops, so each slot is checked when present.
+    function isValidVersions(l) {
+      return l is list && l.size() <= 12
+        && (l.size() <= 0 || isValidVersion(l[0])) && (l.size() <= 1 || isValidVersion(l[1]))
+        && (l.size() <= 2 || isValidVersion(l[2])) && (l.size() <= 3 || isValidVersion(l[3]))
+        && (l.size() <= 4 || isValidVersion(l[4])) && (l.size() <= 5 || isValidVersion(l[5]))
+        && (l.size() <= 6 || isValidVersion(l[6])) && (l.size() <= 7 || isValidVersion(l[7]))
+        && (l.size() <= 8 || isValidVersion(l[8])) && (l.size() <= 9 || isValidVersion(l[9]))
+        && (l.size() <= 10 || isValidVersion(l[10])) && (l.size() <= 11 || isValidVersion(l[11]));
+    }
+
+    function isValidVersion(v) {
+      return v is map
+        && v.keys().hasOnly(['from', 'amountCents'])
+        && v.keys().hasAll(['from'])
+        && v.from is string && v.from.matches('^[0-9]{4}-[0-9]{2}$')
+        && (!('amountCents' in v) || v.amountCents == null
+          || (v.amountCents is int && v.amountCents >= 0 && v.amountCents <= 100000000000));
     }
 
     // The keys of the income lines generated from the salary profile (absent on the user's own lines); the
@@ -312,13 +341,14 @@ service cloud.firestore {
     }
 
     function isValidCategoryGroup(data) {
-      return data.keys().hasOnly(['name', 'order', 'amountCents', 'fundedBy', 'updatedAt'])
+      return data.keys().hasOnly(['name', 'order', 'amountCents', 'fundedBy', 'startMonth', 'versions', 'updatedAt'])
         && data.keys().hasAll(['name', 'order'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 50
         && data.order is int
         && (!('amountCents' in data) || (data.amountCents is int
           && data.amountCents >= 1 && data.amountCents <= 100000000000))
         && (!('fundedBy' in data) || (data.fundedBy is string && isCategoryIdShape(data.fundedBy)))
+        && isValidPlanTiming(data)
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 

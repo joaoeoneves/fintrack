@@ -7,6 +7,8 @@ import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -17,7 +19,12 @@ class SessionRecurringRepositoryTest : LocalStoreTestBase() {
     private val sessions = FakeSessionRepository(initialSession = Session.Guest)
     private val remote = CountingLazy<FirestoreRecurringRepository>(null)
     private val repo by lazy {
-        SessionRecurringRepository(sessions, remote, LocalRecurringRepository(newStore(), SequenceIds("g")))
+        SessionRecurringRepository(
+            sessions,
+            CoroutineScope(Dispatchers.Unconfined),
+            remote,
+            LocalRecurringRepository(newStore(), SequenceIds("g")),
+        )
     }
 
     @Test

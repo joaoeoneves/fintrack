@@ -25,7 +25,10 @@ class IncomeComponentsTest {
     private val own1 = PlannedIncome("own1", "Rent", 10_000, order = 100)
     private val own2 = PlannedIncome("own2", "Gig", 5_000, order = 101)
 
-    private fun all(p: SalaryProfile = profile) = salaryProfileLines(p, listOf(own1, own2)) + own1 + own2
+    private fun all(p: SalaryProfile = profile): List<PlannedIncome> {
+        val managed = salaryProfileLines(p, listOf(own1, own2), effectiveFrom = EARLIEST_MONTH)
+        return managed + own1 + own2
+    }
 
     private fun rowsIn(
         month: Int,

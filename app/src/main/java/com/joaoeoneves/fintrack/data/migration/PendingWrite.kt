@@ -4,6 +4,9 @@ import com.google.firebase.firestore.FieldValue
 import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
 import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
+import com.joaoeoneves.fintrack.data.local.toDomainVersions
+import com.joaoeoneves.fintrack.data.local.toYearMonthOrNull
+import com.joaoeoneves.fintrack.data.planTimingFields
 import com.joaoeoneves.fintrack.data.toFirestoreMap
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.LegacyExtraNames
@@ -98,7 +101,7 @@ private fun MigrationPlan.budgetBatches(): List<List<PendingWrite>> =
                     "limitCents" to it.limitCents,
                     "skipMonths" to it.skipMonths.sorted(),
                     "updatedAt" to FieldValue.serverTimestamp(),
-                ),
+                ) + planTimingFields(it.startMonth.toYearMonthOrNull(), it.versions.toDomainVersions()),
             )
         }
     }

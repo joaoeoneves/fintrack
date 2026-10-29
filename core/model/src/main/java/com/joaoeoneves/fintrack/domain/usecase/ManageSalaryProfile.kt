@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.domain.model.staleManagedIds
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
 import kotlinx.coroutines.flow.first
+import java.time.YearMonth
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -19,14 +20,18 @@ class ManageSalaryProfile
         private val profiles: SalaryProfileRepository,
         private val plannedIncome: PlannedIncomeRepository,
     ) {
-        /** Stores [profile], upserts the lines it produces and deletes the managed ones it no longer does. */
+        /**
+         * Stores [profile], upserts the lines it produces and deletes the managed ones it no longer does. Changed
+         * amounts apply from plan month [effectiveFrom] on, earlier months keep theirs.
+         */
         suspend fun save(
             profile: SalaryProfile,
             labels: SalaryLineLabels,
+            effectiveFrom: YearMonth = YearMonth.now(),
         ): Result<Unit> =
             attempt {
                 profiles.saveSalaryProfile(profile).getOrThrow()
-                syncLines(profile, labels)
+                syncLines(profile, labels, effectiveFrom)
             }
 
         /** Deletes the profile and every managed line (the user's own lines stay). */
@@ -50,12 +55,13 @@ class ManageSalaryProfile
         private suspend fun syncLines(
             profile: SalaryProfile?,
             labels: SalaryLineLabels,
+            effectiveFrom: YearMonth = YearMonth.now(),
         ) {
             val existing = plannedIncome.observePlannedIncome().first()
             if (profile == null) {
                 staleManagedIds(null, existing).forEach { plannedIncome.deletePlannedIncome(it).getOrThrow() }
             } else {
-                applySync(managedLinesSync(profile, existing, labels))
+                applySync(managedLinesSync(profile, existing, labels, effectiveFrom = effectiveFrom))
             }
         }
 

@@ -33,8 +33,9 @@ fun plannedForCategory(
     budget: Budget?,
     recurring: List<RecurringItem>,
 ): PlannedAmount {
-    if (budget != null && month.monthValue !in budget.skipMonths) {
-        return PlannedAmount(budget.limitCents, PlannedSource.BUDGET)
+    val active = budget?.asOf(month)
+    if (active != null && month.monthValue !in active.skipMonths) {
+        return PlannedAmount(active.limitCents, PlannedSource.BUDGET)
     }
     val due = recurring.filter { it.type == RecurringType.EXPENSE && it.active && it.occursIn(month) }
     return if (due.isEmpty()) {

@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.data.savedAs
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
@@ -25,13 +26,18 @@ class LocalEnvelopeRepository
             store.update { doc ->
                 val existing = doc.categoryGroups.find { it.id == edit.id }
                 val id = edit.id ?: idGenerator.newId()
+                val order = existing?.order ?: ((doc.categoryGroups.maxOfOrNull { it.order } ?: -1) + 1)
+                val template = Envelope(id, edit.name, order, edit.amountCents, edit.fundedByLineId)
+                val saved = existing?.toDomain().savedAs(template, edit.amountCents, edit.effectiveFrom)
                 val record =
                     LocalCategoryGroup(
                         id = id,
                         name = edit.name,
-                        order = existing?.order ?: ((doc.categoryGroups.maxOfOrNull { it.order } ?: -1) + 1),
-                        amountCents = edit.amountCents,
+                        order = order,
+                        amountCents = saved.amountCents,
                         fundedByLineId = edit.fundedByLineId,
+                        startMonth = saved.startMonth?.toString(),
+                        versions = saved.versions.toLocalVersions(),
                     )
                 validateCategoryGroup(record)
                 val known = knownCategoryIds(doc)
@@ -41,7 +47,17 @@ class LocalEnvelopeRepository
                 val members = edit.categoryIds.mapTo(mutableSetOf()) { it.value }
                 val limitRecords =
                     edit.limits.mapNotNull { (categoryId, budget) ->
-                        budget?.let { LocalBudget(categoryId.value, it.limitCents, it.skipMonths.sorted()) }
+                        budget?.let {
+                            val old = doc.budgets.find { b -> b.categoryId == categoryId.value }?.toDomain()
+                            val next = old.savedAs(categoryId, it.limitCents, it.skipMonths, edit.effectiveFrom)
+                            LocalBudget(
+                                categoryId.value,
+                                next.limitCents,
+                                it.skipMonths.sorted(),
+                                next.startMonth?.toString(),
+                                next.versions.toLocalVersions(),
+                            )
+                        }
                     }
                 val touched = edit.limits.keys.mapTo(mutableSetOf()) { it.value }
                 val budgets =

@@ -6,6 +6,7 @@ import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
+import java.time.YearMonth
 
 /**
  * In-memory [BudgetRepository] implementation intended for tests. Not wired via Hilt; construct
@@ -29,6 +30,7 @@ class FakeBudgetRepository(
         categoryId: CategoryId,
         limitCents: Long,
         skipMonths: Set<Int>,
+        effectiveFrom: YearMonth,
     ): Result<Unit> {
         nextSetBudgetError?.let { error ->
             nextSetBudgetError = null

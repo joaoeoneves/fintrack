@@ -21,7 +21,7 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
     private val categories by lazy { LocalCategoryRepository(store, SequenceIds("c")) }
     private val budgets by lazy { LocalBudgetRepository(store) }
 
-    private suspend fun observed() = groups.observeEnvelopes().first()
+    private suspend fun observed() = groups.observeEnvelopes().first().untimedEnvelopes()
 
     private suspend fun LocalEnvelopeRepository.addEnvelope(name: String) = saveEnvelope(edit(null, name))
 
@@ -145,7 +145,7 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
                         ),
                     ).getOrThrow()
 
-            assertEquals(listOf(Budget(food, 900, setOf(2))), budgets.observeBudgets().first())
+            assertEquals(listOf(Budget(food, 900, setOf(2))), budgets.observeBudgets().first().untimed())
             assertEquals(revisionBefore + 1, store.data.first().revision)
         }
 
@@ -291,7 +291,7 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
                     .single { it.id == food }
                     .groupId,
             )
-            assertEquals(emptyList<Budget>(), budgets.observeBudgets().first())
+            assertEquals(emptyList<Budget>(), budgets.observeBudgets().first().untimed())
         }
 
     @Test

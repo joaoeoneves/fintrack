@@ -89,7 +89,7 @@ internal fun PlannedIncome.toFirestoreMap(): Map<String, Any?> =
         "yearMonth" to yearMonth?.toString(),
         "skipMonths" to skipMonths.sorted(),
         "updatedAt" to FieldValue.serverTimestamp(),
-    ) + earmarkFields() + managedKeyFields() + automationFields()
+    ) + earmarkFields() + managedKeyFields() + automationFields() + planTimingFields(startMonth, versions)
 
 // Both fields or neither; absent for an unearmarked line (the rules reject a null value).
 private fun PlannedIncome.earmarkFields(): Map<String, Any?> =
@@ -139,6 +139,8 @@ private fun DocumentSnapshot.parsePlannedIncome(): PlannedIncome? {
                 managedKey = getString("managedKey"),
                 autoRecord = getBoolean("autoRecord") ?: false,
                 payDay = getLong("payDay")?.toInt()?.takeIf { it in MIN_DAY_OF_MONTH..MAX_DAY_OF_MONTH },
+                startMonth = startMonthOrNull(),
+                versions = versionsOrEmpty(),
             )
     }
 }

@@ -118,8 +118,8 @@ fun envelopesOf(
     val kindById = categories.associate { it.id to it.kind }
     val (saving, others) = buckets.partition { (kindById[it.category.id] ?: it.category.kind) == CategoryKind.SAVING }
     val savingCommitted = saving.sumOf { maxOf(it.planned ?: 0L, it.spentCents) }
-    val split = splitBuckets(others, envelopes) { groupById[it.category.id] ?: it.category.groupId }
-    val regular = plannedIncome.filterNot { it.isExtra }
+    val split = splitBuckets(others, envelopes.asOf(month)) { groupById[it.category.id] ?: it.category.groupId }
+    val regular = plannedIncome.asOf(month).filterNot { it.isExtra }
     val lineById = regular.associateBy { it.id }
     val usedLines = mutableSetOf<String>()
     val progress =
