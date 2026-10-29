@@ -19,7 +19,8 @@ class MigrationPaydayRekeyTest {
         val plan = planMigration(docWith("pay_g1_202610", "manual"), remote)
 
         assertEquals(listOf("pay_acct_202610", "manual"), plan.income.map { it.id })
-        assertEquals(0, plan.skipped)
+        // Only the label-matched guest line itself is skipped (it is not copied).
+        assertEquals(1, plan.skipped)
         assertEquals(emptyList<String>(), plan.plannedIncome.map { it.id })
     }
 
@@ -30,18 +31,19 @@ class MigrationPaydayRekeyTest {
         val plan = planMigration(docWith("pay_g1_202610", "pay_g1_202611"), withReceipt)
 
         assertEquals(listOf("pay_acct_202611"), plan.income.map { it.id })
-        assertEquals(1, plan.skipped)
+        assertEquals(2, plan.skipped) // the line, plus the already-recorded receipt
     }
 
     @Test
     fun twoGuestIncomesCollapsingOntoOneId_keepOnlyOne() {
         val twoLines = listOf(guestLine, localPlanned("g2", label = "NET salary"))
-        val doc = localDoc(income = listOf(localIncome("pay_g1_202610"), localIncome("pay_g2_202610"))).copy(plannedIncome = twoLines)
+        val incomes = listOf(localIncome("pay_g1_202610"), localIncome("pay_g2_202610"))
+        val doc = localDoc(income = incomes).copy(plannedIncome = twoLines)
 
         val plan = planMigration(doc, remote)
 
         assertEquals(listOf("pay_acct_202610"), plan.income.map { it.id })
-        assertEquals(1, plan.skipped)
+        assertEquals(3, plan.skipped) // both lines, plus the duplicate receipt
     }
 
     @Test
