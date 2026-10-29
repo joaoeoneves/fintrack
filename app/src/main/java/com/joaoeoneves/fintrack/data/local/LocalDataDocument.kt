@@ -181,14 +181,11 @@ data class LocalSavingsGoal(
 )
 
 /**
- * The automation settings (schema v12): [paydayEnabled] / [paydayThrough] (ISO `yyyy-MM`) are the legacy single
- * payday switch, kept as migration input; [lineThrough] (schema v16) maps a planned income line id to the ISO
- * `yyyy-MM` cursor of its automatic recording.
+ * The automation settings: [lineThrough] (schema v16) maps a planned income line id to the ISO `yyyy-MM` cursor of
+ * its automatic recording. The old single payday switch (schema v12) is no longer read; old backups still decode.
  */
 @Serializable
 data class LocalAutomation(
-    val paydayEnabled: Boolean = false,
-    val paydayThrough: String? = null,
     val lineThrough: Map<String, String> = emptyMap(),
     /** Schema v18: whether the salary pays the next month's plan; absent = not chosen (follows the profile). */
     val salaryPaysNextMonth: Boolean? = null,

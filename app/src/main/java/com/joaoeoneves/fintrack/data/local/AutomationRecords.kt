@@ -8,9 +8,6 @@ private const val MAX_LINE_CURSORS = 64
 
 internal fun LocalAutomation.toDomain(): AutomationSettings =
     AutomationSettings(
-        legacyPaydayEnabled = paydayEnabled,
-        // An unreadable cursor reads as "never recorded", which the automation treats as off until re-enabled.
-        legacyPaydayRecordedThrough = paydayThrough?.let { runCatching { YearMonth.parse(it) }.getOrNull() },
         lineRecordedThrough =
             lineThrough.mapNotNull { (id, raw) -> parseYearMonthOrNull(raw)?.let { id to it } }.toMap(),
         salaryPaysNextMonth = salaryPaysNextMonth,
@@ -18,8 +15,6 @@ internal fun LocalAutomation.toDomain(): AutomationSettings =
 
 internal fun AutomationSettings.toLocal(): LocalAutomation =
     LocalAutomation(
-        paydayEnabled = legacyPaydayEnabled,
-        paydayThrough = legacyPaydayRecordedThrough?.toString(),
         lineThrough = lineRecordedThrough.mapValues { it.value.toString() },
         salaryPaysNextMonth = salaryPaysNextMonth,
     )
@@ -28,7 +23,6 @@ internal fun AutomationSettings.toLocal(): LocalAutomation =
 internal fun LocalAutomation.validOrNull() = takeIf { runCatching { validateAutomation(it) }.isSuccess }
 
 internal fun validateAutomation(automation: LocalAutomation) {
-    automation.paydayThrough?.let { requireYearMonth(it) }
     require(automation.lineThrough.size <= MAX_LINE_CURSORS) { "At most $MAX_LINE_CURSORS line cursors" }
     automation.lineThrough.forEach { (id, raw) ->
         require(id.isNotBlank()) { "Line cursor id is blank" }
