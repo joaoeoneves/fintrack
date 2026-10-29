@@ -48,6 +48,16 @@ jobs:
         run: |
           head=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
             --jq '[.[] | select(.merged_at != null)] | first | .head.sha // empty')
+          # That commit→PR link can be missing (seen for v5.0), so fall back to the "(#NN)" squash merges put at the
+          # end of the subject, accepting it only if that PR's merge commit is this exact commit.
+          if [ -z "$head" ]; then
+            pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" \
+              --jq '.commit.message | split("\n")[0] | capture("\\(#(?<n>[0-9]+)\\)$") | .n')
+            if [ -n "$pr" ]; then
+              read -r merge_sha pr_head < <(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr" --jq '"\(.merge_commit_sha) \(.head.sha)"')
+              if [ "$merge_sha" = "$GITHUB_SHA" ]; then head=$pr_head; fi
+            fi
+          fi
           if [ -z "$head" ]; then
             echo "::error::$GITHUB_SHA did not come from a merged pull request; release a commit that went through CI"
             exit 1
