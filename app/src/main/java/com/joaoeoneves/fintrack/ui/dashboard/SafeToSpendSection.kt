@@ -138,7 +138,6 @@ private fun PlanContent(
         state.figures?.let {
             MonthSummarySection(
                 figures = it,
-                previousMonth = state.budgetMonth.minusMonths(1),
                 actions =
                     MonthSummaryActions(
                         onOpenIncome = onOpenMonthlyPlan,

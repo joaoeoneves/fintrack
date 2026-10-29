@@ -196,7 +196,6 @@ private fun MonthlyPlanContent(
         item {
             MonthSummarySection(
                 figures = state.figures,
-                previousMonth = state.workingDays.month.minusMonths(1),
                 extraIncomeCents = state.extraIncomeCents,
                 actions =
                     MonthSummaryActions(
