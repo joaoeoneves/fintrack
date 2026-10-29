@@ -585,8 +585,6 @@
     <string name="envelope_deleted">Grupo eliminado</string>
     <string name="envelope_error_name_blank">Escreve um nome</string>
     <string name="envelope_error_name_duplicate">Já existe um grupo com este nome</string>
-    <string name="envelope_card_funded">Financiado por %1$s</string>
-    <string name="envelope_funded_overflow">%1$s cobre %2$s; %3$s vêm de outro rendimento.</string>
     <string name="salary_setup_done">Salário guardado</string>
     <string name="plan_configure_bills">Recorrentes</string>
     <string name="plan_configure_categories">Categorias</string>

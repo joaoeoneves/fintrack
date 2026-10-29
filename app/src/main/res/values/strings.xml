@@ -571,8 +571,6 @@
     <string name="envelope_deleted">Group deleted</string>
     <string name="envelope_error_name_blank">Enter a name</string>
     <string name="envelope_error_name_duplicate">A group with this name already exists</string>
-    <string name="envelope_card_funded">Funded by %1$s</string>
-    <string name="envelope_funded_overflow">%1$s covers %2$s; %3$s comes from other income.</string>
     <string name="salary_setup_done">Salary saved</string>
     <string name="plan_configure_bills">Recurring</string>
     <string name="plan_configure_categories">Categories</string>
