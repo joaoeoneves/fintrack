@@ -125,10 +125,8 @@ private fun wantedLines(
     profile: SalaryProfile,
     breakdown: SalaryBreakdown,
     labels: SalaryLineLabels,
-): List<WantedLine> {
-    val firstSubsidyMonth = minOf(profile.holidaySubsidyMonth, profile.christmasSubsidyMonth)
-    val secondSubsidyMonth = maxOf(profile.holidaySubsidyMonth, profile.christmasSubsidyMonth)
-    return listOf(
+): List<WantedLine> =
+    listOf(
         WantedLine(
             MANAGED_NET_SALARY,
             labels.netSalary,
@@ -152,16 +150,15 @@ private fun wantedLines(
             MANAGED_HOLIDAY,
             labels.holidaySubsidy,
             breakdown.holidayLumpNetCents,
-            monthOfYear = firstSubsidyMonth,
+            monthOfYear = profile.holidaySubsidyMonth,
         ),
         WantedLine(
             MANAGED_CHRISTMAS,
             labels.christmasSubsidy,
             breakdown.christmasLumpNetCents,
-            monthOfYear = secondSubsidyMonth,
+            monthOfYear = profile.christmasSubsidyMonth,
         ),
     ) + extraLines(breakdown)
-}
 
 /** One line per payment of each extra, named after the extra so a rename follows through. */
 private fun extraLines(breakdown: SalaryBreakdown): List<WantedLine> =
