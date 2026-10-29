@@ -154,7 +154,7 @@ class BackupViewModel
         }
 
         private suspend fun stageDecoded(text: String): BackupImportState =
-            when (val result = withContext(ioDispatcher) { BackupCodec.decode(text) }) {
+            when (val result = withContext(ioDispatcher) { BackupCodec.decode(text, clock) }) {
                 is BackupDecodeResult.Success -> {
                     pending = result.document
                     BackupImportState.Confirm(

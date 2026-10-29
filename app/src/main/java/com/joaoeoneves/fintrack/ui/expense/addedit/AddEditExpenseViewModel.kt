@@ -144,9 +144,7 @@ class AddEditExpenseViewModel(
                                     ),
                                 )
                             } else {
-                                AddEditUiState.Ready(
-                                    ExpenseFormState(isEditMode = true, expenseId = expenseId),
-                                )
+                                AddEditUiState.Error(UiText.StringResource(R.string.detail_not_found))
                             }
                     }.onFailure { e ->
                         Log.w(TAG, "Failed to load expense", e)

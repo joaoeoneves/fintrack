@@ -24,8 +24,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.Instant
-import java.time.ZoneId
 import javax.inject.Inject
 
 private const val TAG = "AddEditIncomeViewModel"
@@ -37,6 +37,7 @@ class AddEditIncomeViewModel
         private val incomeRepository: IncomeRepository,
         private val deleteTransaction: DeleteTransaction,
         savedStateHandle: SavedStateHandle,
+        private val clock: Clock,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AddEditIncome>()
 
@@ -82,9 +83,7 @@ class AddEditIncomeViewModel
                                         ),
                                     )
                                 } else {
-                                    AddEditIncomeUiState.Ready(
-                                        IncomeFormState(isEditMode = true, incomeId = incomeId),
-                                    )
+                                    AddEditIncomeUiState.Error(UiText.StringResource(R.string.detail_not_found))
                                 }
                         }.onFailure { e ->
                             Log.w(TAG, "Failed to load income", e)
@@ -95,7 +94,7 @@ class AddEditIncomeViewModel
                     _uiState.value =
                         AddEditIncomeUiState.Ready(
                             IncomeFormState(
-                                date = defaultNewTransactionDate(route.period, Instant.now(), ZoneId.systemDefault()),
+                                date = defaultNewTransactionDate(route.period, clock.instant(), clock.zone),
                             ),
                         )
                 }
