@@ -134,7 +134,7 @@ private fun RecurringItems(
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding)) {
         item(key = "totals") { RecurringTotals(state) }
-        if (state.active.isEmpty() && state.inactive.isEmpty()) {
+        if (state.active.isEmpty() && state.inactive.isEmpty() && state.investments.isEmpty()) {
             item(key = "empty") {
                 Text(
                     text = stringResource(R.string.recurring_list_empty),
@@ -151,6 +151,10 @@ private fun RecurringItems(
         if (state.inactive.isNotEmpty()) {
             item(key = "inactive-header") { SectionHeader(R.string.recurring_section_inactive) }
             items(state.inactive, key = { it.item.id }) { RecurringRowItem(it, actions, motionAnimateItem()) }
+        }
+        if (state.investments.isNotEmpty()) {
+            item(key = "investments-header") { SectionHeader(R.string.recurring_section_investments) }
+            items(state.investments, key = { it.item.id }) { RecurringRowItem(it, actions, motionAnimateItem()) }
         }
         item(key = "income-hint") {
             Text(

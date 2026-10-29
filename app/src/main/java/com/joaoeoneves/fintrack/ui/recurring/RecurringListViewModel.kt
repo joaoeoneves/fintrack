@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.annualizedCents
@@ -13,7 +14,6 @@ import com.joaoeoneves.fintrack.domain.model.firstPendingOccurrence
 import com.joaoeoneves.fintrack.domain.model.isEnded
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
-import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,7 +45,6 @@ class RecurringListViewModel
     constructor(
         private val recurringRepository: RecurringRepository,
         private val categoryRepository: CategoryRepository,
-        private val goalRepository: GoalRepository,
         private val clock: Clock,
     ) : ViewModel() {
         private val retryTrigger = MutableStateFlow(0)
@@ -66,11 +65,9 @@ class RecurringListViewModel
                     combine(
                         recurringRepository.observeRecurring(),
                         categoryRepository.observeCategories(),
-                        goalRepository.observeGoals(),
-                    ) { items, catalog, goals ->
-                        // A savings plan's monthly item lives in the plan; recurring income in the income lines.
-                        val bills = billsOf(items, goals)
-                        contentOf(bills, catalog, today)
+                    ) { items, catalog ->
+                        // Recurring income lives in the income lines; savings items are listed as investments.
+                        contentOf(billsOf(items), catalog, today)
                     }.catch { e ->
                         Log.w(TAG, "Failed to observe recurring items", e)
                         emit(RecurringListUiState.Error(UiText.StringResource(R.string.error_generic_fallback)))
@@ -127,10 +124,12 @@ private fun contentOf(
                 isEnded = ended,
             )
         }
-    val (active, inactive) = rows.partition { it.item.active && !it.isEnded }
+    val (investments, bills) = rows.partition { it.category?.kind == CategoryKind.SAVING }
+    val (active, inactive) = bills.partition { it.item.active && !it.isEnded }
     return RecurringListUiState.Content(
         active = active,
         inactive = inactive,
+        investments = investments,
         annualExpenseCents = annualizedCents(items, RecurringType.EXPENSE, today),
     )
 }
