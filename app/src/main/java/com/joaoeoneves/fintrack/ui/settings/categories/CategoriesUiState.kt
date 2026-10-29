@@ -42,10 +42,6 @@ sealed interface DeleteDialogState {
         override val category: Category,
     ) : DeleteDialogState
 
-    data class ConfirmDelete(
-        override val category: Category,
-    ) : DeleteDialogState
-
     data class InUse(
         override val category: Category,
         val usage: CategoryUsage,

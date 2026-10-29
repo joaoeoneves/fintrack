@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +29,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PrimaryPillButton
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
+import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.SectionLabel
@@ -55,7 +57,6 @@ internal data class CategoriesActions(
     val onAdd: () -> Unit,
     val onDismissEditor: () -> Unit,
     val onSave: (CategoryDraft) -> Unit,
-    val onConfirmDelete: () -> Unit,
     val onDismissDelete: () -> Unit,
     val move: MoveActions,
 )
@@ -71,6 +72,17 @@ fun CategoriesScreen(
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
         viewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
+    }
+    LaunchedEffect(Unit) {
+        viewModel.deletedEvent.collect { category ->
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val result =
+                snackbarHostState.showActionSnackbar(
+                    resources.getString(R.string.category_deleted),
+                    resources.getString(R.string.action_undo),
+                )
+            if (result == SnackbarResult.ActionPerformed) viewModel.onUndoDelete(category)
+        }
     }
 
     CategoriesContent(
@@ -88,7 +100,6 @@ fun CategoriesScreen(
                 onAdd = viewModel::onAdd,
                 onDismissEditor = viewModel::onDismissEditor,
                 onSave = viewModel::onSaveEditor,
-                onConfirmDelete = viewModel::onConfirmDelete,
                 onDismissDelete = viewModel::onDismissDelete,
                 move =
                     MoveActions(
@@ -144,7 +155,6 @@ internal fun CategoriesContent(
                     state.deleteDialog?.let { dialog ->
                         CategoryDeleteDialog(
                             state = dialog,
-                            onDelete = actions.onConfirmDelete,
                             onArchive = { actions.rows.onToggleArchived(dialog.category.id) },
                             onDismiss = actions.onDismissDelete,
                         )

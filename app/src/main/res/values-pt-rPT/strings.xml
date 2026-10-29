@@ -253,7 +253,7 @@
     <string name="cd_category_more_actions">Mais ações para %1$s</string>
     <string name="cd_category_icon_option">Ícone %1$d</string>
     <string name="cd_category_color_option">Cor %1$d</string>
-    <string name="category_delete_confirm">Eliminar “%1$s”?</string>
+    <string name="category_deleted">Categoria eliminada</string>
     <string name="category_in_use_message">“%1$s” é usada por despesas, envelopes ou recorrentes. Arquivar em vez disso?</string>
     <string name="category_in_use_archived_message">“%1$s” é usada por despesas, envelopes ou recorrentes e não pode ser eliminada.</string>
     <string name="category_cannot_verify_message">Não é possível verificar a utilização sem ligação à internet. Arquivar em vez disso?</string>

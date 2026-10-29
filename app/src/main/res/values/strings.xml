@@ -250,7 +250,7 @@
     <string name="cd_category_more_actions">More actions for %1$s</string>
     <string name="cd_category_icon_option">Icon %1$d</string>
     <string name="cd_category_color_option">Color %1$d</string>
-    <string name="category_delete_confirm">Delete “%1$s”?</string>
+    <string name="category_deleted">Category deleted</string>
     <string name="category_in_use_message">“%1$s” is used by expenses, envelopes or recurring. Archive it instead?</string>
     <string name="category_in_use_archived_message">“%1$s” is used by expenses, envelopes or recurring and can\'t be deleted.</string>
     <string name="category_cannot_verify_message">Can\'t check usage while offline. Archive it instead?</string>
