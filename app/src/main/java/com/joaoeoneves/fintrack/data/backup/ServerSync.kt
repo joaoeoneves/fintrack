@@ -1,17 +1,15 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import com.joaoeoneves.fintrack.data.automationSettingsDoc
-import com.joaoeoneves.fintrack.data.awaitServer
+import com.joaoeoneves.fintrack.data.awaitServerWithin
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -46,15 +44,14 @@ class FirestoreServerSync
                     ?: return Result.success(Unit)
             return runCatchingCancellable {
                 val user = firestore.collection("users").document(uid)
-                val reads: List<suspend () -> Unit> =
-                    RESTORE_PRUNE_ORDER.map { collection ->
-                        { user.collection(collection).get(Source.SERVER).await() }
-                    } +
-                        listOf(
-                            { salaryProfileDoc(firestore, uid).get(Source.SERVER).await() },
-                            { automationSettingsDoc(firestore, uid).get(Source.SERVER).await() },
-                        )
-                awaitServer(OVERALL_TIMEOUT) { coroutineScope { reads.map { async { it() } }.awaitAll() } }
+                val reads: List<Task<*>> =
+                    RESTORE_PRUNE_ORDER.map { user.collection(it).get(Source.SERVER) } +
+                        salaryProfileDoc(firestore, uid).get(Source.SERVER) +
+                        automationSettingsDoc(firestore, uid).get(Source.SERVER)
+                awaitServerWithin(OVERALL_TIMEOUT) {
+                    reads.map { it.await() }
+                    Unit
+                }
                 Unit
             }.recoverCatching { throw ServerUnreachableException(it) }
         }
