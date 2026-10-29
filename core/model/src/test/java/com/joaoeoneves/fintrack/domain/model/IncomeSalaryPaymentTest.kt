@@ -55,8 +55,25 @@ class IncomeSalaryPaymentTest {
     }
 
     @Test
-    fun matching_worksBothWays_longerSourceWithTheLabelAsPrefix() {
-        assertEquals(sep, fundedMonth("Salário líquido agosto", "2026-08-28"))
+    fun matching_aLabelThatIsAPrefixOfTheSource_neverMatches() {
+        assertEquals(aug, fundedMonth("Salário líquido agosto", "2026-08-28"))
+        assertFalse(isSalaryPayment(income("Salário líquido agosto", "2026-08-28"), lines, zone))
+    }
+
+    @Test
+    fun isSalaryPayment_requiresTheWinningLineToPayForNextMonth() {
+        val manual = listOf(line("rent", "Salário líquido", managed = false))
+        assertFalse(isSalaryPayment(income("Salário líquido", "2026-08-28"), manual, zone))
+        // The winning (exact) line is manual even though a longer managed label also starts with the source.
+        val mixed = manual + line("long", "Salário líquido extra")
+        assertFalse(isSalaryPayment(income("Salário líquido", "2026-08-28"), mixed, zone))
+        assertTrue(isSalaryPayment(income("Salário", "2026-08-28"), lines, zone))
+    }
+
+    @Test
+    fun matchingLine_ambiguousPrefix_isNoMatch() {
+        val two = listOf(line("a", "Salário um"), line("b", "Salário dois"))
+        assertFalse(isSalaryPayment(income("Salário", "2026-08-28"), two, zone))
     }
 
     @Test

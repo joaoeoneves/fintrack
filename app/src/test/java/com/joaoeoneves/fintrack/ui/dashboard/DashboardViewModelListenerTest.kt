@@ -48,13 +48,13 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
     private fun failingBudgets(error: Throwable) = FakeBudgetRepository(nextObserveBudgetsError = error)
 
     @Test
-    fun currentMonth_usesTheMonthAndTwoMonthBeforeListenersPerRepository() =
+    fun currentMonth_usesTheMonthAndMonthBeforeListenersPerRepository() =
         runTest(testDispatcher) {
             val viewModel = countingViewModel()
             collect(viewModel)
 
-            assertActive(expenseListeners = 3)
-            assertEquals(3, expenses.listeners.observedRanges.size)
+            assertActive(expenseListeners = 2)
+            assertEquals(2, expenses.listeners.observedRanges.size)
         }
 
     @Test
@@ -66,20 +66,20 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
             // Home is month-only: rolling/custom selections coerce to the already-selected current month.
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.SIX_MONTHS))
             advanceUntilIdle()
-            assertActive(expenseListeners = 3)
-            assertEquals(3, expenses.listeners.observedRanges.size)
+            assertActive(expenseListeners = 2)
+            assertEquals(2, expenses.listeners.observedRanges.size)
 
             viewModel.onPreviousMonth()
             advanceUntilIdle()
-            assertActive(expenseListeners = 3)
-            assertEquals(6, expenses.listeners.observedRanges.size)
+            assertActive(expenseListeners = 2)
+            assertEquals(4, expenses.listeners.observedRanges.size)
 
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.ONE_YEAR))
             advanceUntilIdle()
-            assertActive(expenseListeners = 3)
+            assertActive(expenseListeners = 2)
             assertEquals(currentMonth, viewModel.content().budgetMonth)
-            // CurrentMonth, Month(previous), CurrentMonth again: three listeners each.
-            assertEquals(9, expenses.listeners.observedRanges.size)
+            // CurrentMonth, Month(previous), CurrentMonth again: two listeners each.
+            assertEquals(6, expenses.listeners.observedRanges.size)
         }
 
     @Test

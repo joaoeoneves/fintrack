@@ -22,8 +22,8 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         runTest {
             val result = overview(Period.CurrentMonth)
 
-            // The month, the month before it (budget month) and the month before the range: the same one twice.
-            val expected = listOf(october.toInstantRange(zone), monthBefore(october), monthBefore(october))
+            // The month and the month before it, which serves both the budget month and the range: one listener.
+            val expected = listOf(october.toInstantRange(zone), monthBefore(october))
             assertEquals(expected, expenses.listeners.observedRanges)
             assertEquals(expected, income.listeners.observedRanges)
             assertEquals(1, budgets.listeners.observedRanges.size)
@@ -36,10 +36,10 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
             val result = overview(Period.Month(september))
 
             assertEquals(
-                listOf(september.toInstantRange(zone), monthBefore(september), monthBefore(september)),
+                listOf(september.toInstantRange(zone), monthBefore(september)),
                 expenses.listeners.observedRanges,
             )
-            assertEquals(3, income.listeners.observedRanges.size)
+            assertEquals(2, income.listeners.observedRanges.size)
             assertEquals(september, result.budgetMonth)
         }
 
@@ -73,10 +73,30 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         runTest {
             val result = overview(Period.Custom(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 30)))
 
-            assertEquals(4, expenses.listeners.observedRanges.size)
-            assertEquals(october.toInstantRange(zone), expenses.listeners.observedRanges[3])
-            assertEquals(4, income.listeners.observedRanges.size)
+            // Both month-before ranges coincide (the range starts on the 1st), so they share one listener.
+            assertEquals(3, expenses.listeners.observedRanges.size)
+            assertEquals(october.toInstantRange(zone), expenses.listeners.observedRanges[2])
+            assertEquals(3, income.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
+        }
+
+    @Test
+    fun monthBeforeRangesMatching_openExactlyOneMonthBeforeListener() =
+        runTest {
+            overview(Period.CurrentMonth)
+
+            assertEquals(1, expenses.listeners.observedRanges.count { it == monthBefore(october) })
+            assertEquals(1, income.listeners.observedRanges.count { it == monthBefore(october) })
+        }
+
+    @Test
+    fun monthBeforeRangesDiffering_openTwoMonthBeforeListeners() =
+        runTest {
+            val range = Period.Custom(LocalDate.of(2026, 9, 15), LocalDate.of(2026, 10, 31))
+            overview(range)
+
+            assertEquals(1, expenses.listeners.observedRanges.count { it == monthBefore(october) })
+            assertEquals(3, expenses.listeners.observedRanges.size)
         }
 
     @Test
