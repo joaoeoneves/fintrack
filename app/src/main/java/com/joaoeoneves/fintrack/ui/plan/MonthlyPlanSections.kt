@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -137,9 +138,9 @@ fun ExpectedIncomeCard(
         Hairline()
         val (managed, manual) = rows.partition { it.component != null }
         if (managed.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_from_salary_profile))
-        managed.forEach { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) }
+        managed.forEach { key(it.key) { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) } }
         if (managed.isNotEmpty() && manual.isNotEmpty()) IncomeGroupHeader(stringResource(R.string.plan_other_income))
-        manual.forEach { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) }
+        manual.forEach { key(it.key) { IncomeRowItem(it, model, actions, onUndo = { undoing = it }) } }
         if (canAdd) {
             GhostButton(
                 text = stringResource(R.string.plan_add_income_line),

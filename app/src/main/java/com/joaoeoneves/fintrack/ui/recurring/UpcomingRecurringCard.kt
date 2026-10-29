@@ -18,6 +18,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -212,7 +213,7 @@ private fun UpcomingContent(
     }
     rows.take(DASHBOARD_UPCOMING_LIMIT).forEachIndexed { index, row ->
         if (index > 0) Hairline()
-        UpcomingRow(row = row, today = state.today, model = model)
+        key(row.item.id, row.date) { UpcomingRow(row = row, today = state.today, model = model) }
     }
     if (state.overview.annualExpenseCents > 0) {
         Text(
