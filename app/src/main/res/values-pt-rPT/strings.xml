@@ -697,4 +697,13 @@
     <string name="expense_refund_status">Reembolsado %1$d%% · gasto real %2$s</string>
     <string name="expense_record_refund">Registar reembolso</string>
     <string name="expense_refunded_badge">Reembolsado %d%%</string>
+    <!-- Divisão (5.7) -->
+    <string name="expense_more_options">Mais opções</string>
+    <string name="expense_split_switch">Dividir por categorias</string>
+    <string name="expense_split_add_part">Adicionar parte</string>
+    <string name="expense_split_left">Falta %s</string>
+    <string name="expense_split_over">%s a mais</string>
+    <string name="error_split_sum">As partes têm de somar o total</string>
+    <string name="error_split_category">Escolhe a categoria de cada parte</string>
+    <string name="expense_split_part_caption">Parte de uma despesa dividida</string>
 </resources>

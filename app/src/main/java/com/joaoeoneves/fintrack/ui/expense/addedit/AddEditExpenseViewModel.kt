@@ -12,7 +12,9 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
+import com.joaoeoneves.fintrack.domain.model.MAX_SPLIT_PARTS
 import com.joaoeoneves.fintrack.domain.model.NameSuggestion
+import com.joaoeoneves.fintrack.domain.model.SplitPart
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.model.categorySuggestionIndex
 import com.joaoeoneves.fintrack.domain.model.defaultCategory
@@ -22,6 +24,7 @@ import com.joaoeoneves.fintrack.domain.model.nameSuggestions
 import com.joaoeoneves.fintrack.domain.model.normalizedMerchantName
 import com.joaoeoneves.fintrack.domain.model.refundCandidates
 import com.joaoeoneves.fintrack.domain.model.refundStatusOf
+import com.joaoeoneves.fintrack.domain.model.splitExpenses
 import com.joaoeoneves.fintrack.domain.model.usesMealCard
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -55,6 +58,7 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
 import java.time.YearMonth
+import java.util.UUID
 import javax.inject.Inject
 
 private const val TAG = "AddEditExpenseViewModel"
@@ -66,6 +70,8 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 // How far back (in months) the category suggestions look.
 private const val SUGGESTION_HISTORY_MONTHS = 12L
 private const val DAY_SECONDS = 86_400L
+private const val MIN_SPLIT_PARTS = 2
+private val EMPTY_PART = SplitPartForm(null, 0L)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("TooManyFunctions", "LongParameterList") // One handler per form field; the flows are test seams.
@@ -80,6 +86,8 @@ class AddEditExpenseViewModel(
     private val clock: Clock = Clock.systemDefaultZone(),
     /** Whether a month's meal-card plafond is used up (new expenses in it then default to the bank). */
     private val mealCardPlafondUsed: (YearMonth) -> Flow<Boolean> = { flowOf(false) },
+    /** The id shared by the parts of a new split. */
+    private val idFactory: () -> String = { UUID.randomUUID().toString().replace("-", "") },
 ) : ViewModel() {
     @Inject
     constructor(
@@ -198,6 +206,7 @@ class AddEditExpenseViewModel(
                                         isEditMode = true,
                                         expenseId = existing.id,
                                         refundOf = existing.refundOf,
+                                        splitId = existing.splitId,
                                         refundOfLabel = existing.refundOf?.let { originalName(it) },
                                     ),
                                     BuiltInCategories.all,
@@ -355,7 +364,8 @@ class AddEditExpenseViewModel(
 
     fun onRefundChanged(isRefund: Boolean) {
         updateForm {
-            val updated = it.copy(isRefund = isRefund, saveError = null)
+            val base = it.copy(isRefund = isRefund, saveError = null)
+            val updated = if (isRefund) base.withoutSplit() else base
             // A link only means something on a refund.
             (if (isRefund) updated else updated.copy(refundOf = null, refundOfLabel = null)).withMealCardPrefill()
         }
@@ -373,43 +383,19 @@ class AddEditExpenseViewModel(
         val current = _uiState.value
         if (current !is AddEditUiState.Ready || current.form.isSaving) return
         val form = current.form
-
-        val nameError = if (form.name.isBlank()) UiText.StringResource(R.string.error_name_required) else null
-        val amountError = if (form.amountCents <= 0L) UiText.StringResource(R.string.error_invalid_amount) else null
-        // An unknown category (e.g. deleted since the expense was saved) must be replaced first.
-        val categoryError =
-            if (form.category.isUnknown) UiText.StringResource(R.string.error_category_required) else null
-
-        if (nameError != null || amountError != null || categoryError != null) {
-            _uiState.value =
-                AddEditUiState.Ready(
-                    form.copy(nameError = nameError, amountError = amountError, categoryError = categoryError),
-                )
+        val invalid = form.withValidationErrors()
+        if (invalid != null) {
+            _uiState.value = AddEditUiState.Ready(invalid)
             return
         }
-
-        val amountCents = form.amountCents
         _uiState.value = AddEditUiState.Ready(form.copy(isSaving = true))
         viewModelScope.launch {
-            val expense =
-                Expense(
-                    id = form.expenseId.orEmpty(),
-                    name = form.name.trim(),
-                    amountCents = amountCents,
-                    category = form.category,
-                    date = form.date,
-                    note = form.note.trim().ifBlank { null },
-                    isRefund = form.isRefund,
-                    paidWithMealCard = form.paidWithMealCard,
-                    refundOf = form.refundOf.takeIf { form.isRefund },
-                    // Saving counts as looking at it: an edited automatic record leaves the review inbox.
-                    needsReview = false,
-                )
+            val expense = form.toExpense()
             val result =
-                if (form.isEditMode) {
-                    expenseRepository.updateExpense(expense)
-                } else {
-                    expenseRepository.addExpense(expense)
+                when {
+                    form.isEditMode -> expenseRepository.updateExpense(expense)
+                    form.isSplitting -> saveSplit(expense, form)
+                    else -> expenseRepository.addExpense(expense)
                 }
             result
                 .onSuccess {
@@ -424,6 +410,68 @@ class AddEditExpenseViewModel(
                     }
                 }
         }
+    }
+
+    /** Saves the split as sibling expenses sharing one split id, keeping their ids. */
+    private suspend fun saveSplit(
+        base: Expense,
+        form: ExpenseFormState,
+    ): Result<*> {
+        val parts = form.splitParts.map { SplitPart(checkNotNull(it.category), it.amountCents) }
+        return runCatching { splitExpenses(base, parts, idFactory()) }
+            .mapCatching { expenseRepository.addExpensesKeepingIds(it).getOrThrow() }
+    }
+
+    fun onSplitEnabledChanged(enabled: Boolean) =
+        updateForm {
+            if (!enabled) {
+                it.withoutSplit()
+            } else {
+                it.copy(
+                    splitEnabled = true,
+                    splitParts =
+                        listOf(
+                            SplitPartForm(it.category.takeUnless { c -> c.isUnknown }, it.amountCents),
+                            SplitPartForm(null, 0L),
+                        ),
+                    splitError = null,
+                )
+            }
+        }
+
+    fun onSplitPartCategoryChanged(
+        index: Int,
+        category: Category,
+    ) = updateSplitPart(index) { it.copy(category = category) }
+
+    fun onSplitPartAmountChanged(
+        index: Int,
+        amountCents: Long,
+    ) = updateSplitPart(index) { it.copy(amountCents = amountCents) }
+
+    fun onSplitPartAdded() =
+        updateForm {
+            if (it.splitParts.size >= MAX_SPLIT_PARTS) it else it.copy(splitParts = it.splitParts + EMPTY_PART)
+        }
+
+    fun onSplitPartRemoved(index: Int) =
+        updateForm {
+            if (it.splitParts.size <= MIN_SPLIT_PARTS) {
+                it
+            } else {
+                it.copy(splitParts = it.splitParts.filterIndexed { i, _ -> i != index })
+            }
+        }
+
+    private fun updateSplitPart(
+        index: Int,
+        transform: (SplitPartForm) -> SplitPartForm,
+    ) = updateForm {
+        it.copy(
+            splitParts = it.splitParts.mapIndexed { i, part -> if (i == index) transform(part) else part },
+            splitError = null,
+            saveError = null,
+        )
     }
 
     /** Deletes the expense being edited; the screen then closes and offers an undo. */
@@ -483,3 +531,35 @@ private suspend fun loadHistory(
         repository.observeExpenses(start, now.plusSeconds(DAY_SECONDS)).first()
     }.onFailure { Log.w(TAG, "Failed to load suggestion history", it) }
         .getOrDefault(emptyList())
+
+/** This form with its validation errors set, or `null` when it can be saved. */
+private fun ExpenseFormState.withValidationErrors(): ExpenseFormState? {
+    val nameError = if (name.isBlank()) UiText.StringResource(R.string.error_name_required) else null
+    val amountError = if (amountCents <= 0L) UiText.StringResource(R.string.error_invalid_amount) else null
+    // An unknown category (e.g. deleted since the expense was saved) must be replaced first.
+    val categoryError =
+        if (category.isUnknown && !isSplitting) UiText.StringResource(R.string.error_category_required) else null
+    val splitError = splitValidationError()
+    val errors = listOfNotNull(nameError, amountError, categoryError, splitError)
+    return if (errors.isEmpty()) {
+        null
+    } else {
+        copy(nameError = nameError, amountError = amountError, categoryError = categoryError, splitError = splitError)
+    }
+}
+
+private fun ExpenseFormState.toExpense(): Expense =
+    Expense(
+        id = expenseId.orEmpty(),
+        name = name.trim(),
+        amountCents = amountCents,
+        category = category,
+        date = date,
+        note = note.trim().ifBlank { null },
+        isRefund = isRefund,
+        paidWithMealCard = paidWithMealCard,
+        refundOf = refundOf.takeIf { isRefund },
+        splitId = splitId,
+        // Saving counts as looking at it: an edited automatic record leaves the review inbox.
+        needsReview = false,
+    )

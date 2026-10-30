@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.expense.addedit
 
+import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
@@ -44,6 +45,12 @@ data class ExpenseFormState(
     val refundOfLabel: String? = null,
     /** How much of this (original) expense was refunded, in edit mode; not part of the saved snapshot. */
     val refundStatus: RefundStatus? = null,
+    /** The split this (existing) expense is a part of. */
+    val splitId: String? = null,
+    /** A new expense being divided across categories: [splitParts] then replace the single category. */
+    val splitEnabled: Boolean = false,
+    val splitParts: List<SplitPartForm> = emptyList(),
+    val splitError: UiText? = null,
     /** Expenses a refund can link to; not part of the saved snapshot. */
     val refundCandidates: List<Expense> = emptyList(),
 ) {
@@ -53,9 +60,37 @@ data class ExpenseFormState(
     val isBusy: Boolean
         get() = isSaving || isDeleting
 
+    val isSplitting: Boolean
+        get() = splitEnabled && !isEditMode && !isRefund
+
+    /** The part of [amountCents] not assigned to any part yet (negative when over). */
+    val splitRemainingCents: Long
+        get() = amountCents - splitParts.sumOf { it.amountCents }
+
     val canDelete: Boolean
         get() = isEditMode && expenseId != null
 }
+
+/** One row of the split editor; the [category] is `null` until picked. */
+data class SplitPartForm(
+    val category: Category?,
+    val amountCents: Long,
+)
+
+internal fun ExpenseFormState.withoutSplit(): ExpenseFormState {
+    val none = emptyList<SplitPartForm>()
+    return copy(splitEnabled = false, splitParts = none, splitError = null)
+}
+
+/** Why the split cannot be saved yet, or `null` when it can (or it is not a split). */
+internal fun ExpenseFormState.splitValidationError(): UiText? =
+    when {
+        !isSplitting -> null
+        splitParts.any { it.category == null } -> UiText.StringResource(R.string.error_split_category)
+        splitParts.any { it.amountCents <= 0L } || splitRemainingCents != 0L ->
+            UiText.StringResource(R.string.error_split_sum)
+        else -> null
+    }
 
 /**
  * Whether a new expense starts as paid with the meal card: the switch applies, the expense is not a refund (refunds

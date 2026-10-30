@@ -5,10 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -16,15 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
@@ -38,28 +31,19 @@ import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
 import com.joaoeoneves.fintrack.ui.common.DeletedEffect
 import com.joaoeoneves.fintrack.ui.common.ErrorState
-import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.FormDeleteButton
 import com.joaoeoneves.fintrack.ui.common.FormSaveError
 import com.joaoeoneves.fintrack.ui.common.FormScaffold
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
-import com.joaoeoneves.fintrack.ui.common.SearchField
-import com.joaoeoneves.fintrack.ui.common.amountMatchesQuery
 import com.joaoeoneves.fintrack.ui.common.asString
-import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
-import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
-import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
-import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
-import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 
@@ -121,8 +105,17 @@ fun AddEditExpenseScreen(
     }
 }
 
+/** The split editor's callbacks. */
+internal data class SplitActions(
+    val onEnabledChanged: (Boolean) -> Unit,
+    val onCategoryChanged: (Int, Category) -> Unit,
+    val onAmountChanged: (Int, Long) -> Unit,
+    val onAdded: () -> Unit,
+    val onRemoved: (Int) -> Unit,
+)
+
 /** Bundles [ExpenseForm]'s field-change callbacks to keep its own parameter list short. */
-private data class ExpenseFormActions(
+internal data class ExpenseFormActions(
     val onNameChanged: (String) -> Unit,
     val onNameSuggestionPicked: (NameSuggestion) -> Unit,
     val onAmountChanged: (Long) -> Unit,
@@ -131,6 +124,7 @@ private data class ExpenseFormActions(
     val onNoteChanged: (String) -> Unit,
     val onRefundChanged: (Boolean) -> Unit,
     val onRefundOfSelected: (Expense?) -> Unit,
+    val split: SplitActions,
     val onRecordRefund: (String) -> Unit,
     val onMealCardChanged: (Boolean) -> Unit,
     val onDelete: () -> Unit,
@@ -146,6 +140,14 @@ private fun AddEditExpenseViewModel.formActions(onRecordRefund: (String) -> Unit
         onNoteChanged = ::onNoteChanged,
         onRefundChanged = ::onRefundChanged,
         onRefundOfSelected = ::onRefundOfSelected,
+        split =
+            SplitActions(
+                onEnabledChanged = ::onSplitEnabledChanged,
+                onCategoryChanged = ::onSplitPartCategoryChanged,
+                onAmountChanged = ::onSplitPartAmountChanged,
+                onAdded = ::onSplitPartAdded,
+                onRemoved = ::onSplitPartRemoved,
+            ),
         onRecordRefund = onRecordRefund,
         onMealCardChanged = ::onMealCardChanged,
         onDelete = ::onDelete,
@@ -195,24 +197,14 @@ private fun ExpenseForm(
         )
         NameSuggestionRow(form.nameSuggestions, actions.onNameSuggestionPicked)
 
-        CategoryChipFlow(
-            options = categoryOptions,
-            selected = form.category,
-            error = form.categoryError?.asString(),
-            onSelected = actions.onCategorySelected,
-        )
-        if (form.suggestedCategory) {
-            Text(
-                text = stringResource(R.string.expense_category_suggested),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        CategorySection(form = form, categoryOptions = categoryOptions, actions = actions)
 
         RefundAndMealCardSwitches(form = form, actions = actions)
         RecordRefundSection(form = form, actions = actions)
 
         ExpenseDateAndNoteFields(form = form, actions = actions)
+
+        MoreOptions(form = form, actions = actions)
 
         form.saveError?.let { FormSaveError(it.asString()) }
         if (form.canDelete) FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
@@ -295,101 +287,35 @@ private fun ExpenseFormState.untouchedByErrors() =
         refundCandidates = emptyList(),
     )
 
-/** The "Refund of" row: the linked original (or "None"), tapping it opens the picker sheet. */
+/** The category chips, or the split parts while splitting; plus the suggestion and split-part captions. */
 @Composable
-private fun RefundOfRow(
+private fun CategorySection(
     form: ExpenseFormState,
+    categoryOptions: List<Category>,
     actions: ExpenseFormActions,
 ) {
-    var picking by rememberSaveable { mutableStateOf(false) }
-    SettingsRow(
-        title = stringResource(R.string.expense_refund_of),
-        value = form.refundOfLabel ?: stringResource(R.string.expense_refund_of_none),
-        onClick = { picking = true },
-        showChevron = true,
-    )
-    if (picking) {
-        RefundOfSheet(
-            candidates = form.refundCandidates,
-            onPicked = {
-                actions.onRefundOfSelected(it)
-                picking = false
-            },
-            onDismiss = { picking = false },
+    if (form.isSplitting) {
+        SplitParts(form = form, categoryOptions = categoryOptions, actions = actions.split)
+    } else {
+        CategoryChipFlow(
+            options = categoryOptions,
+            selected = form.category,
+            error = form.categoryError?.asString(),
+            onSelected = actions.onCategorySelected,
         )
     }
-}
-
-/** Search, then pick the original expense this refund is for; the first row unlinks. */
-@Composable
-private fun RefundOfSheet(
-    candidates: List<Expense>,
-    onPicked: (Expense?) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var query by rememberSaveable { mutableStateOf("") }
-    val shown =
-        remember(candidates, query) {
-            if (query.isBlank()) {
-                candidates
-            } else {
-                candidates.filter {
-                    it.name.containsIgnoreCase(query.trim()) || amountMatchesQuery(it.amountCents, query)
-                }
-            }
-        }
-    FinTrackBottomSheet(onDismissRequest = onDismiss) {
+    if (form.isEditMode && form.splitId != null) {
         Text(
-            text = stringResource(R.string.expense_refund_of),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = Dimens.Space12),
+            text = stringResource(R.string.expense_split_part_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        SearchField(
-            query = query,
-            onQueryChanged = { query = it },
-            label = stringResource(R.string.activity_search_label),
-        )
-        LazyColumn(modifier = Modifier.heightIn(max = RefundSheetMaxHeight)) {
-            item(key = "none") {
-                SettingsRow(
-                    title = stringResource(R.string.expense_refund_of_none),
-                    onClick = { onPicked(null) },
-                    modifier = Modifier.padding(vertical = Dimens.Space4),
-                )
-            }
-            items(shown, key = { it.id }) { expense ->
-                ExpenseRow(expense = expense, onClick = { onPicked(expense) })
-            }
-        }
     }
-}
-
-/** On an existing, non-refund expense: how much of it was refunded, and a shortcut to record another refund. */
-@Composable
-private fun RecordRefundSection(
-    form: ExpenseFormState,
-    actions: ExpenseFormActions,
-) {
-    val id = form.expenseId
-    if (!form.isEditMode || form.isRefund || id == null) return
-    form.refundStatus?.let { status ->
+    if (form.suggestedCategory && !form.isSplitting) {
         Text(
-            text =
-                stringResource(
-                    R.string.expense_refund_status,
-                    status.percent,
-                    formatAmountCents(status.netCents),
-                ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = FinTrackTheme.colors.textSecondary,
+            text = stringResource(R.string.expense_category_suggested),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-    GhostButton(
-        text = stringResource(R.string.expense_record_refund),
-        onClick = { actions.onRecordRefund(id) },
-        enabled = !form.isBusy,
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
-
-private val RefundSheetMaxHeight = 360.dp

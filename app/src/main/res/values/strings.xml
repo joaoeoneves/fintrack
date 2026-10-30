@@ -686,4 +686,13 @@
     <string name="expense_refund_status">Refunded %1$d%% · real spend %2$s</string>
     <string name="expense_record_refund">Record refund</string>
     <string name="expense_refunded_badge">Refunded %d%%</string>
+    <!-- Split (5.7) -->
+    <string name="expense_more_options">More options</string>
+    <string name="expense_split_switch">Split across categories</string>
+    <string name="expense_split_add_part">Add part</string>
+    <string name="expense_split_left">%s left</string>
+    <string name="expense_split_over">%s over</string>
+    <string name="error_split_sum">Parts must add up to the total</string>
+    <string name="error_split_category">Pick a category for each part</string>
+    <string name="expense_split_part_caption">Part of a split expense</string>
 </resources>
