@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.backup
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,23 +26,20 @@ class BackupCodecValidationTest {
                         backupIncome("i0", amountCents = 0),
                         backupIncome("i2", date = "x"),
                     ),
-                budgets = listOf(LocalBudget("FOOD", 100), LocalBudget("SHOPPING", 0), LocalBudget("NOPE", 10)),
             )
 
         val result = roundTrip(doc)
 
         assertEquals(listOf("ok"), result.document.expenses.map { it.id })
         assertEquals(listOf("i1"), result.document.income.map { it.id })
-        assertEquals(listOf("FOOD", "SHOPPING"), result.document.budgets.map { it.categoryId })
-        assertEquals(5 + 2 + 1, result.skippedCount)
+        assertEquals(5 + 2, result.skippedCount)
     }
 
     @Test
-    fun invalidCategory_droppedWithItsExpensesAndBudgets() {
+    fun invalidCategory_droppedWithItsExpenses() {
         val doc =
             backupDoc(
                 expenses = listOf(backupExpense("e1", categoryId = "gym"), backupExpense("e2")),
-                budgets = listOf(LocalBudget("gym", 100)),
                 categories = listOf(backupCategory("gym", name = null)),
             )
 
@@ -51,8 +47,7 @@ class BackupCodecValidationTest {
 
         assertEquals(emptyList<Any>(), result.document.categories)
         assertEquals(listOf("e2"), result.document.expenses.map { it.id })
-        assertEquals(emptyList<Any>(), result.document.budgets)
-        assertEquals(1 + 1 + 1, result.skippedCount)
+        assertEquals(1 + 1, result.skippedCount)
     }
 
     @Test
@@ -60,7 +55,6 @@ class BackupCodecValidationTest {
         val doc =
             backupDoc(
                 expenses = listOf(backupExpense("e1", categoryId = "gym")),
-                budgets = listOf(LocalBudget("gym", 100)),
                 categories = listOf(backupCategory("gym")),
             )
 
@@ -76,7 +70,6 @@ class BackupCodecValidationTest {
             backupDoc(
                 expenses = listOf(backupExpense("e1", amountCents = 1), backupExpense("e1", amountCents = 2)),
                 income = listOf(backupIncome("i1", amountCents = 7), backupIncome("i1", amountCents = 8)),
-                budgets = listOf(LocalBudget("FOOD", 10), LocalBudget("FOOD", 20)),
                 categories = listOf(backupCategory("gym", name = "A"), backupCategory("gym", name = "B")),
             )
 
@@ -84,9 +77,8 @@ class BackupCodecValidationTest {
 
         assertEquals(listOf(1L), result.document.expenses.map { it.amountCents })
         assertEquals(listOf(7L), result.document.income.map { it.amountCents })
-        assertEquals(listOf(10L), result.document.budgets.map { it.limitCents })
         assertEquals(listOf("A"), result.document.categories.map { it.name })
-        assertEquals(4, result.skippedCount)
+        assertEquals(3, result.skippedCount)
     }
 
     @Test
@@ -107,7 +99,6 @@ class BackupCodecValidationTest {
         val doc =
             backupDoc(
                 expenses = listOf(backupExpense("e1", categoryId = "deleted-1")),
-                budgets = listOf(LocalBudget("deleted-1", 100)),
                 categories = listOf(placeholder),
             )
 

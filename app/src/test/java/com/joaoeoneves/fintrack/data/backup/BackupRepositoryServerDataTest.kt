@@ -1,11 +1,9 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlaceholderNames
@@ -46,12 +44,10 @@ class BackupRepositoryServerDataTest : BackupRepositoryTestBase() {
     ) = ServerData(
         expenses = expenses,
         income = income,
-        budgets = emptyList(),
         plannedIncome = planned,
         recurring = emptyList(),
         monthSettings = emptyList(),
         categoryGroups = emptyList(),
-        goals = emptyList(),
         categories = emptyList(),
         salaryProfile = null,
         automation = AutomationSettings(),
@@ -66,14 +62,12 @@ class BackupRepositoryServerDataTest : BackupRepositoryTestBase() {
         expenses,
         incomes,
         PlanBackupSource(
-            FakeBudgetRepository(),
             FakePlannedIncomeRepository(plannedIncome),
             FakeRecurringRepository(),
             FakeMonthSettingsRepository(),
             FakeEnvelopeRepository(),
             PlanSingletonSources(
                 FakeSalaryProfileRepository(),
-                FakeGoalRepository(),
                 FakeAutomationSettingsRepository(),
                 FakePlaceholderNames(),
             ),

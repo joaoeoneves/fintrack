@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.backup
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
@@ -14,7 +13,6 @@ class BackupRestoreTest : BackupRepositoryTestBase() {
         backupDoc(
             expenses = listOf(backupExpense("e1", categoryId = "gym", note = "n").copy(isRefund = true)),
             income = listOf(backupIncome()),
-            budgets = listOf(LocalBudget("gym", 100)),
             categories = listOf(backupCategory("gym")),
             preferences = BackupPreferences("LIGHT", "ENGLISH"),
         )
@@ -49,7 +47,6 @@ class BackupRestoreTest : BackupRepositoryTestBase() {
             val stored = localStore.data.first()
             assertEquals(doc.expenses, stored.expenses)
             assertEquals(doc.income, stored.income)
-            assertEquals(doc.budgets, stored.budgets)
             assertEquals(doc.categories, stored.categories)
         }
 
