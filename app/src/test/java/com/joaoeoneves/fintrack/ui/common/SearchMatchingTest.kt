@@ -57,8 +57,28 @@ class SearchMatchingTest {
     }
 
     @Test
-    fun amount_groupingSeparators_areNotSupported() {
-        assertFalse(amountMatchesQuery(123_400L, "1,234.00"))
+    fun amount_groupingSeparators_areUnderstood() {
+        assertTrue(amountMatchesQuery(123_400L, "1,234.00"))
+        assertTrue(amountMatchesQuery(123_450L, "1.234,50"))
+        assertTrue(amountMatchesQuery(123_456_700L, "1.234.567"))
+        // A lone '.' + exactly three digits is grouping: "1.234" is 1234, not 1.234.
+        assertTrue(amountMatchesQuery(123_400L, "1.234"))
+        assertFalse(amountMatchesQuery(123L, "1.234"))
+    }
+
+    @Test
+    fun amount_loneCommaIsDecimal_evenWithThreeDigits() {
+        assertFalse(amountMatchesQuery(123_400L, "1,234"))
+        assertTrue(amountMatchesQuery(1_250L, "12,5"))
+    }
+
+    @Test
+    fun amount_currencySignAndSpaces_areIgnored() {
+        assertTrue(amountMatchesQuery(1_250L, "12,50 €"))
+        assertTrue(amountMatchesQuery(1_250L, "€12.50"))
+        assertTrue(amountMatchesQuery(123_450L, "1\u00A0234,50\u00A0€"))
+        assertTrue(amountMatchesQuery(123_450L, "1 234,50"))
+        assertFalse(amountMatchesQuery(1_250L, "€"))
     }
 
     @Test

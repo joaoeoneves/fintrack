@@ -8,10 +8,12 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.usecase.BulkEditExpenses
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
 import com.joaoeoneves.fintrack.domain.usecase.PlanDataSources
@@ -105,10 +107,24 @@ abstract class ActivityViewModelTestBase {
         private val transactions = CombinedTransactionRepository(expenseRepo, incomeRepo)
         private val overview = ObservePeriodOverview(transactionRepository = transactions, sources = sources)
         val deleteTransaction = DeleteTransaction(expenseRepo, incomeRepo, recurringRepo)
-        val vm = ActivityViewModel(overview, categories, deleteTransaction, handle, clock)
+        private val bulkEdit = BulkEditExpenses(expenseRepo, recurringRepo)
+        private val salaryProfiles = FakeSalaryProfileRepository()
+        val vm = newViewModel(handle)
 
         /** A fresh ViewModel over the same repositories and [SavedStateHandle] (process-death restore). */
-        fun recreate() = ActivityViewModel(overview, categories, deleteTransaction, handle, clock)
+        fun recreate() = newViewModel(handle)
+
+        private fun newViewModel(handle: SavedStateHandle) =
+            ActivityViewModel(
+                overview,
+                categories,
+                deleteTransaction,
+                expenseRepo,
+                bulkEdit,
+                salaryProfiles,
+                handle,
+                clock,
+            )
     }
 
     protected fun TestScope.content(vm: ActivityViewModel): ActivityUiState.Content {
