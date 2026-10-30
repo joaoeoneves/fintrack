@@ -51,8 +51,7 @@ class FakeExpenseRepository(
 
     override fun observeNeedingReview(): Flow<List<Expense>> = expensesFlow.map { all -> all.filter { it.needsReview } }
 
-    override fun observeAwaitingRefund(): Flow<List<Expense>> =
-        expensesFlow.map { all -> all.filter { it.awaitingRefund } }
+    override fun observeAwaitingRefund(): Flow<List<Expense>> = expensesFlow.map { it.filter { e -> e.awaitingRefund } }
 
     override suspend fun getSplit(splitId: String): Result<List<Expense>> =
         Result.success(expensesFlow.value.filter { it.splitId == splitId })

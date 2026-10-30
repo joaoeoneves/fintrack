@@ -61,7 +61,8 @@ class LocalDataStoreV26Test : LocalStoreTestBase() {
 
     @Test
     fun document_stampsTheVersion() {
-        val doc = LocalDataDocument(schemaVersion = 25, monthSettings = listOf(sick("2026-10", sick = 1))).upgradedTo26()
+        val old = LocalDataDocument(schemaVersion = 25, monthSettings = listOf(sick("2026-10", sick = 1)))
+        val doc = old.upgradedTo26()
 
         assertEquals(26, doc.schemaVersion)
     }
@@ -73,7 +74,8 @@ class LocalDataStoreV26Test : LocalStoreTestBase() {
                 """{"schemaVersion":25,"revision":3,"monthSettings":[""" +
                     """{"month":"2026-10","vacationDays":22,"otherDays":1,"sickDays":4},""" +
                     """{"month":"2026-11","sickDays":2}],""" +
-                    """"expenses":[{"id":"e","name":"n","amountCents":5,"categoryId":"FOOD","date":"2026-03-10T12:00:00Z"}]}""",
+                    """"expenses":[{"id":"e","name":"n","amountCents":5,"categoryId":"FOOD",""" +
+                    """"date":"2026-03-10T12:00:00Z"}]}""",
             )
             val store = newStore()
 
@@ -85,7 +87,8 @@ class LocalDataStoreV26Test : LocalStoreTestBase() {
                 doc.monthSettings,
             )
             assertFalse(doc.expenses.single().awaitingRefund)
-            store.update { it.copy(revision = it.revision) to Unit }
+            val dec = LocalMonthSettings("2026-12", otherDays = 1)
+            store.update { it.copy(monthSettings = it.monthSettings + dec) to Unit }
             assertFalse(dataFile.readText().contains("sickDays"))
         }
 }

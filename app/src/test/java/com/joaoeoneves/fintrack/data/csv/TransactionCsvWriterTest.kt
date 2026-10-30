@@ -17,7 +17,6 @@ class TransactionCsvWriterTest {
         category: Category,
         date: Instant,
         note: String?,
-        isRefund: Boolean = false,
     ) = Expense(
         id = "",
         name = name,
@@ -25,7 +24,6 @@ class TransactionCsvWriterTest {
         category = category,
         date = date,
         note = note,
-        isRefund = isRefund,
     )
 
     private fun income(
@@ -68,7 +66,8 @@ class TransactionCsvWriterTest {
     @Test
     fun write_refundExpense_isNegative_whileIncomeStaysPositive() {
         val refund =
-            expense("Back", 300L, BuiltInCategories.SHOPPING, Instant.parse("2024-03-02T00:00:00Z"), null, true)
+            expense("Back", 300L, BuiltInCategories.SHOPPING, Instant.parse("2024-03-02T00:00:00Z"), null)
+                .copy(isRefund = true)
 
         val lines = TransactionCsvWriter.write(listOf(refund), listOf(income("Gift", 1L))).split("\n")
 

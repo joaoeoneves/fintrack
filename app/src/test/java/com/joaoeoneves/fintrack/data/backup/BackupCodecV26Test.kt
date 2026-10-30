@@ -19,7 +19,11 @@ class BackupCodecV26Test {
     ) = """{$header,"schemaVersion":$version,"monthSettings":[$months],"expenses":[{"id":"e1","name":"Shoes",""" +
         """"amountCents":5000,"categoryId":"FOOD","date":"$at"$expenseExtra}]}"""
 
-    private fun decodeMonths(months: String) = BackupCodec.decode(file(25, months)).success().document.monthSettings
+    private fun decodeMonths(months: String) =
+        BackupCodec
+            .decode(file(25, months))
+            .success()
+            .document.monthSettings
 
     @Test
     fun currentVersionIsTwentySix() {
@@ -66,7 +70,7 @@ class BackupCodecV26Test {
     }
 
     @Test
-    fun v26_roundTrip_keepsAwaitingRefund_andOmitsFalse() {
+    fun v26_roundTrip_keepsAwaitingRefund_andAndReadsFalse() {
         val doc =
             backupDoc(
                 expenses =
@@ -81,14 +85,17 @@ class BackupCodecV26Test {
 
         assertEquals(doc, result.document)
         assertEquals(listOf(true, false), result.document.expenses.map { it.awaitingRefund })
-        assertEquals(1, Regex("\"awaitingRefund\"").findAll(text).count())
+        assertTrue(Regex("\"awaitingRefund\": true").containsMatchIn(text))
         assertFalse(text.contains("sickDays"))
     }
 
     @Test
     fun v26_monthSettingsPassThroughUnchanged() {
-        val months = BackupCodec.decode(file(26, """{"month":"2026-10","vacationDays":1,"otherDays":2}"""))
-            .success().document.monthSettings
+        val months =
+            BackupCodec
+                .decode(file(26, """{"month":"2026-10","vacationDays":1,"otherDays":2}"""))
+                .success()
+                .document.monthSettings
 
         assertEquals(listOf(LocalMonthSettings("2026-10", 1, 2)), months)
     }

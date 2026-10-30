@@ -19,9 +19,17 @@ class LocalExpenseSplitTest : LocalStoreTestBase() {
     @Test
     fun getSplit_returnsOnlyTheSiblings_andEmptyForUnknownId() =
         runStoreTest {
-            repo.addExpensesKeepingIds(listOf(part("a"), part("b"), part("c", split = "other"), part("d", split = null)))
+            val others = listOf(part("c", split = "other"), part("d", split = null))
+            repo.addExpensesKeepingIds(listOf(part("a"), part("b")) + others)
 
-            assertEquals(listOf("a", "b"), repo.getSplit("grp").getOrThrow().map { it.id }.sorted())
+            assertEquals(
+                listOf("a", "b"),
+                repo
+                    .getSplit("grp")
+                    .getOrThrow()
+                    .map { it.id }
+                    .sorted(),
+            )
             assertEquals(emptyList<String>(), repo.getSplit("nope").getOrThrow().map { it.id })
         }
 
