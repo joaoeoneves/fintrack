@@ -146,7 +146,8 @@ fun SettingsChoiceRow(
     }
 }
 
-/** A row with a trailing switch; the whole row toggles (switch semantics on the row). */
+/** A row with a trailing switch; the whole row toggles (switch semantics on the row) unless [enabled] is false. */
+@Suppress("LongParameterList")
 @Composable
 fun SettingsSwitchRow(
     title: String,
@@ -154,18 +155,23 @@ fun SettingsSwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .heightIn(min = Dimens.SettingsRowMinHeight)
-                .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+                .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (enabled) Color.Unspecified else FinTrackTheme.colors.textSecondary,
+            )
             if (supportingText != null) {
                 Text(
                     text = supportingText,
@@ -177,6 +183,7 @@ fun SettingsSwitchRow(
         Switch(
             checked = checked,
             onCheckedChange = null,
+            enabled = enabled,
             colors =
                 SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.onPrimary,

@@ -1,7 +1,9 @@
 package com.joaoeoneves.fintrack
 
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.splashscreen.SplashScreen
@@ -32,12 +35,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.joaoeoneves.fintrack.data.automation.AutomationSync
+import com.joaoeoneves.fintrack.data.security.AppLockController
+import com.joaoeoneves.fintrack.data.security.LockState
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.ui.auth.AuthUiState
 import com.joaoeoneves.fintrack.ui.auth.AuthViewModel
 import com.joaoeoneves.fintrack.ui.auth.SignInScreen
 import com.joaoeoneves.fintrack.ui.common.applyAppLanguage
+import com.joaoeoneves.fintrack.ui.lock.LockPromptResult
+import com.joaoeoneves.fintrack.ui.lock.LockScreen
+import com.joaoeoneves.fintrack.ui.lock.showAppLockPrompt
 import com.joaoeoneves.fintrack.ui.migration.LocalDataMigrationHost
 import com.joaoeoneves.fintrack.ui.navigation.FinTrackAppShell
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -61,6 +69,11 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var automationSync: AutomationSync
 
+    @Inject
+    lateinit var appLockController: AppLockController
+
+    private var promptShowing = false
+
     // Shared with the hiltViewModel() lookups inside setContent (same activity store, same instances).
     private val themeViewModel: ThemeViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
@@ -75,9 +88,17 @@ class MainActivity : AppCompatActivity() {
         // Each return to the foreground re-checks what is due (the day may have changed while backgrounded).
         lifecycle.addObserver(
             object : DefaultLifecycleObserver {
-                override fun onStart(owner: LifecycleOwner) = automationSync.onForeground()
+                override fun onStart(owner: LifecycleOwner) {
+                    automationSync.onForeground()
+                    appLockController.onForeground()
+                }
+
+                override fun onStop(owner: LifecycleOwner) {
+                    if (!isChangingConfigurations) appLockController.onBackground()
+                }
             },
         )
+        observeRecentsPrivacy()
         enableEdgeToEdge()
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
@@ -101,35 +122,81 @@ class MainActivity : AppCompatActivity() {
                     onDispose {}
                 }
                 FinTrackTheme(darkTheme = resolvedDarkTheme) {
-                    val viewModel: AuthViewModel = hiltViewModel()
-                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-                    val context = LocalContext.current
+                    LockableAppContent()
+                }
+            }
+        }
+    }
 
-                    // A plain Surface rather than a Scaffold: every signed-in screen has its own
-                    // Scaffold that already consumes the system-bar insets, so an outer Scaffold here
-                    // would apply them twice. The app shell's Scaffold is the one exception: it uses
-                    // zero content insets and only lays out the bottom bar.
-                    Surface(
-                        modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true },
-                        color = MaterialTheme.colorScheme.background,
-                    ) {
-                        val state = uiState
-                        if (state is AuthUiState.Starting) {
-                            // Session still resolving: never the sign-in screen, and not a bare black
-                            // surface either (the splash gives up after SPLASH_MAX_MS on a slow cold start).
-                            SessionStartingIndicator()
-                        } else if (state is AuthUiState.SignedIn || state is AuthUiState.Guest) {
-                            FinTrackAppShell(modifier = Modifier.fillMaxSize())
-                            // Only for accounts: guests have nothing to copy anywhere.
-                            if (state is AuthUiState.SignedIn) LocalDataMigrationHost()
-                        } else {
-                            SignInScreen(
-                                uiState = state,
-                                onSignInClick = { viewModel.signIn(context) },
-                                onContinueAsGuest = viewModel::continueAsGuest,
-                            )
-                        }
-                    }
+    @Composable
+    private fun LockableAppContent() {
+        val viewModel: AuthViewModel = hiltViewModel()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val context = LocalContext.current
+
+        // A plain Surface rather than a Scaffold: every signed-in screen has its own
+        // Scaffold that already consumes the system-bar insets, so an outer Scaffold here
+        // would apply them twice. The app shell's Scaffold is the one exception: it uses
+        // zero content insets and only lays out the bottom bar.
+        val lockState by appLockController.state.collectAsStateWithLifecycle()
+        val locked = lockState != LockState.Unlocked
+        LaunchedEffect(lockState) { if (lockState == LockState.Locked) promptUnlock() }
+        Box(modifier = Modifier.fillMaxSize()) {
+            Surface(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .then(if (locked) Modifier.clearAndSetSemantics {} else Modifier)
+                        .semantics { testTagsAsResourceId = true },
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                val state = uiState
+                if (state is AuthUiState.Starting) {
+                    // Session still resolving: never the sign-in screen, and not a bare black
+                    // surface either (the splash gives up after SPLASH_MAX_MS on a slow cold start).
+                    SessionStartingIndicator()
+                } else if (state is AuthUiState.SignedIn || state is AuthUiState.Guest) {
+                    FinTrackAppShell(modifier = Modifier.fillMaxSize())
+                    // Only for accounts: guests have nothing to copy anywhere.
+                    if (state is AuthUiState.SignedIn) LocalDataMigrationHost()
+                } else {
+                    SignInScreen(
+                        uiState = state,
+                        onSignInClick = { viewModel.signIn(context) },
+                        onContinueAsGuest = viewModel::continueAsGuest,
+                    )
+                }
+            }
+            if (locked) LockScreen(onUnlock = ::promptUnlock)
+        }
+    }
+
+    /** Opens the system prompt to unlock; events are ignored meanwhile so the prompt cannot re-lock the app. */
+    private fun promptUnlock() {
+        if (promptShowing) return
+        promptShowing = true
+        appLockController.onAuthenticationStarted()
+        showAppLockPrompt(getString(R.string.lock_prompt_title)) { result ->
+            promptShowing = false
+            appLockController.onAuthenticationEnded()
+            when (result) {
+                LockPromptResult.SUCCESS -> appLockController.onAuthenticated()
+                LockPromptResult.UNAVAILABLE -> appLockController.onUnavailable()
+                LockPromptResult.CANCELLED -> Unit
+            }
+        }
+    }
+
+    /** While the lock is on, hides the app's thumbnail in Recents (API 33+) or blocks screenshots (FLAG_SECURE). */
+    private fun observeRecentsPrivacy() {
+        lifecycleScope.launch {
+            appLockController.enabled.collect { enabled ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    setRecentsScreenshotEnabled(!enabled)
+                } else if (enabled) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
             }
         }
@@ -147,7 +214,11 @@ class MainActivity : AppCompatActivity() {
         }
         splash.setKeepOnScreenCondition {
             !timedOut &&
-                (themeViewModel.themePreference.value == null || authViewModel.uiState.value is AuthUiState.Starting)
+                (
+                    themeViewModel.themePreference.value == null ||
+                        authViewModel.uiState.value is AuthUiState.Starting ||
+                        appLockController.state.value == LockState.Unknown
+                )
         }
     }
 

@@ -196,6 +196,8 @@ private fun ActivityContent(
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
     pill.BindTo(listState)
+    LaunchedEffect(state.period) { pill.show() }
+    LaunchedEffect(selection.state == null) { pill.show() }
 
     Box(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
         LazyColumn(

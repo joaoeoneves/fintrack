@@ -52,7 +52,7 @@ fun PreferencesSection(
         SettingsPickerRow(
             title = stringResource(R.string.settings_theme),
             selected = uiState.themePreference,
-            options = ThemePreference.entries,
+            options = listOf(ThemePreference.DARK, ThemePreference.LIGHT, ThemePreference.SYSTEM),
             optionLabel = { it.label },
             onSelected = onThemeSelected,
         )

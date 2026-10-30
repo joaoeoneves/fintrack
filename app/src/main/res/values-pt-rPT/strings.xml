@@ -161,7 +161,7 @@
     <string name="about_version_unknown">desconhecida</string>
 
     <!-- Tema -->
-    <string name="theme_system">Predefinição do sistema</string>
+    <string name="theme_system">Sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Escuro</string>
 
@@ -598,6 +598,14 @@
     <string name="migration_remove_confirm_title">Remover os dados locais?</string>
     <string name="migration_remove_confirm_message">A cópia neste dispositivo é eliminada de vez. Os teus dados ficam na tua conta.</string>
     <string name="settings_section_home">Início</string>
+    <string name="settings_section_security">Segurança</string>
+    <string name="settings_app_lock">Bloquear a app</string>
+    <string name="settings_app_lock_hint">Pede a impressão digital, o rosto ou o bloqueio de ecrã ao abrir a app e após 1 minuto fora dela.</string>
+    <string name="settings_app_lock_unavailable">Define um bloqueio de ecrã no dispositivo para usar esta opção.</string>
+    <string name="lock_title">A FinTrack está bloqueada</string>
+    <string name="lock_unlock">Desbloquear</string>
+    <string name="lock_prompt_title">Desbloquear a FinTrack</string>
+    <string name="lock_enable_prompt_title">Confirma que és tu</string>
     <string name="settings_show_start_hint">A lista de primeiros passos no Início</string>
     <string name="settings_show_start">Mostrar Começar</string>
     <string name="home_start_dismissed">Começar escondido</string>
