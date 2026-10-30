@@ -185,6 +185,8 @@ data class LocalSalaryProfile(
     val mealPayment: String = "CARD",
     /** ADSE / other deductions rate in ppm (schema v20). */
     val otherDeductionsPpm: Int = 0,
+    /** The yearly raise starts in February (schema v24); absent = off. */
+    val raiseInFebruary: Boolean? = null,
     val mealSkipMonths: List<Int> = emptyList(),
     val holidaySubsidyMonth: Int = 6,
     val christmasSubsidyMonth: Int = 12,

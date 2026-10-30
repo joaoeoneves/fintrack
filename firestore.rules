@@ -248,13 +248,14 @@ service cloud.firestore {
       return data.keys().hasOnly(['inputMode', 'baseGrossCents', 'subsidySpreadPpm', 'irsBasePpm', 'irsSubsidiesPpm',
           'ssPpm', 'irsJovemExemptPpm', 'netMonthlyCents', 'netHolidayLumpCents', 'netChristmasLumpCents',
           'mealRatePerDayCents', 'vacationDaysPerYear', 'mealSkipMonths', 'holidaySubsidyMonth', 'christmasSubsidyMonth',
-          'extras', 'sector', 'mealPayment', 'otherDeductionsPpm', 'updatedAt'])
+          'extras', 'sector', 'mealPayment', 'otherDeductionsPpm', 'raiseInFebruary', 'updatedAt'])
         && data.keys().hasAll(['inputMode'])
         && data.inputMode in ['GROSS', 'NET']
         && (!('subsidySpreadPpm' in data) || data.subsidySpreadPpm in [0, 500000, 1000000])
         && isOptionalInt(data, 'irsBasePpm', 0, 1000000) && isOptionalInt(data, 'irsSubsidiesPpm', 0, 1000000)
         && isOptionalInt(data, 'ssPpm', 0, 1000000) && isOptionalInt(data, 'irsJovemExemptPpm', 0, 1000000)
         && isOptionalInt(data, 'otherDeductionsPpm', 0, 1000000)
+        && (!('raiseInFebruary' in data) || data.raiseInFebruary is bool)
         && (!('sector' in data) || data.sector in ['PRIVATE', 'PUBLIC'])
         && (!('mealPayment' in data) || data.mealPayment in ['CARD', 'WITH_SALARY'])
         && isOptionalInt(data, 'baseGrossCents', 1, 100000000000)
