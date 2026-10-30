@@ -47,9 +47,15 @@ class SessionExpenseRepository
         override suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> =
             switch.call { it.addExpensesKeepingIds(expenses) }
 
-        override suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> = switch.call { it.updateExpenses(expenses) }
+        override suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> =
+            switch.call {
+                it.updateExpenses(expenses)
+            }
 
-        override suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> = switch.call { it.deleteExpenses(ids) }
+        override suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
+            switch.call {
+                it.deleteExpenses(ids)
+            }
 
         private val linkedRefunds: Flow<List<Expense>> = switch.flow(emptyList()) { it.observeLinkedRefunds() }
 
