@@ -319,6 +319,7 @@
     </plurals>
     <string name="recurring_nothing_due">Nada a vencer em breve</string>
     <string name="recurring_annual_cost">Recorrentes: %1$s/ano (%2$s/mês)</string>
+    <string name="recurring_cost_split">Mensais %1$s/mês · Anuais %2$s/ano (%3$s/mês)</string>
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar recorrentes</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
@@ -328,6 +329,7 @@
     <string name="recurring_list_empty">Ainda não há recorrentes</string>
     <string name="recurring_paused">Em pausa</string>
     <string name="recurring_ended">Terminado</string>
+    <string name="recurring_ends">termina em %1$s</string>
     <string name="recurring_frequency_monthly">Mensal</string>
     <string name="recurring_frequency_yearly">Anual</string>
     <string name="recurring_day_of_month">Dia do mês</string>

@@ -312,6 +312,7 @@
     </plurals>
     <string name="recurring_nothing_due">Nothing due soon</string>
     <string name="recurring_annual_cost">Recurring: %1$s/year (%2$s/month)</string>
+    <string name="recurring_cost_split">Monthly %1$s/month · Yearly %2$s/year (%3$s/month)</string>
     <string name="recurring_manage">Manage</string>
     <string name="recurring_empty_cta">Set up recurring</string>
     <string name="recurring_next_due">Next: %1$s</string>
@@ -321,6 +322,7 @@
     <string name="recurring_list_empty">No recurring yet</string>
     <string name="recurring_paused">Paused</string>
     <string name="recurring_ended">Ended</string>
+    <string name="recurring_ends">ends %1$s</string>
     <string name="recurring_frequency_monthly">Monthly</string>
     <string name="recurring_frequency_yearly">Yearly</string>
     <string name="recurring_day_of_month">Day of month</string>
