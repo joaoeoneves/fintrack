@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.workingDaysIn
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
+import com.joaoeoneves.fintrack.ui.activity.analytics.incomeAnalytics
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
@@ -117,6 +118,29 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
     fun canGoNext_fromTheCurrentMonth() =
         runTest(testDispatcher) {
             assertTrue(canGoNext(Period.CurrentMonth))
+        }
+
+    @Test
+    fun currentYear_expectedCoversJanuaryToDecember_futureMonthsAreStillToReceive() =
+        runTest(testDispatcher) {
+            incomeRepo.savePlannedIncome(line("a", 100_000L))
+            val vm = at(Period.Year(2026))
+            collect(vm)
+
+            val history = vm.content().history!!
+            val analytics = history.incomeAnalytics()
+            val months =
+                history.monthly.incomeSources
+                    .single()
+                    .months
+                    .map { it.month }
+            assertEquals(YearMonth.of(2026, 12), months.last())
+            assertTrue(months.containsAll((1..12).map { YearMonth.of(2026, it) }))
+            assertEquals(1_200_000L, analytics.expectedCents)
+            assertEquals(0L, analytics.receivedCents)
+            assertEquals(1_200_000L, analytics.missingCents)
+            // Only January to September are past (today is mid-October, which is current, never short).
+            assertEquals(900_000L, analytics.sources.single().pastShortCents)
         }
 
     @Test

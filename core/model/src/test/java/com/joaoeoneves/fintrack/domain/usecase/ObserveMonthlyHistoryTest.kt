@@ -111,4 +111,50 @@ class ObserveMonthlyHistoryTest {
             assertEquals(1_000L, history.yearToDate.incomeCents)
             assertEquals(history.months.sumOf { it.spendingCents }, history.yearToDate.spentCents)
         }
+
+    @Test
+    fun expectedThrough_extendsIncomeSourcesWithFutureMonths_totalsStayOnTheWindow() =
+        runTest {
+            val pay = testIncome("pay_sal_202610", 100_000L, at(2026, 10, 5))
+            val history = useCase(Transactions(emptyList(), listOf(pay)), listOf(salary))
+            val through = YearMonth.of(2026, 12)
+
+            val result = history(end, 2, zone, end, through).first()
+
+            assertEquals(listOf(9, 10), result.months.map { it.month.monthValue })
+            val months = result.incomeSources.single().months
+            assertEquals(listOf(9, 10, 11, 12), months.map { it.month.monthValue })
+            assertEquals(listOf(0L, 100_000L, 0L, 0L), months.map { it.receivedCents })
+            assertEquals(listOf(100_000L, 100_000L, 100_000L, 100_000L), months.map { it.expectedCents })
+            assertEquals(100_000L, result.yearToDate.incomeCents)
+        }
+
+    @Test
+    fun expectedThrough_nullOrNotAfterEnd_addsNoMonths() =
+        runTest {
+            val history = useCase(Transactions(emptyList(), emptyList()), listOf(salary))
+
+            val none =
+                history(end, 2, zone, end)
+                    .first()
+                    .incomeSources
+                    .single()
+                    .months
+            val same =
+                history(end, 2, zone, end, end)
+                    .first()
+                    .incomeSources
+                    .single()
+                    .months
+            val before =
+                history(end, 2, zone, end, YearMonth.of(2026, 8))
+                    .first()
+                    .incomeSources
+                    .single()
+                    .months
+
+            assertEquals(2, none.size)
+            assertEquals(2, same.size)
+            assertEquals(2, before.size)
+        }
 }

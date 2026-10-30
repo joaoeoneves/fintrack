@@ -22,6 +22,7 @@ data class ActivityHistory(
     val periodMonths: List<YearMonth>,
     val calendarMonth: Boolean,
     val monthly: MonthlyHistory,
+    val today: YearMonth? = null,
 )
 
 /** The months [period] touches, oldest first (a rolling/custom range lists every calendar month it overlaps). */

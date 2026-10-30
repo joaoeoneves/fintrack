@@ -33,6 +33,7 @@ class IncomeAnalyticsTest {
         sources: List<IncomeSourceHistory>,
         period: List<YearMonth> = months,
         income: List<Long> = listOf(0L, 0L),
+        today: YearMonth? = null,
     ) = ActivityHistory(
         period,
         period.size == 1,
@@ -42,6 +43,7 @@ class IncomeAnalyticsTest {
             sources,
             YearToDate(2026, 0L, 0L, 0L),
         ),
+        today,
     )
 
     @Test
@@ -55,21 +57,21 @@ class IncomeAnalyticsTest {
         val a = h.incomeAnalytics()
         assertEquals(100L, a.receivedCents)
         assertEquals(100L, a.expectedCents)
-        assertEquals(0L, a.differenceCents)
+        assertNull(a.missingCents)
         assertEquals(100L, a.sources.single().receivedCents)
     }
 
     @Test
-    fun analytics_noExpectation_expectedAndDifferenceNull() {
+    fun analytics_noExpectation_expectedAndMissingNull() {
         val h = history(listOf(source(gift, 50L to null, 0L to null)), income = listOf(50L, 0L))
         val a = h.incomeAnalytics()
         assertNull(a.expectedCents)
-        assertNull(a.differenceCents)
+        assertNull(a.missingCents)
         assertEquals(50L, a.receivedCents)
     }
 
     @Test
-    fun analytics_unplannedIncomeCountsTowardsTheDifference() {
+    fun analytics_unplannedIncomeDoesNotOffsetTheMissing() {
         val h =
             history(
                 listOf(source(salary, 80L to 100L, 80L to 100L), source(gift, 500L to null, 0L to null)),
@@ -78,58 +80,142 @@ class IncomeAnalyticsTest {
         val a = h.incomeAnalytics()
         assertEquals(660L, a.receivedCents)
         assertEquals(200L, a.expectedCents)
-        // Received (all sources) minus expected, as the shown figures read.
-        assertEquals(460L, a.differenceCents)
+        // Salary is 40 short over both months; the unplanned gift does not offset it.
+        assertEquals(40L, a.missingCents)
         assertEquals(2, a.sources.size)
         assertNull(a.sources[1].expectedCents)
     }
 
     @Test
-    fun difference_isReceivedMinusExpected_3727() {
+    fun missing_overReceived_isNull() {
         val h = history(listOf(source(salary, 0L to 0L, 140_000L to 136_273L)), income = listOf(0L, 140_000L))
 
         val a = h.incomeAnalytics()
 
         assertEquals(140_000L, a.receivedCents)
         assertEquals(136_273L, a.expectedCents)
-        assertEquals(3_727L, a.differenceCents)
+        assertNull(a.missingCents)
     }
 
     @Test
-    fun difference_belowExpected_isNegative() {
+    fun missing_belowExpected_isTheShortfall() {
         val h = history(listOf(source(salary, 0L to 0L, 100_000L to 136_273L)), income = listOf(0L, 100_000L))
 
-        assertEquals(-36_273L, h.incomeAnalytics().differenceCents)
+        assertEquals(36_273L, h.incomeAnalytics().missingCents)
     }
 
     @Test
-    fun difference_includesIncomeFromUnplannedSources() {
+    fun missing_overReceivedSource_doesNotOffsetAnotherSourcesShortfall() {
+        val bonus = IncomeSourceKey.Row(SalaryComponent.HOLIDAY, null, null)
         val h =
             history(
-                listOf(source(salary, 0L to 0L, 100_000L to 100_000L), source(gift, 0L to null, 5_000L to null)),
-                income = listOf(0L, 105_000L),
+                listOf(source(salary, 150L to 100L, 0L to 100L), source(bonus, 0L to 50L, 0L to 0L)),
+                income = listOf(150L, 0L),
             )
 
         val a = h.incomeAnalytics()
 
-        assertEquals(105_000L, a.receivedCents)
-        assertEquals(100_000L, a.expectedCents)
-        assertEquals(5_000L, a.differenceCents)
+        assertEquals(150L, a.receivedCents)
+        assertEquals(250L, a.expectedCents)
+        // Salary expects 200 and got 150 (50 short); the bonus expects 50 and got nothing; the totals add up to 100.
+        assertEquals(100L, a.missingCents)
     }
 
     @Test
-    fun yearPeriod_sumsEveryMonth_andTheDifferenceMatchesTheShownFigures() {
-        val h =
-            history(
-                listOf(source(salary, 90_000L to 100_000L, 110_000L to 100_000L)),
-                income = listOf(90_000L, 110_000L),
-            )
+    fun missing_sumsMonthsPerSourceBeforeClamping() {
+        // Within one source, an over-received month offsets a short one.
+        val h = history(listOf(source(salary, 90L to 100L, 110L to 100L)), income = listOf(90L, 110L))
 
         val a = h.incomeAnalytics()
 
-        assertEquals(200_000L, a.receivedCents)
-        assertEquals(200_000L, a.expectedCents)
-        assertEquals(a.receivedCents - a.expectedCents!!, a.differenceCents)
+        assertEquals(200L, a.receivedCents)
+        assertEquals(200L, a.expectedCents)
+        assertNull(a.missingCents)
+    }
+
+    @Test
+    fun missing_futureMonthsCountAsStillToReceive() {
+        val h =
+            history(
+                listOf(source(salary, 100L to 100L, 0L to 100L)),
+                income = listOf(100L, 0L),
+                today = sep,
+            )
+
+        assertEquals(100L, h.incomeAnalytics().missingCents)
+    }
+
+    @Test
+    fun pastShort_onlyCountsMonthsBeforeToday() {
+        val h = history(listOf(source(salary, 40L to 100L, 0L to 100L)), income = listOf(40L, 0L), today = oct)
+        val row = h.incomeAnalytics().sources.single()
+
+        // September is past and short by 60; October (current) is never short.
+        assertEquals(60L, row.pastShortCents)
+        assertEquals(160L, h.incomeAnalytics().missingCents)
+    }
+
+    @Test
+    fun pastShort_currentAndFutureMonthsNeverShort() {
+        val h = history(listOf(source(salary, 100L to 100L, 0L to 100L)), income = listOf(100L, 0L), today = oct)
+        assertEquals(
+            0L,
+            h
+                .incomeAnalytics()
+                .sources
+                .single()
+                .pastShortCents,
+        )
+        val allFuture = history(listOf(source(salary, 0L to 100L, 0L to 100L)), today = sep)
+        assertEquals(
+            0L,
+            allFuture
+                .incomeAnalytics()
+                .sources
+                .single()
+                .pastShortCents,
+        )
+    }
+
+    @Test
+    fun pastShort_unknownToday_treatsEveryMonthAsPast() {
+        val h = history(listOf(source(salary, 0L to 100L, 0L to 100L)))
+        assertEquals(
+            200L,
+            h
+                .incomeAnalytics()
+                .sources
+                .single()
+                .pastShortCents,
+        )
+    }
+
+    @Test
+    fun pastShort_overReceivedPastMonthsClampToZero() {
+        val h = history(listOf(source(salary, 150L to 100L, 0L to 100L)), income = listOf(150L, 0L), today = oct)
+        assertEquals(
+            0L,
+            h
+                .incomeAnalytics()
+                .sources
+                .single()
+                .pastShortCents,
+        )
+    }
+
+    @Test
+    fun incomeSeries_sourceWithMonthsBeyondTheWindow_alignsToTheWindow() {
+        val nov = YearMonth.of(2026, 11)
+        val extended =
+            IncomeSourceHistory(
+                salary,
+                "label",
+                listOf(SourceMonth(sep, 10L, 10L), SourceMonth(oct, 20L, 20L), SourceMonth(nov, 0L, 20L)),
+            )
+        val h = history(listOf(extended), income = listOf(10L, 20L))
+
+        assertEquals(listOf(10L, 20L), h.incomeSeries(salary.encode()))
+        assertEquals(h.monthly.months.size, h.incomeSeries(salary.encode()).size)
     }
 
     @Test

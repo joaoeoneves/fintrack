@@ -148,22 +148,21 @@ fun IncomeHeadline(
                     color = FinTrackTheme.colors.textSecondary,
                 )
                 Text(text = formatAmountCents(analytics.receivedCents), style = AmountLarge, maxLines = 1)
-                if (analytics.expectedCents != null && analytics.differenceCents != null) {
-                    val colors = FinTrackTheme.colors
+                if (analytics.expectedCents != null) {
+                    val expected = formatAmountCents(analytics.expectedCents)
                     Text(
                         text =
-                            stringResource(
-                                R.string.activity_expected_difference,
-                                formatAmountCents(analytics.expectedCents),
-                                signedAmount(analytics.differenceCents),
-                            ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color =
-                            when {
-                                analytics.differenceCents > 0L -> colors.positive
-                                analytics.differenceCents < 0L -> colors.negative
-                                else -> colors.textSecondary
+                            if (analytics.missingCents != null) {
+                                stringResource(
+                                    R.string.activity_expected_missing,
+                                    expected,
+                                    formatAmountCents(analytics.missingCents),
+                                )
+                            } else {
+                                stringResource(R.string.activity_expected, expected)
                             },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = FinTrackTheme.colors.textSecondary,
                     )
                 }
             }
@@ -208,14 +207,6 @@ fun IncomeHistory(
 }
 
 @Composable
-private fun signedAmount(cents: Long): String =
-    when {
-        cents > 0 -> "+" + formatAmountCents(cents)
-        cents < 0 -> "−" + formatAmountCents(-cents)
-        else -> formatAmountCents(0L)
-    }
-
-@Composable
 private fun SourceRows(
     sources: List<IncomeSourceRow>,
     onSourceClick: (String) -> Unit,
@@ -251,7 +242,7 @@ private fun SourceRow(
             row.expectedCents?.let { expected ->
                 val color =
                     when {
-                        row.receivedCents < expected -> colors.negative
+                        row.pastShortCents > 0L -> colors.negative
                         row.receivedCents > expected -> colors.positive
                         else -> colors.textSecondary
                     }

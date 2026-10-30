@@ -42,7 +42,6 @@ class IncomeHistorySubsidySourcesTest {
             lines,
             IncomeMonth { 20 },
             ZoneOffset.UTC,
-            YearMonth.of(2026, 12),
         )
 
     @Test

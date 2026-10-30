@@ -20,7 +20,9 @@ import com.joaoeoneves.fintrack.MainActivity
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.testutil.FirebaseTestApp
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -29,7 +31,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -52,6 +53,8 @@ class FinTrack59ScreenTest {
     val rules: RuleChain = RuleChain.outerRule(hiltRule).around(composeRule)
 
     @Inject lateinit var expenseRepository: ExpenseRepository
+
+    @Inject lateinit var incomeRepository: IncomeRepository
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private var scenario: ActivityScenario<MainActivity>? = null
@@ -86,6 +89,14 @@ class FinTrack59ScreenTest {
                 expenseRepository
                     .addExpense(Expense("", "Item $i", 1_000L + i, BuiltInCategories.SHOPPING, noon, null))
                     .getOrThrow()
+            }
+        }
+
+    private fun seedIncome() =
+        runBlocking {
+            val noon = ZonedDateTime.now(ZoneId.systemDefault()).withHour(12).toInstant()
+            repeat(SEEDED) { i ->
+                incomeRepository.addIncome(Income("", "Source $i", 50_000L + i, noon, null)).getOrThrow()
             }
         }
 
@@ -136,10 +147,10 @@ class FinTrack59ScreenTest {
         assertPillHidesOnSwipeUp_andReturnsOnSwipeDown()
     }
 
-    @Ignore("The test seeds no income, so the empty Income tab cannot scroll and the pill never hides.")
     @Test
     fun incomeTab_pillHidesOnSwipeUp_andReturnsOnSwipeDown() {
         enterGuest()
+        seedIncome()
         awaitTag(TestTags.NAV_INCOME).performClick()
 
         assertPillHidesOnSwipeUp_andReturnsOnSwipeDown()

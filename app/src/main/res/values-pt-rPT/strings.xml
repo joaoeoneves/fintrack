@@ -614,7 +614,8 @@
     <string name="activity_monthly_average">Média mensal %1$s</string>
     <string name="activity_evolution">Evolução</string>
     <string name="activity_received_total">Recebido</string>
-    <string name="activity_expected_difference">Esperado %1$s · Diferença %2$s</string>
+    <string name="activity_expected">Esperado %1$s</string>
+    <string name="activity_expected_missing">Esperado %1$s · Falta receber %2$s</string>
     <string name="activity_by_source">Por fonte</string>
     <string name="activity_source_expected">de %1$s esperado</string>
     <string name="activity_source_other">Outro</string>

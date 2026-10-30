@@ -5,11 +5,144 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [5.9] - 2026-10-30
+
+"One place per thing."
+
+### Changed
+- Days off have two types, **vacation** and **other**. Sick leave counts as other, and earlier sick-leave
+  days are added to other (schema 26).
+- Opening any part of a split expense edits every part together. The edit is saved in one write.
+- The Get started checklist ticks a step only after the server has confirmed it.
+- The CSV export also includes income, with a `type` column.
+
+### Added
+- **Will be refunded**: the expense stays in To review until a refund is linked to it.
+- **How it works** page in Settings, covering categories, groups, recurring items and To review.
+
+### Removed
+- The Carnival shortcut in days off. Company days given as vacation belong in the yearly vacation total.
+- The *Record refund* button on an expense. A refund is linked from the refund itself.
+
+## [5.8] - 2026-10-30
+
+### Added
+- Optional app lock with fingerprint, face or screen lock, when the app opens and after 1 minute away.
+  While the lock is on, the preview in recent apps is hidden.
+
+### Changed
+- The theme choice is Dark / Light / System, and the light theme's category colours have more contrast.
+- The *Add* button hides while scrolling down on every tab.
+
+## [5.7] - 2026-10-30
+
+### Added
+- Link a refund to the original expense. The original shows the refunded share and the real spend.
+- Split a new expense across categories (*More options*), and duplicate an expense.
+- Multi-select in Activity: change the category, toggle the meal card or delete, with undo.
+- Search matches amounts written like "12,50 €" or "1.234,56".
+- An *above average* mark on Spending categories (schema 25).
+
+## [5.6] - 2026-10-30
+
+### Added
+- Days off by type, set for one month or several months at once (schema 24).
+- Vacation left in the salary profile, and an *Annual raise in February* option.
+- Recurring cost split into monthly and yearly items, plus the month each item ends.
+- Category | Group switch in Spending.
+- Starter categories for new users.
+
+## [5.5] - 2026-10-30
+
+"Simplify": removes more than it adds.
+
+### Removed
+- Savings goals, budgets, envelope amounts and funding, and the salary-shift setting (schema 23).
+- The currency choice (euros only), CSV import, the in-app reduced-motion option and the working-days
+  override.
+- The summary in Activity, which is now a list.
+
+### Changed
+- Every recurring item posts automatically and is reviewed in To review.
+- The salary profile's advanced fields moved under *Advanced*.
+- Tapping a bar in a year chart opens that month.
+
+## [5.4] - 2026-10-29
+
+### Added
+- To review card, quick add and "Make it recurring?" suggestions on Home.
+
+### Fixed
+- Several fixes to the Year view.
+
+## [5.3] - 2026-10-29
+
+### Fixed
+- Second audit fixes, the meal-card allowance and vacation days.
+
+## [5.2] - 2026-10-29
+
+### Added
+- A modular employee profile, the meal card and future income.
+
+### Fixed
+- Audit fixes.
+
+## [5.1] - 2026-10-29
+
+### Added
+- Salary compared with the next month's spending.
+
 ### Removed
 - The 3.0 data migrations (envelopes, savings plans, recurring income), the old payday switch, earmarks,
   the flex / profit-share / bonus salary fields and the old preferences migration, in the app and in the
   Firestore rules. Pre-3.0 backups still restore, but earmarks and the payday switch are ignored and
   recurring income items are skipped.
+
+## [5.0] - 2026-10-29
+
+### Changed
+- Income and spending are separate, with four-tab navigation.
+
+## [4.1] - 2026-10-29
+
+### Changed
+- Activity is a list.
+
+### Added
+- Evolution and detail pages.
+
+## [4.0] - 2026-10-29
+
+### Added
+- *Valid from*: each month is judged by the plan that was valid then.
+
+## [3.4] - 2026-10-29
+
+### Changed
+- The salary-shift preference is stored on the account.
+- The next month appears in the plan.
+
+### Fixed
+- Small fixes.
+
+## [3.3] - 2026-10-29
+
+### Added
+- Monthly control without rollover, income history and spending evolution.
+
+## [3.2] - 2026-10-29
+
+### Changed
+- One source for every number, and shared components.
+
+### Added
+- The salary can pay the next month.
+
+## [3.1] - 2026-10-28
+
+### Fixed
+- Recurring sync, plainer wording and small plan fixes.
 
 ## [3.0] - 2026-10-28
 
