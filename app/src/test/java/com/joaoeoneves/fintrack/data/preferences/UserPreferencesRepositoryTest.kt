@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.preferences
 
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
 import com.joaoeoneves.fintrack.testutil.FakePreferencesSync
@@ -22,7 +21,6 @@ class UserPreferencesRepositoryTest : PreferencesStoreTestBase() {
     fun defaults_areExposed() =
         runTest {
             assertEquals(ThemePreference.DARK, repo.observeThemePreference().first())
-            assertEquals(CurrencyOption.EUR, repo.observeCurrency().first())
             assertEquals(AppLanguage.SYSTEM, repo.observeLanguage().first())
             assertEquals(emptyList<Any>(), sync.pushes)
         }
@@ -41,15 +39,6 @@ class UserPreferencesRepositoryTest : PreferencesStoreTestBase() {
         }
 
     @Test
-    fun setCurrency_updatesFlowAndPushes() =
-        runTest {
-            repo.setCurrency(CurrencyOption.JPY)
-
-            assertEquals(CurrencyOption.JPY, repo.observeCurrency().first())
-            assertEquals(listOf(PreferenceField.CURRENCY to "JPY"), sync.pushes)
-        }
-
-    @Test
     fun setLanguage_updatesFlowAndPushes() =
         runTest {
             repo.setLanguage(AppLanguage.SYSTEM)
@@ -61,24 +50,23 @@ class UserPreferencesRepositoryTest : PreferencesStoreTestBase() {
     @Test
     fun setter_doesNotChangeOtherFields() =
         runTest {
-            repo.setCurrency(CurrencyOption.USD)
+            repo.setLanguage(AppLanguage.ENGLISH)
 
             assertEquals(ThemePreference.DARK, repo.observeThemePreference().first())
-            assertEquals(AppLanguage.SYSTEM, repo.observeLanguage().first())
+            assertEquals(AppLanguage.ENGLISH, repo.observeLanguage().first())
         }
 
     @Test
-    fun themeChange_doesNotReEmitCurrency() =
+    fun themeChange_doesNotReEmitLanguage() =
         runTest {
-            val emissions = mutableListOf<CurrencyOption>()
-            val job = repo.observeCurrency().onEach { emissions += it }.launchIn(this)
+            val emissions = mutableListOf<AppLanguage>()
+            val job = repo.observeLanguage().onEach { emissions += it }.launchIn(this)
 
             repo.setThemePreference(ThemePreference.LIGHT)
             repo.setLanguage(AppLanguage.ENGLISH)
-            repo.setCurrency(CurrencyOption.GBP)
             job.cancel()
 
-            assertEquals(listOf(CurrencyOption.EUR, CurrencyOption.GBP), emissions)
+            assertEquals(listOf(AppLanguage.SYSTEM, AppLanguage.ENGLISH), emissions)
         }
 
     @Test

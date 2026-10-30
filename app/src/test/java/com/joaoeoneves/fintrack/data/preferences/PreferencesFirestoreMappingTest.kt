@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.preferences
 
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
 import org.junit.Assert.assertEquals
@@ -54,14 +53,13 @@ class PreferencesFirestoreMappingTest {
             mapOf<String, Any?>("theme" to "SYSTEM", "currency" to "JPY", "language" to "ENGLISH", "updatedAt" to 1L)
                 .toRemotePreferences()
 
-        assertEquals(RemotePreferences(ThemePreference.SYSTEM, CurrencyOption.JPY, AppLanguage.ENGLISH, emptySet()), r)
+        assertEquals(RemotePreferences(ThemePreference.SYSTEM, AppLanguage.ENGLISH, emptySet()), r)
     }
 
     @Test
     fun toRemote_absentKeys_areListedAsMissing() {
         val r = mapOf<String, Any?>("currency" to "CAD").toRemotePreferences()
 
-        assertEquals(CurrencyOption.CAD, r.currency)
         assertNull(r.theme)
         assertEquals(setOf(PreferenceField.THEME, PreferenceField.LANGUAGE), r.missing)
     }
@@ -69,11 +67,10 @@ class PreferencesFirestoreMappingTest {
     @Test
     fun toRemote_unknownOrNonStringValues_areNullButNotMissing() {
         val r =
-            mapOf<String, Any?>("theme" to "NEON", "currency" to 42, "language" to null)
+            mapOf<String, Any?>("theme" to "NEON", "language" to null)
                 .toRemotePreferences()
 
         assertNull(r.theme)
-        assertNull(r.currency)
         assertNull(r.language)
         assertEquals(emptySet<PreferenceField>(), r.missing)
     }
@@ -85,25 +82,25 @@ class PreferencesFirestoreMappingTest {
 
     @Test
     fun mergedWith_remoteOverrides_nullKeepsLocal() {
-        val local = UserPreferences(ThemePreference.DARK, CurrencyOption.EUR, AppLanguage.PORTUGUESE)
-        val remote = RemotePreferences(ThemePreference.LIGHT, null, AppLanguage.ENGLISH, emptySet())
+        val local = UserPreferences(ThemePreference.DARK, AppLanguage.PORTUGUESE)
+        val remote = RemotePreferences(ThemePreference.LIGHT, AppLanguage.ENGLISH, emptySet())
 
         assertEquals(
-            UserPreferences(ThemePreference.LIGHT, CurrencyOption.EUR, AppLanguage.ENGLISH),
+            UserPreferences(ThemePreference.LIGHT, AppLanguage.ENGLISH),
             local.mergedWith(remote),
         )
     }
 
     @Test
     fun fieldValues_returnsOnlyRequestedFieldsWithEnumNames() {
-        val prefs = UserPreferences(ThemePreference.LIGHT, CurrencyOption.GBP, AppLanguage.SYSTEM)
+        val prefs = UserPreferences(ThemePreference.LIGHT, AppLanguage.SYSTEM)
 
         assertEquals(
             mapOf("theme" to "LIGHT", "language" to "SYSTEM"),
             prefs.fieldValues(setOf(PreferenceField.THEME, PreferenceField.LANGUAGE)),
         )
         assertEquals(
-            mapOf("theme" to "LIGHT", "currency" to "GBP", "language" to "SYSTEM"),
+            mapOf("theme" to "LIGHT", "language" to "SYSTEM"),
             prefs.fieldValues(PreferenceField.entries.toSet()),
         )
         assertEquals(emptyMap<String, String>(), prefs.fieldValues(emptySet()))

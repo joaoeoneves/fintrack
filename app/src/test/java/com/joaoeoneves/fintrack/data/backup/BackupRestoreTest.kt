@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import kotlinx.coroutines.flow.first
@@ -17,7 +16,7 @@ class BackupRestoreTest : BackupRepositoryTestBase() {
             income = listOf(backupIncome()),
             budgets = listOf(LocalBudget("gym", 100)),
             categories = listOf(backupCategory("gym")),
-            preferences = BackupPreferences("LIGHT", "USD", "ENGLISH"),
+            preferences = BackupPreferences("LIGHT", "ENGLISH"),
         )
 
     @Test
@@ -79,21 +78,19 @@ class BackupRestoreTest : BackupRepositoryTestBase() {
 
             val prefs = prefsStore.data.first()
             assertEquals(ThemePreference.LIGHT, prefs.theme)
-            assertEquals(CurrencyOption.USD, prefs.currency)
             assertEquals(AppLanguage.ENGLISH, prefs.language)
         }
 
     @Test
     fun restore_unknownOrNullPreferenceNames_keepCurrent() =
         runStoreTest {
-            prefsStore.update { it.copy(theme = ThemePreference.SYSTEM, currency = CurrencyOption.GBP) }
-            val odd = doc.copy(preferences = BackupPreferences(theme = "NEON", currency = null, language = "KLINGON"))
+            prefsStore.update { it.copy(theme = ThemePreference.SYSTEM) }
+            val odd = doc.copy(preferences = BackupPreferences(theme = "NEON", language = "KLINGON"))
 
             repository().restoreAsGuest(odd)
 
             val prefs = prefsStore.data.first()
             assertEquals(ThemePreference.SYSTEM, prefs.theme)
-            assertEquals(CurrencyOption.GBP, prefs.currency)
             assertEquals(AppLanguage.SYSTEM, prefs.language)
         }
 

@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalAutomation
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -21,9 +20,8 @@ class BackupCodecTest {
                         backupExpense("e2", note = null),
                     ),
                 income = listOf(backupIncome()),
-                budgets = listOf(LocalBudget("FOOD", 5000)),
                 categories = listOf(backupCategory(archived = true), backupCategory("FOOD", name = null, order = 3)),
-                preferences = BackupPreferences("DARK", "EUR", "ENGLISH"),
+                preferences = BackupPreferences("DARK", "ENGLISH"),
             ).copy(appVersion = "1.2")
 
         val result = decode(BackupCodec.encode(doc)).success()

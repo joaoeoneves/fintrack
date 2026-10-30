@@ -59,7 +59,8 @@ class LocalDataDocumentMonthSettingsTest : LocalStoreTestBase() {
 
             val doc = newStore().data.first()
 
-            assertEquals(listOf(LocalMonthSettings("2026-10", 15, 0)), doc.monthSettings)
+            // A record that only carried the removed manual working-days count is dropped by the 22 -> 23 upgrade.
+            assertEquals(emptyList<LocalMonthSettings>(), doc.monthSettings)
             assertTrue(filesInDir().none { it.contains("corrupt") })
         }
 }
