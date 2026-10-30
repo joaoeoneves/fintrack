@@ -245,8 +245,8 @@ formatted in euros.
 motion tokens. The look is dark-first with a gold accent, hairline dividers and colour reserved for
 meaning (gains, overspending, category data). Screens compose the in-house components from
 `ui/designsystem/` on top of Material 3. Motion uses shared tokens (`Motion`, `motionSpec`,
-`motionAnimateItem` in `ui/theme/`) and respects `LocalReducedMotion`, which combines the system animator
-scale with the device-only "Reduce animations" preference.
+`motionAnimateItem` in `ui/theme/`) and respects `LocalReducedMotion`, which follows the system animator
+scale.
 
 There is a light and a dark palette (`Light*`/`Dark*` in `ui/theme/Color.kt`, category colours as light/dark
 pairs in `ui/common/CategoryDisplay.kt`, each at least 3:1 against its background). The choice is Dark
