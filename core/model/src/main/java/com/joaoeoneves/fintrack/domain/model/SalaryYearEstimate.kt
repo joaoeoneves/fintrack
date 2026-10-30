@@ -54,7 +54,7 @@ fun salaryYearEstimateOf(
     val income =
         IncomeMonth { month ->
             val current = byMonth[month]
-            effectiveWorkingDays(month, current?.workingDaysOverride, (current?.daysOff ?: 0) + (assumed[month] ?: 0))
+            effectiveWorkingDays(month, (current?.daysOff ?: 0) + (assumed[month] ?: 0))
         }
     val months = (1..MONTHS_IN_YEAR).map { YearMonth.of(year, it) }
     val managed = lines.filter { it.isManaged }

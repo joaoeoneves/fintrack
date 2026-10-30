@@ -8,7 +8,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +15,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.YearMonth
 
-/** Days off in [IncomeTabViewModel]: `onSetWorkingDays(month, days, daysOff)` and the resulting state. */
+/** Days off in [IncomeTabViewModel]: `onSetDaysOff(month, daysOff)` and the resulting state. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
@@ -44,74 +43,29 @@ class IncomeTabViewModelDaysOffTest : IncomeTabViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            vm.onSetWorkingDays(oct, null, daysOff = 3)
+            vm.onSetDaysOff(oct, 3)
             advanceUntilIdle()
 
             val state = vm.content().workingDays
             assertEquals(3, state.daysOff)
             assertEquals(18, state.days)
             assertEquals(21, state.calendarDays)
-            assertFalse(state.overridden)
-            assertEquals(listOf(MonthSettings(oct, null, 3)), monthSettingsRepo.settings)
+            assertEquals(listOf(MonthSettings(oct, 3)), monthSettingsRepo.settings)
         }
 
     @Test
-    fun setOverrideAndDaysOffTogether_overrideWins_bothStored() =
+    fun zeroDaysOff_removesTheMonthSettings() =
         runTest(testDispatcher) {
             val vm = viewModel()
             collect(vm)
-
-            vm.onSetWorkingDays(oct, 15, daysOff = 2)
+            vm.onSetDaysOff(oct, 4)
             advanceUntilIdle()
 
-            val state = vm.content().workingDays
-            assertEquals(15, state.days)
-            assertEquals(2, state.daysOff)
-            assertTrue(state.overridden)
-            assertEquals(listOf(MonthSettings(oct, 15, 2)), monthSettingsRepo.settings)
-        }
-
-    @Test
-    fun nullDaysOff_leavesExistingDaysOffUntouched() =
-        runTest(testDispatcher) {
-            val vm = viewModel()
-            collect(vm)
-            vm.onSetWorkingDays(oct, null, daysOff = 4)
-            advanceUntilIdle()
-
-            vm.onSetWorkingDays(oct, 12)
-            advanceUntilIdle()
-
-            assertEquals(listOf(MonthSettings(oct, 12, 4)), monthSettingsRepo.settings)
-        }
-
-    @Test
-    fun zeroDaysOff_clearsThem_andKeepsOverride() =
-        runTest(testDispatcher) {
-            val vm = viewModel()
-            collect(vm)
-            vm.onSetWorkingDays(oct, 12, daysOff = 4)
-            advanceUntilIdle()
-
-            vm.onSetWorkingDays(oct, 12, daysOff = 0)
-            advanceUntilIdle()
-
-            assertEquals(0, vm.content().workingDays.daysOff)
-            assertEquals(listOf(MonthSettings(oct, 12, 0)), monthSettingsRepo.settings)
-        }
-
-    @Test
-    fun clearingOverrideAndDaysOff_removesTheMonthSettings() =
-        runTest(testDispatcher) {
-            val vm = viewModel()
-            collect(vm)
-            vm.onSetWorkingDays(oct, 12, daysOff = 4)
-            advanceUntilIdle()
-
-            vm.onSetWorkingDays(oct, null, daysOff = 0)
+            vm.onSetDaysOff(oct, 0)
             advanceUntilIdle()
 
             assertTrue(monthSettingsRepo.settings.isEmpty())
+            assertEquals(0, vm.content().workingDays.daysOff)
             assertEquals(21, vm.content().workingDays.days)
         }
 
@@ -121,7 +75,7 @@ class IncomeTabViewModelDaysOffTest : IncomeTabViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            vm.onSetWorkingDays(oct, null, daysOff = 23)
+            vm.onSetDaysOff(oct, 23)
             advanceUntilIdle()
 
             assertEquals(0, vm.content().workingDays.days)

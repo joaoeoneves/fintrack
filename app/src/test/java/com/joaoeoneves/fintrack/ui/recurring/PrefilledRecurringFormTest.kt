@@ -133,7 +133,6 @@ class PrefilledRecurringFormTest : AddEditRecurringViewModelTestBase() {
                 dayText = "10",
                 monthOfYear = null,
                 endDate = null,
-                autoPost = true,
                 paused = false,
             )
         val json = Json.encodeToString(RecurringFormSnapshot.serializer(), snapshot)

@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
@@ -13,14 +12,12 @@ import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
-import com.joaoeoneves.fintrack.domain.repository.PlanSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.TransactionRepository
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -52,14 +49,6 @@ class ObserveMonthlyHistoryTest {
         }
     }
 
-    private class Shift(
-        private val value: Boolean?,
-    ) : PlanSettingsRepository {
-        override fun observeSalaryPaysNextMonth(): Flow<Boolean?> = flowOf(value)
-
-        override suspend fun setSalaryPaysNextMonth(enabled: Boolean) = Unit
-    }
-
     private val salary = PlannedIncome("sal", "Salário líquido", 100_000L, 0, managedKey = MANAGED_NET_SALARY)
 
     private fun at(
@@ -71,17 +60,14 @@ class ObserveMonthlyHistoryTest {
     private fun useCase(
         tx: TransactionRepository,
         lines: List<PlannedIncome> = emptyList(),
-        shift: Boolean? = null,
     ) = ObserveMonthlyHistory(
         tx,
         PlanDataSources(
-            FakeBudgetRepository(),
             FakePlannedIncomeRepository(lines),
             FakeMonthSettingsRepository(),
             FakeCategoryRepository(),
             FakeEnvelopeRepository(),
             FakeRecurringRepository(),
-            Shift(shift),
         ),
     )
 
@@ -97,13 +83,11 @@ class ObserveMonthlyHistoryTest {
         }
 
     @Test
-    fun endOfMonthSalary_landsInItsOwnMonth_regardlessOfShiftPref() =
+    fun endOfMonthSalary_landsInItsOwnMonth() =
         runTest {
             val pay = testIncome("pay_sal_202609", 100_000L, at(2026, 9, 30))
-            listOf(null, true, false).forEach { pref ->
-                val history = useCase(Transactions(emptyList(), listOf(pay)), listOf(salary), pref)
-                assertEquals(listOf(100_000L, 0L), history(end, 2, zone, end).first().months.map { it.incomeCents })
-            }
+            val history = useCase(Transactions(emptyList(), listOf(pay)), listOf(salary))
+            assertEquals(listOf(100_000L, 0L), history(end, 2, zone, end).first().months.map { it.incomeCents })
         }
 
     @Test

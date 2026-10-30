@@ -25,7 +25,7 @@ class BackupRepositoryMonthSettingsTest : BackupRepositoryTestBase() {
         }
 
     @Test
-    fun export_withoutOverrides_hasNoMonthSettings() =
+    fun export_withoutDaysOff_hasNoMonthSettings() =
         runStoreTest {
             assertTrue(
                 repository()
@@ -62,30 +62,27 @@ class BackupRepositoryMonthSettingsTest : BackupRepositoryTestBase() {
         }
 
     @Test
-    fun export_includesDaysOffOnlyAndBothRecords_andSkipsBlankOnes() =
+    fun export_includesDaysOff_andSkipsBlankOnes() =
         runStoreTest {
             val repo =
                 repository(
                     monthSettings =
                         listOf(
-                            MonthSettings(YearMonth.of(2026, 10), 15, 2),
-                            MonthSettings(YearMonth.of(2026, 11), null, 3),
-                            MonthSettings(YearMonth.of(2026, 12), null, 0),
+                            MonthSettings(YearMonth.of(2026, 10), 2),
+                            MonthSettings(YearMonth.of(2026, 11), 3),
+                            MonthSettings(YearMonth.of(2026, 12), 0),
                         ),
                 )
 
             val doc = repo.buildBackup(at).getOrThrow()
 
-            assertEquals(
-                listOf(LocalMonthSettings("2026-10", 15, 2), LocalMonthSettings("2026-11", null, 3)),
-                doc.monthSettings,
-            )
+            assertEquals(listOf(LocalMonthSettings("2026-10", 2), LocalMonthSettings("2026-11", 3)), doc.monthSettings)
         }
 
     @Test
     fun restoreAsGuest_keepsDaysOff() =
         runStoreTest {
-            val doc = backupDoc().copy(monthSettings = listOf(LocalMonthSettings("2026-10", null, 4)))
+            val doc = backupDoc().copy(monthSettings = listOf(LocalMonthSettings("2026-10", 4)))
 
             assertTrue(repository().restoreAsGuest(doc).isSuccess)
 

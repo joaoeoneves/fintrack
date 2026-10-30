@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.decodeFromString
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,7 +42,7 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
             newStore().update { it.copy(recurring = listOf(item)) to Unit }
 
             val onDisk = diskDoc()
-            assertEquals(22, onDisk.schemaVersion)
+            assertEquals(LOCAL_SCHEMA_VERSION, onDisk.schemaVersion)
             assertEquals(listOf(item), onDisk.recurring)
             assertEquals(1, onDisk.plannedIncome.size)
         }
@@ -61,24 +62,20 @@ class LocalDataDocumentRecurringTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun autoPost_roundTripsThroughLocalRecord() {
-        val on = recurringItem(id = "a", autoPost = true)
-        val off = recurringItem(id = "b", autoPost = false)
-
-        assertTrue(on.toLocal().toDomainOrNull()!!.autoPost)
-        assertFalse(off.toLocal().toDomainOrNull()!!.autoPost)
-        assertTrue(on.toLocal().autoPost)
+    fun toLocal_neverWritesTheAutoPostMarker() {
+        assertNull(recurringItem().toLocal().autoPost)
+        assertFalse(json.encodeToString(recurringItem().toLocal()).contains("autoPost"))
     }
 
     @Test
-    fun oldJsonWithoutAutoPost_decodesAsOff() {
+    fun oldJsonWithAutoPost_stillDecodes_andTheFlagIsDroppedFromTheDomain() {
         val old =
             """{"id":"x","type":"EXPENSE","name":"Rent","amountCents":5,"categoryId":"FOOD","frequency":"MONTHLY",""" +
-                """"dayOfMonth":15,"startDate":"2026-01-01","active":true}"""
+                """"dayOfMonth":15,"startDate":"2026-01-01","active":true,"autoPost":false}"""
 
         val record = json.decodeFromString<LocalRecurringItem>(old)
 
-        assertFalse(record.autoPost)
-        assertFalse(record.toDomainOrNull()!!.autoPost)
+        assertEquals(false, record.autoPost)
+        assertEquals("x", record.toDomainOrNull()!!.id)
     }
 }

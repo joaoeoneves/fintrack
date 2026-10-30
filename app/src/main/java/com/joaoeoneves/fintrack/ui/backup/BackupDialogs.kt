@@ -87,7 +87,6 @@ internal fun countsText(counts: BackupCounts): String =
         counts.categories,
         counts.plannedIncome,
         counts.recurring,
-        counts.goals,
         stringResource(if (counts.salaryProfile > 0) R.string.backup_salary_yes else R.string.backup_salary_no),
     )
 

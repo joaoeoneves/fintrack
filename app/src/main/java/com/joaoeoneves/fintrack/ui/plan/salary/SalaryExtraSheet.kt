@@ -136,12 +136,14 @@ private fun GrossOnlyFields(
         label = { stringResource(deductionsLabel(it)) },
         onSelect = { onChange(form.copy(deductions = it)) },
     )
-    SalaryTextField(
-        label = stringResource(R.string.salary_extra_fee),
-        value = form.feeText,
-        onChange = { onChange(form.copy(feeText = it)) },
-        invalid = SalaryExtraField.FEE in editor.invalid,
-    )
+    AdvancedSection(initiallyExpanded = form.feeText.isNotBlank()) {
+        SalaryTextField(
+            label = stringResource(R.string.salary_extra_fee),
+            value = form.feeText,
+            onChange = { onChange(form.copy(feeText = it)) },
+            invalid = SalaryExtraField.FEE in editor.invalid,
+        )
+    }
 }
 
 private fun typeLabel(type: SalaryExtraAmountType): Int =

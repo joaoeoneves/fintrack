@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class MigrationAutomationTest {
-    private val automation = LocalAutomation(lineThrough = mapOf("p1" to "2026-09"), salaryPaysNextMonth = true)
+    private val automation = LocalAutomation(lineThrough = mapOf("p1" to "2026-09"))
 
     private fun guestDoc() = localDoc().copy(plannedIncome = listOf(localPlanned("p1")), automation = automation)
 

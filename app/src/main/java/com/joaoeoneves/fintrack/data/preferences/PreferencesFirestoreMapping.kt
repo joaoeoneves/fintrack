@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.preferences
 
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
 
@@ -11,7 +10,6 @@ import com.joaoeoneves.fintrack.domain.model.UserPreferences
  */
 data class RemotePreferences(
     val theme: ThemePreference?,
-    val currency: CurrencyOption?,
     val language: AppLanguage?,
     val missing: Set<PreferenceField>,
 )
@@ -44,7 +42,6 @@ fun decideSyncAction(s: RemoteSnapshot): SyncAction =
 fun Map<String, Any?>.toRemotePreferences(): RemotePreferences =
     RemotePreferences(
         theme = parseEnum<ThemePreference>(PreferenceField.THEME),
-        currency = parseEnum<CurrencyOption>(PreferenceField.CURRENCY),
         language = parseEnum<AppLanguage>(PreferenceField.LANGUAGE),
         missing = PreferenceField.entries.filterNot { containsKey(it.key) }.toSet(),
     )
@@ -52,7 +49,6 @@ fun Map<String, Any?>.toRemotePreferences(): RemotePreferences =
 fun UserPreferences.mergedWith(r: RemotePreferences): UserPreferences =
     copy(
         theme = r.theme ?: theme,
-        currency = r.currency ?: currency,
         language = r.language ?: language,
     )
 
@@ -61,7 +57,6 @@ fun UserPreferences.fieldValues(fields: Set<PreferenceField>): Map<String, Strin
         field.key to
             when (field) {
                 PreferenceField.THEME -> theme.name
-                PreferenceField.CURRENCY -> currency.name
                 PreferenceField.LANGUAGE -> language.name
             }
     }

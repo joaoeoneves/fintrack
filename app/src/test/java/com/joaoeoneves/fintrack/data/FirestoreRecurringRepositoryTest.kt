@@ -52,6 +52,12 @@ class FirestoreRecurringRepositoryTest {
         }
 
     @Test
+    fun signedOut_adoptLegacyManualItemsFails() =
+        runTest {
+            assertNotSignedIn(repository.adoptLegacyManualItems(day(2026, 3, 15)))
+        }
+
+    @Test
     fun signedOut_setHandledThroughAndConfirmFail() =
         runTest {
             assertNotSignedIn(repository.setHandledThrough("x", day(2026, 3, 15)))

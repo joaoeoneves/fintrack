@@ -16,7 +16,7 @@ tags:
 # default to AppLanguage.PORTUGUESE instead of AppLanguage.SYSTEM, so this flow can no longer
 # assume the app renders in English out of the box. The account/settings entry point is the avatar
 # in the top bar (testTag account_avatar, locale-independent). "English" is always labeled "English" regardless
-# of the active app language (see settings.yaml's currency-pinning header comment for the general
+# of the active app language (see settings.yaml's header comment for the general
 # "pin a known baseline" pattern this mirrors). No restore-to-original-language step at the end of
 # this flow is needed: golden-path.yaml doesn't restore any other global setting either (unlike
 # settings.yaml, which restores theme/currency because other flows depend on those defaults).
@@ -28,32 +28,6 @@ tags:
     text: "English"
     index: -1
 - back
-
-# --- 0b: Pin currency to EUR before the "−€12.34"/"−€56.78" assertions below. Fresh installs now
-# default to EUR, but this device may have an explicit USD selection persisted from a prior run of
-# settings.yaml or income-tracking.yaml (an explicit selection is never retroactively changed by
-# what the fallback default is) -- these flows share a device/emulator and don't run in isolation,
-# so pin a known baseline here explicitly rather than assuming whatever currency another flow left
-# the device on. Mirrors the exact navigation pattern already used in settings.yaml's own
-# currency-switching steps: open the avatar (Account & settings), tap "Currency" (an anchored dropdown menu on
-# the Settings screen itself, not a separate screen), tap the target currency option (selects it
-# and closes the dropdown, still on Settings), then tap "Back" (the top-app-bar back arrow,
-# content-desc "Back") to return directly to the Dashboard. No restore-to-original-currency step at
-# the end of this flow is needed, same reasoning as the language pin above.
-- tapOn:
-    id: "account_avatar"
-- extendedWaitUntil:
-    visible: "Preferences"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "Currency"
-    direction: DOWN
-- tapOn: "Currency"
-# Index -1 = the open menu's option (the Currency row's value also reads "Euro (€)").
-- tapOn:
-    text: "Euro \\(€\\)"
-    index: -1
-- tapOn: "Back"
 
 # --- 1: Home (the former dashboard) loads with the month selector, balance summary card and bottom bar ---
 # The period selector replaced the old 1W/1M/3M/6M/1Y chips: previous/next month arrows (content
@@ -82,13 +56,15 @@ tags:
 # 5.0: every figures screen has a Month | Year switch (Home included).
 - assertVisible: "Month"
 - assertVisible: "Year"
-# Home: income card, spending card, left-over row. A fresh guest also sees the "Get started" card.
+# Home: income card, spending card (no recent-activity section, no left-over row). A fresh guest also sees the "Get started" card.
 - assertVisible:
     id: "dashboard_income_card"
 - assertVisible:
     id: "dashboard_spending_card"
 - assertVisible:
     id: "start_checklist"
+- assertNotVisible: "Recent activity"
+- assertNotVisible: "Left over.*"
 # The bottom navigation bar shows four tabs: Home, Activity, Income, Spending.
 - assertVisible:
     id: "nav_home"
@@ -128,11 +104,9 @@ tags:
     direction: UP
 
 # --- 2: Add a new expense via the Dashboard's floating add pill ---
-# Home's merged "Recent activity" section has a clickable title and a "See all" link but no plus
-# icon; adding goes only through the floating pill (content description "Add expense", matched by
-# Maestro the same way as visible text).
-# The pill ("Add expense"/"Add income") lives in the Scaffold FAB slot outside the LazyColumn and
-# hides while scrolling down, so tap it directly with no scrolling first.
+# Home has no recent-activity list any more: adding goes through the floating pill (content
+# description "Add expense"), and the new row is checked in the Activity tab.
+# The pill lives in the Scaffold FAB slot outside the LazyColumn, so tap it directly.
 - tapOn: "Add expense"
 - assertVisible: "Add expense"
 - tapOn: "Name"
@@ -141,71 +115,53 @@ tags:
 - inputText: "1234"
 - tapOn: "Save"
 
-# Saving pops back to the Dashboard (that's where we navigated from) -- the new expense should show
-# up immediately in the "Recent activity" list (it sorts by date descending, and this row is the
-# most recent). Money formatting now follows the app locale via NumberFormat, so English + EUR
-# renders as "[-−]€12.34" (prefixed symbol, period decimal).
+# Saving pops back to Home; the expense shows in the Activity tab. English + EUR renders as "[-−]€12.34".
+- extendedWaitUntil:
+    visible:
+      id: "dashboard_list"
+    timeout: 10000
+- tapOn:
+    id: "nav_activity"
+- assertVisible:
+    id: "activity_list"
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
 - assertVisible: "Maestro E2E Test Expense"
 - assertVisible: "[-−]€12\\.34"
+# 5.5: no summary header on Activity.
+- assertNotVisible: "Spent .*"
 
 # --- 3: Edit it (change the amount) and confirm the change persists ---
-# Tapping a row in Home's "Recent activity" list opens that expense's edit screen directly,
-# and Save pops back to the Dashboard. The extra plain scroll brings the row fully inside the
-# LazyColumn's clip bounds before tapping (see income-tracking.yaml step 4).
 - scroll
 - tapOn: "Maestro E2E Test Expense"
 - assertVisible: "Edit expense"
-# In edit mode the amount is prefilled with the *locale's* decimal separator (no longer the
-# currency's) -- English (pinned in step 0) uses '.', so the field shows "12.34".
+# In edit mode the amount is prefilled with the locale's decimal separator ('.' in English).
 - assertVisible: "12\\.34"
-# The amount is a custom field: tapping it puts the cursor where tapped (not at the end), so tap
-# its right edge to land the cursor after the last digit before erasing.
+# The amount is a custom field: tap its right edge to land the cursor after the last digit before erasing.
 - tapOn:
     text: "Amount"
     point: "99%,50%"
 - eraseText: 20
-# B4: the amount field still accepts ',' as the decimal separator even in English, proving comma
-# parsing keeps working regardless of the locale's own separator.
 - inputText: "5678"
 - tapOn: "Save"
 
-# Back on the Dashboard, the recent row shows the updated amount.
+# Back on Activity, the row shows the updated amount.
 - assertVisible:
-    id: "dashboard_list"
+    id: "activity_list"
 - scrollUntilVisible:
     element: "Maestro E2E Test Expense"
     direction: DOWN
 - assertVisible: "[-−]€56\\.78"
 - assertNotVisible: "[-−]€12\\.34"
 
-# Open the Activity tab (unified list) via "See all" for the delete step below.
-- scrollUntilVisible:
-    element:
-      id: "see_all_activity"
-    direction: DOWN
-- scroll
+# The Spending tab lists the category; a category row opens its detail page.
 - tapOn:
-    id: "see_all_activity"
-- assertVisible:
-    id: "activity_list"
-# Activity: one period selector (no 1M/3M/6M/1A tabs), a one-line summary ("Spent X · Received Y")
-# and no analytics header / "Show details" toggle.
-- assertVisible: "Spent .*"
-- assertNotVisible: "Show breakdown"
-- assertNotVisible: "Show details"
-- assertNotVisible: "Fixed vs variable"
-# 5.0: the summary's "Spent" opens the Spending tab (no pushed Evolution screen any more).
-- tapOn: "Spent .*"
+    id: "nav_spending"
 - extendedWaitUntil:
     visible: "By category"
     timeout: 10000
-- assertVisible:
-    id: "nav_spending"
 - takeScreenshot: build/maestro/golden-path-spending
-# A category row opens its detail page (the only expense is the one created above).
 # centerElement keeps the row clear of the floating "+ Expense / + Income" pill that overlaps the list bottom.
 - scrollUntilVisible:
     element: "Shopping.*"

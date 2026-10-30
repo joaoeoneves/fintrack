@@ -38,8 +38,6 @@ class SessionAutomationSettingsRepository
             remove: Set<String>,
         ): Result<Unit> = switch.call { it.updateLineCursors(set, remove) }
 
-        override suspend fun setSalaryPaysNextMonth(on: Boolean) = switch.call { it.setSalaryPaysNextMonth(on) }
-
         override suspend fun recordPayday(
             incomes: List<Income>,
             cursors: Map<String, YearMonth>,

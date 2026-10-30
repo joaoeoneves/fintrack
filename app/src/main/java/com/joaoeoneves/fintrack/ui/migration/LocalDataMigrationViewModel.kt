@@ -179,14 +179,12 @@ private fun LocalDataDocument.counts() =
     BackupCounts(
         expenses = expenses.size,
         income = income.size,
-        budgets = budgets.size,
         categories = categories.size,
         plannedIncome = plannedIncome.size,
         recurring = recurring.size,
         monthSettings = monthSettings.size,
         categoryGroups = categoryGroups.size,
         salaryProfile = if (salaryProfile != null) 1 else 0,
-        goals = goals.size,
     )
 
 private suspend fun MigrationOfferStore.markHandledLogged(revision: Long) {

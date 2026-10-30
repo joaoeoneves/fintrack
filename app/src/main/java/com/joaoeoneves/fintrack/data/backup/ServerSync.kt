@@ -10,18 +10,15 @@ import com.joaoeoneves.fintrack.data.awaitWithin
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
 import com.joaoeoneves.fintrack.data.toAutomationSettings
-import com.joaoeoneves.fintrack.data.toBudgets
 import com.joaoeoneves.fintrack.data.toCategoryOrNull
 import com.joaoeoneves.fintrack.data.toEnvelopeList
 import com.joaoeoneves.fintrack.data.toExpenses
-import com.joaoeoneves.fintrack.data.toGoalList
 import com.joaoeoneves.fintrack.data.toIncomeList
 import com.joaoeoneves.fintrack.data.toMonthSettings
 import com.joaoeoneves.fintrack.data.toPlannedIncomeList
 import com.joaoeoneves.fintrack.data.toRecurringList
 import com.joaoeoneves.fintrack.data.toSalaryProfileOrNull
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.Expense
@@ -30,7 +27,6 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
-import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.mergeCategories
 import com.joaoeoneves.fintrack.domain.model.resolvedWith
@@ -51,12 +47,10 @@ class ServerUnreachableException(
 class ServerData(
     val expenses: List<Expense>,
     val income: List<Income>,
-    val budgets: List<Budget>,
     val plannedIncome: List<PlannedIncome>,
     val recurring: List<RecurringItem>,
     val monthSettings: List<MonthSettings>,
     val categoryGroups: List<Envelope>,
-    val goals: List<SavingsGoal>,
     val categories: List<Category>,
     val salaryProfile: SalaryProfile?,
     val automation: AutomationSettings,
@@ -109,12 +103,10 @@ class FirestoreServerSync
                 ServerData(
                     expenses = snapshots.getValue("expenses").toExpenses().resolvedWith(categories),
                     income = snapshots.getValue("income").toIncomeList(),
-                    budgets = snapshots.getValue("budgets").toBudgets(),
                     plannedIncome = snapshots.getValue("plannedIncome").toPlannedIncomeList(),
                     recurring = snapshots.getValue("recurring").toRecurringList(),
                     monthSettings = snapshots.getValue("monthSettings").toMonthSettings(),
                     categoryGroups = snapshots.getValue("categoryGroups").toEnvelopeList(),
-                    goals = snapshots.getValue("goals").toGoalList(),
                     categories = categories,
                     salaryProfile = profileDoc.takeIf { it.exists() }?.toSalaryProfileOrNull(),
                     automation = automationDoc.toAutomationSettings(),

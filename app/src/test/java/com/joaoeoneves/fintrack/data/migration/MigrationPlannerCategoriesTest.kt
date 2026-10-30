@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.migration
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.testutil.userCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -66,7 +65,7 @@ class MigrationPlannerCategoriesTest {
             localDoc(
                 categories = listOf(localCategory("local-gym", "  GYM ")),
                 expenses = listOf(localExpense("e1", "local-gym")),
-                budgets = listOf(LocalBudget("local-gym", 5000)),
+                recurring = listOf(localRecurring("r1", "local-gym")),
             )
         val remote = remoteSnapshot(categories = listOf(userCategory("acct-gym", "gym")))
 
@@ -74,7 +73,7 @@ class MigrationPlannerCategoriesTest {
 
         assertTrue(plan.categories.isEmpty())
         assertEquals("acct-gym", plan.expenses.single().categoryId)
-        assertEquals("acct-gym", plan.budgets.single().categoryId)
+        assertEquals("acct-gym", plan.recurring.single().categoryId)
     }
 
     @Test
@@ -115,7 +114,7 @@ class MigrationPlannerCategoriesTest {
         val local =
             localDoc(
                 expenses = listOf(localExpense("e1", "deleted-cat")),
-                budgets = listOf(LocalBudget("deleted-cat", 100)),
+                recurring = listOf(localRecurring("r1", "deleted-cat")),
             )
 
         val plan = planMigration(local, remoteSnapshot())
@@ -124,7 +123,7 @@ class MigrationPlannerCategoriesTest {
         assertEquals("deleted-cat", placeholder.id)
         assertTrue(placeholder.archived)
         assertEquals(1, plan.expenses.size)
-        assertEquals(1, plan.budgets.size)
+        assertEquals(1, plan.recurring.size)
         assertEquals(0, plan.skipped)
         assertEquals(3, plan.total)
     }
@@ -144,14 +143,14 @@ class MigrationPlannerCategoriesTest {
             localDoc(
                 categories = listOf(localCategory("bad", name = "")),
                 expenses = listOf(localExpense("e1", "bad"), localExpense("e2", "FOOD")),
-                budgets = listOf(LocalBudget("bad", 100)),
+                recurring = listOf(localRecurring("r1", "bad")),
             )
 
         val plan = planMigration(local, remoteSnapshot())
 
         assertTrue(plan.categories.isEmpty())
         assertEquals(listOf("e2"), plan.expenses.map { it.id })
-        assertTrue(plan.budgets.isEmpty())
+        assertTrue(plan.recurring.isEmpty())
         assertEquals(3, plan.skipped)
     }
 
@@ -161,7 +160,7 @@ class MigrationPlannerCategoriesTest {
             localDoc(
                 categories = listOf(localCategory("ws", name = "   ")),
                 expenses = listOf(localExpense("e1", "ws")),
-                budgets = listOf(LocalBudget("ws", 100)),
+                recurring = listOf(localRecurring("r1", "ws")),
             )
 
         val plan = planMigration(local, remoteSnapshot())
@@ -169,6 +168,8 @@ class MigrationPlannerCategoriesTest {
         assertEquals(emptyPlan(skipped = 3), plan)
     }
 
-    private fun emptyPlan(skipped: Int) =
-        MigrationPlan(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), skipped)
+    private fun emptyPlan(skipped: Int): MigrationPlan {
+        val none = emptyList<Nothing>()
+        return MigrationPlan(none, none, none, none, none, skipped)
+    }
 }

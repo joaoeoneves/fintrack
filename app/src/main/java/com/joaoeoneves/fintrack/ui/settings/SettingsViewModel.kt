@@ -5,14 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
-import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -35,39 +31,27 @@ class SettingsViewModel
     @Inject
     constructor(
         private val themeRepository: ThemeRepository,
-        private val currencyRepository: CurrencyRepository,
         private val sessionRepository: SessionRepository,
         // Nullable with a default so existing unit tests that construct this ViewModel directly
         // (bypassing Hilt) with only the original 3 positional args keep compiling; Hilt itself
         // always supplies it in production. When null (test-only), the language always reads as
         // AppLanguage.SYSTEM, matching SettingsUiState()'s own default.
         private val languageRepository: LanguageRepository? = null,
-        // Same test-only nullable default; reads as MotionPreference.SYSTEM when absent.
-        private val motionRepository: MotionRepository? = null,
     ) : ViewModel() {
         private val signOutError = MutableStateFlow<UiText?>(null)
         private val signInError = MutableStateFlow<UiText?>(null)
         private val errors = combine(signOutError, signInError) { signOut, signIn -> signOut to signIn }
 
-        private val languageAndMotion =
-            combine(
-                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.SYSTEM),
-                motionRepository?.observeMotionPreference() ?: flowOf(MotionPreference.SYSTEM),
-            ) { language, motion -> language to motion }
-
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 themeRepository.observeThemePreference(),
-                currencyRepository.observeCurrency(),
-                languageAndMotion,
+                languageRepository?.observeLanguage() ?: flowOf(AppLanguage.SYSTEM),
                 sessionRepository.session,
                 errors,
-            ) { themePreference, currency, (language, motion), session, (signOut, signIn) ->
+            ) { themePreference, language, session, (signOut, signIn) ->
                 SettingsUiState(
                     themePreference = themePreference,
-                    currency = currency,
                     language = language,
-                    motionPreference = motion,
                     currentUser = (session as? Session.SignedIn)?.user,
                     signOutError = signOut,
                     isGuest = session is Session.Guest,
@@ -83,16 +67,8 @@ class SettingsViewModel
             viewModelScope.launch { themeRepository.setThemePreference(preference) }
         }
 
-        fun setCurrency(currency: CurrencyOption) {
-            viewModelScope.launch { currencyRepository.setCurrency(currency) }
-        }
-
         fun setLanguage(language: AppLanguage) {
             viewModelScope.launch { languageRepository?.setLanguage(language) }
-        }
-
-        fun setMotionPreference(preference: MotionPreference) {
-            viewModelScope.launch { motionRepository?.setMotionPreference(preference) }
         }
 
         fun signOut() {

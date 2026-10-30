@@ -349,24 +349,14 @@ private fun PeriodItems.Loaded.toContent(
             byType
         }
     val sorted = sortTransactions(filtered, activeFilters.sort)
-    val totals = activityTotalsOf(sorted, catalog)
     return ActivityUiState.Content(
         period = period,
         canGoToNextMonth = canGoToNextMonth,
         items = sorted,
         days = if (shouldGroupByDay(activeFilters.sort)) groupByDay(sorted, zone) else emptyList(),
-        totals = totals,
         filters = activeFilters.copy(incomeSource = incomeSource),
         analytics = analytics.following(sorted.filterIsInstance<Expense>(), catalog),
         incomeSources = sources,
-        summary =
-            activitySummaryOf(
-                activeFilters,
-                incomeSource.takeIf { activeFilters.type == ActivityType.INCOME },
-                period,
-                overview,
-                totals,
-            ),
         categoryScope =
             envelope?.let { selected ->
                 catalog
@@ -396,27 +386,5 @@ private fun ActivityAnalytics.following(
         spentCents = visibleSplit.spendingCents,
         split = visibleSplit,
         breakdown = breakdown.copy(categoryTotals = visibleTotals),
-    )
-}
-
-/**
- * The one-line summary: spending of the visible list ([ActivityTotals.spendingCents], investments apart) and money
- * in. For a
- * month period with no search or source filter the money in is the month's income ([PeriodOverview.monthIncome]);
- * otherwise it is the visible list's income by date.
- */
-internal fun activitySummaryOf(
-    filters: ActivityFilters,
-    incomeSource: String?,
-    period: Period,
-    overview: PeriodOverview,
-    totals: ActivityTotals,
-): ActivitySummary {
-    val byFundingMonth =
-        (period is Period.CurrentMonth || period is Period.Month) && filters.query.isBlank() && incomeSource == null
-    return ActivitySummary(
-        spentCents = totals.spendingCents,
-        savedCents = totals.savedCents,
-        receivedCents = if (byFundingMonth) overview.monthIncome.sumOf { it.amountCents } else totals.inCents,
     )
 }

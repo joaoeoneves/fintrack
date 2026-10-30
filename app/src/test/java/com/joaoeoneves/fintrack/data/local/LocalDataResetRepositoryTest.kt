@@ -12,7 +12,7 @@ class LocalDataResetRepositoryTest : LocalStoreTestBase() {
             it.copy(
                 expenses = listOf(LocalExpense("e1", "Lunch", 1050, "FOOD", "2026-01-31T10:15:30Z", note = null)),
                 income = listOf(LocalIncome("i1", "Pay", 9000, "2026-01-01T00:00:00Z")),
-                budgets = listOf(LocalBudget("FOOD", 20000)),
+                monthSettings = listOf(LocalMonthSettings("2026-10", 2)),
                 categories = listOf(LocalCategory("c1", "Gym", "home", "teal", "SPENDING", 0)),
             ) to Unit
         }
@@ -52,7 +52,7 @@ class LocalDataResetRepositoryTest : LocalStoreTestBase() {
             LocalDataResetRepository(store).deleteAllData()
 
             val reloaded = newStore().data.first()
-            assertTrue(reloaded.expenses.isEmpty() && reloaded.budgets.isEmpty())
+            assertTrue(reloaded.expenses.isEmpty() && reloaded.monthSettings.isEmpty())
         }
 
     @Test

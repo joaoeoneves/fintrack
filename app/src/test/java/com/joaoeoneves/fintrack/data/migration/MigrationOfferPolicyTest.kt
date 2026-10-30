@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.migration
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.Session
 import org.junit.Assert.assertFalse
@@ -9,7 +8,7 @@ import org.junit.Test
 
 class MigrationOfferPolicyTest {
     private val signedIn = Session.SignedIn(AuthUser("u", null, null, null))
-    private val data = localDoc(budgets = listOf(LocalBudget("FOOD", 1)), revision = 3)
+    private val data = localDoc(expenses = listOf(localExpense("e1")), revision = 3)
 
     @Test
     fun signedInWithDataNeverHandled_offers() {

@@ -28,12 +28,6 @@ class RecordValidationAmountCapTest {
     }
 
     @Test
-    fun budget_cap() {
-        validateBudget("FOOD", MAX_AMOUNT_CENTS, known)
-        invalid { validateBudget("FOOD", over, known) }
-    }
-
-    @Test
     fun plannedIncome_cap() {
         validatePlannedIncome(LocalPlannedIncome("p", "Salary", MAX_AMOUNT_CENTS, 0))
         invalid { validatePlannedIncome(LocalPlannedIncome("p", "Salary", over, 0)) }

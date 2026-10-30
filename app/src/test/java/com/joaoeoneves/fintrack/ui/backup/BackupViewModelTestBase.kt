@@ -3,11 +3,9 @@ package com.joaoeoneves.fintrack.ui.backup
 import android.app.Application
 import android.net.Uri
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlaceholderNames
@@ -20,7 +18,6 @@ import com.joaoeoneves.fintrack.data.backup.BackupRepository
 import com.joaoeoneves.fintrack.data.backup.BackupRepositoryTestBase
 import com.joaoeoneves.fintrack.data.backup.PlanBackupSource
 import com.joaoeoneves.fintrack.data.backup.PlanSingletonSources
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -60,10 +57,9 @@ abstract class BackupViewModelTestBase : BackupRepositoryTestBase() {
 
     protected fun viewModel(
         expenses: List<Expense> = emptyList(),
-        budgets: List<Budget> = emptyList(),
         repository: BackupRepository? = null,
     ) = BackupViewModel(
-        repository ?: repository(expenses = expenses, budgets = budgets),
+        repository ?: repository(expenses = expenses),
         RuntimeEnvironment.getApplication(),
         dispatcher,
         clock,
@@ -74,14 +70,12 @@ abstract class BackupViewModelTestBase : BackupRepositoryTestBase() {
             FakeExpenseRepository(),
             FakeIncomeRepository(),
             PlanBackupSource(
-                FakeBudgetRepository(nextObserveBudgetsError = IllegalStateException("boom")),
-                FakePlannedIncomeRepository(),
+                FakePlannedIncomeRepository(nextObserveError = IllegalStateException("boom")),
                 FakeRecurringRepository(),
                 FakeMonthSettingsRepository(),
                 FakeEnvelopeRepository(),
                 PlanSingletonSources(
                     FakeSalaryProfileRepository(),
-                    FakeGoalRepository(),
                     FakeAutomationSettingsRepository(),
                     FakePlaceholderNames(),
                 ),

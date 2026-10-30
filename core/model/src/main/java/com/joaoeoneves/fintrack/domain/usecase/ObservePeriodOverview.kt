@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.domain.usecase
 
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
@@ -32,7 +31,7 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 /**
- * Observes the [PeriodOverview] of a [Period]. Budgets and the monthly plan are evaluated against
+ * Observes the [PeriodOverview] of a [Period]. The per-category rows and the monthly plan are evaluated against
  * the period's anchor month, or the current month for rolling/custom periods. Income counts in its owner month
  * (see `ownerMonth`). When the
  * period's range already covers that whole month, the month's spend and income are derived from the period's own
@@ -57,11 +56,10 @@ class ObservePeriodOverview
             val inputs =
                 combine(
                     combine(
-                        sources.budgets.observeBudgets(),
                         sources.plannedIncome.observePlannedIncome(),
                         sources.monthSettings.observeMonthSettings(),
                         sources.categories.observeCategories(),
-                    ) { budgets, lines, settings, catalog -> PlanInputs(budgets, lines, settings, catalog) },
+                    ) { lines, settings, catalog -> PlanInputs(lines, settings, catalog) },
                     sources.envelopes.observeEnvelopes(),
                     sources.recurring.observeRecurring(),
                 ) { plan, envelopes, recurring -> OverviewInputs(plan, envelopes, recurring) }
@@ -94,14 +92,12 @@ class ObservePeriodOverview
             val rows =
                 budgetProgressOf(
                     monthTransactions.expenses,
-                    plan.budgets,
                     plan.categories,
                     inputs.recurring,
                     budgetMonth,
                 )
             val monthSettings = plan.monthSettings.firstOrNull { it.month == budgetMonth }
-            val workingDays =
-                effectiveWorkingDays(budgetMonth, monthSettings?.workingDaysOverride, monthSettings?.daysOff ?: 0)
+            val workingDays = effectiveWorkingDays(budgetMonth, monthSettings?.daysOff ?: 0)
             val planMonth = PlanMonth(budgetMonth, workingDays)
             val envelopes =
                 envelopesOf(
@@ -134,7 +130,7 @@ class ObservePeriodOverview
         }
     }
 
-/** Spent per envelope over the whole period's [transactions] (planned amounts and funding are left out). */
+/** Spent per envelope over the whole period's [transactions] (planned amounts are left out). */
 private fun periodEnvelopesOf(
     transactions: TransactionsInRange,
     categories: List<Category>,
@@ -142,7 +138,7 @@ private fun periodEnvelopesOf(
     planMonth: PlanMonth,
 ): EnvelopesSummary =
     envelopesOf(
-        buckets = budgetProgressOf(transactions.expenses, emptyList(), categories),
+        buckets = budgetProgressOf(transactions.expenses, categories),
         categories = categories,
         envelopes = envelopes,
         planMonth = planMonth,
@@ -150,7 +146,6 @@ private fun periodEnvelopesOf(
 
 /** The plan-side flows of an overview, combined once so the main combine stays within five flows. */
 private class PlanInputs(
-    val budgets: List<Budget>,
     val plannedIncome: List<PlannedIncome>,
     val monthSettings: List<MonthSettings>,
     val categories: List<Category>,

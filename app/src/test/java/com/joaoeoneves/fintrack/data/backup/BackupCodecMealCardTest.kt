@@ -37,7 +37,7 @@ class BackupCodecMealCardTest {
 
         assertEquals(doc, result.document)
         assertEquals(0, result.skippedCount)
-        assertEquals(22, result.document.schemaVersion)
+        assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.mergeCategories
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.userCategory
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -78,7 +79,8 @@ class CategoriesViewModelArchiveReorderTest : CategoriesViewModelTestBase() {
     fun onToggleArchived_clearsDeleteDialog() =
         runTest(testDispatcher) {
             val viewModel = start(FakeCategoryRepository(listOf(gym)))
-            budgets.setBudget(gym.id, 1_000L) // in use: the dialog stays open instead of deleting at once
+            // In use: the dialog stays open instead of deleting at once.
+            recurring.saveRecurring(recurringItem("r1", categoryId = gym.id))
             viewModel.onDeleteRequested(gym.id)
             advanceUntilIdle()
             assertTrue(viewModel.content().deleteDialog != null)

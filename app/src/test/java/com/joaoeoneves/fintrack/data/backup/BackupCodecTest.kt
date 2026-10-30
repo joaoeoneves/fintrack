@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalAutomation
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -21,9 +20,8 @@ class BackupCodecTest {
                         backupExpense("e2", note = null),
                     ),
                 income = listOf(backupIncome()),
-                budgets = listOf(LocalBudget("FOOD", 5000)),
                 categories = listOf(backupCategory(archived = true), backupCategory("FOOD", name = null, order = 3)),
-                preferences = BackupPreferences("DARK", "EUR", "ENGLISH"),
+                preferences = BackupPreferences("DARK", "ENGLISH"),
             ).copy(appVersion = "1.2")
 
         val result = decode(BackupCodec.encode(doc)).success()
@@ -66,7 +64,7 @@ class BackupCodecTest {
         val text = BackupCodec.encode(backupDoc())
 
         assertTrue(text.contains("\"format\": \"fintrack-backup\""))
-        assertTrue(text.contains("\"schemaVersion\": 22"))
+        assertTrue(text.contains("\"schemaVersion\": $BACKUP_SCHEMA_VERSION"))
     }
 
     @Test
@@ -96,9 +94,9 @@ class BackupCodecTest {
 
     @Test
     fun decode_futureVersion_unsupported() {
-        val text = """{"format":"fintrack-backup","schemaVersion":23,"exportedAt":"$EXPORTED_AT"}"""
+        val text = """{"format":"fintrack-backup","schemaVersion":24,"exportedAt":"$EXPORTED_AT"}"""
 
-        assertEquals(BackupDecodeResult.UnsupportedVersion(23), decode(text))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(BACKUP_SCHEMA_VERSION + 1), decode(text))
     }
 
     @Test

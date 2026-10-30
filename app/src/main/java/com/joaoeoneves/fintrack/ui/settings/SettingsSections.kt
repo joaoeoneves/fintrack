@@ -10,18 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.ui.common.currentLocale
-import com.joaoeoneves.fintrack.ui.common.displayName
-import com.joaoeoneves.fintrack.ui.common.symbol
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackMenuItem
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 
-/** The preferences group (theme, language, currency) shown on [SettingsScreen]. */
+/** The preferences group (theme, language) shown on [SettingsScreen]. */
 private val ThemePreference.label: String
     @Composable
     get() =
@@ -29,15 +24,6 @@ private val ThemePreference.label: String
             ThemePreference.SYSTEM -> stringResource(R.string.theme_system)
             ThemePreference.LIGHT -> stringResource(R.string.theme_light)
             ThemePreference.DARK -> stringResource(R.string.theme_dark)
-        }
-
-private val MotionPreference.label: String
-    @Composable
-    get() =
-        when (this) {
-            MotionPreference.SYSTEM -> stringResource(R.string.motion_system)
-            MotionPreference.ON -> stringResource(R.string.motion_on)
-            MotionPreference.OFF -> stringResource(R.string.motion_off)
         }
 
 /**
@@ -54,18 +40,14 @@ private val AppLanguage.label: String
             AppLanguage.PORTUGUESE -> stringResource(R.string.language_portuguese)
         }
 
-/** Theme, language, display currency and reduced motion as rows, each opening a menu of its options. */
-@Suppress("LongParameterList") // one callback per preference
+/** Theme and language as rows, each opening a menu of its options. */
 @Composable
 fun PreferencesSection(
     uiState: SettingsUiState,
     onThemeSelected: (ThemePreference) -> Unit,
     onLanguageSelected: (AppLanguage) -> Unit,
-    onCurrencySelected: (CurrencyOption) -> Unit,
-    onMotionSelected: (MotionPreference) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val locale = currentLocale()
     SettingsGroup(label = stringResource(R.string.settings_section_preferences), modifier = modifier) {
         SettingsPickerRow(
             title = stringResource(R.string.settings_theme),
@@ -80,21 +62,6 @@ fun PreferencesSection(
             options = AppLanguage.entries,
             optionLabel = { it.label },
             onSelected = onLanguageSelected,
-        )
-        SettingsPickerRow(
-            title = stringResource(R.string.settings_section_currency),
-            selected = uiState.currency,
-            options = CurrencyOption.entries,
-            optionLabel = { "${it.displayName} (${it.symbol(locale)})" },
-            onSelected = onCurrencySelected,
-            supportingText = stringResource(R.string.settings_currency_hint),
-        )
-        SettingsPickerRow(
-            title = stringResource(R.string.settings_reduce_motion),
-            selected = uiState.motionPreference,
-            options = MotionPreference.entries,
-            optionLabel = { it.label },
-            onSelected = onMotionSelected,
         )
     }
 }

@@ -7,7 +7,6 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -26,13 +25,12 @@ import java.time.Clock
  */
 fun dashboardViewModel(
     expenseRepository: ExpenseRepository,
-    budgetRepository: BudgetRepository,
     incomeRepository: IncomeRepository,
     savedStateHandle: SavedStateHandle,
     clock: Clock,
 ): DashboardViewModel =
     dashboardViewModel(
-        DashboardRepositories(expenseRepository, budgetRepository, incomeRepository, FakeCategoryRepository()),
+        DashboardRepositories(expenseRepository, incomeRepository, FakeCategoryRepository()),
         savedStateHandle,
         clock,
     )
@@ -40,7 +38,6 @@ fun dashboardViewModel(
 /** The repositories a [DashboardViewModel] is built on (see [dashboardViewModel]). */
 data class DashboardRepositories(
     val expenseRepository: ExpenseRepository,
-    val budgetRepository: BudgetRepository,
     val incomeRepository: IncomeRepository,
     val categoryRepository: CategoryRepository,
     val plannedIncomeRepository: PlannedIncomeRepository = FakePlannedIncomeRepository(),
@@ -65,7 +62,6 @@ fun dashboardViewModel(
 /** The data sources of [repositories], as the Hilt graph bundles them. */
 fun planDataSourcesOf(repositories: DashboardRepositories): PlanDataSources =
     PlanDataSources(
-        budgets = repositories.budgetRepository,
         plannedIncome = repositories.plannedIncomeRepository,
         monthSettings = repositories.monthSettingsRepository,
         categories = repositories.categoryRepository,

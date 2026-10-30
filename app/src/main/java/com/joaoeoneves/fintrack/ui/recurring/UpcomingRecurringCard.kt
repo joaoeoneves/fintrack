@@ -11,51 +11,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
-import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
 import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
-import com.joaoeoneves.fintrack.domain.model.payingLines
 import com.joaoeoneves.fintrack.ui.common.TestTags
-import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.rememberDayMonthText
-import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
-import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
-import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
-import com.joaoeoneves.fintrack.ui.designsystem.PendingOccurrenceRow
-import com.joaoeoneves.fintrack.ui.designsystem.PendingTone
 import com.joaoeoneves.fintrack.ui.designsystem.SectionAction
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
-import com.joaoeoneves.fintrack.ui.designsystem.rememberFinTrackHaptics
-import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
-import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
-import com.joaoeoneves.fintrack.ui.plan.ReceiveChange
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.plan.displayLabel
-import com.joaoeoneves.fintrack.ui.plan.key
 import com.joaoeoneves.fintrack.ui.plan.rememberPaydayText
-import com.joaoeoneves.fintrack.ui.plan.rememberPendingLabels
-import com.joaoeoneves.fintrack.ui.plan.rememberReceivedText
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.LocalDate
@@ -66,40 +43,13 @@ const val DASHBOARD_UPCOMING_LIMIT = 5
 /** The card's state plus its callbacks, bundled to keep the dashboard's parameter lists short. */
 data class UpcomingRecurringModel(
     val state: UpcomingRecurringUiState,
-    val onConfirm: (UpcomingOccurrence, amountCents: Long?) -> Unit,
-    val onSkip: (UpcomingOccurrence) -> Unit,
     val onManage: () -> Unit,
-    /** Records the income as received; returns what takes it back. */
-    val onReceiveIncome: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> () -> Unit,
 )
 
-/** Shows the view model's failures and its confirm/skip snackbars (with "Undo") in [snackbarHostState]. */
-@Composable
-fun UpcomingRecurringSnackbars(
-    viewModel: UpcomingRecurringViewModel,
-    snackbarHostState: SnackbarHostState,
-) {
-    val resources = LocalResources.current
-    LaunchedEffect(Unit) {
-        viewModel.errorEvent.collect { snackbarHostState.showSnackbar(it.asString(resources)) }
-    }
-    LaunchedEffect(Unit) {
-        viewModel.undoEvent.collect { undo ->
-            val message =
-                when (undo.kind) {
-                    RecurringUndo.Kind.CONFIRMED -> resources.getString(R.string.recurring_added, undo.itemName)
-                    RecurringUndo.Kind.SKIPPED -> resources.getString(R.string.recurring_skipped, undo.itemName)
-                }
-            snackbarHostState.currentSnackbarData?.dismiss()
-            val result = snackbarHostState.showActionSnackbar(message, resources.getString(R.string.action_undo))
-            if (result == SnackbarResult.ActionPerformed) viewModel.onUndo(undo)
-        }
-    }
-}
-
 /**
- * The dashboard block listing what recurring bills/income are due; hidden while loading or on
- * error. Without any recurring items it collapses to a single call-to-action row.
+ * The dashboard block listing what recurring bills/income are coming up, read-only (bills post themselves and land in
+ * "To review"); hidden while loading or on error. Without any recurring items it collapses to a single
+ * call-to-action row.
  */
 @Composable
 fun UpcomingRecurringCard(
@@ -133,63 +83,22 @@ fun UpcomingRecurringCard(
             }
             Hairline()
         }
-        state.expectedIncome?.takeIf { it.entries.isNotEmpty() }?.let {
-            ExpectedIncomeGroup(expected = it, today = state.today, onReceive = model.onReceiveIncome)
-        }
+        state.expectedIncome?.takeIf { it.entries.isNotEmpty() }?.let { ExpectedIncomeGroup(expected = it) }
     }
 }
 
-/**
- * The current month's income not yet received, offered from a week before payday: each row with a check that
- * records it as received today and offers to change the date or amount from the snackbar.
- */
+/** The current month's income still to come, from a week before payday: name, pay date and amount, nothing to tap. */
 @Composable
-private fun ExpectedIncomeGroup(
-    expected: ExpectedIncome,
-    today: LocalDate,
-    onReceive: (row: IncomeRow, date: LocalDate, amountCents: Long?) -> () -> Unit,
-) {
-    val feedback = LocalReceiveFeedback.current
-    val haptics = rememberFinTrackHaptics()
-    val undoLabel = stringResource(R.string.action_undo)
-    val labels = rememberPendingLabels(income = true)
+private fun ExpectedIncomeGroup(expected: ExpectedIncome) {
     SectionTitle(title = stringResource(R.string.home_to_receive_title))
     expected.entries.forEachIndexed { index, entry ->
         if (index > 0) Hairline()
         val row = entry.row
-        val title = row.displayLabel()
-        val payDate = entry.payDate
-        val receiveDate = minOf(payDate, today)
-        val snackbarText = stringResource(R.string.plan_received_on, rememberReceivedText(receiveDate))
-        key(row.key, payDate) {
-            PendingOccurrenceRow(
-                title = title,
-                amountText = formatAmountCents(row.cents),
-                statusText = stringResource(R.string.plan_payday, rememberPaydayText(payDate)),
-                labels = labels,
-                onConfirm =
-                    if (row.cents > 0L) {
-                        {
-                            haptics.success()
-                            val undo = onReceive(row, receiveDate, null)
-                            feedback?.announce(snackbarText, undoLabel, undo)
-                        }
-                    } else {
-                        null
-                    },
-                onChangeAmount = {
-                    val paying = row.payingLines(entry.month, expected.incomeMonth)
-                    feedback?.open(
-                        ReceiveChange(
-                            title = title,
-                            today = today,
-                            date = receiveDate,
-                            editableAmountCents =
-                                paying.singleOrNull()?.let { expected.incomeMonth.amountIn(it, entry.month) },
-                            onConfirm = { date, cents -> onReceive(row, date, cents) },
-                        ),
-                    )
-                },
+        key(row.lines.first().id, entry.payDate) {
+            SettingsRow(
+                title = row.displayLabel(),
+                supportingText = stringResource(R.string.plan_payday, rememberPaydayText(entry.payDate)),
+                value = formatAmountCents(row.cents),
             )
         }
     }
@@ -215,7 +124,7 @@ private fun UpcomingContent(
     }
     rows.take(DASHBOARD_UPCOMING_LIMIT).forEachIndexed { index, row ->
         if (index > 0) Hairline()
-        key(row.item.id, row.date) { UpcomingRow(row = row, today = state.today, model = model) }
+        key(row.item.id, row.date) { UpcomingRow(row = row, today = state.today) }
     }
     if (state.overview.annualExpenseCents > 0) {
         Text(
@@ -232,98 +141,27 @@ private fun UpcomingContent(
     }
 }
 
+/** One upcoming bill: name, its date (or "overdue" / "due today") and amount. */
 @Composable
 private fun UpcomingRow(
     row: UpcomingOccurrence,
     today: LocalDate,
-    model: UpcomingRecurringModel,
 ) {
-    val haptics = rememberFinTrackHaptics()
-    var changingAmount by remember { mutableStateOf(false) }
-    // A future auto-posted bill posts itself: informational, no controls.
-    val automatic = row.item.autoPost && !row.isDue
     val status =
         when {
-            automatic ->
-                stringResource(R.string.pending_automatic, rememberDayMonthText(row.date))
             row.date < today -> stringResource(R.string.recurring_overdue)
             row.date == today -> stringResource(R.string.recurring_due_today)
             else -> rememberDayMonthText(row.date)
         }
-    PendingOccurrenceRow(
+    val more =
+        if (row.overdueCount > 0) {
+            pluralStringResource(R.plurals.recurring_more_overdue, row.overdueCount, row.overdueCount)
+        } else {
+            null
+        }
+    SettingsRow(
         title = row.item.name,
-        amountText = formatAmountCents(row.item.amountCents),
-        statusText = status,
-        statusTone =
-            when {
-                row.date < today -> PendingTone.NEGATIVE
-                row.isDue -> PendingTone.ACCENT
-                else -> PendingTone.NEUTRAL
-            },
-        extraText =
-            if (row.overdueCount > 0) {
-                pluralStringResource(R.plurals.recurring_more_overdue, row.overdueCount, row.overdueCount)
-            } else {
-                null
-            },
-        labels = rememberPendingLabels(),
-        onConfirm =
-            if (automatic) {
-                null
-            } else {
-                {
-                    haptics.confirm()
-                    model.onConfirm(row, null)
-                }
-            },
-        confirmEnabled = row.isDue,
-        onSkip =
-            {
-                haptics.reject()
-                model.onSkip(row)
-            },
-        onChangeAmount = { changingAmount = true }.takeIf { row.isDue },
-    )
-    if (changingAmount) {
-        ChangeAmountDialog(
-            title = stringResource(R.string.recurring_amount_title, row.item.name),
-            initialCents = row.item.amountCents,
-            onConfirm = {
-                changingAmount = false
-                haptics.confirm()
-                model.onConfirm(row, it)
-            },
-            onDismiss = { changingAmount = false },
-        )
-    }
-}
-
-/** Asks for the amount actually billed before confirming a bill whose amount varies. */
-@Composable
-private fun ChangeAmountDialog(
-    title: String,
-    initialCents: Long,
-    onConfirm: (Long) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var cents by remember { mutableLongStateOf(initialCents) }
-    FinTrackAlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            MoneyTextField(
-                cents = cents,
-                onCentsChange = { cents = it },
-                label = stringResource(R.string.field_amount),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        confirmButton = {
-            DialogTextButton(
-                text = stringResource(R.string.recurring_confirm),
-                onClick = { if (cents > 0L) onConfirm(cents) },
-            )
-        },
-        dismissButton = { DialogTextButton(text = stringResource(R.string.action_cancel), onClick = onDismiss) },
+        supportingText = listOfNotNull(status, more).joinToString(" · "),
+        value = formatAmountCents(row.item.amountCents),
     )
 }

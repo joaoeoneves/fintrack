@@ -17,16 +17,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.ui.backup.BackupFlow
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.designsystem.LargeTitleScaffold
 import com.joaoeoneves.fintrack.ui.importexport.ExportUiState
 import com.joaoeoneves.fintrack.ui.importexport.ImportExportViewModel
-import com.joaoeoneves.fintrack.ui.importexport.ImportPreviewDialog
-import com.joaoeoneves.fintrack.ui.importexport.ImportUiState
 import com.joaoeoneves.fintrack.ui.importexport.MessageDialog
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 
@@ -40,14 +36,9 @@ fun SettingsScreen(
 ) {
     val importExportViewModel: ImportExportViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val importState by importExportViewModel.importState.collectAsStateWithLifecycle()
     val exportState by importExportViewModel.exportState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    val importLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let(importExportViewModel::onImportFileSelected)
-        }
     val exportLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
             uri?.let(importExportViewModel::onExportTargetSelected)
@@ -59,11 +50,6 @@ fun SettingsScreen(
             SettingsActions(
                 onThemeSelected = viewModel::setThemePreference,
                 onLanguageSelected = viewModel::setLanguage,
-                onCurrencySelected = viewModel::setCurrency,
-                onMotionSelected = viewModel::setMotionPreference,
-                onImportClick = {
-                    importLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "*/*"))
-                },
                 onExportClick = { exportLauncher.launch("fintrack-expenses.csv") },
                 onSignOut = viewModel::signOut,
                 onSignInToSync = { viewModel.signInToSync(context) },
@@ -74,10 +60,7 @@ fun SettingsScreen(
     )
 
     ImportExportDialogs(
-        importState = importState,
         exportState = exportState,
-        onConfirmImport = importExportViewModel::onConfirmImport,
-        onDismissImport = importExportViewModel::onDismissImport,
         onDismissExport = importExportViewModel::onDismissExport,
     )
 
@@ -102,9 +85,6 @@ fun SettingsScreen(
 private data class SettingsActions(
     val onThemeSelected: (ThemePreference) -> Unit,
     val onLanguageSelected: (AppLanguage) -> Unit,
-    val onCurrencySelected: (CurrencyOption) -> Unit,
-    val onMotionSelected: (MotionPreference) -> Unit,
-    val onImportClick: () -> Unit,
     val onExportClick: () -> Unit,
     val onSignOut: () -> Unit,
     val onSignInToSync: () -> Unit,
@@ -138,8 +118,6 @@ private fun SettingsScaffold(
                 uiState = uiState,
                 onThemeSelected = actions.onThemeSelected,
                 onLanguageSelected = actions.onLanguageSelected,
-                onCurrencySelected = actions.onCurrencySelected,
-                onMotionSelected = actions.onMotionSelected,
             )
             StartChecklistSection()
             BackupFlow(signedIn = !uiState.isGuest) { onExport, onRestore ->
@@ -153,7 +131,6 @@ private fun SettingsScaffold(
                             DataSectionActions(
                                 onExportBackup = onExport,
                                 onRestoreBackup = onRestore,
-                                onImportCsv = actions.onImportClick,
                                 onExportCsv = actions.onExportClick,
                                 onDeleteAll = onDeleteAll,
                             ),
@@ -184,64 +161,10 @@ private fun AccountCard(
 
 @Composable
 private fun ImportExportDialogs(
-    importState: ImportUiState,
     exportState: ExportUiState,
-    onConfirmImport: () -> Unit,
-    onDismissImport: () -> Unit,
     onDismissExport: () -> Unit,
 ) {
-    ImportStateDialog(state = importState, onConfirm = onConfirmImport, onDismiss = onDismissImport)
     ExportStateDialog(state = exportState, onDismiss = onDismissExport)
-}
-
-@Composable
-private fun ImportStateDialog(
-    state: ImportUiState,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    when (state) {
-        is ImportUiState.Preview -> {
-            ImportPreviewDialog(state = state, onConfirm = onConfirm, onDismiss = onDismiss)
-        }
-
-        is ImportUiState.Done -> {
-            MessageDialog(
-                title = stringResource(R.string.label_import_complete),
-                message =
-                    pluralStringResource(
-                        R.plurals.import_complete_message,
-                        state.importedCount,
-                        state.importedCount,
-                    ),
-                onDismiss = onDismiss,
-            )
-        }
-
-        is ImportUiState.PartialFailure -> {
-            MessageDialog(
-                title = stringResource(R.string.label_import_partial_failure),
-                message =
-                    pluralStringResource(
-                        R.plurals.import_partial_failure_message,
-                        state.succeededCount,
-                        state.succeededCount,
-                        state.message.asString(),
-                    ),
-                onDismiss = onDismiss,
-            )
-        }
-
-        is ImportUiState.Error -> {
-            MessageDialog(
-                title = stringResource(R.string.label_import_failed),
-                message = state.message.asString(),
-                onDismiss = onDismiss,
-            )
-        }
-
-        ImportUiState.Idle, ImportUiState.Loading, ImportUiState.Importing -> Unit
-    }
 }
 
 @Composable

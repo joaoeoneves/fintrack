@@ -2,9 +2,7 @@ package com.joaoeoneves.fintrack.ui.theme
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,20 +16,12 @@ class ThemeViewModel
     @Inject
     constructor(
         private val themeRepository: ThemeRepository,
-        motionRepository: MotionRepository,
     ) : ViewModel() {
         val themePreference: StateFlow<ThemePreference?> =
             themeRepository.observeThemePreference().stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.Eagerly,
                 initialValue = null,
-            )
-
-        val motionPreference: StateFlow<MotionPreference> =
-            motionRepository.observeMotionPreference().stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.Eagerly,
-                initialValue = MotionPreference.SYSTEM,
             )
 
         /**

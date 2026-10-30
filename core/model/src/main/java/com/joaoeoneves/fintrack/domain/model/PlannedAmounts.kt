@@ -6,9 +6,6 @@ import java.time.temporal.ChronoUnit
 
 /** Where a category's planned amount for a month comes from. */
 enum class PlannedSource {
-    /** An explicit budget limit. */
-    BUDGET,
-
     /** The sum of the active expense recurring items falling in the month. */
     RECURRING,
 
@@ -25,19 +22,13 @@ data class PlannedAmount(
 private const val MONTHS_PER_YEAR = 12
 
 /**
- * What is planned for a category in [month]. An explicit [budget] wins, unless [month] is one of its
- * skipped months; otherwise the amounts of the active EXPENSE items in [recurring] that have an occurrence
- * in the month are summed. [recurring] is the category's items (items of other kinds are ignored here).
+ * What is planned for a category in [month]: the amounts of the active EXPENSE items in [recurring] that have an
+ * occurrence in the month are summed. [recurring] is the category's items (items of other kinds are ignored here).
  */
 fun plannedForCategory(
     month: YearMonth,
-    budget: Budget?,
     recurring: List<RecurringItem>,
 ): PlannedAmount {
-    val active = budget?.asOf(month)
-    if (active != null && month.monthValue !in active.skipMonths) {
-        return PlannedAmount(active.limitCents, PlannedSource.BUDGET)
-    }
     val due = recurring.filter { it.type == RecurringType.EXPENSE && it.countsIn(month) }
     return if (due.isEmpty()) {
         PlannedAmount(null, PlannedSource.NONE)

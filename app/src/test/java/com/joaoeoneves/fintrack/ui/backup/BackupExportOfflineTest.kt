@@ -2,11 +2,9 @@ package com.joaoeoneves.fintrack.ui.backup
 
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlaceholderNames
@@ -45,14 +43,12 @@ class BackupExportOfflineTest : BackupViewModelTestBase() {
             FakeExpenseRepository(listOf(testExpense("e1", 500, Instant.parse("2026-03-10T12:00:00Z")))),
             FakeIncomeRepository(),
             PlanBackupSource(
-                FakeBudgetRepository(),
                 FakePlannedIncomeRepository(),
                 FakeRecurringRepository(),
                 FakeMonthSettingsRepository(),
                 FakeEnvelopeRepository(),
                 PlanSingletonSources(
                     FakeSalaryProfileRepository(),
-                    FakeGoalRepository(),
                     FakeAutomationSettingsRepository(),
                     FakePlaceholderNames(),
                 ),

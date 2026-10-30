@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.migration
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.testutil.userCategory
@@ -119,17 +118,6 @@ class MigrationPlannerGroupsTest {
     }
 
     @Test
-    fun budgetSkipMonths_areCarried_andInvalidOnesSkipped() {
-        val local =
-            localDoc(budgets = listOf(LocalBudget("FOOD", 100, listOf(8)), LocalBudget("SHOPPING", 100, listOf(0))))
-
-        val plan = planMigration(local, remoteSnapshot())
-
-        assertEquals(listOf(LocalBudget("FOOD", 100, listOf(8))), plan.budgets)
-        assertEquals(1, plan.skipped)
-    }
-
-    @Test
     fun noGroups_planStaysEmpty() {
         assertNull(planMigration(localDoc(), remoteSnapshot()).categoryGroups.firstOrNull())
     }
@@ -140,18 +128,17 @@ class MigrationPlannerGroupsTest {
     fun groups_areBatchedFirst_withExpectedKeys() {
         val plan =
             planMigration(
-                docWith(listOf(food), "gym" to "g-food").copy(budgets = listOf(LocalBudget("FOOD", 10, listOf(3, 1)))),
+                docWith(listOf(food), "gym" to "g-food"),
                 remoteSnapshot(),
             )
 
         val batches = plan.toBatches()
 
-        assertEquals(listOf("categoryGroups", "categories", "budgets"), batches.map { it.first().collection })
+        assertEquals(listOf("categoryGroups", "categories"), batches.map { it.first().collection })
         val group = batches.first().single()
         assertEquals("g-food", group.id)
         assertEquals("Food", group.data["name"])
         assertEquals(0, group.data["order"])
         assertEquals("g-food", batches[1].single().data["groupId"])
-        assertEquals(listOf(1, 3), batches[2].single().data["skipMonths"])
     }
 }

@@ -13,7 +13,7 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 /**
- * Confirms or skips one occurrence of a recurring item. Both re-read the latest item and are a
+ * Confirms one occurrence of a recurring item. It re-reads the latest item and is a
  * no-op success when the occurrence was already handled (a double tap or a second device).
  */
 class HandleRecurringOccurrence
@@ -58,17 +58,6 @@ class HandleRecurringOccurrence
                         else -> amounted
                     }
                 recurringRepository.confirmOccurrence(itemId, occurrence, posted).getOrThrow()
-            }
-
-        /** Records [occurrence] as skipped and moves the cursor to it, without creating a transaction. */
-        suspend fun skip(
-            itemId: String,
-            occurrence: LocalDate,
-        ): Result<Unit> =
-            runNonCancelling {
-                val item = latest(itemId)
-                if (isHandled(item, occurrence) || occurrence in item.skipped) return@runNonCancelling
-                recurringRepository.skipOccurrences(itemId, setOf(occurrence), advanceTo = occurrence).getOrThrow()
             }
 
         private suspend fun latest(itemId: String): RecurringItem =

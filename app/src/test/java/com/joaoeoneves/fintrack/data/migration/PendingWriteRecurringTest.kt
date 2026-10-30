@@ -18,7 +18,6 @@ class PendingWriteRecurringTest {
         expense: Boolean = false,
     ) = MigrationPlan(
         emptyList(),
-        emptyList(),
         if (expense) listOf(localExpense("e1")) else emptyList(),
         emptyList(),
         if (planned) listOf(localPlanned("p1")) else emptyList(),

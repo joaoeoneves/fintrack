@@ -1,11 +1,9 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Envelope
-import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_GROUP_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 import kotlinx.coroutines.flow.first
@@ -19,21 +17,16 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
     private val store by lazy { newStore() }
     private val groups by lazy { LocalEnvelopeRepository(store, SequenceIds("g")) }
     private val categories by lazy { LocalCategoryRepository(store, SequenceIds("c")) }
-    private val budgets by lazy { LocalBudgetRepository(store) }
 
-    private suspend fun observed() = groups.observeEnvelopes().first().untimedEnvelopes()
+    private suspend fun observed() = groups.observeEnvelopes().first()
 
     private suspend fun LocalEnvelopeRepository.addEnvelope(name: String) = saveEnvelope(edit(null, name))
 
-    @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
     private fun edit(
         id: String?,
         name: String,
-        amount: Long? = null,
-        fundedBy: String? = null,
         members: Set<CategoryId> = emptySet(),
-        limits: Map<CategoryId, Budget?> = emptyMap(),
-    ) = EnvelopeEdit(id, name, amount, fundedBy, members, limits)
+    ) = EnvelopeEdit(id, name, members)
 
     @Test
     fun empty_hasNoGroups() =
@@ -77,32 +70,12 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun save_unknownIdOrInvalid_failsAndKeepsData() =
+    fun save_invalidName_failsAndKeepsData() =
         runStoreTest {
             groups.addEnvelope("Food")
 
             assertTrue(groups.saveEnvelope(edit("g1", "")).isFailure)
-            assertTrue(groups.saveEnvelope(edit("g1", "ok", amount = 0)).isFailure)
-            assertTrue(groups.saveEnvelope(edit("g1", "ok", amount = -5)).isFailure)
-            assertTrue(groups.saveEnvelope(edit("g1", "ok", amount = MAX_AMOUNT_CENTS + 1)).isFailure)
-            assertTrue(groups.saveEnvelope(edit("g1", "ok", fundedBy = "bad id!")).isFailure)
-            assertTrue(groups.saveEnvelope(edit("g1", "ok", fundedBy = "")).isFailure)
             assertEquals(listOf(Envelope("g1", "Food", 0)), observed())
-        }
-
-    @Test
-    fun save_amountAndFundingAtTheLimits_areStored() =
-        runStoreTest {
-            groups.saveEnvelope(edit(null, "Max", amount = MAX_AMOUNT_CENTS, fundedBy = "a".repeat(64))).getOrThrow()
-            groups.saveEnvelope(edit(null, "Min", amount = 1, fundedBy = "line_1-x")).getOrThrow()
-
-            assertEquals(
-                listOf(
-                    Envelope("g1", "Max", 0, MAX_AMOUNT_CENTS, "a".repeat(64)),
-                    Envelope("g2", "Min", 1, 1, "line_1-x"),
-                ),
-                observed(),
-            )
         }
 
     @Test
@@ -123,33 +96,6 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun save_limits_setAndClearBudgetsInTheSameWrite() =
-        runStoreTest {
-            val food = BuiltInCategories.FOOD.id
-            val shopping = BuiltInCategories.SHOPPING.id
-            budgets.setBudget(shopping, 500)
-            val revisionBefore = store.data.first().revision
-
-            val id =
-                groups
-                    .saveEnvelope(
-                        edit(
-                            null,
-                            "Mix",
-                            members = setOf(food, shopping),
-                            limits =
-                                mapOf(
-                                    food to Budget(food, 900, setOf(2)),
-                                    shopping to null,
-                                ),
-                        ),
-                    ).getOrThrow()
-
-            assertEquals(listOf(Budget(food, 900, setOf(2))), budgets.observeBudgets().first().untimed())
-            assertEquals(revisionBefore + 1, store.data.first().revision)
-        }
-
-    @Test
     fun save_filesABuiltInCategoryWithoutAStoredRecord() =
         runStoreTest {
             val id = groups.saveEnvelope(edit(null, "Mix", members = setOf(BuiltInCategories.FOOD.id))).getOrThrow()
@@ -162,61 +108,6 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
                     .single { it.id == BuiltInCategories.FOOD.id }
                     .groupId,
             )
-        }
-
-    @Test
-    fun save_fixedAmount_leavesTheMembersBudgetsUntouched() =
-        runStoreTest {
-            val food = BuiltInCategories.FOOD.id
-            val shopping = BuiltInCategories.SHOPPING.id
-            budgets.setBudget(food, 100)
-            budgets.setBudget(shopping, 200)
-
-            groups.saveEnvelope(edit(null, "Fixed", amount = 5_000, members = setOf(food)))
-
-            assertEquals(
-                setOf(food, shopping),
-                budgets
-                    .observeBudgets()
-                    .first()
-                    .map { it.categoryId }
-                    .toSet(),
-            )
-        }
-
-    @Test
-    fun save_invalidLimit_failsAndWritesNothingElse() =
-        runStoreTest {
-            val food = BuiltInCategories.FOOD.id
-
-            val result =
-                groups.saveEnvelope(
-                    edit(null, "Bad", members = setOf(food), limits = mapOf(food to Budget(food, -1))),
-                )
-
-            assertTrue(result.isFailure)
-            assertEquals(emptyList<Envelope>(), observed())
-        }
-
-    @Test
-    fun save_fundingLine_isClearedOnAnyOtherEnvelopeUsingIt() =
-        runStoreTest {
-            groups.saveEnvelope(edit(null, "A", fundedBy = "meal"))
-            groups.saveEnvelope(edit(null, "B", fundedBy = "other"))
-
-            groups.saveEnvelope(edit(null, "C", fundedBy = "meal"))
-
-            assertEquals(listOf(null, "other", "meal"), observed().map { it.fundedByLineId })
-        }
-
-    @Test
-    fun save_sameEnvelopeKeepsItsOwnFundingLine() =
-        runStoreTest {
-            groups.saveEnvelope(edit(null, "A", fundedBy = "meal"))
-
-            groups.saveEnvelope(edit("g1", "A2", fundedBy = "meal"))
-
-            assertEquals(listOf(Envelope("g1", "A2", 0, null, "meal")), observed())
         }
 
     @Test
@@ -259,53 +150,6 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
             assertNull(catalog.getValue(gym).groupId)
             assertNull(catalog.getValue(BuiltInCategories.FOOD.id).groupId)
             assertEquals(other, catalog.getValue(book).groupId)
-        }
-
-    @Test
-    fun delete_leavesTheBudgetsOfItsCategoriesUntouched() =
-        runStoreTest {
-            val food = groups.addEnvelope("Food").getOrThrow()
-            categories.setGroup(BuiltInCategories.FOOD.id, food)
-            budgets.setBudget(BuiltInCategories.FOOD.id, 100)
-            budgets.setBudget(BuiltInCategories.SHOPPING.id, 200)
-
-            assertTrue(groups.deleteEnvelope(food).isSuccess)
-
-            assertEquals(
-                setOf(BuiltInCategories.FOOD.id, BuiltInCategories.SHOPPING.id),
-                budgets
-                    .observeBudgets()
-                    .first()
-                    .map { it.categoryId }
-                    .toSet(),
-            )
-        }
-
-    @Test
-    fun delete_unfilesABuiltInMember_andKeepsItsBudget() =
-        runStoreTest {
-            val food = BuiltInCategories.FOOD.id
-            val limits = mapOf(food to Budget(food, 300))
-            val id = groups.saveEnvelope(edit(null, "Mix", members = setOf(food), limits = limits)).getOrThrow()
-            assertEquals(
-                id,
-                categories
-                    .observeCategories()
-                    .first()
-                    .single { it.id == food }
-                    .groupId,
-            )
-
-            assertTrue(groups.deleteEnvelope(id).isSuccess)
-
-            assertNull(
-                categories
-                    .observeCategories()
-                    .first()
-                    .single { it.id == food }
-                    .groupId,
-            )
-            assertEquals(listOf(Budget(food, 300)), budgets.observeBudgets().first().untimed())
         }
 
     @Test
@@ -368,68 +212,6 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
                     .first()
                     .single { it.id == id }
                     .groupId,
-            )
-        }
-
-    // ---- budget skip months ----
-
-    @Test
-    fun setBudget_storesSkipMonths_andReplacesThemOnNextSet() =
-        runStoreTest {
-            val food = BuiltInCategories.FOOD.id
-            budgets.setBudget(food, 100, setOf(8, 1))
-            assertEquals(
-                setOf(1, 8),
-                budgets
-                    .observeBudgets()
-                    .first()
-                    .single()
-                    .skipMonths,
-            )
-            assertEquals(
-                listOf(1, 8),
-                store.data
-                    .first()
-                    .budgets
-                    .single()
-                    .skipMonths,
-            )
-
-            budgets.setBudget(food, 100)
-            assertEquals(
-                emptySet<Int>(),
-                budgets
-                    .observeBudgets()
-                    .first()
-                    .single()
-                    .skipMonths,
-            )
-        }
-
-    @Test
-    fun setBudget_invalidSkipMonths_fails() =
-        runStoreTest {
-            val food = BuiltInCategories.FOOD.id
-
-            assertTrue(budgets.setBudget(food, 100, setOf(0)).isFailure)
-            assertTrue(budgets.setBudget(food, 100, setOf(13)).isFailure)
-            assertFalse(dataFile.exists())
-        }
-
-    @Test
-    fun legacyBudgetWithoutSkipMonths_decodesWithEmptySet() =
-        runStoreTest {
-            dataFile.writeText("""{"schemaVersion":4,"revision":1,"budgets":[{"categoryId":"FOOD","limitCents":5}]}""")
-
-            assertEquals(
-                emptySet<Int>(),
-                newStore()
-                    .data
-                    .first()
-                    .budgets
-                    .single()
-                    .skipMonths
-                    .toSet(),
             )
         }
 }

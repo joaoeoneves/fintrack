@@ -13,12 +13,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The group-related behavior of [FakeEnvelopeRepository], [FakeCategoryRepository] and [FakeBudgetRepository]. */
+/** The group-related behavior of [FakeEnvelopeRepository] and [FakeCategoryRepository]. */
 class FakeEnvelopeRepositoryTest {
     private fun edit(
         id: String?,
         name: String,
-    ) = EnvelopeEdit(id, name, null, null, emptySet(), emptyMap())
+    ) = EnvelopeEdit(id, name, emptySet())
 
     @Test
     fun add_rename_reorder_roundTrip() =
@@ -94,27 +94,5 @@ class FakeEnvelopeRepositoryTest {
                     .single { it.id == id }
                     .groupId,
             )
-        }
-
-    @Test
-    fun budgetFake_setBudget_replacesSkipMonths() =
-        runBlocking {
-            val budgets = FakeBudgetRepository()
-            val food = BuiltInCategories.FOOD.id
-
-            budgets.setBudget(food, 100, setOf(8))
-            assertEquals(
-                setOf(8),
-                budgets
-                    .observeBudgets()
-                    .first()
-                    .single()
-                    .skipMonths,
-            )
-
-            budgets.setBudget(food, 200)
-            val budget = budgets.observeBudgets().first().single()
-            assertEquals(200L, budget.limitCents)
-            assertEquals(emptySet<Int>(), budget.skipMonths)
         }
 }

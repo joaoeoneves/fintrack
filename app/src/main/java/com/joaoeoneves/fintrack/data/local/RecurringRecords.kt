@@ -39,8 +39,8 @@ data class LocalRecurringItem(
     val endDate: String? = null,
     val handledThrough: String? = null,
     val active: Boolean = true,
-    /** Added in schema version 11; absent (off) in older files. */
-    val autoPost: Boolean = false,
+    /** Schema versions 11 to 22 only: read by the 22 -> 23 upgrade (false/absent = was manual), never written. */
+    val autoPost: Boolean? = null,
     /** Added in schema version 17: ISO dates of the skipped occurrences; absent (empty) in older files. */
     val skipped: List<String> = emptyList(),
     /** Added in schema version 17: ISO date the item was paused; absent in older files. */
@@ -88,7 +88,6 @@ internal fun LocalRecurringItem.toDomainOrNull(): RecurringItem? {
                 endDate = end.getOrNull(),
                 handledThrough = handled.getOrNull(),
                 active = active,
-                autoPost = autoPost,
                 skipped = skipped.mapNotNull(::parseLocalDate).toSet(),
                 pausedAt = pausedAt?.let(::parseLocalDate),
             )
@@ -113,7 +112,6 @@ internal fun RecurringItem.toLocal(): LocalRecurringItem =
         endDate = endDate?.toString(),
         handledThrough = handledThrough?.toString(),
         active = active,
-        autoPost = autoPost,
         skipped = skipped.sorted().map { it.toString() },
         pausedAt = pausedAt?.toString(),
     )
