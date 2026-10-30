@@ -360,7 +360,7 @@ class AddEditExpenseViewModel(
     fun onRefundChanged(isRefund: Boolean) {
         updateForm {
             val base = it.copy(isRefund = isRefund, saveError = null)
-            val updated = if (isRefund) base.withoutSplit().copy(awaitingRefund = false) else base
+            val updated = if (isRefund) base.withoutSplitKeepingOpened().copy(awaitingRefund = false) else base
             // A link only means something on a refund.
             (if (isRefund) updated else updated.copy(refundOf = null, refundOfLabel = null)).withMealCardPrefill()
         }
@@ -455,14 +455,7 @@ class AddEditExpenseViewModel(
     fun onSplitEnabledChanged(enabled: Boolean) =
         updateForm {
             if (!enabled) {
-                val openedId = it.expenseId
-                val opened = it.splitParts.firstOrNull { part -> openedId != null && part.expenseId == openedId }
-                val plain = it.withoutSplit()
-                if (opened == null) {
-                    plain
-                } else {
-                    plain.copy(amountCents = opened.amountCents, category = opened.category ?: plain.category)
-                }
+                it.withoutSplitKeepingOpened()
             } else {
                 it.copy(
                     splitEnabled = true,
@@ -582,6 +575,20 @@ private fun ExpenseFormState.withValidationErrors(): ExpenseFormState? {
         null
     } else {
         copy(nameError = nameError, amountError = amountError, categoryError = categoryError, splitError = splitError)
+    }
+}
+
+/**
+ * Drops the split; when a stored part is open, the form keeps that part's own amount and category (J11) instead of
+ * the total of all parts.
+ */
+private fun ExpenseFormState.withoutSplitKeepingOpened(): ExpenseFormState {
+    val opened = splitParts.firstOrNull { part -> expenseId != null && part.expenseId == expenseId }
+    val plain = withoutSplit()
+    return if (opened == null) {
+        plain
+    } else {
+        plain.copy(amountCents = opened.amountCents, category = opened.category ?: plain.category)
     }
 }
 
