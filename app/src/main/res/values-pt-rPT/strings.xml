@@ -161,7 +161,7 @@
     <string name="about_version_unknown">desconhecida</string>
 
     <!-- Tema -->
-    <string name="theme_system">Predefinição do sistema</string>
+    <string name="theme_system">Sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Escuro</string>
 

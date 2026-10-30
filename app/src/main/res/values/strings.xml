@@ -161,7 +161,7 @@
     <string name="about_version_unknown">unknown</string>
 
     <!-- Theme -->
-    <string name="theme_system">System default</string>
+    <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
 
