@@ -209,7 +209,8 @@ class AddEditExpenseViewModel(
                                         isEditMode = true,
                                         expenseId = existing.id,
                                         refundOf = existing.refundOf,
-                                        splitId = existing.splitId,
+                                        // A lone leftover part is a plain expense: saving it clears the id.
+                                        splitId = existing.splitId.takeIf { siblings.isNotEmpty() },
                                         awaitingRefund = existing.awaitingRefund,
                                         refundOfLabel = existing.refundOf?.let { originalName(it) },
                                     ),
