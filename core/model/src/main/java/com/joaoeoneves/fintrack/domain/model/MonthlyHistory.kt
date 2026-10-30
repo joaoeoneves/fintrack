@@ -114,6 +114,26 @@ fun seriesComparisonOf(
     )
 }
 
+/** Fewest earlier months with spending a category needs before it can count as above its average. */
+const val ABOVE_AVERAGE_MIN_MONTHS = 3
+
+/**
+ * The categories whose value at [index] is strictly above the average of the up-to-[window] earlier months that have
+ * spending, provided at least [minMonths] of those months do. Empty months are not counted (see [seriesComparisonOf]).
+ */
+fun categoriesAboveAverage(
+    series: Map<CategoryId, List<Long>>,
+    index: Int,
+    window: Int = COMPARISON_WINDOW_MONTHS,
+    minMonths: Int = ABOVE_AVERAGE_MIN_MONTHS,
+): Set<CategoryId> =
+    series
+        .filterValues { values ->
+            val comparison = seriesComparisonOf(values, index, window)
+            val average = comparison.averageCents
+            average != null && comparison.averageMonths >= minMonths && comparison.currentCents > average
+        }.keys
+
 /** Income, spending and saving of [year] from January up to the month given to [yearToDateOf]. */
 data class YearToDate(
     val year: Int,

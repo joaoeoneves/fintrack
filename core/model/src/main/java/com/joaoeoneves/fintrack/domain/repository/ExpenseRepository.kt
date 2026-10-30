@@ -53,26 +53,29 @@ interface ExpenseRepository {
     /** Clears [Expense.needsReview] on the expenses with these [ids] (missing ids are ignored). */
     suspend fun markReviewed(ids: Collection<String>): Result<Unit> = Result.success(Unit)
 
-    /** STUB(5.7): adds the expenses keeping their ids. */
-    suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> =
-        runCatching { expenses.map { addExpense(it).getOrThrow() } }
-
-    /** STUB(5.7). */
-    suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> =
-        runCatching { expenses.forEach { updateExpense(it).getOrThrow() } }
-
-    /** STUB(5.7). */
-    suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
-        runCatching { ids.forEach { deleteExpense(it).getOrThrow() } }
-
-    /** STUB(5.7): the refunds that link to an original. */
-    fun observeLinkedRefunds(): Flow<List<Expense>> = flowOf(emptyList())
-
     suspend fun addExpense(expense: Expense): Result<String>
 
     suspend fun updateExpense(expense: Expense): Result<Unit>
 
     suspend fun deleteExpense(id: String): Result<Unit>
+
+    /**
+     * Adds these expenses under the ids they carry (a blank id gets a generated one) and returns the ids in order.
+     * The default adds them one by one; real repositories write them in one go.
+     */
+    suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> =
+        runCatching { expenses.map { addExpense(it).getOrThrow() } }
+
+    /** Updates these existing expenses. The default updates them one by one; real repositories write in one go. */
+    suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> =
+        runCatching { expenses.forEach { updateExpense(it).getOrThrow() } }
+
+    /** Deletes the expenses with these [ids], one by one by default; real repositories write in one go. */
+    suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
+        runCatching { ids.forEach { deleteExpense(it).getOrThrow() } }
+
+    /** The refunds (across all months) that link to an original expense through [Expense.refundOf]. */
+    fun observeLinkedRefunds(): Flow<List<Expense>> = flowOf(emptyList())
 
     suspend fun getExpense(id: String): Result<Expense?>
 

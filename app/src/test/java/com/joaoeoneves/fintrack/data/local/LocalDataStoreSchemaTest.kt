@@ -49,9 +49,9 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
             """${recurringJson("legacy", "")},${recurringJson("auto", ",\"autoPost\":true")}]}"""
 
     @Test
-    fun currentSchemaVersion_isTwentyFour() {
-        assertEquals(24, LOCAL_SCHEMA_VERSION)
-        assertEquals(24, LocalDataDocument().schemaVersion)
+    fun currentSchemaVersion_isTwentyFive() {
+        assertEquals(25, LOCAL_SCHEMA_VERSION)
+        assertEquals(25, LocalDataDocument().schemaVersion)
     }
 
     @Test

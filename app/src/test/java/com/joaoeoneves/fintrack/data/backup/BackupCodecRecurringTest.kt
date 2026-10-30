@@ -116,7 +116,7 @@ class BackupCodecRecurringTest {
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
 
         assertEquals(doc, result.document)
-        assertEquals(24, BACKUP_SCHEMA_VERSION)
+        assertEquals(25, BACKUP_SCHEMA_VERSION)
     }
 
     @Test
