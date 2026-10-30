@@ -55,7 +55,6 @@ fun AddEditExpenseScreen(
     onDeleted: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
-    onRecordRefund: (String) -> Unit = {},
     onDuplicate: (String) -> Unit = {},
     viewModel: AddEditExpenseViewModel = hiltViewModel(),
 ) {
@@ -85,7 +84,7 @@ fun AddEditExpenseScreen(
                     form = state.form,
                     categoryOptions = categoryOptions.optionsIncluding(state.form.category),
                     isEditMode = viewModel.isEditRoute,
-                    actions = viewModel.formActions(onRecordRefund, onDuplicate),
+                    actions = viewModel.formActions(onDuplicate),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -127,16 +126,12 @@ internal data class ExpenseFormActions(
     val onRefundChanged: (Boolean) -> Unit,
     val onRefundOfSelected: (Expense?) -> Unit,
     val split: SplitActions,
-    val onRecordRefund: (String) -> Unit,
     val onDuplicate: (String) -> Unit,
     val onMealCardChanged: (Boolean) -> Unit,
     val onDelete: () -> Unit,
 )
 
-private fun AddEditExpenseViewModel.formActions(
-    onRecordRefund: (String) -> Unit,
-    onDuplicate: (String) -> Unit,
-): ExpenseFormActions =
+private fun AddEditExpenseViewModel.formActions(onDuplicate: (String) -> Unit): ExpenseFormActions =
     ExpenseFormActions(
         onNameChanged = ::onNameChanged,
         onNameSuggestionPicked = ::onNameSuggestionPicked,
@@ -154,7 +149,6 @@ private fun AddEditExpenseViewModel.formActions(
                 onAdded = ::onSplitPartAdded,
                 onRemoved = ::onSplitPartRemoved,
             ),
-        onRecordRefund = onRecordRefund,
         onDuplicate = onDuplicate,
         onMealCardChanged = ::onMealCardChanged,
         onDelete = ::onDelete,
@@ -207,7 +201,7 @@ private fun ExpenseForm(
         CategorySection(form = form, categoryOptions = categoryOptions, actions = actions)
 
         RefundAndMealCardSwitches(form = form, actions = actions)
-        RecordRefundSection(form = form, actions = actions)
+        RefundStatusLine(form = form)
 
         ExpenseDateAndNoteFields(form = form, actions = actions)
 

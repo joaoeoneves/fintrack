@@ -258,7 +258,6 @@ private fun NavGraphBuilder.formRoutes(
                     popUpTo<AddEditExpense> { inclusive = true }
                 }
             },
-            onRecordRefund = { id -> navController.navigate(AddEditExpense(refundOf = id)) },
         )
     }
     composable<AddEditIncome>(

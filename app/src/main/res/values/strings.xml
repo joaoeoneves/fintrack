@@ -692,7 +692,6 @@
     <string name="expense_refund_of">Refund of</string>
     <string name="expense_refund_of_none">None</string>
     <string name="expense_refund_status">Refunded %1$d%% · real spend %2$s</string>
-    <string name="expense_record_refund">Record refund</string>
     <string name="expense_refunded_badge">Refunded %d%%</string>
     <!-- Split (5.7) -->
     <string name="expense_more_options">More options</string>

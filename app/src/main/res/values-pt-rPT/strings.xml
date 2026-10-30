@@ -703,7 +703,6 @@
     <string name="expense_refund_of">Reembolso de</string>
     <string name="expense_refund_of_none">Nenhuma</string>
     <string name="expense_refund_status">Reembolsado %1$d%% · gasto real %2$s</string>
-    <string name="expense_record_refund">Registar reembolso</string>
     <string name="expense_refunded_badge">Reembolsado %d%%</string>
     <!-- Divisão (5.7) -->
     <string name="expense_more_options">Mais opções</string>

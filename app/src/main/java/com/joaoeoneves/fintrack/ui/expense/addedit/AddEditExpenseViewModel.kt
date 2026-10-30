@@ -254,38 +254,21 @@ class AddEditExpenseViewModel(
         }
     }
 
-    /**
-     * The new [form] seeded from the route: a duplicate copies the other expense, "record refund" starts a refund
-     * linked to its original (amount left empty); a missing source expense leaves the form as it was.
-     */
+    /** The new [form] seeded from the route: a duplicate copies the other expense; a missing source leaves it as is. */
     private suspend fun seededFromRoute(form: ExpenseFormState): ExpenseFormState {
-        val duplicateOf = route.duplicateOf
-        val refundOf = route.refundOf
-        val source =
-            (duplicateOf ?: refundOf)?.let { id -> expenseRepository.getExpense(id).getOrNull() } ?: return form
-        return if (duplicateOf != null) {
-            val copy = source.duplicated(clock.instant())
-            form.copy(
-                name = copy.name,
-                amountCents = copy.amountCents,
-                category = copy.category,
-                date = copy.date,
-                note = copy.note.orEmpty(),
-                isRefund = copy.isRefund,
-                paidWithMealCard = copy.paidWithMealCard,
-                categoryTouched = true,
-                mealCardTouched = true,
-            )
-        } else {
-            form.copy(
-                name = source.name,
-                category = source.category,
-                isRefund = true,
-                refundOf = source.id,
-                refundOfLabel = source.name,
-                categoryTouched = true,
-            )
-        }
+        val source = route.duplicateOf?.let { id -> expenseRepository.getExpense(id).getOrNull() } ?: return form
+        val copy = source.duplicated(clock.instant())
+        return form.copy(
+            name = copy.name,
+            amountCents = copy.amountCents,
+            category = copy.category,
+            date = copy.date,
+            note = copy.note.orEmpty(),
+            isRefund = copy.isRefund,
+            paidWithMealCard = copy.paidWithMealCard,
+            categoryTouched = true,
+            mealCardTouched = true,
+        )
     }
 
     /** The name of the original expense [id], or `null` when it no longer exists. */
