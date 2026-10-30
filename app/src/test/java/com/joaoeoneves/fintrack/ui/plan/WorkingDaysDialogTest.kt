@@ -2,6 +2,8 @@ package com.joaoeoneves.fintrack.ui.plan
 
 import android.app.Application
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -32,19 +34,20 @@ class WorkingDaysDialogTest {
             FinTrackTheme {
                 WorkingDaysDialog(
                     state = state,
-                    onSave = { months, v, s, o -> saved = listOf(months, v, s, o) },
+                    onSave = { months, v, o -> saved = listOf(months, v, o) },
                     onDismiss = {},
                 )
             }
         }
 
     @Test
-    fun showsThreeSteppers_andTheUntilRow() {
+    fun showsTwoSteppers_andTheUntilRow_noSickNoCarnival() {
         show()
 
         rule.onNodeWithText("Vacation").assertExists()
-        rule.onNodeWithText("Sick leave").assertExists()
         rule.onNodeWithText("Other").assertExists()
+        rule.onNodeWithText("Sick leave").assertDoesNotExist()
+        rule.onAllNodesWithText("Carnival", substring = true).assertCountEquals(0)
         rule.onNodeWithTag(TestTags.DAYS_OFF_UNTIL).assertExists()
     }
 
@@ -53,10 +56,10 @@ class WorkingDaysDialogTest {
         show()
 
         rule.onNodeWithContentDescription("More vacation days").performClick()
-        rule.onNodeWithContentDescription("More sick days").performClick()
-        rule.onNodeWithContentDescription("More sick days").performClick()
+        rule.onNodeWithContentDescription("More other days off").performClick()
+        rule.onNodeWithContentDescription("More other days off").performClick()
         rule.onNodeWithTag(TestTags.DAYS_OFF_SAVE).performClick()
 
-        assertEquals(listOf(listOf(feb), 2, 2, 0), saved)
+        assertEquals(listOf(listOf(feb), 2, 2), saved)
     }
 }
