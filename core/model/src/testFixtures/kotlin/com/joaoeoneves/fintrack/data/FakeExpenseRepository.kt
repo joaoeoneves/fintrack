@@ -100,8 +100,9 @@ class FakeExpenseRepository(
         return Result.success(Unit)
     }
 
-    override fun observeLinkedRefunds(): Flow<List<Expense>> =
-        expensesFlow.map { all -> all.filter { it.isRefund && it.refundOf != null } }
+    override fun observeLinkedRefunds(): Flow<List<Expense>> = expensesFlow.map { all -> all.filter(::isLinkedRefund) }
+
+    private fun isLinkedRefund(expense: Expense) = expense.isRefund && expense.refundOf != null
 
     override suspend fun getExpense(id: String): Result<Expense?> {
         nextGetExpenseError?.let { error ->
