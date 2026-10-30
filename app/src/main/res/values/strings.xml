@@ -102,6 +102,8 @@
 
     <string name="expense_field_refund">Refund</string>
     <string name="expense_field_refund_hint">Money returned to you; reduces this category\'s spending</string>
+    <string name="expense_field_awaiting_refund">Will be refunded</string>
+    <string name="expense_field_awaiting_refund_hint">Stays in To review until you record the refund.</string>
     <string name="expense_refund_badge">Refund</string>
     <string name="filter_all">All</string>
     <string name="field_length_counter">%1$d/%2$d</string>
@@ -661,6 +663,7 @@
     <string name="error_write_rejected">Couldn\'t save a change to the server.</string>
     <string name="error_write_permission">The server did not accept a change. Check that you are signed in with the right account.</string>
     <string name="home_review_subtitle">Recorded automatically</string>
+    <string name="home_review_awaiting_refund">Awaiting refund</string>
     <string name="home_review_confirm_all">Confirm all</string>
     <string name="home_review_more">and %d more</string>
     <plurals name="home_review_confirmed">

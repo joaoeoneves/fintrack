@@ -21,6 +21,7 @@ data class ExpenseFormSnapshot(
     val categoryTouched: Boolean,
     val refundOf: String? = null,
     val refundOfLabel: String? = null,
+    val awaitingRefund: Boolean = false,
     val splitEnabled: Boolean = false,
     val splitParts: List<SplitPartSnapshot> = emptyList(),
 )
@@ -46,6 +47,7 @@ internal fun ExpenseFormState.toSnapshot() =
         categoryTouched = categoryTouched,
         refundOf = refundOf,
         refundOfLabel = refundOfLabel,
+        awaitingRefund = awaitingRefund,
         splitEnabled = splitEnabled,
         splitParts =
             splitParts.map {
@@ -79,6 +81,7 @@ internal fun ExpenseFormState.restoredFrom(
             categoryTouched = snapshot.categoryTouched,
             refundOf = snapshot.refundOf?.takeIf { snapshot.isRefund },
             refundOfLabel = snapshot.refundOfLabel?.takeIf { snapshot.isRefund },
+            awaitingRefund = snapshot.awaitingRefund && !snapshot.isRefund,
             splitEnabled = snapshot.splitEnabled && !isEditMode,
             splitParts =
                 if (isEditMode) {

@@ -207,6 +207,7 @@ class AddEditExpenseViewModel(
                                         expenseId = existing.id,
                                         refundOf = existing.refundOf,
                                         splitId = existing.splitId,
+                                        awaitingRefund = existing.awaitingRefund,
                                         refundOfLabel = existing.refundOf?.let { originalName(it) },
                                     ),
                                     BuiltInCategories.all,
@@ -348,7 +349,7 @@ class AddEditExpenseViewModel(
     fun onRefundChanged(isRefund: Boolean) {
         updateForm {
             val base = it.copy(isRefund = isRefund, saveError = null)
-            val updated = if (isRefund) base.withoutSplit() else base
+            val updated = if (isRefund) base.withoutSplit().copy(awaitingRefund = false) else base
             // A link only means something on a refund.
             (if (isRefund) updated else updated.copy(refundOf = null, refundOfLabel = null)).withMealCardPrefill()
         }
@@ -358,6 +359,9 @@ class AddEditExpenseViewModel(
     fun onRefundOfSelected(original: Expense?) {
         updateForm { it.copy(refundOf = original?.id, refundOfLabel = original?.name, saveError = null) }
     }
+
+    /** The "Will be refunded" switch. */
+    fun onAwaitingRefundChanged(awaiting: Boolean) = updateForm { it.copy(awaitingRefund = awaiting) }
 
     /** The "Paid with meal card" switch; once the user sets it, the category no longer decides. */
     fun onMealCardChanged(paid: Boolean) = updateForm { it.copy(paidWithMealCard = paid, mealCardTouched = true) }
@@ -543,6 +547,7 @@ private fun ExpenseFormState.toExpense(): Expense =
         paidWithMealCard = paidWithMealCard,
         refundOf = refundOf.takeIf { isRefund },
         splitId = splitId,
+        awaitingRefund = awaitingRefund && !isRefund,
         // Saving counts as looking at it: an edited automatic record leaves the review inbox.
         needsReview = false,
     )

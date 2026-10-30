@@ -43,6 +43,8 @@ data class ExpenseFormState(
     val refundOf: String? = null,
     /** The original's name, shown in the "Refund of" row; `null` when unlinked. */
     val refundOfLabel: String? = null,
+    /** A refund is expected: the expense stays in the review inbox until one is linked. */
+    val awaitingRefund: Boolean = false,
     /** How much of this (original) expense was refunded, in edit mode; not part of the saved snapshot. */
     val refundStatus: RefundStatus? = null,
     /** The split this (existing) expense is a part of. */

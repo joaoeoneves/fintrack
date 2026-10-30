@@ -128,6 +128,7 @@ internal data class ExpenseFormActions(
     val split: SplitActions,
     val onDuplicate: (String) -> Unit,
     val onMealCardChanged: (Boolean) -> Unit,
+    val onAwaitingRefundChanged: (Boolean) -> Unit,
     val onDelete: () -> Unit,
 )
 
@@ -151,6 +152,7 @@ private fun AddEditExpenseViewModel.formActions(onDuplicate: (String) -> Unit): 
             ),
         onDuplicate = onDuplicate,
         onMealCardChanged = ::onMealCardChanged,
+        onAwaitingRefundChanged = ::onAwaitingRefundChanged,
         onDelete = ::onDelete,
     )
 
@@ -251,6 +253,14 @@ private fun RefundAndMealCardSwitches(
         supportingText = stringResource(R.string.expense_field_refund_hint),
     )
     if (form.isRefund) RefundOfRow(form = form, actions = actions)
+    if (!form.isRefund && !form.isSplitting) {
+        SettingsSwitchRow(
+            title = stringResource(R.string.expense_field_awaiting_refund),
+            checked = form.awaitingRefund,
+            onCheckedChange = actions.onAwaitingRefundChanged,
+            supportingText = stringResource(R.string.expense_field_awaiting_refund_hint),
+        )
+    }
     if (form.showsMealCardSwitch) {
         SettingsSwitchRow(
             title = stringResource(R.string.expense_field_meal_card),

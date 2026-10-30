@@ -97,7 +97,17 @@ private fun ReviewRecords(
                 val rowModifier = Modifier.weight(1f)
                 when (item) {
                     is Expense ->
-                        ExpenseRow(item, rowModifier, onClick = { model.onOpenExpense(item.id) }, showDate = true)
+                        Column(rowModifier) {
+                            ExpenseRow(item, onClick = { model.onOpenExpense(item.id) }, showDate = true)
+                            if (item.awaitingRefund) {
+                                Text(
+                                    text = stringResource(R.string.home_review_awaiting_refund),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = FinTrackTheme.colors.textSecondary,
+                                    modifier = Modifier.padding(horizontal = Dimens.Space16),
+                                )
+                            }
+                        }
 
                     is Income ->
                         IncomeRow(item, rowModifier, onClick = { model.onOpenIncome(item.id) }, showDate = true)

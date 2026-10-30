@@ -102,6 +102,8 @@
 
     <string name="expense_field_refund">Reembolso</string>
     <string name="expense_field_refund_hint">Dinheiro devolvido; reduz os gastos desta categoria</string>
+    <string name="expense_field_awaiting_refund">Vai ser reembolsada</string>
+    <string name="expense_field_awaiting_refund_hint">Fica em Por rever até registares o reembolso.</string>
     <string name="expense_refund_badge">Reembolso</string>
     <string name="filter_all">Todas</string>
     <string name="field_length_counter">%1$d/%2$d</string>
@@ -672,6 +674,7 @@
     <string name="error_write_rejected">Não foi possível guardar uma alteração no servidor.</string>
     <string name="error_write_permission">O servidor não aceitou uma alteração. Confirma que entraste com a conta certa.</string>
     <string name="home_review_subtitle">Registados automaticamente</string>
+    <string name="home_review_awaiting_refund">Por reembolsar</string>
     <string name="home_review_confirm_all">Confirmar todos</string>
     <string name="home_review_more">e mais %d</string>
     <plurals name="home_review_confirmed">
