@@ -7,7 +7,6 @@ import com.joaoeoneves.fintrack.data.backup.backupCategory
 import com.joaoeoneves.fintrack.data.backup.backupDoc
 import com.joaoeoneves.fintrack.data.backup.backupExpense
 import com.joaoeoneves.fintrack.data.backup.backupIncome
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import kotlinx.coroutines.flow.first
@@ -20,7 +19,6 @@ class BackupViewModelImportTest : BackupViewModelTestBase() {
         backupDoc(
             expenses = listOf(backupExpense("e1", categoryId = "gym"), backupExpense("bad", amountCents = 0)),
             income = listOf(backupIncome()),
-            budgets = listOf(LocalBudget("FOOD", 100)),
             categories = listOf(backupCategory("gym")),
             preferences = BackupPreferences(theme = "LIGHT"),
         )

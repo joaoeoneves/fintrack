@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.ui.settings.categories
 
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeBuiltInCategoryNames
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
@@ -27,7 +26,6 @@ import org.junit.Before
 abstract class CategoriesViewModelTestBase {
     protected val testDispatcher = StandardTestDispatcher()
     protected val expenses = FakeExpenseRepository()
-    protected val budgets = FakeBudgetRepository()
     protected val recurring = FakeRecurringRepository()
     protected val errors = mutableListOf<UiText>()
 
@@ -49,9 +47,9 @@ abstract class CategoriesViewModelTestBase {
     ): CategoriesViewModel =
         CategoriesViewModel(
             repo,
-            CheckCategoryUsage(expenses, budgets, recurring),
+            CheckCategoryUsage(expenses, recurring),
             FakeBuiltInCategoryNames(),
-            MoveCategoryItems(expenses, budgets, recurring, testDispatcher),
+            MoveCategoryItems(expenses, recurring, testDispatcher),
             SavedStateHandle(listOfNotNull(editId?.let { "editId" to it }).toMap()),
         )
 

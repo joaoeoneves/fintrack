@@ -113,6 +113,18 @@ class SpendingTabViewModelTest {
         }
 
     @Test
+    fun onMonthSelected_fromTheYearScale_opensThatMonth() =
+        runTest(testDispatcher) {
+            val setup = setup("period" to Period.Year(2026).encode())
+            content(setup.vm)
+
+            setup.vm.onMonthSelected(YearMonth.of(2026, 3))
+            advanceUntilIdle()
+
+            assertEquals(Period.Month(YearMonth.of(2026, 3)), (setup.vm.uiState.value as SpendingTabUiState.Content).period)
+        }
+
+    @Test
     fun seededFromRoute_period() =
         runTest(testDispatcher) {
             val period = Period.Month(YearMonth.of(2026, 7))

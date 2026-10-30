@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.ui.settings.categories
 import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.usecase.CategoryMovePreview
 import com.joaoeoneves.fintrack.testutil.recurringItem
@@ -36,7 +35,6 @@ class CategoriesViewModelMoveTest : CategoriesViewModelTestBase() {
         expenses.addExpense(testExpense("e1", 500L, date, source))
         expenses.addExpense(testExpense("e2", 700L, date, source))
         recurring.saveRecurring(recurringItem("r1", categoryId = source.id))
-        budgets.setBudget(source.id, 9_000L)
     }
 
     private fun CategoriesViewModel.moveDialog() = content().moveDialog
@@ -93,18 +91,6 @@ class CategoriesViewModelMoveTest : CategoriesViewModelTestBase() {
         }
 
     @Test
-    fun request_budgetOnly_stillOffersTargets() =
-        runTest(testDispatcher) {
-            budgets.setBudget(source.id, 100L)
-            val vm = start(FakeCategoryRepository(listOf(gym)))
-
-            vm.onMoveItemsRequested(source.id)
-            advanceUntilIdle()
-
-            assertTrue(vm.moveDialog() is MoveDialogState.PickTarget)
-        }
-
-    @Test
     fun request_previewFails_showsCannotVerify() =
         runTest(testDispatcher) {
             expenses.nextCountExpensesError = IllegalStateException("offline")
@@ -117,10 +103,9 @@ class CategoriesViewModelMoveTest : CategoriesViewModelTestBase() {
         }
 
     @Test
-    fun pickTarget_showsConfirmWithCountsAndTargetBudgetFlag() =
+    fun pickTarget_showsConfirmWithCounts() =
         runTest(testDispatcher) {
             seedSourceItems()
-            budgets.setBudget(gym.id, 1_000L)
             val vm = start(FakeCategoryRepository(listOf(gym)))
             vm.onMoveItemsRequested(source.id)
             advanceUntilIdle()
@@ -132,7 +117,7 @@ class CategoriesViewModelMoveTest : CategoriesViewModelTestBase() {
                 MoveDialogState.Confirm(
                     source,
                     gym,
-                    CategoryMovePreview(2, 1, hasBudget = true, targetHasBudget = true),
+                    CategoryMovePreview(2, 1),
                 ),
                 vm.moveDialog(),
             )
@@ -181,7 +166,6 @@ class CategoriesViewModelMoveTest : CategoriesViewModelTestBase() {
             assertEquals(listOf<UiText>(UiText.StringResource(R.string.category_move_done)), errors)
             assertEquals(0, expenses.countExpensesWithCategory(source.id).getOrThrow())
             assertEquals(BuiltInCategories.FOOD.id, recurring.items.single().categoryId)
-            assertEquals(listOf(Budget(BuiltInCategories.FOOD.id, 9_000L)), budgets.observeBudgets().first())
         }
 
     @Test

@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
-import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.local.LocalExpense
@@ -86,12 +86,12 @@ abstract class LocalDataMigrationViewModelTestBase : LocalStoreTestBase() {
 
     protected suspend fun seedLocal(
         expenses: Int = 2,
-        budgets: Int = 1,
+        income: Int = 1,
     ): LocalDataDocument {
         store.update {
             it.copy(
                 expenses = (1..expenses).map { n -> LocalExpense("e$n", "Item", 100, "FOOD", "2026-03-10T12:00:00Z") },
-                budgets = listOf(LocalBudget("FOOD", 100)).take(budgets),
+                income = (1..income).map { n -> LocalIncome("i$n", "Pay", 100, "2026-03-10T12:00:00Z") },
             ) to Unit
         }
         return store.data.first()
@@ -115,11 +115,10 @@ abstract class LocalDataMigrationViewModelTestBase : LocalStoreTestBase() {
     protected fun counts(
         expenses: Int,
         income: Int = 0,
-        budgets: Int = 0,
         categories: Int = 0,
         plannedIncome: Int = 0,
         recurring: Int = 0,
-    ) = BackupCounts(expenses, income, budgets, categories, plannedIncome, recurring)
+    ) = BackupCounts(expenses, income, categories, plannedIncome, recurring)
 
     protected fun assertText(
         expectedRes: Int,

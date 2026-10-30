@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -119,48 +120,38 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
         }
 
     @Test
-    fun futureYear_isAllExpected() =
+    fun futureYear_canStillGoForward() =
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(line("a", 100_000L))
             val vm = at(Period.Year(2027))
             collect(vm)
 
-            val outlook = vm.content().outlook!!
-            assertEquals(12, outlook.months.size)
-            assertTrue(outlook.months.none { it.received })
-            assertEquals(1_200_000L, outlook.totalCents)
-            assertEquals(0L, outlook.receivedCents)
+            assertEquals(Period.Year(2027), vm.content().period)
             assertTrue(vm.content().canGoToNextMonth)
         }
 
-    // Production bug: historyOf() returns null for the current year (its last month is after today).
     @Test
-    fun currentYear_mixesReceivedAndExpected() =
+    fun onMonthSelected_pastMonth_opensThatMonth_fromTheYearScale() =
         runTest(testDispatcher) {
-            incomeRepo.savePlannedIncome(line("a", 100_000L))
-            actualIncomeRepo.addIncome(testIncome("i1", 95_000L, Instant.parse("2026-02-10T10:00:00Z")))
             val vm = at(Period.Year(2026))
             collect(vm)
 
-            val outlook = vm.content().outlook!!
-            // October is the current month: partial, not yet received.
-            assertEquals(9, outlook.months.count { it.received })
-            assertTrue(outlook.months[9].partial)
-            assertEquals(95_000L, outlook.months[1].cents)
-            assertEquals(0L, outlook.months[0].cents)
-            assertFalse(outlook.months[10].received)
-            assertEquals(100_000L, outlook.months[10].cents)
-            assertEquals(95_000L, outlook.receivedCents)
-            assertEquals(300_000L, outlook.expectedCents)
+            vm.onMonthSelected(YearMonth.of(2026, 3))
+            advanceUntilIdle()
+
+            assertEquals(Period.Month(YearMonth.of(2026, 3)), vm.content().period)
         }
 
     @Test
-    fun pastYear_hasNoOutlook() =
+    fun onMonthSelected_currentMonth_resolvesToCurrentMonth() =
         runTest(testDispatcher) {
-            val vm = at(Period.Year(2025))
+            val vm = at(Period.Year(2026))
             collect(vm)
 
-            assertNull(vm.content().outlook)
+            vm.onMonthSelected(oct)
+            advanceUntilIdle()
+
+            assertEquals(Period.CurrentMonth, vm.content().period)
         }
 
     @Test
