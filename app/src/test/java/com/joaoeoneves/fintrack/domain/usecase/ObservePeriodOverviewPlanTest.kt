@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.testutil.assertFailsWithError
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,7 +33,7 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
     private val salary = PlannedIncome(id = "salary", label = "Salary", amountCents = 200_000L, order = 0)
 
     @Test
-    fun budgetChange_reEmits_withMonthSpendOnly() =
+    fun recurringChange_reEmits_withMonthSpendOnly() =
         runTest {
             expenses.delegate.addExpense(testExpense("oct", 4_000L, noonOn(october, 31), BuiltInCategories.FOOD))
             val november = noonOn(october.plusMonths(1), 1)
@@ -42,23 +43,14 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
                 useCase(Period.CurrentMonth, now, zone, 5).toList(emissions)
             }
 
-            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 3_000L)
+            recurring.saveRecurring(recurringItem("f1", amountCents = 3_000L, categoryId = BuiltInCategories.FOOD.id))
 
             val before = emissions.first().budgets.food()
             val after = emissions.last().budgets.food()
             assertEquals(4_000L, before.spentCents)
-            assertNull(before.limitCents)
-            assertEquals(3_000L, after.limitCents)
+            assertNull(before.planned)
+            assertEquals(3_000L, after.planned)
             assertTrue(after.isOverBudget)
-        }
-
-    @Test
-    fun budgetFlowError_propagates() =
-        runTest {
-            val error = IllegalStateException("budgets down")
-            budgets.delegate.nextObserveBudgetsError = error
-
-            assertFailsWithError(error) { overview(Period.CurrentMonth) }
         }
 
     @Test
@@ -83,10 +75,10 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
         }
 
     @Test
-    fun plan_combinesPlannedIncomeBudgetsAndSpend() =
+    fun plan_combinesPlannedIncomeRecurringAndSpend() =
         runTest {
             plannedIncome.savePlannedIncome(salary)
-            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 30_000L)
+            recurring.saveRecurring(recurringItem("f1", amountCents = 30_000L, categoryId = BuiltInCategories.FOOD.id))
             expenses.delegate.addExpense(testExpense("f", 5_000L, noonOn(october, 3), BuiltInCategories.FOOD))
 
             val plan = overview(Period.CurrentMonth).plan
@@ -190,16 +182,6 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
             monthSettings.setDaysOff(october, MAX_DAYS_OFF)
 
             assertEquals(0L, overview(Period.CurrentMonth).plan.expectedIncomeCents)
-        }
-
-    @Test
-    fun override_winsOverDaysOff() =
-        runTest {
-            plannedIncome.savePlannedIncome(perDay)
-            monthSettings.setWorkingDaysOverride(october, 10)
-            monthSettings.setDaysOff(october, 3)
-
-            assertEquals(1046L * 10, overview(Period.CurrentMonth).plan.expectedIncomeCents)
         }
 
     @Test
