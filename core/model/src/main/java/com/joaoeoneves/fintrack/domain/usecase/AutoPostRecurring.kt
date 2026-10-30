@@ -23,8 +23,9 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 /**
- * Confirms the due occurrences of every active auto-post recurring expense (income is a planned line, see
- * `RecordPayday`), oldest first. Safe to repeat: an
+ * Confirms the due occurrences of every active recurring expense (income is a planned line, see
+ * `RecordPayday`), oldest first. Items created before 5.5 are adopted first (their backlog is marked handled, see
+ * [RecurringRepository.adoptLegacyManualItems]); when that fails nothing is posted. Safe to repeat: an
  * occurrence whose transaction already exists (a second device got there first) only advances the cursor.
  *
  * It also heals: an occurrence the item has already handled (before its cursor, within the lookback window, not
@@ -54,6 +55,9 @@ class AutoPostRecurring
             today: LocalDate,
             zone: ZoneId,
         ): AutomationOutcome {
+            if (recurringRepository.adoptLegacyManualItems(today).isFailure) {
+                return AutomationOutcome(0, failed = true)
+            }
             val items = recurringRepository.observeRecurring().first()
             var catalog: List<Category>? = null
             var failed = false

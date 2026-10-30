@@ -2,13 +2,10 @@ package com.joaoeoneves.fintrack.data.preferences
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
@@ -19,14 +16,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private val themeKey = stringPreferencesKey(KEY_THEME)
-private val currencyKey = stringPreferencesKey(KEY_CURRENCY)
 private val languageKey = stringPreferencesKey(KEY_LANGUAGE)
-private val reducedMotionKey = stringPreferencesKey(KEY_REDUCED_MOTION)
-private val salaryPaysNextMonthKey = booleanPreferencesKey("salaryPaysNextMonth")
 
 /**
  * Typed view over the single preferences [DataStore]. Missing or unrecognized stored values read
- * as the [UserPreferences] defaults.
+ * as the [UserPreferences] defaults; keys of removed preferences (currency, reduced motion, salary shift) are ignored.
  */
 @Singleton
 class UserPreferencesStore
@@ -46,11 +40,7 @@ class UserPreferencesStore
             dataStore.edit { prefs ->
                 result = transform(prefs.toUserPreferences())
                 prefs[themeKey] = result.theme.name
-                prefs[currencyKey] = result.currency.name
                 prefs[languageKey] = result.language.name
-                prefs[reducedMotionKey] = result.reducedMotion.name
-                val shift = result.salaryPaysNextMonth
-                if (shift != null) prefs[salaryPaysNextMonthKey] = shift else prefs.remove(salaryPaysNextMonthKey)
             }
             return result
         }
@@ -59,11 +49,7 @@ class UserPreferencesStore
             val defaults = UserPreferences()
             return UserPreferences(
                 theme = ThemePreference.entries.find { it.name == this[themeKey] } ?: defaults.theme,
-                currency = CurrencyOption.entries.find { it.name == this[currencyKey] } ?: defaults.currency,
                 language = AppLanguage.entries.find { it.name == this[languageKey] } ?: defaults.language,
-                reducedMotion =
-                    MotionPreference.entries.find { it.name == this[reducedMotionKey] } ?: defaults.reducedMotion,
-                salaryPaysNextMonth = this[salaryPaysNextMonthKey],
             )
         }
     }

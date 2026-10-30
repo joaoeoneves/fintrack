@@ -35,6 +35,8 @@ class SessionRecurringRepository
 
         override suspend fun deleteRecurring(id: String): Result<Unit> = switch.call { it.deleteRecurring(id) }
 
+        override suspend fun adoptLegacyManualItems(today: LocalDate) = switch.call { it.adoptLegacyManualItems(today) }
+
         override suspend fun skipOccurrences(
             itemId: String,
             dates: Set<LocalDate>,

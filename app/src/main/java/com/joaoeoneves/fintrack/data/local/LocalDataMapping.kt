@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.data.local
 import android.util.Log
 import com.joaoeoneves.fintrack.data.DEFAULT_CATEGORY_COLOR_KEY
 import com.joaoeoneves.fintrack.data.DEFAULT_CATEGORY_ICON_KEY
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
@@ -81,24 +80,6 @@ internal fun Income.toLocal(): LocalIncome =
         date = date.toString(),
         note = note,
         needsReview = needsReview,
-    )
-
-internal fun LocalBudget.toDomain(): Budget =
-    Budget(
-        categoryId = CategoryId(categoryId),
-        limitCents = limitCents,
-        skipMonths = skipMonths.toSet(),
-        startMonth = startMonth.toYearMonthOrNull(),
-        versions = versions.toDomainVersions(),
-    )
-
-internal fun Budget.toLocal(): LocalBudget =
-    LocalBudget(
-        categoryId = categoryId.value,
-        limitCents = limitCents,
-        skipMonths = skipMonths.sorted(),
-        startMonth = startMonth?.toString(),
-        versions = versions.toLocalVersions(),
     )
 
 /**

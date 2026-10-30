@@ -4,7 +4,6 @@ import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
@@ -31,7 +30,6 @@ class GuestBackupRestorer
                     preferencesStore.update { current ->
                         current.copy(
                             theme = ThemePreference.entries.find { it.name == backup.theme } ?: current.theme,
-                            currency = CurrencyOption.entries.find { it.name == backup.currency } ?: current.currency,
                             language = AppLanguage.entries.find { it.name == backup.language } ?: current.language,
                         )
                     }

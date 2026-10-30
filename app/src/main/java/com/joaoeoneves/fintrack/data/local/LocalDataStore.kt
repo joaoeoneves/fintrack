@@ -109,7 +109,9 @@ class LocalDataStore
                     null
                 }
             return if (doc != null && doc.schemaVersion <= LOCAL_SCHEMA_VERSION) {
-                if (doc.schemaVersion < START_MONTH_SCHEMA_VERSION) doc.upgradedToStartMonths() else doc
+                val withStartMonths =
+                    if (doc.schemaVersion < START_MONTH_SCHEMA_VERSION) doc.upgradedToStartMonths() else doc
+                if (doc.schemaVersion < SIMPLIFIED_SCHEMA_VERSION) withStartMonths.upgradedTo23() else withStartMonths
             } else {
                 if (doc != null) Log.w(TAG, "Guest data file has newer schema ${doc.schemaVersion}; moving it aside")
                 moveAside()

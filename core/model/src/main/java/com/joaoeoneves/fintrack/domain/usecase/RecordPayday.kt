@@ -96,7 +96,7 @@ class RecordPayday
             var recorded = 0
             for (month in months) {
                 val current = monthSettings.firstOrNull { it.month == month }
-                val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
+                val workingDays = effectiveWorkingDays(month, current?.daysOff ?: 0)
                 val monthLines = due.filterValues { month in it }.keys.toList()
                 val incomeMonth = IncomeMonth.forMonth(month, workingDays)
                 val count =
