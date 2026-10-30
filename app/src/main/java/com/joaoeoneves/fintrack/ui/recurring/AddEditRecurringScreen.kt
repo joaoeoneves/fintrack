@@ -126,19 +126,13 @@ private fun RecurringFormContent(
     }
 }
 
-/** The auto-post switch and, when editing, the pause switch. */
+/** The pause switch, when editing. */
 @Composable
 private fun RecurringToggles(
     form: RecurringForm,
     isEditMode: Boolean,
     onFormChanged: (RecurringForm) -> Unit,
 ) {
-    SettingsSwitchRow(
-        title = stringResource(R.string.recurring_auto_post),
-        checked = form.autoPost,
-        onCheckedChange = { onFormChanged(form.copy(autoPost = it)) },
-        supportingText = stringResource(R.string.recurring_auto_post_hint),
-    )
     if (isEditMode) {
         SettingsSwitchRow(
             title = stringResource(R.string.recurring_paused),
