@@ -465,13 +465,15 @@ class IncomeTabViewModel(
         viewModelScope.launch { repositories.plannedIncome.savePlannedIncome(line).onFailure { reportFailure(it) } }
     }
 
-    /** Sets the days off taken in [month]. */
+    /** Sets the days off by type taken in each of [months], replacing what those months had. */
     fun onSetDaysOff(
-        month: YearMonth,
-        daysOff: Int,
+        months: List<YearMonth>,
+        vacation: Int,
+        sick: Int,
+        other: Int,
     ) {
         viewModelScope.launch {
-            repositories.monthSettings.setDaysOff(month, daysOff).onFailure { reportFailure(it) }
+            repositories.monthSettings.setDaysOff(months, vacation, sick, other).onFailure { reportFailure(it) }
         }
     }
 
@@ -600,7 +602,9 @@ private fun workingDaysOf(
     return WorkingDaysState(
         month = month,
         days = effectiveWorkingDays(month, daysOff),
-        daysOff = daysOff,
+        vacationDays = monthSettings?.vacationDays ?: 0,
+        sickDays = monthSettings?.sickDays ?: 0,
+        otherDays = monthSettings?.otherDays ?: 0,
         calendarDays = calendar,
         holidays = holidayWeekdaysIn(month),
     )

@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.common.history
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +10,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,21 +21,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
+import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
-import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeBreakdown
 import com.joaoeoneves.fintrack.ui.activity.analytics.EvolutionCaptions
 import com.joaoeoneves.fintrack.ui.activity.analytics.EvolutionSection
+import com.joaoeoneves.fintrack.ui.activity.analytics.GroupBreakdown
 import com.joaoeoneves.fintrack.ui.activity.analytics.HistoryFigures
 import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeSourceRow
 import com.joaoeoneves.fintrack.ui.activity.analytics.MonthlyAverageLine
 import com.joaoeoneves.fintrack.ui.activity.analytics.SpendingComparisonLines
 import com.joaoeoneves.fintrack.ui.activity.analytics.SpendingSplitCard
+import com.joaoeoneves.fintrack.ui.activity.analytics.groupTotalsOf
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeFigures
 import com.joaoeoneves.fintrack.ui.activity.analytics.spendingFigures
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.dashboard.CategoryBreakdownSection
 import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
+import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -71,22 +77,53 @@ fun SpendingHistory(
             }
         }
         if (!analytics.breakdown.isEmpty) {
-            CategoryBreakdownSection(
-                breakdown = analytics.breakdown,
-                showTotal = false,
-                modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-                onCategoryClick = onCategoryClick,
-            )
-            if (analytics.breakdown.hasEnvelopes) {
-                SectionTitle(
-                    title = stringResource(R.string.insights_by_group),
-                    modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-                )
-                EnvelopeBreakdown(
-                    summary = analytics.breakdown.envelopes,
-                    modifier = Modifier.padding(horizontal = Dimens.ScreenPadding),
-                )
+            SpendingBreakdown(analytics.breakdown, onCategoryClick)
+        }
+    }
+}
+
+/** The two ways to read the spending breakdown, switched when the user has any group. */
+private enum class BreakdownMode(
+    @param:StringRes val label: Int,
+) {
+    CATEGORY(R.string.breakdown_mode_category),
+    GROUP(R.string.breakdown_mode_group),
+}
+
+@Composable
+private fun SpendingBreakdown(
+    breakdown: ActivityBreakdown,
+    onCategoryClick: (Category) -> Unit,
+) {
+    val padding = Modifier.padding(horizontal = Dimens.ScreenPadding)
+    var mode by rememberSaveable { mutableStateOf(BreakdownMode.CATEGORY) }
+    val tabs: @Composable () -> Unit = {
+        SegmentedTextTabs(
+            options = BreakdownMode.entries,
+            selected = mode,
+            label = { stringResource(it.label) },
+            onSelect = { mode = it },
+            modifier = Modifier.padding(vertical = Dimens.Space8),
+        )
+    }
+    if (!breakdown.hasEnvelopes || mode == BreakdownMode.CATEGORY) {
+        CategoryBreakdownSection(
+            breakdown = breakdown,
+            showTotal = false,
+            modifier = padding,
+            onCategoryClick = onCategoryClick,
+            belowTitle = tabs.takeIf { breakdown.hasEnvelopes },
+        )
+    } else {
+        val noGroup = stringResource(R.string.plan_group_other)
+        val groups =
+            remember(breakdown, noGroup) {
+                groupTotalsOf(breakdown.categoryTotals, breakdown.envelopes.envelopes.map { it.envelope }, noGroup)
             }
+        Column(modifier = padding) {
+            SectionTitle(title = stringResource(R.string.insights_by_group))
+            tabs()
+            GroupBreakdown(groups)
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data.local
 
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
+import com.joaoeoneves.fintrack.domain.model.requireValidDaysOff
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -19,24 +20,22 @@ class LocalMonthSettingsRepository
             store.data.map { doc -> doc.monthSettings.mapNotNull { it.toDomainOrNull() } }
 
         override suspend fun setDaysOff(
-            month: YearMonth,
-            days: Int,
-        ): Result<Unit> = change(month) { it.copy(daysOff = days) }
-
-        /** Applies [edit] to [month]'s record (a blank one if absent); a record left with nothing set is removed. */
-        private suspend fun change(
-            month: YearMonth,
-            edit: (LocalMonthSettings) -> LocalMonthSettings,
-        ): Result<Unit> =
-            store.update { doc ->
-                val key = month.toString()
-                val current = doc.monthSettings.firstOrNull { it.month == key } ?: LocalMonthSettings(month = key)
-                val record = edit(current)
-                if (record.daysOff == 0) {
-                    doc.copy(monthSettings = doc.monthSettings.filterNot { it.month == key }) to Unit
-                } else {
-                    validateMonthSettings(record)
-                    doc.copy(monthSettings = doc.monthSettings.upserted(record) { it.month == key }) to Unit
-                }
+            months: Collection<YearMonth>,
+            vacation: Int,
+            sick: Int,
+            other: Int,
+        ): Result<Unit> {
+            requireValidDaysOff(months, vacation, sick, other)
+            val keys = months.map { it.toString() }.toSet()
+            return store.update { doc ->
+                val kept = doc.monthSettings.filterNot { it.month in keys }
+                val set =
+                    if (vacation + sick + other == 0) {
+                        emptyList()
+                    } else {
+                        keys.map { LocalMonthSettings(it, vacation, sick, other) }.onEach { validateMonthSettings(it) }
+                    }
+                doc.copy(monthSettings = kept + set) to Unit
             }
+        }
     }

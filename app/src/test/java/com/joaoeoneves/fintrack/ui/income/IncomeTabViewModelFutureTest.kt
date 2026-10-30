@@ -79,7 +79,7 @@ class IncomeTabViewModelFutureTest : IncomeTabViewModelTestBase() {
         runTest(testDispatcher) {
             incomeRepo.savePlannedIncome(meal(1_000L))
             val target = YearMonth.of(2027, 3)
-            monthSettingsRepo.setDaysOff(target, 2)
+            monthSettingsRepo.setDaysOff(listOf(target), 0, 0, 2)
             val vm = at(Period.Month(target))
             collect(vm)
 

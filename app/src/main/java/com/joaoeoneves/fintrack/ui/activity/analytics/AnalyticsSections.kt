@@ -23,7 +23,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.SpendingSplit
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -77,25 +76,18 @@ fun SpendingSplitCard(
     }
 }
 
-/** The envelope view of the breakdown: each envelope's share of the period's outflow, "No envelope" for the rest. */
+/** The group view of the breakdown: each group's share of the period's spending, "No group" for the rest. */
 @Composable
-fun EnvelopeBreakdown(
-    summary: EnvelopesSummary,
+fun GroupBreakdown(
+    groups: List<GroupTotal>,
     modifier: Modifier = Modifier,
 ) {
-    val noEnvelope = stringResource(R.string.plan_group_other)
-    val shown =
-        (
-            summary.envelopes.map { it.envelope.id to (it.envelope.name to it.spentCents) } +
-                listOf(NO_ENVELOPE to (noEnvelope to summary.unenvelopedSpentCents))
-        ).filter { it.second.second > 0 }
-            .sortedByDescending { it.second.second }
-    val total = shown.sumOf { it.second.second }
+    val total = groups.sumOf { it.totalCents }
     Column(modifier = modifier.fillMaxWidth()) {
-        shown.forEach { (id, named) ->
-            key(id) {
-                AmountRow(label = named.first, cents = named.second, total = total)
-                ThinProgressBar(progress = named.second.toFloat() / total.toFloat())
+        groups.forEach { group ->
+            key(group.id) {
+                AmountRow(label = group.name, cents = group.totalCents, total = total)
+                ThinProgressBar(progress = if (total > 0L) group.totalCents.toFloat() / total.toFloat() else 0f)
             }
         }
     }

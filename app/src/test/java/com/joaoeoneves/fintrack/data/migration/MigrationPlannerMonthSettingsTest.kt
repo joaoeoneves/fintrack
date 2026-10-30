@@ -62,7 +62,7 @@ class MigrationPlannerMonthSettingsTest {
     }
 
     @Test
-    fun pendingWrites_useMonthAsIdAndDaysOffField_andComeLast() {
+    fun pendingWrites_useMonthAsIdAndVacationDaysField_andComeLast() {
         val plan = planMigration(local(oct).copy(income = listOf(localIncome("i1"))), remoteSnapshot())
 
         val batches = plan.toBatches()
@@ -70,8 +70,8 @@ class MigrationPlannerMonthSettingsTest {
         assertEquals(listOf("income", "monthSettings"), batches.map { it.single().collection })
         val write = batches.last().single()
         assertEquals("2026-10", write.id)
-        assertEquals(setOf("daysOff", "updatedAt"), write.data.keys)
-        assertEquals(15, write.data["daysOff"])
+        assertEquals(setOf("vacationDays", "updatedAt"), write.data.keys)
+        assertEquals(15, write.data["vacationDays"])
     }
 
     @Test

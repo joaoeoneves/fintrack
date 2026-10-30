@@ -53,10 +53,15 @@ val IncomeRow.key: String get() = lines.first().id
 data class WorkingDaysState(
     val month: YearMonth,
     val days: Int,
-    val daysOff: Int = 0,
+    val vacationDays: Int = 0,
+    val sickDays: Int = 0,
+    val otherDays: Int = 0,
     val calendarDays: Int,
     val holidays: Int,
-)
+) {
+    /** All the days off of the month, whatever their type. */
+    val daysOff: Int get() = vacationDays + sickDays + otherDays
+}
 
 /** When and how an income line pays; the part of the line the editor sheet adds beyond label and amount. */
 data class IncomeSchedule(

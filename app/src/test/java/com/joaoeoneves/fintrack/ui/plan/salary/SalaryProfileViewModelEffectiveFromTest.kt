@@ -6,8 +6,11 @@ import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
 import com.joaoeoneves.fintrack.domain.model.AmountVersion
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
+import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.SPREAD_FULL_PPM
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
+import com.joaoeoneves.fintrack.domain.model.SalaryProfile
+import com.joaoeoneves.fintrack.domain.model.VacationBalance
 import com.joaoeoneves.fintrack.domain.usecase.ManageSalaryProfile
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import kotlinx.coroutines.Dispatchers
@@ -49,13 +52,13 @@ class SalaryProfileViewModelEffectiveFromTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun TestScope.started(): SalaryProfileViewModel {
+    private fun TestScope.started(settings: List<MonthSettings> = emptyList()): SalaryProfileViewModel {
         val vm =
             SalaryProfileViewModel(
                 profiles,
                 ManageSalaryProfile(profiles, income),
                 income,
-                FakeMonthSettingsRepository(),
+                FakeMonthSettingsRepository(settings),
                 clock,
                 idGenerator = { "id1" },
             )
@@ -112,5 +115,61 @@ class SalaryProfileViewModelEffectiveFromTest {
             assertEquals(YearMonth.of(2027, 1), after.versions.last().from)
             assertEquals(AmountVersion(YearMonth.of(2026, 1), before.amountCents), after.versions.first())
             assertTrue(after.amountCents > before.amountCents)
+        }
+
+    @Test
+    fun raiseInFebruary_defaultsToThisYearsFebruary_andOffToTheCurrentMonth() =
+        runTest(dispatcher) {
+            val vm = started()
+            vm.onFormChange(SalaryForm(base = 100_000L, raiseInFebruary = true))
+            advanceUntilIdle()
+            assertEquals(YearMonth.of(2026, 2), vm.content().effectiveFrom)
+
+            vm.onFormChange(vm.content().form.copy(raiseInFebruary = false))
+            advanceUntilIdle()
+            assertEquals(YearMonth.of(2026, 10), vm.content().effectiveFrom)
+        }
+
+    @Test
+    fun raiseInFebruary_explicitChoiceWins_andSaveStartsTheLineThere() =
+        runTest(dispatcher) {
+            val vm = started()
+            vm.onFormChange(SalaryForm(base = 100_000L, spreadPpm = SPREAD_FULL_PPM, raiseInFebruary = true))
+            vm.onEffectiveFromChange(YearMonth.of(2026, 6))
+            advanceUntilIdle()
+            assertEquals(YearMonth.of(2026, 6), vm.content().effectiveFrom)
+
+            vm.onSave(labels)
+            advanceUntilIdle()
+
+            assertEquals(YearMonth.of(2026, 6), income.lines.single { it.id == MANAGED_NET_SALARY }.startMonth)
+        }
+
+    @Test
+    fun raiseInFebruary_roundTripsThroughSaveAndReload() =
+        runTest(dispatcher) {
+            val first = started()
+            first.onFormChange(SalaryForm(base = 100_000L, spreadPpm = SPREAD_FULL_PPM, raiseInFebruary = true))
+            first.onSave(labels)
+            advanceUntilIdle()
+
+            assertTrue(profiles.profile?.raiseInFebruary == true)
+            assertTrue(started().content().form.raiseInFebruary)
+        }
+
+    @Test
+    fun vacationBalance_countsOnlyThisYearsVacationAgainstTheProfileAllowance() =
+        runTest(dispatcher) {
+            profiles.saveSalaryProfile(SalaryProfile(baseGrossCents = 100_000, vacationDaysPerYear = 25))
+            val settings =
+                listOf(
+                    MonthSettings(YearMonth.of(2026, 3), vacationDays = 5, sickDays = 2),
+                    MonthSettings(YearMonth.of(2026, 8), vacationDays = 3, otherDays = 1),
+                    MonthSettings(YearMonth.of(2025, 12), vacationDays = 9),
+                )
+
+            val vm = started(settings)
+
+            assertEquals(VacationBalance(used = 8, total = 25), vm.content().vacationBalance)
         }
 }

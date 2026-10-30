@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Starter categories created for new users -->
+    <string name="starter_category_home">Home</string>
+    <string name="starter_category_transport">Transport</string>
+    <string name="starter_category_health">Health</string>
+    <string name="starter_category_leisure">Leisure</string>
+</resources>

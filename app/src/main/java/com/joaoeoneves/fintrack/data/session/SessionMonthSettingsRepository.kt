@@ -30,7 +30,9 @@ class SessionMonthSettingsRepository
         override fun observeMonthSettings(): Flow<List<MonthSettings>> = observeMonthSettingsShared
 
         override suspend fun setDaysOff(
-            month: YearMonth,
-            days: Int,
-        ): Result<Unit> = switch.call { it.setDaysOff(month, days) }
+            months: Collection<YearMonth>,
+            vacation: Int,
+            sick: Int,
+            other: Int,
+        ): Result<Unit> = switch.call { it.setDaysOff(months, vacation, sick, other) }
     }

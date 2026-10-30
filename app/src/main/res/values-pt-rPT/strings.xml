@@ -319,6 +319,7 @@
     </plurals>
     <string name="recurring_nothing_due">Nada a vencer em breve</string>
     <string name="recurring_annual_cost">Recorrentes: %1$s/ano (%2$s/mês)</string>
+    <string name="recurring_cost_split">Mensais %1$s/mês · Anuais %2$s/ano (%3$s/mês)</string>
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar recorrentes</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
@@ -328,6 +329,7 @@
     <string name="recurring_list_empty">Ainda não há recorrentes</string>
     <string name="recurring_paused">Em pausa</string>
     <string name="recurring_ended">Terminado</string>
+    <string name="recurring_ends">termina em %1$s</string>
     <string name="recurring_frequency_monthly">Mensal</string>
     <string name="recurring_frequency_yearly">Anual</string>
     <string name="recurring_day_of_month">Dia do mês</string>
@@ -359,6 +361,8 @@
     <string name="insights_split_variable">Variável</string>
     <string name="insights_by_category">Por categoria</string>
     <string name="insights_by_group">Por grupo</string>
+    <string name="breakdown_mode_category">Categoria</string>
+    <string name="breakdown_mode_group">Grupo</string>
     <string name="cd_insights_split">Divisão da despesa: %1$s fixo, %2$s variável</string>
     <string name="plan_basis_fixed">Fixo</string>
     <string name="plan_basis_per_day">Por dia útil</string>
@@ -391,11 +395,22 @@
         <item quantity="many">%1$d dias de folga</item>
         <item quantity="other">%1$d dias de folga</item>
     </plurals>
-    <string name="plan_days_off_title">Dias de férias/folga neste mês</string>
+    <string name="plan_days_off_vacation">Férias</string>
+    <string name="plan_days_off_sick">Baixa</string>
+    <string name="plan_days_off_other">Outro</string>
+    <string name="plan_days_off_until">Até</string>
+    <plurals name="plan_days_off_range_hint">
+        <item quantity="one">Estes valores substituem os dias de folga de %d mês.</item>
+        <item quantity="other">Estes valores substituem os dias de folga de %d meses.</item>
+    </plurals>
+    <string name="cd_fewer_vacation_days">Menos dias de férias</string>
+    <string name="cd_more_vacation_days">Mais dias de férias</string>
+    <string name="cd_fewer_sick_days">Menos dias de baixa</string>
+    <string name="cd_more_sick_days">Mais dias de baixa</string>
+    <string name="cd_fewer_other_days">Menos outros dias de folga</string>
+    <string name="cd_more_other_days">Mais outros dias de folga</string>
     <string name="plan_days_off_carnival">Terça-feira de Carnaval (dia %d)</string>
     <string name="plan_days_off_carnival_hint">Feriado facultativo: conta como um dia de folga quando marcado.</string>
-    <string name="cd_fewer_days_off">Menos dias de folga</string>
-    <string name="cd_more_days_off">Mais dias de folga</string>
 
     <string name="plan_group_other">Sem grupo</string>
     <string name="error_group_save_failed">Não foi possível guardar o grupo</string>
@@ -456,6 +471,13 @@
     <string name="salary_year_meal_vacation">com %1$d dias de férias</string>
     <string name="salary_field_vacation_days">Dias de férias por ano</string>
     <string name="salary_vacation_days_hint">Opcional. Serve para estimar o subsídio de refeição do ano; os meses com dias sem trabalho já definidos contam esses.</string>
+    <string name="salary_vacation_left">Férias por gozar: %1$d de %2$d</string>
+    <plurals name="salary_vacation_over">
+        <item quantity="one">%d dia acima do previsto</item>
+        <item quantity="other">%d dias acima do previsto</item>
+    </plurals>
+    <string name="salary_raise_february">Aumento anual em fevereiro</string>
+    <string name="salary_raise_february_hint">Janeiro mantém o salário anterior</string>
     <string name="salary_year_title">No ano (estimativa)</string>
     <string name="salary_year_net">Total anual líquido estimado</string>
     <string name="salary_year_gross">Bruto no ano</string>

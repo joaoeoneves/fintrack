@@ -12,9 +12,11 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
+import com.joaoeoneves.fintrack.domain.model.StarterCategoryNames
 import com.joaoeoneves.fintrack.domain.repository.AuthRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
@@ -28,6 +30,8 @@ class FirebaseAuthRepository
     constructor(
         private val firebaseAuth: FirebaseAuth,
         private val credentialManager: CredentialManager,
+        private val firestore: FirebaseFirestore,
+        private val starterNames: StarterCategoryNames,
     ) : AuthRepository {
         override fun observeCurrentUser(): Flow<AuthUser?> =
             callbackFlow {
@@ -67,6 +71,11 @@ class FirebaseAuthRepository
                         val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
                         val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
                         val user = authResult.user
+                        if (user != null && authResult.additionalUserInfo?.isNewUser == true) {
+                            // Best effort and not awaited: a brand-new account starts with the starter categories.
+                            runCatching { seedStarterCategories(firestore, user.uid, starterNames.names()) }
+                                .onFailure { Log.w(TAG, "Could not seed the starter categories", it) }
+                        }
                         if (user != null) {
                             Result.success(user.toAuthUser())
                         } else {

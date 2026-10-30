@@ -20,7 +20,9 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -33,6 +35,9 @@ import java.io.IOException
 class DefaultSessionRepositoryFailureTest {
     private val user = AuthUser(uid = "u1", displayName = null, email = null, photoUrl = null)
     private val scope = CoroutineScope(UnconfinedTestDispatcher() + Job())
+
+    @get:Rule
+    val tmp = TemporaryFolder()
 
     /** [DataStore] whose reads and/or writes throw [IOException]. */
     private class ThrowingDataStore(
@@ -59,7 +64,7 @@ class DefaultSessionRepositoryFailureTest {
     private fun repo(
         store: DataStore<Preferences>,
         auth: FakeAuthRepository = FakeAuthRepository(),
-    ) = DefaultSessionRepository(auth, SessionFlagStore(store), scope)
+    ) = DefaultSessionRepository(auth, SessionFlagStore(store), guestSeederIn(tmp.root), scope)
 
     private suspend fun DefaultSessionRepository.resolved() = withTimeout(TIMEOUT_MS) { session.first(::isResolved) }
 

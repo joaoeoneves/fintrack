@@ -122,6 +122,7 @@ fun CategoryBreakdownSection(
     modifier: Modifier = Modifier,
     showTotal: Boolean = true,
     onCategoryClick: ((Category) -> Unit)? = null,
+    belowTitle: (@Composable () -> Unit)? = null,
 ) {
     if (!breakdown.hasExpenses) {
         BreakdownEmpty(modifier)
@@ -130,6 +131,7 @@ fun CategoryBreakdownSection(
     val slices = breakdown.categoryTotals
     Column(modifier = modifier.fillMaxWidth()) {
         SectionTitle(title = stringResource(breakdownTitleRes(showTotal)))
+        belowTitle?.invoke()
         if (showTotal) {
             Text(
                 text = formatAmountCents(slices.clampedForChart().sumOf { it.totalCents }),

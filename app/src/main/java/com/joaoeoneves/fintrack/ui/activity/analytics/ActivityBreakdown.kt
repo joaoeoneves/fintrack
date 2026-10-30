@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
+import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.EnvelopesSummary
 import com.joaoeoneves.fintrack.domain.model.SpendingSplit
 import com.joaoeoneves.fintrack.ui.common.FALLBACK_COLOR_KEY
@@ -46,3 +47,33 @@ data class ActivityAnalytics(
     val envelopeChips: List<EnvelopeChip>,
     val envelopeIds: Set<String> = emptySet(),
 )
+
+/** One row of the group view of the breakdown: [id] is the envelope id or [NO_ENVELOPE]. */
+data class GroupTotal(
+    val id: String,
+    val name: String,
+    val totalCents: Long,
+)
+
+/**
+ * The spend of [categoryTotals] summed per group (the envelope a category is filed under), biggest first.
+ * Categories without a group, or filed under an unknown one, add up under [noGroupLabel], which comes last.
+ * Groups with nothing spent are left out.
+ */
+fun groupTotalsOf(
+    categoryTotals: List<CategoryTotal>,
+    envelopes: List<Envelope>,
+    noGroupLabel: String,
+): List<GroupTotal> {
+    val known = envelopes.associateBy { it.id }
+    val byGroup = categoryTotals.groupBy { it.category.groupId?.takeIf { id -> id in known } ?: NO_ENVELOPE }
+
+    fun sum(id: String) = byGroup[id].orEmpty().sumOf { it.totalCents }
+    val groups =
+        envelopes
+            .map { GroupTotal(it.id, it.name, sum(it.id)) }
+            .filter { it.totalCents != 0L }
+            .sortedByDescending { it.totalCents }
+    val noGroup = GroupTotal(NO_ENVELOPE, noGroupLabel, sum(NO_ENVELOPE)).takeIf { it.totalCents != 0L }
+    return groups + listOfNotNull(noGroup)
+}

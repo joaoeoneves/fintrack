@@ -3,7 +3,9 @@ package com.joaoeoneves.fintrack.data.backup
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
+import com.joaoeoneves.fintrack.data.local.SIMPLIFIED_SCHEMA_VERSION
 import com.joaoeoneves.fintrack.data.local.upgradedTo23
+import com.joaoeoneves.fintrack.data.local.upgradedTo24
 import com.joaoeoneves.fintrack.data.local.upgradedToStartMonths
 import com.joaoeoneves.fintrack.data.local.validateAutomation
 import com.joaoeoneves.fintrack.data.local.validateCategory
@@ -111,13 +113,20 @@ object BackupCodec {
         // 22 -> 23 dropped goals, budgets, envelope funding/amount history, the working-days override,
         // salaryPaysNextMonth and the currency preference (unknown keys now) and the manual recurring flow (see
         // upgradedTo23: the backlog of a manual item is marked handled).
+        // 23 -> 24 split the monthSettings daysOff total into vacationDays/sickDays/otherDays (the total becomes
+        // vacation, see upgradedTo24).
         return when (document.schemaVersion) {
-            in 1 until BACKUP_SCHEMA_VERSION ->
-                sanitize(
-                    document
-                        .upgradedToStartMonths(YearMonth.now(clock), clock.zone)
-                        .upgradedTo23(LocalDate.now(clock)),
-                )
+            in 1 until BACKUP_SCHEMA_VERSION -> {
+                val simplified =
+                    if (document.schemaVersion < SIMPLIFIED_SCHEMA_VERSION) {
+                        document
+                            .upgradedToStartMonths(YearMonth.now(clock), clock.zone)
+                            .upgradedTo23(LocalDate.now(clock))
+                    } else {
+                        document
+                    }
+                sanitize(simplified.upgradedTo24())
+            }
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
         }
@@ -207,10 +216,14 @@ internal fun BackupDocument.upgradedToStartMonths(
     return copy(plannedIncome = upgraded.plannedIncome)
 }
 
+/** The 23 -> 24 upgrade of a backup: the same rule as the guest file (see `upgradedTo24`). */
+internal fun BackupDocument.upgradedTo24(): BackupDocument =
+    copy(schemaVersion = BACKUP_SCHEMA_VERSION, monthSettings = monthSettings.upgradedTo24())
+
 /** The 22 -> 23 upgrade of a backup: the same rules as the guest file (see `upgradedTo23`). */
 internal fun BackupDocument.upgradedTo23(today: LocalDate): BackupDocument =
     copy(
-        schemaVersion = BACKUP_SCHEMA_VERSION,
+        schemaVersion = SIMPLIFIED_SCHEMA_VERSION,
         recurring = recurring.upgradedTo23(today),
         monthSettings = monthSettings.upgradedTo23(),
     )

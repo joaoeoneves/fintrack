@@ -94,7 +94,8 @@ class BackupCodecTest {
 
     @Test
     fun decode_futureVersion_unsupported() {
-        val text = """{"format":"fintrack-backup","schemaVersion":24,"exportedAt":"$EXPORTED_AT"}"""
+        val future = BACKUP_SCHEMA_VERSION + 1
+        val text = """{"format":"fintrack-backup","schemaVersion":$future,"exportedAt":"$EXPORTED_AT"}"""
 
         assertEquals(BackupDecodeResult.UnsupportedVersion(BACKUP_SCHEMA_VERSION + 1), decode(text))
     }

@@ -5,13 +5,17 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 
 /** `null` when the record's month is unparsable. */
 internal fun LocalMonthSettings.toDomainOrNull(): MonthSettings? =
-    parseYearMonthOrNull(month)?.let { MonthSettings(month = it, daysOff = daysOff) }
+    parseYearMonthOrNull(month)?.let { MonthSettings(it, vacationDays, sickDays, otherDays) }
 
-internal fun MonthSettings.toLocal() = LocalMonthSettings(month.toString(), daysOff)
+internal fun MonthSettings.toLocal() = LocalMonthSettings(month.toString(), vacationDays, sickDays, otherDays)
 
 /** Mirror of the firestore.rules check, plus "something is set"; throws [IllegalArgumentException] for a violation. */
 internal fun validateMonthSettings(record: LocalMonthSettings) {
     require(parseYearMonthOrNull(record.month) != null) { "Month settings id must be yyyy-MM" }
-    require(record.daysOff in 0..MAX_DAYS_OFF) { "Days off must be 0..$MAX_DAYS_OFF" }
-    require(record.daysOff > 0) { "Month settings must set something" }
+    require(record.legacyDaysOff == null) { "Legacy days off must be upgraded first" }
+    val counts = listOf(record.vacationDays, record.sickDays, record.otherDays)
+    require(counts.all { it in 0..MAX_DAYS_OFF }) {
+        "Each days-off count must be 0..$MAX_DAYS_OFF"
+    }
+    require(record.totalDays in 1..MAX_DAYS_OFF) { "Days off must total 1..$MAX_DAYS_OFF" }
 }

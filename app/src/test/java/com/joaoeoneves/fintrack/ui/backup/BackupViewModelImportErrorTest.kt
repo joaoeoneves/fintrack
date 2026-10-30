@@ -63,7 +63,7 @@ class BackupViewModelImportErrorTest : BackupViewModelTestBase() {
             val vm = viewModel()
 
             vm.onImportFileSelected(
-                fileWith("""{"format":"fintrack-backup","schemaVersion":24,"exportedAt":"2026-01-01T00:00:00Z"}"""),
+                fileWith("""{"format":"fintrack-backup","schemaVersion":25,"exportedAt":"2026-01-01T00:00:00Z"}"""),
             )
             settle()
 

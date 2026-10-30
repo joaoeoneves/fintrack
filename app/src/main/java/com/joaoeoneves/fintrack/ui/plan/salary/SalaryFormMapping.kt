@@ -27,6 +27,7 @@ internal fun SalaryProfile.toForm(decimalSeparator: Char): SalaryForm {
         mealPayment = mealPayment,
         otherDeductions = percent(otherDeductionsPpm),
         vacationDays = vacationDaysPerYear?.toString().orEmpty(),
+        raiseInFebruary = raiseInFebruary,
     )
 }
 

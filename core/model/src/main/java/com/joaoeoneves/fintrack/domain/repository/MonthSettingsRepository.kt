@@ -8,9 +8,15 @@ interface MonthSettingsRepository {
     /** The months that have settings, in any order. */
     fun observeMonthSettings(): Flow<List<MonthSettings>>
 
-    /** Sets the days off taken in [month] to [days] (0 clears them). */
+    /**
+     * Sets the days off taken in every one of [months] (1..24 distinct-or-not months) to the given per-type counts, in
+     * one atomic write. All three zero clears the months. Each count is 0..MAX_DAYS_OFF and their total at most
+     * MAX_DAYS_OFF; anything else throws [IllegalArgumentException].
+     */
     suspend fun setDaysOff(
-        month: YearMonth,
-        days: Int,
+        months: Collection<YearMonth>,
+        vacation: Int,
+        sick: Int,
+        other: Int,
     ): Result<Unit>
 }

@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data.session
 
 import android.content.Context
 import android.util.Log
+import com.joaoeoneves.fintrack.data.local.GuestStarterSeeder
 import com.joaoeoneves.fintrack.di.ApplicationScope
 import com.joaoeoneves.fintrack.domain.model.AuthUser
 import com.joaoeoneves.fintrack.domain.model.Session
@@ -24,6 +25,7 @@ class DefaultSessionRepository
     constructor(
         private val authRepository: AuthRepository,
         private val flagStore: SessionFlagStore,
+        private val guestSeeder: GuestStarterSeeder,
         @ApplicationScope scope: CoroutineScope,
     ) : SessionRepository {
         override val session: StateFlow<Session> =
@@ -35,7 +37,11 @@ class DefaultSessionRepository
                 }
             }.stateIn(scope, SharingStarted.Eagerly, Session.Loading)
 
-        override suspend fun continueAsGuest(): Result<Unit> = flagStore.setGuest(true)
+        override suspend fun continueAsGuest(): Result<Unit> {
+            // Best effort: a failed seed must not stop the user from entering guest mode.
+            guestSeeder.seedIfUntouched().onFailure { Log.w(TAG, "Could not seed the starter categories", it) }
+            return flagStore.setGuest(true)
+        }
 
         override suspend fun leaveGuestMode(): Result<Unit> = flagStore.setGuest(false)
 

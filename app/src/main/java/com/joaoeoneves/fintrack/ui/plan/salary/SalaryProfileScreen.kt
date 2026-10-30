@@ -32,6 +32,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.EditorScaffold
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
@@ -176,8 +177,14 @@ private fun SalaryProfileContent(
             NetSection(form, actions.onChange)
         }
         SubsidyMonthsSection(form, actions.onChange)
-        MealSection(form, state.invalid, actions.onChange)
+        MealSection(form, state.invalid, actions.onChange, state.vacationBalance)
         SalaryExtrasSection(state, actions.extras.onAdd, actions.extras.onEdit)
+        SettingsSwitchRow(
+            title = stringResource(R.string.salary_raise_february),
+            supportingText = stringResource(R.string.salary_raise_february_hint),
+            checked = form.raiseInFebruary,
+            onCheckedChange = { actions.onChange(form.copy(raiseInFebruary = it)) },
+        )
         if (state.showEffectiveFrom) {
             SalaryEffectiveFrom(state.effectiveFrom, actions.onEffectiveFromChange)
         }
