@@ -101,4 +101,10 @@ class FirestoreSalaryProfileMapTest {
         assertEquals("PER_PAYMENT", extraMap(SalaryExtraAmountScope.PER_PAYMENT)["amountScope"])
         assertFalse(extraMap(SalaryExtraAmountScope.TOTAL).containsKey("amountScope"))
     }
+
+    @Test
+    fun raiseInFebruary_isWrittenOnlyWhenOn() {
+        assertEquals(true, SalaryProfile(baseGrossCents = 1, raiseInFebruary = true).toFirestoreMap()["raiseInFebruary"])
+        assertFalse(SalaryProfile(baseGrossCents = 1).toFirestoreMap().containsKey("raiseInFebruary"))
+    }
 }

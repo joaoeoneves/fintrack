@@ -49,9 +49,9 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
             """${recurringJson("legacy", "")},${recurringJson("auto", ",\"autoPost\":true")}]}"""
 
     @Test
-    fun currentSchemaVersion_isTwentyThree() {
-        assertEquals(23, LOCAL_SCHEMA_VERSION)
-        assertEquals(23, LocalDataDocument().schemaVersion)
+    fun currentSchemaVersion_isTwentyFour() {
+        assertEquals(24, LOCAL_SCHEMA_VERSION)
+        assertEquals(24, LocalDataDocument().schemaVersion)
     }
 
     @Test
@@ -179,5 +179,45 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
         val upgraded = LocalDataDocument(recurring = listOf(manual)).upgradedTo23(day(2026, 3, 15))
 
         assertEquals("2026-02-15", upgraded.recurring.single().handledThrough)
+    }
+
+    @Test
+    fun v23File_legacyDaysOffBecomesVacation_andNoLegacyKeyRemainsAfterAWrite() =
+        runStoreTest {
+            dataFile.writeText(
+                """{"schemaVersion":23,"revision":4,"monthSettings":[{"month":"2026-10","daysOff":3},""" +
+                    """{"month":"2026-11","vacationDays":1,"sickDays":2}]}""",
+            )
+
+            val store = newStore()
+            val doc = store.data.first()
+
+            assertEquals(LOCAL_SCHEMA_VERSION, doc.schemaVersion)
+            assertEquals(
+                listOf(LocalMonthSettings("2026-10", vacationDays = 3), LocalMonthSettings("2026-11", 1, 2)),
+                doc.monthSettings,
+            )
+            store.update { it to Unit }
+            assertFalse(dataFile.readText().contains("daysOff"))
+        }
+
+    @Test
+    fun upgradedTo24_isIdempotent_dropsEmptyRecords_andDoesNotRerunUpgradedTo23() {
+        val legacy = LocalMonthSettings("2026-10", legacyDaysOff = 2)
+        val doc = LocalDataDocument(schemaVersion = 23, monthSettings = listOf(legacy, LocalMonthSettings("2026-09")))
+
+        val once = doc.upgradedTo24()
+        val twice = once.upgradedTo24()
+
+        assertEquals(24, once.schemaVersion)
+        assertEquals(listOf(LocalMonthSettings("2026-10", vacationDays = 2)), once.monthSettings)
+        assertEquals(once, twice)
+    }
+
+    @Test
+    fun upgradedTo24_addsLegacyToExistingVacation() {
+        val record = LocalMonthSettings("2026-10", vacationDays = 1, legacyDaysOff = 2)
+
+        assertEquals(listOf(LocalMonthSettings("2026-10", vacationDays = 3)), listOf(record).upgradedTo24())
     }
 }

@@ -60,4 +60,12 @@ class FirestoreSalaryProfileParseTest {
 
         assertEquals(emptyList<Any>(), profile?.extras)
     }
+
+    @Test
+    fun raiseInFebruary_trueIsRead_absentIsFalse() {
+        val base = "inputMode" to TestDocumentSnapshots.stringValue("GROSS")
+
+        assertEquals(true, parse(base, "raiseInFebruary" to TestDocumentSnapshots.booleanValue(true))?.raiseInFebruary)
+        assertEquals(false, parse(base)?.raiseInFebruary)
+    }
 }

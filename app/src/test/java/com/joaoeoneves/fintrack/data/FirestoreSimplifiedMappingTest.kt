@@ -99,6 +99,26 @@ class FirestoreSimplifiedMappingTest {
     }
 
     @Test
+    fun monthSettings_typedFields_winOverLegacyDaysOff() {
+        val parsed =
+            monthSettings(
+                "2026-10",
+                mapOf("sickDays" to lng(2L), "otherDays" to lng(1L), "daysOff" to lng(9L)),
+            )
+
+        assertEquals(MonthSettings(YearMonth.of(2026, 10), 0, 2, 1), parsed)
+    }
+
+    @Test
+    fun monthSettings_legacyDaysOff_isVacationOnlyWhenNoTypedFieldExists() {
+        assertEquals(MonthSettings(YearMonth.of(2026, 10), 5), monthSettings("2026-10", mapOf("daysOff" to lng(5L))))
+        assertEquals(
+            MonthSettings(YearMonth.of(2026, 10), 4),
+            monthSettings("2026-10", mapOf("vacationDays" to lng(4L), "daysOff" to lng(9L))),
+        )
+    }
+
+    @Test
     fun monthSettings_zeroDaysOff_isIgnored_andBadIdIsDropped() {
         assertNull(monthSettings("2026-10", mapOf("daysOff" to lng(0L))))
         assertNull(monthSettings("not-a-month", mapOf("daysOff" to lng(2L))))
@@ -106,9 +126,12 @@ class FirestoreSimplifiedMappingTest {
 
     @Test
     fun monthSettings_toFirestoreMap_hasNoWorkingDaysField() {
-        val map = MonthSettings(YearMonth.of(2026, 10), 3).toFirestoreMap()
+        val map = MonthSettings(YearMonth.of(2026, 10), 3, 0, 2).toFirestoreMap()
 
-        assertEquals(3, map["daysOff"])
+        assertEquals(3, map["vacationDays"])
+        assertEquals(2, map["otherDays"])
+        assertFalse(map.containsKey("sickDays"))
+        assertFalse(map.containsKey("daysOff"))
         assertFalse(map.containsKey("workingDays"))
     }
 }
