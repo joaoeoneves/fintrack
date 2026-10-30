@@ -388,4 +388,3 @@ private fun ActivityAnalytics.following(
         breakdown = breakdown.copy(categoryTotals = visibleTotals),
     )
 }
-

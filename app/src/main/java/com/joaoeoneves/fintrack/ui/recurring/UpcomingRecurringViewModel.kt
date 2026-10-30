@@ -5,23 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.ExpectedIncome
-import com.joaoeoneves.fintrack.domain.model.IncomeRow
-import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.domain.model.RecurringType
-import com.joaoeoneves.fintrack.domain.model.UpcomingOccurrence
-import com.joaoeoneves.fintrack.domain.model.payingLinesByPayMonth
-import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
-import com.joaoeoneves.fintrack.domain.usecase.ReceiveRequest
-import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
 import com.joaoeoneves.fintrack.domain.usecase.RecurringOverview
-import com.joaoeoneves.fintrack.domain.usecase.UndoRecurringOccurrence
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,12 +18,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
-import java.time.YearMonth
 import javax.inject.Inject
 
 private const val TAG = "UpcomingRecurringVM"
@@ -96,8 +82,3 @@ class UpcomingRecurringViewModel
             retryTrigger.value++
         }
     }
-
-private fun UpcomingOccurrence.undo(kind: Kind): RecurringUndo {
-    val handled = item.handledThrough
-    return RecurringUndo(kind, item.id, item.name, date, handled, item.type)
-}

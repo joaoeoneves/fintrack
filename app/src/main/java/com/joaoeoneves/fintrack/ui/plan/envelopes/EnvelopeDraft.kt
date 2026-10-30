@@ -8,7 +8,10 @@ import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 /** Why an [EnvelopeDraft] cannot be saved. */
 enum class EnvelopeDraftError { BlankName, DuplicateName }
 
-/** The editable state of the group editor (an envelope in the data model): a name and its categories. [id] is null for a new group. */
+/**
+ * The editable state of the group editor (an envelope in the data model): a name and its categories. [id] is null
+ * for a new group.
+ */
 data class EnvelopeDraft(
     val id: String?,
     val name: String,

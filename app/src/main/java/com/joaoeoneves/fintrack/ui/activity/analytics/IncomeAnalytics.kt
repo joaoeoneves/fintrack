@@ -60,8 +60,10 @@ fun ActivityHistory.incomeAnalytics(): IncomeAnalytics {
 }
 
 /** The Income header's figures; the Evolution chart follows the selected [source]. */
-fun ActivityHistory.incomeFigures(source: String?): HistoryFigures =
-    HistoryFigures(evolution = evolutionOf(incomeSeries(source)))
+fun ActivityHistory.incomeFigures(source: String?): HistoryFigures {
+    val evolution = evolutionOf(incomeSeries(source))
+    return HistoryFigures(evolution = evolution)
+}
 
 /** One "Source" filter chip of the Income tab: the encoded [key] of a source and its display [label]. */
 data class IncomeSourceChip(

@@ -61,7 +61,7 @@ internal fun RecurringFormSnapshot.toForm(
                 dayText = dayText,
                 monthOfYear = monthOfYear,
                 endDate = endDate?.let(LocalDate::parse),
-                        paused = paused,
+                paused = paused,
             )
         }.getOrNull()
     }

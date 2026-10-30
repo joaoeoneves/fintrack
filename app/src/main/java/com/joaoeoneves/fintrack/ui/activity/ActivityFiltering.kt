@@ -2,14 +2,10 @@
 
 package com.joaoeoneves.fintrack.ui.activity
 
-import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
-import com.joaoeoneves.fintrack.domain.model.netCents
-import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
 import com.joaoeoneves.fintrack.ui.common.amountMatchesQuery
 import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase

@@ -11,7 +11,7 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.RecurringCandidate
 import com.joaoeoneves.fintrack.ui.designsystem.showActionSnackbar
 
-/** The "Make it recurring?" suggestion's state plus its callbacks, bundled to keep the dashboard's parameter lists short. */
+/** The "Make it recurring?" suggestion's state plus its callbacks, bundled to keep parameter lists short. */
 data class RecurringSuggestionModel(
     val state: RecurringSuggestionUiState,
     val onAccept: (RecurringCandidate) -> Unit,

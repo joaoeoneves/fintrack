@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
@@ -18,6 +22,7 @@ import com.joaoeoneves.fintrack.ui.designsystem.DecimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.MoneyTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 
@@ -106,13 +111,6 @@ internal fun GrossSections(
             invalid = SalaryField.IRS_BASE in invalid,
         )
         SalaryTextField(
-            label = stringResource(R.string.salary_field_irs_subsidies),
-            value = form.irsSubsidies,
-            onChange = { onChange(form.copy(irsSubsidies = it)) },
-            invalid = SalaryField.IRS_SUBSIDIES in invalid,
-            hint = stringResource(R.string.salary_irs_subsidies_hint),
-        )
-        SalaryTextField(
             label = stringResource(R.string.salary_field_irs_jovem),
             value = form.exempt,
             onChange = { onChange(form.copy(exempt = it)) },
@@ -131,6 +129,45 @@ internal fun GrossSections(
             onChange = { onChange(form.copy(otherDeductions = it)) },
             invalid = SalaryField.OTHER_DEDUCTIONS in invalid,
         )
+        AdvancedSection(initiallyExpanded = form.irsSubsidies.isNotBlank()) {
+            IrsSubsidiesField(form, SalaryField.IRS_SUBSIDIES in invalid, onChange)
+        }
+    }
+}
+
+/** The IRS rate withheld on the subsidy lump sums, when it differs from the base rate (an "Advanced" field). */
+@Composable
+private fun IrsSubsidiesField(
+    form: SalaryForm,
+    invalid: Boolean,
+    onChange: (SalaryForm) -> Unit,
+) {
+    SalaryTextField(
+        label = stringResource(R.string.salary_field_irs_subsidies),
+        value = form.irsSubsidies,
+        onChange = { onChange(form.copy(irsSubsidies = it)) },
+        invalid = invalid,
+        hint = stringResource(R.string.salary_irs_subsidies_hint),
+    )
+}
+
+/**
+ * An "Advanced" row that expands on tap to show [content]; collapsed by default, and open from the start when
+ * [initiallyExpanded] (a value is already set), so nothing set is ever hidden.
+ */
+@Composable
+internal fun AdvancedSection(
+    initiallyExpanded: Boolean,
+    content: @Composable () -> Unit,
+) {
+    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
+        SettingsRow(
+            title = stringResource(R.string.advanced_title),
+            onClick = { expanded = !expanded },
+            showChevron = true,
+        )
+        if (expanded) content()
     }
 }
 

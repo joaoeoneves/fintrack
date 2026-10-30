@@ -39,6 +39,7 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.YearMonth
 
 /** The Gastos side: Spent with its comparison lines, fixed/variable, bars and breakdowns. */
+@Suppress("LongParameterList") // the chart's Year-scale wiring is optional and defaulted
 @Composable
 fun SpendingHistory(
     analytics: ActivityAnalytics,
@@ -134,6 +135,7 @@ fun IncomeHeadline(
  * scale ([yearScale]) a bar's caption reads "Received X" (plus "· Expected Y" for the months in [expectedByMonth])
  * and a tap opens that month through [onMonthClick].
  */
+@Suppress("LongParameterList") // the chart's Year-scale wiring is optional and defaulted
 @Composable
 fun IncomeHistory(
     history: ActivityHistory?,

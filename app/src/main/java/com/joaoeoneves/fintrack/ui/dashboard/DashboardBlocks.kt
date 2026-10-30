@@ -21,8 +21,8 @@ import com.joaoeoneves.fintrack.ui.dashboard.recurring.RecurringSuggestionViewMo
 import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxCard
 import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxModel
 import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxSnackbars
-import com.joaoeoneves.fintrack.ui.dashboard.review.hasContent
 import com.joaoeoneves.fintrack.ui.dashboard.review.ReviewInboxViewModel
+import com.joaoeoneves.fintrack.ui.dashboard.review.hasContent
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 

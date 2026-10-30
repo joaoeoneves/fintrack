@@ -61,7 +61,7 @@ fun DashboardScreen(
     StartDismissedSnackbar(startViewModel, snackbarHostState)
     val start = StartChecklistModel(startState, callbacks.onOpenStartStep, startViewModel::onDismiss)
     val blocks = rememberHomeBlocks(start, callbacks, snackbarHostState)
-    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, blocks, callbacks)
+    val actions = dashboardActions(viewModel, upcomingState, blocks, callbacks)
 
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
@@ -156,7 +156,6 @@ private data class DashboardScroll(
 
 private fun dashboardActions(
     viewModel: DashboardViewModel,
-    upcomingViewModel: UpcomingRecurringViewModel,
     upcomingState: UpcomingRecurringUiState,
     blocks: HomeBlocks,
     callbacks: DashboardCallbacks,

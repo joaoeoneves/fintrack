@@ -23,10 +23,12 @@ const val ENVELOPE_CHIP_ALL_TAG = "envelope_chip_all"
 
 /**
  * Wrapping (flow), single-select envelope filter: an "All" chip (selected when [selected] is null)
- * followed by one chip per entry of [chips], labelled "Name · amount" (just "Name" when [showAmounts] is off) with the colour dot of its bar segment
+ * followed by one chip per entry of [chips], labelled "Name · amount" (just "Name" when [showAmounts] is off) with
+ * the colour dot of its bar segment
  * ([dotColors], colours derived from [EnvelopeChip.colorKey] by the caller).
  */
 @OptIn(ExperimentalLayoutApi::class)
+@Suppress("LongParameterList") // chips/selection/callback plus the optional dots and amounts switch
 @Composable
 fun EnvelopeFilterRow(
     chips: List<EnvelopeChip>,
