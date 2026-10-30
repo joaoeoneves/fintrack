@@ -307,10 +307,15 @@ service cloud.firestore {
     }
 
     function isValidMonthSettings(data) {
-      // workingDays: legacy manual override, tolerated on update, never written by >=5.5.
-      return data.keys().hasOnly(['workingDays', 'daysOff', 'updatedAt'])
+      // workingDays and daysOff: legacy (the pre-5.5 override, the pre-5.6 total), tolerated on update, never written
+      // by >=5.6. A legacy daysOff only counts alone; the typed fields below replace it.
+      return data.keys().hasOnly(['workingDays', 'daysOff', 'vacationDays', 'sickDays', 'otherDays', 'updatedAt'])
         && (!('workingDays' in data) || (data.workingDays is int && data.workingDays >= 0 && data.workingDays <= 23))
         && (!('daysOff' in data) || (data.daysOff is int && data.daysOff >= 0 && data.daysOff <= 23))
+        && isOptionalInt(data, 'vacationDays', 0, 23)
+        && isOptionalInt(data, 'sickDays', 0, 23)
+        && isOptionalInt(data, 'otherDays', 0, 23)
+        && (data.get('vacationDays', 0) + data.get('sickDays', 0) + data.get('otherDays', 0)) <= 23
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 

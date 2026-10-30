@@ -111,7 +111,7 @@ class LocalDataStore
             return if (doc != null && doc.schemaVersion <= LOCAL_SCHEMA_VERSION) {
                 val withStartMonths =
                     if (doc.schemaVersion < START_MONTH_SCHEMA_VERSION) doc.upgradedToStartMonths() else doc
-                if (doc.schemaVersion < SIMPLIFIED_SCHEMA_VERSION) withStartMonths.upgradedTo23() else withStartMonths
+                withStartMonths.upgradedFrom(doc.schemaVersion)
             } else {
                 if (doc != null) Log.w(TAG, "Guest data file has newer schema ${doc.schemaVersion}; moving it aside")
                 moveAside()
@@ -144,3 +144,9 @@ class LocalDataStore
             }
         }
     }
+
+/** Applies the schema upgrades newer than [version] to this (already start-month-upgraded) document. */
+private fun LocalDataDocument.upgradedFrom(version: Int): LocalDataDocument {
+    val simplified = if (version < SIMPLIFIED_SCHEMA_VERSION) upgradedTo23() else this
+    return if (version < DAYS_OFF_BY_TYPE_SCHEMA_VERSION) simplified.upgradedTo24() else simplified
+}

@@ -1,9 +1,10 @@
 package com.joaoeoneves.fintrack.data.local
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 23
+internal const val LOCAL_SCHEMA_VERSION = 24
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -108,14 +109,20 @@ data class LocalPlannedIncome(
 )
 
 /**
- * A month's days off; [month] is ISO `yyyy-MM` and doubles as the record id. [daysOff] is absent (0) in files
- * before schema v6, whose manual working-days count (dropped in schema v23) is no longer read.
+ * A month's days off by type; [month] is ISO `yyyy-MM` and doubles as the record id. Files before schema v24 held
+ * one total under the key `daysOff` ([legacyDaysOff], read only to upgrade: it becomes [vacationDays] and is never
+ * written; before schema v6 it was absent, and the manual working-days count was dropped in v23).
  */
 @Serializable
 data class LocalMonthSettings(
     val month: String,
-    val daysOff: Int = 0,
-)
+    val vacationDays: Int = 0,
+    val sickDays: Int = 0,
+    val otherDays: Int = 0,
+    @SerialName("daysOff") val legacyDaysOff: Int? = null,
+) {
+    val totalDays: Int get() = vacationDays + sickDays + otherDays
+}
 
 @Serializable
 data class LocalCategory(
