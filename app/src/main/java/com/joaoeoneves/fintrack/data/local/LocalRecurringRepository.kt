@@ -13,6 +13,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /** Recurring bill/income templates kept in the guest-mode [LocalDataStore]. */
+@Suppress("TooManyFunctions") // One member per RecurringRepository operation.
 @Singleton
 class LocalRecurringRepository
     @Inject

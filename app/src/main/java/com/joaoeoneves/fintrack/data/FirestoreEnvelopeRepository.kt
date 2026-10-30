@@ -136,7 +136,7 @@ class FirestoreEnvelopeRepository
         }
     }
 
-/** Fields of the envelope document the app wrote before 5.5; tolerated by the rules, ignored on read, deleted on save. */
+/** Envelope fields written before 5.5: tolerated by the rules, ignored on read, deleted on save. */
 private val LEGACY_ENVELOPE_FIELDS = listOf("amountCents", "fundedBy", "startMonth", "versions")
 
 /** Written whole (no merge); the id is the document id. */

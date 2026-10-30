@@ -116,7 +116,9 @@ class FirestoreRecurringRepository
                 val legacy = awaitServer { collection(uid).get().await() }.documents.filter { it.isLegacyManual() }
                 for (chunk in legacy.chunked(ADOPTION_BATCH_SIZE)) {
                     val batch = firestore.batch()
-                    chunk.forEach { doc -> batch.update(doc.reference, legacyAdoptionUpdate(doc.toRecurringOrNull(), today)) }
+                    chunk.forEach { doc ->
+                        batch.update(doc.reference, legacyAdoptionUpdate(doc.toRecurringOrNull(), today))
+                    }
                     // Not awaited (see saveRecurring): the batch is applied to the local cache at once.
                     batch.commit().addOnFailureListener(onFail(TAG, "Adopting legacy manual recurring items failed"))
                 }

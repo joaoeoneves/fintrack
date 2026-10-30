@@ -21,7 +21,7 @@ data class LocalDataDocument(
     val plannedIncome: List<LocalPlannedIncome> = emptyList(),
     /** Recurring bill/income templates (absent in schema v1 and v2 files). */
     val recurring: List<LocalRecurringItem> = emptyList(),
-    /** Per-month plan settings (absent in schema v1 to v3 files; `daysOff` since v6; the manual count was dropped in v23). */
+    /** Per-month plan settings (absent in schema v1 to v3 files; `daysOff` since v6). */
     val monthSettings: List<LocalMonthSettings> = emptyList(),
     /** Category groups (absent in schema v1 to v4 files). */
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),

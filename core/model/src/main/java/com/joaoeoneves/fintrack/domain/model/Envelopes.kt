@@ -72,14 +72,14 @@ internal fun splitBuckets(
 }
 
 /** An envelope's amount for a month: what its [rows] plan, else `null`. */
-internal fun monthAmountOf(rows: List<CategoryBudget>): Long? =
-    rows.mapNotNull { it.planned }.takeIf { it.isNotEmpty() }?.sum()
+internal fun monthAmountOf(rows: List<CategoryBudget>) = rows.mapNotNull { it.planned }.ifEmpty { null }?.sum()
 
 /**
  * Evaluates the envelope groups for a month: per group what its categories planned and spent (no free money; income
  * is not part of the groups). SAVING-kind categories belong to no group: they only add what they
  * commit (the larger of planned and spent) to [EnvelopesSummary.savingCommittedCents].
  */
+@Suppress("UnusedParameter") // planMonth: kept for callers; envelopes no longer depend on the month.
 fun envelopesOf(
     buckets: List<CategoryBudget>,
     categories: List<Category>,

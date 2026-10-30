@@ -7,7 +7,7 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 internal fun LocalMonthSettings.toDomainOrNull(): MonthSettings? =
     parseYearMonthOrNull(month)?.let { MonthSettings(month = it, daysOff = daysOff) }
 
-internal fun MonthSettings.toLocal(): LocalMonthSettings = LocalMonthSettings(month = month.toString(), daysOff = daysOff)
+internal fun MonthSettings.toLocal() = LocalMonthSettings(month.toString(), daysOff)
 
 /** Mirror of the firestore.rules check, plus "something is set"; throws [IllegalArgumentException] for a violation. */
 internal fun validateMonthSettings(record: LocalMonthSettings) {
