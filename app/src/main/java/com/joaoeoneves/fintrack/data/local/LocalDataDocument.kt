@@ -66,6 +66,8 @@ data class LocalExpense(
     val refundOf: String? = null,
     /** Shared id of the expenses a split purchase was divided into (schema v25; absent = none). */
     val splitId: String? = null,
+    /** Waiting for a refund; stays in the review inbox until one is linked (schema v26; absent = false). */
+    val awaitingRefund: Boolean = false,
 )
 
 @Serializable
