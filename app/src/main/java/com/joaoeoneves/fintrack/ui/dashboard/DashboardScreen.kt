@@ -229,8 +229,6 @@ private fun DashboardContent(
                 UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
             }
         }
-        recurringSuggestionItems(recurring = actions.blocks.recurring, visible = state.showsCurrentMonthBlocks)
-        activityItems(state = state, callbacks = callbacks)
     }
 }
 
@@ -253,27 +251,9 @@ private fun LazyListScope.summaryItems(
             ScreenItem(Modifier.padding(top = Dimens.Space16)) {
                 InvestedRow(
                     figure = invested,
-                    month = state.budgetMonth,
-                    isCurrentMonth = state.budgetMonthIsCurrent,
                     onClick = { callbacks.onOpenInvestments(state.period) },
                 )
             }
-        }
-    }
-    state.leftover?.let { leftover ->
-        item(key = "leftover") {
-            ScreenItem(Modifier.padding(top = Dimens.Space12)) { LeftoverRow(figure = leftover) }
-        }
-    }
-}
-
-private fun LazyListScope.activityItems(
-    state: DashboardUiState.Content,
-    callbacks: DashboardCallbacks,
-) {
-    item(key = "recent_activity") {
-        ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            RecentActivitySection(items = state.recent, period = state.period, callbacks = callbacks)
         }
     }
 }

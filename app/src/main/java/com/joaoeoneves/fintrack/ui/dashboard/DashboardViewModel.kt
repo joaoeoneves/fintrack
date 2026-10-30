@@ -84,7 +84,7 @@ class DashboardViewModel
             val today = currentYearMonth(now, zone)
             val endMonth = endMonthOf(period, today, zone, now)
             return combine(
-                observePeriodOverview(period, now, zone, RECENT_ITEMS_LIMIT),
+                observePeriodOverview(period, now, zone, recentLimit = 0),
                 observeMonthlyHistory(endMonth, HISTORY_MONTHS, zone, today),
             ) { overview, history -> contentOf(overview, history, ViewedPeriod(period, endMonth, today), now) }
                 .catch { e ->
@@ -160,11 +160,16 @@ class DashboardViewModel
                 spendingVsAveragePercent =
                     if (isYear) null else percentChange(overview.summary.spendingCents, comparison.averageCents),
                 invested =
-                    InvestedFigure(if (isYear) null else monthSaved, yearSaved, endMonth.year)
-                        .takeIf { (it.monthCents ?: 0L) != 0L || yearSaved != 0L },
-                leftover =
-                    history.leftover.averageCents?.let { LeftoverFigure(it, minOf(endMonth, today.minusMonths(1))) },
-                recent = mergeRecent(overview.recent.expenses, overview.recent.income),
+                    InvestedFigure(
+                        monthCents = if (isYear) null else monthSaved,
+                        yearCents = yearSaved,
+                        year = endMonth.year,
+                        ratePercent =
+                            investmentRatePercent(
+                                investedCents = if (isYear) yearSaved else monthSaved,
+                                receivedCents = overview.summary.incomeCents,
+                            ),
+                    ).takeIf { (it.monthCents ?: 0L) != 0L || yearSaved != 0L },
                 spendingAverageMonths = comparison.averageMonths,
             )
         }

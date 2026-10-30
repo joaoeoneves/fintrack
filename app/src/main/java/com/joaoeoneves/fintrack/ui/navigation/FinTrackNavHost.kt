@@ -78,7 +78,6 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                         onOpenSettings = { navController.navigate(Settings) },
                         onOpenExpense = { id -> navController.navigate(AddEditExpense(expenseId = id)) },
                         onOpenIncome = { id -> navController.navigate(AddEditIncome(incomeId = id)) },
-                        onOpenActivity = { period -> navController.navigateToTabWith(Activity(period.encode())) },
                         onOpenIncomeTab = { period -> navController.navigateToTabWith(IncomeHome(period.encode())) },
                         onOpenSpendingTab = { period ->
                             navController.navigateToTabWith(SpendingHome(period.encode()))
