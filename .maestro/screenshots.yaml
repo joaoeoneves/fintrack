@@ -1,19 +1,19 @@
 appId: com.joaoeoneves.fintrack
 ---
-# README screenshots flow (updated for 5.0; guest mode, English, EUR, dark, demo data only). NOT a regression gate.
+# README screenshots flow (updated for 5.5; guest mode, English, EUR, dark, demo data only). NOT a regression gate.
 # Four tabs: Home, Activity, Income, Spending. Groups/Recurring live in the Spending tab, the salary
 # profile in the Income tab, the investments page behind Home's "Invested" row.
 # Run locally on a 1080x2400 / 420 dpi emulator (adb shell wm size 1080x2400; adb shell wm density 420;
 # reset with wm size reset / wm density reset) with SystemUI demo mode on (clock 12:00, full battery, wifi,
 # no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
 #   maestro test .maestro/screenshots.yaml
-# Captures: home, activity (period selector + summary line, unscrolled), income, spending, investments, add-expense.
+# Captures: home, activity (period selector + chips, unscrolled), income, spending, investments, add-expense.
 # Money inputs are cash-register style: digits only ("6420" = 64.20); no `back` is pressed after typing (the CI emulator has no IME);
 # Save is tapped directly.
 
 - runFlow: _guest-start.yaml
 
-# --- Pin English + EUR + Dark ---
+# --- Pin English + Dark (EUR is fixed) ---
 - tapOn:
     id: "account_avatar"
 - tapOn: "Language|Idioma"
@@ -27,13 +27,6 @@ appId: com.joaoeoneves.fintrack
 - tapOn: "Theme"
 - tapOn:
     text: "Dark"
-    index: -1
-- scrollUntilVisible:
-    element: "Currency"
-    direction: DOWN
-- tapOn: "Currency"
-- tapOn:
-    text: "Euro \\(€\\)"
     index: -1
 - back
 - extendedWaitUntil:
@@ -269,7 +262,7 @@ appId: com.joaoeoneves.fintrack
     visible:
       id: "activity_list"
     timeout: 10000
-# Unscrolled: the period selector, the one-line "Spent X · Received Y" summary and the source chips; the add pill only overlaps
+# Unscrolled: the period selector, the source chips; the add pill only overlaps
 # the category chip row, never a transaction row.
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/activity
