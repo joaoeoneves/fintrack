@@ -12,7 +12,7 @@ internal const val START_MONTH_SCHEMA_VERSION = 19
 private val YEAR_MONTH_SHAPE = Regex("^[0-9]{4}-[0-9]{2}$")
 
 /**
- * The 18 -> 19 upgrade: every budget, planned income line and envelope without a `startMonth` gets the earliest
+ * The 18 -> 19 upgrade: every planned income line without a `startMonth` gets the earliest
  * month among the data set's expenses and income (the upgrade [now] month if there are none), so nothing that was
  * planned retroactively disappears from past months. Idempotent; the result carries [START_MONTH_SCHEMA_VERSION].
  */
@@ -29,9 +29,7 @@ internal fun LocalDataDocument.upgradedToStartMonths(
     val text = start.toString()
     return copy(
         schemaVersion = START_MONTH_SCHEMA_VERSION,
-        budgets = budgets.map { if (it.startMonth == null) it.copy(startMonth = text) else it },
         plannedIncome = plannedIncome.map { if (it.startMonth == null) it.copy(startMonth = text) else it },
-        categoryGroups = categoryGroups.map { if (it.startMonth == null) it.copy(startMonth = text) else it },
     )
 }
 
@@ -48,15 +46,6 @@ internal fun validatePlanTiming(
             "Version amount must be 0..$MAX_AMOUNT_CENTS cents"
         }
     }
-}
-
-/** A whole stored budget: [validateBudget] plus its start month and versions. */
-internal fun validateBudget(
-    budget: LocalBudget,
-    knownCategoryIds: Set<String>,
-) {
-    validateBudget(budget.categoryId, budget.limitCents, knownCategoryIds, budget.skipMonths)
-    validatePlanTiming(budget.startMonth, budget.versions)
 }
 
 internal fun String?.toYearMonthOrNull(): YearMonth? = this?.let(::parseYearMonthOrNull)

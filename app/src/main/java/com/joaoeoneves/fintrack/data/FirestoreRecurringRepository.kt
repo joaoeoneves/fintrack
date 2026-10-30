@@ -17,6 +17,7 @@ import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.domain.model.withoutBacklog
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -109,6 +110,20 @@ class FirestoreRecurringRepository
             }
         }
 
+        override suspend fun adoptLegacyManualItems(today: LocalDate): Result<Int> {
+            val uid = firebaseAuth.currentUser?.uid ?: return notSignedIn()
+            return runCatchingCancellable {
+                val legacy = awaitServer { collection(uid).get().await() }.documents.filter { it.isLegacyManual() }
+                for (chunk in legacy.chunked(ADOPTION_BATCH_SIZE)) {
+                    val batch = firestore.batch()
+                    chunk.forEach { doc -> batch.update(doc.reference, legacyAdoptionUpdate(doc.toRecurringOrNull(), today)) }
+                    // Not awaited (see saveRecurring): the batch is applied to the local cache at once.
+                    batch.commit().addOnFailureListener(onFail(TAG, "Adopting legacy manual recurring items failed"))
+                }
+                legacy.size
+            }
+        }
+
         override suspend fun setHandledThrough(
             id: String,
             date: LocalDate?,
@@ -187,6 +202,28 @@ class FirestoreRecurringRepository
         private fun <T> notSignedIn(): Result<T> = Result.failure(IllegalStateException("Not signed in"))
     }
 
+private const val ADOPTION_BATCH_SIZE = 400
+
+/**
+ * Whether this stored item predates 5.5 and still waits for manual confirmation: its `autoPost` marker is false or
+ * absent. Every item written by 5.5 or later carries `autoPost: true` (a marker only; all items auto-post).
+ */
+internal fun DocumentSnapshot.isLegacyManual(): Boolean = get("autoPost") != true
+
+/**
+ * The update that adopts a legacy manual [item] (`null` when it could not be mapped: only the marker is set):
+ * everything strictly before [today] is marked handled (see `withoutBacklog`) and the marker is set.
+ */
+internal fun legacyAdoptionUpdate(
+    item: RecurringItem?,
+    today: LocalDate,
+): Map<String, Any?> =
+    buildMap {
+        item?.withoutBacklog(today)?.let { put("handledThrough", it.handledThrough?.toString()) }
+        put("autoPost", true)
+        put("updatedAt", FieldValue.serverTimestamp())
+    }
+
 private fun Set<LocalDate>.isoStrings(): Array<Any> = sorted().map { it.toString() }.toTypedArray()
 
 private fun handledThroughUpdate(date: LocalDate?): Map<String, Any?> =
@@ -207,7 +244,8 @@ internal fun RecurringItem.toFirestoreMap(): Map<String, Any?> =
         "endDate" to endDate?.toString(),
         "handledThrough" to handledThrough?.toString(),
         "active" to active,
-        "autoPost" to autoPost,
+        // A marker only (every item auto-posts): its absence or false marks an item to adopt, see isLegacyManual.
+        "autoPost" to true,
         "skipped" to skipped.sorted().map { it.toString() },
         "pausedAt" to pausedAt?.toString(),
         "updatedAt" to FieldValue.serverTimestamp(),
@@ -257,7 +295,6 @@ private fun DocumentSnapshot.parseRecurring(): RecurringItem? {
             endDate = parseDate("endDate"),
             handledThrough = parseDate("handledThrough"),
             active = checkNotNull(active),
-            autoPost = get("autoPost") as? Boolean ?: false,
             skipped = parseSkipped(),
             pausedAt = parseDate("pausedAt"),
         )

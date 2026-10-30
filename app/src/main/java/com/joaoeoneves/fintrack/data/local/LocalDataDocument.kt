@@ -3,7 +3,7 @@ package com.joaoeoneves.fintrack.data.local
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 22
+internal const val LOCAL_SCHEMA_VERSION = 23
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
@@ -15,21 +15,18 @@ data class LocalDataDocument(
     val revision: Long = 0,
     val expenses: List<LocalExpense> = emptyList(),
     val income: List<LocalIncome> = emptyList(),
-    val budgets: List<LocalBudget> = emptyList(),
     /** Overrides of built-in categories plus user categories; `builtIn` is derived from the id. */
     val categories: List<LocalCategory> = emptyList(),
     /** Expected-income lines of the monthly plan (absent in schema v1 files). */
     val plannedIncome: List<LocalPlannedIncome> = emptyList(),
     /** Recurring bill/income templates (absent in schema v1 and v2 files). */
     val recurring: List<LocalRecurringItem> = emptyList(),
-    /** Per-month plan settings (absent in schema v1 to v3 files; `daysOff` since v6). */
+    /** Per-month plan settings (absent in schema v1 to v3 files; `daysOff` since v6; the manual count was dropped in v23). */
     val monthSettings: List<LocalMonthSettings> = emptyList(),
     /** Category groups (absent in schema v1 to v4 files). */
     val categoryGroups: List<LocalCategoryGroup> = emptyList(),
     /** The salary profile singleton (absent in schema v1 to v7 files). */
     val salaryProfile: LocalSalaryProfile? = null,
-    /** Savings goals (absent in schema v1 to v8 files). */
-    val goals: List<LocalSavingsGoal> = emptyList(),
     /** The automation settings singleton (absent in schema v1 to v11 files). */
     val automation: LocalAutomation? = null,
     /** Normalized names of the dismissed "make it recurring?" suggestions (absent in schema v1 to v21 files). */
@@ -39,14 +36,12 @@ data class LocalDataDocument(
     val isEmpty: Boolean get() =
         expenses.isEmpty() &&
             income.isEmpty() &&
-            budgets.isEmpty() &&
             categories.isEmpty() &&
             plannedIncome.isEmpty() &&
             recurring.isEmpty() &&
             monthSettings.isEmpty() &&
             categoryGroups.isEmpty() &&
             salaryProfile == null &&
-            goals.isEmpty() &&
             automation == null
 }
 
@@ -75,18 +70,6 @@ data class LocalIncome(
     val note: String? = null,
     /** Recorded automatically and not yet reviewed (schema v22; absent = reviewed). */
     val needsReview: Boolean = false,
-)
-
-@Serializable
-data class LocalBudget(
-    val categoryId: String,
-    val limitCents: Long,
-    /** Month numbers 1..12 the limit does not apply to (absent in schema v1 to v4 files). */
-    val skipMonths: List<Int> = emptyList(),
-    /** ISO `yyyy-MM`: first plan month the limit applies in; absent = always (schema v19). */
-    val startMonth: String? = null,
-    /** Limit history (schema v19); [limitCents] is the latest. */
-    val versions: List<LocalAmountVersion> = emptyList(),
 )
 
 /** An amount that applies from plan month [from] (ISO `yyyy-MM`); a null amount has the item's own meaning. */
@@ -125,13 +108,12 @@ data class LocalPlannedIncome(
 )
 
 /**
- * A month's manual working-days count and/or days off; [month] is ISO `yyyy-MM` and doubles as the record id.
- * [workingDays] is absent in a record that only holds days off, [daysOff] absent (0) in files before schema v6.
+ * A month's days off; [month] is ISO `yyyy-MM` and doubles as the record id. [daysOff] is absent (0) in files
+ * before schema v6, whose manual working-days count (dropped in schema v23) is no longer read.
  */
 @Serializable
 data class LocalMonthSettings(
     val month: String,
-    val workingDays: Int? = null,
     val daysOff: Int = 0,
 )
 
@@ -153,40 +135,13 @@ data class LocalCategory(
 
 /**
  * An envelope (kept under its pre-envelope name): a named bucket of categories; [order] is its position in the
- * list. [amountCents] is its fixed monthly amount and [fundedByLineId] the income line paying for it (schema v14).
+ * list. The fixed amount, income funding and amount history of older files were dropped in schema v23.
  */
 @Serializable
 data class LocalCategoryGroup(
     val id: String,
     val name: String,
     val order: Int,
-    val amountCents: Long? = null,
-    val fundedByLineId: String? = null,
-    /** First plan month the envelope exists in, ISO `yyyy-MM`; absent = always (schema v19). */
-    val startMonth: String? = null,
-    /** Amount history (schema v19); a null amount = sum of categories. */
-    val versions: List<LocalAmountVersion> = emptyList(),
-)
-
-/**
- * A savings goal (schema v9): [targetType] is a [com.joaoeoneves.fintrack.domain.model.GoalTargetType] name, dates
- * are ISO `yyyy-MM-dd`, [linkedRecurringIds] the recurring items whose generated expenses count towards it and
- * [recurringId] (schema v15) the one a savings plan owns.
- */
-@Serializable
-data class LocalSavingsGoal(
-    val id: String,
-    val name: String,
-    val targetCents: Long,
-    val targetType: String = "ANNUAL",
-    val startDate: String,
-    val targetDate: String? = null,
-    val initialCents: Long = 0L,
-    val linkedRecurringIds: List<String> = emptyList(),
-    val linkedCategoryId: String? = null,
-    val archived: Boolean = false,
-    val order: Int = 0,
-    val recurringId: String? = null,
 )
 
 /**
@@ -196,8 +151,6 @@ data class LocalSavingsGoal(
 @Serializable
 data class LocalAutomation(
     val lineThrough: Map<String, String> = emptyMap(),
-    /** Schema v18: whether the salary pays the next month's plan; absent = not chosen (follows the profile). */
-    val salaryPaysNextMonth: Boolean? = null,
 )
 
 /**

@@ -18,11 +18,6 @@ class LocalMonthSettingsRepository
         override fun observeMonthSettings(): Flow<List<MonthSettings>> =
             store.data.map { doc -> doc.monthSettings.mapNotNull { it.toDomainOrNull() } }
 
-        override suspend fun setWorkingDaysOverride(
-            month: YearMonth,
-            days: Int?,
-        ): Result<Unit> = change(month) { it.copy(workingDays = days) }
-
         override suspend fun setDaysOff(
             month: YearMonth,
             days: Int,
@@ -37,7 +32,7 @@ class LocalMonthSettingsRepository
                 val key = month.toString()
                 val current = doc.monthSettings.firstOrNull { it.month == key } ?: LocalMonthSettings(month = key)
                 val record = edit(current)
-                if (record.workingDays == null && record.daysOff == 0) {
+                if (record.daysOff == 0) {
                     doc.copy(monthSettings = doc.monthSettings.filterNot { it.month == key }) to Unit
                 } else {
                     validateMonthSettings(record)

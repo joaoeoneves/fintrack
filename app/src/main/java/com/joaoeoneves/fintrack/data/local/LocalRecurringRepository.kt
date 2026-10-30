@@ -55,6 +55,9 @@ class LocalRecurringRepository
                 doc.copy(recurring = doc.recurring.withCursor(id, date)) to Unit
             }
 
+        // Nothing to adopt: the 22 -> 23 upgrade of the guest file (and of a restored backup) already did it.
+        override suspend fun adoptLegacyManualItems(today: LocalDate): Result<Int> = Result.success(0)
+
         override suspend fun skipOccurrences(
             itemId: String,
             dates: Set<LocalDate>,

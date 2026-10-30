@@ -3,13 +3,12 @@ package com.joaoeoneves.fintrack.data.backup
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
+import com.joaoeoneves.fintrack.data.local.upgradedTo23
 import com.joaoeoneves.fintrack.data.local.upgradedToStartMonths
 import com.joaoeoneves.fintrack.data.local.validateAutomation
-import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
 import com.joaoeoneves.fintrack.data.local.validateExpense
-import com.joaoeoneves.fintrack.data.local.validateGoal
 import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validateMonthSettings
 import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
@@ -23,6 +22,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.time.Clock
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 
@@ -108,9 +108,16 @@ object BackupCodec {
         // paidWithMealCard and category mealCardByDefault (absent = private / card / 0 / off / off / off).
         // 20 -> 21 salaryProfile vacationDaysPerYear (absent = the default of 22).
         // 21 -> 22 expense/income needsReview and dismissedRecurringSuggestions (absent = reviewed / none).
+        // 22 -> 23 dropped goals, budgets, envelope funding/amount history, the working-days override,
+        // salaryPaysNextMonth and the currency preference (unknown keys now) and the manual recurring flow (see
+        // upgradedTo23: the backlog of a manual item is marked handled).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION ->
-                sanitize(document.upgradedToStartMonths(YearMonth.now(clock), clock.zone))
+                sanitize(
+                    document
+                        .upgradedToStartMonths(YearMonth.now(clock), clock.zone)
+                        .upgradedTo23(LocalDate.now(clock)),
+                )
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
         }
@@ -120,10 +127,6 @@ object BackupCodec {
     private fun sanitize(document: BackupDocument): BackupDecodeResult.Success {
         val categories = keepValid(document.categories, { it.id }) { validateCategory(it) }
         val known = categoryIdsWithBuiltIns(categories)
-        val budgets =
-            keepValid(document.budgets, { it.categoryId }) {
-                validateBudget(it, known)
-            }
         val expenses = keepValid(document.expenses, { it.id }) { validateExpense(it, known) }
         val income = keepValid(document.income, { it.id }) { validateIncome(it) }
         val salaryProfile = document.salaryProfile?.takeIf { isValidProfile(it) }
@@ -134,20 +137,18 @@ object BackupCodec {
         val recurring = keepValid(document.recurring, { it.id }) { validateRecurring(it, known) }
         val monthSettings = keepValid(document.monthSettings, { it.month }) { validateMonthSettings(it) }
         val categoryGroups = keepValid(document.categoryGroups, { it.id }) { validateCategoryGroup(it) }
-        val goals = keepValid(document.goals, { it.id }) { validateGoal(it) }
         val automation = document.automation?.takeIf { runCatching { validateAutomation(it) }.isSuccess }
         val skipped =
-            (document.categories.size - categories.size) + (document.budgets.size - budgets.size) +
-                (document.expenses.size - expenses.size) + (document.income.size - income.size) +
+            (document.categories.size - categories.size) + (document.expenses.size - expenses.size) +
+                (document.income.size - income.size) +
                 (document.plannedIncome.size - plannedIncome.size) + (document.recurring.size - recurring.size) +
                 (document.monthSettings.size - monthSettings.size) +
-                (document.categoryGroups.size - categoryGroups.size) + (document.goals.size - goals.size) +
+                (document.categoryGroups.size - categoryGroups.size) +
                 (if (document.salaryProfile != null && salaryProfile == null) 1 else 0) +
                 (if (document.automation != null && automation == null) 1 else 0)
         return BackupDecodeResult.Success(
             document.copy(
                 categories = categories,
-                budgets = budgets,
                 expenses = expenses,
                 income = income,
                 plannedIncome = plannedIncome,
@@ -155,7 +156,6 @@ object BackupCodec {
                 monthSettings = monthSettings,
                 categoryGroups = categoryGroups,
                 salaryProfile = salaryProfile,
-                goals = goals,
                 automation = automation,
                 dismissedRecurringSuggestions = document.dismissedRecurringSuggestions.dismissalsKept(),
             ),
@@ -202,17 +202,18 @@ internal fun BackupDocument.upgradedToStartMonths(
         LocalDataDocument(
             expenses = expenses,
             income = income,
-            budgets = budgets,
             plannedIncome = plannedIncome,
-            categoryGroups = categoryGroups,
         ).upgradedToStartMonths(now, zone)
-    return copy(
-        schemaVersion = BACKUP_SCHEMA_VERSION,
-        budgets = upgraded.budgets,
-        plannedIncome = upgraded.plannedIncome,
-        categoryGroups = upgraded.categoryGroups,
-    )
+    return copy(plannedIncome = upgraded.plannedIncome)
 }
+
+/** The 22 -> 23 upgrade of a backup: the same rules as the guest file (see `upgradedTo23`). */
+internal fun BackupDocument.upgradedTo23(today: LocalDate): BackupDocument =
+    copy(
+        schemaVersion = BACKUP_SCHEMA_VERSION,
+        recurring = recurring.upgradedTo23(today),
+        monthSettings = monthSettings.upgradedTo23(),
+    )
 
 private const val MAX_DISMISSED_SUGGESTIONS = 500
 

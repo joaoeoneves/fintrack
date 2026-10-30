@@ -5,7 +5,6 @@ enum class PreferenceField(
     val key: String,
 ) {
     THEME("theme"),
-    CURRENCY("currency"),
     LANGUAGE("language"),
 }
 
