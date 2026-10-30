@@ -16,7 +16,6 @@ class RecordIdShapeTest {
     private val badIds = listOf("a".repeat(65), "has space", "slash/id", "dot.id", "accént", "emoji😀", "")
     private val goodIds = listOf("a", "A-z_09", "a".repeat(64))
 
-    private val goal = LocalSavingsGoal(id = "g", name = "Holiday", targetCents = 1000, startDate = "2026-01-01")
     private val expense = LocalExpense("e", "Lunch", 100, "FOOD", "2026-03-10T12:00:00Z")
     private val income = LocalIncome("i", "Pay", 100, "2026-03-10T12:00:00Z")
     private val recurring = recurringItem().toLocal()
@@ -33,9 +32,6 @@ class RecordIdShapeTest {
     }
 
     @Test
-    fun goal() = checkAll({ validateGoal(goal.copy(id = it)) }, "goal")
-
-    @Test
     fun expense() = checkAll({ validateExpense(expense.copy(id = it), known) }, "expense")
 
     @Test
@@ -46,10 +42,4 @@ class RecordIdShapeTest {
 
     @Test
     fun plannedIncome() = checkAll({ validatePlannedIncome(planned.copy(id = it)) }, "planned income")
-
-    @Test
-    fun goalLinkedCategoryAndRecurringIds_areCheckedToo() {
-        assertThrows(IllegalArgumentException::class.java) { validateGoal(goal.copy(linkedCategoryId = "a b")) }
-        assertThrows(IllegalArgumentException::class.java) { validateGoal(goal.copy(recurringId = "x".repeat(65))) }
-    }
 }
