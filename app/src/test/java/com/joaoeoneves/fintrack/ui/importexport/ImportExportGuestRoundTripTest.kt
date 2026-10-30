@@ -15,7 +15,6 @@ import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Session
-import java.time.Instant
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +31,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import java.time.Instant
 
 /** CSV export as a guest, through the full guest repository stack (local file store). */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -78,8 +78,26 @@ class ImportExportGuestRoundTripTest : LocalStoreTestBase() {
             val store = newStore()
             val ids = SequenceIds("x")
             val local = LocalExpenseRepository(store, ids)
-            local.addExpense(Expense(id = "", name = "Coffee", amountCents = 500L, category = BuiltInCategories.SHOPPING, date = Instant.parse("2024-01-15T00:00:00Z"), note = "with milk"))
-            local.addExpense(Expense(id = "", name = "Rent", amountCents = 150_000L, category = BuiltInCategories.RECURRING, date = Instant.parse("2024-02-01T00:00:00Z"), note = null))
+            local.addExpense(
+                Expense(
+                    id = "",
+                    name = "Coffee",
+                    amountCents = 500L,
+                    category = BuiltInCategories.SHOPPING,
+                    date = Instant.parse("2024-01-15T00:00:00Z"),
+                    note = "with milk",
+                ),
+            )
+            local.addExpense(
+                Expense(
+                    id = "",
+                    name = "Rent",
+                    amountCents = 150_000L,
+                    category = BuiltInCategories.RECURRING,
+                    date = Instant.parse("2024-02-01T00:00:00Z"),
+                    note = null,
+                ),
+            )
             val output = tmp.newFile("out.csv")
             val vm = viewModel(store, ids)
 

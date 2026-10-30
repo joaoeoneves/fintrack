@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.backup.BackupCounts
-import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.local.LocalExpense
+import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.migration.AccountMigrator
 import com.joaoeoneves.fintrack.data.migration.MigrationOfferStore

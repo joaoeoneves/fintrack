@@ -22,7 +22,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.Clock
-import java.time.Instant
 import java.time.YearMonth
 
 /** The Home cards of [DashboardViewModel]: income (+ expected), spending, invested, and the Year scale. */
@@ -100,7 +99,7 @@ class DashboardViewModelCardsTest : DashboardViewModelTestBase() {
             collect(vm)
 
             val names = DashboardUiState.Content::class.java.declaredFields.map { it.name }
-            assertFalse(names.any { it.contains("recent", ignoreCase = true) || it.contains("leftover", ignoreCase = true) })
+            assertFalse(names.any { n -> listOf("recent", "leftover").any { n.contains(it, ignoreCase = true) } })
         }
 
     @Test

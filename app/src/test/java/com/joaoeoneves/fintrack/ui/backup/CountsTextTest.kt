@@ -48,7 +48,7 @@ class CountsTextTest {
 
     @Test
     fun withoutSalaryProfile_saysNo_andZeroCountsAreShown() {
-        val text = render(BackupCounts(0, 0, 0, 0, 0, 0))
+        val text = render(BackupCounts(0, 0, 0, 0, 0))
 
         assertEquals(true, text.endsWith("Recurring: 0\nSalary profile: No"))
     }

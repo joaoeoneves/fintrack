@@ -79,7 +79,8 @@ class CategoriesViewModelArchiveReorderTest : CategoriesViewModelTestBase() {
     fun onToggleArchived_clearsDeleteDialog() =
         runTest(testDispatcher) {
             val viewModel = start(FakeCategoryRepository(listOf(gym)))
-            recurring.saveRecurring(recurringItem("r1", categoryId = gym.id)) // in use: the dialog stays open instead of deleting at once
+            // In use: the dialog stays open instead of deleting at once.
+            recurring.saveRecurring(recurringItem("r1", categoryId = gym.id))
             viewModel.onDeleteRequested(gym.id)
             advanceUntilIdle()
             assertTrue(viewModel.content().deleteDialog != null)

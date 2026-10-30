@@ -121,7 +121,8 @@ class SpendingTabViewModelTest {
             setup.vm.onMonthSelected(YearMonth.of(2026, 3))
             advanceUntilIdle()
 
-            assertEquals(Period.Month(YearMonth.of(2026, 3)), (setup.vm.uiState.value as SpendingTabUiState.Content).period)
+            val state = setup.vm.uiState.value as SpendingTabUiState.Content
+            assertEquals(Period.Month(YearMonth.of(2026, 3)), state.period)
         }
 
     @Test

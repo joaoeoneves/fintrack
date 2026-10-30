@@ -164,7 +164,8 @@ class ImportExportViewModelTest {
             val repo = FakeExpenseRepository(listOf(expense(id = "e1", name = "Coffee")))
             val viewModel = ImportExportViewModel(repo, context())
 
-            viewModel.onExportTargetSelected(Uri.parse("content://${GenericFailureContentProvider.AUTHORITY}/export.csv"))
+            val uri = Uri.parse("content://${GenericFailureContentProvider.AUTHORITY}/export.csv")
+            viewModel.onExportTargetSelected(uri)
             advanceUntilIdle()
 
             assertEquals(

@@ -102,9 +102,14 @@ class UpcomingRecurringViewModelTest {
             assertTrue(row.isDue)
             assertTrue(repo.confirmedTransactions.isEmpty())
             assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
-            assertTrue(repo.items.single().skipped.isEmpty())
+            assertTrue(
+                repo.items
+                    .single()
+                    .skipped
+                    .isEmpty(),
+            )
             val actions = vm.javaClass.declaredMethods.map { it.name }
-            assertTrue(actions.none { it.startsWith("onConfirm") || it.startsWith("onSkip") || it.startsWith("onUndo") })
+            assertTrue(actions.none { n -> listOf("onConfirm", "onSkip", "onUndo").any { n.startsWith(it) } })
         }
 
     @Test
