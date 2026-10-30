@@ -127,16 +127,27 @@ class ActivityViewModelSelectionTest : ActivityViewModelTestBase() {
             fixture.vm.onBulkCategory(BuiltInCategories.FOOD)
             advanceUntilIdle()
 
-            val stored = fixture.expenseRepo.getAllExpenses().getOrThrow().associateBy { it.id }
+            val stored =
+                fixture.expenseRepo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .associateBy { it.id }
             assertEquals(BuiltInCategories.FOOD, stored.getValue("a").category)
             assertEquals(BuiltInCategories.FOOD, stored.getValue("b").category)
             assertEquals(c.category, stored.getValue("c").category)
-            assertTrue(fixture.vm.selectedIds.value.isEmpty())
+            assertTrue(
+                fixture.vm.selectedIds.value
+                    .isEmpty(),
+            )
             assertEquals(listOf(BulkKind.CATEGORY to 2), events.map { it.kind to it.count })
 
             fixture.vm.onBulkUndo(events.single().undo)
             advanceUntilIdle()
-            val restored = fixture.expenseRepo.getAllExpenses().getOrThrow().associateBy { it.id }
+            val restored =
+                fixture.expenseRepo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .associateBy { it.id }
             assertEquals(BuiltInCategories.SHOPPING, restored.getValue("a").category)
         }
 
@@ -151,17 +162,30 @@ class ActivityViewModelSelectionTest : ActivityViewModelTestBase() {
 
             fixture.vm.onBulkMealCard()
             advanceUntilIdle()
-            assertTrue(fixture.expenseRepo.getAllExpenses().getOrThrow().all { it.paidWithMealCard })
+            assertTrue(
+                fixture.expenseRepo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .all { it.paidWithMealCard },
+            )
 
             fixture.vm.onLongPress("a")
 
             advanceUntilIdle()
             fixture.vm.onToggleSelected("b")
             advanceUntilIdle()
-            assertTrue(fixture.vm.selectionState.value?.allOnMealCard == true)
+            assertTrue(
+                fixture.vm.selectionState.value
+                    ?.allOnMealCard == true,
+            )
             fixture.vm.onBulkMealCard()
             advanceUntilIdle()
-            assertTrue(fixture.expenseRepo.getAllExpenses().getOrThrow().none { it.paidWithMealCard })
+            assertTrue(
+                fixture.expenseRepo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .none { it.paidWithMealCard },
+            )
         }
 
     @Test
@@ -177,12 +201,25 @@ class ActivityViewModelSelectionTest : ActivityViewModelTestBase() {
 
             fixture.vm.onBulkDelete()
             advanceUntilIdle()
-            assertEquals(listOf("b"), fixture.expenseRepo.getAllExpenses().getOrThrow().map { it.id })
+            assertEquals(
+                listOf("b"),
+                fixture.expenseRepo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .map { it.id },
+            )
             assertEquals(BulkKind.DELETE, events.single().kind)
 
             fixture.vm.onBulkUndo(events.single().undo)
             advanceUntilIdle()
-            assertEquals(setOf("a", "b", "c"), fixture.expenseRepo.getAllExpenses().getOrThrow().map { it.id }.toSet())
+            assertEquals(
+                setOf("a", "b", "c"),
+                fixture.expenseRepo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .map { it.id }
+                    .toSet(),
+            )
         }
 
     @Test
@@ -196,7 +233,13 @@ class ActivityViewModelSelectionTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertTrue(events.isEmpty())
-            assertEquals(1, fixture.expenseRepo.getAllExpenses().getOrThrow().size)
+            assertEquals(
+                1,
+                fixture.expenseRepo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .size,
+            )
         }
 
     @Test

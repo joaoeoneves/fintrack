@@ -37,7 +37,6 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.inject.Inject
@@ -120,8 +119,7 @@ class FinTrack57ScreenTest {
         awaitTag(TestTags.NAV_ACTIVITY).performClick()
     }
 
-    private fun clickText(text: String) =
-        awaitNode(hasText(text) and hasClickAction()).performClick()
+    private fun clickText(text: String) = awaitNode(hasText(text) and hasClickAction()).performClick()
 
     @Test
     fun form_moreOptions_isCollapsed_thenRevealsSplit_withPartsAndFooter() {
