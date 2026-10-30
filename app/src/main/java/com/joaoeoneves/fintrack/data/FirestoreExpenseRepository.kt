@@ -452,8 +452,8 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
     val isRefund = get("isRefund") as? Boolean ?: false
     val paidWithMealCard = get("paidWithMealCard") as? Boolean ?: false
     val needsReview = get("needsReview") as? Boolean ?: false
-    val refundOf = getString("refundOf")?.takeIf { it.isNotBlank() }
-    val splitId = getString("splitId")?.takeIf { it.isNotBlank() }
+    val refundOf = (get("refundOf") as? String)?.takeIf { it.isNotBlank() }
+    val splitId = (get("splitId") as? String)?.takeIf { it.isNotBlank() }
 
     return when {
         name == null -> {
