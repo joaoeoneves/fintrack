@@ -70,7 +70,7 @@ interface ExpenseRepository {
     suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> =
         runCatching { expenses.forEach { updateExpense(it).getOrThrow() } }
 
-    /** Deletes the expenses with these [ids]. The default deletes them one by one; real repositories write in one go. */
+    /** Deletes the expenses with these [ids], one by one by default; real repositories write in one go. */
     suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
         runCatching { ids.forEach { deleteExpense(it).getOrThrow() } }
 
