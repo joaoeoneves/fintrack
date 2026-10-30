@@ -80,8 +80,7 @@ class FinTrack57ScreenTest {
 
     private fun awaitText(text: String) = awaitNode(hasText(text, substring = true))
 
-    private fun isShown(text: String) =
-        composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().isNotEmpty()
+    private fun isShown(text: String) = composeRule.onAllNodesWithText(text, true).fetchSemanticsNodes().isNotEmpty()
 
     private fun seed(
         name: String,
