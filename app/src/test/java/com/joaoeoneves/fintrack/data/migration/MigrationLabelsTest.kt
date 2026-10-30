@@ -56,6 +56,4 @@ class MigrationLabelsTest {
 
         assertTrue(plan.categories.isEmpty())
     }
-
-
 }

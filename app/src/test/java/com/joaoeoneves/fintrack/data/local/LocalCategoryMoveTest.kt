@@ -5,7 +5,6 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith

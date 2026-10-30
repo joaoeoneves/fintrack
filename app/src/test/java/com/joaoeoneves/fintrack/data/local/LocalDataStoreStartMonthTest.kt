@@ -56,6 +56,4 @@ class LocalDataStoreStartMonthTest : LocalStoreTestBase() {
             assertEquals(LOCAL_SCHEMA_VERSION, onDisk.schemaVersion)
             assertEquals("2026-04", onDisk.plannedIncome.single().startMonth)
         }
-
-
 }

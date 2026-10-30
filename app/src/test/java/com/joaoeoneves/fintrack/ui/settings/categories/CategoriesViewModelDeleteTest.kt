@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.userCategory
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -71,20 +72,20 @@ class CategoriesViewModelDeleteTest : CategoriesViewModelTestBase() {
             viewModel.onDeleteRequested(gym.id)
             advanceUntilIdle()
             assertEquals(
-                DeleteDialogState.InUse(gym, CategoryUsage(hasExpenses = true, hasBudget = false)),
+                DeleteDialogState.InUse(gym, CategoryUsage(hasExpenses = true)),
                 viewModel.content().deleteDialog,
             )
         }
 
     @Test
-    fun usedByBudget_isInUseWithBudget() =
+    fun usedByRecurring_isInUseWithRecurring() =
         runTest(testDispatcher) {
-            budgets.setBudget(gym.id, 1_000L)
+            recurring.saveRecurring(recurringItem("r1", categoryId = gym.id))
             val viewModel = start(repo())
             viewModel.onDeleteRequested(gym.id)
             advanceUntilIdle()
             assertEquals(
-                DeleteDialogState.InUse(gym, CategoryUsage(hasExpenses = false, hasBudget = true)),
+                DeleteDialogState.InUse(gym, CategoryUsage(hasExpenses = false, hasRecurring = true)),
                 viewModel.content().deleteDialog,
             )
         }
@@ -138,9 +139,9 @@ class CategoriesViewModelDeleteTest : CategoriesViewModelTestBase() {
         }
 
     @Test
-    fun budgetForOtherCategory_doesNotBlockDelete() =
+    fun recurringForOtherCategory_doesNotBlockDelete() =
         runTest(testDispatcher) {
-            budgets.setBudget(BuiltInCategories.FOOD.id, 500L)
+            recurring.saveRecurring(recurringItem("r1", categoryId = BuiltInCategories.FOOD.id))
             val repo = repo()
             val viewModel = start(repo)
             viewModel.onDeleteRequested(gym.id)

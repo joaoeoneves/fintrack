@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.ui.spending
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
@@ -75,7 +74,6 @@ class SpendingTabViewModelTest {
         val transactions = CombinedTransactionRepository(expenseRepo ?: counting, CountingIncomeRepository(emptyList()))
         val sources =
             PlanDataSources(
-                budgets = FakeBudgetRepository(),
                 plannedIncome = FakePlannedIncomeRepository(),
                 monthSettings = FakeMonthSettingsRepository(),
                 categories = FakeCategoryRepository(),
@@ -112,6 +110,19 @@ class SpendingTabViewModelTest {
             val leftover = c.history!!.monthly.leftover
             assertEquals(2, leftover.months)
             assertEquals(YearMonth.of(2026, 12), leftover.until)
+        }
+
+    @Test
+    fun onMonthSelected_fromTheYearScale_opensThatMonth() =
+        runTest(testDispatcher) {
+            val setup = setup("period" to Period.Year(2026).encode())
+            content(setup.vm)
+
+            setup.vm.onMonthSelected(YearMonth.of(2026, 3))
+            advanceUntilIdle()
+
+            val state = setup.vm.uiState.value as SpendingTabUiState.Content
+            assertEquals(Period.Month(YearMonth.of(2026, 3)), state.period)
         }
 
     @Test

@@ -16,8 +16,8 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import com.joaoeoneves.fintrack.testutil.userCategory
 import kotlinx.coroutines.flow.first

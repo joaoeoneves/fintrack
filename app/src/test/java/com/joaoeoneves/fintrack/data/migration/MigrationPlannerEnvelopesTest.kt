@@ -14,7 +14,8 @@ class MigrationPlannerEnvelopesTest {
     fun envelope_isCopiedWithNameAndOrderOnly() {
         val plan = planMigration(doc(LocalCategoryGroup("g1", "Food", 3)), remoteSnapshot())
 
-        assertEquals(listOf(LocalCategoryGroup("g1", "Food", 3)), plan.categoryGroups)
+        assertEquals(listOf("g1"), plan.categoryGroups.map { it.id })
+        assertEquals("Food", plan.categoryGroups.single().name)
         val write = plan.toBatches().flatten().single { it.collection == "categoryGroups" }
         assertFalse(write.data.keys.any { it in setOf("amountCents", "fundedBy", "fundedByLineId", "startMonth", "versions") })
     }

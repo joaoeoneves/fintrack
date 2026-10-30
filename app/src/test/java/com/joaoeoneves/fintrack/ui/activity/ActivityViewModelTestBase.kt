@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.ui.activity
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
@@ -89,7 +88,6 @@ abstract class ActivityViewModelTestBase {
         incomes: List<Income> = emptyList(),
         val handle: SavedStateHandle = SavedStateHandle(),
         val categories: FakeCategoryRepository = FakeCategoryRepository(),
-        val budgets: FakeBudgetRepository = FakeBudgetRepository(),
         val envelopes: FakeEnvelopeRepository = FakeEnvelopeRepository(),
     ) {
         val expenseRepo = CountingExpenseRepository(expenses)
@@ -98,7 +96,6 @@ abstract class ActivityViewModelTestBase {
         val plannedIncomeRepo = FakePlannedIncomeRepository()
         private val sources =
             PlanDataSources(
-                budgets = budgets,
                 plannedIncome = plannedIncomeRepo,
                 monthSettings = FakeMonthSettingsRepository(),
                 categories = categories,

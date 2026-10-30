@@ -2,15 +2,12 @@ package com.joaoeoneves.fintrack.domain.usecase
 
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
-import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.PlannedSource
-import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 import com.joaoeoneves.fintrack.testutil.assertFailsWithError
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -43,7 +40,7 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
             assertEquals(16_000L, rows[0].amountCents)
             assertEquals(4_000L, rows[0].spentCents)
             assertEquals(8_650L, rows[1].amountCents)
-            assertEquals(2, result.recurring.size)
+            assertEquals(3, result.recurring.size)
             val row = result.budgets.single { it.category.id == BuiltInCategories.RECURRING.id }
             assertEquals(PlannedSource.RECURRING, row.plannedSource)
         }

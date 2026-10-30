@@ -128,7 +128,7 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
 
             val result = overview(Period.Month(september))
 
-            assertEquals(BuiltInCategories.all.toList(), result.budgets.map { it.category })
+            assertEquals(BuiltInCategories.all.filterNot { it.archived }, result.budgets.map { it.category })
             assertEquals(1_000L, result.budgets.single { it.category == BuiltInCategories.FOOD }.planned)
             assertEquals(september.toInstantRange(zone), result.transactions.range)
         }

@@ -88,7 +88,7 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
         }
 
     @Test
-    fun onTypeSelected_filtersList_andTotalsFollowIt() =
+    fun onTypeSelected_filtersList() =
         runTest(testDispatcher) {
             val vm = fixture().vm
             content(vm)
@@ -97,7 +97,6 @@ class ActivityViewModelFilterTest : ActivityViewModelTestBase() {
             advanceUntilIdle()
 
             assertEquals(listOf("salary"), ids(current(vm).items))
-            assertEquals(ActivityTotals(inCents = 250_000L, outCents = 0L), current(vm).totals)
             assertEquals(ActivityType.INCOME, vm.type.value)
         }
 

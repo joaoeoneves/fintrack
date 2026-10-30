@@ -23,7 +23,12 @@ class BackupEnvelopesTest : BackupRepositoryTestBase() {
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
         assertEquals(listOf(LocalCategoryGroup("g-food", "Food", 0)), result.document.categoryGroups)
-        assertEquals("meal", result.document.plannedIncome.single().id)
+        assertEquals(
+            "meal",
+            result.document.plannedIncome
+                .single()
+                .id,
+        )
         assertEquals(0, result.skippedCount)
     }
 

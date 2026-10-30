@@ -6,9 +6,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.FirestoreDataResetRepository
-import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.local.LocalDataResetRepository
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
+import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.domain.model.AuthUser

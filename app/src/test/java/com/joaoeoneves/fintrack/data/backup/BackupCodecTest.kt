@@ -64,7 +64,7 @@ class BackupCodecTest {
         val text = BackupCodec.encode(backupDoc())
 
         assertTrue(text.contains("\"format\": \"fintrack-backup\""))
-        assertTrue(text.contains("\"schemaVersion\": 22"))
+        assertTrue(text.contains("\"schemaVersion\": $BACKUP_SCHEMA_VERSION"))
     }
 
     @Test
@@ -94,9 +94,9 @@ class BackupCodecTest {
 
     @Test
     fun decode_futureVersion_unsupported() {
-        val text = """{"format":"fintrack-backup","schemaVersion":23,"exportedAt":"$EXPORTED_AT"}"""
+        val text = """{"format":"fintrack-backup","schemaVersion":24,"exportedAt":"$EXPORTED_AT"}"""
 
-        assertEquals(BackupDecodeResult.UnsupportedVersion(23), decode(text))
+        assertEquals(BackupDecodeResult.UnsupportedVersion(BACKUP_SCHEMA_VERSION + 1), decode(text))
     }
 
     @Test
