@@ -123,4 +123,4 @@ class UpcomingRecurringViewModelTest {
             assertEquals(day(2026, 3, 16), state.today)
             assertEquals(1, state.overview.upcoming.size)
         }
-
+}

@@ -17,32 +17,32 @@ class UiTextArgsTest {
 
     @Test
     fun noArgs_defaultsToEmptyList() {
-        assertEquals(emptyList<Any>(), UiText.StringResource(R.string.error_csv_empty).args)
+        assertEquals(emptyList<Any>(), UiText.StringResource(R.string.activity_evolution).args)
     }
 
     @Test
     fun intArg_isFormatted_english() {
-        val text = UiText.StringResource(R.string.error_csv_row_columns, listOf(4))
-        assertEquals("Expected 5 columns, found 4", text.asString(resources()))
+        val text = UiText.StringResource(R.string.cd_category_icon_option, listOf(4))
+        assertEquals("Icon 4", text.asString(resources()))
     }
 
     @Test
     fun stringArg_isFormatted_englishAndEchoesRawValue() {
-        val text = UiText.StringResource(R.string.error_csv_row_date_invalid, listOf(" not-a-date "))
-        assertEquals("Invalid date: ' not-a-date '", text.asString(resources()))
+        val text = UiText.StringResource(R.string.category_move_nothing, listOf(" Gym "))
+        assertEquals("Nothing uses “ Gym ”, so there is nothing to move.", text.asString(resources()))
     }
 
     @Test
     @Config(qualifiers = "pt-rPT")
     fun intArg_isFormatted_portuguese() {
-        val text = UiText.StringResource(R.string.error_csv_row_name_too_long, listOf(200))
-        assertEquals("O nome é demasiado longo (máximo: 200)", text.asString(resources()))
+        val text = UiText.StringResource(R.string.cd_category_icon_option, listOf(12))
+        assertEquals("Ícone 12", text.asString(resources()))
     }
 
     @Test
     @Config(qualifiers = "pt-rPT")
     fun stringArg_isFormatted_portuguese() {
-        val text = UiText.StringResource(R.string.error_csv_row_category_unknown, listOf("Gym"))
-        assertEquals("Categoria desconhecida: 'Gym'", text.asString(resources()))
+        val text = UiText.StringResource(R.string.category_move_nothing, listOf("Gym"))
+        assertEquals("Nada usa “Gym”, por isso não há nada para mover.", text.asString(resources()))
     }
 }
