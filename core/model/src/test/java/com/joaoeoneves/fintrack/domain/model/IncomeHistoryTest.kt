@@ -102,28 +102,36 @@ class IncomeHistoryTest {
     ) = income("pay_rent_%d%02d".format(y, m), "Rent", 20_000L, at(y, m, 1))
 
     @Test
-    fun history_expectedNullAfterToday_zeroNotNullBefore() {
-        val months = listOf(ym(2026, 9), ym(2026, 10), ym(2026, 11))
+    fun history_futureMonthsKeepTheirExpected_skippedMonthIsZero() {
+        val months = listOf(ym(2026, 9), ym(2026, 10), ym(2026, 11), ym(2026, 12))
         val paid = listOf(rentPay(2026, 9))
-        val row = incomeHistoryOf(months, paid, listOf(rent), off, zone, ym(2026, 10)).single()
-        assertEquals(listOf(20_000L, 20_000L, null), row.months.map { it.expectedCents })
-        val skipped =
-            incomeHistoryOf(months, paid, listOf(rent.copy(skipMonths = setOf(9))), off, zone, ym(2026, 10))
+        val row = incomeHistoryOf(months, paid, listOf(rent), off, zone).single()
+        assertEquals(listOf(20_000L, 20_000L, 20_000L, 20_000L), row.months.map { it.expectedCents })
+        assertEquals(listOf(20_000L, 0L, 0L, 0L), row.months.map { it.receivedCents })
+        val skipped = incomeHistoryOf(months, paid, listOf(rent.copy(skipMonths = setOf(9))), off, zone)
         assertEquals(0L, skipped.single().months[0].expectedCents)
+    }
+
+    @Test
+    fun history_futureMonthBeforeStartMonth_hasNoExpected() {
+        val months = listOf(ym(2026, 11), ym(2026, 12), ym(2027, 1))
+        val later = listOf(rent.copy(startMonth = ym(2026, 12)))
+        val row = incomeHistoryOf(months, emptyList(), later, off, zone).single()
+        assertEquals(listOf(null, 20_000L, 20_000L), row.months.map { it.expectedCents })
     }
 
     @Test
     fun history_expectedNullBeforeTheLinesStartMonth() {
         val months = listOf(ym(2026, 8), ym(2026, 9), ym(2026, 10))
         val started = listOf(rent.copy(startMonth = ym(2026, 9)))
-        val row = incomeHistoryOf(months, listOf(rentPay(2026, 9)), started, off, zone, ym(2026, 10)).single()
+        val row = incomeHistoryOf(months, listOf(rentPay(2026, 9)), started, off, zone).single()
         assertEquals(listOf(null, 20_000L, 20_000L), row.months.map { it.expectedCents })
     }
 
     @Test
     fun history_manualPayment_stillShowsTheLinesExpected() {
         val manual = income("m1", "Rent", 20_000L, at(2026, 10, 1))
-        val row = incomeHistoryOf(listOf(ym(2026, 10)), listOf(manual), listOf(rent), off, zone, ym(2026, 10)).single()
+        val row = incomeHistoryOf(listOf(ym(2026, 10)), listOf(manual), listOf(rent), off, zone).single()
         assertEquals(listOf<Long?>(20_000L), row.months.map { it.expectedCents })
         assertEquals(20_000L, row.receivedCents)
     }
@@ -132,7 +140,7 @@ class IncomeHistoryTest {
     fun history_endOfMonthSalary_countsInItsOwnMonth() {
         val pay = income("pay_sal_202509", "Salário líquido", 100_000L, at(2025, 9, 30))
         val months = listOf(ym(2025, 9), ym(2025, 10))
-        val row = incomeHistoryOf(months, listOf(pay), listOf(salary), off, zone, ym(2025, 10)).single()
+        val row = incomeHistoryOf(months, listOf(pay), listOf(salary), off, zone).single()
         assertEquals(listOf(100_000L, 0L), row.months.map { it.receivedCents })
     }
 
@@ -149,7 +157,6 @@ class IncomeHistoryTest {
                 emptyList(),
                 off,
                 zone,
-                ym(2026, 10),
             )
         assertEquals(listOf("Refund", "Gift"), result.map { it.label })
         assertEquals(600L, result[1].receivedCents)
@@ -165,7 +172,6 @@ class IncomeHistoryTest {
                 listOf(rent, rent.copy(id = "none", label = "None", amountCents = 0L, order = 3)),
                 off,
                 zone,
-                ym(2026, 10),
             )
         // "x" received 0 and "None" expects 0 are dropped; Rent (expected, nothing received) stays.
         assertEquals(listOf("Rent"), result.map { it.label })
