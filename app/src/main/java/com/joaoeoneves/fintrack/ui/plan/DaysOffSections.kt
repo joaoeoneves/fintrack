@@ -41,6 +41,7 @@ import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import java.time.YearMonth
+import java.time.temporal.ChronoUnit
 
 /** "Working days in Oct: 22 (2 holidays, 3 days off)"; tap to edit the month's days off. */
 @Composable
@@ -93,7 +94,7 @@ internal fun monthsBetween(
     start: YearMonth,
     until: YearMonth,
 ): List<YearMonth> {
-    val count = (until.year * 12 + until.monthValue) - (start.year * 12 + start.monthValue)
+    val count = ChronoUnit.MONTHS.between(start, until).toInt()
     return (0..count.coerceIn(0, DAYS_OFF_MAX_MONTHS_AHEAD)).map { start.plusMonths(it.toLong()) }
 }
 

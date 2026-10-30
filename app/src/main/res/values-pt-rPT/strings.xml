@@ -467,6 +467,13 @@
     <string name="salary_year_meal_vacation">com %1$d dias de férias</string>
     <string name="salary_field_vacation_days">Dias de férias por ano</string>
     <string name="salary_vacation_days_hint">Opcional. Serve para estimar o subsídio de refeição do ano; os meses com dias sem trabalho já definidos contam esses.</string>
+    <string name="salary_vacation_left">Férias por gozar: %1$d de %2$d</string>
+    <plurals name="salary_vacation_over">
+        <item quantity="one">%d dia acima do previsto</item>
+        <item quantity="other">%d dias acima do previsto</item>
+    </plurals>
+    <string name="salary_raise_february">Aumento anual em fevereiro</string>
+    <string name="salary_raise_february_hint">Janeiro mantém o salário anterior</string>
     <string name="salary_year_title">No ano (estimativa)</string>
     <string name="salary_year_net">Total anual líquido estimado</string>
     <string name="salary_year_gross">Bruto no ano</string>

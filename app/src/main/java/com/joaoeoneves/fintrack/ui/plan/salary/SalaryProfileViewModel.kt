@@ -13,9 +13,11 @@ import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryLineLabels
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.YearEstimateInput
+import com.joaoeoneves.fintrack.domain.model.defaultEffectiveFrom
 import com.joaoeoneves.fintrack.domain.model.salaryBreakdownOf
 import com.joaoeoneves.fintrack.domain.model.salaryProfileLines
 import com.joaoeoneves.fintrack.domain.model.salaryYearEstimateOf
+import com.joaoeoneves.fintrack.domain.model.vacationBalanceOf
 import com.joaoeoneves.fintrack.domain.model.vacationDays
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
@@ -192,8 +194,11 @@ class SalaryProfileViewModel
             viewModelScope.launch {
                 saving.value = true
                 manageProfile
-                    .save(result.profile, labels, effectiveFrom.value ?: YearMonth.now(clock))
-                    .onSuccess { finishSave() }
+                    .save(
+                        result.profile,
+                        labels,
+                        effectiveFrom.value ?: defaultEffectiveFrom(YearMonth.now(clock), current.raiseInFebruary),
+                    ).onSuccess { finishSave() }
                     .onFailure { reportFailure(it) }
                 saving.value = false
             }
@@ -248,7 +253,7 @@ class SalaryProfileViewModel
             val (saved, busy, editing) = Triple(typed.saved, typed.busy, typed.editing)
             val result = current.toResult()
             val month = YearMonth.now(clock)
-            val effective = from ?: month
+            val effective = from ?: defaultEffectiveFrom(month, current.raiseInFebruary)
             val breakdown = salaryBreakdownOf(result.profile).takeIf { result.invalid.isEmpty() }
             val vacation = result.profile.vacationDays
             return SalaryProfileUiState.Content(
@@ -267,6 +272,7 @@ class SalaryProfileViewModel
                         salaryYearEstimateOf(result.profile, it, month.year, input)
                     },
                 vacationDaysAssumed = vacation,
+                vacationBalance = vacationBalanceOf(month.year, plan.settings, result.profile),
                 extraEditor = editing?.let { editorStateOf(it, current.mode) },
                 canAddExtra = current.extras.size < MAX_SALARY_EXTRAS,
                 effectiveFrom = effective,
