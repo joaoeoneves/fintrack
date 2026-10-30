@@ -40,7 +40,8 @@ mode).
 - Home, Activity, Income and Spending, plus an avatar with your initial that opens Account & settings.
   Every tab has the same Month | Year switch (calendar year).
 - **Home**: a **Get started** checklist (hidden when done), a **To review** card (records posted
-  automatically and "Make it recurring?" suggestions), an income card (received of expected), a spending
+  automatically, expenses marked *Will be refunded* until the refund is linked, and "Make it
+  recurring?" suggestions; the checklist ticks a step once the server has confirmed it), an income card (received of expected), a spending
   card, an *Invested* row with the share of what you received ("you invested 12% of what you received")
   that opens the investments page, quick add and an informative list of what is coming up.
 - **Activity**: the list of expenses and income, with search, type, category, group and income source
@@ -49,7 +50,7 @@ mode).
   delete several expenses at once (all with undo). Totals and breakdowns live
   in Spending and Income.
 - **Income**: received versus expected with the difference, income lines, days off by type
-  (vacation, sick leave, other; one month or several at once; the working-day count follows from the
+  (vacation and other; one month or several at once; the working-day count follows from the
   calendar, holidays and days off), and history. Income counts by the date it was
   received.
 - **Spending**: spent, fixed versus variable, evolution, and spending by category or by group (a name
@@ -64,13 +65,13 @@ mode).
 - Expenses (name, amount, category, date, note) and income (source, amount, date, note). Refunds
   subtract from their category and can be linked to the original expense, which then shows the refunded
   share and the real spend. An expense can be duplicated, and a new one can be split across categories
-  (*More options*). When you add an expense, the category you used last time for that name
+  (*More options*); opening any part of a split edits all its parts together. When you add an expense, the category you used last time for that name
   is suggested.
 - Categories: built-ins plus your own (new users also start with Home, Transport, Health and Leisure) (name, icon, colour, spending or saving), with rename, reorder,
-  archive and delete.
+  archive and delete. *How it works* in Settings explains categories, groups, recurring items and To review.
 - Income lines that change over time keep their history: a new amount applies
   from the month you choose (*Valid from*) and earlier months keep the old one.
-- CSV export for expenses.
+- CSV export of expenses and income (one file with a type column).
 
 **Income lines**
 - The salary profile (optional) and your own lines, one row per component. Salary set-up is three steps
@@ -78,7 +79,7 @@ mode).
   and extras (a fixed amount, a multiple of the base or a share of the annual gross, paid in the months
   you choose).
 - Any line can be recorded automatically on its pay day (last working day, with Portuguese holidays, or
-  a fixed day). Income can be per working day, with days off and a Carnival shortcut.
+  a fixed day). Income can be per working day, with days off.
 - The salary profile shows the vacation days left this year, and an optional annual raise in February
   makes a new salary apply from February (January keeps the previous one).
 
