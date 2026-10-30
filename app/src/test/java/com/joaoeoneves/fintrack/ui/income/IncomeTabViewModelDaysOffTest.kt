@@ -43,14 +43,17 @@ class IncomeTabViewModelDaysOffTest : IncomeTabViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            vm.onSetDaysOff(oct, 3)
+            vm.onSetDaysOff(listOf(oct), 1, 1, 1)
             advanceUntilIdle()
 
             val state = vm.content().workingDays
             assertEquals(3, state.daysOff)
             assertEquals(18, state.days)
             assertEquals(21, state.calendarDays)
-            assertEquals(listOf(MonthSettings(oct, 3)), monthSettingsRepo.settings)
+            assertEquals(1, state.vacationDays)
+            assertEquals(1, state.sickDays)
+            assertEquals(1, state.otherDays)
+            assertEquals(listOf(MonthSettings(oct, 1, 1, 1)), monthSettingsRepo.settings)
         }
 
     @Test
@@ -58,10 +61,10 @@ class IncomeTabViewModelDaysOffTest : IncomeTabViewModelTestBase() {
         runTest(testDispatcher) {
             val vm = viewModel()
             collect(vm)
-            vm.onSetDaysOff(oct, 4)
+            vm.onSetDaysOff(listOf(oct), 2, 1, 1)
             advanceUntilIdle()
 
-            vm.onSetDaysOff(oct, 0)
+            vm.onSetDaysOff(listOf(oct), 0, 0, 0)
             advanceUntilIdle()
 
             assertTrue(monthSettingsRepo.settings.isEmpty())
@@ -75,9 +78,26 @@ class IncomeTabViewModelDaysOffTest : IncomeTabViewModelTestBase() {
             val vm = viewModel()
             collect(vm)
 
-            vm.onSetDaysOff(oct, 23)
+            vm.onSetDaysOff(listOf(oct), 23, 0, 0)
             advanceUntilIdle()
 
             assertEquals(0, vm.content().workingDays.days)
+        }
+
+    @Test
+    fun setDaysOff_overSeveralMonths_writesEachWithTheSameCounts() =
+        runTest(testDispatcher) {
+            val vm = viewModel()
+            collect(vm)
+            val nov = oct.plusMonths(1)
+
+            vm.onSetDaysOff(listOf(oct, nov), 2, 0, 1)
+            advanceUntilIdle()
+
+            assertEquals(
+                setOf(MonthSettings(oct, 2, 0, 1), MonthSettings(nov, 2, 0, 1)),
+                monthSettingsRepo.settings.toSet(),
+            )
+            assertEquals(3, vm.content().workingDays.daysOff)
         }
 }
