@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.security
 
-import androidx.datastore.preferences.core.Preferences
 import com.joaoeoneves.fintrack.data.preferences.AppLockStore
 import com.joaoeoneves.fintrack.data.preferences.PreferencesStoreTestBase
 import kotlinx.coroutines.CoroutineScope
@@ -30,8 +29,7 @@ class AppLockControllerTest : PreferencesStoreTestBase() {
         return AppLockController(store, { secure }, { now }, appScope)
     }
 
-    private fun TestScope.ready(enabled: Boolean): AppLockController =
-        controller(enabled).also { advanceUntilIdle() }
+    private fun TestScope.ready(enabled: Boolean): AppLockController = controller(enabled).also { advanceUntilIdle() }
 
     @Test
     fun beforeStoreRead_isUnknown() =
@@ -42,12 +40,10 @@ class AppLockControllerTest : PreferencesStoreTestBase() {
         }
 
     @Test
-    fun coldStart_enabledAndSecure_locks() =
-        runTest { assertEquals(LockState.Locked, ready(true).state.value) }
+    fun coldStart_enabledAndSecure_locks() = runTest { assertEquals(LockState.Locked, ready(true).state.value) }
 
     @Test
-    fun coldStart_disabled_unlocked() =
-        runTest { assertEquals(LockState.Unlocked, ready(false).state.value) }
+    fun coldStart_disabled_unlocked() = runTest { assertEquals(LockState.Unlocked, ready(false).state.value) }
 
     @Test
     fun coldStart_enabledButNotSecure_unlocked() =

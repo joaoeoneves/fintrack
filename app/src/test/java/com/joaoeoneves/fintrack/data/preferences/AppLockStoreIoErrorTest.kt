@@ -25,7 +25,7 @@ class AppLockStoreIoErrorTest {
                 object : DataStore<Preferences> {
                     override val data: Flow<Preferences> = flow { throw IOException("boom") }
 
-                    override suspend fun updateData(transform: suspend (Preferences) -> Preferences) =
+                    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences =
                         throw IOException("boom")
                 }
             val failing = AppLockStore(broken)
