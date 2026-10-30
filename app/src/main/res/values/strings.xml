@@ -587,6 +587,14 @@
     <string name="migration_remove_confirm_title">Remove local data?</string>
     <string name="migration_remove_confirm_message">The copy on this device is deleted for good. Your data stays in your account.</string>
     <string name="settings_section_home">Home</string>
+    <string name="settings_section_security">Security</string>
+    <string name="settings_app_lock">Lock the app</string>
+    <string name="settings_app_lock_hint">Asks for your fingerprint, face or screen lock when you open the app and after 1 minute away.</string>
+    <string name="settings_app_lock_unavailable">Set a screen lock on this device to use this option.</string>
+    <string name="lock_title">FinTrack is locked</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_prompt_title">Unlock FinTrack</string>
+    <string name="lock_enable_prompt_title">Confirm it\'s you</string>
     <string name="settings_show_start">Show Get started</string>
     <string name="settings_show_start_hint">The setup checklist on Home</string>
     <string name="home_start_dismissed">Get started hidden</string>
