@@ -278,7 +278,8 @@ class AddEditExpenseViewModelLinkSplitTest {
             advanceUntilIdle()
 
             assertFalse(vm.form().isSplitting)
-            assertEquals("s1", vm.form().splitId)
+            // A lone leftover part is a plain expense: no split id in the form, so no split switch.
+            assertNull(vm.form().splitId)
         }
 
     // ---- duplicate ----
