@@ -106,7 +106,34 @@ class FirestoreSimplifiedMappingTest {
                 mapOf("sickDays" to lng(2L), "otherDays" to lng(1L), "daysOff" to lng(9L)),
             )
 
-        assertEquals(MonthSettings(YearMonth.of(2026, 10), 0, 2, 1), parsed)
+        assertEquals(MonthSettings(YearMonth.of(2026, 10), 0, 3), parsed)
+    }
+
+    @Test
+    fun monthSettings_sickDays_foldIntoOther_andSickOnlyDocIsTypedNotLegacy() {
+        val month = YearMonth.of(2026, 10)
+        assertEquals(
+            MonthSettings(month, 2, 5),
+            monthSettings("2026-10", mapOf("vacationDays" to lng(2L), "otherDays" to lng(3L), "sickDays" to lng(2L))),
+        )
+        // Sick-only: typed, so the stale total is not read as vacation.
+        assertEquals(
+            MonthSettings(month, 0, 4),
+            monthSettings("2026-10", mapOf("sickDays" to lng(4L), "daysOff" to lng(9L))),
+        )
+    }
+
+    @Test
+    fun monthSettings_fold_isCappedAt23MinusVacation() {
+        val month = YearMonth.of(2026, 10)
+        assertEquals(
+            MonthSettings(month, 20, 3),
+            monthSettings("2026-10", mapOf("vacationDays" to lng(20L), "otherDays" to lng(2L), "sickDays" to lng(9L))),
+        )
+        assertEquals(
+            MonthSettings(month, 0, 23),
+            monthSettings("2026-10", mapOf("otherDays" to lng(20L), "sickDays" to lng(20L))),
+        )
     }
 
     @Test
@@ -126,7 +153,7 @@ class FirestoreSimplifiedMappingTest {
 
     @Test
     fun monthSettings_toFirestoreMap_hasNoWorkingDaysField() {
-        val map = MonthSettings(YearMonth.of(2026, 10), 3, 0, 2).toFirestoreMap()
+        val map = MonthSettings(YearMonth.of(2026, 10), 3, 2).toFirestoreMap()
 
         assertEquals(3, map["vacationDays"])
         assertEquals(2, map["otherDays"])

@@ -24,15 +24,10 @@ class BackupCodecV25Test {
         )
 
     @Test
-    fun currentVersionIsTwentyFive() {
-        assertEquals(25, BACKUP_SCHEMA_VERSION)
-    }
-
-    @Test
-    fun v24File_decodesWithNoLinks_atV25_nothingSkipped() {
+    fun v24File_decodesWithNoLinks_atCurrentVersion_nothingSkipped() {
         val result = BackupCodec.decode(v(24)).success()
 
-        assertEquals(25, result.document.schemaVersion)
+        assertEquals(26, result.document.schemaVersion)
         assertEquals(0, result.skippedCount)
         assertNull(
             result.document.expenses
@@ -47,12 +42,12 @@ class BackupCodecV25Test {
     }
 
     @Test
-    fun v23File_goesThroughTheWholeChain_endingAtV25() {
+    fun v23File_goesThroughTheWholeChain_endingAtTheCurrentVersion() {
         val text = """{$header,"schemaVersion":23,"monthSettings":[{"month":"2026-10","daysOff":2}]}"""
 
         val doc = BackupCodec.decode(text).success().document
 
-        assertEquals(25, doc.schemaVersion)
+        assertEquals(26, doc.schemaVersion)
         assertEquals(2, doc.monthSettings.single().vacationDays)
     }
 
@@ -78,11 +73,6 @@ class BackupCodecV25Test {
         assertEquals("orig", e.refundOf)
         assertEquals("s1", e.splitId)
         assertEquals(0, result.skippedCount)
-    }
-
-    @Test
-    fun v26File_isUnsupported() {
-        assertEquals(BackupDecodeResult.UnsupportedVersion(26), BackupCodec.decode(v(26)))
     }
 
     @Test

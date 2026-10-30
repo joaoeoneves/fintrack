@@ -74,7 +74,7 @@ class GuestStarterSeederTest : LocalStoreTestBase() {
     @Test
     fun storeWithOnlyASalaryProfileOrMonthSettings_isNotSeeded() =
         runStoreTest {
-            store.update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", sickDays = 1))) to Unit }
+            store.update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", otherDays = 1))) to Unit }
 
             seeder.seedIfUntouched()
 
