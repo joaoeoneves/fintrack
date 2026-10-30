@@ -33,20 +33,20 @@ class SalaryYearEstimateTest {
     }
 
     @Test
-    fun spread_leavesMonthsWithDaysOffOrOverrideOut_andSubtractsRecordedDays() {
-        val settings = listOf(MonthSettings(ym(1), null, daysOff = 3), MonthSettings(ym(2), 18))
+    fun spread_leavesMonthsWithDaysOffOut_andSubtractsRecordedDays() {
+        val settings = listOf(MonthSettings(ym(1), daysOff = 3), MonthSettings(ym(2), daysOff = 4))
         val spread = assumedVacationByMonth(year, settings, 22)
         assertNull(spread[ym(1)])
         assertNull(spread[ym(2)])
-        // 22 - 3 recorded = 19 over the 10 free months: Mar..Nov take 2, Dec 1.
-        assertEquals(19, spread.values.sum())
+        // 22 - 3 - 4 recorded = 15 over the 10 free months: Mar..Jul take 2, the rest 1.
+        assertEquals(15, spread.values.sum())
         assertEquals(2, spread[ym(3)])
         assertEquals(1, spread[ym(12)])
     }
 
     @Test
     fun spread_isEmptyWhenRecordedDaysCoverTheVacation_orThereIsNone() {
-        assertTrue(assumedVacationByMonth(year, listOf(MonthSettings(ym(1), null, daysOff = 25)), 22).isEmpty())
+        assertTrue(assumedVacationByMonth(year, listOf(MonthSettings(ym(1), daysOff = 25)), 22).isEmpty())
         assertTrue(assumedVacationByMonth(year, emptyList(), 0).isEmpty())
         val allSet = (1..12).map { MonthSettings(ym(it), 20) }
         assertTrue(assumedVacationByMonth(year, allSet, 22).isEmpty())
@@ -79,7 +79,7 @@ class SalaryYearEstimateTest {
 
     @Test
     fun estimate_respectsDaysOffAlreadySet() {
-        val settings = listOf(MonthSettings(ym(1), null, daysOff = 10))
+        val settings = listOf(MonthSettings(ym(1), daysOff = 10))
         val result = estimate(settings = settings)
         assertEquals(900L * (yearWorkingDays() - 22), result.mealYearCents)
     }

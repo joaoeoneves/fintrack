@@ -228,18 +228,6 @@ class RecordPaydayRunDueTest : RecordPaydayTestBase() {
         }
 
     @Test
-    fun perWorkingDayLine_usesTheMonthsOverride() =
-        runTest {
-            plan.savePlannedIncome(line("p1", 1_000).copy(basis = IncomeBasis.PER_WORKING_DAY))
-            monthSettings.setWorkingDaysOverride(oct, 18)
-            cursors("p1" to sep)
-
-            useCase.runDue(payday, utc)
-
-            assertEquals(18_000L, stored().single().amountCents)
-        }
-
-    @Test
     fun perWorkingDayLine_usesCalendarDaysMinusDaysOff() =
         runTest {
             plan.savePlannedIncome(line("p1", 1_000).copy(basis = IncomeBasis.PER_WORKING_DAY))
@@ -249,7 +237,7 @@ class RecordPaydayRunDueTest : RecordPaydayTestBase() {
             useCase.runDue(payday, utc)
 
             assertEquals(18_000L, stored().single().amountCents)
-            assertEquals(listOf(MonthSettings(oct, null, 3)), monthSettings.settings)
+            assertEquals(listOf(MonthSettings(oct, 3)), monthSettings.settings)
         }
 
     @Test
