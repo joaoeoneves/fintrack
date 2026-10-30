@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
 import com.joaoeoneves.fintrack.ui.common.color
@@ -116,6 +117,7 @@ fun rankedBreakdown(slices: List<CategoryTotal>): List<BreakdownEntry> {
  * When [onCategoryClick] is set, each category row is tappable. With [showTotal] false (the Spending tab, which
  * already shows "Spent") the heading is "By category", the big total is left out and the chart reads as spending.
  */
+@Suppress("LongParameterList") // Independent display options of the section.
 @Composable
 fun CategoryBreakdownSection(
     breakdown: ActivityBreakdown,
@@ -123,6 +125,7 @@ fun CategoryBreakdownSection(
     showTotal: Boolean = true,
     onCategoryClick: ((Category) -> Unit)? = null,
     belowTitle: (@Composable () -> Unit)? = null,
+    aboveAverage: Set<CategoryId> = emptySet(),
 ) {
     if (!breakdown.hasExpenses) {
         BreakdownEmpty(modifier)
@@ -143,6 +146,7 @@ fun CategoryBreakdownSection(
             slices = slices,
             totalDescriptionRes = if (showTotal) R.string.cd_pie_chart_total else R.string.cd_pie_chart_spending_total,
             onCategoryClick = onCategoryClick,
+            aboveAverage = aboveAverage,
             modifier = Modifier.padding(top = if (showTotal) Dimens.Space16 else Dimens.Space8),
         )
     }
@@ -170,6 +174,7 @@ fun CategoryBreakdown(
     modifier: Modifier = Modifier,
     @StringRes totalDescriptionRes: Int = R.string.cd_pie_chart_total,
     onCategoryClick: ((Category) -> Unit)? = null,
+    aboveAverage: Set<CategoryId> = emptySet(),
 ) {
     val chartSlices = slices.clampedForChart()
     val entries = rankedBreakdown(slices)
@@ -193,7 +198,11 @@ fun CategoryBreakdown(
                 },
         )
         Column(modifier = Modifier.padding(top = Dimens.Space8)) {
-            entries.forEach { entry -> key(entry.category.id) { BreakdownRow(entry, onCategoryClick) } }
+            entries.forEach { entry ->
+                key(entry.category.id) {
+                    BreakdownRow(entry, onCategoryClick, entry.category.id in aboveAverage)
+                }
+            }
         }
     }
 }
@@ -251,11 +260,14 @@ private fun BarSegment(
 private fun BreakdownRow(
     entry: BreakdownEntry,
     onClick: ((Category) -> Unit)?,
+    aboveAverage: Boolean,
 ) {
     val name = entry.category.displayName
     val amount = formatAmountCents(entry.cents)
     val spokenAmount = formatAmountCents(entry.cents, typographic = false)
-    val description = stringResource(R.string.cd_pie_chart_category_item, name, entry.percent, spokenAmount)
+    val itemDescription = stringResource(R.string.cd_pie_chart_category_item, name, entry.percent, spokenAmount)
+    val aboveAverageText = stringResource(R.string.breakdown_above_average)
+    val description = if (aboveAverage) "$itemDescription, $aboveAverageText" else itemDescription
     val tap = if (onClick == null) Modifier else Modifier.clickable(role = Role.Button) { onClick(entry.category) }
     Row(
         modifier =
@@ -276,13 +288,21 @@ private fun BreakdownRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.size(DotSize).background(entry.category.color, CircleShape))
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(start = Dimens.Space12),
-        )
+        Column(modifier = Modifier.weight(1f).padding(start = Dimens.Space12)) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (aboveAverage) {
+                Text(
+                    text = aboveAverageText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = FinTrackTheme.colors.textSecondary,
+                )
+            }
+        }
         Text(
             text = formatPercent(entry.percent, currentLocale()),
             style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
