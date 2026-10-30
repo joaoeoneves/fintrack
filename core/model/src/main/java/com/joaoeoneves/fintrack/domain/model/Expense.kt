@@ -21,6 +21,10 @@ data class Expense(
      * "to review" inbox until confirmed or edited. Absent in stored data means reviewed.
      */
     val needsReview: Boolean = false,
+    /** STUB(5.7): id of the original expense this refund returns money for. */
+    val refundOf: String? = null,
+    /** STUB(5.7): shared by the sibling expenses of one split. */
+    val splitId: String? = null,
 ) : Transaction {
     /** [amountCents] with its sign applied: negative for refunds, positive otherwise. */
     val signedAmountCents: Long get() = if (isRefund) -amountCents else amountCents

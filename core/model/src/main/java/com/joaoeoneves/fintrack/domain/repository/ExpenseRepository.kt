@@ -53,6 +53,21 @@ interface ExpenseRepository {
     /** Clears [Expense.needsReview] on the expenses with these [ids] (missing ids are ignored). */
     suspend fun markReviewed(ids: Collection<String>): Result<Unit> = Result.success(Unit)
 
+    /** STUB(5.7): adds the expenses keeping their ids. */
+    suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> =
+        runCatching { expenses.map { addExpense(it).getOrThrow() } }
+
+    /** STUB(5.7). */
+    suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> =
+        runCatching { expenses.forEach { updateExpense(it).getOrThrow() } }
+
+    /** STUB(5.7). */
+    suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
+        runCatching { ids.forEach { deleteExpense(it).getOrThrow() } }
+
+    /** STUB(5.7): the refunds that link to an original. */
+    fun observeLinkedRefunds(): Flow<List<Expense>> = flowOf(emptyList())
+
     suspend fun addExpense(expense: Expense): Result<String>
 
     suspend fun updateExpense(expense: Expense): Result<Unit>
