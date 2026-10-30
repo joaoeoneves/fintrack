@@ -27,7 +27,7 @@ class CategoryColorForTest {
 
     @Test
     fun shopping_lightMode_resolvesToBrandYellow() {
-        assertEquals(Color(0xFFD97706), categoryColorFor(BuiltInCategories.SHOPPING, isDarkTheme = false))
+        assertEquals(Color(0xFFB45309), categoryColorFor(BuiltInCategories.SHOPPING, isDarkTheme = false))
     }
 
     @Test

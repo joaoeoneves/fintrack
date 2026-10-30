@@ -65,65 +65,6 @@ class ThemeViewModelTest {
             job.cancel()
         }
 
-    @Test
-    fun toggleTheme_currentlyResolvedDark_setsPreferenceToLight() =
-        runTest(testDispatcher) {
-            val repo = FakeThemeRepository(ThemePreference.SYSTEM)
-            val viewModel = ThemeViewModel(repo)
-            advanceUntilIdle()
-
-            viewModel.toggleTheme(currentlyResolvedDark = true)
-            advanceUntilIdle()
-
-            assertEquals(ThemePreference.LIGHT, repo.currentPreference())
-        }
-
-    @Test
-    fun toggleTheme_currentlyResolvedLight_setsPreferenceToDark() =
-        runTest(testDispatcher) {
-            val repo = FakeThemeRepository(ThemePreference.SYSTEM)
-            val viewModel = ThemeViewModel(repo)
-            advanceUntilIdle()
-
-            viewModel.toggleTheme(currentlyResolvedDark = false)
-            advanceUntilIdle()
-
-            assertEquals(ThemePreference.DARK, repo.currentPreference())
-        }
-
-    @Test
-    fun toggleTheme_ignoresStoredPreference_onlyDependsOnResolvedFlagArgument() =
-        runTest(testDispatcher) {
-            // Even though the stored preference is explicitly LIGHT, toggling with
-            // currentlyResolvedDark = true (as if the resolved theme were dark via some other
-            // path) must still flip to LIGHT -- the method deliberately takes the caller's
-            // resolved-state snapshot, not the stored preference, as its source of truth.
-            val repo = FakeThemeRepository(ThemePreference.LIGHT)
-            val viewModel = ThemeViewModel(repo)
-            advanceUntilIdle()
-
-            viewModel.toggleTheme(currentlyResolvedDark = true)
-            advanceUntilIdle()
-
-            assertEquals(ThemePreference.LIGHT, repo.currentPreference())
-        }
-
-    @Test
-    fun toggleTheme_calledTwice_toggledBackAndForthByCaller_endsAtSecondCallsTarget() =
-        runTest(testDispatcher) {
-            val repo = FakeThemeRepository(ThemePreference.SYSTEM)
-            val viewModel = ThemeViewModel(repo)
-            advanceUntilIdle()
-
-            viewModel.toggleTheme(currentlyResolvedDark = false) // -> DARK
-            advanceUntilIdle()
-            assertEquals(ThemePreference.DARK, repo.currentPreference())
-
-            viewModel.toggleTheme(currentlyResolvedDark = true) // -> LIGHT
-            advanceUntilIdle()
-            assertEquals(ThemePreference.LIGHT, repo.currentPreference())
-        }
-
     /**
      * Minimal in-memory [ThemeRepository] fake, local to this test file since no fake exists
      * under `app/src/main` for this repository.

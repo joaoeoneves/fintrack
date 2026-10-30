@@ -8,7 +8,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,14 +22,4 @@ class ThemeViewModel
                 started = SharingStarted.Eagerly,
                 initialValue = null,
             )
-
-        /**
-         * Flips whichever theme is currently resolved/displayed to its opposite, regardless of
-         * whether that resolved state came from an explicit preference or the system setting.
-         * There is deliberately no "return to system default" option in this pass.
-         */
-        fun toggleTheme(currentlyResolvedDark: Boolean) {
-            val next = if (currentlyResolvedDark) ThemePreference.LIGHT else ThemePreference.DARK
-            viewModelScope.launch { themeRepository.setThemePreference(next) }
-        }
     }

@@ -119,6 +119,7 @@ private fun SettingsScaffold(
                 onThemeSelected = actions.onThemeSelected,
                 onLanguageSelected = actions.onLanguageSelected,
             )
+            AppLockSection()
             StartChecklistSection()
             BackupFlow(signedIn = !uiState.isGuest) { onExport, onRestore ->
                 DeleteAllDataFlow(

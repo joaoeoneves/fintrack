@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,8 +23,10 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.history.SpendingHistory
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
+import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.ListSkeleton
+import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
@@ -43,17 +48,18 @@ fun SpendingTabScreen(
     viewModel: SpendingTabViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pill = remember { PillVisibility() }
+    val scrollState = rememberScrollState()
+    pill.BindTo(scrollState)
+    val period = (state as? SpendingTabUiState.Content)?.period
+    LaunchedEffect(period) { pill.show() }
     TabScaffold(
         title = stringResource(R.string.nav_spending),
         onOpenSettings = onOpenSettings,
         modifier = modifier,
         floatingActionButton = {
             (state as? SpendingTabUiState.Content)?.let { content ->
-                AddTransactionPill(
-                    visible = true,
-                    onAddExpense = { onAddExpense(content.period) },
-                    onAddIncome = { onAddIncome(content.period) },
-                )
+                SpendingAddPill(content.period, pill, onAddExpense, onAddIncome)
             }
         },
     ) { innerPadding ->
@@ -74,7 +80,8 @@ fun SpendingTabScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
-                                .verticalScroll(rememberScrollState())
+                                .nestedScroll(pill.connection)
+                                .verticalScroll(scrollState)
                                 .navigationBarsPadding()
                                 .padding(bottom = Dimens.AddPillClearance),
                     ) {
@@ -99,6 +106,20 @@ fun SpendingTabScreen(
             }
         }
     }
+}
+
+@Composable
+private fun SpendingAddPill(
+    period: Period,
+    pill: PillVisibility,
+    onAddExpense: (Period) -> Unit,
+    onAddIncome: (Period) -> Unit,
+) {
+    AddTransactionPill(
+        visible = pill.visible,
+        onAddExpense = { onAddExpense(period) },
+        onAddIncome = { onAddIncome(period) },
+    )
 }
 
 @Composable

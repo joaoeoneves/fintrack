@@ -99,11 +99,14 @@ mode).
 
 **Localization and appearance**
 - English and Portuguese (pt-PT), switchable in-app; follows the system language by default.
-- System, light or dark theme. Motion (smooth transitions, predictive back, counting amounts, skeleton
+- Dark (default), light or system theme. The *Add* button hides while you scroll down and comes back
+  when you scroll up. Motion (smooth transitions, predictive back, counting amounts, skeleton
   loading and haptics) follows the system's animation setting.
 - Amounts are in euros.
 
 **Privacy-relevant bits**
+- Optional app lock (fingerprint, face or screen lock) when the app opens and after 1 minute away; while
+  it is on, the app preview in recent apps is hidden.
 - Sign-in is Google via Credential Manager; data is stored under your own user id and Firestore security
   rules restrict every document to its owner (see [SECURITY.md](SECURITY.md)).
 - Guest data never leaves the device unless you export a backup.
