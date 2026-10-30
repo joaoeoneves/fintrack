@@ -723,4 +723,13 @@
         <item quantity="one">%d expense deleted</item>
         <item quantity="other">%d expenses deleted</item>
     </plurals>
+    <string name="how_it_works_title">How it works</string>
+    <string name="how_it_works_categories_title">Categories</string>
+    <string name="how_it_works_categories_body">Every expense belongs to one category, such as Groceries or Transport. You can rename, archive and add categories in Settings. Categories drive the totals and the limits you set for each month.</string>
+    <string name="how_it_works_groups_title">Groups</string>
+    <string name="how_it_works_groups_body">A group is a name plus the categories that belong to it, for example Home or Leisure. Groups do not change your expenses. They are used in Spending, where you can switch between Category and Group to see the same month either way.</string>
+    <string name="how_it_works_recurring_title">Recurring</string>
+    <string name="how_it_works_recurring_body">A recurring item is an expense or income that repeats, such as rent or a subscription. On its day each month the app records it for you, so you do not have to type it. Every record made this way lands in To review.</string>
+    <string name="how_it_works_review_title">To review</string>
+    <string name="how_it_works_review_body">To review lists what the app recorded on its own and what you marked as Will be refunded. Tap a record to check or edit it, or use Confirm all. An expense marked as Will be refunded stays there until you record a refund linked to it.</string>
 </resources>

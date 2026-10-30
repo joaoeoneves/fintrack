@@ -32,6 +32,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onDataDeleted: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenHowItWorks: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val importExportViewModel: ImportExportViewModel = hiltViewModel()
@@ -55,6 +56,7 @@ fun SettingsScreen(
                 onSignInToSync = { viewModel.signInToSync(context) },
                 onLeaveGuestMode = viewModel::leaveGuestMode,
                 onDataDeleted = onDataDeleted,
+                onOpenHowItWorks = onOpenHowItWorks,
             ),
         modifier = modifier,
     )
@@ -90,6 +92,7 @@ private data class SettingsActions(
     val onSignInToSync: () -> Unit,
     val onLeaveGuestMode: () -> Unit,
     val onDataDeleted: () -> Unit,
+    val onOpenHowItWorks: () -> Unit,
 )
 
 @Composable
@@ -138,7 +141,7 @@ private fun SettingsScaffold(
                     )
                 }
             }
-            AboutSection()
+            AboutSection(onOpenHowItWorks = actions.onOpenHowItWorks)
         }
     }
 }

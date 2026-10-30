@@ -738,4 +738,13 @@
         <item quantity="many">%d de despesas apagadas</item>
         <item quantity="other">%d despesas apagadas</item>
     </plurals>
+    <string name="how_it_works_title">Como funciona</string>
+    <string name="how_it_works_categories_title">Categorias</string>
+    <string name="how_it_works_categories_body">Cada despesa pertence a uma categoria, como Supermercado ou Transportes. Podes mudar o nome, arquivar e criar categorias nas Definições. As categorias servem para os totais e para os limites que defines em cada mês.</string>
+    <string name="how_it_works_groups_title">Grupos</string>
+    <string name="how_it_works_groups_body">Um grupo é um nome com as categorias que lhe pertencem, por exemplo Casa ou Lazer. Os grupos não alteram as tuas despesas. São usados em Gastos, onde podes alternar entre Categoria e Grupo para ver o mesmo mês das duas formas.</string>
+    <string name="how_it_works_recurring_title">Recorrentes</string>
+    <string name="how_it_works_recurring_body">Um item recorrente é uma despesa ou um rendimento que se repete, como a renda ou uma subscrição. No dia certo de cada mês a app regista-o por ti, sem teres de o escrever. Cada registo feito assim aparece em Por rever.</string>
+    <string name="how_it_works_review_title">Por rever</string>
+    <string name="how_it_works_review_body">Por rever mostra o que a app registou sozinha e o que marcaste como Vai ser reembolsada. Toca num registo para o confirmar ou editar, ou usa Confirmar todos. Uma despesa marcada como Vai ser reembolsada fica aqui até registares um reembolso ligado a ela.</string>
 </resources>

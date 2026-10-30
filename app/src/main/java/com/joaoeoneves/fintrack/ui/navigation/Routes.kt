@@ -71,6 +71,10 @@ data class AddEditIncome(
 @Serializable
 object Settings
 
+/** The static "How it works" page opened from Settings. */
+@Serializable
+object HowItWorks
+
 /** The categories list; a non-null [editId] opens that category's editor once, on arrival. */
 @Serializable
 data class Categories(
