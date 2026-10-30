@@ -49,7 +49,10 @@ class CategoryResolvingExpenseRepository
                 categoryRepository.observeCategories(),
             ) { expenses, categories -> expenses.resolvedWith(categories) }
 
-        override suspend fun getSplit(splitId: String): Result<List<Expense>> = delegate.getSplit(splitId).map { resolve(it) }
+        override suspend fun getSplit(splitId: String): Result<List<Expense>> =
+            delegate.getSplit(splitId).map { expenses ->
+                resolve(expenses)
+            }
 
         override suspend fun getExpense(id: String): Result<Expense?> =
             delegate.getExpense(id).map { expense -> expense?.let { resolve(listOf(it)).single() } }
