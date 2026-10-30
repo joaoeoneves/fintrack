@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
+import com.joaoeoneves.fintrack.domain.model.requireValidDaysOff
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,9 @@ import javax.inject.Inject
 private const val TAG = "FirestoreMonthSettingsRepo"
 private const val FIELD_WORKING_DAYS = "workingDays"
 private const val FIELD_DAYS_OFF = "daysOff"
+private const val FIELD_VACATION_DAYS = "vacationDays"
+private const val FIELD_SICK_DAYS = "sickDays"
+private const val FIELD_OTHER_DAYS = "otherDays"
 
 class FirestoreMonthSettingsRepository
     @Inject
@@ -48,37 +52,49 @@ class FirestoreMonthSettingsRepository
         }
 
         override suspend fun setDaysOff(
-            month: YearMonth,
-            days: Int,
+            months: Collection<YearMonth>,
+            vacation: Int,
+            sick: Int,
+            other: Int,
         ): Result<Unit> {
+            requireValidDaysOff(months, vacation, sick, other)
             val uid = firebaseAuth.currentUser?.uid ?: return Result.failure(IllegalStateException("Not signed in"))
             return runCatchingCancellable {
-                val docRef = collection(uid).document(month.toString())
+                val batch = firestore.batch()
+                months.distinct().forEach { month ->
+                    val docRef = collection(uid).document(month.toString())
+                    if (vacation + sick + other == 0) {
+                        batch.delete(docRef)
+                    } else {
+                        // `workingDays` (pre-5.5) and `daysOff` (pre-5.6 total) are dropped on the next save.
+                        val data =
+                            buildMap<String, Any> {
+                                put(FIELD_VACATION_DAYS, vacation.orDelete())
+                                put(FIELD_SICK_DAYS, sick.orDelete())
+                                put(FIELD_OTHER_DAYS, other.orDelete())
+                                put(FIELD_DAYS_OFF, FieldValue.delete())
+                                put(FIELD_WORKING_DAYS, FieldValue.delete())
+                                put("updatedAt", FieldValue.serverTimestamp())
+                            }
+                        batch.set(docRef, data, SetOptions.merge())
+                    }
+                }
                 // Not awaited: the write lands in Firestore's local cache immediately and syncs when
                 // the device is online. Awaiting would hang indefinitely while offline.
-                if (days <= 0) {
-                    docRef.delete().addOnFailureListener(onFail(TAG, "Clear month settings ${docRef.id} failed"))
-                } else {
-                    // `workingDays` is the pre-5.5 manual override: dropped from the document on the next save.
-                    val data =
-                        mapOf(
-                            FIELD_DAYS_OFF to days,
-                            FIELD_WORKING_DAYS to FieldValue.delete(),
-                            "updatedAt" to FieldValue.serverTimestamp(),
-                        )
-                    docRef
-                        .set(data, SetOptions.merge())
-                        .addOnFailureListener(onFail(TAG, "Set month settings ${docRef.id} failed"))
-                }
+                batch.commit().addOnFailureListener(onFail(TAG, "Set month settings failed"))
                 Unit
             }
         }
     }
 
+private fun Int.orDelete(): Any = if (this > 0) this else FieldValue.delete()
+
 /** Written whole; only the fields that are set are included. The document id is the month (`yyyy-MM`). */
 internal fun MonthSettings.toFirestoreMap(): Map<String, Any?> =
     buildMap {
-        if (daysOff > 0) put(FIELD_DAYS_OFF, daysOff)
+        if (vacationDays > 0) put(FIELD_VACATION_DAYS, vacationDays)
+        if (sickDays > 0) put(FIELD_SICK_DAYS, sickDays)
+        if (otherDays > 0) put(FIELD_OTHER_DAYS, otherDays)
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
@@ -92,15 +108,17 @@ private fun DocumentSnapshot.toMonthSettingsOrNull(): MonthSettings? =
             } catch (_: DateTimeException) {
                 null
             }
-        val daysOff = getLong(FIELD_DAYS_OFF)?.toInt() ?: 0
-        when {
-            month == null -> {
-                Log.w(TAG, "Dropping malformed month settings doc $id")
-                null
-            }
-            // A leftover document with nothing set (only the legacy working-days override, or a field cleared
-            // offline) carries no information.
-            daysOff == 0 -> null
-            else -> MonthSettings(month = month, daysOff = daysOff)
+        if (month == null) {
+            Log.w(TAG, "Dropping malformed month settings doc $id")
+            return@mapOrNull null
         }
+        val vacation = getLong(FIELD_VACATION_DAYS)?.toInt()
+        val sick = getLong(FIELD_SICK_DAYS)?.toInt()
+        val other = getLong(FIELD_OTHER_DAYS)?.toInt()
+        // A pre-5.6 document only has the total, which counts as vacation; once a typed field exists it is ignored.
+        val legacy = vacation == null && sick == null && other == null
+        val vacationDays = if (legacy) getLong(FIELD_DAYS_OFF)?.toInt() ?: 0 else vacation ?: 0
+        // A leftover document with nothing set (only the legacy working-days override, or fields cleared
+        // offline) carries no information.
+        MonthSettings(month, vacationDays, sick ?: 0, other ?: 0).takeUnless { it.isBlank }
     }
