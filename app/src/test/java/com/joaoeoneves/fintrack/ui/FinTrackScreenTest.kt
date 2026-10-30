@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui
 
 import android.content.Context
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -19,13 +21,21 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.joaoeoneves.fintrack.MainActivity
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.model.Income
+import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.testutil.FirebaseTestApp
 import com.joaoeoneves.fintrack.ui.common.TestTags
+import com.joaoeoneves.fintrack.ui.dashboard.DashboardTags
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -33,6 +43,8 @@ import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.Instant
+import javax.inject.Inject
 
 /** Runs the main app flows end to end on the JVM (guest mode, fake sign-in), replacing emulator flows. */
 @HiltAndroidTest
@@ -44,6 +56,10 @@ class FinTrackScreenTest {
 
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(hiltRule).around(composeRule)
+
+    @Inject lateinit var incomeRepository: IncomeRepository
+
+    @Inject lateinit var expenseRepository: ExpenseRepository
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private var scenario: ActivityScenario<MainActivity>? = null
@@ -100,6 +116,8 @@ class FinTrackScreenTest {
         pickFirstCategory()
         awaitNode(hasText(str(R.string.action_save)) and hasClickAction()).performClick()
 
+        // Home no longer lists recent activity: the new row lives in the Activity tab.
+        awaitTag(TestTags.NAV_ACTIVITY).performClick()
         // The form's own name field also shows the text until it closes, so wait for the list row.
         // The new row can sit under the floating add pill until it is scrolled into the clear area.
         awaitRow().performScrollTo().performClick()
@@ -126,6 +144,70 @@ class FinTrackScreenTest {
         awaitText(str(R.string.period_scale_month))
         awaitText(str(R.string.period_scale_year))
     }
+
+    @Test
+    fun home_blocks_follow_the_5_5_order_without_recent_activity() {
+        awaitTag(TestTags.CONTINUE_AS_GUEST).performClick()
+        awaitTag(TestTags.NAV_HOME)
+        runBlocking {
+            incomeRepository.addIncome(Income("", "Pay", 100_000L, Instant.now(), null, needsReview = true))
+            expenseRepository.addExpense(
+                Expense("", "Coffee", 1_000L, BuiltInCategories.SHOPPING, Instant.now(), null),
+            )
+            expenseRepository.addExpense(
+                Expense("", "ETF", 10_000L, BuiltInCategories.INVESTMENTS, Instant.now(), null),
+            )
+        }
+
+        val review = awaitTag(TestTags.REVIEW_INBOX).y()
+        val income = awaitTag(DashboardTags.INCOME_CARD).y()
+        val spending = awaitTag(DashboardTags.SPENDING_CARD).y()
+        val invested = awaitTag(DashboardTags.INVESTED_ROW).y()
+
+        assertTrue("review $review < income $income", review < income)
+        assertTrue("income < spending", income < spending)
+        assertTrue("spending < invested", spending < invested)
+        // 10 000 of 100 000 received: the rate shows next to the amount.
+        awaitText("10%")
+        assertTrue(
+            "Home lists no recent activity",
+            composeRule.onAllNodes(hasText("Coffee", substring = true)).fetchSemanticsNodes().isEmpty(),
+        )
+    }
+
+    @Test
+    fun settings_has_no_currency_motion_or_import_rows() {
+        awaitTag(TestTags.CONTINUE_AS_GUEST).performClick()
+        awaitTag(TestTags.ACCOUNT_AVATAR).performClick()
+        awaitText(str(R.string.settings_theme))
+
+        awaitText(str(R.string.settings_export_csv))
+        assertGone("Currency")
+        assertGone("Reduced motion")
+        assertGone("Import")
+    }
+
+    @Test
+    fun recurring_form_has_no_automatic_posting_switch() {
+        awaitTag(TestTags.CONTINUE_AS_GUEST).performClick()
+        awaitText(str(R.string.recurring_empty_cta)).performClick()
+        awaitTag(TestTags.RECURRING_ADD).performClick()
+        awaitText(str(R.string.recurring_day_of_month))
+
+        assertGone("utomatic")
+        assertTrue(
+            "no switch on the new-recurring form",
+            composeRule.onAllNodes(isToggleable()).fetchSemanticsNodes().isEmpty(),
+        )
+    }
+
+    private fun SemanticsNodeInteraction.y() = fetchSemanticsNode().positionInRoot.y
+
+    private fun assertGone(text: String) =
+        assertTrue(
+            "'$text' must not be shown",
+            composeRule.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isEmpty(),
+        )
 
     private companion object {
         const val WAIT_MS = 5_000L

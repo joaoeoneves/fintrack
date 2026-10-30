@@ -1,29 +1,19 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
 import android.app.Application
-import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryRepository
-import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
-import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
-import com.joaoeoneves.fintrack.domain.model.IncomeRow
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
-import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
-import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
-import com.joaoeoneves.fintrack.domain.usecase.UndoRecurringOccurrence
 import com.joaoeoneves.fintrack.testutil.MutableClock
-import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -43,7 +33,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneOffset
 
-/** The "Expected income" group of [UpcomingRecurringViewModel] and its Received action. */
+/** The read-only "Expected income" group of [UpcomingRecurringViewModel]: receiving happens in the Income tab. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
@@ -66,15 +56,6 @@ class UpcomingRecurringExpectedIncomeTest {
         return UpcomingRecurringViewModel(
             ObserveUpcomingRecurring(recurring),
             ObserveExpectedIncome(plannedIncome, months, incomes),
-            HandleRecurringOccurrence(recurring, FakeCategoryRepository()),
-            RecordPayday(
-                plannedIncome,
-                months,
-                incomes,
-                FakeAutomationSettingsRepository(),
-                FakeSalaryLineLabelsProvider(),
-            ),
-            UndoRecurringOccurrence(recurring, FakeExpenseRepository()),
             clock,
         )
     }
@@ -101,84 +82,6 @@ class UpcomingRecurringExpectedIncomeTest {
             clock.now = Instant.parse("2026-10-10T10:00:00Z")
 
             assertTrue(content(viewModel()).expectedIncome!!.rows.isEmpty())
-        }
-
-    @Test
-    fun onReceiveIncome_recordsIt_andTheRowDisappears() =
-        runTest(dispatcher) {
-            val vm = viewModel()
-            val row = content(vm).expectedIncome!!.rows.single()
-
-            vm.onReceiveIncome(row, LocalDate.of(2026, 10, 27), null)
-            advanceUntilIdle()
-
-            val stored = incomes.getAllIncome().getOrThrow().single()
-            assertEquals("pay_p1_202610", stored.id)
-            assertEquals(150_000L, stored.amountCents)
-            assertEquals(Instant.parse("2026-10-27T12:00:00Z"), stored.date)
-            assertTrue(content(vm).expectedIncome!!.rows.isEmpty())
-        }
-
-    @Test
-    fun onReceiveIncome_withAmountOverride() =
-        runTest(dispatcher) {
-            val vm = viewModel()
-            val row = content(vm).expectedIncome!!.rows.single()
-
-            vm.onReceiveIncome(row, LocalDate.of(2026, 10, 28), 140_000L)
-            advanceUntilIdle()
-
-            assertEquals(
-                140_000L,
-                incomes
-                    .getAllIncome()
-                    .getOrThrow()
-                    .single()
-                    .amountCents,
-            )
-        }
-
-    @Test
-    fun onReceiveIncome_undo_removesTheIncome_andTheRowReturns() =
-        runTest(dispatcher) {
-            val vm = viewModel()
-            val row = content(vm).expectedIncome!!.rows.single()
-            val undo = vm.onReceiveIncome(row, LocalDate.of(2026, 10, 27), null)
-            advanceUntilIdle()
-            assertEquals(1, incomes.getAllIncome().getOrThrow().size)
-
-            undo()
-            advanceUntilIdle()
-
-            assertTrue(incomes.getAllIncome().getOrThrow().isEmpty())
-            assertEquals(1, content(vm).expectedIncome!!.rows.size)
-        }
-
-    @Test
-    fun onReceiveIncome_beforeContentLoads_returnsANoOpUndo() =
-        runTest(dispatcher) {
-            val vm = viewModel()
-
-            val undo = vm.onReceiveIncome(IncomeRow(null, emptyList(), 0L), LocalDate.of(2026, 10, 27), null)
-            undo()
-            advanceUntilIdle()
-
-            assertTrue(incomes.getAllIncome().getOrThrow().isEmpty())
-        }
-
-    @Test
-    fun onReceiveIncome_futureDate_emitsAnError_andWritesNothing() =
-        runTest(dispatcher) {
-            val vm = viewModel()
-            val errors = mutableListOf<UiText>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
-            val row = content(vm).expectedIncome!!.rows.single()
-
-            vm.onReceiveIncome(row, LocalDate.of(2026, 10, 29), null)
-            advanceUntilIdle()
-
-            assertEquals(1, errors.size)
-            assertTrue(incomes.getAllIncome().getOrThrow().isEmpty())
         }
 
     @Test

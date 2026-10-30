@@ -157,7 +157,7 @@ class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
         }
 
     @Test
-    fun totals_followTheVisibleList() =
+    fun list_followsQueryAndType() =
         runTest(testDispatcher) {
             val fixture =
                 Fixture(
@@ -170,36 +170,23 @@ class ActivityViewModelPeriodTest : ActivityViewModelTestBase() {
             vm.onTypeSelected(ActivityType.EXPENSE)
             advanceUntilIdle()
 
-            assertEquals(ActivityTotals(inCents = 0L, outCents = 1_000L), current(vm).totals)
             assertEquals(listOf("a"), current(vm).items.map { it.id })
         }
 
     @Test
-    fun totals_outIsNetOfRefunds_andMayBeNegative() =
-        runTest(testDispatcher) {
-            val net = Fixture(listOf(expense("a", 1_000L), expense("r", 400L, isRefund = true)))
-            assertEquals(600L, content(net.vm).totals.outCents)
-
-            val negative = Fixture(listOf(expense("r", 400L, isRefund = true)))
-            assertEquals(-400L, content(negative.vm).totals.outCents)
-        }
-
-    @Test
-    fun totals_emptyPeriod_areZero_andItemsEmpty() =
+    fun emptyPeriod_hasNoItems() =
         runTest(testDispatcher) {
             val content = content(Fixture().vm)
 
-            assertEquals(ActivityTotals(0L, 0L), content.totals)
             assertTrue(content.items.isEmpty())
             assertTrue(content.days.isEmpty())
         }
 
     @Test
-    fun totals_zeroAmountEntries_countAsZero() =
+    fun zeroAmountEntries_stillListed() =
         runTest(testDispatcher) {
             val content = content(Fixture(listOf(expense("z", 0L)), listOf(income("zi", 0L))).vm)
 
-            assertEquals(ActivityTotals(0L, 0L), content.totals)
             assertEquals(2, content.items.size)
         }
 }

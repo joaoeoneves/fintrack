@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.ui.migration
 
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.migration.MigrationOfflineException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
@@ -188,7 +188,7 @@ class LocalDataMigrationViewModelRunTest : LocalDataMigrationViewModelTestBase()
             settle()
             assertEquals(MigrationUiState.Hidden, vm.uiState.value)
 
-            store.update { it.copy(budgets = it.budgets + LocalBudget("SHOPPING", 5)) to Unit }
+            store.update { it.copy(income = it.income + LocalIncome("i9", "Bonus", 5, "2026-03-11T12:00:00Z")) to Unit }
             settle()
             vm.onAccept()
             settle()
@@ -207,7 +207,7 @@ class LocalDataMigrationViewModelRunTest : LocalDataMigrationViewModelTestBase()
             vm.onAccept()
             settle()
 
-            store.update { it.copy(expenses = emptyList(), budgets = emptyList()) to Unit }
+            store.update { it.copy(expenses = emptyList(), income = emptyList()) to Unit }
             settle()
             assertTrue(vm.uiState.value is MigrationUiState.Running)
 

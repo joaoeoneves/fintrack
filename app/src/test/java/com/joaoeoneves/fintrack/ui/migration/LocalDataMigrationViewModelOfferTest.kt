@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.ui.migration
 
 import com.joaoeoneves.fintrack.data.backup.backupRecurring
-import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.domain.model.Session
 import kotlinx.coroutines.flow.first
@@ -14,11 +14,11 @@ class LocalDataMigrationViewModelOfferTest : LocalDataMigrationViewModelTestBase
     @Test
     fun signedInWithLocalData_showsOfferWithCounts() =
         runStoreTest {
-            seedLocal(expenses = 2, budgets = 1)
+            seedLocal(expenses = 2, income = 1)
             val vm = viewModel()
             settle()
 
-            assertEquals(MigrationUiState.Offer(counts(expenses = 2, budgets = 1)), vm.uiState.value)
+            assertEquals(MigrationUiState.Offer(counts(expenses = 2, income = 1)), vm.uiState.value)
         }
 
     @Test
@@ -143,10 +143,10 @@ class LocalDataMigrationViewModelOfferTest : LocalDataMigrationViewModelTestBase
             vm.onDismiss()
             settle()
 
-            store.update { it.copy(budgets = it.budgets + LocalBudget("SHOPPING", 5)) to Unit }
+            store.update { it.copy(income = it.income + LocalIncome("i9", "Bonus", 5, "2026-03-11T12:00:00Z")) to Unit }
             settle()
 
-            assertEquals(MigrationUiState.Offer(counts(expenses = 2, budgets = 2)), vm.uiState.value)
+            assertEquals(MigrationUiState.Offer(counts(expenses = 2, income = 2)), vm.uiState.value)
         }
 
     @Test
@@ -156,7 +156,7 @@ class LocalDataMigrationViewModelOfferTest : LocalDataMigrationViewModelTestBase
             val vm = viewModel()
             settle()
 
-            store.update { it.copy(expenses = emptyList(), budgets = emptyList()) to Unit }
+            store.update { it.copy(expenses = emptyList(), income = emptyList()) to Unit }
             settle()
 
             assertEquals(MigrationUiState.Hidden, vm.uiState.value)
