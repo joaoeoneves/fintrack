@@ -8,8 +8,7 @@ import kotlinx.coroutines.flow.flow
 import java.time.YearMonth
 
 /**
- * In-memory [MonthSettingsRepository] intended for tests; a record holds an override, days off or both and is
- * removed when neither is set.
+ * In-memory [MonthSettingsRepository] intended for tests; a record is removed when its days off are 0.
  */
 class FakeMonthSettingsRepository(
     initialSettings: List<MonthSettings> = emptyList(),
@@ -26,11 +25,6 @@ class FakeMonthSettingsRepository(
         return settingsFlow
     }
 
-    override suspend fun setWorkingDaysOverride(
-        month: YearMonth,
-        days: Int?,
-    ): Result<Unit> = change(month) { it.copy(workingDaysOverride = days) }
-
     override suspend fun setDaysOff(
         month: YearMonth,
         days: Int,
@@ -44,7 +38,7 @@ class FakeMonthSettingsRepository(
             nextSetError = null
             return Result.failure(error)
         }
-        val current = settingsFlow.value.firstOrNull { it.month == month } ?: MonthSettings(month, null)
+        val current = settingsFlow.value.firstOrNull { it.month == month } ?: MonthSettings(month)
         val updated = edit(current)
         val others = settingsFlow.value.filterNot { it.month == month }
         settingsFlow.value = if (updated.isBlank) others else others + updated
