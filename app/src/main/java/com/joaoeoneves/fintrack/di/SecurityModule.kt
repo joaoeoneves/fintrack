@@ -10,7 +10,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
-/** TEMPORARY stub of the Track A contract. */
+/** Bindings for the app lock: the device-lock check and the monotonic clock. */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class SecurityModule {
