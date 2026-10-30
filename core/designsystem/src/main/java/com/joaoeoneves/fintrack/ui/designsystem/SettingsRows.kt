@@ -147,6 +147,7 @@ fun SettingsChoiceRow(
 }
 
 /** A row with a trailing switch; the whole row toggles (switch semantics on the row) unless [enabled] is false. */
+@Suppress("LongParameterList")
 @Composable
 fun SettingsSwitchRow(
     title: String,
