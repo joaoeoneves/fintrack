@@ -46,11 +46,13 @@ mode).
 - **Activity**: the list of expenses and income, with search, type, category, group and income source
   filters, sorting, and delete by swiping or from the edit screen (with undo). Totals and breakdowns live
   in Spending and Income.
-- **Income**: received versus expected with the difference, income lines, days off (the working-day
-  count follows from the calendar, holidays and days off), and history. Income counts by the date it was
+- **Income**: received versus expected with the difference, income lines, days off by type
+  (vacation, sick leave, other; one month or several at once; the working-day count follows from the
+  calendar, holidays and days off), and history. Income counts by the date it was
   received.
-- **Spending**: spent, fixed versus variable, evolution, spending by category and groups (a name plus
-  its categories). Recurring bills and investments are managed here.
+- **Spending**: spent, fixed versus variable, evolution, and spending by category or by group (a name
+  plus its categories) with a Category | Group switch. Recurring bills and investments are managed here,
+  with their yearly cost (monthly and yearly items apart) and the month each one ends.
 - Tapping a bar in a year chart shows that month's figures and opens the month.
 - Detail pages per category and per income source. For the net salary source it shows what was received
   at the end of a month against what was spent in the next one.
@@ -59,7 +61,7 @@ mode).
 - Expenses (name, amount, category, date, note) and income (source, amount, date, note). Refunds
   subtract from their category. When you add an expense, the category you used last time for that name
   is suggested.
-- Categories: built-ins plus your own (name, icon, colour, spending or saving), with rename, reorder,
+- Categories: built-ins plus your own (new users also start with Home, Transport, Health and Leisure) (name, icon, colour, spending or saving), with rename, reorder,
   archive and delete.
 - Income lines that change over time keep their history: a new amount applies
   from the month you choose (*Valid from*) and earlier months keep the old one.
@@ -72,6 +74,8 @@ mode).
   you choose).
 - Any line can be recorded automatically on its pay day (last working day, with Portuguese holidays, or
   a fixed day). Income can be per working day, with days off and a Carnival shortcut.
+- The salary profile shows the vacation days left this year, and an optional annual raise in February
+  makes a new salary apply from February (January keeps the previous one).
 
 **Bills and investments**
 - Monthly or yearly recurring expenses (rent, subscriptions) and recurring investments, with start and

@@ -389,7 +389,7 @@
     <string name="plan_days_off_other">Other</string>
     <string name="plan_days_off_until">Until</string>
     <plurals name="plan_days_off_range_hint">
-        <item quantity="one">These counts replace the month's days off.</item>
+        <item quantity="one">These counts replace the month\'s days off.</item>
         <item quantity="other">These counts replace the days off of %d months.</item>
     </plurals>
     <string name="cd_fewer_vacation_days">Fewer vacation days</string>
