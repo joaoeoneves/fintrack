@@ -123,3 +123,15 @@ Short records of the main architectural choices: context, decision, consequences
   refund, used only for display.
 - **Consequences:** No aggregation changes and every existing path stays correct. There is no group edit:
   each part is edited or deleted on its own, and a lone remaining part simply reads as a normal expense.
+
+## 13. App lock as an in-app overlay (5.8)
+
+- **Context:** The app holds personal finances, and some users want a lock beyond the phone's own. A lock
+  must never trap the user out of their data and must not break navigation or screenshots for reports.
+- **Decision:** An optional, device-only setting. The lock screen is a Compose overlay in `MainActivity`
+  rather than a separate activity. It asks on a cold start and after 60 s in the background (monotonic
+  clock), using biometrics or the device credential. Enabling it needs a successful authentication first;
+  without a device screen lock the app stays unlocked. Recent-apps previews are hidden only while the lock
+  is on (screenshots stay allowed on API 33+).
+- **Consequences:** The navigation state survives a lock, and there is no extra activity or task to manage.
+  Leaving for a system picker for a minute or more locks on return, which is accepted.
