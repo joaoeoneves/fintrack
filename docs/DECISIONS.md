@@ -111,3 +111,15 @@ Short records of the main architectural choices: context, decision, consequences
 - **Consequences:** Fewer settings and fewer paths to the same result. Firestore rules still tolerate the
   legacy fields on update (the next save removes them) and allow deleting the old `budgets`/`goals`
   documents; backups older than schema 23 still restore, with the removed fields ignored.
+
+## 12. Split expenses as sibling records (5.7)
+
+- **Context:** A purchase can span several categories (a supermarket run with food and household items).
+  Modelling it as one expense with parts would have to be exploded in every total, filter, breakdown,
+  budget, CSV export, backup, migration and category-usage check.
+- **Decision:** A split creates one normal expense per part, sharing an optional `splitId`. Name, date, note
+  and meal card are copied to every part; the parts must add up to the total (2..10 parts). Splitting is
+  only offered for a new, non-refund expense. Refund links work the same way: an optional `refundOf` on the
+  refund, used only for display.
+- **Consequences:** No aggregation changes and every existing path stays correct. There is no group edit:
+  each part is edited or deleted on its own, and a lone remaining part simply reads as a normal expense.
