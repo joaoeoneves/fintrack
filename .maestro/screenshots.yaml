@@ -79,7 +79,7 @@ appId: com.joaoeoneves.fintrack
     index: -1
 - tapOn: "Save"
 - extendedWaitUntil:
-    visible: "By group"
+    visible: "Group"
     timeout: 10000
 - scrollUntilVisible:
     element: "New group"
@@ -92,7 +92,7 @@ appId: com.joaoeoneves.fintrack
     index: -1
 - tapOn: "Save"
 - extendedWaitUntil:
-    visible: "By group"
+    visible: "Group"
     timeout: 10000
 
 # --- Spending tab > Recurring: Rent and Internet ---

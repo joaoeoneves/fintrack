@@ -4,7 +4,7 @@ tags:
 ---
 # Income and Spending tabs (release smoke): guest start -> Income tab: add a manual income line and mark
 # it received (receive check), set days off for the month -> Spending tab: add a group (name + categories),
-# see it under "By group", open Recurring. Starts from a fresh guest install (see _guest-start.yaml), so
+# see the Category | Group switch, open Recurring. Starts from a fresh guest install (see _guest-start.yaml), so
 # nothing needs cleaning up afterwards.
 
 - runFlow: _guest-start.yaml
@@ -82,7 +82,7 @@ tags:
     index: -1
 - tapOn: "Save"
 - extendedWaitUntil:
-    visible: "By group"
+    visible: "Group"
     timeout: 10000
 
 # --- Recurring ---
