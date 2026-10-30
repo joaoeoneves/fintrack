@@ -63,8 +63,9 @@ fun ActivityHistory.incomeAnalytics(): IncomeAnalytics {
         receivedCents = receivedCents,
         expectedCents = expected,
         missingCents =
-            expected?.let { expecting.sumOf { maxOf(0L, (it.expectedCents ?: 0L) - it.receivedCents) } }
-                ?.takeIf { it > 0L },
+            expecting
+                .sumOf { maxOf(0L, (it.expectedCents ?: 0L) - it.receivedCents) }
+                .takeIf { it > 0L },
         sources = rows,
     )
 }
