@@ -67,8 +67,12 @@ class LocalMonthSettingsRepositoryTest : LocalStoreTestBase() {
         runStoreTest {
             repo.setDaysOff(listOf(oct), MAX_DAYS_OFF, 0, 0)
 
-            assertThrows(IllegalArgumentException::class.java) { runBlocking { repo.setDaysOff(listOf(oct), 1, 0, 0) } }
-            assertThrows(IllegalArgumentException::class.java) { runBlocking { repo.setDaysOff(listOf(oct), -1, 0, 0) } }
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking { repo.setDaysOff(listOf(oct), MAX_DAYS_OFF + 1, 0, 0) }
+            }
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking { repo.setDaysOff(listOf(oct), -1, 0, 0) }
+            }
             assertThrows(IllegalArgumentException::class.java) {
                 runBlocking { repo.setDaysOff(listOf(oct), MAX_DAYS_OFF, 1, 0) }
             }

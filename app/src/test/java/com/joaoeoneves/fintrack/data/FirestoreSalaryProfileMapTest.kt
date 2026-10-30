@@ -104,7 +104,8 @@ class FirestoreSalaryProfileMapTest {
 
     @Test
     fun raiseInFebruary_isWrittenOnlyWhenOn() {
-        assertEquals(true, SalaryProfile(baseGrossCents = 1, raiseInFebruary = true).toFirestoreMap()["raiseInFebruary"])
+        val map = SalaryProfile(baseGrossCents = 1, raiseInFebruary = true).toFirestoreMap()
+        assertEquals(true, map["raiseInFebruary"])
         assertFalse(SalaryProfile(baseGrossCents = 1).toFirestoreMap().containsKey("raiseInFebruary"))
     }
 }

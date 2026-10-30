@@ -166,7 +166,7 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
 
         val once = doc.upgradedTo23(today)
 
-        assertEquals(LOCAL_SCHEMA_VERSION, once.schemaVersion)
+        assertEquals(23, once.schemaVersion)
         assertEquals("2026-03-15", once.recurring.single { it.id == "m" }.handledThrough)
         assertEquals("2026-01-15", once.recurring.single { it.id == "a" }.handledThrough)
         assertTrue(once.recurring.all { it.autoPost == null })
@@ -197,7 +197,8 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
                 listOf(LocalMonthSettings("2026-10", vacationDays = 3), LocalMonthSettings("2026-11", 1, 2)),
                 doc.monthSettings,
             )
-            store.update { it to Unit }
+            val dec = LocalMonthSettings("2026-12", sickDays = 1)
+            store.update { it.copy(monthSettings = it.monthSettings + dec) to Unit }
             assertFalse(dataFile.readText().contains("daysOff"))
         }
 

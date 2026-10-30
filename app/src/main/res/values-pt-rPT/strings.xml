@@ -400,7 +400,7 @@
     <string name="plan_days_off_other">Outro</string>
     <string name="plan_days_off_until">Até</string>
     <plurals name="plan_days_off_range_hint">
-        <item quantity="one">Estes valores substituem os dias de folga do mês.</item>
+        <item quantity="one">Estes valores substituem os dias de folga de %d mês.</item>
         <item quantity="other">Estes valores substituem os dias de folga de %d meses.</item>
     </plurals>
     <string name="cd_fewer_vacation_days">Menos dias de férias</string>

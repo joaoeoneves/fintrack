@@ -31,7 +31,8 @@ class DefaultSessionRepositoryTest : PreferencesStoreTestBase() {
         scope.cancel()
     }
 
-    private fun repo(auth: FakeAuthRepository = FakeAuthRepository()) = DefaultSessionRepository(auth, flagStore, guestSeederIn(tmp.root), scope)
+    private fun repo(auth: FakeAuthRepository = FakeAuthRepository()) =
+        DefaultSessionRepository(auth, flagStore, guestSeederIn(tmp.root), scope)
 
     private suspend fun DefaultSessionRepository.await(expected: Session): Session =
         withTimeout(TIMEOUT_MS) { session.first { it == expected } }
@@ -65,7 +66,13 @@ class DefaultSessionRepositoryTest : PreferencesStoreTestBase() {
             first.continueAsGuest()
             first.await(Session.Guest)
 
-            val second = DefaultSessionRepository(FakeAuthRepository(), SessionFlagStore(dataStore), guestSeederIn(tmp.root), scope)
+            val second =
+                DefaultSessionRepository(
+                    FakeAuthRepository(),
+                    SessionFlagStore(dataStore),
+                    guestSeederIn(tmp.root),
+                    scope,
+                )
             assertEquals(Session.Guest, second.await(Session.Guest))
         }
 
