@@ -37,6 +37,11 @@ class FakeRecurringRepository(
 
     /** Names of the mutating calls made so far (`skip`, `unskip`), in order, for call-order assertions. */
     val calls: MutableList<String> = mutableListOf()
+    /** Result of the next [adoptLegacyManualItems] calls; failure fails them. */
+    var adoptResult: Result<Int> = Result.success(0)
+
+    /** The `today` of every [adoptLegacyManualItems] call, in order. */
+    val adoptCalls: MutableList<LocalDate> = mutableListOf()
     private val confirmed = mutableListOf<Transaction>()
     private var nextId = 1
 
@@ -130,6 +135,12 @@ class FakeRecurringRepository(
             return Result.failure(error)
         }
         return update(itemId) { it.copy(skipped = it.skipped - dates) }
+    }
+
+    override suspend fun adoptLegacyManualItems(today: LocalDate): Result<Int> {
+        calls += "adopt"
+        adoptCalls += today
+        return adoptResult
     }
 
     private fun update(
