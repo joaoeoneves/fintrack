@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.domain.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -21,7 +22,6 @@ class RecurringAutoPostTest {
         endDate: LocalDate? = null,
         handledThrough: LocalDate? = null,
         active: Boolean = true,
-        autoPost: Boolean = true,
     ) = RecurringItem(
         id = "r1",
         type = RecurringType.EXPENSE,
@@ -36,21 +36,18 @@ class RecurringAutoPostTest {
         endDate = endDate,
         handledThrough = handledThrough,
         active = active,
-        autoPost = autoPost,
     )
 
     @Test
     fun lookbackConstant_isTwelveMonths() {
         assertEquals(12L, AUTO_POST_LOOKBACK_MONTHS)
-        assertFalse(item().copy(autoPost = false).autoPost)
     }
 
     @Test
-    fun inactiveOrAutoPostOff_isEmpty() {
+    fun inactive_isEmpty() {
         val today = d(2026, 3, 20)
 
         assertTrue(item(active = false).autoPostDueOccurrences(today).isEmpty())
-        assertTrue(item(autoPost = false).autoPostDueOccurrences(today).isEmpty())
     }
 
     @Test
@@ -121,5 +118,59 @@ class RecurringAutoPostTest {
     @Test
     fun startInTheFuture_isEmpty() {
         assertTrue(item(startDate = d(2026, 5, 1)).autoPostDueOccurrences(d(2026, 3, 20)).isEmpty())
+    }
+
+    // ---- withoutBacklog ----
+
+    @Test
+    fun withoutBacklog_noCursor_movesToTheLastOccurrenceBeforeToday() {
+        val moved = item(startDate = d(2026, 1, 1)).withoutBacklog(d(2026, 3, 20))
+
+        assertEquals(d(2026, 3, 15), moved.handledThrough)
+    }
+
+    @Test
+    fun withoutBacklog_oldCursor_jumpsForward_andNothingBeforeTodayIsDue() {
+        val moved = item(handledThrough = d(2026, 1, 15)).withoutBacklog(d(2026, 4, 20))
+
+        assertEquals(d(2026, 4, 15), moved.handledThrough)
+        assertTrue(moved.autoPostDueOccurrences(d(2026, 4, 20)).isEmpty())
+    }
+
+    @Test
+    fun withoutBacklog_todaysOccurrenceStaysDue() {
+        val moved = item(handledThrough = d(2026, 1, 15)).withoutBacklog(d(2026, 4, 15))
+
+        assertEquals(d(2026, 3, 15), moved.handledThrough)
+        assertEquals(listOf(d(2026, 4, 15)), moved.autoPostDueOccurrences(d(2026, 4, 15)))
+    }
+
+    @Test
+    fun withoutBacklog_neverMovesTheCursorBackwards() {
+        val ahead = item(handledThrough = d(2026, 6, 15))
+
+        assertEquals(d(2026, 6, 15), ahead.withoutBacklog(d(2026, 3, 20)).handledThrough)
+    }
+
+    @Test
+    fun withoutBacklog_futureStart_leavesTheCursorNull() {
+        val future = item(startDate = d(2026, 5, 1))
+
+        assertNull(future.withoutBacklog(d(2026, 3, 20)).handledThrough)
+    }
+
+    @Test
+    fun withoutBacklog_yearly_movesToLastYearsOccurrence() {
+        val yearly = item(frequency = RecurringFrequency.YEARLY, startDate = d(2024, 1, 1))
+
+        assertEquals(d(2026, 3, 15), yearly.withoutBacklog(d(2026, 6, 1)).handledThrough)
+        assertEquals(d(2025, 3, 15), yearly.withoutBacklog(d(2026, 3, 15)).handledThrough)
+    }
+
+    @Test
+    fun withoutBacklog_afterTheEndDate_stopsAtTheLastOccurrence() {
+        val ended = item(endDate = d(2026, 2, 20))
+
+        assertEquals(d(2026, 2, 15), ended.withoutBacklog(d(2026, 8, 1)).handledThrough)
     }
 }

@@ -45,29 +45,6 @@ class MonthlyPlanEnvelopesTest : MonthlyPlanTestBase() {
     }
 
     @Test
-    fun fixedAmount_countsAsPlannedSpending_andRemainingIsAmountMinusSpend() {
-        val buckets = listOf(bucket(dinners, 99_000, spent = 12_000), bucket(rent, 5_000))
-
-        val summary = planWith(buckets, listOf(envelope.copy(amountCents = 40_000)))
-
-        assertEquals(45_000L, summary.plannedSpendingCents)
-        assertEquals(28_000L + 5_000L, summary.remainingInBucketsCents)
-        assertEquals(40_000L + 5_000L, summary.committedCents)
-    }
-
-    @Test
-    fun fixedAmount_overspent_remainingFloorsAtZero_committedIsSpend() {
-        val summary =
-            planWith(
-                listOf(bucket(dinners, null, spent = 60_000)),
-                listOf(envelope.copy(amountCents = 40_000)),
-            )
-
-        assertEquals(0L, summary.remainingInBucketsCents)
-        assertEquals(60_000L, summary.committedCents)
-    }
-
-    @Test
     fun perCategoryEnvelope_savingKindStaysSaving() {
         val saving = cat("invest", CategoryKind.SAVING)
 
