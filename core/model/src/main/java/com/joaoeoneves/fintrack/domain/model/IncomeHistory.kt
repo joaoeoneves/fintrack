@@ -67,8 +67,8 @@ private class DatedIncome(
 
 /**
  * Per-source income history over [months]: received by the month of its date, expected from
- * [incomeRowsIn] only for months up to [today], and only in months where the row exists (a line not yet valid
- * in a month has no row there, so no expected value). Line rows come first in list order, then named sources by
+ * [incomeRowsIn], and only in months where the row exists (a line not yet valid in a month has no row there,
+ * so no expected value). Line rows come first in list order, then named sources by
  * received
  * total (largest first); sources with nothing received and nothing expected are dropped.
  */
@@ -79,7 +79,6 @@ fun incomeHistoryOf(
     lines: List<PlannedIncome>,
     incomeMonth: IncomeMonth,
     zone: ZoneId,
-    today: YearMonth,
 ): List<IncomeSourceHistory> {
     val received =
         income
@@ -101,8 +100,7 @@ fun incomeHistoryOf(
         val mine = received.filter { it.key == key }
         val sourceMonths =
             months.map { month ->
-                val expected =
-                    if (month > today) null else rowsByMonth[month].orEmpty().firstOrNull { it.key() == key }?.cents
+                val expected = rowsByMonth[month].orEmpty().firstOrNull { it.key() == key }?.cents
                 SourceMonth(month, mine.filter { it.month == month }.sumOf { it.income.amountCents }, expected)
             }
         val label =

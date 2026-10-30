@@ -37,7 +37,8 @@ data class MonthlyHistory(
 
 /**
  * Observes the [MonthlyHistory] of the `months` months ending at `endMonth` (inclusive); income and spending are
- * attributed by date.
+ * attributed by date. With [expectedThrough] the income sources also cover the months after `endMonth` up to it
+ * (nothing received, only expected); the totals and charts stay on the window.
  */
 class ObserveMonthlyHistory
     @Inject
@@ -50,8 +51,14 @@ class ObserveMonthlyHistory
             months: Int = DEFAULT_HISTORY_MONTHS,
             zone: ZoneId,
             today: YearMonth,
+            expectedThrough: YearMonth? = null,
         ): Flow<MonthlyHistory> {
             val window = (months - 1 downTo 0).map { endMonth.minusMonths(it.toLong()) }
+            val incomeWindow =
+                window +
+                    generateSequence(endMonth.plusMonths(1)) { it.plusMonths(1) }
+                        .takeWhile { expectedThrough != null && it <= expectedThrough }
+                        .toList()
             val range =
                 InstantRange(
                     endMonth.minusMonths(months.toLong()).toInstantRange(zone).startInclusive,
@@ -71,7 +78,7 @@ class ObserveMonthlyHistory
                 MonthlyHistory(
                     months = totals,
                     categoryMonthly = categoryMonthlyOf(window, tx.expenses, plan.categories, zone),
-                    incomeSources = incomeHistoryOf(window, tx.income, plan.lines, plan.incomeMonth, zone, today),
+                    incomeSources = incomeHistoryOf(incomeWindow, tx.income, plan.lines, plan.incomeMonth, zone),
                     yearToDate = yearToDateOf(totals, endMonth),
                     leftover = leftoverOf(totals, endMonth, today),
                 )

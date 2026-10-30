@@ -286,10 +286,11 @@ class IncomeTabViewModel(
         val today = currentYearMonth(now, clock.zone)
         // A period that starts after the current month has nothing recorded yet: no history, only expectations.
         if (months.first() > today) return flowOf(null)
-        // A current Year ends in the future: its history stops at the current month, the rest is only expected.
+        // A current Year ends in the future: its history stops at the current month, later ones only expect income.
         val end = minOf(months.last(), today)
-        return observeMonthlyHistory(end, maxOf(HISTORY_MONTHS, months.size), clock.zone, today)
-            .map<MonthlyHistory, ActivityHistory?> { ActivityHistory(months, calendarMonth, it) }
+        val size = maxOf(HISTORY_MONTHS, months.size)
+        return observeMonthlyHistory(end, size, clock.zone, today, months.last())
+            .map<MonthlyHistory, ActivityHistory?> { ActivityHistory(months, calendarMonth, it, today) }
             .catch { e ->
                 Log.w(TAG, "History flow failed", e)
                 emit(null)

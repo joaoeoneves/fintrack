@@ -603,7 +603,8 @@
     <string name="activity_monthly_average">Monthly average %1$s</string>
     <string name="activity_evolution">Evolution</string>
     <string name="activity_received_total">Received</string>
-    <string name="activity_expected_difference">Expected %1$s · Difference %2$s</string>
+    <string name="activity_expected">Expected %1$s</string>
+    <string name="activity_expected_missing">Expected %1$s · Still to receive %2$s</string>
     <string name="activity_by_source">By source</string>
     <string name="activity_source_expected">of %1$s expected</string>
     <string name="activity_source_other">Other</string>
