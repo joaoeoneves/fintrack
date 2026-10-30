@@ -57,10 +57,10 @@ class SpendingBreakdownTabsTest {
         show(withEnvelopes = true)
 
         rule.onNodeWithText("Category").assertExists()
-        rule.onNodeWithText("Essentials").assertDoesNotExist()
+        rule.onNodeWithText("Essentials", useUnmergedTree = true).assertDoesNotExist()
 
         rule.onNodeWithText("Group").performClick()
 
-        rule.onNodeWithText("Essentials").assertExists()
+        rule.onNodeWithText("Essentials", useUnmergedTree = true).assertExists()
     }
 }
