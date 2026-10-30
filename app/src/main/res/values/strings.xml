@@ -149,7 +149,7 @@
     <string name="settings_section_data">Data</string>
     <string name="settings_section_account">Account</string>
     <string name="settings_section_about">About</string>
-    <string name="settings_export_csv">Export expenses (CSV)</string>
+    <string name="settings_export_csv">Export transactions (CSV)</string>
     <string name="settings_signed_in_fallback">Signed in</string>
     <string name="label_sign_out_failed">Couldn\'t sign out</string>
     <string name="settings_guest_account">Guest — data is stored only on this device</string>
@@ -175,8 +175,8 @@
     <string name="language_portuguese">Português</string>
 
     <plurals name="export_complete_message">
-        <item quantity="one">Exported %d expense.</item>
-        <item quantity="other">Exported %d expenses.</item>
+        <item quantity="one">Exported %d transaction.</item>
+        <item quantity="other">Exported %d transactions.</item>
     </plurals>
 
     <string name="categories_title">Categories</string>

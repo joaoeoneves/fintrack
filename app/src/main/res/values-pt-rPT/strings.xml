@@ -149,7 +149,7 @@
     <string name="settings_section_data">Dados</string>
     <string name="settings_section_account">Conta</string>
     <string name="settings_section_about">Acerca de</string>
-    <string name="settings_export_csv">Exportar despesas (CSV)</string>
+    <string name="settings_export_csv">Exportar movimentos (CSV)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
     <string name="label_sign_out_failed">Não foi possível terminar sessão</string>
     <string name="settings_guest_account">Convidado — os dados ficam guardados apenas neste dispositivo</string>
@@ -174,9 +174,9 @@
     <string name="language_portuguese">Português</string>
 
     <plurals name="export_complete_message">
-        <item quantity="one">%d despesa exportada.</item>
-        <item quantity="many">%d de despesas exportadas.</item>
-        <item quantity="other">%d despesas exportadas.</item>
+        <item quantity="one">%d movimento exportado.</item>
+        <item quantity="many">%d de movimentos exportados.</item>
+        <item quantity="other">%d movimentos exportados.</item>
     </plurals>
 
     <string name="categories_title">Categorias</string>
