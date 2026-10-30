@@ -2,11 +2,9 @@ package com.joaoeoneves.fintrack.data.backup
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlaceholderNames
@@ -18,7 +16,6 @@ import com.joaoeoneves.fintrack.data.FakeSuggestionRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.domain.model.AutomationSettings
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.model.Expense
@@ -27,7 +24,6 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
-import com.joaoeoneves.fintrack.domain.model.SavingsGoal
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.testutil.FakeAccountRestore
 import kotlinx.coroutines.CoroutineScope
@@ -66,14 +62,12 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
     protected fun repository(
         expenses: List<Expense> = emptyList(),
         income: List<Income> = emptyList(),
-        budgets: List<Budget> = emptyList(),
         categoryDocs: List<Category> = emptyList(),
         plannedIncome: List<PlannedIncome> = emptyList(),
         recurring: List<RecurringItem> = emptyList(),
         monthSettings: List<MonthSettings> = emptyList(),
         groups: List<Envelope> = emptyList(),
         salaryProfile: SalaryProfile? = null,
-        goals: List<SavingsGoal> = emptyList(),
         automation: AutomationSettings = AutomationSettings(),
         deletedCategoryName: String = "Deleted category",
         dismissed: Set<String> = emptySet(),
@@ -81,14 +75,12 @@ abstract class BackupRepositoryTestBase : LocalStoreTestBase() {
         FakeExpenseRepository(expenses),
         FakeIncomeRepository(income),
         PlanBackupSource(
-            FakeBudgetRepository(budgets),
             FakePlannedIncomeRepository(plannedIncome),
             FakeRecurringRepository(recurring),
             FakeMonthSettingsRepository(monthSettings),
             FakeEnvelopeRepository(groups),
             PlanSingletonSources(
                 FakeSalaryProfileRepository(salaryProfile),
-                FakeGoalRepository(goals),
                 FakeAutomationSettingsRepository(automation),
                 FakePlaceholderNames(deletedCategoryName),
             ),

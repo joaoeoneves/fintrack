@@ -1,13 +1,11 @@
 package com.joaoeoneves.fintrack.data.migration
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
 import com.joaoeoneves.fintrack.data.local.LocalPlannedIncome
 import com.joaoeoneves.fintrack.data.local.LocalRecurringItem
-import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
 import com.joaoeoneves.fintrack.data.local.toDomain
 import com.joaoeoneves.fintrack.data.local.toDomainOrNull
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
@@ -18,7 +16,6 @@ import com.joaoeoneves.fintrack.domain.model.Envelope
 internal fun remoteSnapshot(
     expenseIds: Set<String> = emptySet(),
     incomeIds: Set<String> = emptySet(),
-    budgetCategoryIds: Set<String> = emptySet(),
     plannedIncomeIds: Set<String> = emptySet(),
     recurringIds: Set<String> = emptySet(),
     categories: List<Category> = emptyList(),
@@ -28,7 +25,6 @@ internal fun remoteSnapshot(
 ) = RemoteAccountSnapshot(
     expenseIds,
     incomeIds,
-    budgetCategoryIds,
     plannedIncomeIds,
     recurringIds,
     categories,
@@ -41,7 +37,6 @@ internal fun remoteSnapshot(
 internal fun localDoc(
     expenses: List<LocalExpense> = emptyList(),
     income: List<LocalIncome> = emptyList(),
-    budgets: List<LocalBudget> = emptyList(),
     categories: List<LocalCategory> = emptyList(),
     recurring: List<LocalRecurringItem> = emptyList(),
     revision: Long = 1,
@@ -49,7 +44,6 @@ internal fun localDoc(
     revision = revision,
     expenses = expenses,
     income = income,
-    budgets = budgets,
     categories = categories,
     recurring = recurring,
 )
@@ -86,10 +80,8 @@ internal fun RemoteAccountSnapshot.after(plan: MigrationPlan) =
     copy(
         expenseIds = expenseIds + plan.expenses.map { it.id },
         incomeIds = incomeIds + plan.income.map { it.id },
-        budgetCategoryIds = budgetCategoryIds + plan.budgets.map { it.categoryId },
         plannedIncomeIds = plannedIncomeIds + plan.plannedIncome.map { it.id },
         recurringIds = recurringIds + plan.recurring.map { it.id },
-        goalIds = goalIds + plan.goals.map { it.id },
         monthSettingsIds = monthSettingsIds + plan.monthSettings.map { it.month },
         categoryGroups = categoryGroups + plan.categoryGroups.map { it.toDomain() },
         categories = categories + plan.categories.mapNotNull { it.toDomainOrNull() },
@@ -109,17 +101,4 @@ internal fun localRecurring(
     frequency = "MONTHLY",
     dayOfMonth = 15,
     startDate = "2026-01-01",
-)
-
-internal fun localGoal(
-    id: String,
-    categoryId: String? = null,
-    recurringIds: List<String> = emptyList(),
-) = LocalSavingsGoal(
-    id = id,
-    name = "Goal $id",
-    targetCents = 120_000,
-    startDate = "2026-01-01",
-    linkedRecurringIds = recurringIds,
-    linkedCategoryId = categoryId,
 )
