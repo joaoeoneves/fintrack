@@ -16,15 +16,11 @@ fun holidayWeekdaysIn(
     holidays: Set<LocalDate> = portugueseNationalHolidays(month.year),
 ): Int = weekdaysOf(month).count { it in holidays }
 
-/**
- * The working days to use for [month]: the user's [override] when set, else the calendar count minus the
- * [daysOff] taken that month (never below zero).
- */
+/** The working days to use for [month]: the calendar count minus the [daysOff] taken that month (never below zero). */
 fun effectiveWorkingDays(
     month: YearMonth,
-    override: Int?,
     daysOff: Int = 0,
-): Int = override ?: maxOf(0, workingDaysIn(month) - daysOff)
+): Int = maxOf(0, workingDaysIn(month) - daysOff)
 
 /** The last Monday to Friday day of [month] that is not in [holidays]: the day pay is expected. */
 fun lastWorkingDayOf(

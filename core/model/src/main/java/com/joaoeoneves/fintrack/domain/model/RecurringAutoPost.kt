@@ -7,13 +7,13 @@ const val AUTO_POST_LOOKBACK_MONTHS = 12L
 
 /**
  * The pending occurrences to confirm automatically on [today], oldest first (one due today counts). Empty
- * unless the item is active with [RecurringItem.autoPost] on, and also when the oldest pending one is more
+ * unless the item is active, and also when the oldest pending one is more
  * than [AUTO_POST_LOOKBACK_MONTHS] months old: such a backlog stays manual in the upcoming list.
  */
 fun RecurringItem.autoPostDueOccurrences(today: LocalDate): List<LocalDate> {
     val first = firstPendingOccurrence()
     val limit = endDate?.let { minOf(it, today) } ?: today
-    val eligible = active && autoPost && first != null && first <= limit
+    val eligible = active && first != null && first <= limit
     return if (eligible && first >= today.minusMonths(AUTO_POST_LOOKBACK_MONTHS)) {
         (lastIndexOnOrBefore(first)..lastIndexOnOrBefore(limit)).map { occurrence(it) }.filter { it !in skipped }
     } else {
@@ -24,11 +24,11 @@ fun RecurringItem.autoPostDueOccurrences(today: LocalDate): List<LocalDate> {
 /**
  * Past occurrences an auto-post expense item should already have a transaction for: those up to its cursor
  * ([RecurringItem.handledThrough]) within the lookback window, minus the periods the user skipped. Empty unless
- * the item is an active auto-post expense with a cursor. Never moves past [today] or the end date.
+ * the item is an active expense with a cursor. Never moves past [today] or the end date.
  */
 fun RecurringItem.selfHealCandidates(today: LocalDate): List<LocalDate> {
     val cursor = handledThrough
-    val eligible = active && autoPost && type == RecurringType.EXPENSE
+    val eligible = active && type == RecurringType.EXPENSE
     if (!eligible || cursor == null) return emptyList()
     val from = maxOf(startDate, today.minusMonths(AUTO_POST_LOOKBACK_MONTHS))
     val skippedPeriods = skipped.map { periodKey(it) }.toSet()
@@ -51,3 +51,11 @@ fun RecurringItem.missingOccurrences(
             .toSet()
     return candidates.filter { periodKey(it) !in present }
 }
+
+/**
+ * This item with everything strictly before [today] marked handled (the cursor moves to its last occurrence before
+ * [today], never backwards): an item that used to wait for manual confirmation does not post its backlog when it
+ * becomes automatic. Today's occurrence stays pending and posts normally.
+ */
+fun RecurringItem.withoutBacklog(today: LocalDate): RecurringItem =
+    copy(handledThrough = listOfNotNull(handledThrough, lastOccurrenceBefore(today)).maxOrNull())
