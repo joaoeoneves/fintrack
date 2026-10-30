@@ -170,7 +170,7 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
     fun daysOff_reduceThePerWorkingDayIncome() =
         runTest {
             plannedIncome.savePlannedIncome(perDay)
-            monthSettings.setDaysOff(listOf(october), 3, 0, 0)
+            monthSettings.setDaysOff(listOf(october), 3, 0)
 
             assertEquals(1046L * (21 - 3), overview(Period.CurrentMonth).plan.expectedIncomeCents)
         }
@@ -179,7 +179,7 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
     fun daysOff_beyondTheCalendarCount_clampIncomeAtZero() =
         runTest {
             plannedIncome.savePlannedIncome(perDay)
-            monthSettings.setDaysOff(listOf(october), MAX_DAYS_OFF, 0, 0)
+            monthSettings.setDaysOff(listOf(october), MAX_DAYS_OFF, 0)
 
             assertEquals(0L, overview(Period.CurrentMonth).plan.expectedIncomeCents)
         }
@@ -188,7 +188,7 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
     fun daysOffInAnotherMonth_doNotAffectTheBudgetMonth() =
         runTest {
             plannedIncome.savePlannedIncome(perDay)
-            monthSettings.setDaysOff(listOf(september), 5, 0, 0)
+            monthSettings.setDaysOff(listOf(september), 5, 0)
 
             assertEquals(1046L * 21, overview(Period.CurrentMonth).plan.expectedIncomeCents)
         }
@@ -197,7 +197,7 @@ class ObservePeriodOverviewPlanTest : ObservePeriodOverviewTestBase() {
     fun daysOff_doNotChangeFixedIncome() =
         runTest {
             plannedIncome.savePlannedIncome(salary)
-            monthSettings.setDaysOff(listOf(october), 3, 0, 0)
+            monthSettings.setDaysOff(listOf(october), 3, 0)
 
             assertEquals(200_000L, overview(Period.CurrentMonth).plan.expectedIncomeCents)
         }
