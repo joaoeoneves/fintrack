@@ -59,11 +59,7 @@ fun SpendingTabScreen(
         modifier = modifier,
         floatingActionButton = {
             (state as? SpendingTabUiState.Content)?.let { content ->
-                AddTransactionPill(
-                    visible = pill.visible,
-                    onAddExpense = { onAddExpense(content.period) },
-                    onAddIncome = { onAddIncome(content.period) },
-                )
+                SpendingAddPill(content.period, pill, onAddExpense, onAddIncome)
             }
         },
     ) { innerPadding ->
@@ -110,6 +106,20 @@ fun SpendingTabScreen(
             }
         }
     }
+}
+
+@Composable
+private fun SpendingAddPill(
+    period: Period,
+    pill: PillVisibility,
+    onAddExpense: (Period) -> Unit,
+    onAddIncome: (Period) -> Unit,
+) {
+    AddTransactionPill(
+        visible = pill.visible,
+        onAddExpense = { onAddExpense(period) },
+        onAddIncome = { onAddIncome(period) },
+    )
 }
 
 @Composable
