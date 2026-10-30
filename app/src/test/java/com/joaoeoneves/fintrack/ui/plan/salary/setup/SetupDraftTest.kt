@@ -94,6 +94,7 @@ class SetupDraftTest {
         val handle = SavedStateHandle()
         handle.saveDraft(full)
         val parts = handle.get<String>("draft_form").orEmpty().split("|")
+
         fun withPart(
             index: Int,
             value: String,

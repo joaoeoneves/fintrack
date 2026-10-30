@@ -45,7 +45,8 @@ class SalarySetupViewModelAdseTest : SalarySetupViewModelTestBase() {
         runTest(dispatcher) {
             val vm = viewModel()
             started(vm)
-            vm.onFormChange(vm.uiState.value.form.copy(otherDeductions = "1"))
+            val typed = vm.uiState.value.form.copy(otherDeductions = "1")
+            vm.onFormChange(typed)
             advanceUntilIdle()
             vm.onAdseChange(true, '.')
             advanceUntilIdle()
