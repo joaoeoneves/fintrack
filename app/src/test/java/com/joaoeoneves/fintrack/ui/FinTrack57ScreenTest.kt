@@ -152,7 +152,7 @@ class FinTrack57ScreenTest {
     }
 
     @Test
-    fun edit_showsDuplicate_andRecordRefund_forAnExpense() {
+    fun edit_showsDuplicate_butNoRecordRefund_forAnExpense() {
         enterGuest()
         seed("Headphones", 10_000L)
         openActivity()
@@ -160,7 +160,7 @@ class FinTrack57ScreenTest {
         awaitText("Headphones").performScrollTo().performClick()
 
         awaitText(str(R.string.action_duplicate))
-        awaitText(str(R.string.expense_record_refund))
+        assertTrue(!isShown("Record refund"))
         assertTrue(!isShown(str(R.string.expense_more_options)))
     }
 
