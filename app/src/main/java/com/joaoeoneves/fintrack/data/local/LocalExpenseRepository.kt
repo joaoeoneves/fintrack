@@ -75,6 +75,45 @@ class LocalExpenseRepository
         override suspend fun deleteExpense(id: String): Result<Unit> =
             store.update { doc -> doc.copy(expenses = doc.expenses.filterNot { it.id == id }) to Unit }
 
+        override suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> =
+            store.update { doc ->
+                val known = knownCategoryIds(doc)
+                val records =
+                    expenses.map { expense ->
+                        expense.toLocal().let { it.copy(id = it.id.ifBlank { idGenerator.newId() }) }.also {
+                            validateExpense(it, known)
+                        }
+                    }
+                val added = records.map { it.id }.toSet()
+                doc.copy(expenses = doc.expenses.filterNot { it.id in added } + records) to records.map { it.id }
+            }
+
+        override suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> =
+            store.update { doc ->
+                val known = knownCategoryIds(doc)
+                val records = expenses.map { it.toLocal() }
+                val existing = doc.expenses.mapTo(mutableSetOf()) { it.id }
+                records.forEach { record ->
+                    require(record.id in existing) { "Expense ${record.id} does not exist" }
+                    validateExpense(record, known)
+                }
+                val byId = records.associateBy { it.id }
+                doc.copy(expenses = doc.expenses.map { byId[it.id] ?: it }) to Unit
+            }
+
+        override suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
+            store.update { doc ->
+                val wanted = ids.toSet()
+                doc.copy(expenses = doc.expenses.filterNot { it.id in wanted }) to Unit
+            }
+
+        override fun observeLinkedRefunds(): Flow<List<Expense>> =
+            store.data.map { doc ->
+                doc.expenses
+                    .filter { it.isRefund && it.refundOf != null }
+                    .mapNotNull { it.toDomainOrNull() }
+            }
+
         override suspend fun getExpense(id: String): Result<Expense?> =
             runCatchingCancellable {
                 store.data

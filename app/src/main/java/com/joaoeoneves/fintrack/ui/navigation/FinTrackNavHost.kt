@@ -252,6 +252,13 @@ private fun NavGraphBuilder.formRoutes(
             onSaved = dropUnlessResumed { navController.popBackStack() },
             onDeleted = dropUnlessResumed { navController.popBackStack() },
             onCancel = dropUnlessResumed { navController.popBackStack() },
+            onDuplicate = { id ->
+                // The copy replaces the edit screen, so back returns to where the original was opened from.
+                navController.navigate(AddEditExpense(duplicateOf = id)) {
+                    popUpTo<AddEditExpense> { inclusive = true }
+                }
+            },
+            onRecordRefund = { id -> navController.navigate(AddEditExpense(refundOf = id)) },
         )
     }
     composable<AddEditIncome>(

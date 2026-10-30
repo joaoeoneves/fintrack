@@ -7,11 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.PeriodOverview
 import com.joaoeoneves.fintrack.domain.model.canGoToNextMonth
 import com.joaoeoneves.fintrack.domain.model.canGoToNextYear
+import com.joaoeoneves.fintrack.domain.model.categoriesAboveAverage
 import com.joaoeoneves.fintrack.domain.model.currentYearMonth
 import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
@@ -157,6 +159,20 @@ class SpendingTabViewModel
             retryTrigger.value++
         }
 
+        /** The categories above their recent average in the single month of a month period; none otherwise. */
+        private fun PeriodData.Loaded.aboveAverageIn(
+            monthly: MonthlyHistory?,
+            months: List<YearMonth>,
+        ): Set<CategoryId> {
+            val isMonth = period is Period.CurrentMonth || period is Period.Month
+            val index = monthly?.months?.indexOfFirst { it.month == months.last() } ?: -1
+            return if (monthly == null || !isMonth || index < 0) {
+                emptySet()
+            } else {
+                categoriesAboveAverage(monthly.categoryMonthly, index)
+            }
+        }
+
         private fun PeriodData.Loaded.toContent(
             monthly: MonthlyHistory?,
             catalog: List<Category>,
@@ -171,6 +187,7 @@ class SpendingTabViewModel
                     monthly
                         ?.takeIf { it.months.lastOrNull()?.month == months.last() }
                         ?.let { ActivityHistory(months, period is Period.CurrentMonth || period is Period.Month, it) },
+                aboveAverage = aboveAverageIn(monthly, months),
             )
         }
     }

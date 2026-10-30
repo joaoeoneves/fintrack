@@ -680,4 +680,42 @@
     <string name="home_invested_rate">You invested %1$s · %2$d%% of what you received</string>
     <string name="home_invested">You invested %1$s</string>
     <string name="home_review_title_count">To review (%1$d)</string>
+    <!-- Refund link (5.7) -->
+    <string name="expense_refund_of">Refund of</string>
+    <string name="expense_refund_of_none">None</string>
+    <string name="expense_refund_status">Refunded %1$d%% · real spend %2$s</string>
+    <string name="expense_record_refund">Record refund</string>
+    <string name="expense_refunded_badge">Refunded %d%%</string>
+    <!-- Split (5.7) -->
+    <string name="expense_more_options">More options</string>
+    <string name="expense_split_switch">Split across categories</string>
+    <string name="expense_split_add_part">Add part</string>
+    <string name="expense_split_left">%s left</string>
+    <string name="expense_split_over">%s over</string>
+    <string name="error_split_sum">Parts must add up to the total</string>
+    <string name="error_split_category">Pick a category for each part</string>
+    <string name="expense_split_part_caption">Part of a split expense</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="breakdown_above_average">above average</string>
+    <!-- Multi-select (5.7) -->
+    <plurals name="selection_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="selection_cancel">Cancel selection</string>
+    <string name="selection_category">Category</string>
+    <string name="selection_meal_card">Meal card</string>
+    <string name="selection_delete">Delete</string>
+    <plurals name="bulk_category_changed">
+        <item quantity="one">Category changed on %d expense</item>
+        <item quantity="other">Category changed on %d expenses</item>
+    </plurals>
+    <plurals name="bulk_meal_card_updated">
+        <item quantity="one">Meal card updated on %d expense</item>
+        <item quantity="other">Meal card updated on %d expenses</item>
+    </plurals>
+    <plurals name="bulk_deleted">
+        <item quantity="one">%d expense deleted</item>
+        <item quantity="other">%d expenses deleted</item>
+    </plurals>
 </resources>

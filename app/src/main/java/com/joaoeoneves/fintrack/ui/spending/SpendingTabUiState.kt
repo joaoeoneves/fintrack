@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.spending
 
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
@@ -18,6 +19,8 @@ sealed interface SpendingTabUiState {
         val analytics: ActivityAnalytics,
         val groups: List<SpendingGroup>,
         val history: ActivityHistory?,
+        /** Categories spending clearly more than their recent monthly average; month periods only. */
+        val aboveAverage: Set<CategoryId> = emptySet(),
     ) : SpendingTabUiState
 
     data class Error(
