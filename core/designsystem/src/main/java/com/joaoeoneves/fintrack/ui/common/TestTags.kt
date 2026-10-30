@@ -7,6 +7,8 @@ package com.joaoeoneves.fintrack.ui.common
  */
 object TestTags {
     const val CONTINUE_AS_GUEST = "continue_as_guest"
+    const val DAYS_OFF_SAVE = "days_off_save"
+    const val DAYS_OFF_UNTIL = "days_off_until"
     const val DASHBOARD_LIST = "dashboard_list"
     const val DASHBOARD_ADD_EXPENSE = "dashboard_add_expense"
     const val ACCOUNT_AVATAR = "account_avatar"

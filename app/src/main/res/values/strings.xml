@@ -380,11 +380,22 @@
         <item quantity="one">%1$d day off</item>
         <item quantity="other">%1$d days off</item>
     </plurals>
-    <string name="plan_days_off_title">Days off this month</string>
+    <string name="plan_days_off_vacation">Vacation</string>
+    <string name="plan_days_off_sick">Sick leave</string>
+    <string name="plan_days_off_other">Other</string>
+    <string name="plan_days_off_until">Until</string>
+    <plurals name="plan_days_off_range_hint">
+        <item quantity="one">These counts replace the month's days off.</item>
+        <item quantity="other">These counts replace the days off of %d months.</item>
+    </plurals>
+    <string name="cd_fewer_vacation_days">Fewer vacation days</string>
+    <string name="cd_more_vacation_days">More vacation days</string>
+    <string name="cd_fewer_sick_days">Fewer sick days</string>
+    <string name="cd_more_sick_days">More sick days</string>
+    <string name="cd_fewer_other_days">Fewer other days off</string>
+    <string name="cd_more_other_days">More other days off</string>
     <string name="plan_days_off_carnival">Carnival Tuesday (day %d)</string>
     <string name="plan_days_off_carnival_hint">Optional holiday: counts as one day off when ticked.</string>
-    <string name="cd_fewer_days_off">Fewer days off</string>
-    <string name="cd_more_days_off">More days off</string>
 
     <string name="plan_group_other">No group</string>
     <string name="error_group_save_failed">Couldn\'t save the group</string>
