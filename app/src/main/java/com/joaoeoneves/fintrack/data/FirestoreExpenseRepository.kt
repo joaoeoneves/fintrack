@@ -124,7 +124,8 @@ class FirestoreExpenseRepository
                 firebaseAuth.currentUser?.uid
                     ?: return Result.failure(IllegalStateException("Not signed in"))
             return runCatchingCancellable {
-                expensesCollection(uid).whereEqualTo("splitId", splitId).get().await().toExpenses()
+                val query = expensesCollection(uid).whereEqualTo("splitId", splitId)
+                query.get().await().toExpenses()
             }
         }
 

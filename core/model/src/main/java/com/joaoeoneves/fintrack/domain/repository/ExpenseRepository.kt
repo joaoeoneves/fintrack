@@ -82,8 +82,10 @@ interface ExpenseRepository {
         }
 
     /** The expenses sharing [splitId] (the parts of one split purchase), in no particular order. */
-    suspend fun getSplit(splitId: String): Result<List<Expense>> =
-        getAllExpenses().map { all -> all.filter { it.splitId == splitId } }
+    suspend fun getSplit(splitId: String): Result<List<Expense>> {
+        val all = getAllExpenses()
+        return all.map { expenses -> expenses.filter { it.splitId == splitId } }
+    }
 
     /**
      * Saves an edited split in one atomic write: updates the [update] parts, adds the [add] parts (under the ids they
