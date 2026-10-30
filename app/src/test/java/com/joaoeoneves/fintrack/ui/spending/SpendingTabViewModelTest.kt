@@ -8,6 +8,7 @@ import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.encode
@@ -214,5 +215,41 @@ class SpendingTabViewModelTest {
             advanceUntilIdle()
 
             assertTrue(vm.uiState.value is SpendingTabUiState.Error)
+        }
+
+    private fun aboveAverageRepo(octoberCents: Long): CountingExpenseRepository {
+        fun shopping(
+            id: String,
+            month: Int,
+            cents: Long,
+        ) = testExpense(id, cents, Instant.parse("2026-%02d-10T12:00:00Z".format(month)))
+        return CountingExpenseRepository(
+            listOf(
+                shopping("jul", 7, 1_000L),
+                shopping("aug", 8, 1_000L),
+                shopping("sep", 9, 1_000L),
+                shopping("oct", 10, octoberCents),
+                testExpense("food", 5_000L, Instant.parse("2026-10-11T12:00:00Z"), BuiltInCategories.FOOD),
+            ),
+        )
+    }
+
+    @Test
+    fun aboveAverage_flagsOnlyCategoriesStrictlyAboveTheirRecentAverage() =
+        runTest(testDispatcher) {
+            val above = content(setup(expenseRepo = aboveAverageRepo(2_000L)).vm).aboveAverage
+            // Food has no earlier months, so it is never flagged however large.
+            assertEquals(setOf(BuiltInCategories.SHOPPING.id), above)
+
+            val equal = content(setup(expenseRepo = aboveAverageRepo(1_000L)).vm).aboveAverage
+            assertTrue(equal.isEmpty())
+        }
+
+    @Test
+    fun aboveAverage_isEmptyForYearPeriods() =
+        runTest(testDispatcher) {
+            val c = content(setup("period" to Period.Year(2026).encode(), expenseRepo = aboveAverageRepo(9_000L)).vm)
+
+            assertTrue(c.aboveAverage.isEmpty())
         }
 }

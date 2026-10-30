@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.data.backup
 
+import com.joaoeoneves.fintrack.data.local.DAYS_OFF_BY_TYPE_SCHEMA_VERSION
+import com.joaoeoneves.fintrack.data.local.EXPENSE_LINKS_SCHEMA_VERSION
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
@@ -115,6 +117,7 @@ object BackupCodec {
         // upgradedTo23: the backlog of a manual item is marked handled).
         // 23 -> 24 split the monthSettings daysOff total into vacationDays/sickDays/otherDays (the total becomes
         // vacation, see upgradedTo24).
+        // 24 -> 25 expense refundOf/splitId (absent = none).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> {
                 val simplified =
@@ -125,7 +128,10 @@ object BackupCodec {
                     } else {
                         document
                     }
-                sanitize(simplified.upgradedTo24())
+                val old = document.schemaVersion < DAYS_OFF_BY_TYPE_SCHEMA_VERSION
+                val daysOff = if (old) simplified.upgradedTo24() else simplified
+                // 24 -> 25 expense refundOf/splitId (absent = none): no transform, only the version stamp.
+                sanitize(daysOff.copy(schemaVersion = EXPENSE_LINKS_SCHEMA_VERSION))
             }
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
@@ -218,7 +224,7 @@ internal fun BackupDocument.upgradedToStartMonths(
 
 /** The 23 -> 24 upgrade of a backup: the same rule as the guest file (see `upgradedTo24`). */
 internal fun BackupDocument.upgradedTo24(): BackupDocument =
-    copy(schemaVersion = BACKUP_SCHEMA_VERSION, monthSettings = monthSettings.upgradedTo24())
+    copy(schemaVersion = DAYS_OFF_BY_TYPE_SCHEMA_VERSION, monthSettings = monthSettings.upgradedTo24())
 
 /** The 22 -> 23 upgrade of a backup: the same rules as the guest file (see `upgradedTo23`). */
 internal fun BackupDocument.upgradedTo23(today: LocalDate): BackupDocument =

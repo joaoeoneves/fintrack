@@ -49,6 +49,9 @@ internal fun List<LocalMonthSettings>.upgradedTo24(): List<LocalMonthSettings> =
         if (legacy == null) record else record.copy(vacationDays = record.vacationDays + legacy, legacyDaysOff = null)
     }.filter { it.totalDays > 0 }
 
+/** Schema version (guest file and backup) that added the optional expense `refundOf`/`splitId` links. */
+internal const val EXPENSE_LINKS_SCHEMA_VERSION = 25
+
 /** The 23 -> 24 upgrade of the guest file: see the month-settings upgrade above. */
 internal fun LocalDataDocument.upgradedTo24(): LocalDataDocument =
     copy(schemaVersion = DAYS_OFF_BY_TYPE_SCHEMA_VERSION, monthSettings = monthSettings.upgradedTo24())

@@ -1,7 +1,7 @@
 package com.joaoeoneves.fintrack.ui.designsystem
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,13 +44,23 @@ fun TransactionRow(
     modifier: Modifier = Modifier,
     badge: (@Composable () -> Unit)? = null,
     subtitleMaxLines: Int = 1,
+    /** Long press, e.g. to start a multi-selection. */
+    onLongClick: (() -> Unit)? = null,
+    /** Drawn as part of a multi-selection: soft background and a check in place of the icon. */
+    selected: Boolean = false,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(vertical = Dimens.Space12),
+                .then(if (selected) Modifier.background(FinTrackTheme.colors.surface2) else Modifier)
+                .then(
+                    if (onClick != null) {
+                        Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                    } else {
+                        Modifier
+                    },
+                ).padding(vertical = Dimens.Space12),
         horizontalArrangement = Arrangement.spacedBy(Dimens.Space12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -60,7 +72,11 @@ fun TransactionRow(
                     .background(FinTrackTheme.colors.surface2),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+            Icon(
+                imageVector = if (selected) Icons.Default.Check else icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
         }
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

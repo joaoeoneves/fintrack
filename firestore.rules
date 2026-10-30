@@ -64,7 +64,7 @@ service cloud.firestore {
 
     function isValidExpense(userId, data) {
       return data.keys().hasOnly(['name', 'amountCents', 'category', 'date', 'note', 'isRefund', 'paidWithMealCard',
-          'needsReview', 'createdAt', 'updatedAt'])
+          'needsReview', 'refundOf', 'splitId', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
@@ -73,6 +73,9 @@ service cloud.firestore {
         && (!('isRefund' in data) || data.isRefund is bool)
         && (!('paidWithMealCard' in data) || data.paidWithMealCard is bool)
         && (!('needsReview' in data) || data.needsReview is bool)
+        && (!('refundOf' in data) || (data.refundOf is string && isCategoryIdShape(data.refundOf)
+            && 'isRefund' in data && data.isRefund == true))
+        && (!('splitId' in data) || (data.splitId is string && isCategoryIdShape(data.splitId)))
         && isValidAuditTimestamps(data)
         && isValidNote(data);
     }

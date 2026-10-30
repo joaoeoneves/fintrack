@@ -19,6 +19,17 @@ data class ExpenseFormSnapshot(
     val paidWithMealCard: Boolean,
     val mealCardTouched: Boolean,
     val categoryTouched: Boolean,
+    val refundOf: String? = null,
+    val refundOfLabel: String? = null,
+    val splitEnabled: Boolean = false,
+    val splitParts: List<SplitPartSnapshot> = emptyList(),
+)
+
+/** A split part as saved: the category id is empty while none is picked. */
+@Serializable
+data class SplitPartSnapshot(
+    val categoryId: String,
+    val amountCents: Long,
 )
 
 internal fun ExpenseFormState.toSnapshot() =
@@ -33,6 +44,19 @@ internal fun ExpenseFormState.toSnapshot() =
         paidWithMealCard = paidWithMealCard,
         mealCardTouched = mealCardTouched,
         categoryTouched = categoryTouched,
+        refundOf = refundOf,
+        refundOfLabel = refundOfLabel,
+        splitEnabled = splitEnabled,
+        splitParts =
+            splitParts.map {
+                SplitPartSnapshot(
+                    it.category
+                        ?.id
+                        ?.value
+                        .orEmpty(),
+                    it.amountCents,
+                )
+            },
     )
 
 /** This form with the saved [snapshot]'s fields, when it belongs to the same expense (or both are new). */
@@ -53,5 +77,19 @@ internal fun ExpenseFormState.restoredFrom(
             paidWithMealCard = snapshot.paidWithMealCard,
             mealCardTouched = snapshot.mealCardTouched,
             categoryTouched = snapshot.categoryTouched,
+            refundOf = snapshot.refundOf?.takeIf { snapshot.isRefund },
+            refundOfLabel = snapshot.refundOfLabel?.takeIf { snapshot.isRefund },
+            splitEnabled = snapshot.splitEnabled && !isEditMode,
+            splitParts =
+                if (isEditMode) {
+                    emptyList()
+                } else {
+                    snapshot.splitParts.map { part ->
+                        SplitPartForm(
+                            part.categoryId.takeIf { it.isNotEmpty() }?.let { catalog.resolve(CategoryId(it)) },
+                            part.amountCents,
+                        )
+                    }
+                },
         )
     }

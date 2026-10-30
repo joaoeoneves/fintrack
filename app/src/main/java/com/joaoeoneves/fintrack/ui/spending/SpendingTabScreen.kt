@@ -89,6 +89,7 @@ fun SpendingTabScreen(
                         SpendingHistory(
                             analytics = current.analytics,
                             history = current.history,
+                            aboveAverage = current.aboveAverage,
                             onCategoryClick = { navigation.onOpenCategory(it.id.value, current.period) },
                             yearScale = current.period is Period.Year,
                             onMonthClick = viewModel::onMonthSelected,

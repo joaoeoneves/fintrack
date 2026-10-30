@@ -32,6 +32,13 @@ internal fun validateExpense(
     requireKnownCategory(expense.categoryId, knownCategoryIds)
     requireValidDate(expense.date)
     requireValidNote(expense.note)
+    // A link may dangle (its original deleted), so only the id shape is checked, never existence.
+    expense.refundOf?.let {
+        requireIdShape(it, "refund link")
+        require(expense.isRefund) { "Only a refund can link to an original expense" }
+        require(it != expense.id) { "A refund cannot link to itself" }
+    }
+    expense.splitId?.let { requireIdShape(it, "split") }
 }
 
 internal fun validateIncome(income: LocalIncome) {

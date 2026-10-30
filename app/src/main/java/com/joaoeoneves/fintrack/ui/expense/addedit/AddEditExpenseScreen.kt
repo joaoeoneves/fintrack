@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -21,6 +22,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.NameSuggestion
@@ -38,6 +40,7 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
@@ -45,12 +48,15 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 
+@Suppress("LongParameterList") // One navigation callback per exit of the form.
 @Composable
 fun AddEditExpenseScreen(
     onSaved: () -> Unit,
     onDeleted: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
+    onRecordRefund: (String) -> Unit = {},
+    onDuplicate: (String) -> Unit = {},
     viewModel: AddEditExpenseViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,7 +85,7 @@ fun AddEditExpenseScreen(
                     form = state.form,
                     categoryOptions = categoryOptions.optionsIncluding(state.form.category),
                     isEditMode = viewModel.isEditRoute,
-                    actions = viewModel.formActions(),
+                    actions = viewModel.formActions(onRecordRefund, onDuplicate),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -101,8 +107,17 @@ fun AddEditExpenseScreen(
     }
 }
 
+/** The split editor's callbacks. */
+internal data class SplitActions(
+    val onEnabledChanged: (Boolean) -> Unit,
+    val onCategoryChanged: (Int, Category) -> Unit,
+    val onAmountChanged: (Int, Long) -> Unit,
+    val onAdded: () -> Unit,
+    val onRemoved: (Int) -> Unit,
+)
+
 /** Bundles [ExpenseForm]'s field-change callbacks to keep its own parameter list short. */
-private data class ExpenseFormActions(
+internal data class ExpenseFormActions(
     val onNameChanged: (String) -> Unit,
     val onNameSuggestionPicked: (NameSuggestion) -> Unit,
     val onAmountChanged: (Long) -> Unit,
@@ -110,11 +125,18 @@ private data class ExpenseFormActions(
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
     val onRefundChanged: (Boolean) -> Unit,
+    val onRefundOfSelected: (Expense?) -> Unit,
+    val split: SplitActions,
+    val onRecordRefund: (String) -> Unit,
+    val onDuplicate: (String) -> Unit,
     val onMealCardChanged: (Boolean) -> Unit,
     val onDelete: () -> Unit,
 )
 
-private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
+private fun AddEditExpenseViewModel.formActions(
+    onRecordRefund: (String) -> Unit,
+    onDuplicate: (String) -> Unit,
+): ExpenseFormActions =
     ExpenseFormActions(
         onNameChanged = ::onNameChanged,
         onNameSuggestionPicked = ::onNameSuggestionPicked,
@@ -123,6 +145,17 @@ private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
         onDateSelected = ::onDateSelected,
         onNoteChanged = ::onNoteChanged,
         onRefundChanged = ::onRefundChanged,
+        onRefundOfSelected = ::onRefundOfSelected,
+        split =
+            SplitActions(
+                onEnabledChanged = ::onSplitEnabledChanged,
+                onCategoryChanged = ::onSplitPartCategoryChanged,
+                onAmountChanged = ::onSplitPartAmountChanged,
+                onAdded = ::onSplitPartAdded,
+                onRemoved = ::onSplitPartRemoved,
+            ),
+        onRecordRefund = onRecordRefund,
+        onDuplicate = onDuplicate,
         onMealCardChanged = ::onMealCardChanged,
         onDelete = ::onDelete,
     )
@@ -171,26 +204,25 @@ private fun ExpenseForm(
         )
         NameSuggestionRow(form.nameSuggestions, actions.onNameSuggestionPicked)
 
-        CategoryChipFlow(
-            options = categoryOptions,
-            selected = form.category,
-            error = form.categoryError?.asString(),
-            onSelected = actions.onCategorySelected,
-        )
-        if (form.suggestedCategory) {
-            Text(
-                text = stringResource(R.string.expense_category_suggested),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        CategorySection(form = form, categoryOptions = categoryOptions, actions = actions)
 
         RefundAndMealCardSwitches(form = form, actions = actions)
+        RecordRefundSection(form = form, actions = actions)
 
         ExpenseDateAndNoteFields(form = form, actions = actions)
 
+        MoreOptions(form = form, actions = actions)
+
         form.saveError?.let { FormSaveError(it.asString()) }
-        if (form.canDelete) FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
+        if (form.canDelete) {
+            GhostButton(
+                text = stringResource(R.string.action_duplicate),
+                onClick = { form.expenseId?.let(actions.onDuplicate) },
+                enabled = !form.isBusy,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
+        }
     }
 }
 
@@ -224,6 +256,7 @@ private fun RefundAndMealCardSwitches(
         onCheckedChange = actions.onRefundChanged,
         supportingText = stringResource(R.string.expense_field_refund_hint),
     )
+    if (form.isRefund) RefundOfRow(form = form, actions = actions)
     if (form.showsMealCardSwitch) {
         SettingsSwitchRow(
             title = stringResource(R.string.expense_field_meal_card),
@@ -265,4 +298,39 @@ private fun ExpenseFormState.untouchedByErrors() =
         saveError = null,
         isSaving = false,
         isDeleting = false,
+        refundStatus = null,
+        refundCandidates = emptyList(),
     )
+
+/** The category chips, or the split parts while splitting; plus the suggestion and split-part captions. */
+@Composable
+private fun CategorySection(
+    form: ExpenseFormState,
+    categoryOptions: List<Category>,
+    actions: ExpenseFormActions,
+) {
+    if (form.isSplitting) {
+        SplitParts(form = form, categoryOptions = categoryOptions, actions = actions.split)
+    } else {
+        CategoryChipFlow(
+            options = categoryOptions,
+            selected = form.category,
+            error = form.categoryError?.asString(),
+            onSelected = actions.onCategorySelected,
+        )
+    }
+    if (form.isEditMode && form.splitId != null) {
+        Text(
+            text = stringResource(R.string.expense_split_part_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    if (form.suggestedCategory && !form.isSplitting) {
+        Text(
+            text = stringResource(R.string.expense_category_suggested),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}

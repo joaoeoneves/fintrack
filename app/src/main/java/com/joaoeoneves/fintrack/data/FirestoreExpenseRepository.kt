@@ -176,6 +176,72 @@ class FirestoreExpenseRepository
             }
         }
 
+        override suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val collection = expensesCollection(uid)
+                val withIds = expenses.map { if (it.id.isBlank()) it.copy(id = collection.document().id) else it }
+                for (chunk in withIds.importChunks()) {
+                    val batch = firestore.batch()
+                    chunk.forEach { batch.set(collection.document(it.id), it.toFirestoreMap(includeCreatedAt = true)) }
+                    // Not awaited: lands in the local cache at once and syncs later (see addExpense).
+                    batch.commit().addOnFailureListener(onFail(TAG, "Bulk add expenses failed"))
+                }
+                withIds.map { it.id }
+            }
+        }
+
+        override suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                for (chunk in expenses.importChunks()) {
+                    val batch = firestore.batch()
+                    chunk.forEach { expense ->
+                        val ref = expensesCollection(uid).document(expense.id)
+                        batch.update(ref, expense.toFirestoreMap(includeCreatedAt = false))
+                    }
+                    // Not awaited: see addExpensesKeepingIds.
+                    batch.commit().addOnFailureListener(onFail(TAG, "Bulk update expenses failed"))
+                }
+            }
+        }
+
+        override suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                for (chunk in ids.distinct().chunked(REVIEW_BATCH_SIZE)) {
+                    val batch = firestore.batch()
+                    chunk.forEach { batch.delete(expensesCollection(uid).document(it)) }
+                    // Not awaited: see addExpensesKeepingIds.
+                    batch.commit().addOnFailureListener(onFail(TAG, "Bulk delete expenses failed"))
+                }
+            }
+        }
+
+        override fun observeLinkedRefunds(): Flow<List<Expense>> {
+            val uid = firebaseAuth.currentUser?.uid ?: return flowOf(emptyList())
+            val query = expensesCollection(uid).whereGreaterThan("refundOf", "")
+            return callbackFlow {
+                val registration =
+                    query.addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            trySend(snapshot.toExpenses())
+                        }
+                    }
+                awaitClose { registration.remove() }
+            }
+        }
+
         override suspend fun getExpense(id: String): Result<Expense?> {
             val uid =
                 firebaseAuth.currentUser?.uid
@@ -349,7 +415,23 @@ internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?
     } else if (!includeCreatedAt) {
         map["needsReview"] = FieldValue.delete()
     }
+    putOptional(map, "refundOf", refundOf, includeCreatedAt)
+    putOptional(map, "splitId", splitId, includeCreatedAt)
     return map
+}
+
+/** Written when set; on an update (merge) a null value deletes the key explicitly. */
+private fun putOptional(
+    map: MutableMap<String, Any?>,
+    key: String,
+    value: String?,
+    isCreate: Boolean,
+) {
+    if (value != null) {
+        map[key] = value
+    } else if (!isCreate) {
+        map[key] = FieldValue.delete()
+    }
 }
 
 internal fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
@@ -370,6 +452,8 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
     val isRefund = get("isRefund") as? Boolean ?: false
     val paidWithMealCard = get("paidWithMealCard") as? Boolean ?: false
     val needsReview = get("needsReview") as? Boolean ?: false
+    val refundOf = (get("refundOf") as? String)?.takeIf { it.isNotBlank() }
+    val splitId = (get("splitId") as? String)?.takeIf { it.isNotBlank() }
 
     return when {
         name == null -> {
@@ -399,6 +483,8 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
                 isRefund = isRefund,
                 paidWithMealCard = paidWithMealCard,
                 needsReview = needsReview,
+                refundOf = refundOf,
+                splitId = splitId,
             )
     }
 }

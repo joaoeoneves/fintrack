@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
@@ -54,6 +55,7 @@ fun SpendingHistory(
     modifier: Modifier = Modifier,
     yearScale: Boolean = false,
     onMonthClick: (YearMonth) -> Unit = {},
+    aboveAverage: Set<CategoryId> = emptySet(),
 ) {
     val figures = remember(history) { history?.spendingFigures(null, null) ?: HistoryFigures() }
     val padding = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8)
@@ -77,7 +79,7 @@ fun SpendingHistory(
             }
         }
         if (!analytics.breakdown.isEmpty) {
-            SpendingBreakdown(analytics.breakdown, onCategoryClick)
+            SpendingBreakdown(analytics.breakdown, onCategoryClick, aboveAverage)
         }
     }
 }
@@ -94,6 +96,7 @@ private enum class BreakdownMode(
 private fun SpendingBreakdown(
     breakdown: ActivityBreakdown,
     onCategoryClick: (Category) -> Unit,
+    aboveAverage: Set<CategoryId>,
 ) {
     val padding = Modifier.padding(horizontal = Dimens.ScreenPadding)
     var mode by rememberSaveable { mutableStateOf(BreakdownMode.CATEGORY) }
@@ -112,6 +115,7 @@ private fun SpendingBreakdown(
             showTotal = false,
             modifier = padding,
             onCategoryClick = onCategoryClick,
+            aboveAverage = aboveAverage,
             belowTitle = tabs.takeIf { breakdown.hasEnvelopes },
         )
     } else {

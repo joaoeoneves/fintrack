@@ -44,14 +44,17 @@ mode).
   card, an *Invested* row with the share of what you received ("you invested 12% of what you received")
   that opens the investments page, quick add and an informative list of what is coming up.
 - **Activity**: the list of expenses and income, with search, type, category, group and income source
-  filters, sorting, and delete by swiping or from the edit screen (with undo). Totals and breakdowns live
+  filters (search also matches the note and the amount, e.g. "12,50 €"), sorting, delete by swiping or
+  from the edit screen, and multi-select by long press to change the category, toggle the meal card or
+  delete several expenses at once (all with undo). Totals and breakdowns live
   in Spending and Income.
 - **Income**: received versus expected with the difference, income lines, days off by type
   (vacation, sick leave, other; one month or several at once; the working-day count follows from the
   calendar, holidays and days off), and history. Income counts by the date it was
   received.
 - **Spending**: spent, fixed versus variable, evolution, and spending by category or by group (a name
-  plus its categories) with a Category | Group switch. Recurring bills and investments are managed here,
+  plus its categories) with a Category | Group switch; a category spending more than its recent average is marked *above
+  average*. Recurring bills and investments are managed here,
   with their yearly cost (monthly and yearly items apart) and the month each one ends.
 - Tapping a bar in a year chart shows that month's figures and opens the month.
 - Detail pages per category and per income source. For the net salary source it shows what was received
@@ -59,7 +62,9 @@ mode).
 
 **Tracking**
 - Expenses (name, amount, category, date, note) and income (source, amount, date, note). Refunds
-  subtract from their category. When you add an expense, the category you used last time for that name
+  subtract from their category and can be linked to the original expense, which then shows the refunded
+  share and the real spend. An expense can be duplicated, and a new one can be split across categories
+  (*More options*). When you add an expense, the category you used last time for that name
   is suggested.
 - Categories: built-ins plus your own (new users also start with Home, Transport, Health and Leisure) (name, icon, colour, spending or saving), with rename, reorder,
   archive and delete.

@@ -85,7 +85,7 @@ All data lives under `users/{uid}/`. Money is stored as integer minor units (`am
 
 | Path | Fields (summary) |
 |---|---|
-| `expenses/{id}` | `name`, `amountCents` (> 0), `category` (category id), `isRefund?`, `date`, `note?`, `createdAt`, `updatedAt` |
+| `expenses/{id}` | `name`, `amountCents` (> 0), `category` (category id), `isRefund?`, `refundOf?` (a refund's original expense id, only with `isRefund`; display only, totals are unchanged, a dangling id reads as unlinked), `splitId?` (the parts of one purchase split across categories are separate expenses sharing this id), `date`, `note?`, `createdAt`, `updatedAt` |
 | `income/{id}` | `source` (free text), `amountCents`, `date`, `note?`, timestamps |
 | `plannedIncome/{lineId}` | `label` (1..50), `amountCents` (the rate for per-working-day lines), `order`, `basis?` (`FIXED`/`PER_WORKING_DAY`), `frequency?` (`MONTHLY`/`YEARLY`/`ONCE`), `monthOfYear?` (yearly only), `yearMonth?` (`yyyy-MM`, one-off only), `skipMonths?` (list of months 1..12 a monthly line is not paid in), `autoRecord?` (record the line on its pay day), `payDay?` 1..31 (fixed pay day; absent = last working day), `managedKey?` (one of the `profile_*` keys: the line is generated from the salary profile, read-only except the label, `autoRecord` and `payDay`); absent fields mean fixed/monthly; at most 20 lines (enforced client-side, rules cannot count documents) |
 | `plan/salaryProfile` | singleton: `inputMode` (`GROSS`/`NET`), rates as integer ppm (`subsidySpreadPpm` 0/500000/1000000, `irsBasePpm`, `irsSubsidiesPpm?`, `ssPpm`, `irsJovemExemptPpm`), amounts in cents (`baseGrossCents?`, `netMonthlyCents?`, `netHolidayLumpCents?`, `netChristmasLumpCents?`, `mealRatePerDayCents?`), months 1..12 (`holidaySubsidyMonth`, `christmasSubsidyMonth`), `mealSkipMonths`, `extras` (list of up to 10 `{id, name, amountType` FIXED_CENTS/MULTIPLE_OF_BASE_PPM/PERCENT_OF_ANNUAL_GROSS_PPM`, amount, months, deductions?, feePpm?, amountScope?` TOTAL/PER_PAYMENT, omitted = TOTAL`}`; the rules accept only those two scopes; absent = none), `raiseInFebruary?` (written only when true: a new salary amount defaults to applying from February), `updatedAt`; saving it upserts the managed `plannedIncome` lines, deleting it removes them |
@@ -131,14 +131,14 @@ expenses, income, planned income, categories, recurring items, month settings, c
 - Loaded lazily, kept in memory, rewritten on every change.
 - **Atomic writes**: temp file, fsync, rename. New state is published to observers only after the write
   succeeded, so no one sees data that is not on disk. A mutex serialises writers.
-- **Versioning**: `schemaVersion` is currently 24. A corrupt file, or one with a newer schema, is moved to
+- **Versioning**: `schemaVersion` is currently 25. A corrupt file, or one with a newer schema, is moved to
   `guest-data.corrupt-<millis>.json` (never deleted) and the store starts empty.
 - After a migration to an account and a confirmed "Remove from this device", one safety copy remains as
   `guest-data.migrated.json`, overwritten next time.
 
 ## Backup format
 
-A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 24, "exportedAt",
+A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 25, "exportedAt",
 "appVersion", "preferences", ...records }` using the same record shapes as the guest store. Decoding:
 
 - a missing or invalid version is rejected; a version newer than the app supports is refused;
@@ -147,7 +147,8 @@ A backup is a JSON document `{ "format": "fintrack-backup", "schemaVersion": 24,
 - fields removed in 5.5 (goals, budgets, envelope amounts and funding, currency, working-days override,
   the salary-shift setting) are ignored, and pre-5.5 manual recurring items are adopted without
   posting past occurrences;
-- from schema 24 days off are typed (vacation, sick leave, other); an older `daysOff` becomes vacation.
+- from schema 24 days off are typed (vacation, sick leave, other); an older `daysOff` becomes vacation;
+- from schema 25 expenses may carry `refundOf` and `splitId` (absent = none).
 
 Backups can be exported and restored signed in or as a guest. A signed-in restore
 (`AccountBackupRestorer`) first reads every account collection from the server (nothing is written if

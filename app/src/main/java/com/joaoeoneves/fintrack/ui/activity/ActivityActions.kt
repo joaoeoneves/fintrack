@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.activity
 
+import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.Transaction
@@ -25,6 +26,16 @@ data class ActivityActions(
     val onSortSelected: (SortOption) -> Unit,
     val onOpen: (Transaction) -> Unit,
     val onDelete: (String) -> Unit,
+    val onLongPress: (String) -> Unit,
+    val onToggleSelected: (String) -> Unit,
     val onAddExpense: () -> Unit,
     val onAddIncome: () -> Unit,
+)
+
+/** What the selection bar can do with the selected expenses. */
+data class SelectionBarActions(
+    val onClear: () -> Unit,
+    val onCategory: (Category) -> Unit,
+    val onMealCard: () -> Unit,
+    val onDelete: () -> Unit,
 )
