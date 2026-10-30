@@ -322,4 +322,15 @@ class SalaryProfileRecordsTest {
         assertTrue(!text.contains("flexPpm"))
         validateSalaryProfile(local)
     }
+
+    @Test
+    fun raiseInFebruary_roundTrips_andAbsentMeansFalse() {
+        val on = SalaryProfile(baseGrossCents = 1, raiseInFebruary = true)
+        assertEquals(true, on.toLocal().raiseInFebruary)
+        assertEquals(true, on.toLocal().toDomain().raiseInFebruary)
+
+        val off = SalaryProfile(baseGrossCents = 1)
+        assertEquals(null, off.toLocal().raiseInFebruary)
+        assertEquals(false, LocalSalaryProfile().toDomain().raiseInFebruary)
+    }
 }

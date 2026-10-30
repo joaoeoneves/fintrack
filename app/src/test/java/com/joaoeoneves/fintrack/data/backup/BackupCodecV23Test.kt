@@ -102,4 +102,32 @@ class BackupCodecV23Test {
 
         assertEquals("2026-01-15", result.recurring.single().handledThrough)
     }
+
+    @Test
+    fun v23File_legacyDaysOffBecomesVacation_andV24RoundTripsUnchanged() {
+        val v23 =
+            """{$header,"schemaVersion":23,"monthSettings":[{"month":"2026-10","daysOff":3},""" +
+                """{"month":"2026-11","daysOff":0}]}"""
+
+        val doc = BackupCodec.decode(v23).success().document
+
+        assertEquals(BACKUP_SCHEMA_VERSION, doc.schemaVersion)
+        assertEquals(listOf(LocalMonthSettings("2026-10", vacationDays = 3)), doc.monthSettings)
+
+        val encoded = BackupCodec.encode(doc)
+        assertFalse(encoded.contains("daysOff"))
+        val again = BackupCodec.decode(encoded).success().document
+        assertEquals(doc, again)
+    }
+
+    @Test
+    fun v24File_withTypedCounts_isKeptAsIs() {
+        val v24 =
+            """{$header,"schemaVersion":24,"monthSettings":[{"month":"2026-10","vacationDays":2,"sickDays":3,""" +
+                """"otherDays":1}]}"""
+
+        val doc = BackupCodec.decode(v24).success().document
+
+        assertEquals(listOf(LocalMonthSettings("2026-10", 2, 3, 1)), doc.monthSettings)
+    }
 }

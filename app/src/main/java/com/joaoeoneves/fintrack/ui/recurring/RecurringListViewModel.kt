@@ -7,11 +7,10 @@ import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
-import com.joaoeoneves.fintrack.domain.model.RecurringType
-import com.joaoeoneves.fintrack.domain.model.annualizedCents
 import com.joaoeoneves.fintrack.domain.model.billsOf
 import com.joaoeoneves.fintrack.domain.model.firstPendingOccurrence
 import com.joaoeoneves.fintrack.domain.model.isEnded
+import com.joaoeoneves.fintrack.domain.model.recurringCostOf
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -130,6 +129,6 @@ private fun contentOf(
         active = active,
         inactive = inactive,
         investments = investments,
-        annualExpenseCents = annualizedCents(items, RecurringType.EXPENSE, today),
+        cost = recurringCostOf(items, today),
     )
 }

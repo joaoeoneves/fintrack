@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
 import com.joaoeoneves.fintrack.domain.model.RecurringType
 import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
 import com.joaoeoneves.fintrack.testutil.MutableClock
@@ -89,7 +90,7 @@ class RecurringListViewModelTest {
 
             assertEquals(setOf("a"), state.active.map { it.item.id }.toSet())
             assertEquals(setOf("p", "e"), state.inactive.map { it.item.id }.toSet())
-            assertEquals(12_000L, state.annualExpenseCents)
+            assertEquals(12_000L, state.cost.annualCents)
             assertTrue(state.inactive.first { it.item.id == "e" }.isEnded)
             assertNull(state.inactive.first { it.item.id == "p" }.nextDue)
             assertEquals(
@@ -114,7 +115,7 @@ class RecurringListViewModelTest {
 
             assertEquals(setOf("own", "lnk"), state.active.map { it.item.id }.toSet())
             assertEquals(listOf("off"), state.inactive.map { it.item.id })
-            assertEquals(72_000L, state.annualExpenseCents)
+            assertEquals(72_000L, state.cost.annualCents)
         }
 
     @Test
@@ -198,4 +199,21 @@ class RecurringListViewModelTest {
         assertEquals(8L, monthlyEquivalentCents(100L))
         assertEquals(9L, monthlyEquivalentCents(103L))
     }
+
+    @Test
+    fun cost_splitsMonthlyFromYearlyItems_ofActiveBillsOnly() =
+        runTest(testDispatcher) {
+            val monthly = recurringItem(id = "m", amountCents = 1_000)
+            val yearly = recurringItem(id = "y", amountCents = 6_000, frequency = RecurringFrequency.YEARLY)
+            val paused = recurringItem(id = "p", amountCents = 9_000, active = false)
+            val vm = viewModel(FakeRecurringRepository(listOf(monthly, yearly, paused)))
+            started(vm)
+
+            val cost = content(vm).cost
+
+            assertEquals(1_000L, cost.monthlyItemsCents)
+            assertEquals(6_000L, cost.yearlyItemsCents)
+            assertEquals(18_000L, cost.annualCents)
+            assertEquals(500L, cost.yearlyPerMonthCents)
+        }
 }

@@ -108,7 +108,7 @@ internal fun SalaryForm.toResult(): SalaryFormResult {
             }
         }
     return SalaryFormResult(
-        profile.copy(vacationDaysPerYear = vacation),
+        profile.copy(vacationDaysPerYear = vacation, raiseInFebruary = raiseInFebruary),
         reader.invalid,
         hasRequiredAmount = required != null,
         vacationDays = vacation,

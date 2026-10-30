@@ -112,7 +112,18 @@ data class SalaryProfile(
     val mealPayment: MealPayment = MealPayment.CARD,
     /** ADSE, SAMS, union dues and similar, withheld like SS (monthly pay and subsidy lumps, not extras). */
     val otherDeductionsPpm: Int = 0,
+    /** The yearly raise takes effect in February: a new salary's default "valid from" is then February, not now. */
+    val raiseInFebruary: Boolean = false,
 ) {
     /** The subsidy IRS rate actually used: the explicit one or the base rate. */
     val effectiveIrsSubsidiesPpm: Int get() = irsSubsidiesPpm ?: irsBasePpm
 }
+
+/**
+ * The default "valid from" month of a new salary: with [raiseInFebruary] the next February that is not already
+ * past (January gives this year's coming February, February to December this year's February), otherwise [now].
+ */
+fun defaultEffectiveFrom(
+    now: YearMonth,
+    raiseInFebruary: Boolean,
+): YearMonth = if (raiseInFebruary) YearMonth.of(now.year, 2) else now

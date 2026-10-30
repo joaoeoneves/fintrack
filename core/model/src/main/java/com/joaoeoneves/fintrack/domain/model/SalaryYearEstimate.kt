@@ -5,8 +5,9 @@ import java.time.YearMonth
 private const val MONTHS_IN_YEAR = 12
 
 /**
- * The extra days off assumed in each month of [year] that has nothing set (no override, no days off): the
- * [vacationDays] not already recorded as days off in the year's other months, spread evenly over those free months
+ * The extra days off assumed in each month of [year] with no vacation days recorded (sick and other days do not
+ * count): the [vacationDays] not already recorded as vacation in the year's other months, spread evenly over those
+ * free months
  * (earlier months take the remainder) and never above a month's working days. Months not in the map assume none.
  */
 fun assumedVacationByMonth(
@@ -16,8 +17,8 @@ fun assumedVacationByMonth(
 ): Map<YearMonth, Int> {
     val byMonth = settings.associateBy { it.month }
     val months = (1..MONTHS_IN_YEAR).map { YearMonth.of(year, it) }
-    val recorded = months.sumOf { byMonth[it]?.daysOff ?: 0 }
-    val free = months.filter { byMonth[it]?.isBlank ?: true }
+    val recorded = months.sumOf { byMonth[it]?.vacationDays ?: 0 }
+    val free = months.filter { (byMonth[it]?.vacationDays ?: 0) == 0 }
     val remaining = maxOf(0, vacationDays - recorded)
     if (free.isEmpty() || remaining == 0) return emptyMap()
     val each = remaining / free.size

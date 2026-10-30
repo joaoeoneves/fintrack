@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.data
 
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
+import com.joaoeoneves.fintrack.domain.model.requireValidDaysOff
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,22 +27,26 @@ class FakeMonthSettingsRepository(
     }
 
     override suspend fun setDaysOff(
-        month: YearMonth,
-        days: Int,
-    ): Result<Unit> = change(month) { it.copy(daysOff = days) }
+        months: Collection<YearMonth>,
+        vacation: Int,
+        sick: Int,
+        other: Int,
+    ): Result<Unit> {
+        requireValidDaysOff(months, vacation, sick, other)
+        return change(months.toSet()) { MonthSettings(it, vacation, sick, other) }
+    }
 
     private fun change(
-        month: YearMonth,
-        edit: (MonthSettings) -> MonthSettings,
+        months: Set<YearMonth>,
+        edit: (YearMonth) -> MonthSettings,
     ): Result<Unit> {
         nextSetError?.let { error ->
             nextSetError = null
             return Result.failure(error)
         }
-        val current = settingsFlow.value.firstOrNull { it.month == month } ?: MonthSettings(month)
-        val updated = edit(current)
-        val others = settingsFlow.value.filterNot { it.month == month }
-        settingsFlow.value = if (updated.isBlank) others else others + updated
+        val updated = months.map(edit)
+        val others = settingsFlow.value.filterNot { it.month in months }
+        settingsFlow.value = others + updated.filterNot { it.isBlank }
         return Result.success(Unit)
     }
 }

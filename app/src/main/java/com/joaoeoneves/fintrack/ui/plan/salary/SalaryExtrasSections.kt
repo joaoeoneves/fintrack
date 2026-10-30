@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.joaoeoneves.fintrack.R
@@ -15,6 +16,7 @@ import com.joaoeoneves.fintrack.domain.model.ExtraBreakdown
 import com.joaoeoneves.fintrack.domain.model.MealPayment
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
+import com.joaoeoneves.fintrack.domain.model.VacationBalance
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
@@ -31,6 +33,7 @@ internal fun MealSection(
     form: SalaryForm,
     invalid: Set<SalaryField>,
     onChange: (SalaryForm) -> Unit,
+    balance: VacationBalance? = null,
 ) {
     SalaryGroup(stringResource(R.string.salary_group_meal)) {
         SalaryMoneyField(
@@ -41,7 +44,7 @@ internal fun MealSection(
         )
         if (form.mealTaxableWarning()) MealTaxWarning()
         if (form.meal > 0L) {
-            VacationDaysField(form, invalid, onChange)
+            VacationDaysField(form, invalid, onChange, balance)
             Text(
                 text = stringResource(R.string.salary_meal_payment),
                 style = MaterialTheme.typography.labelLarge,
@@ -82,6 +85,7 @@ internal fun VacationDaysField(
     form: SalaryForm,
     invalid: Set<SalaryField>,
     onChange: (SalaryForm) -> Unit,
+    balance: VacationBalance? = null,
 ) {
     val isInvalid = SalaryField.VACATION_DAYS in invalid
     MinimalTextField(
@@ -95,6 +99,24 @@ internal fun VacationDaysField(
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.fillMaxWidth(),
+    )
+    if (balance != null && !isInvalid) VacationBalanceLine(balance)
+}
+
+/** "Vacation left: 8 of 22", plus how many days over the allowance when more were taken. */
+@Composable
+private fun VacationBalanceLine(balance: VacationBalance) {
+    val text =
+        stringResource(R.string.salary_vacation_left, balance.remaining, balance.total) +
+            if (balance.overBy > 0) {
+                " · " + pluralStringResource(R.plurals.salary_vacation_over, balance.overBy, balance.overBy)
+            } else {
+                ""
+            }
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = if (balance.overBy > 0) FinTrackTheme.colors.negative else FinTrackTheme.colors.textSecondary,
     )
 }
 

@@ -113,6 +113,7 @@ internal fun SalaryProfile.toFirestoreMap(): Map<String, Any?> =
         putIfSet("sector", sector?.name)
         if (mealPayment != MealPayment.CARD) put("mealPayment", mealPayment.name)
         if (otherDeductionsPpm != 0) put("otherDeductionsPpm", otherDeductionsPpm)
+        if (raiseInFebruary) put("raiseInFebruary", true)
         put("updatedAt", FieldValue.serverTimestamp())
     }
 
@@ -169,6 +170,7 @@ private fun DocumentSnapshot.parseSalaryProfile(): SalaryProfile? {
         sector = parseSector(),
         mealPayment = parseMealPayment(),
         otherDeductionsPpm = int("otherDeductionsPpm") ?: defaults.otherDeductionsPpm,
+        raiseInFebruary = getBoolean("raiseInFebruary") ?: false,
     )
 }
 

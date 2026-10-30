@@ -1,6 +1,7 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.RecurringCost
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.LocalDate
@@ -28,7 +29,7 @@ sealed interface RecurringListUiState {
         val active: List<RecurringRow>,
         val inactive: List<RecurringRow>,
         val investments: List<RecurringRow> = emptyList(),
-        val annualExpenseCents: Long,
+        val cost: RecurringCost,
     ) : RecurringListUiState
 
     data class Error(

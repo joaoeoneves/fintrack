@@ -12,27 +12,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.RecurringFrequency
-import com.joaoeoneves.fintrack.domain.model.monthlyEquivalentCents
+import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.displayName
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.icon
+import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.common.rememberLocaleAwareDateFormatter
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.TransactionRow
+import java.time.YearMonth
 
 /** The annualized expense of the active items, with its monthly equivalent. */
 @Composable
 internal fun RecurringTotals(state: RecurringListUiState.Content) {
+    val cost = state.cost
     Column {
         SettingsRow(
             title =
                 stringResource(
                     R.string.recurring_annual_cost,
-                    formatAmountCents(state.annualExpenseCents),
-                    formatAmountCents(monthlyEquivalentCents(state.annualExpenseCents)),
+                    formatAmountCents(cost.annualCents),
+                    formatAmountCents(cost.monthlyEquivalentCents),
                 ),
         )
+        if (cost.yearlyItemsCents > 0) {
+            SettingsRow(
+                title =
+                    stringResource(
+                        R.string.recurring_cost_split,
+                        formatAmountCents(cost.monthlyItemsCents),
+                        formatAmountCents(cost.yearlyItemsCents),
+                        formatAmountCents(cost.yearlyPerMonthCents),
+                    ),
+            )
+        }
         Hairline()
     }
 }
@@ -77,12 +91,23 @@ internal fun RecurringRowItem(
 }
 
 @Composable
+private fun endMonthLabel(month: YearMonth): String {
+    val locale = currentLocale()
+    return "${formatShortMonthName(month, locale)} ${month.year}"
+}
+
+@Composable
 private fun statusText(row: RecurringRow): String {
     val formatter = rememberLocaleAwareDateFormatter()
     return when {
         row.isEnded -> stringResource(R.string.recurring_ended)
         !row.item.active -> stringResource(R.string.recurring_paused)
-        row.nextDue != null -> stringResource(R.string.recurring_next_due, formatter.format(row.nextDue))
-        else -> ""
+        else ->
+            listOfNotNull(
+                row.nextDue?.let { stringResource(R.string.recurring_next_due, formatter.format(it)) },
+                row.item.endDate?.let {
+                    stringResource(R.string.recurring_ends, endMonthLabel(YearMonth.from(it)))
+                },
+            ).joinToString(" · ")
     }
 }

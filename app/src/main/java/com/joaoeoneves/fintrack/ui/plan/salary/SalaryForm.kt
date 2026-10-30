@@ -13,6 +13,7 @@ import com.joaoeoneves.fintrack.domain.model.SalaryExtraAmountType
 import com.joaoeoneves.fintrack.domain.model.SalaryExtraDeductions
 import com.joaoeoneves.fintrack.domain.model.SalaryInputMode
 import com.joaoeoneves.fintrack.domain.model.SalaryYearSummary
+import com.joaoeoneves.fintrack.domain.model.VacationBalance
 import java.time.YearMonth
 
 /** The fields of the salary form that can hold an invalid value. */
@@ -60,6 +61,8 @@ data class SalaryForm(
     val otherDeductions: String = "",
     /** Vacation days per year as typed (blank = the default of 22); only used for the yearly meal estimate. */
     val vacationDays: String = "",
+    /** The yearly raise takes effect in February: the default "valid from" is then that February. */
+    val raiseInFebruary: Boolean = false,
 )
 
 /** The sector the form stands for: the chosen one, private when none was set. */
@@ -110,6 +113,8 @@ sealed interface SalaryProfileUiState {
         val yearSummary: SalaryYearSummary?,
         /** The vacation days the year summary assumed (the typed ones, else the default). */
         val vacationDaysAssumed: Int = DEFAULT_VACATION_DAYS,
+        /** The year's vacation days taken against the typed (else default) allowance; follows the typed field. */
+        val vacationBalance: VacationBalance? = null,
         val extraEditor: SalaryExtraEditorState? = null,
         val canAddExtra: Boolean = true,
         /** The plan month the changed amounts apply from (default: the current month). */

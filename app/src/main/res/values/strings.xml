@@ -312,6 +312,7 @@
     </plurals>
     <string name="recurring_nothing_due">Nothing due soon</string>
     <string name="recurring_annual_cost">Recurring: %1$s/year (%2$s/month)</string>
+    <string name="recurring_cost_split">Monthly %1$s/month · Yearly %2$s/year (%3$s/month)</string>
     <string name="recurring_manage">Manage</string>
     <string name="recurring_empty_cta">Set up recurring</string>
     <string name="recurring_next_due">Next: %1$s</string>
@@ -321,6 +322,7 @@
     <string name="recurring_list_empty">No recurring yet</string>
     <string name="recurring_paused">Paused</string>
     <string name="recurring_ended">Ended</string>
+    <string name="recurring_ends">ends %1$s</string>
     <string name="recurring_frequency_monthly">Monthly</string>
     <string name="recurring_frequency_yearly">Yearly</string>
     <string name="recurring_day_of_month">Day of month</string>
@@ -352,6 +354,8 @@
     <string name="insights_split_variable">Variable</string>
     <string name="insights_by_category">By category</string>
     <string name="insights_by_group">By group</string>
+    <string name="breakdown_mode_category">Category</string>
+    <string name="breakdown_mode_group">Group</string>
     <string name="cd_insights_split">Spending split: %1$s fixed, %2$s variable</string>
     <string name="plan_basis_fixed">Fixed</string>
     <string name="plan_basis_per_day">Per working day</string>
@@ -380,11 +384,22 @@
         <item quantity="one">%1$d day off</item>
         <item quantity="other">%1$d days off</item>
     </plurals>
-    <string name="plan_days_off_title">Days off this month</string>
+    <string name="plan_days_off_vacation">Vacation</string>
+    <string name="plan_days_off_sick">Sick leave</string>
+    <string name="plan_days_off_other">Other</string>
+    <string name="plan_days_off_until">Until</string>
+    <plurals name="plan_days_off_range_hint">
+        <item quantity="one">These counts replace the month\'s days off.</item>
+        <item quantity="other">These counts replace the days off of %d months.</item>
+    </plurals>
+    <string name="cd_fewer_vacation_days">Fewer vacation days</string>
+    <string name="cd_more_vacation_days">More vacation days</string>
+    <string name="cd_fewer_sick_days">Fewer sick days</string>
+    <string name="cd_more_sick_days">More sick days</string>
+    <string name="cd_fewer_other_days">Fewer other days off</string>
+    <string name="cd_more_other_days">More other days off</string>
     <string name="plan_days_off_carnival">Carnival Tuesday (day %d)</string>
     <string name="plan_days_off_carnival_hint">Optional holiday: counts as one day off when ticked.</string>
-    <string name="cd_fewer_days_off">Fewer days off</string>
-    <string name="cd_more_days_off">More days off</string>
 
     <string name="plan_group_other">No group</string>
     <string name="error_group_save_failed">Couldn\'t save the group</string>
@@ -445,6 +460,13 @@
     <string name="salary_year_meal_vacation">assuming %1$d vacation days</string>
     <string name="salary_field_vacation_days">Vacation days per year</string>
     <string name="salary_vacation_days_hint">Optional. Used to estimate the meal allowance for the year; months with days off already set count those instead.</string>
+    <string name="salary_vacation_left">Vacation left: %1$d of %2$d</string>
+    <plurals name="salary_vacation_over">
+        <item quantity="one">%d day over</item>
+        <item quantity="other">%d days over</item>
+    </plurals>
+    <string name="salary_raise_february">Annual raise in February</string>
+    <string name="salary_raise_february_hint">January keeps the previous salary</string>
     <string name="salary_year_title">In the year (estimate)</string>
     <string name="salary_year_net">Estimated net for the year</string>
     <string name="salary_year_gross">Gross in the year</string>
