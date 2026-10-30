@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.backup
 
 import android.net.Uri
 import com.joaoeoneves.fintrack.R
+import com.joaoeoneves.fintrack.data.backup.BACKUP_SCHEMA_VERSION
 import com.joaoeoneves.fintrack.data.backup.backupDoc
 import org.junit.Test
 import java.io.File
@@ -63,7 +64,10 @@ class BackupViewModelImportErrorTest : BackupViewModelTestBase() {
             val vm = viewModel()
 
             vm.onImportFileSelected(
-                fileWith("""{"format":"fintrack-backup","schemaVersion":25,"exportedAt":"2026-01-01T00:00:00Z"}"""),
+                fileWith(
+                    """{"format":"fintrack-backup","schemaVersion":${BACKUP_SCHEMA_VERSION + 1},""" +
+                        """"exportedAt":"2026-01-01T00:00:00Z"}""",
+                ),
             )
             settle()
 

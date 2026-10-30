@@ -78,6 +78,31 @@ class FakeExpenseRepository(
         return Result.success(Unit)
     }
 
+    override suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> {
+        val toStore = expenses.map { it.copy(id = it.id.ifBlank { UUID.randomUUID().toString() }) }
+        val added = toStore.map { it.id }.toSet()
+        expensesFlow.value = expensesFlow.value.filterNot { it.id in added } + toStore
+        return Result.success(toStore.map { it.id })
+    }
+
+    /** All or nothing: fails without changing anything when one of [expenses] does not exist. */
+    override suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> {
+        val current = expensesFlow.value
+        val missing = expenses.firstOrNull { e -> current.none { it.id == e.id } }
+        if (missing != null) return Result.failure(NoSuchElementException("Expense with id ${missing.id} not found"))
+        val byId = expenses.associateBy { it.id }
+        expensesFlow.value = current.map { byId[it.id] ?: it }
+        return Result.success(Unit)
+    }
+
+    override suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> {
+        expensesFlow.value = expensesFlow.value.filterNot { it.id in ids }
+        return Result.success(Unit)
+    }
+
+    override fun observeLinkedRefunds(): Flow<List<Expense>> =
+        expensesFlow.map { all -> all.filter { it.isRefund && it.refundOf != null } }
+
     override suspend fun getExpense(id: String): Result<Expense?> {
         nextGetExpenseError?.let { error ->
             nextGetExpenseError = null
