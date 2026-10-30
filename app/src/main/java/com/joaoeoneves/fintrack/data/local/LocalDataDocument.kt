@@ -1,5 +1,7 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.StarterCategories
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -37,7 +39,7 @@ data class LocalDataDocument(
     val isEmpty: Boolean get() =
         expenses.isEmpty() &&
             income.isEmpty() &&
-            categories.isEmpty() &&
+            categories.all { it.isUntouchedStarter() } &&
             plannedIncome.isEmpty() &&
             recurring.isEmpty() &&
             monthSettings.isEmpty() &&
@@ -217,3 +219,20 @@ data class LocalSalaryExtra(
     /** A `SalaryExtraAmountScope` name; absent before schema v13. */
     val amountScope: String = "TOTAL",
 )
+
+/** Whether this is one of the seeded starter categories exactly as created (any supported language's name). */
+internal fun LocalCategory.isUntouchedStarter(): Boolean {
+    val spec = StarterCategories.specOf(id) ?: return false
+    return name in StarterCategories.knownNames.getValue(id) &&
+        iconKey == spec.iconKey &&
+        colorKey == spec.colorKey &&
+        kind == CategoryKind.SPENDING.name &&
+        order == spec.order &&
+        !archived &&
+        groupId == null &&
+        !mealCardByDefault
+}
+
+/** This document without its untouched starter categories (what the user actually put in). */
+internal fun LocalDataDocument.withoutUntouchedStarters(): LocalDataDocument =
+    copy(categories = categories.filterNot { it.isUntouchedStarter() })

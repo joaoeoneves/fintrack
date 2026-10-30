@@ -79,7 +79,7 @@ class LocalDataStore
                 mutex.withLock {
                     val current = loadLocked()
                     // An empty document has nothing worth keeping; skipping it protects an earlier backup.
-                    val hasData = current.copy(revision = 0) != LocalDataDocument()
+                    val hasData = current.withoutUntouchedStarters().copy(revision = 0) != LocalDataDocument()
                     if (hasData && file.exists()) {
                         withContext(dispatcher) {
                             file.copyTo(File(file.parentFile, MIGRATED_BACKUP_NAME), overwrite = true)
