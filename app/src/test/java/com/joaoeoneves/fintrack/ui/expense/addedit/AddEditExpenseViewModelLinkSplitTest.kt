@@ -369,6 +369,12 @@ class AddEditExpenseViewModelLinkSplitTest {
             vm.onSave()
             advanceUntilIdle()
 
-            assertFalse(repo.getAllExpenses().getOrThrow().single().awaitingRefund)
+            assertFalse(
+                repo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .single()
+                    .awaitingRefund,
+            )
         }
 }
