@@ -1,9 +1,8 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalAmountVersion
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class BackupCodecStartMonthTest {
@@ -21,34 +20,28 @@ class BackupCodecStartMonthTest {
 
         val doc = BackupCodec.decode(text).success().document
 
-        assertEquals(22, doc.schemaVersion)
-        assertEquals("2026-02", doc.budgets.single().startMonth)
+        assertEquals(BACKUP_SCHEMA_VERSION, doc.schemaVersion)
         assertEquals("2026-02", doc.plannedIncome.single().startMonth)
     }
 
     @Test
-    fun v20Backup_keepsItsStartMonthsAndVersions() {
+    fun v20Backup_keepsItsIncomeLineStartMonthsAndVersions() {
         val versions = listOf(LocalAmountVersion("2026-03", 400), LocalAmountVersion("2026-07", 500))
-        val budget = LocalBudget("FOOD", 500, startMonth = "2026-03", versions = versions)
-        val doc = backupDoc(budgets = listOf(budget), expenses = listOf(backupExpense(date = "2025-01-10T12:00:00Z")))
+        val line = backupPlanned("p1").copy(startMonth = "2026-03", versions = versions)
+        val doc = backupDoc(expenses = listOf(backupExpense(date = "2025-01-10T12:00:00Z"))).copy(plannedIncome = listOf(line))
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success().document
 
-        assertEquals(22, result.schemaVersion)
-        assertEquals(budget, result.budgets.single())
-        assertTrue(
-            result.budgets
-                .single()
-                .versions.size == 2,
-        )
+        assertEquals(BACKUP_SCHEMA_VERSION, result.schemaVersion)
+        assertEquals(line, result.plannedIncome.single())
     }
 
     @Test
     fun v19Backup_withoutStartMonth_staysUnpinned() {
-        val doc = backupDoc(budgets = listOf(LocalBudget("FOOD", 500)))
+        val doc = backupDoc().copy(plannedIncome = listOf(backupPlanned("p1")))
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success().document
 
-        assertEquals(null, result.budgets.single().startMonth)
+        assertNull(result.plannedIncome.single().startMonth)
     }
 }

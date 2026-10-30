@@ -25,13 +25,13 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
         }
 
     @Test
-    fun groups_sumPlannedFromBudgetsAndRecurring_andSpend() =
+    fun groups_sumPlannedFromRecurring_andSpend() =
         runTest {
             val food = groups.addEnvelope("Food").getOrThrow()
             val bills = groups.addEnvelope("Bills").getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, food)
             categories.setGroup(BuiltInCategories.RECURRING.id, bills)
-            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 16_000L)
+            recurring.saveRecurring(recurringItem("f1", amountCents = 16_000L, categoryId = BuiltInCategories.FOOD.id))
             recurring.saveRecurring(recurringItem("r1", amountCents = 5_000L, categoryId = billsCategory))
             recurring.saveRecurring(recurringItem("r2", amountCents = 3_650L, categoryId = billsCategory))
             expenses.delegate.addExpense(testExpense("e1", 4_000L, noonOn(october, 5), BuiltInCategories.FOOD))
@@ -45,22 +45,7 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
             assertEquals(8_650L, rows[1].amountCents)
             assertEquals(2, result.recurring.size)
             val row = result.budgets.single { it.category.id == BuiltInCategories.RECURRING.id }
-            assertNull(row.limitCents)
             assertEquals(PlannedSource.RECURRING, row.plannedSource)
-        }
-
-    @Test
-    fun skippedMonthBudget_fallsBackToRecurring_inTheBudgetMonth() =
-        runTest {
-            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 16_000L, setOf(10))
-            recurring.saveRecurring(recurringItem("r1", amountCents = 1_500L, categoryId = BuiltInCategories.FOOD.id))
-
-            val food = overview(Period.CurrentMonth).budgets.single { it.category == BuiltInCategories.FOOD }
-
-            assertEquals(1_500L, food.planned)
-            assertEquals(PlannedSource.RECURRING, food.plannedSource)
-            assertEquals(16_000L, food.limitCents)
-            assertEquals(setOf(10), food.skipMonths)
         }
 
     @Test
@@ -76,17 +61,15 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
         }
 
     @Test
-    fun fixedAmountAndSpend_flowIntoTheOverview() =
+    fun envelopeSpendAndRecurringPlanned_flowIntoTheOverview() =
         runTest {
-            val food = groups.saveEnvelope(envelopeEdit("Food", amount = 20_000L, fundedBy = "meal")).getOrThrow()
+            val food = groups.addEnvelope("Food").getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, food)
-            plannedIncome.savePlannedIncome(PlannedIncome("salary", "Salary", 100_000L, 0))
-            plannedIncome.savePlannedIncome(PlannedIncome("meal", "Meal", 20_000L, 1))
+            recurring.saveRecurring(recurringItem("f1", amountCents = 20_000L, categoryId = BuiltInCategories.FOOD.id))
             expenses.delegate.addExpense(testExpense("e1", 25_000L, noonOn(october, 5), BuiltInCategories.FOOD))
 
-            val result = overview(Period.CurrentMonth)
+            val progress = overview(Period.CurrentMonth).envelopes.envelopes.single()
 
-            val progress = result.envelopes.envelopes.single()
             assertEquals(20_000L, progress.amountCents)
             assertEquals(25_000L, progress.spentCents)
             assertTrue(progress.isOver)
@@ -109,21 +92,4 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
 
             assertFailsWithError(error) { overview(Period.CurrentMonth) }
         }
-
-    @Test
-    fun budgetWithOtherMonthSkipped_stillApplies() =
-        runTest {
-            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 100L, setOf(8))
-
-            val food = overview(Period.CurrentMonth).budgets.single { it.category == BuiltInCategories.FOOD }
-
-            assertEquals(PlannedSource.BUDGET, food.plannedSource)
-            assertEquals(100L, food.planned)
-        }
-
-    private fun envelopeEdit(
-        name: String,
-        amount: Long?,
-        fundedBy: String?,
-    ) = EnvelopeEdit(null, name, amount, fundedBy, emptySet(), emptyMap())
 }

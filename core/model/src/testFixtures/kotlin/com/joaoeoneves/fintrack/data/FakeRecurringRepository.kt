@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.data
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.RecurringItem
 import com.joaoeoneves.fintrack.domain.model.Transaction
+import com.joaoeoneves.fintrack.domain.model.withoutBacklog
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,14 @@ class FakeRecurringRepository(
 
     /** Names of the mutating calls made so far (`skip`, `unskip`), in order, for call-order assertions. */
     val calls: MutableList<String> = mutableListOf()
+    /** When set, [adoptLegacyManualItems] returns it (failure included) without touching any item. */
+    var adoptResult: Result<Int>? = null
+
+    /** Ids of items that count as legacy manual ones: adoption moves their cursor with `withoutBacklog`. */
+    val legacyManualIds: MutableSet<String> = mutableSetOf()
+
+    /** The `today` of every [adoptLegacyManualItems] call, in order. */
+    val adoptCalls: MutableList<LocalDate> = mutableListOf()
     private val confirmed = mutableListOf<Transaction>()
     private var nextId = 1
 
@@ -130,6 +139,16 @@ class FakeRecurringRepository(
             return Result.failure(error)
         }
         return update(itemId) { it.copy(skipped = it.skipped - dates) }
+    }
+
+    override suspend fun adoptLegacyManualItems(today: LocalDate): Result<Int> {
+        calls += "adopt"
+        adoptCalls += today
+        adoptResult?.let { return it }
+        val adopted = itemsFlow.value.filter { it.id in legacyManualIds }
+        itemsFlow.value = itemsFlow.value.map { if (it.id in legacyManualIds) it.withoutBacklog(today) else it }
+        legacyManualIds.clear()
+        return Result.success(adopted.size)
     }
 
     private fun update(

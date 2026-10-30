@@ -6,7 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.FirestoreDataResetRepository
-import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.local.LocalDataResetRepository
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository
@@ -53,7 +53,7 @@ class SessionDataResetRepositorySignedInTest {
             val remote = FirestoreDataResetRepository(FirebaseFirestore.getInstance(app), FirebaseAuth.getInstance(app))
             val lazyRemote = CountingLazy(remote)
             val store = LocalDataStore(File(tmp.root, "guest.json"), Dispatchers.IO, kotlinx.serialization.json.Json)
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 100))) to Unit }
+            store.update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", 2))) to Unit }
             val prefs =
                 UserPreferencesRepository(
                     UserPreferencesStore(
@@ -81,7 +81,7 @@ class SessionDataResetRepositorySignedInTest {
                 1,
                 store.data
                     .first()
-                    .budgets.size,
+                    .monthSettings.size,
             )
             assertEquals(ThemePreference.LIGHT, prefs.observeThemePreference().first())
             assertTrue(sync.pushes.isEmpty())

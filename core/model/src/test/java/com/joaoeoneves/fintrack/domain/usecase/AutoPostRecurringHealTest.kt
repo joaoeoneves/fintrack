@@ -126,11 +126,10 @@ class AutoPostRecurringHealTest : AutoPostRecurringTestBase() {
         }
 
     @Test
-    fun pausedAndManualItems_areNotHealed() =
+    fun pausedItems_areNotHealed() =
         runBlocking {
             val paused = auto(id = "p", handled = mar15).copy(active = false)
-            val manual = recurringItem(id = "m", handledThrough = mar15)
-            val repo = FakeRecurringRepository(listOf(paused, manual))
+            val repo = FakeRecurringRepository(listOf(paused))
             val expenses = FakeExpenseRepository()
 
             assertEquals(0, build(repo, expenses)(today, zone))
@@ -158,7 +157,6 @@ class AutoPostRecurringHealTest : AutoPostRecurringTestBase() {
                     frequency = RecurringFrequency.YEARLY,
                     startDate = day(2024, 1, 1),
                     handledThrough = mar15,
-                    autoPost = true,
                 )
             val expenses = FakeExpenseRepository()
 

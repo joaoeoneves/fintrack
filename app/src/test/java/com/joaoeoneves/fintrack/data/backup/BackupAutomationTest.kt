@@ -37,13 +37,6 @@ class BackupAutomationTest : BackupRepositoryTestBase() {
     }
 
     @Test
-    fun salaryPaysNextMonthOnly_isKept() {
-        val doc = backupDoc().copy(automation = LocalAutomation(salaryPaysNextMonth = true))
-
-        assertEquals(doc, BackupCodec.decode(BackupCodec.encode(doc)).success().document)
-    }
-
-    @Test
     fun invalidCursor_isDropped_andCountedAsSkipped() {
         val text = """{$header,"schemaVersion":13,"automation":{"lineThrough":{"p1":"soon"}}}"""
 
@@ -68,7 +61,7 @@ class BackupAutomationTest : BackupRepositoryTestBase() {
         val text = """{$header,"schemaVersion":13,"automation":{"salaryPaysNextMonth":false,"x":1}}"""
 
         assertEquals(
-            LocalAutomation(salaryPaysNextMonth = false),
+            LocalAutomation(),
             BackupCodec
                 .decode(text)
                 .success()

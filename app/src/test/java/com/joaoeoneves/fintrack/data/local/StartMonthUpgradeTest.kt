@@ -27,9 +27,7 @@ class StartMonthUpgradeTest {
         schemaVersion = 18,
         expenses = expenses,
         income = income,
-        budgets = listOf(LocalBudget("FOOD", 500)),
         plannedIncome = listOf(LocalPlannedIncome("p", "Pay", 1_000, 0)),
-        categoryGroups = listOf(LocalCategoryGroup("g", "Group", 0)),
     )
 
     @Test
@@ -39,26 +37,23 @@ class StartMonthUpgradeTest {
                 expenses = listOf(expense("2026-05-10T12:00:00Z")),
                 income = listOf(income("2026-03-01T12:00:00Z"), income("2026-08-01T12:00:00Z")),
             ).upgradedToStartMonths(now, utc)
-        assertEquals("2026-03", upgraded.budgets.single().startMonth)
         assertEquals("2026-03", upgraded.plannedIncome.single().startMonth)
-        assertEquals("2026-03", upgraded.categoryGroups.single().startMonth)
         assertEquals(19, upgraded.schemaVersion)
     }
 
     @Test
     fun upgrade_emptyFile_pinsNow() {
         val upgraded = doc().upgradedToStartMonths(now, utc)
-        assertEquals("2026-10", upgraded.budgets.single().startMonth)
+        assertEquals("2026-10", upgraded.plannedIncome.single().startMonth)
         assertEquals(19, upgraded.schemaVersion)
     }
 
     @Test
     fun upgrade_keepsExistingStartMonths_andIsIdempotent() {
         val base = doc(expenses = listOf(expense("2026-01-10T12:00:00Z")))
-        val kept = base.copy(budgets = listOf(LocalBudget("FOOD", 500, startMonth = "2026-06")))
+        val kept = base.copy(plannedIncome = listOf(LocalPlannedIncome("p", "Pay", 1_000, 0, startMonth = "2026-06")))
         val once = kept.upgradedToStartMonths(now, utc)
-        assertEquals("2026-06", once.budgets.single().startMonth)
-        assertEquals("2026-01", once.plannedIncome.single().startMonth)
+        assertEquals("2026-06", once.plannedIncome.single().startMonth)
         assertEquals(once, once.upgradedToStartMonths(now, utc))
     }
 
@@ -84,18 +79,6 @@ class StartMonthUpgradeTest {
         }
         val tooMany = (1..MAX_AMOUNT_VERSIONS + 1).map { LocalAmountVersion("2026-%02d".format(it % 12 + 1), 1) }
         assertThrows(IllegalArgumentException::class.java) { validatePlanTiming(null, tooMany) }
-    }
-
-    @Test
-    fun validateBudget_checksLimitAndTiming() {
-        val known = setOf("FOOD")
-        validateBudget(LocalBudget("FOOD", 1, startMonth = "2026-01"), known)
-        validateBudget(LocalBudget("FOOD", 0), known)
-        assertThrows(IllegalArgumentException::class.java) { validateBudget(LocalBudget("FOOD", -1), known) }
-        assertThrows(IllegalArgumentException::class.java) { validateBudget(LocalBudget("NOPE", 5), known) }
-        assertThrows(IllegalArgumentException::class.java) {
-            validateBudget(LocalBudget("FOOD", 5, startMonth = "bad"), known)
-        }
     }
 
     @Test

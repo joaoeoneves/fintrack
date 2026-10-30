@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.testutil
 import com.joaoeoneves.fintrack.data.CategoryResolvingExpenseRepository
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
 import com.joaoeoneves.fintrack.data.session.DefaultSessionRepository
-import com.joaoeoneves.fintrack.data.session.SessionBudgetRepository
 import com.joaoeoneves.fintrack.data.session.SessionCategoryRepository
 import com.joaoeoneves.fintrack.data.session.SessionDataResetRepository
 import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
@@ -12,7 +11,6 @@ import com.joaoeoneves.fintrack.di.RawExpenses
 import com.joaoeoneves.fintrack.di.RepositoryModule
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.TransactionsInRange
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.DataResetRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -64,9 +62,6 @@ abstract class TestRepositoryModule {
 
     @Binds
     abstract fun bindCategoryRepository(impl: SessionCategoryRepository): CategoryRepository
-
-    @Binds
-    abstract fun bindBudgetRepository(impl: SessionBudgetRepository): BudgetRepository
 
     @Binds
     abstract fun bindIncomeRepository(impl: SessionIncomeRepository): IncomeRepository

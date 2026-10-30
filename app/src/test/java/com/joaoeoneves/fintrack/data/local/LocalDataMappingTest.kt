@@ -76,12 +76,6 @@ class LocalDataMappingTest {
     @Test
     fun documentIsEmpty() {
         assertTrue(LocalDataDocument().isEmpty)
-        assertFalse(LocalDataDocument(budgets = listOf(LocalBudget("FOOD", 1))).isEmpty)
-        assertNotNull(LocalBudget("FOOD", 1).toDomain())
-    }
-
-    @Test
-    fun budget_roundTrips() {
-        assertEquals(LocalBudget("FOOD", 9), LocalBudget("FOOD", 9).toDomain().toLocal())
+        assertFalse(LocalDataDocument(dismissedRecurringSuggestions = listOf("x")).isEmpty)
     }
 }

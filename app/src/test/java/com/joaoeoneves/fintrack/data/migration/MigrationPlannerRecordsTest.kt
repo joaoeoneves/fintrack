@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.migration
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.testutil.userCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -61,49 +60,13 @@ class MigrationPlannerRecordsTest {
     }
 
     @Test
-    fun budgets_accountBudgetWinsSilently() {
-        val local = localDoc(budgets = listOf(LocalBudget("FOOD", 100), LocalBudget("SHOPPING", 200)))
-        val remote = remoteSnapshot(budgetCategoryIds = setOf("FOOD"))
-
-        val plan = planMigration(local, remote)
-
-        assertEquals(listOf(LocalBudget("SHOPPING", 200)), plan.budgets)
-        assertEquals(0, plan.skipped)
-    }
-
-    @Test
-    fun budgets_duplicateTargetsKeepFirst() {
-        val local =
-            localDoc(
-                categories = listOf(localCategory("a", "Gym"), localCategory("b", "Gym")),
-                budgets = listOf(LocalBudget("a", 100), LocalBudget("b", 999)),
-            )
-
-        val plan = planMigration(local, remoteSnapshot())
-
-        assertEquals(listOf(LocalBudget("a", 100)), plan.budgets)
-        // The dropped duplicate counts as skipped.
-        assertEquals(1, plan.skipped)
-    }
-
-    @Test
-    fun budgets_negativeLimit_isSkipped_zeroKept() {
-        val local = localDoc(budgets = listOf(LocalBudget("FOOD", 0), LocalBudget("SHOPPING", -1)))
-
-        val plan = planMigration(local, remoteSnapshot())
-
-        assertEquals(listOf("FOOD"), plan.budgets.map { it.categoryId })
-        assertEquals(1, plan.skipped)
-    }
-
-    @Test
     fun replanningAgainstAccountThatHasEverythingWritten_isEmpty() {
         val local =
             localDoc(
                 categories = listOf(localCategory("gym", "Gym"), localCategory("FOOD", "Meals")),
                 expenses = listOf(localExpense("e1", "gym"), localExpense("e2", "orphan")),
                 income = listOf(localIncome("i1")),
-                budgets = listOf(LocalBudget("gym", 100), LocalBudget("SHOPPING", 50)),
+                recurring = listOf(localRecurring("r1", "gym"), localRecurring("r2", "SHOPPING")),
             )
         val remote = remoteSnapshot(categories = listOf(userCategory("other", "Other", order = 7)))
 

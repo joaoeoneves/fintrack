@@ -4,7 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.FirestoreDataResetRepository
 import com.joaoeoneves.fintrack.data.local.LOCAL_SCHEMA_VERSION
-import com.joaoeoneves.fintrack.data.local.LocalBudget
+import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.local.LocalDataResetRepository
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
@@ -12,8 +12,6 @@ import com.joaoeoneves.fintrack.data.preferences.PreferenceField
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesStore
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
@@ -56,10 +54,10 @@ class SessionDataResetRepositoryGuestTest : LocalStoreTestBase() {
     fun guest_wipesLocalStoreAndResetsPreferences_withoutResolvingRemote() =
         runStoreTest {
             val store = newStore()
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 100))) to Unit }
+            store.update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", 2))) to Unit }
             val prefs = UserPreferencesRepository(prefsStore(), sync)
             prefs.setThemePreference(ThemePreference.LIGHT)
-            prefs.setCurrency(CurrencyOption.JPY)
+            prefs.setLanguage(AppLanguage.ENGLISH)
             sync.pushes.clear()
 
             val result = repo(store, prefs).deleteAllData()
@@ -69,29 +67,17 @@ class SessionDataResetRepositoryGuestTest : LocalStoreTestBase() {
             assertTrue(
                 store.data
                     .first()
-                    .budgets
+                    .monthSettings
                     .isEmpty(),
             )
             assertEquals(LOCAL_SCHEMA_VERSION, store.data.first().schemaVersion)
             val defaults = UserPreferences()
             assertEquals(defaults.theme, prefs.observeThemePreference().first())
-            assertEquals(defaults.currency, prefs.observeCurrency().first())
             assertEquals(defaults.language, prefs.observeLanguage().first())
             assertEquals(
-                setOf(PreferenceField.THEME, PreferenceField.CURRENCY, PreferenceField.LANGUAGE),
+                setOf(PreferenceField.THEME, PreferenceField.LANGUAGE),
                 sync.pushes.map { it.first }.toSet(),
             )
-        }
-
-    @Test
-    fun guest_motionReset_toSystem() =
-        runStoreTest {
-            val prefs = UserPreferencesRepository(prefsStore(), sync)
-            prefs.setMotionPreference(MotionPreference.ON)
-
-            assertTrue(repo(newStore(), prefs).deleteAllData().isSuccess)
-
-            assertEquals(MotionPreference.SYSTEM, prefs.observeMotionPreference().first())
         }
 
     @Test
@@ -110,7 +96,7 @@ class SessionDataResetRepositoryGuestTest : LocalStoreTestBase() {
         runStoreTest {
             val dir = File(tmp.root, "sub").apply { mkdirs() }
             val store = newStore(File(dir, "guest-data.json"))
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 100))) to Unit }
+            store.update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", 2))) to Unit }
             dir.deleteRecursively()
             dir.writeText("not a directory")
             val prefs = UserPreferencesRepository(prefsStore(), sync)
@@ -126,7 +112,7 @@ class SessionDataResetRepositoryGuestTest : LocalStoreTestBase() {
                 1,
                 store.data
                     .first()
-                    .budgets.size,
+                    .monthSettings.size,
             )
         }
 }

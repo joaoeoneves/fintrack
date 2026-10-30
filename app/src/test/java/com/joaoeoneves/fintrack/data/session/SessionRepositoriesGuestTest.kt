@@ -1,11 +1,9 @@
 package com.joaoeoneves.fintrack.data.session
 
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
-import com.joaoeoneves.fintrack.data.FirestoreBudgetRepository
 import com.joaoeoneves.fintrack.data.FirestoreCategoryRepository
 import com.joaoeoneves.fintrack.data.FirestoreExpenseRepository
 import com.joaoeoneves.fintrack.data.FirestoreIncomeRepository
-import com.joaoeoneves.fintrack.data.local.LocalBudgetRepository
 import com.joaoeoneves.fintrack.data.local.LocalCategoryRepository
 import com.joaoeoneves.fintrack.data.local.LocalExpenseRepository
 import com.joaoeoneves.fintrack.data.local.LocalIncomeRepository
@@ -16,6 +14,7 @@ import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
 import dagger.Lazy
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -42,14 +41,6 @@ class SessionRepositoriesGuestTest : LocalStoreTestBase() {
     }
     private val income by lazy {
         SessionIncomeRepository(sessions, forbidden<FirestoreIncomeRepository>(), LocalIncomeRepository(store, ids))
-    }
-    private val budgets by lazy {
-        SessionBudgetRepository(
-            sessions,
-            testScope,
-            forbidden<FirestoreBudgetRepository>(),
-            LocalBudgetRepository(store),
-        )
     }
     private val categories by lazy {
         SessionCategoryRepository(
@@ -80,22 +71,6 @@ class SessionRepositoriesGuestTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun budgets_roundTripLocally() =
-        runStoreTest {
-            assertTrue(budgets.setBudget(BuiltInCategories.FOOD.id, 5000).isSuccess)
-            assertEquals(
-                5000L,
-                budgets
-                    .observeBudgets()
-                    .first()
-                    .single()
-                    .limitCents,
-            )
-            assertTrue(budgets.clearBudget(BuiltInCategories.FOOD.id).isSuccess)
-            assertTrue(budgets.observeBudgets().first().isEmpty())
-        }
-
-    @Test
     fun categories_emptyStoreShowsBuiltIns_andCustomCategoryCanBeAdded() =
         runStoreTest {
             assertEquals(BuiltInCategories.all, categories.observeCategories().first())
@@ -107,12 +82,13 @@ class SessionRepositoriesGuestTest : LocalStoreTestBase() {
     fun checkCategoryUsage_worksOffline_withLocalRepositories() =
         runStoreTest {
             val id = categories.addCategory("Gym", "home", "teal", CategoryKind.SPENDING).getOrThrow()
-            val useCase = CheckCategoryUsage(expenses, budgets, LocalRecurringRepository(store, ids))
+            val recurringRepo = LocalRecurringRepository(store, ids)
+            val useCase = CheckCategoryUsage(expenses, recurringRepo)
 
             assertFalse(useCase(id).getOrThrow().inUse)
 
-            budgets.setBudget(id, 1000)
-            assertEquals(true, useCase(id).getOrThrow().hasBudget)
+            recurringRepo.saveRecurring(recurringItem(id = "", categoryId = id))
+            assertEquals(true, useCase(id).getOrThrow().hasRecurring)
             assertFalse(useCase(id).getOrThrow().hasExpenses)
 
             expenses.addExpense(expense(id = "", categoryId = id.value))

@@ -19,7 +19,6 @@ class LocalDataStoreTest : LocalStoreTestBase() {
                     LocalExpense("e2", "Shoes", 5000, "SHOPPING", "2026-02-01T00:00:00Z", note = "n", isRefund = true),
                 ),
             income = listOf(LocalIncome("i1", "Pay", 9000, "2026-01-01T00:00:00Z")),
-            budgets = listOf(LocalBudget("FOOD", 20000)),
             categories = listOf(LocalCategory("c1", "Gym", "home", "teal", "SPENDING", 7)),
         )
 
@@ -47,7 +46,7 @@ class LocalDataStoreTest : LocalStoreTestBase() {
         runStoreTest {
             val store = newStore()
             repeat(3) { i ->
-                store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 100L + i))) to Unit }
+                store.update { it.copy(dismissedRecurringSuggestions = listOf("d$i")) to Unit }
             }
             assertEquals(3L, store.data.first().revision)
             assertEquals(3L, diskDoc().revision)
@@ -69,7 +68,7 @@ class LocalDataStoreTest : LocalStoreTestBase() {
     @Test
     fun update_returnsTransformResult() =
         runStoreTest {
-            val result = newStore().update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to "ok" }
+            val result = newStore().update { it.copy(dismissedRecurringSuggestions = listOf("d1")) to "ok" }
             assertEquals("ok", result.getOrNull())
         }
 
@@ -94,13 +93,13 @@ class LocalDataStoreTest : LocalStoreTestBase() {
             val store = newStore()
             (1..100)
                 .map { i ->
-                    async { store.update { doc -> doc.copy(budgets = doc.budgets + LocalBudget("B$i", 1L)) to Unit } }
+                    async { store.update { doc -> doc.copy(dismissedRecurringSuggestions = doc.dismissedRecurringSuggestions + "B$i") to Unit } }
                 }.awaitAll()
                 .forEach { assertTrue(it.isSuccess) }
             val reloaded = newStore().data.first()
-            assertEquals(100, reloaded.budgets.size)
+            assertEquals(100, reloaded.dismissedRecurringSuggestions.size)
             assertEquals(100L, reloaded.revision)
-            assertEquals((1..100).map { "B$it" }.toSet(), reloaded.budgets.map { it.categoryId }.toSet())
+            assertEquals((1..100).map { "B$it" }.toSet(), reloaded.dismissedRecurringSuggestions.toSet())
         }
 
     @Test
@@ -108,11 +107,11 @@ class LocalDataStoreTest : LocalStoreTestBase() {
         runStoreTest {
             dataFile.writeText(
                 """{"schemaVersion":1,"revision":4,"future":{"a":1},""" +
-                    """"budgets":[{"categoryId":"FOOD","limitCents":5,"x":true}]}""",
+                    """"dismissedRecurringSuggestions":["a"],"budgets":[{"categoryId":"FOOD","limitCents":5,"x":true}]}""",
             )
             val doc = newStore().data.first()
             assertEquals(4L, doc.revision)
-            assertEquals(listOf(LocalBudget("FOOD", 5)), doc.budgets.untimedLocal())
+            assertEquals(listOf("a"), doc.dismissedRecurringSuggestions)
         }
 
     @Test
@@ -120,7 +119,7 @@ class LocalDataStoreTest : LocalStoreTestBase() {
         runStoreTest {
             newStore().replaceAll(sample)
             val text = dataFile.readText()
-            assertTrue(text.contains("\"schemaVersion\":22"))
+            assertTrue(text.contains("\"schemaVersion\":$LOCAL_SCHEMA_VERSION"))
             assertTrue(text.contains("\"isRefund\":false"))
             assertFalse(text.contains("null"))
         }
