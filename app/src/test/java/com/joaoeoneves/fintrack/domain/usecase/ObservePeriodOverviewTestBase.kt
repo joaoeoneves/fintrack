@@ -9,10 +9,8 @@ import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.domain.model.InstantRange
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
-import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
 import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
-import com.joaoeoneves.fintrack.testutil.FakePlanSettingsRepository
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.YearMonth
@@ -63,26 +61,22 @@ abstract class ObservePeriodOverviewTestBase {
 
     protected val expenses = CountingExpenseRepository()
     protected val income = CountingIncomeRepository()
-    protected val budgets = CountingBudgetRepository()
     protected val plannedIncome = FakePlannedIncomeRepository()
     protected val categories = FakeCategoryRepository()
     protected val groups = FakeEnvelopeRepository()
     protected val recurring = FakeRecurringRepository()
     protected val monthSettings = FakeMonthSettingsRepository()
-    protected val planSettings = FakePlanSettingsRepository()
 
     protected val useCase =
         ObservePeriodOverview(
             transactionRepository = CombinedTransactionRepository(expenses, income),
             sources =
                 PlanDataSources(
-                    budgets = budgets,
                     plannedIncome = plannedIncome,
                     monthSettings = monthSettings,
                     categories = categories,
                     envelopes = groups,
                     recurring = recurring,
-                    planSettings = planSettings,
                 ),
         )
 

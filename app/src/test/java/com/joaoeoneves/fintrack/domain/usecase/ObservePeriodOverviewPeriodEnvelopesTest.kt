@@ -3,6 +3,7 @@ package com.joaoeoneves.fintrack.domain.usecase
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -90,11 +91,11 @@ class ObservePeriodOverviewPeriodEnvelopesTest : ObservePeriodOverviewTestBase()
         }
 
     @Test
-    fun plannedBudgets_doNotLeakIntoPeriodEnvelopes() =
+    fun plannedAmounts_doNotLeakIntoPeriodEnvelopes() =
         runTest {
             val food = groups.addEnvelope("Food").getOrThrow()
             categories.setGroup(BuiltInCategories.FOOD.id, food)
-            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 16_000L)
+            recurring.saveRecurring(recurringItem("f1", amountCents = 16_000L, categoryId = BuiltInCategories.FOOD.id))
             expenses.delegate.addExpense(testExpense("f", 100L, noonOn(october, 2), BuiltInCategories.FOOD))
 
             val result = overview(Period.CurrentMonth)
