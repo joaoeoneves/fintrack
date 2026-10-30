@@ -16,8 +16,10 @@ class KeyguardDeviceLockChecker
     constructor(
         @ApplicationContext private val context: Context,
     ) : DeviceLockChecker {
-        override fun isDeviceSecure(): Boolean =
-            context.getSystemService(KeyguardManager::class.java)?.isDeviceSecure == true
+        override fun isDeviceSecure(): Boolean {
+            val keyguard = context.getSystemService(KeyguardManager::class.java)
+            return keyguard?.isDeviceSecure == true
+        }
     }
 
 fun interface ElapsedRealtime {
