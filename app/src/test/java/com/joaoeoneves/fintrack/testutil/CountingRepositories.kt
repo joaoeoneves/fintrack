@@ -1,13 +1,10 @@
 package com.joaoeoneves.fintrack.testutil
 
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.InstantRange
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import kotlinx.coroutines.flow.Flow
@@ -68,20 +65,4 @@ class CountingIncomeRepository(
             InstantRange(startInclusive, endExclusive),
             delegate.observeIncome(startInclusive, endExclusive),
         )
-}
-
-/** [BudgetRepository] decorator counting `observeBudgets` listeners; writes go to [delegate]. */
-class CountingBudgetRepository(
-    val delegate: FakeBudgetRepository = FakeBudgetRepository(),
-) : BudgetRepository by delegate {
-    constructor(budgets: List<Budget>) : this(FakeBudgetRepository(budgets))
-
-    val listeners = ListenerCounter()
-
-    override fun observeBudgets(): Flow<List<Budget>> = listeners.track(ALL_TIME, delegate.observeBudgets())
-
-    private companion object {
-        // Budgets aren't range-scoped; a placeholder range keeps [ListenerCounter] uniform.
-        val ALL_TIME = InstantRange(Instant.MIN, Instant.MAX)
-    }
 }
