@@ -272,11 +272,10 @@ class AddEditExpenseViewModelLinkSplitTest {
         }
 
     @Test
-    fun editMode_neverSplits() =
+    fun editMode_singleStoredPart_opensAsPlainExpense() =
         runTest(testDispatcher) {
             val vm = viewModel(FakeExpenseRepository(listOf(original)), "expenseId" to "o1")
             advanceUntilIdle()
-            vm.onSplitEnabledChanged(true)
 
             assertFalse(vm.form().isSplitting)
             assertEquals("s1", vm.form().splitId)

@@ -127,7 +127,7 @@ class AddEditExpenseViewModelSplitEditTest {
             vm.onSplitPartRemoved(i3)
             vm.onSplitPartAdded()
             vm.onSplitPartCategoryChanged(vm.form().splitParts.lastIndex, BuiltInCategories.INVESTMENTS)
-            vm.onSplitPartAmountChanged(vm.form().splitParts.lastIndex, 1_000L)
+            vm.onSplitPartAmountChanged(vm.form().splitParts.lastIndex, 2_000L)
             vm.onSave()
             advanceUntilIdle()
 
@@ -137,7 +137,7 @@ class AddEditExpenseViewModelSplitEditTest {
             assertEquals(4_000L, stored.getValue("p2").amountCents)
             val added = stored.values.single { it.id !in setOf("p1", "p2") }
             assertEquals(BuiltInCategories.INVESTMENTS, added.category)
-            assertEquals(1_000L, added.amountCents)
+            assertEquals(2_000L, added.amountCents)
             assertTrue(stored.values.all { it.name == "Supermarket" && it.splitId == "s1" && it.note == "weekly" })
         }
 
