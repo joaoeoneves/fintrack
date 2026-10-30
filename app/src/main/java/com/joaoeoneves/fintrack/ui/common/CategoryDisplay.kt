@@ -61,14 +61,14 @@ private val categoryPalette: Map<String, CategoryColor> =
     linkedMapOf(
         "blue" to CategoryColor(Color(0xFF2563EB), Color(0xFF3B82F6)),
         "emerald" to CategoryColor(Color(0xFF059669), Color(0xFF10B981)),
-        "amber" to CategoryColor(Color(0xFFD97706), Color(0xFFF59E0B)),
+        "amber" to CategoryColor(Color(0xFFB45309), Color(0xFFF59E0B)),
         "violet" to CategoryColor(Color(0xFF7C3AED), Color(0xFF8B5CF6)),
         "red" to CategoryColor(Color(0xFFDC2626), Color(0xFFEF4444)),
         "pink" to CategoryColor(Color(0xFFDB2777), Color(0xFFEC4899)),
         "teal" to CategoryColor(Color(0xFF0D9488), Color(0xFF14B8A6)),
         "orange" to CategoryColor(Color(0xFFEA580C), Color(0xFFF97316)),
         "indigo" to CategoryColor(Color(0xFF4F46E5), Color(0xFF6366F1)),
-        "lime" to CategoryColor(Color(0xFF65A30D), Color(0xFF84CC16)),
+        "lime" to CategoryColor(Color(0xFF4D7C0F), Color(0xFF84CC16)),
         "cyan" to CategoryColor(Color(0xFF0891B2), Color(0xFF06B6D4)),
         FALLBACK_COLOR_KEY to CategoryColor(Color(0xFF475569), Color(0xFF64748B)),
     )
