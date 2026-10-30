@@ -133,7 +133,8 @@ object BackupCodec {
                 val old = document.schemaVersion < DAYS_OFF_BY_TYPE_SCHEMA_VERSION
                 val daysOff = if (old) simplified.upgradedTo24() else simplified
                 // 24 -> 25 expense refundOf/splitId (absent = none): no transform, only the version stamp.
-                val folded = if (document.schemaVersion < DAYS_OFF_TWO_TYPES_SCHEMA_VERSION) daysOff.upgradedTo26() else daysOff
+                val twoTypes = document.schemaVersion >= DAYS_OFF_TWO_TYPES_SCHEMA_VERSION
+                val folded = if (twoTypes) daysOff else daysOff.upgradedTo26()
                 sanitize(folded.copy(schemaVersion = DAYS_OFF_TWO_TYPES_SCHEMA_VERSION))
             }
             BACKUP_SCHEMA_VERSION -> sanitize(document)

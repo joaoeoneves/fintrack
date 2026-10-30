@@ -25,13 +25,12 @@ object TransactionCsvWriter {
                     expense.name,
                     expense.signedAmountCents,
                     expense.category.canonicalName(),
-                    expense.date.toString(),
-                    expense.note,
+                    expense.date.toString() to expense.note,
                     TYPE_EXPENSE,
                 )
         }
         incomes.forEach { income ->
-            lines += row(income.source, income.amountCents, "", income.date.toString(), income.note, TYPE_INCOME)
+            lines += row(income.source, income.amountCents, "", income.date.toString() to income.note, TYPE_INCOME)
         }
         return lines.joinToString("\n")
     }
@@ -40,16 +39,15 @@ object TransactionCsvWriter {
         name: String,
         amountCents: Long,
         category: String,
-        date: String,
-        note: String?,
+        dateAndNote: Pair<String, String?>,
         type: String,
     ): String =
         listOf(
             escapeCsvField(name),
             amountCents.toString(),
             escapeCsvField(category),
-            date,
-            escapeCsvField(note.orEmpty()),
+            dateAndNote.first,
+            escapeCsvField(dateAndNote.second.orEmpty()),
             type,
         ).joinToString(",")
 
