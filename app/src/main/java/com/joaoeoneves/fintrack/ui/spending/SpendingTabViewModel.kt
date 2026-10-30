@@ -136,6 +136,11 @@ class SpendingTabViewModel
                 onSelectScale = selection::selectScale,
             )
 
+        /** Opens [month] (a tap on a Year chart bar): the current month resolves to "this month". */
+        fun onMonthSelected(month: YearMonth) {
+            selection.select(Period.ofMonth(month, clock.instant(), clock.zone))
+        }
+
         val uiState: StateFlow<SpendingTabUiState> =
             combine(periodData, history, categories) { data, monthly, catalog ->
                 when (data) {

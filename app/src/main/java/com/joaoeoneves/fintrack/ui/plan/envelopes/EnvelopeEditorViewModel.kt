@@ -233,14 +233,7 @@ class EnvelopeEditorViewModel
                 val snapshot =
                     DeletedEnvelope(
                         edit =
-                            EnvelopeEdit(
-                                id = id,
-                                name = envelope.name,
-                                amountCents = envelope.amountCents,
-                                fundedByLineId = envelope.fundedByLineId,
-                                categoryIds = members,
-                                limits = emptyMap(),
-                            ),
+                            EnvelopeEdit(id = id, name = envelope.name, categoryIds = members),
                         position = envelopes.indexOfFirst { it.id == id },
                     )
                 envelopeRepository

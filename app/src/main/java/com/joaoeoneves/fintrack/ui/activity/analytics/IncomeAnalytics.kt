@@ -61,7 +61,7 @@ fun ActivityHistory.incomeAnalytics(): IncomeAnalytics {
 
 /** The Income header's figures; the Evolution chart follows the selected [source]. */
 fun ActivityHistory.incomeFigures(source: String?): HistoryFigures =
-    HistoryFigures(yearToDate = monthly.yearToDate.orNull(), evolution = evolutionOf(incomeSeries(source)))
+    HistoryFigures(evolution = evolutionOf(incomeSeries(source)))
 
 /** One "Source" filter chip of the Income tab: the encoded [key] of a source and its display [label]. */
 data class IncomeSourceChip(

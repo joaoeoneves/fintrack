@@ -37,11 +37,15 @@ import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalReducedMotion
 
-/** One bar: its axis [label], [valueCents] (negatives draw as zero) and the [accessibilityText] spoken for it. */
+/**
+ * One bar: its axis [label], [valueCents] (negatives draw as zero) and the [accessibilityText] spoken for it.
+ * [caption], when set, is what the line above the chart shows while the bar is selected (instead of the plain value).
+ */
 data class MonthlyBar(
     val label: String,
     val valueCents: Long,
     val accessibilityText: String,
+    val caption: String? = null,
 )
 
 private val ChartHeight = 120.dp
@@ -52,7 +56,7 @@ private val MinTouchTarget = 48.dp
 /**
  * A stateless bar chart, one bar per month, scaled to the largest value. [highlighted] indexes are drawn in the
  * emphasis colour, the rest muted. Each bar is a single accessibility node with its [MonthlyBar.accessibilityText];
- * tapping a bar shows its value above the chart (local state only) and calls [onBarClick]; it never filters.
+ * tapping a bar shows its caption (else its value) above the chart (local state only) and calls [onBarClick]; it never filters.
  * Bars snap under reduced motion and otherwise draw in with the shared progress spring.
  */
 @Composable
@@ -66,7 +70,7 @@ fun MonthlyBars(
     val maxValue = bars.maxOfOrNull { it.valueCents }?.coerceAtLeast(1L) ?: 1L
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.Space8)) {
         Text(
-            text = selected?.let { bars.getOrNull(it) }?.let { formatAmountCents(it.valueCents) }.orEmpty(),
+            text = selected?.let { bars.getOrNull(it) }?.let { it.caption ?: formatAmountCents(it.valueCents) }.orEmpty(),
             style = MaterialTheme.typography.labelSmall,
             color = FinTrackTheme.colors.textSecondary,
             modifier = Modifier.heightIn(min = Dimens.Space16).clearAndSetSemantics { },

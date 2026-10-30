@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** A deleted envelope: [edit] re-creates it with its members and limits, [position] is its place in the list. */
+/** A deleted envelope: [edit] re-creates it with its members, [position] is its place in the list. */
 data class DeletedEnvelope(
     val edit: EnvelopeEdit,
     val position: Int,
@@ -45,7 +45,7 @@ class EnvelopeUndoViewModel
     constructor(
         private val repository: EnvelopeRepository,
     ) : ViewModel() {
-        /** Re-creates [deleted] with its categories and limits and moves it back to its old position. */
+        /** Re-creates [deleted] with its categories and moves it back to its old position. */
         fun restore(deleted: DeletedEnvelope) {
             viewModelScope.launch {
                 val id = repository.saveEnvelope(deleted.edit).getOrNull() ?: return@launch

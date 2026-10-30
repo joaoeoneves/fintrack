@@ -40,7 +40,6 @@ sealed interface DetailSubject {
     data class OfCategory(
         val category: Category,
         val envelopeName: String?,
-        val limitCents: Long?,
     ) : DetailSubject
 
     data class OfSource(

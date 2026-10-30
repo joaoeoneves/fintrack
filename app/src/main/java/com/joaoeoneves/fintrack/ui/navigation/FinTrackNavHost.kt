@@ -136,10 +136,6 @@ private fun NavGraphBuilder.activityRoutes(navController: NavHostController) {
                             navController.navigate(AddEditIncome(period = period.newTransactionArg()))
                         },
                         onOpenSettings = { navController.navigate(Settings) },
-                        onOpenSpending = { period ->
-                            navController.navigateToTabWith(SpendingHome(period.encode()))
-                        },
-                        onOpenIncomeTab = { period -> navController.navigateToTabWith(IncomeHome(period.encode())) },
                     ),
             )
         }

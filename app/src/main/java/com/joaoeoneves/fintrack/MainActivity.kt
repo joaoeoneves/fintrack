@@ -14,7 +14,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,15 +37,12 @@ import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.ui.auth.AuthUiState
 import com.joaoeoneves.fintrack.ui.auth.AuthViewModel
 import com.joaoeoneves.fintrack.ui.auth.SignInScreen
-import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.common.applyAppLanguage
 import com.joaoeoneves.fintrack.ui.migration.LocalDataMigrationHost
 import com.joaoeoneves.fintrack.ui.navigation.FinTrackAppShell
-import com.joaoeoneves.fintrack.ui.theme.CurrencyViewModel
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.NightModeSync
 import com.joaoeoneves.fintrack.ui.theme.ThemeViewModel
-import com.joaoeoneves.fintrack.ui.theme.rememberReducedMotion
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -104,8 +100,7 @@ class MainActivity : AppCompatActivity() {
                     enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
                     onDispose {}
                 }
-                val reducedMotion = themeViewModel.resolvedReducedMotion()
-                FinTrackTheme(darkTheme = resolvedDarkTheme, reducedMotion = reducedMotion) {
+                FinTrackTheme(darkTheme = resolvedDarkTheme) {
                     val viewModel: AuthViewModel = hiltViewModel()
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     val context = LocalContext.current
@@ -124,11 +119,7 @@ class MainActivity : AppCompatActivity() {
                             // surface either (the splash gives up after SPLASH_MAX_MS on a slow cold start).
                             SessionStartingIndicator()
                         } else if (state is AuthUiState.SignedIn || state is AuthUiState.Guest) {
-                            val currencyViewModel: CurrencyViewModel = hiltViewModel()
-                            val currency by currencyViewModel.currency.collectAsStateWithLifecycle()
-                            CompositionLocalProvider(LocalCurrency provides currency) {
-                                FinTrackAppShell(modifier = Modifier.fillMaxSize())
-                            }
+                            FinTrackAppShell(modifier = Modifier.fillMaxSize())
                             // Only for accounts: guests have nothing to copy anywhere.
                             if (state is AuthUiState.SignedIn) LocalDataMigrationHost()
                         } else {
@@ -174,13 +165,6 @@ class MainActivity : AppCompatActivity() {
 }
 
 private const val SPLASH_MAX_MS = 1_500L
-
-/** The stored motion preference resolved against the system animator setting. */
-@Composable
-private fun ThemeViewModel.resolvedReducedMotion(): Boolean {
-    val preference by motionPreference.collectAsStateWithLifecycle()
-    return preference.resolve(rememberReducedMotion())
-}
 
 @Composable
 private fun SessionStartingIndicator() {

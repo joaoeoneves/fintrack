@@ -26,8 +26,6 @@ import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
 import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
-import com.joaoeoneves.fintrack.ui.common.symbol
-import com.joaoeoneves.fintrack.ui.common.symbolLeads
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.FieldErrorText
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackDropdownMenu

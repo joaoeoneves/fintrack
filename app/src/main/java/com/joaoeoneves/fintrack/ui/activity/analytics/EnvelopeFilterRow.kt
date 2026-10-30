@@ -23,7 +23,7 @@ const val ENVELOPE_CHIP_ALL_TAG = "envelope_chip_all"
 
 /**
  * Wrapping (flow), single-select envelope filter: an "All" chip (selected when [selected] is null)
- * followed by one chip per entry of [chips], labelled "Name · amount" with the colour dot of its bar segment
+ * followed by one chip per entry of [chips], labelled "Name · amount" (just "Name" when [showAmounts] is off) with the colour dot of its bar segment
  * ([dotColors], colours derived from [EnvelopeChip.colorKey] by the caller).
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -34,6 +34,7 @@ fun EnvelopeFilterRow(
     onSelected: (String?) -> Unit,
     modifier: Modifier = Modifier,
     dotColors: List<Color> = emptyList(),
+    showAmounts: Boolean = true,
 ) {
     val noEnvelope = stringResource(R.string.plan_group_other)
     FlowRow(
@@ -50,13 +51,17 @@ fun EnvelopeFilterRow(
         chips.forEachIndexed { index, chip ->
             val name = chip.name ?: noEnvelope
             val spoken =
-                stringResource(
-                    R.string.cd_envelope_chip,
-                    name,
-                    formatAmountCents(chip.spentCents, typographic = false),
-                )
+                if (showAmounts) {
+                    stringResource(
+                        R.string.cd_envelope_chip,
+                        name,
+                        formatAmountCents(chip.spentCents, typographic = false),
+                    )
+                } else {
+                    name
+                }
             CategoryChip(
-                label = "$name · ${formatAmountCents(chip.spentCents)}",
+                label = if (showAmounts) "$name · ${formatAmountCents(chip.spentCents)}" else name,
                 selected = selected == chip.id,
                 leading = dotColors.getOrNull(index)?.let { dot -> { LegendDot(dot) } },
                 onClick = { onSelected(chip.id) },
