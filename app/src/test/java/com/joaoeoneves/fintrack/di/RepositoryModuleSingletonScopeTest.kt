@@ -12,7 +12,7 @@ import javax.inject.Singleton
 /**
  * Regression guard for a bug that shipped once: a preference repository that loses its
  * `@Singleton` scope makes Hilt hand each injection point (e.g. `MainActivity`'s
- * `CurrencyViewModel`/`ThemeViewModel` vs. `SettingsViewModel`) a separate instance, so a write
+ * `ThemeViewModel` vs. `SettingsViewModel`) a separate instance, so a write
  * through one never reaches another's observers (the live Dashboard would ignore a Settings
  * change until relaunch). See the header comment in `.maestro/settings.yaml`.
  *
@@ -38,11 +38,6 @@ class RepositoryModuleSingletonScopeTest {
     @Test
     fun firestorePreferencesSync_classIsAnnotatedSingleton() {
         assertSingleton(FirestorePreferencesSync::class.java.isSingleton(), "FirestorePreferencesSync")
-    }
-
-    @Test
-    fun bindCurrencyRepository_takesUserPreferencesRepositoryAndIsSingleton() {
-        assertBindSingleton("bindCurrencyRepository")
     }
 
     @Test

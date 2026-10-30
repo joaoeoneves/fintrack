@@ -93,7 +93,12 @@ class LocalDataStoreTest : LocalStoreTestBase() {
             val store = newStore()
             (1..100)
                 .map { i ->
-                    async { store.update { doc -> doc.copy(dismissedRecurringSuggestions = doc.dismissedRecurringSuggestions + "B$i") to Unit } }
+                    async {
+                        store.update { doc ->
+                            doc.copy(dismissedRecurringSuggestions = doc.dismissedRecurringSuggestions + "B$i") to
+                                Unit
+                        }
+                    }
                 }.awaitAll()
                 .forEach { assertTrue(it.isSuccess) }
             val reloaded = newStore().data.first()

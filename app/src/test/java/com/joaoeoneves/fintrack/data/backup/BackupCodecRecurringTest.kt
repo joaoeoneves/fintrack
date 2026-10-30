@@ -45,7 +45,10 @@ class BackupCodecRecurringTest {
 
     @Test
     fun v23File_isUnsupported() {
-        assertEquals(BackupDecodeResult.UnsupportedVersion(BACKUP_SCHEMA_VERSION + 1), BackupCodec.decode("""{$header,"schemaVersion":24}"""))
+        assertEquals(
+            BackupDecodeResult.UnsupportedVersion(BACKUP_SCHEMA_VERSION + 1),
+            BackupCodec.decode("""{$header,"schemaVersion":24}"""),
+        )
     }
 
     @Test

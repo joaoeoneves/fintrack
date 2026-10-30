@@ -38,6 +38,7 @@ class FakeRecurringRepository(
 
     /** Names of the mutating calls made so far (`skip`, `unskip`), in order, for call-order assertions. */
     val calls: MutableList<String> = mutableListOf()
+
     /** When set, [adoptLegacyManualItems] returns it (failure included) without touching any item. */
     var adoptResult: Result<Int>? = null
 

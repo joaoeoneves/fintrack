@@ -4,9 +4,9 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.FirestoreDataResetRepository
 import com.joaoeoneves.fintrack.data.local.LOCAL_SCHEMA_VERSION
-import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.local.LocalDataResetRepository
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
+import com.joaoeoneves.fintrack.data.local.LocalMonthSettings
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.preferences.PreferenceField
 import com.joaoeoneves.fintrack.data.preferences.UserPreferencesRepository

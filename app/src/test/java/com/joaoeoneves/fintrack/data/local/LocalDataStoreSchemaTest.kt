@@ -112,7 +112,12 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
         runStoreTest {
             dataFile.writeText(v22File)
 
-            val byId = newStore().data.first().recurring.associateBy { it.id }
+            val byId =
+                newStore()
+                    .data
+                    .first()
+                    .recurring
+                    .associateBy { it.id }
 
             val today = LocalDate.now()
             listOf("manual", "legacy").forEach { id ->

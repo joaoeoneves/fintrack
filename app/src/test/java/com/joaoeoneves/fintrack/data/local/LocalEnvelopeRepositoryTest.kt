@@ -214,6 +214,4 @@ class LocalEnvelopeRepositoryTest : LocalStoreTestBase() {
                     .groupId,
             )
         }
-
-
 }

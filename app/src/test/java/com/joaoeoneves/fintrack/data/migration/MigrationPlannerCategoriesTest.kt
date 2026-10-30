@@ -168,6 +168,5 @@ class MigrationPlannerCategoriesTest {
         assertEquals(emptyPlan(skipped = 3), plan)
     }
 
-    private fun emptyPlan(skipped: Int) =
-        MigrationPlan(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), skipped)
+    private fun emptyPlan(skipped: Int) = MigrationPlan(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), skipped)
 }
