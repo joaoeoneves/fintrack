@@ -5,6 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.Income
 
 /** Temporary stub: expenses only, with the type column. */
 object TransactionCsvWriter {
+    @Suppress("UnusedParameter")
     fun write(
         expenses: List<Expense>,
         incomes: List<Income>,

@@ -85,8 +85,8 @@ interface ExpenseRepository {
     fun observeAwaitingRefund(): Flow<List<Expense>> = flowOf(emptyList())
 
     /** The expenses sharing [splitId]. */
-    suspend fun getSplit(splitId: String): Result<List<Expense>> =
-        getAllExpenses().map { all -> all.filter { it.splitId == splitId } }
+    @Suppress("MaxLineLength")
+    suspend fun getSplit(splitId: String): Result<List<Expense>> = getAllExpenses().map { it.filter { e -> e.splitId == splitId } }
 
     /** Updates [update], adds [add] and deletes [deleteIds] together. */
     suspend fun replaceSplit(

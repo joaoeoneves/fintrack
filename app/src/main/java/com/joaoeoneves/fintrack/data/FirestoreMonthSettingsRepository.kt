@@ -119,5 +119,6 @@ private fun DocumentSnapshot.toMonthSettingsOrNull(): MonthSettings? =
         val vacationDays = if (legacy) getLong(FIELD_DAYS_OFF)?.toInt() ?: 0 else vacation ?: 0
         // A leftover document with nothing set (only the legacy working-days override, or fields cleared
         // offline) carries no information.
-        MonthSettings(month, vacationDays, ((other ?: 0) + (sick ?: 0)).coerceAtMost(MAX_DAYS_OFF - vacationDays)).takeUnless { it.isBlank }
+        val otherDays = ((other ?: 0) + (sick ?: 0)).coerceAtMost(MAX_DAYS_OFF - vacationDays)
+        MonthSettings(month, vacationDays, otherDays).takeUnless { it.isBlank }
     }

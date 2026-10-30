@@ -63,7 +63,7 @@ data class ExpenseFormState(
         get() = isSaving || isDeleting
 
     val isSplitting: Boolean
-        get() = splitEnabled && !isEditMode && !isRefund
+        get() = splitEnabled && !isRefund
 
     /** The part of [amountCents] not assigned to any part yet (negative when over). */
     val splitRemainingCents: Long
@@ -77,6 +77,8 @@ data class ExpenseFormState(
 data class SplitPartForm(
     val category: Category?,
     val amountCents: Long,
+    /** The stored expense this part is when editing an existing split; `null` for a part added in the form. */
+    val expenseId: String? = null,
 )
 
 internal fun ExpenseFormState.withoutSplit(): ExpenseFormState {

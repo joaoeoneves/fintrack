@@ -31,6 +31,7 @@ data class ExpenseFormSnapshot(
 data class SplitPartSnapshot(
     val categoryId: String,
     val amountCents: Long,
+    val expenseId: String? = null,
 )
 
 internal fun ExpenseFormState.toSnapshot() =
@@ -57,6 +58,7 @@ internal fun ExpenseFormState.toSnapshot() =
                         ?.value
                         .orEmpty(),
                     it.amountCents,
+                    it.expenseId,
                 )
             },
     )
@@ -69,6 +71,7 @@ internal fun ExpenseFormState.restoredFrom(
     if (snapshot == null || snapshot.expenseId != expenseId) {
         this
     } else {
+        val editsSplit = !isEditMode || splitId != null
         copy(
             name = snapshot.name,
             amountCents = snapshot.amountCents,
@@ -82,15 +85,16 @@ internal fun ExpenseFormState.restoredFrom(
             refundOf = snapshot.refundOf?.takeIf { snapshot.isRefund },
             refundOfLabel = snapshot.refundOfLabel?.takeIf { snapshot.isRefund },
             awaitingRefund = snapshot.awaitingRefund && !snapshot.isRefund,
-            splitEnabled = snapshot.splitEnabled && !isEditMode,
+            splitEnabled = snapshot.splitEnabled && editsSplit,
             splitParts =
-                if (isEditMode) {
+                if (!editsSplit) {
                     emptyList()
                 } else {
                     snapshot.splitParts.map { part ->
                         SplitPartForm(
                             part.categoryId.takeIf { it.isNotEmpty() }?.let { catalog.resolve(CategoryId(it)) },
                             part.amountCents,
+                            part.expenseId,
                         )
                     }
                 },

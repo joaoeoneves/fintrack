@@ -32,7 +32,9 @@ class LocalMonthSettingsRepository
                     if (vacation + other == 0) {
                         emptyList()
                     } else {
-                        keys.map { LocalMonthSettings(it, vacation, otherDays = other) }.onEach { validateMonthSettings(it) }
+                        keys
+                            .map { LocalMonthSettings(it, vacation, otherDays = other) }
+                            .onEach { validateMonthSettings(it) }
                     }
                 doc.copy(monthSettings = kept + set) to Unit
             }

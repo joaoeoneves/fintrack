@@ -147,6 +147,9 @@ class AddEditExpenseViewModel(
     // Every refund linked to some original; the edited expense's own refund status derives from it.
     private var linkedRefunds: List<Expense> = emptyList()
 
+    // The stored parts of the split being edited (empty for any other expense).
+    private var siblings: List<Expense> = emptyList()
+
     init {
         loadExpense()
         if (route.expenseId != null) {
@@ -191,12 +194,12 @@ class AddEditExpenseViewModel(
                     .getExpense(expenseId)
                     .onSuccess { existing ->
                         loaded = existing
+                        siblings = existing?.let { loadSiblings(it) }.orEmpty()
                         _uiState.value =
                             if (existing != null) {
                                 readyWithSaved(
-                                    ExpenseFormState(
+                                    existing.toEditForm(mealAvailable, siblings.sortedBy { it.id }).copy(
                                         name = existing.name,
-                                        amountCents = existing.amountCents,
                                         category = existing.category,
                                         date = existing.date,
                                         note = existing.note ?: "",
@@ -228,6 +231,13 @@ class AddEditExpenseViewModel(
                 loadNewForm()
             }
         }
+    }
+
+    /** The parts of the split [existing] belongs to (itself included), or empty when it is no split of 2+ parts. */
+    private suspend fun loadSiblings(existing: Expense): List<Expense> {
+        val splitId = existing.splitId ?: return emptyList()
+        val parts = expenseRepository.getSplit(splitId).getOrNull().orEmpty()
+        return if (parts.size >= MIN_SPLIT_PARTS && parts.any { it.id == existing.id }) parts else emptyList()
     }
 
     /** A new form: today's date, the default category and the route's prefill (a saved snapshot wins over it). */
@@ -380,6 +390,7 @@ class AddEditExpenseViewModel(
             val expense = form.toExpense()
             val result =
                 when {
+                    form.isEditMode && form.splitId != null && siblings.isNotEmpty() -> saveSplitEdit(expense, form)
                     form.isEditMode -> expenseRepository.updateExpense(expense)
                     form.isSplitting -> saveSplit(expense, form)
                     else -> expenseRepository.addExpense(expense)
@@ -409,16 +420,54 @@ class AddEditExpenseViewModel(
             .mapCatching { expenseRepository.addExpensesKeepingIds(it).getOrThrow() }
     }
 
+    /**
+     * Saves the edit of a stored split as one atomic replace: the kept parts are updated, parts added in the form are
+     * created and the parts removed from it are deleted. With the split switched off (or the expense made a refund)
+     * the opened part stays as a plain expense and every other part is deleted. Shared fields (name, date, note, meal
+     * card, awaiting refund) are written to all the parts.
+     */
+    private suspend fun saveSplitEdit(
+        opened: Expense,
+        form: ExpenseFormState,
+    ): Result<Unit> {
+        val byId = siblings.associateBy { it.id }
+        if (!form.isSplitting) {
+            val others = siblings.map { it.id }.filter { it != opened.id }
+            return expenseRepository.replaceSplit(listOf(opened.copy(splitId = null)), emptyList(), others)
+        }
+        val shared = opened.copy(id = "", splitId = form.splitId)
+        val kept = form.splitParts.mapNotNull { it.expenseId }.toSet()
+        val update = mutableListOf<Expense>()
+        val add = mutableListOf<Expense>()
+        form.splitParts.forEach { part ->
+            val category = checkNotNull(part.category)
+            val stored = part.expenseId?.let(byId::get)
+            if (stored != null) {
+                update += shared.copy(id = stored.id, category = category, amountCents = part.amountCents)
+            } else {
+                add += shared.copy(category = category, amountCents = part.amountCents)
+            }
+        }
+        return expenseRepository.replaceSplit(update, add, byId.keys - kept)
+    }
+
     fun onSplitEnabledChanged(enabled: Boolean) =
         updateForm {
             if (!enabled) {
-                it.withoutSplit()
+                val openedId = it.expenseId
+                val opened = it.splitParts.firstOrNull { part -> openedId != null && part.expenseId == openedId }
+                val plain = it.withoutSplit()
+                if (opened == null) {
+                    plain
+                } else {
+                    plain.copy(amountCents = opened.amountCents, category = opened.category ?: plain.category)
+                }
             } else {
                 it.copy(
                     splitEnabled = true,
                     splitParts =
                         listOf(
-                            SplitPartForm(it.category.takeUnless { c -> c.isUnknown }, it.amountCents),
+                            SplitPartForm(it.category.takeUnless { c -> c.isUnknown }, it.amountCents, it.expenseId),
                             SplitPartForm(null, 0L),
                         ),
                     splitError = null,
@@ -551,3 +600,27 @@ private fun ExpenseFormState.toExpense(): Expense =
         // Saving counts as looking at it: an edited automatic record leaves the review inbox.
         needsReview = false,
     )
+
+/** The edit form of [existing]; part of a split of [parts] (2+) it opens the split editor with every part. */
+private fun Expense.toEditForm(
+    mealAvailable: Boolean,
+    parts: List<Expense>,
+): ExpenseFormState {
+    val base =
+        ExpenseFormState(
+            amountCents = amountCents,
+            category = category,
+            mealCardAvailable = mealAvailable,
+            isEditMode = true,
+            expenseId = id,
+        )
+    return if (parts.isEmpty()) {
+        base
+    } else {
+        base.copy(
+            amountCents = parts.sumOf { it.amountCents },
+            splitEnabled = true,
+            splitParts = parts.map { SplitPartForm(it.category, it.amountCents, it.id) },
+        )
+    }
+}

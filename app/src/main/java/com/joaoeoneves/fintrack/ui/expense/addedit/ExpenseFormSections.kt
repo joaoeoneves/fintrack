@@ -130,15 +130,19 @@ internal fun RefundStatusLine(form: ExpenseFormState) {
 
 private val RefundSheetMaxHeight = 360.dp
 
-/** New expenses only: a collapsed "More options" section holding the split switch (hidden for refunds). */
+/**
+ * New expenses and parts of an existing split: a "More options" section holding the split switch (hidden for
+ * refunds); a stored split shows the switch straight away.
+ */
 @Composable
 internal fun MoreOptions(
     form: ExpenseFormState,
     actions: ExpenseFormActions,
 ) {
-    if (form.isEditMode || form.isRefund) return
+    val editsSplit = form.isEditMode && form.splitId != null
+    if ((form.isEditMode && !editsSplit) || form.isRefund) return
     var expanded by rememberSaveable { mutableStateOf(false) }
-    if (!expanded && !form.splitEnabled) {
+    if (!expanded && !form.splitEnabled && !editsSplit) {
         GhostButton(
             text = stringResource(R.string.expense_more_options),
             onClick = { expanded = true },
