@@ -96,3 +96,18 @@ Short records of the main architectural choices: context, decision, consequences
 - **Consequences:** Fewer screens and words to learn. The legacy fields, documents and the migration syncs were removed
   in 5.1 (rules and app); pre-3.0 backups still restore, but earmarks and the payday switch are ignored and
   recurring income items are skipped.
+
+## 11. Simplify: one way per job, lists apart from analytics (5.5)
+
+- **Context:** By 5.4 several features had become hidden or duplicated: savings goals, category limits and
+  envelope amounts no longer had a screen, Activity repeated the Spending summary, recurring items could be
+  confirmed by hand or posted automatically, and the working-day count could be overridden or reduced with
+  days off.
+- **Decision:** Remove what is hidden or duplicated. Goals, budgets, envelope funding, the currency choice,
+  CSV import, the in-app reduced-motion option and the working-days override are gone. Every recurring item
+  posts automatically and is reviewed in *To review*; Activity is a list with filters; totals live in
+  Spending and Income. Pre-5.5 manual recurring items are adopted with their cursor moved to the last
+  occurrence before today, so nothing in the past is posted.
+- **Consequences:** Fewer settings and fewer paths to the same result. Firestore rules still tolerate the
+  legacy fields on update (the next save removes them) and allow deleting the old `budgets`/`goals`
+  documents; backups older than schema 23 still restore, with the removed fields ignored.
