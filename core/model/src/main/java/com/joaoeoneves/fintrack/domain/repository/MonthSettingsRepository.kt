@@ -16,7 +16,6 @@ interface MonthSettingsRepository {
     suspend fun setDaysOff(
         months: Collection<YearMonth>,
         vacation: Int,
-        sick: Int,
         other: Int,
     ): Result<Unit>
 }

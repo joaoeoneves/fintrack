@@ -81,6 +81,25 @@ interface ExpenseRepository {
     /** The refunds (across all months) that link to an original expense through [Expense.refundOf]. */
     fun observeLinkedRefunds(): Flow<List<Expense>> = flowOf(emptyList())
 
+    /** The expenses flagged [Expense.awaitingRefund]. */
+    fun observeAwaitingRefund(): Flow<List<Expense>> = flowOf(emptyList())
+
+    /** The expenses sharing [splitId]. */
+    suspend fun getSplit(splitId: String): Result<List<Expense>> =
+        getAllExpenses().map { all -> all.filter { it.splitId == splitId } }
+
+    /** Updates [update], adds [add] and deletes [deleteIds] together. */
+    suspend fun replaceSplit(
+        update: List<Expense>,
+        add: List<Expense>,
+        deleteIds: Collection<String>,
+    ): Result<Unit> =
+        runCatching {
+            updateExpenses(update).getOrThrow()
+            addExpensesKeepingIds(add).getOrThrow()
+            deleteExpenses(deleteIds).getOrThrow()
+        }
+
     suspend fun getExpense(id: String): Result<Expense?>
 
     suspend fun getAllExpenses(): Result<List<Expense>>

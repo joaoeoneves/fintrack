@@ -5,9 +5,9 @@ import com.joaoeoneves.fintrack.domain.model.MonthSettings
 
 /** `null` when the record's month is unparsable. */
 internal fun LocalMonthSettings.toDomainOrNull(): MonthSettings? =
-    parseYearMonthOrNull(month)?.let { MonthSettings(it, vacationDays, sickDays, otherDays) }
+    parseYearMonthOrNull(month)?.let { MonthSettings(it, vacationDays, otherDays + sickDays) }
 
-internal fun MonthSettings.toLocal() = LocalMonthSettings(month.toString(), vacationDays, sickDays, otherDays)
+internal fun MonthSettings.toLocal() = LocalMonthSettings(month.toString(), vacationDays, otherDays = otherDays)
 
 /** Mirror of the firestore.rules check, plus "something is set"; throws [IllegalArgumentException] for a violation. */
 internal fun validateMonthSettings(record: LocalMonthSettings) {
