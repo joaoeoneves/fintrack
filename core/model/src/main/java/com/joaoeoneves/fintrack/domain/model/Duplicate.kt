@@ -7,4 +7,10 @@ import java.time.Instant
  * the id, links (refundOf, splitId) and the review flag are not.
  */
 fun Expense.duplicated(today: Instant): Expense =
-    copy(id = "", date = today, refundOf = null, splitId = null, needsReview = false)
+    copy(
+        id = "",
+        date = today,
+        refundOf = null,
+        splitId = null,
+        needsReview = false,
+    )
