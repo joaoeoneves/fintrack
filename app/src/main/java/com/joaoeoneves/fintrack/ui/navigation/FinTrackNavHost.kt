@@ -28,6 +28,7 @@ import com.joaoeoneves.fintrack.ui.plan.salary.SalaryProfileScreen
 import com.joaoeoneves.fintrack.ui.plan.salary.setup.SalarySetupScreen
 import com.joaoeoneves.fintrack.ui.recurring.AddEditRecurringScreen
 import com.joaoeoneves.fintrack.ui.recurring.RecurringListScreen
+import com.joaoeoneves.fintrack.ui.settings.HowItWorksScreen
 import com.joaoeoneves.fintrack.ui.settings.SettingsScreen
 import com.joaoeoneves.fintrack.ui.settings.categories.CategoriesScreen
 import com.joaoeoneves.fintrack.ui.spending.SpendingTabNavigation
@@ -189,7 +190,11 @@ private fun NavGraphBuilder.sharedRoutes(navController: NavHostController) {
         SettingsScreen(
             onBack = dropUnlessResumed { navController.popBackStack() },
             onDataDeleted = { navController.navigateToTab(TopLevelTab.HOME) },
+            onOpenHowItWorks = { navController.navigate(HowItWorks) },
         )
+    }
+    composable<HowItWorks> {
+        HowItWorksScreen(onBack = dropUnlessResumed { navController.popBackStack() })
     }
     composable<Categories> {
         CategoriesScreen(onBack = dropUnlessResumed { navController.popBackStack() })
@@ -258,7 +263,6 @@ private fun NavGraphBuilder.formRoutes(
                     popUpTo<AddEditExpense> { inclusive = true }
                 }
             },
-            onRecordRefund = { id -> navController.navigate(AddEditExpense(refundOf = id)) },
         )
     }
     composable<AddEditIncome>(

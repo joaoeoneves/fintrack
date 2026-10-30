@@ -64,7 +64,7 @@ service cloud.firestore {
 
     function isValidExpense(userId, data) {
       return data.keys().hasOnly(['name', 'amountCents', 'category', 'date', 'note', 'isRefund', 'paidWithMealCard',
-          'needsReview', 'refundOf', 'splitId', 'createdAt', 'updatedAt'])
+          'needsReview', 'awaitingRefund', 'refundOf', 'splitId', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['name', 'amountCents', 'category', 'date'])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 200
         && isValidAmountCents(data.amountCents)
@@ -73,6 +73,7 @@ service cloud.firestore {
         && (!('isRefund' in data) || data.isRefund is bool)
         && (!('paidWithMealCard' in data) || data.paidWithMealCard is bool)
         && (!('needsReview' in data) || data.needsReview is bool)
+        && (!('awaitingRefund' in data) || data.awaitingRefund is bool)
         && (!('refundOf' in data) || (data.refundOf is string && isCategoryIdShape(data.refundOf)
             && 'isRefund' in data && data.isRefund == true))
         && (!('splitId' in data) || (data.splitId is string && isCategoryIdShape(data.splitId)))
@@ -312,7 +313,8 @@ service cloud.firestore {
 
     function isValidMonthSettings(data) {
       // workingDays and daysOff: legacy (the pre-5.5 override, the pre-5.6 total), tolerated on update, never written
-      // by >=5.6. A legacy daysOff only counts alone; the typed fields below replace it.
+      // by >=5.6. A legacy daysOff only counts alone; the typed fields below replace it. sickDays: legacy too (5.6-5.8
+      // wrote it; 5.9 folds it into otherDays and deletes it on the next save), tolerated until then.
       return data.keys().hasOnly(['workingDays', 'daysOff', 'vacationDays', 'sickDays', 'otherDays', 'updatedAt'])
         && (!('workingDays' in data) || (data.workingDays is int && data.workingDays >= 0 && data.workingDays <= 23))
         && (!('daysOff' in data) || (data.daysOff is int && data.daysOff >= 0 && data.daysOff <= 23))
@@ -345,8 +347,9 @@ service cloud.firestore {
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
-    // Each user can only read/write their own recurring templates (rent, subscriptions, salary).
-    // Confirming an occurrence writes the expense/income and bumps handledThrough in one batch.
+    // Each user can only read/write their own recurring templates (rent, subscriptions;
+    // expenses only, recurring income lives in the planned income lines).
+    // Confirming an occurrence writes the expense and bumps handledThrough in one batch.
     match /users/{userId}/recurring/{itemId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidRecurring(userId, request.resource.data);

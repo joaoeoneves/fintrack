@@ -78,20 +78,6 @@ class AddEditExpenseViewModelLinkSplitTest {
     // ---- refund link ----
 
     @Test
-    fun recordRefundRoute_prefillsLinkedRefund_withEmptyAmount() =
-        runTest(testDispatcher) {
-            val vm = viewModel(FakeExpenseRepository(listOf(original)), "refundOf" to "o1")
-            advanceUntilIdle()
-
-            val form = vm.form()
-            assertTrue(form.isRefund)
-            assertEquals("o1", form.refundOf)
-            assertEquals("Headphones", form.refundOfLabel)
-            assertEquals("Headphones", form.name)
-            assertEquals(0L, form.amountCents)
-        }
-
-    @Test
     fun onRefundOfSelected_linksAndUnlinks_andSaveStoresLink() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository(listOf(original))
@@ -118,8 +104,12 @@ class AddEditExpenseViewModelLinkSplitTest {
     fun refundOff_clearsLink_andNothingLinkedIsSaved() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository(listOf(original))
-            val vm = viewModel(repo, "refundOf" to "o1")
+            val vm = viewModel(repo)
             advanceUntilIdle()
+            vm.onNameChanged("Return")
+            vm.onRefundChanged(true)
+            vm.onRefundOfSelected(original)
+            assertEquals("o1", vm.form().refundOf)
 
             vm.onRefundChanged(false)
             assertNull(vm.form().refundOf)
@@ -282,14 +272,14 @@ class AddEditExpenseViewModelLinkSplitTest {
         }
 
     @Test
-    fun editMode_neverSplits() =
+    fun editMode_singleStoredPart_opensAsPlainExpense() =
         runTest(testDispatcher) {
             val vm = viewModel(FakeExpenseRepository(listOf(original)), "expenseId" to "o1")
             advanceUntilIdle()
-            vm.onSplitEnabledChanged(true)
 
             assertFalse(vm.form().isSplitting)
-            assertEquals("s1", vm.form().splitId)
+            // A lone leftover part is a plain expense: no split id in the form, so no split switch.
+            assertNull(vm.form().splitId)
         }
 
     // ---- duplicate ----
@@ -340,5 +330,51 @@ class AddEditExpenseViewModelLinkSplitTest {
 
             assertEquals("", vm.form().name)
             assertEquals(0L, vm.form().amountCents)
+        }
+
+    // ---- awaiting refund (5.9) ----
+
+    @Test
+    fun awaitingRefundSwitch_isSaved_andReloaded() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            val vm = viewModel(repo)
+            advanceUntilIdle()
+            vm.onNameChanged("Shoes")
+            vm.onAmountChanged(5_000L)
+            vm.onAwaitingRefundChanged(true)
+            vm.onSave()
+            advanceUntilIdle()
+
+            val saved = repo.getAllExpenses().getOrThrow().single()
+            assertTrue(saved.awaitingRefund)
+            val reopened = viewModel(repo, "expenseId" to saved.id)
+            advanceUntilIdle()
+            assertTrue(reopened.form().awaitingRefund)
+        }
+
+    @Test
+    fun turningRefundOn_clearsAwaitingRefund_andItIsNotSaved() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository()
+            val vm = viewModel(repo)
+            advanceUntilIdle()
+            vm.onNameChanged("Return")
+            vm.onAmountChanged(5_000L)
+            vm.onAwaitingRefundChanged(true)
+
+            vm.onRefundChanged(true)
+            assertFalse(vm.form().awaitingRefund)
+            vm.onAwaitingRefundChanged(true)
+            vm.onSave()
+            advanceUntilIdle()
+
+            assertFalse(
+                repo
+                    .getAllExpenses()
+                    .getOrThrow()
+                    .single()
+                    .awaitingRefund,
+            )
         }
 }

@@ -21,6 +21,7 @@ data class ExpenseFormSnapshot(
     val categoryTouched: Boolean,
     val refundOf: String? = null,
     val refundOfLabel: String? = null,
+    val awaitingRefund: Boolean = false,
     val splitEnabled: Boolean = false,
     val splitParts: List<SplitPartSnapshot> = emptyList(),
 )
@@ -30,6 +31,7 @@ data class ExpenseFormSnapshot(
 data class SplitPartSnapshot(
     val categoryId: String,
     val amountCents: Long,
+    val expenseId: String? = null,
 )
 
 internal fun ExpenseFormState.toSnapshot() =
@@ -46,6 +48,7 @@ internal fun ExpenseFormState.toSnapshot() =
         categoryTouched = categoryTouched,
         refundOf = refundOf,
         refundOfLabel = refundOfLabel,
+        awaitingRefund = awaitingRefund,
         splitEnabled = splitEnabled,
         splitParts =
             splitParts.map {
@@ -55,6 +58,7 @@ internal fun ExpenseFormState.toSnapshot() =
                         ?.value
                         .orEmpty(),
                     it.amountCents,
+                    it.expenseId,
                 )
             },
     )
@@ -67,6 +71,7 @@ internal fun ExpenseFormState.restoredFrom(
     if (snapshot == null || snapshot.expenseId != expenseId) {
         this
     } else {
+        val editsSplit = !isEditMode || splitId != null
         copy(
             name = snapshot.name,
             amountCents = snapshot.amountCents,
@@ -79,15 +84,17 @@ internal fun ExpenseFormState.restoredFrom(
             categoryTouched = snapshot.categoryTouched,
             refundOf = snapshot.refundOf?.takeIf { snapshot.isRefund },
             refundOfLabel = snapshot.refundOfLabel?.takeIf { snapshot.isRefund },
-            splitEnabled = snapshot.splitEnabled && !isEditMode,
+            awaitingRefund = snapshot.awaitingRefund && !snapshot.isRefund,
+            splitEnabled = snapshot.splitEnabled && editsSplit,
             splitParts =
-                if (isEditMode) {
+                if (!editsSplit) {
                     emptyList()
                 } else {
                     snapshot.splitParts.map { part ->
                         SplitPartForm(
                             part.categoryId.takeIf { it.isNotEmpty() }?.let { catalog.resolve(CategoryId(it)) },
                             part.amountCents,
+                            part.expenseId,
                         )
                     }
                 },

@@ -54,13 +54,12 @@ data class WorkingDaysState(
     val month: YearMonth,
     val days: Int,
     val vacationDays: Int = 0,
-    val sickDays: Int = 0,
     val otherDays: Int = 0,
     val calendarDays: Int,
     val holidays: Int,
 ) {
     /** All the days off of the month, whatever their type. */
-    val daysOff: Int get() = vacationDays + sickDays + otherDays
+    val daysOff: Int get() = vacationDays + otherDays
 }
 
 /** When and how an income line pays; the part of the line the editor sheet adds beyond label and amount. */

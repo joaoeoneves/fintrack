@@ -43,6 +43,8 @@ data class ExpenseFormState(
     val refundOf: String? = null,
     /** The original's name, shown in the "Refund of" row; `null` when unlinked. */
     val refundOfLabel: String? = null,
+    /** A refund is expected: the expense stays in the review inbox until one is linked. */
+    val awaitingRefund: Boolean = false,
     /** How much of this (original) expense was refunded, in edit mode; not part of the saved snapshot. */
     val refundStatus: RefundStatus? = null,
     /** The split this (existing) expense is a part of. */
@@ -61,7 +63,7 @@ data class ExpenseFormState(
         get() = isSaving || isDeleting
 
     val isSplitting: Boolean
-        get() = splitEnabled && !isEditMode && !isRefund
+        get() = splitEnabled && !isRefund
 
     /** The part of [amountCents] not assigned to any part yet (negative when over). */
     val splitRemainingCents: Long
@@ -75,6 +77,8 @@ data class ExpenseFormState(
 data class SplitPartForm(
     val category: Category?,
     val amountCents: Long,
+    /** The stored expense this part is when editing an existing split; `null` for a part added in the form. */
+    val expenseId: String? = null,
 )
 
 internal fun ExpenseFormState.withoutSplit(): ExpenseFormState {

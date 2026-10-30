@@ -12,10 +12,10 @@ class VacationBalanceTest {
     ) = YearMonth.of(year, month)
 
     @Test
-    fun countsOnlyVacationDaysOfTheYear_notSickOrOtherNorOtherYears() {
+    fun countsOnlyVacationDaysOfTheYear_notOtherDaysNorOtherYears() {
         val settings =
             listOf(
-                MonthSettings(ym(2026, 1), vacationDays = 5, sickDays = 3, otherDays = 2),
+                MonthSettings(ym(2026, 1), vacationDays = 5, otherDays = 5),
                 MonthSettings(ym(2026, 12), vacationDays = 4),
                 MonthSettings(ym(2025, 12), vacationDays = 9),
                 MonthSettings(ym(2027, 1), vacationDays = 7),
@@ -44,29 +44,30 @@ class VacationBalanceTest {
 
     @Test
     fun requireValidDaysOff_acceptsTheBoundaries() {
-        requireValidDaysOff(listOf(ym(2026, 1)), 0, 0, 0)
-        requireValidDaysOff(listOf(ym(2026, 1)), MAX_DAYS_OFF, 0, 0)
+        requireValidDaysOff(listOf(ym(2026, 1)), 0, 0)
+        requireValidDaysOff(listOf(ym(2026, 1)), MAX_DAYS_OFF, 0)
         val months = (0 until MAX_DAYS_OFF_MONTHS).map { ym(2026, 1).plusMonths(it.toLong()) }
-        requireValidDaysOff(months, 10, 8, 5)
+        requireValidDaysOff(months, 15, 8)
     }
 
     @Test
     fun requireValidDaysOff_rejectsBadMonthCountsAndCounts() {
         val one = listOf(ym(2026, 1))
-        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(emptyList(), 1, 0, 0) }
+        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(emptyList(), 1, 0) }
         val tooMany = (0..MAX_DAYS_OFF_MONTHS).map { ym(2026, 1).plusMonths(it.toLong()) }
-        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(tooMany, 1, 0, 0) }
-        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(one, -1, 0, 0) }
-        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(one, 0, MAX_DAYS_OFF + 1, 0) }
+        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(tooMany, 1, 0) }
+        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(one, -1, 0) }
+        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(one, 0, -1) }
+        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(one, 0, MAX_DAYS_OFF + 1) }
         // Total above the cap even though each count is valid on its own.
-        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(one, 10, 10, MAX_DAYS_OFF - 19) }
+        assertThrows(IllegalArgumentException::class.java) { requireValidDaysOff(one, MAX_DAYS_OFF, 1) }
     }
 
     @Test
     fun daysOffIsTheTotal_andBlankOnlyWhenAllZero() {
-        assertEquals(6, MonthSettings(ym(2026, 1), 1, 2, 3).daysOff)
+        assertEquals(5, MonthSettings(ym(2026, 1), 2, 3).daysOff)
         assertEquals(true, MonthSettings(ym(2026, 1)).isBlank)
-        assertEquals(false, MonthSettings(ym(2026, 1), sickDays = 1).isBlank)
+        assertEquals(false, MonthSettings(ym(2026, 1), otherDays = 1).isBlank)
     }
 
     @Test

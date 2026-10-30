@@ -10,6 +10,7 @@ import com.joaoeoneves.fintrack.di.StartChecklistSettleMillis
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.StartChecklist
 import com.joaoeoneves.fintrack.domain.model.StartStep
+import com.joaoeoneves.fintrack.domain.repository.ServerSettled
 import com.joaoeoneves.fintrack.domain.repository.SessionRepository
 import com.joaoeoneves.fintrack.domain.usecase.ObserveStartChecklist
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -67,10 +69,11 @@ class StartChecklistViewModel
         private val store: StartChecklistStore,
         private val observeChecklist: ObserveStartChecklist,
         private val sessionRepository: SessionRepository,
+        private val serverSettled: ServerSettled,
         @param:StartChecklistSettleMillis private val settleMillis: Long,
     ) : ViewModel() {
         val uiState: StateFlow<StartChecklistUiState> =
-            combine(store.state, observeChecklist()) { state, checklist ->
+            combine(store.state, settledChecklist()) { state, checklist ->
                 if (state == StartChecklistState.ACTIVE && !checklist.isComplete) {
                     checklist.toVisible()
                 } else {
@@ -84,6 +87,16 @@ class StartChecklistViewModel
                 started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
                 initialValue = StartChecklistUiState.Hidden,
             )
+
+        /**
+         * The checklist, but a value is only emitted once the writes made so far are confirmed by the server, so a
+         * step ticks only when its data is really saved; the last confirmed value stays meanwhile.
+         */
+        private fun settledChecklist(): Flow<StartChecklist> =
+            observeChecklist().transformLatest { checklist ->
+                serverSettled.awaitPendingWrites()
+                emit(checklist)
+            }
 
         init {
             viewModelScope.launch {
@@ -120,7 +133,7 @@ class StartChecklistViewModel
                         // The first value is often the cache or a half-loaded set: wait for one that stays put.
                         // The decision is final: once the card has been shown (ACTIVE) it is never retired behind
                         // the user's back. The repositories expose no "from server" signal: only the debounce settles.
-                        val checklist = observeChecklist().debounce(settleMillis).first()
+                        val checklist = settledChecklist().debounce(settleMillis).first()
                         val alreadySetUp = checklist.doneCount >= RETIRE_THRESHOLD
                         store.set(if (alreadySetUp) StartChecklistState.RETIRED else StartChecklistState.ACTIVE)
                     }.onFailure { e ->

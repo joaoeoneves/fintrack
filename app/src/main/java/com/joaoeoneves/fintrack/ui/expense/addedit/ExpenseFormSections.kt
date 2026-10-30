@@ -110,14 +110,10 @@ private fun RefundOfSheet(
     }
 }
 
-/** On an existing, non-refund expense: how much of it was refunded, and a shortcut to record another refund. */
+/** On an existing, non-refund expense: how much of it was refunded (text only). */
 @Composable
-internal fun RecordRefundSection(
-    form: ExpenseFormState,
-    actions: ExpenseFormActions,
-) {
-    val id = form.expenseId
-    if (!form.isEditMode || form.isRefund || id == null) return
+internal fun RefundStatusLine(form: ExpenseFormState) {
+    if (!form.isEditMode || form.isRefund) return
     form.refundStatus?.let { status ->
         Text(
             text =
@@ -130,25 +126,23 @@ internal fun RecordRefundSection(
             color = FinTrackTheme.colors.textSecondary,
         )
     }
-    GhostButton(
-        text = stringResource(R.string.expense_record_refund),
-        onClick = { actions.onRecordRefund(id) },
-        enabled = !form.isBusy,
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 private val RefundSheetMaxHeight = 360.dp
 
-/** New expenses only: a collapsed "More options" section holding the split switch (hidden for refunds). */
+/**
+ * New expenses and parts of an existing split: a "More options" section holding the split switch (hidden for
+ * refunds); a stored split shows the switch straight away.
+ */
 @Composable
 internal fun MoreOptions(
     form: ExpenseFormState,
     actions: ExpenseFormActions,
 ) {
-    if (form.isEditMode || form.isRefund) return
+    val editsSplit = form.isEditMode && form.splitId != null
+    if ((form.isEditMode && !editsSplit) || form.isRefund) return
     var expanded by rememberSaveable { mutableStateOf(false) }
-    if (!expanded && !form.splitEnabled) {
+    if (!expanded && !form.splitEnabled && !editsSplit) {
         GhostButton(
             text = stringResource(R.string.expense_more_options),
             onClick = { expanded = true },

@@ -50,6 +50,9 @@ interface ExpenseRepository {
     /** The expenses flagged [Expense.needsReview], across all months. */
     fun observeNeedingReview(): Flow<List<Expense>> = flowOf(emptyList())
 
+    /** The expenses flagged [Expense.awaitingRefund], across all months. */
+    fun observeAwaitingRefund(): Flow<List<Expense>> = flowOf(emptyList())
+
     /** Clears [Expense.needsReview] on the expenses with these [ids] (missing ids are ignored). */
     suspend fun markReviewed(ids: Collection<String>): Result<Unit> = Result.success(Unit)
 
@@ -76,6 +79,28 @@ interface ExpenseRepository {
     suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
         runCatching {
             ids.forEach { deleteExpense(it).getOrThrow() }
+        }
+
+    /** The expenses sharing [splitId] (the parts of one split purchase), in no particular order. */
+    suspend fun getSplit(splitId: String): Result<List<Expense>> {
+        val all = getAllExpenses()
+        return all.map { expenses -> expenses.filter { it.splitId == splitId } }
+    }
+
+    /**
+     * Saves an edited split in one atomic write: updates the [update] parts, adds the [add] parts (under the ids they
+     * carry, a blank id gets a generated one) and deletes [deleteIds]. The default composes the bulk calls (not
+     * atomic); real repositories override it.
+     */
+    suspend fun replaceSplit(
+        update: List<Expense>,
+        add: List<Expense>,
+        deleteIds: Collection<String>,
+    ): Result<Unit> =
+        runCatching {
+            if (update.isNotEmpty()) updateExpenses(update).getOrThrow()
+            if (add.isNotEmpty()) addExpensesKeepingIds(add).getOrThrow()
+            if (deleteIds.isNotEmpty()) deleteExpenses(deleteIds).getOrThrow()
         }
 
     /** The refunds (across all months) that link to an original expense through [Expense.refundOf]. */

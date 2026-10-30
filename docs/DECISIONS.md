@@ -135,3 +135,24 @@ Short records of the main architectural choices: context, decision, consequences
   is on (screenshots stay allowed on API 33+).
 - **Consequences:** The navigation state survives a lock, and there is no extra activity or task to manage.
   Leaving for a system picker for a minute or more locks on return, which is accepted.
+
+## 14. One place per thing (5.9)
+
+- **Context:** A few shortcuts wrote into another concept's field: a Carnival tick that added a day to the
+  days off, and a "Record refund" button on an expense that opened a prefilled refund. Days off also had three
+  types (vacation, sick leave, other) where only vacation behaves differently.
+- **Decision:** Each thing is entered in one place. Days off have two types, vacation (counts against the
+  yearly allowance) and other (only reduces working days); sick leave folds into other. The Carnival
+  shortcut and the "Record refund" button are gone: a refund is linked from the refund itself. Company
+  days given as vacation (Carnival, a regional holiday) belong in the yearly vacation total.
+- **Consequences:** Fewer controls and one way to record each fact. Old sick-leave counts are added to
+  other days on read and on upgrade (schema 26).
+
+## 15. Awaiting refund is derived, the checklist waits for the server (5.9)
+
+- **Context:** Expenses paid back later need a reminder until the money comes in. The Get started checklist
+  ticked steps as soon as a write reached the local cache, even offline.
+- **Decision:** An optional `awaitingRefund` flag puts an expense in To review until any refund links to
+  it; nothing is written when the refund arrives, so deleting that refund brings the reminder back. The
+  checklist only shows a new state after `waitForPendingWrites()` (guests: immediately).
+- **Consequences:** No extra state to keep in sync. Offline, checklist ticks wait for the connection.
