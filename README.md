@@ -49,7 +49,7 @@ mode).
   from the edit screen, and multi-select by long press to change the category, toggle the meal card or
   delete several expenses at once (all with undo). Totals and breakdowns live
   in Spending and Income.
-- **Income**: received versus expected with the difference, income lines, days off by type
+- **Income**: received versus expected (the whole period, January to December in the Year view) with what is still to receive, income lines, days off by type
   (vacation and other; one month or several at once; the working-day count follows from the
   calendar, holidays and days off), and history. Income counts by the date it was
   received.

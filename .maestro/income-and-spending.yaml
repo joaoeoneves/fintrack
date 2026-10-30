@@ -52,7 +52,7 @@ tags:
 - extendedWaitUntil:
     visible: "Received on .*"
     timeout: 10000
-- assertVisible: "Expected .* Difference .*"
+- assertVisible: "Expected .*"
 
 # --- Working days / days off (Adjustments group at the bottom of the tab) ---
 - scrollUntilVisible:
