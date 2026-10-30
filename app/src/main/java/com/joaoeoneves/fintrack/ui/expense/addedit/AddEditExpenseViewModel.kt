@@ -16,9 +16,12 @@ import com.joaoeoneves.fintrack.domain.model.NameSuggestion
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.domain.model.categorySuggestionIndex
 import com.joaoeoneves.fintrack.domain.model.defaultCategory
+import com.joaoeoneves.fintrack.domain.model.duplicated
 import com.joaoeoneves.fintrack.domain.model.limitInput
 import com.joaoeoneves.fintrack.domain.model.nameSuggestions
 import com.joaoeoneves.fintrack.domain.model.normalizedMerchantName
+import com.joaoeoneves.fintrack.domain.model.refundCandidates
+import com.joaoeoneves.fintrack.domain.model.refundStatusOf
 import com.joaoeoneves.fintrack.domain.model.usesMealCard
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
@@ -133,8 +136,22 @@ class AddEditExpenseViewModel(
     private var mealAvailable = false
     private var plafondUsed = false
 
+    // Every refund linked to some original; the edited expense's own refund status derives from it.
+    private var linkedRefunds: List<Expense> = emptyList()
+
     init {
         loadExpense()
+        if (route.expenseId != null) {
+            viewModelScope.launch {
+                expenseRepository
+                    .observeLinkedRefunds()
+                    .catch { Log.w(TAG, "Failed to observe linked refunds", it) }
+                    .collect { refunds ->
+                        linkedRefunds = refunds
+                        applyRefundStatus()
+                    }
+            }
+        }
         viewModelScope.launch {
             mealCardAvailable.collect { available ->
                 mealAvailable = available
@@ -180,12 +197,18 @@ class AddEditExpenseViewModel(
                                         mealCardAvailable = mealAvailable,
                                         isEditMode = true,
                                         expenseId = existing.id,
+                                        refundOf = existing.refundOf,
+                                        refundOfLabel = existing.refundOf?.let { originalName(it) },
                                     ),
                                     BuiltInCategories.all,
                                 )
                             } else {
                                 AddEditUiState.Error(UiText.StringResource(R.string.detail_not_found))
                             }
+                        if (existing != null) {
+                            applyRefundStatus()
+                            publishRefundCandidates(loadHistory(expenseRepository, clock))
+                        }
                     }.onFailure { e ->
                         Log.w(TAG, "Failed to load expense", e)
                         _uiState.value =
@@ -209,15 +232,65 @@ class AddEditExpenseViewModel(
             )
         val prefilled =
             base.withPrefill(route.prefillName, route.prefillAmountCents, route.prefillCategoryId, catalog)
-        _uiState.value = readyWithSaved(prefilled.withMealCardPrefill(), categoryOptions.value)
+        val seeded = seededFromRoute(prefilled)
+        _uiState.value = readyWithSaved(seeded.withMealCardPrefill(), categoryOptions.value)
         history = loadHistory(expenseRepository, clock)
+        publishRefundCandidates(history)
         suggestionIndex = categorySuggestionIndex(history)
         // A chip whose category is gone or archived falls back to the one last used for its name.
-        if (route.prefillName != null && !prefilled.suggestedCategory) {
+        if (route.prefillName != null && !prefilled.suggestedCategory && seeded === prefilled) {
             updateForm {
                 if (it.categoryTouched) it else it.withSuggestion(suggestionIndex, catalog).withMealCardPrefill()
             }
         }
+    }
+
+    /**
+     * The new [form] seeded from the route: a duplicate copies the other expense, "record refund" starts a refund
+     * linked to its original (amount left empty); a missing source expense leaves the form as it was.
+     */
+    private suspend fun seededFromRoute(form: ExpenseFormState): ExpenseFormState {
+        val duplicateOf = route.duplicateOf
+        val refundOf = route.refundOf
+        val source =
+            (duplicateOf ?: refundOf)?.let { id -> expenseRepository.getExpense(id).getOrNull() } ?: return form
+        return if (duplicateOf != null) {
+            val copy = source.duplicated(clock.instant())
+            form.copy(
+                name = copy.name,
+                amountCents = copy.amountCents,
+                category = copy.category,
+                date = copy.date,
+                note = copy.note.orEmpty(),
+                isRefund = copy.isRefund,
+                paidWithMealCard = copy.paidWithMealCard,
+                categoryTouched = true,
+                mealCardTouched = true,
+            )
+        } else {
+            form.copy(
+                name = source.name,
+                category = source.category,
+                isRefund = true,
+                refundOf = source.id,
+                refundOfLabel = source.name,
+                categoryTouched = true,
+            )
+        }
+    }
+
+    /** The name of the original expense [id], or `null` when it no longer exists. */
+    private suspend fun originalName(id: String): String? = expenseRepository.getExpense(id).getOrNull()?.name
+
+    private fun applyRefundStatus() {
+        val original = loaded ?: return
+        val status = if (original.isRefund) null else refundStatusOf(original, linkedRefunds)
+        updateForm { it.copy(refundStatus = status) }
+    }
+
+    private fun publishRefundCandidates(expenses: List<Expense>) {
+        val candidates = refundCandidates(expenses, route.expenseId)
+        updateForm { it.copy(refundCandidates = candidates) }
     }
 
     /** The loaded [form] with what was typed before the process died, if anything. */
@@ -281,7 +354,16 @@ class AddEditExpenseViewModel(
     }
 
     fun onRefundChanged(isRefund: Boolean) {
-        updateForm { it.copy(isRefund = isRefund, saveError = null).withMealCardPrefill() }
+        updateForm {
+            val updated = it.copy(isRefund = isRefund, saveError = null)
+            // A link only means something on a refund.
+            (if (isRefund) updated else updated.copy(refundOf = null, refundOfLabel = null)).withMealCardPrefill()
+        }
+    }
+
+    /** Links this refund to [original], or unlinks it when `null`. */
+    fun onRefundOfSelected(original: Expense?) {
+        updateForm { it.copy(refundOf = original?.id, refundOfLabel = original?.name, saveError = null) }
     }
 
     /** The "Paid with meal card" switch; once the user sets it, the category no longer decides. */
@@ -319,6 +401,7 @@ class AddEditExpenseViewModel(
                     note = form.note.trim().ifBlank { null },
                     isRefund = form.isRefund,
                     paidWithMealCard = form.paidWithMealCard,
+                    refundOf = form.refundOf.takeIf { form.isRefund },
                     // Saving counts as looking at it: an edited automatic record leaves the review inbox.
                     needsReview = false,
                 )

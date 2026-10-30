@@ -19,6 +19,8 @@ data class ExpenseFormSnapshot(
     val paidWithMealCard: Boolean,
     val mealCardTouched: Boolean,
     val categoryTouched: Boolean,
+    val refundOf: String? = null,
+    val refundOfLabel: String? = null,
 )
 
 internal fun ExpenseFormState.toSnapshot() =
@@ -33,6 +35,8 @@ internal fun ExpenseFormState.toSnapshot() =
         paidWithMealCard = paidWithMealCard,
         mealCardTouched = mealCardTouched,
         categoryTouched = categoryTouched,
+        refundOf = refundOf,
+        refundOfLabel = refundOfLabel,
     )
 
 /** This form with the saved [snapshot]'s fields, when it belongs to the same expense (or both are new). */
@@ -53,5 +57,7 @@ internal fun ExpenseFormState.restoredFrom(
             paidWithMealCard = snapshot.paidWithMealCard,
             mealCardTouched = snapshot.mealCardTouched,
             categoryTouched = snapshot.categoryTouched,
+            refundOf = snapshot.refundOf?.takeIf { snapshot.isRefund },
+            refundOfLabel = snapshot.refundOfLabel?.takeIf { snapshot.isRefund },
         )
     }

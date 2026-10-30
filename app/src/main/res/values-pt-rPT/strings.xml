@@ -691,4 +691,10 @@
     <string name="home_invested_rate">Investiste %1$s · %2$d%% do que recebeste</string>
     <string name="home_invested">Investiste %1$s</string>
     <string name="home_review_title_count">Por rever (%1$d)</string>
+    <!-- Ligação de reembolsos (5.7) -->
+    <string name="expense_refund_of">Reembolso de</string>
+    <string name="expense_refund_of_none">Nenhuma</string>
+    <string name="expense_refund_status">Reembolsado %1$d%% · gasto real %2$s</string>
+    <string name="expense_record_refund">Registar reembolso</string>
+    <string name="expense_refunded_badge">Reembolsado %d%%</string>
 </resources>

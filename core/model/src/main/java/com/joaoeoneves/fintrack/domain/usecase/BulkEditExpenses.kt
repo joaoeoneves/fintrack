@@ -25,7 +25,7 @@ class BulkEditExpenses
 
         suspend fun setMealCard(
             expenses: List<Expense>,
-            paid: Boolean,
+            enabled: Boolean,
         ): Result<BulkUndo> = Result.success(BulkUndo(BulkKind.MEAL_CARD, expenses))
 
         suspend fun delete(expenses: List<Expense>): Result<BulkUndo> =

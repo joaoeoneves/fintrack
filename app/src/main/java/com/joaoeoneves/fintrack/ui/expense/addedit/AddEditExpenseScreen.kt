@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -13,14 +16,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
+import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
 import com.joaoeoneves.fintrack.domain.model.NameSuggestion
@@ -29,28 +38,39 @@ import com.joaoeoneves.fintrack.domain.model.optionsIncluding
 import com.joaoeoneves.fintrack.ui.common.CategoryChipFlow
 import com.joaoeoneves.fintrack.ui.common.DeletedEffect
 import com.joaoeoneves.fintrack.ui.common.ErrorState
+import com.joaoeoneves.fintrack.ui.common.ExpenseRow
 import com.joaoeoneves.fintrack.ui.common.FieldSupportingText
 import com.joaoeoneves.fintrack.ui.common.FormDeleteButton
 import com.joaoeoneves.fintrack.ui.common.FormSaveError
 import com.joaoeoneves.fintrack.ui.common.FormScaffold
 import com.joaoeoneves.fintrack.ui.common.ReadOnlyDateField
+import com.joaoeoneves.fintrack.ui.common.SearchField
+import com.joaoeoneves.fintrack.ui.common.amountMatchesQuery
 import com.joaoeoneves.fintrack.ui.common.asString
+import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
+import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.designsystem.FinTrackBottomSheet
+import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
+import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 
+@Suppress("LongParameterList") // One navigation callback per exit of the form.
 @Composable
 fun AddEditExpenseScreen(
     onSaved: () -> Unit,
     onDeleted: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
+    onRecordRefund: (String) -> Unit = {},
     viewModel: AddEditExpenseViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,7 +99,7 @@ fun AddEditExpenseScreen(
                     form = state.form,
                     categoryOptions = categoryOptions.optionsIncluding(state.form.category),
                     isEditMode = viewModel.isEditRoute,
-                    actions = viewModel.formActions(),
+                    actions = viewModel.formActions(onRecordRefund),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -110,11 +130,13 @@ private data class ExpenseFormActions(
     val onDateSelected: (Instant) -> Unit,
     val onNoteChanged: (String) -> Unit,
     val onRefundChanged: (Boolean) -> Unit,
+    val onRefundOfSelected: (Expense?) -> Unit,
+    val onRecordRefund: (String) -> Unit,
     val onMealCardChanged: (Boolean) -> Unit,
     val onDelete: () -> Unit,
 )
 
-private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
+private fun AddEditExpenseViewModel.formActions(onRecordRefund: (String) -> Unit): ExpenseFormActions =
     ExpenseFormActions(
         onNameChanged = ::onNameChanged,
         onNameSuggestionPicked = ::onNameSuggestionPicked,
@@ -123,6 +145,8 @@ private fun AddEditExpenseViewModel.formActions(): ExpenseFormActions =
         onDateSelected = ::onDateSelected,
         onNoteChanged = ::onNoteChanged,
         onRefundChanged = ::onRefundChanged,
+        onRefundOfSelected = ::onRefundOfSelected,
+        onRecordRefund = onRecordRefund,
         onMealCardChanged = ::onMealCardChanged,
         onDelete = ::onDelete,
     )
@@ -186,6 +210,7 @@ private fun ExpenseForm(
         }
 
         RefundAndMealCardSwitches(form = form, actions = actions)
+        RecordRefundSection(form = form, actions = actions)
 
         ExpenseDateAndNoteFields(form = form, actions = actions)
 
@@ -224,6 +249,7 @@ private fun RefundAndMealCardSwitches(
         onCheckedChange = actions.onRefundChanged,
         supportingText = stringResource(R.string.expense_field_refund_hint),
     )
+    if (form.isRefund) RefundOfRow(form = form, actions = actions)
     if (form.showsMealCardSwitch) {
         SettingsSwitchRow(
             title = stringResource(R.string.expense_field_meal_card),
@@ -265,4 +291,105 @@ private fun ExpenseFormState.untouchedByErrors() =
         saveError = null,
         isSaving = false,
         isDeleting = false,
+        refundStatus = null,
+        refundCandidates = emptyList(),
     )
+
+/** The "Refund of" row: the linked original (or "None"), tapping it opens the picker sheet. */
+@Composable
+private fun RefundOfRow(
+    form: ExpenseFormState,
+    actions: ExpenseFormActions,
+) {
+    var picking by rememberSaveable { mutableStateOf(false) }
+    SettingsRow(
+        title = stringResource(R.string.expense_refund_of),
+        value = form.refundOfLabel ?: stringResource(R.string.expense_refund_of_none),
+        onClick = { picking = true },
+        showChevron = true,
+    )
+    if (picking) {
+        RefundOfSheet(
+            candidates = form.refundCandidates,
+            onPicked = {
+                actions.onRefundOfSelected(it)
+                picking = false
+            },
+            onDismiss = { picking = false },
+        )
+    }
+}
+
+/** Search, then pick the original expense this refund is for; the first row unlinks. */
+@Composable
+private fun RefundOfSheet(
+    candidates: List<Expense>,
+    onPicked: (Expense?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var query by rememberSaveable { mutableStateOf("") }
+    val shown =
+        remember(candidates, query) {
+            if (query.isBlank()) {
+                candidates
+            } else {
+                candidates.filter {
+                    it.name.containsIgnoreCase(query.trim()) || amountMatchesQuery(it.amountCents, query)
+                }
+            }
+        }
+    FinTrackBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            text = stringResource(R.string.expense_refund_of),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = Dimens.Space12),
+        )
+        SearchField(
+            query = query,
+            onQueryChanged = { query = it },
+            label = stringResource(R.string.activity_search_label),
+        )
+        LazyColumn(modifier = Modifier.heightIn(max = RefundSheetMaxHeight)) {
+            item(key = "none") {
+                SettingsRow(
+                    title = stringResource(R.string.expense_refund_of_none),
+                    onClick = { onPicked(null) },
+                    modifier = Modifier.padding(vertical = Dimens.Space4),
+                )
+            }
+            items(shown, key = { it.id }) { expense ->
+                ExpenseRow(expense = expense, onClick = { onPicked(expense) })
+            }
+        }
+    }
+}
+
+/** On an existing, non-refund expense: how much of it was refunded, and a shortcut to record another refund. */
+@Composable
+private fun RecordRefundSection(
+    form: ExpenseFormState,
+    actions: ExpenseFormActions,
+) {
+    val id = form.expenseId
+    if (!form.isEditMode || form.isRefund || id == null) return
+    form.refundStatus?.let { status ->
+        Text(
+            text =
+                stringResource(
+                    R.string.expense_refund_status,
+                    status.percent,
+                    formatAmountCents(status.netCents),
+                ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = FinTrackTheme.colors.textSecondary,
+        )
+    }
+    GhostButton(
+        text = stringResource(R.string.expense_record_refund),
+        onClick = { actions.onRecordRefund(id) },
+        enabled = !form.isBusy,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+private val RefundSheetMaxHeight = 360.dp

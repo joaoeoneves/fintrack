@@ -42,6 +42,8 @@ sealed interface ActivityUiState {
         val analytics: ActivityAnalytics,
         val categoryScope: Set<CategoryId>? = null,
         val incomeSources: List<IncomeSourceChip> = emptyList(),
+        /** Per expense id: the share (1..100) of it refunded through linked refunds; absent when none. */
+        val refundedPercent: Map<String, Int> = emptyMap(),
     ) : ActivityUiState
 
     data class Error(

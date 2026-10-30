@@ -138,7 +138,7 @@ fun LazyListScope.activityRowItems(
     }
     if (state.days.isEmpty()) {
         items(state.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = true, actions = actions)
+            ActivityRow(transaction, showDate = true, actions = actions, refundedPercent = state.refundedPercent)
         }
         return
     }
@@ -151,7 +151,7 @@ fun LazyListScope.activityRowItems(
             )
         }
         items(section.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = false, actions = actions)
+            ActivityRow(transaction, showDate = false, actions = actions, refundedPercent = state.refundedPercent)
         }
     }
 }
@@ -178,6 +178,7 @@ private fun LazyItemScope.ActivityRow(
     transaction: Transaction,
     showDate: Boolean,
     actions: ActivityActions,
+    refundedPercent: Map<String, Int>,
 ) {
     SwipeToDeleteRow(
         onDelete = { actions.onDelete(transaction.id) },
@@ -192,6 +193,7 @@ private fun LazyItemScope.ActivityRow(
                     showDate = showDate,
                     onClick = { actions.onOpen(transaction) },
                     modifier = rowModifier,
+                    refundedPercent = refundedPercent[transaction.id],
                 )
             is Income ->
                 IncomeRow(

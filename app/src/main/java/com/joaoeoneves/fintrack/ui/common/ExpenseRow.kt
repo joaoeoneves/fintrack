@@ -25,6 +25,8 @@ fun ExpenseRow(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     showDate: Boolean = true,
+    /** How much of this expense was refunded (1..100, from linked refunds); `null` or 0 shows nothing. */
+    refundedPercent: Int? = null,
 ) {
     val dateFormatter = rememberLocaleAwareDateFormatter()
     val subtitle =
@@ -52,14 +54,23 @@ fun ExpenseRow(
         amountColor = amountColor,
         onClick = onClick,
         modifier = modifier,
-        badge = if (expense.isRefund) ({ RefundBadge() }) else null,
+        badge =
+            when {
+                expense.isRefund -> ({ RefundBadge(stringResource(R.string.expense_refund_badge)) })
+                refundedPercent != null && refundedPercent > 0 ->
+                    ({ RefundBadge(stringResource(R.string.expense_refunded_badge, refundedPercent)) })
+                else -> null
+            },
     )
 }
 
 @Composable
-private fun RefundBadge(modifier: Modifier = Modifier) {
+private fun RefundBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
-        text = stringResource(R.string.expense_refund_badge),
+        text = text,
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurface,
         maxLines = 1,

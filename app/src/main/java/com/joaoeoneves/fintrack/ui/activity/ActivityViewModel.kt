@@ -19,9 +19,11 @@ import com.joaoeoneves.fintrack.domain.model.decodePeriod
 import com.joaoeoneves.fintrack.domain.model.encode
 import com.joaoeoneves.fintrack.domain.model.incomeSourceOf
 import com.joaoeoneves.fintrack.domain.model.netCents
+import com.joaoeoneves.fintrack.domain.model.refundIndexOf
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
+import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
@@ -93,6 +95,7 @@ class ActivityViewModel
         private val observePeriodOverview: ObservePeriodOverview,
         categoryRepository: CategoryRepository,
         private val deleteTransaction: DeleteTransaction,
+        expenseRepository: ExpenseRepository,
         private val savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
@@ -219,10 +222,26 @@ class ActivityViewModel
                 onSelectScale = selection::selectScale,
             )
 
+        // Refunded cents per original expense id; a failing listener just shows no badges.
+        private val refundIndex: Flow<Map<String, Long>> =
+            expenseRepository
+                .observeLinkedRefunds()
+                .map { refundIndexOf(it) }
+                .catch {
+                    Log.w(TAG, "Linked refunds flow failed", it)
+                    emit(emptyMap())
+                }
+
         val uiState: StateFlow<ActivityUiState> =
-            combine(periodItems, filters, categoryLabels, categories) { items, active, labels, catalog ->
+            combine(
+                periodItems,
+                filters,
+                categoryLabels,
+                categories,
+                refundIndex,
+            ) { items, active, labels, catalog, refunds ->
                 when (items) {
-                    is PeriodItems.Loaded -> items.toContent(active, labels, catalog, clock.zone)
+                    is PeriodItems.Loaded -> items.toContent(active, labels, catalog, clock.zone, refunds)
                     is PeriodItems.Failed -> ActivityUiState.Error(items.message)
                 }
             }.stateIn(
@@ -322,6 +341,7 @@ private fun PeriodItems.Loaded.toContent(
     labels: Map<CategoryId, String>,
     catalog: List<Category>,
     zone: ZoneId,
+    refunds: Map<String, Long>,
 ): ActivityUiState.Content {
     val analytics = overview.analyticsOf(requested.envelope, catalog)
     // An envelope id that no longer exists filters nothing.
@@ -357,6 +377,7 @@ private fun PeriodItems.Loaded.toContent(
         filters = activeFilters.copy(incomeSource = incomeSource),
         analytics = analytics.following(sorted.filterIsInstance<Expense>(), catalog),
         incomeSources = sources,
+        refundedPercent = refundedPercentOf(sorted.filterIsInstance<Expense>(), refunds),
         categoryScope =
             envelope?.let { selected ->
                 catalog
@@ -388,3 +409,18 @@ private fun ActivityAnalytics.following(
         breakdown = breakdown.copy(categoryTotals = visibleTotals),
     )
 }
+
+/** The share (1..100, floored, capped) of each non-refund expense in [expenses] that [refunds] returned. */
+private fun refundedPercentOf(
+    expenses: List<Expense>,
+    refunds: Map<String, Long>,
+): Map<String, Int> =
+    expenses
+        .filter { !it.isRefund && it.amountCents > 0L }
+        .mapNotNull { expense ->
+            val refunded = refunds[expense.id] ?: return@mapNotNull null
+            val percent = (refunded * PERCENT / expense.amountCents).toInt().coerceAtMost(PERCENT)
+            if (percent > 0) expense.id to percent else null
+        }.toMap()
+
+private const val PERCENT = 100

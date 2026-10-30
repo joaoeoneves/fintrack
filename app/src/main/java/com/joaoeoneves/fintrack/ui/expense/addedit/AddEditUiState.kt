@@ -3,9 +3,11 @@ package com.joaoeoneves.fintrack.ui.expense.addedit
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
+import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.NameSuggestion
+import com.joaoeoneves.fintrack.domain.model.RefundStatus
 import com.joaoeoneves.fintrack.domain.model.active
 import com.joaoeoneves.fintrack.ui.common.UiText
 import java.time.Instant
@@ -36,6 +38,14 @@ data class ExpenseFormState(
     val isDeleting: Boolean = false,
     val isEditMode: Boolean = false,
     val expenseId: String? = null,
+    /** The original expense this refund returns money for (only meaningful while [isRefund]). */
+    val refundOf: String? = null,
+    /** The original's name, shown in the "Refund of" row; `null` when unlinked. */
+    val refundOfLabel: String? = null,
+    /** How much of this (original) expense was refunded, in edit mode; not part of the saved snapshot. */
+    val refundStatus: RefundStatus? = null,
+    /** Expenses a refund can link to; not part of the saved snapshot. */
+    val refundCandidates: List<Expense> = emptyList(),
 ) {
     val isValid: Boolean
         get() = name.isNotBlank() && amountCents in 1..MAX_AMOUNT_CENTS

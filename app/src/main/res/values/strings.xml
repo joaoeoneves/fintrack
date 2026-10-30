@@ -680,4 +680,10 @@
     <string name="home_invested_rate">You invested %1$s · %2$d%% of what you received</string>
     <string name="home_invested">You invested %1$s</string>
     <string name="home_review_title_count">To review (%1$d)</string>
+    <!-- Refund link (5.7) -->
+    <string name="expense_refund_of">Refund of</string>
+    <string name="expense_refund_of_none">None</string>
+    <string name="expense_refund_status">Refunded %1$d%% · real spend %2$s</string>
+    <string name="expense_record_refund">Record refund</string>
+    <string name="expense_refunded_badge">Refunded %d%%</string>
 </resources>

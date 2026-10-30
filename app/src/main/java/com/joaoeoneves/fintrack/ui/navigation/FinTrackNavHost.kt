@@ -252,6 +252,7 @@ private fun NavGraphBuilder.formRoutes(
             onSaved = dropUnlessResumed { navController.popBackStack() },
             onDeleted = dropUnlessResumed { navController.popBackStack() },
             onCancel = dropUnlessResumed { navController.popBackStack() },
+            onRecordRefund = { id -> navController.navigate(AddEditExpense(refundOf = id)) },
         )
     }
     composable<AddEditIncome>(
