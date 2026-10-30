@@ -6,7 +6,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** Version written into [LocalDataDocument.schemaVersion]; a file with a higher one is not read. */
-internal const val LOCAL_SCHEMA_VERSION = 24
+internal const val LOCAL_SCHEMA_VERSION = 25
 
 /**
  * The whole guest-mode data set, stored as one JSON file. Enums are stored as strings and dates as
