@@ -150,5 +150,10 @@ private fun LocalDataDocument.upgradedFrom(version: Int): LocalDataDocument {
     val simplified = if (version < SIMPLIFIED_SCHEMA_VERSION) upgradedTo23() else this
     val daysOff = if (version < DAYS_OFF_BY_TYPE_SCHEMA_VERSION) simplified.upgradedTo24() else simplified
     // 24 -> 25 expense refundOf/splitId (absent = none): no transform, only the version stamp.
-    return daysOff.copy(schemaVersion = EXPENSE_LINKS_SCHEMA_VERSION)
+    // 25 -> 26 sickDays folded into otherDays; expense awaitingRefund (absent = false).
+    return if (version < DAYS_OFF_TWO_TYPES_SCHEMA_VERSION) {
+        daysOff.upgradedTo26()
+    } else {
+        daysOff.copy(schemaVersion = DAYS_OFF_TWO_TYPES_SCHEMA_VERSION)
+    }
 }

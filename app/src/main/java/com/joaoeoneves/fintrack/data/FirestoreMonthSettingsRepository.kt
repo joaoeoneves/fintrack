@@ -70,6 +70,7 @@ class FirestoreMonthSettingsRepository
                         val data =
                             buildMap<String, Any> {
                                 put(FIELD_VACATION_DAYS, vacation.orDelete())
+                                // `sickDays` (5.6-5.8) was folded into `otherDays` in 5.9.
                                 put(FIELD_SICK_DAYS, FieldValue.delete())
                                 put(FIELD_OTHER_DAYS, other.orDelete())
                                 put(FIELD_DAYS_OFF, FieldValue.delete())
@@ -117,8 +118,9 @@ private fun DocumentSnapshot.toMonthSettingsOrNull(): MonthSettings? =
         // A pre-5.6 document only has the total, which counts as vacation; once a typed field exists it is ignored.
         val legacy = vacation == null && sick == null && other == null
         val vacationDays = if (legacy) getLong(FIELD_DAYS_OFF)?.toInt() ?: 0 else vacation ?: 0
+        // 5.9 folded sick days into other days: read both, capped so the total stays within the 23-day limit.
+        val otherDays = ((other ?: 0) + (sick ?: 0)).coerceIn(0, (MAX_DAYS_OFF - vacationDays).coerceAtLeast(0))
         // A leftover document with nothing set (only the legacy working-days override, or fields cleared
         // offline) carries no information.
-        val otherDays = ((other ?: 0) + (sick ?: 0)).coerceAtMost(MAX_DAYS_OFF - vacationDays)
         MonthSettings(month, vacationDays, otherDays).takeUnless { it.isBlank }
     }

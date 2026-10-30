@@ -43,6 +43,14 @@ class CategoryResolvingExpenseRepository
                 categoryRepository.observeCategories(),
             ) { expenses, categories -> expenses.resolvedWith(categories) }
 
+        override fun observeAwaitingRefund(): Flow<List<Expense>> =
+            combine(
+                delegate.observeAwaitingRefund(),
+                categoryRepository.observeCategories(),
+            ) { expenses, categories -> expenses.resolvedWith(categories) }
+
+        override suspend fun getSplit(splitId: String): Result<List<Expense>> = delegate.getSplit(splitId).map { resolve(it) }
+
         override suspend fun getExpense(id: String): Result<Expense?> =
             delegate.getExpense(id).map { expense -> expense?.let { resolve(listOf(it)).single() } }
 

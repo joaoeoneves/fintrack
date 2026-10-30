@@ -4,7 +4,7 @@ import java.time.YearMonth
 
 /**
  * Per-month plan settings: the days off taken that month, by type. Vacation days count against the year's
- * vacation allowance; sick and other days only reduce the month's working days. [daysOff] is the total.
+ * vacation allowance; other days (sick, personal...) only reduce the month's working days. [daysOff] is the total.
  */
 data class MonthSettings(
     val month: YearMonth,

@@ -50,6 +50,9 @@ interface ExpenseRepository {
     /** The expenses flagged [Expense.needsReview], across all months. */
     fun observeNeedingReview(): Flow<List<Expense>> = flowOf(emptyList())
 
+    /** The expenses flagged [Expense.awaitingRefund], across all months. */
+    fun observeAwaitingRefund(): Flow<List<Expense>> = flowOf(emptyList())
+
     /** Clears [Expense.needsReview] on the expenses with these [ids] (missing ids are ignored). */
     suspend fun markReviewed(ids: Collection<String>): Result<Unit> = Result.success(Unit)
 
@@ -78,27 +81,28 @@ interface ExpenseRepository {
             ids.forEach { deleteExpense(it).getOrThrow() }
         }
 
-    /** The refunds (across all months) that link to an original expense through [Expense.refundOf]. */
-    fun observeLinkedRefunds(): Flow<List<Expense>> = flowOf(emptyList())
+    /** The expenses sharing [splitId] (the parts of one split purchase), in no particular order. */
+    suspend fun getSplit(splitId: String): Result<List<Expense>> =
+        getAllExpenses().map { all -> all.filter { it.splitId == splitId } }
 
-    /** The expenses flagged [Expense.awaitingRefund]. */
-    fun observeAwaitingRefund(): Flow<List<Expense>> = flowOf(emptyList())
-
-    /** The expenses sharing [splitId]. */
-    @Suppress("MaxLineLength")
-    suspend fun getSplit(splitId: String): Result<List<Expense>> = getAllExpenses().map { it.filter { e -> e.splitId == splitId } }
-
-    /** Updates [update], adds [add] and deletes [deleteIds] together. */
+    /**
+     * Saves an edited split in one atomic write: updates the [update] parts, adds the [add] parts (under the ids they
+     * carry, a blank id gets a generated one) and deletes [deleteIds]. The default composes the bulk calls (not
+     * atomic); real repositories override it.
+     */
     suspend fun replaceSplit(
         update: List<Expense>,
         add: List<Expense>,
         deleteIds: Collection<String>,
     ): Result<Unit> =
         runCatching {
-            updateExpenses(update).getOrThrow()
-            addExpensesKeepingIds(add).getOrThrow()
-            deleteExpenses(deleteIds).getOrThrow()
+            if (update.isNotEmpty()) updateExpenses(update).getOrThrow()
+            if (add.isNotEmpty()) addExpensesKeepingIds(add).getOrThrow()
+            if (deleteIds.isNotEmpty()) deleteExpenses(deleteIds).getOrThrow()
         }
+
+    /** The refunds (across all months) that link to an original expense through [Expense.refundOf]. */
+    fun observeLinkedRefunds(): Flow<List<Expense>> = flowOf(emptyList())
 
     suspend fun getExpense(id: String): Result<Expense?>
 
