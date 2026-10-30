@@ -44,6 +44,8 @@ internal fun LocalExpense.toDomainOrNull(): Expense? =
             isRefund = isRefund,
             paidWithMealCard = paidWithMealCard,
             needsReview = needsReview,
+            refundOf = refundOf,
+            splitId = splitId,
         )
     }
 
@@ -58,6 +60,8 @@ internal fun Expense.toLocal(): LocalExpense =
         isRefund = isRefund,
         paidWithMealCard = paidWithMealCard,
         needsReview = needsReview,
+        refundOf = refundOf,
+        splitId = splitId,
     )
 
 internal fun LocalIncome.toDomainOrNull(): Income? =

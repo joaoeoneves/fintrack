@@ -62,6 +62,10 @@ data class LocalExpense(
     val paidWithMealCard: Boolean = false,
     /** Recorded automatically and not yet reviewed (schema v22; absent = reviewed). */
     val needsReview: Boolean = false,
+    /** Id of the expense this refund returns money for (schema v25; absent = none). */
+    val refundOf: String? = null,
+    /** Shared id of the expenses a split purchase was divided into (schema v25; absent = none). */
+    val splitId: String? = null,
 )
 
 @Serializable

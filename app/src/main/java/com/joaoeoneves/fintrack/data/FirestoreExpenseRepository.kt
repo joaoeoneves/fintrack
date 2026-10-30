@@ -349,7 +349,23 @@ internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?
     } else if (!includeCreatedAt) {
         map["needsReview"] = FieldValue.delete()
     }
+    putOptional(map, "refundOf", refundOf, includeCreatedAt)
+    putOptional(map, "splitId", splitId, includeCreatedAt)
     return map
+}
+
+/** Written when set; on an update (merge) a null value deletes the key explicitly. */
+private fun putOptional(
+    map: MutableMap<String, Any?>,
+    key: String,
+    value: String?,
+    isCreate: Boolean,
+) {
+    if (value != null) {
+        map[key] = value
+    } else if (!isCreate) {
+        map[key] = FieldValue.delete()
+    }
 }
 
 internal fun QuerySnapshot.toExpenses(): List<Expense> = documents.mapNotNull { it.toExpenseOrNull() }
@@ -370,6 +386,8 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
     val isRefund = get("isRefund") as? Boolean ?: false
     val paidWithMealCard = get("paidWithMealCard") as? Boolean ?: false
     val needsReview = get("needsReview") as? Boolean ?: false
+    val refundOf = getString("refundOf")?.takeIf { it.isNotBlank() }
+    val splitId = getString("splitId")?.takeIf { it.isNotBlank() }
 
     return when {
         name == null -> {
@@ -399,6 +417,8 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
                 isRefund = isRefund,
                 paidWithMealCard = paidWithMealCard,
                 needsReview = needsReview,
+                refundOf = refundOf,
+                splitId = splitId,
             )
     }
 }
