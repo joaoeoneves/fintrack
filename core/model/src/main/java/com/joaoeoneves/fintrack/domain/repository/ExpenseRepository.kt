@@ -67,12 +67,10 @@ interface ExpenseRepository {
         runCatching { expenses.map { addExpense(it).getOrThrow() } }
 
     /** Updates these existing expenses. The default updates them one by one; real repositories write them in one go. */
-    suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> =
-        runCatching { expenses.forEach { updateExpense(it).getOrThrow() } }
+    suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> = runCatching { expenses.forEach { updateExpense(it).getOrThrow() } }
 
     /** Deletes the expenses with these [ids]. The default deletes them one by one; real repositories write in one go. */
-    suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> =
-        runCatching { ids.forEach { deleteExpense(it).getOrThrow() } }
+    suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> = runCatching { ids.forEach { deleteExpense(it).getOrThrow() } }
 
     /** The refunds (across all months) that link to an original expense through [Expense.refundOf]. */
     fun observeLinkedRefunds(): Flow<List<Expense>> = flowOf(emptyList())
