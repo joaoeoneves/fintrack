@@ -21,7 +21,6 @@
     <string name="action_ok">OK</string>
     <string name="action_retry">Tentar novamente</string>
     <string name="action_undo">Desfazer</string>
-    <string name="action_import">Importar</string>
     <string name="action_sign_out">Terminar sessão</string>
     <string name="action_add_expense">Adicionar despesa</string>
     <string name="action_add_income">Adicionar rendimento</string>
@@ -70,12 +69,6 @@
     <string name="category_unknown">Categoria desconhecida</string>
 
     <!-- Moedas -->
-    <string name="currency_usd">Dólar americano</string>
-    <string name="currency_eur">Euro</string>
-    <string name="currency_gbp">Libra esterlina</string>
-    <string name="currency_jpy">Iene japonês</string>
-    <string name="currency_cad">Dólar canadiano</string>
-    <string name="currency_aud">Dólar australiano</string>
 
     <!-- Seletor de período -->
     <string name="period_this_month">Este mês</string>
@@ -133,30 +126,8 @@
     <string name="sort_lowest_amount">Valor mais baixo</string>
 
     <!-- Importar/exportar -->
-    <string name="import_preview_title">Pré-visualização da importação</string>
-    <plurals name="import_preview_summary">
-        <item quantity="one">%1$d linha pronta a importar, %2$d falharam</item>
-        <item quantity="many">%1$d de linhas prontas a importar, %2$d falharam</item>
-        <item quantity="other">%1$d linhas prontas a importar, %2$d falharam</item>
-    </plurals>
-    <string name="import_preview_row_failure">Linha %1$d: %2$s</string>
-    <string name="label_import_complete">Importação concluída</string>
-    <string name="label_import_partial_failure">Importação parcialmente concluída</string>
-    <string name="label_import_failed">Falha na importação</string>
     <string name="label_export_complete">Exportação concluída</string>
     <string name="label_export_failed">Falha na exportação</string>
-    <string name="error_import_read_file">Não foi possível ler o ficheiro selecionado</string>
-    <string name="error_import_failed">Falha na importação</string>
-    <string name="error_csv_empty">O ficheiro está vazio</string>
-    <string name="error_csv_header">Este ficheiro não é um CSV do FinTrack (os cabeçalhos das colunas não correspondem)</string>
-    <string name="error_csv_row_columns">Esperadas 5 colunas, encontradas %1$d</string>
-    <string name="error_csv_row_name_required">O nome é obrigatório</string>
-    <string name="error_csv_row_name_too_long">O nome é demasiado longo (máximo: %1$d)</string>
-    <string name="error_csv_row_amount_invalid">Valor inválido: \'%1$s\'</string>
-    <string name="error_csv_row_amount_zero">O valor não pode ser zero: \'%1$s\'</string>
-    <string name="error_csv_row_category_unknown">Categoria desconhecida: \'%1$s\'</string>
-    <string name="error_csv_row_date_invalid">Data inválida: \'%1$s\'</string>
-    <string name="error_csv_row_note_too_long">A nota é demasiado longa (máximo: %1$d)</string>
     <string name="error_export_write_file">Não foi possível escrever o ficheiro de exportação</string>
     <string name="error_export_failed">Falha na exportação</string>
 
@@ -173,16 +144,9 @@
     <string name="settings_section_language">Idioma</string>
     <string name="settings_section_preferences">Preferências</string>
     <string name="settings_theme">Tema</string>
-    <string name="settings_currency_hint">Só visual — os valores não são convertidos</string>
-    <string name="settings_reduce_motion">Reduzir animações</string>
-    <string name="motion_system">Sistema</string>
-    <string name="motion_on">Ativado</string>
-    <string name="motion_off">Desativado</string>
-    <string name="settings_section_currency">Moeda</string>
     <string name="settings_section_data">Dados</string>
     <string name="settings_section_account">Conta</string>
     <string name="settings_section_about">Acerca de</string>
-    <string name="settings_import_csv">Importar despesas (CSV)</string>
     <string name="settings_export_csv">Exportar despesas (CSV)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
     <string name="label_sign_out_failed">Não foi possível terminar sessão</string>
@@ -207,20 +171,10 @@
     <string name="language_english">English</string>
     <string name="language_portuguese">Português</string>
 
-    <plurals name="import_complete_message">
-        <item quantity="one">%d despesa importada.</item>
-        <item quantity="many">%d de despesas importadas.</item>
-        <item quantity="other">%d despesas importadas.</item>
-    </plurals>
     <plurals name="export_complete_message">
         <item quantity="one">%d despesa exportada.</item>
         <item quantity="many">%d de despesas exportadas.</item>
         <item quantity="other">%d despesas exportadas.</item>
-    </plurals>
-    <plurals name="import_partial_failure_message">
-        <item quantity="one">%1$d despesa foi importada antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
-        <item quantity="many">%1$d de despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
-        <item quantity="other">%1$d despesas foram importadas antes de ocorrer um erro: %2$s. Reimportar o mesmo ficheiro pode criar linhas duplicadas.</item>
     </plurals>
 
     <string name="categories_title">Categorias</string>
@@ -280,7 +234,7 @@
     <string name="settings_export_backup">Exportar cópia (JSON)</string>
     <string name="settings_restore_backup">Restaurar cópia (JSON)</string>
     <string name="action_restore">Restaurar</string>
-    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nGrupos: %3$d\nCategorias: %4$d\nRendimento previsto: %5$d\nRecorrentes: %6$d\nObjetivos: %7$d\nPerfil salarial: %8$s</string>
+    <string name="backup_counts">Despesas: %1$d\nRendimentos: %2$d\nGrupos: %3$d\nCategorias: %4$d\nRendimento previsto: %5$d\nRecorrentes: %6$d\nPerfil salarial: %7$s</string>
     <string name="backup_salary_no">Não</string>
     <string name="backup_salary_yes">Sim</string>
     <string name="backup_export_done_title">Cópia de segurança exportada</string>
@@ -367,7 +321,6 @@
     <string name="recurring_annual_cost">Recorrentes: %1$s/ano (%2$s/mês)</string>
     <string name="recurring_manage">Gerir</string>
     <string name="recurring_empty_cta">Configurar recorrentes</string>
-    <string name="recurring_added">Adicionado: “%1$s”</string>
     <string name="recurring_next_due">Próximo: %1$s</string>
     <string name="recurring_section_active">Ativos</string>
     <string name="recurring_section_investments">Investimentos</string>
@@ -383,9 +336,6 @@
     <string name="recurring_end_date">Data de fim</string>
     <string name="recurring_end_date_add">Adicionar data de fim</string>
     <string name="recurring_end_date_clear">Remover data de fim</string>
-    <string name="recurring_auto_post">Registar automaticamente</string>
-    <string name="recurring_auto_post_hint">Registado na data, sem precisar de confirmar</string>
-    <string name="recurring_automatic">Automático</string>
     <string name="error_recurring_save_failed">Não foi possível guardar o recorrente</string>
     <string name="error_recurring_not_found">Este recorrente já não existe</string>
     <string name="error_recurring_end_before_start">A data de fim não pode ser anterior à data de início</string>
@@ -398,7 +348,6 @@
     <string name="day_header_yesterday">Ontem</string>
 
     <!-- Redesenho do painel -->
-    <string name="action_see_all">Ver tudo</string>
     <string name="nav_home">Início</string>
     <string name="nav_activity">Movimentos</string>
     <string name="nav_income">Rendimentos</string>
@@ -411,9 +360,6 @@
     <string name="insights_by_category">Por categoria</string>
     <string name="insights_by_group">Por grupo</string>
     <string name="cd_insights_split">Divisão da despesa: %1$s fixo, %2$s variável</string>
-    <string name="home_recent_title">Movimentos recentes</string>
-    <string name="home_recent_empty">Ainda não há movimentos</string>
-    <string name="dashboard_see_all_activity">Ver todos os movimentos</string>
     <string name="plan_basis_fixed">Fixo</string>
     <string name="plan_basis_per_day">Por dia útil</string>
     <string name="plan_frequency_monthly">Mensal</string>
@@ -450,13 +396,6 @@
     <string name="plan_days_off_carnival_hint">Feriado facultativo: conta como um dia de folga quando marcado.</string>
     <string name="cd_fewer_days_off">Menos dias de folga</string>
     <string name="cd_more_days_off">Mais dias de folga</string>
-    <string name="plan_working_days_edited">%1$d (alterado)</string>
-    <string name="plan_working_days_reset">Repor automático</string>
-    <string name="plan_working_days_hint">Definidos à mão para este mês, por isso as folgas já não os alteram.</string>
-    <string name="plan_working_days_hint_auto">Contados pelo calendário: dias úteis menos feriados e folgas.</string>
-    <string name="plan_working_days_label">Dias úteis</string>
-    <string name="cd_fewer_working_days">Menos dias úteis</string>
-    <string name="cd_more_working_days">Mais dias úteis</string>
 
     <string name="plan_group_other">Sem grupo</string>
     <string name="error_group_save_failed">Não foi possível guardar o grupo</string>
@@ -488,7 +427,7 @@
     <string name="salary_field_net_christmas">Subsídio de Natal (líquido)</string>
     <string name="salary_group_subsidy_months">Meses dos subsídios</string>
     <string name="salary_subsidy_months">Subsídios pagos em</string>
-    <string name="salary_meal_hint">Pago por cada dia útil; define as férias e os dias sem trabalho nos dias úteis do separador Rendimentos.</string>
+    <string name="salary_meal_hint">Pago por cada dia útil; define as tuas folgas nos dias úteis do separador Rendimentos.</string>
     <string name="salary_meal_tax_warning">Acima de ~6 €/dia, o subsídio de refeição pago com o salário paga IRS e SS.</string>
     <string name="salary_group_meal">Subsídio de refeição</string>
     <string name="salary_field_meal">Subsídio de refeição por dia útil</string>
@@ -630,12 +569,8 @@
     <string name="backup_restore_partial_title">Restauro incompleto</string>
     <string name="backup_restore_partial_message">Alguns dados já foram substituídos. Tenta novamente para terminar — repetir não duplica nada.</string>
     <string name="backup_error_restore_offline">Sem ligação. Nada foi alterado.</string>
-    <string name="activity_total_out_includes_saving">Investido %1$s</string>
     <string name="pending_more_options">Mais opções</string>
     <string name="pending_change_amount">Alterar valor</string>
-    <string name="pending_automatic">Automático · %1$s</string>
-    <string name="recurring_skipped">Ignorado: “%1$s”</string>
-    <string name="recurring_amount_title">Valor de “%1$s”</string>
     <string name="sign_out_confirm_title">Terminar sessão?</string>
     <string name="sign_out_confirm_message">Os teus dados ficam na tua conta; inicia sessão outra vez para os veres.</string>
     <string name="migration_remove_confirm_title">Remover os dados locais?</string>
@@ -650,9 +585,6 @@
     <string name="activity_vs_previous_month">vs mês anterior</string>
     <string name="activity_vs_average">vs média %1$d meses</string>
     <string name="activity_monthly_average">Média mensal %1$s</string>
-    <string name="activity_since_january">Desde janeiro</string>
-    <string name="activity_ytd_spent">Gasto</string>
-    <string name="activity_ytd_received">Recebido</string>
     <string name="activity_evolution">Evolução</string>
     <string name="activity_received_total">Recebido</string>
     <string name="activity_expected_difference">Esperado %1$s · Diferença %2$s</string>
@@ -663,10 +595,6 @@
     <string name="advanced_title">Avançado</string>
     <string name="effective_from_title">Válido desde</string>
     <string name="effective_from_history">%1$s até %2$s</string>
-    <string name="activity_summary_spent">Gasto %1$s</string>
-    <string name="activity_summary_received">Recebido %1$s</string>
-    <string name="cd_open_spending">Abrir gastos</string>
-    <string name="cd_open_income">Abrir rendimentos</string>
     <string name="activity_source_all">Todas</string>
     <string name="detail_vs_average">%1$s vs média</string>
     <string name="detail_edit">Editar</string>
@@ -681,10 +609,6 @@
     <string name="home_income_title">Recebido</string>
     <string name="home_income_of_expected">de %1$s esperado</string>
     <string name="home_spending_title">Gasto</string>
-    <string name="home_invested_month">Investido: %1$s este mês · %2$s em %3$s</string>
-    <string name="home_invested_other_month">Investido: %1$s em %2$s · %3$s em %4$s</string>
-    <string name="home_invested_year">Investido em %1$s: %2$s</string>
-    <string name="home_leftover">Sobrou até %1$s: média de %2$s por mês</string>
     <string name="investments_title">Investimentos</string>
     <string name="investments_this_month">Este mês</string>
     <string name="investments_all_time">Desde sempre</string>
@@ -718,15 +642,10 @@
     <string name="income_meal_card_plafond">Plafond</string>
     <string name="income_meal_card_plafond_from">Plafond (subsídio de %1$s)</string>
     <string name="income_meal_card_spent">Gasto</string>
-    <string name="income_outlook">Rendimentos por mês</string>
-    <string name="income_outlook_received">Recebido</string>
-    <string name="income_outlook_expected">Previsto</string>
-    <string name="income_outlook_partial">Recebido até agora + previsto</string>
     <string name="income_outlook_total">Total do ano</string>
     <string name="income_outlook_total_detail">Recebido %1$s · previsto %2$s</string>
     <string name="error_write_rejected">Não foi possível guardar uma alteração no servidor.</string>
     <string name="error_write_permission">O servidor não aceitou uma alteração. Confirma que entraste com a conta certa.</string>
-    <string name="home_review_title">Por rever</string>
     <string name="home_review_subtitle">Registados automaticamente</string>
     <string name="home_review_confirm_all">Confirmar todos</string>
     <string name="home_review_more">e mais %d</string>
@@ -743,4 +662,11 @@
     <string name="home_recurring_suggestion_dismiss">Ignorar</string>
     <string name="home_recurring_suggestion_dismissed">Sugestão ignorada</string>
     <string name="income_meal_card_no_allowance">Sem subsídio de refeição recebido em %1$s</string>
+    <string name="plan_working_days_computed">Dias úteis: %1$d (calendário menos feriados e folgas)</string>
+    <string name="evolution_caption_spent">Gasto %1$s</string>
+    <string name="evolution_caption_received">Recebido %1$s</string>
+    <string name="evolution_caption_received_expected">Recebido %1$s · Esperado %2$s</string>
+    <string name="home_invested_rate">Investiste %1$s · %2$d%% do que recebeste</string>
+    <string name="home_invested">Investiste %1$s</string>
+    <string name="home_review_title_count">Por rever (%1$d)</string>
 </resources>

@@ -16,7 +16,7 @@ class RecurringSelfHealTest {
     private fun auto(
         handled: java.time.LocalDate? = mar15,
         startDate: java.time.LocalDate = day(2026, 1, 1),
-    ) = recurringItem(handledThrough = handled, autoPost = true, startDate = startDate)
+    ) = recurringItem(handledThrough = handled, startDate = startDate)
 
     @Test
     fun candidates_areTheOccurrencesUpToTheCursor() {
@@ -59,9 +59,8 @@ class RecurringSelfHealTest {
     }
 
     @Test
-    fun candidates_areEmptyForInactiveManualAndIncomeItems() {
+    fun candidates_areEmptyForInactiveAndIncomeItems() {
         assertTrue(auto().copy(active = false).selfHealCandidates(today).isEmpty())
-        assertTrue(auto().copy(autoPost = false).selfHealCandidates(today).isEmpty())
         val income = auto().copy(type = RecurringType.INCOME, categoryId = null)
         assertTrue(income.selfHealCandidates(today).isEmpty())
     }
@@ -80,7 +79,6 @@ class RecurringSelfHealTest {
                 frequency = RecurringFrequency.YEARLY,
                 startDate = day(2024, 1, 1),
                 handledThrough = mar15,
-                autoPost = true,
                 skipped = setOf(day(2026, 3, 15)),
             )
 

@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.local
 
-import com.joaoeoneves.fintrack.data.savedAs
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
@@ -27,51 +26,11 @@ class LocalEnvelopeRepository
                 val existing = doc.categoryGroups.find { it.id == edit.id }
                 val id = edit.id ?: idGenerator.newId()
                 val order = existing?.order ?: ((doc.categoryGroups.maxOfOrNull { it.order } ?: -1) + 1)
-                val template = Envelope(id, edit.name, order, edit.amountCents, edit.fundedByLineId)
-                val saved = existing?.toDomain().savedAs(template, edit.amountCents, edit.effectiveFrom)
-                val record =
-                    LocalCategoryGroup(
-                        id = id,
-                        name = edit.name,
-                        order = order,
-                        amountCents = saved.amountCents,
-                        fundedByLineId = edit.fundedByLineId,
-                        startMonth = saved.startMonth?.toString(),
-                        versions = saved.versions.toLocalVersions(),
-                    )
+                val record = LocalCategoryGroup(id = id, name = edit.name, order = order)
                 validateCategoryGroup(record)
-                val known = knownCategoryIds(doc)
-                edit.limits.forEach { (categoryId, budget) ->
-                    budget?.let { validateBudget(categoryId.value, it.limitCents, known, it.skipMonths) }
-                }
                 val members = edit.categoryIds.mapTo(mutableSetOf()) { it.value }
-                val limitRecords =
-                    edit.limits.mapNotNull { (categoryId, budget) ->
-                        budget?.let {
-                            val old = doc.budgets.find { b -> b.categoryId == categoryId.value }?.toDomain()
-                            val next = old.savedAs(categoryId, it.limitCents, it.skipMonths, edit.effectiveFrom)
-                            LocalBudget(
-                                categoryId.value,
-                                next.limitCents,
-                                it.skipMonths.sorted(),
-                                next.startMonth?.toString(),
-                                next.versions.toLocalVersions(),
-                            )
-                        }
-                    }
-                val touched = edit.limits.keys.mapTo(mutableSetOf()) { it.value }
-                val budgets = doc.budgets.filterNot { it.categoryId in touched } + limitRecords
-                val groups =
-                    doc.categoryGroups
-                        .map { group ->
-                            val sameLine =
-                                edit.fundedByLineId != null &&
-                                    edit.fundedByLineId != existing?.fundedByLineId &&
-                                    group.fundedByLineId == edit.fundedByLineId
-                            if (group.id != id && sameLine) group.copy(fundedByLineId = null) else group
-                        }.upserted(record) { it.id == id }
-                val withMembers = doc.withMembers(id, members)
-                withMembers.copy(categoryGroups = groups, budgets = budgets) to id
+                val groups = doc.categoryGroups.upserted(record) { it.id == id }
+                doc.withMembers(id, members).copy(categoryGroups = groups) to id
             }
 
         override suspend fun reorderEnvelopes(orderedIds: List<String>): Result<Unit> =

@@ -21,7 +21,6 @@
     <string name="action_ok">OK</string>
     <string name="action_retry">Retry</string>
     <string name="action_undo">Undo</string>
-    <string name="action_import">Import</string>
     <string name="action_sign_out">Sign out</string>
     <string name="action_add_expense">Add expense</string>
     <string name="action_add_income">Add income</string>
@@ -70,12 +69,6 @@
     <string name="category_unknown">Unknown category</string>
 
     <!-- Currencies -->
-    <string name="currency_usd">US Dollar</string>
-    <string name="currency_eur">Euro</string>
-    <string name="currency_gbp">British Pound</string>
-    <string name="currency_jpy">Japanese Yen</string>
-    <string name="currency_cad">Canadian Dollar</string>
-    <string name="currency_aud">Australian Dollar</string>
 
     <!-- Period selector -->
     <string name="period_this_month">This month</string>
@@ -133,29 +126,8 @@
     <string name="sort_lowest_amount">Lowest amount</string>
 
     <!-- Import/export -->
-    <string name="import_preview_title">Import preview</string>
-    <plurals name="import_preview_summary">
-        <item quantity="one">%1$d row ready to import, %2$d failed</item>
-        <item quantity="other">%1$d rows ready to import, %2$d failed</item>
-    </plurals>
-    <string name="import_preview_row_failure">Row %1$d: %2$s</string>
-    <string name="label_import_complete">Import complete</string>
-    <string name="label_import_partial_failure">Import partially completed</string>
-    <string name="label_import_failed">Import failed</string>
     <string name="label_export_complete">Export complete</string>
     <string name="label_export_failed">Export failed</string>
-    <string name="error_import_read_file">Couldn\'t read the selected file</string>
-    <string name="error_import_failed">Import failed</string>
-    <string name="error_csv_empty">The file is empty</string>
-    <string name="error_csv_header">This isn\'t a FinTrack CSV file (the column headings don\'t match)</string>
-    <string name="error_csv_row_columns">Expected 5 columns, found %1$d</string>
-    <string name="error_csv_row_name_required">Name is required</string>
-    <string name="error_csv_row_name_too_long">Name is too long (maximum: %1$d)</string>
-    <string name="error_csv_row_amount_invalid">Invalid amount: \'%1$s\'</string>
-    <string name="error_csv_row_amount_zero">The amount can\'t be zero: \'%1$s\'</string>
-    <string name="error_csv_row_category_unknown">Unknown category: \'%1$s\'</string>
-    <string name="error_csv_row_date_invalid">Invalid date: \'%1$s\'</string>
-    <string name="error_csv_row_note_too_long">Note is too long (maximum: %1$d)</string>
     <string name="error_export_write_file">Couldn\'t write the export file</string>
     <string name="error_export_failed">Export failed</string>
 
@@ -172,16 +144,9 @@
     <string name="settings_section_language">Language</string>
     <string name="settings_section_preferences">Preferences</string>
     <string name="settings_theme">Theme</string>
-    <string name="settings_currency_hint">Display only — amounts aren\'t converted</string>
-    <string name="settings_reduce_motion">Reduce animations</string>
-    <string name="motion_system">System</string>
-    <string name="motion_on">On</string>
-    <string name="motion_off">Off</string>
-    <string name="settings_section_currency">Currency</string>
     <string name="settings_section_data">Data</string>
     <string name="settings_section_account">Account</string>
     <string name="settings_section_about">About</string>
-    <string name="settings_import_csv">Import expenses (CSV)</string>
     <string name="settings_export_csv">Export expenses (CSV)</string>
     <string name="settings_signed_in_fallback">Signed in</string>
     <string name="label_sign_out_failed">Couldn\'t sign out</string>
@@ -207,17 +172,9 @@
     <string name="language_english">English</string>
     <string name="language_portuguese">Português</string>
 
-    <plurals name="import_complete_message">
-        <item quantity="one">Imported %d expense.</item>
-        <item quantity="other">Imported %d expenses.</item>
-    </plurals>
     <plurals name="export_complete_message">
         <item quantity="one">Exported %d expense.</item>
         <item quantity="other">Exported %d expenses.</item>
-    </plurals>
-    <plurals name="import_partial_failure_message">
-        <item quantity="one">%1$d expense was imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
-        <item quantity="other">%1$d expenses were imported before an error occurred: %2$s. Re-importing the same file may create duplicate rows.</item>
     </plurals>
 
     <string name="categories_title">Categories</string>
@@ -275,7 +232,7 @@
     <string name="settings_export_backup">Export backup (JSON)</string>
     <string name="settings_restore_backup">Restore backup (JSON)</string>
     <string name="action_restore">Restore</string>
-    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nGroups: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring: %6$d\nGoals: %7$d\nSalary profile: %8$s</string>
+    <string name="backup_counts">Expenses: %1$d\nIncome: %2$d\nGroups: %3$d\nCategories: %4$d\nExpected income: %5$d\nRecurring: %6$d\nSalary profile: %7$s</string>
     <string name="backup_salary_no">No</string>
     <string name="backup_salary_yes">Yes</string>
     <string name="backup_export_done_title">Backup exported</string>
@@ -357,7 +314,6 @@
     <string name="recurring_annual_cost">Recurring: %1$s/year (%2$s/month)</string>
     <string name="recurring_manage">Manage</string>
     <string name="recurring_empty_cta">Set up recurring</string>
-    <string name="recurring_added">Added “%1$s”</string>
     <string name="recurring_next_due">Next: %1$s</string>
     <string name="recurring_section_active">Active</string>
     <string name="recurring_section_investments">Investments</string>
@@ -373,9 +329,6 @@
     <string name="recurring_end_date">End date</string>
     <string name="recurring_end_date_add">Add end date</string>
     <string name="recurring_end_date_clear">Remove end date</string>
-    <string name="recurring_auto_post">Record automatically</string>
-    <string name="recurring_auto_post_hint">Recorded on its date, no need to confirm</string>
-    <string name="recurring_automatic">Automatic</string>
     <string name="error_recurring_save_failed">Couldn\'t save the recurring</string>
     <string name="error_recurring_not_found">This recurring no longer exists</string>
     <string name="error_recurring_end_before_start">The end date can\'t be before the start date</string>
@@ -388,7 +341,6 @@
     <string name="day_header_yesterday">Yesterday</string>
 
     <!-- Dashboard redesign -->
-    <string name="action_see_all">See all</string>
     <string name="nav_home">Home</string>
     <string name="nav_activity">Activity</string>
     <string name="nav_income">Income</string>
@@ -401,9 +353,6 @@
     <string name="insights_by_category">By category</string>
     <string name="insights_by_group">By group</string>
     <string name="cd_insights_split">Spending split: %1$s fixed, %2$s variable</string>
-    <string name="home_recent_title">Recent activity</string>
-    <string name="home_recent_empty">No activity yet</string>
-    <string name="dashboard_see_all_activity">See all activity</string>
     <string name="plan_basis_fixed">Fixed</string>
     <string name="plan_basis_per_day">Per working day</string>
     <string name="plan_frequency_monthly">Monthly</string>
@@ -436,13 +385,6 @@
     <string name="plan_days_off_carnival_hint">Optional holiday: counts as one day off when ticked.</string>
     <string name="cd_fewer_days_off">Fewer days off</string>
     <string name="cd_more_days_off">More days off</string>
-    <string name="plan_working_days_edited">%1$d (edited)</string>
-    <string name="plan_working_days_reset">Reset to automatic</string>
-    <string name="plan_working_days_hint">Set by hand for this month, so days off no longer change it.</string>
-    <string name="plan_working_days_hint_auto">Counted from the calendar: weekdays minus holidays and days off.</string>
-    <string name="plan_working_days_label">Working days</string>
-    <string name="cd_fewer_working_days">Fewer working days</string>
-    <string name="cd_more_working_days">More working days</string>
 
     <string name="plan_group_other">No group</string>
     <string name="error_group_save_failed">Couldn\'t save the group</string>
@@ -474,7 +416,7 @@
     <string name="salary_field_net_christmas">Christmas subsidy (net)</string>
     <string name="salary_group_subsidy_months">Subsidy months</string>
     <string name="salary_subsidy_months">Subsidies paid in</string>
-    <string name="salary_meal_hint">Paid for each working day; set vacation and days off in the working days of the Income tab.</string>
+    <string name="salary_meal_hint">Paid for each working day; set your days off in the working days of the Income tab.</string>
     <string name="salary_meal_tax_warning">Above about €6 a day, a meal allowance paid with the salary is subject to IRS and social security.</string>
     <string name="salary_group_meal">Meal allowance</string>
     <string name="salary_field_meal">Meal allowance per working day</string>
@@ -616,12 +558,8 @@
     <string name="backup_restore_partial_title">Restore incomplete</string>
     <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish — retrying doesn\'t duplicate anything.</string>
     <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
-    <string name="activity_total_out_includes_saving">Invested %1$s</string>
     <string name="pending_more_options">More options</string>
     <string name="pending_change_amount">Change amount</string>
-    <string name="pending_automatic">Automatic · %1$s</string>
-    <string name="recurring_skipped">Skipped “%1$s”</string>
-    <string name="recurring_amount_title">Amount for “%1$s”</string>
     <string name="sign_out_confirm_title">Sign out?</string>
     <string name="sign_out_confirm_message">Your data stays in your account; sign in again to see it.</string>
     <string name="migration_remove_confirm_title">Remove local data?</string>
@@ -636,9 +574,6 @@
     <string name="activity_vs_previous_month">vs previous month</string>
     <string name="activity_vs_average">vs %1$d-month average</string>
     <string name="activity_monthly_average">Monthly average %1$s</string>
-    <string name="activity_since_january">Since January</string>
-    <string name="activity_ytd_spent">Spent</string>
-    <string name="activity_ytd_received">Received</string>
     <string name="activity_evolution">Evolution</string>
     <string name="activity_received_total">Received</string>
     <string name="activity_expected_difference">Expected %1$s · Difference %2$s</string>
@@ -649,10 +584,6 @@
     <string name="advanced_title">Advanced</string>
     <string name="effective_from_title">Valid from</string>
     <string name="effective_from_history">%1$s until %2$s</string>
-    <string name="activity_summary_spent">Spent %1$s</string>
-    <string name="activity_summary_received">Received %1$s</string>
-    <string name="cd_open_spending">Open spending</string>
-    <string name="cd_open_income">Open income</string>
     <string name="activity_source_all">All</string>
     <string name="detail_vs_average">%1$s vs average</string>
     <string name="detail_edit">Edit</string>
@@ -667,10 +598,6 @@
     <string name="home_income_title">Received</string>
     <string name="home_income_of_expected">of %1$s expected</string>
     <string name="home_spending_title">Spent</string>
-    <string name="home_invested_month">Invested: %1$s this month · %2$s in %3$s</string>
-    <string name="home_invested_other_month">Invested: %1$s in %2$s · %3$s in %4$s</string>
-    <string name="home_invested_year">Invested in %1$s: %2$s</string>
-    <string name="home_leftover">Left over until %1$s: average %2$s a month</string>
     <string name="investments_title">Investments</string>
     <string name="investments_this_month">This month</string>
     <string name="investments_all_time">All time</string>
@@ -704,15 +631,10 @@
     <string name="income_meal_card_plafond">Plafond</string>
     <string name="income_meal_card_plafond_from">Plafond (%1$s allowance)</string>
     <string name="income_meal_card_spent">Spent</string>
-    <string name="income_outlook">Income by month</string>
-    <string name="income_outlook_received">Received</string>
-    <string name="income_outlook_expected">Expected</string>
-    <string name="income_outlook_partial">Received so far + expected</string>
     <string name="income_outlook_total">Total for the year</string>
     <string name="income_outlook_total_detail">Received %1$s · expected %2$s</string>
     <string name="error_write_rejected">Couldn\'t save a change to the server.</string>
     <string name="error_write_permission">The server did not accept a change. Check that you are signed in with the right account.</string>
-    <string name="home_review_title">To review</string>
     <string name="home_review_subtitle">Recorded automatically</string>
     <string name="home_review_confirm_all">Confirm all</string>
     <string name="home_review_more">and %d more</string>
@@ -729,4 +651,11 @@
     <string name="home_recurring_suggestion_dismiss">Dismiss</string>
     <string name="home_recurring_suggestion_dismissed">Suggestion dismissed</string>
     <string name="income_meal_card_no_allowance">No meal allowance received in %1$s</string>
+    <string name="plan_working_days_computed">Working days: %1$d (calendar minus holidays and days off)</string>
+    <string name="evolution_caption_spent">Spent %1$s</string>
+    <string name="evolution_caption_received">Received %1$s</string>
+    <string name="evolution_caption_received_expected">Received %1$s · Expected %2$s</string>
+    <string name="home_invested_rate">You invested %1$s · %2$d%% of what you received</string>
+    <string name="home_invested">You invested %1$s</string>
+    <string name="home_review_title_count">To review (%1$d)</string>
 </resources>

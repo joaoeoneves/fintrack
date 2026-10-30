@@ -37,15 +37,15 @@ class BackupCodecReviewTest {
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
 
         assertEquals(doc, result.document)
-        assertEquals(22, result.document.schemaVersion)
+        assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
         assertEquals(listOf(true, false), result.document.expenses.map { it.needsReview })
     }
 
     @Test
     fun v23File_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(23),
-            BackupCodec.decode("""{$header,"schemaVersion":23}"""),
+            BackupDecodeResult.UnsupportedVersion(BACKUP_SCHEMA_VERSION + 1),
+            BackupCodec.decode("""{$header,"schemaVersion":24}"""),
         )
     }
 

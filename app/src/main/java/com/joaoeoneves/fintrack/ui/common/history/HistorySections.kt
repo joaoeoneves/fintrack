@@ -20,14 +20,13 @@ import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
 import com.joaoeoneves.fintrack.ui.activity.analytics.EnvelopeBreakdown
+import com.joaoeoneves.fintrack.ui.activity.analytics.EvolutionCaptions
 import com.joaoeoneves.fintrack.ui.activity.analytics.EvolutionSection
 import com.joaoeoneves.fintrack.ui.activity.analytics.HistoryFigures
 import com.joaoeoneves.fintrack.ui.activity.analytics.IncomeSourceRow
 import com.joaoeoneves.fintrack.ui.activity.analytics.MonthlyAverageLine
 import com.joaoeoneves.fintrack.ui.activity.analytics.SpendingComparisonLines
 import com.joaoeoneves.fintrack.ui.activity.analytics.SpendingSplitCard
-import com.joaoeoneves.fintrack.ui.activity.analytics.YearToDateFigure
-import com.joaoeoneves.fintrack.ui.activity.analytics.YearToDateRow
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.incomeFigures
 import com.joaoeoneves.fintrack.ui.activity.analytics.spendingFigures
@@ -37,14 +36,18 @@ import com.joaoeoneves.fintrack.ui.designsystem.SectionTitle
 import com.joaoeoneves.fintrack.ui.theme.AmountLarge
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
+import java.time.YearMonth
 
-/** The Gastos side: Spent with its comparison lines, fixed/variable, bars, breakdowns, year to date. */
+/** The Gastos side: Spent with its comparison lines, fixed/variable, bars and breakdowns. */
+@Suppress("LongParameterList") // the chart's Year-scale wiring is optional and defaulted
 @Composable
 fun SpendingHistory(
     analytics: ActivityAnalytics,
     history: ActivityHistory?,
     onCategoryClick: (Category) -> Unit,
     modifier: Modifier = Modifier,
+    yearScale: Boolean = false,
+    onMonthClick: (YearMonth) -> Unit = {},
 ) {
     val figures = remember(history) { history?.spendingFigures(null, null) ?: HistoryFigures() }
     val padding = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8)
@@ -60,7 +63,13 @@ fun SpendingHistory(
             figures.monthlyAverageCents?.let { MonthlyAverageLine(it) }
         }
         if (analytics.split.spendingCents > 0) SpendingSplitCard(analytics.split, padding)
-        figures.evolution?.let { EvolutionSection(it, padding) }
+        figures.evolution?.let {
+            if (yearScale) {
+                EvolutionSection(it, padding, EvolutionCaptions(R.string.evolution_caption_spent), onMonthClick)
+            } else {
+                EvolutionSection(it, padding)
+            }
+        }
         if (!analytics.breakdown.isEmpty) {
             CategoryBreakdownSection(
                 breakdown = analytics.breakdown,
@@ -79,7 +88,6 @@ fun SpendingHistory(
                 )
             }
         }
-        figures.yearToDate?.let { YearToDateRow(it, YearToDateFigure.SPENT, padding) }
     }
 }
 
@@ -122,20 +130,39 @@ fun IncomeHeadline(
     }
 }
 
-/** The Income tab's bars, "By source" and year to date; the [IncomeHeadline] is drawn separately, above the lines. */
+/**
+ * The Income tab's bars and "By source"; the [IncomeHeadline] is drawn separately, above the lines. On the Year
+ * scale ([yearScale]) a bar's caption reads "Received X" (plus "· Expected Y" for the months in [expectedByMonth])
+ * and a tap opens that month through [onMonthClick].
+ */
+@Suppress("LongParameterList") // the chart's Year-scale wiring is optional and defaulted
 @Composable
 fun IncomeHistory(
     history: ActivityHistory?,
     onSourceClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    yearScale: Boolean = false,
+    expectedByMonth: Map<YearMonth, Long> = emptyMap(),
+    onMonthClick: (YearMonth) -> Unit = {},
 ) {
     val analytics = remember(history) { history?.incomeAnalytics() }
     val figures = remember(history) { history?.incomeFigures(null) ?: HistoryFigures() }
     val padding = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space8)
     Column(modifier = modifier.fillMaxWidth()) {
-        figures.evolution?.let { EvolutionSection(it, padding) }
+        figures.evolution?.let {
+            if (yearScale) {
+                val captions =
+                    EvolutionCaptions(
+                        labelRes = R.string.evolution_caption_received,
+                        expectedLabelRes = R.string.evolution_caption_received_expected,
+                        expectedByMonth = expectedByMonth,
+                    )
+                EvolutionSection(it, padding, captions, onMonthClick)
+            } else {
+                EvolutionSection(it, padding)
+            }
+        }
         analytics?.sources?.takeIf { it.isNotEmpty() }?.let { SourceRows(it, onSourceClick, padding) }
-        figures.yearToDate?.let { YearToDateRow(it, YearToDateFigure.RECEIVED, padding) }
     }
 }
 

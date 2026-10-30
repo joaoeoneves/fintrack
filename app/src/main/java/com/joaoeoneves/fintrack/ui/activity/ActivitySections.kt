@@ -1,26 +1,17 @@
 package com.joaoeoneves.fintrack.ui.activity
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
@@ -39,18 +30,16 @@ import com.joaoeoneves.fintrack.ui.common.SortDropdown
 import com.joaoeoneves.fintrack.ui.common.SwipeToDeleteRow
 import com.joaoeoneves.fintrack.ui.common.categoryColorFor
 import com.joaoeoneves.fintrack.ui.common.dayHeaderOf
-import com.joaoeoneves.fintrack.ui.common.formatAmountCents
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.designsystem.EmptyState
 import com.joaoeoneves.fintrack.ui.designsystem.SegmentedTextTabs
 import com.joaoeoneves.fintrack.ui.theme.Dimens
-import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import com.joaoeoneves.fintrack.ui.theme.LocalDarkTheme
 import com.joaoeoneves.fintrack.ui.theme.motionAnimateItem
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** Period selector, one summary line, type tabs, chips (envelope/category or source), then the search and sort row. */
+/** Period selector, type tabs, chips (envelope/category or source), then the search and sort row. */
 fun LazyListScope.activityHeaderItems(
     state: ActivityUiState.Content,
     query: String,
@@ -65,9 +54,6 @@ fun LazyListScope.activityHeaderItems(
             modifier = Modifier.padding(horizontal = Dimens.Space8),
             showScaleSwitch = true,
         )
-    }
-    item(key = "summary") {
-        ActivitySummaryLine(state.summary, state.filters.type, actions.onOpenSpending, actions.onOpenIncomeTab)
     }
     item(key = "type") {
         SegmentedTextTabs(
@@ -183,72 +169,7 @@ private fun EnvelopeChipsRow(
         onSelected = onSelected,
         modifier = Modifier.padding(top = Dimens.Space16),
         dotColors = chips.map { categoryColorFor(it.colorKey, dark) },
-    )
-}
-
-/**
- * "Spent X · Received Y": only the side that matches the tab (both on All). Each figure is a link: "Spent" opens the
- * Spending tab and "Received" the Income tab, both for this period. A note repeats how much of the outflow went
- * into savings.
- */
-@Composable
-private fun ActivitySummaryLine(
-    summary: ActivitySummary,
-    type: ActivityType,
-    onOpenSpending: () -> Unit,
-    onOpenIncome: () -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.Space12)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (type != ActivityType.INCOME) {
-                SummaryLink(
-                    text = stringResource(R.string.activity_summary_spent, formatAmountCents(summary.spentCents)),
-                    onClickLabel = stringResource(R.string.cd_open_spending),
-                    onClick = onOpenSpending,
-                )
-            }
-            if (type == ActivityType.ALL) {
-                Text(text = " · ", style = MaterialTheme.typography.titleMedium)
-            }
-            if (type != ActivityType.EXPENSE) {
-                SummaryLink(
-                    text = stringResource(R.string.activity_summary_received, formatAmountCents(summary.receivedCents)),
-                    onClickLabel = stringResource(R.string.cd_open_income),
-                    onClick = onOpenIncome,
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = FinTrackTheme.colors.textSecondary,
-            )
-        }
-        if (type != ActivityType.INCOME && summary.savedCents != 0L) {
-            Text(
-                text =
-                    stringResource(R.string.activity_total_out_includes_saving, formatAmountCents(summary.savedCents)),
-                style = MaterialTheme.typography.bodySmall,
-                color = FinTrackTheme.colors.textSecondary,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SummaryLink(
-    text: String,
-    onClickLabel: String,
-    onClick: () -> Unit,
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier =
-            Modifier
-                .clickable(onClickLabel = onClickLabel, role = Role.Button, onClick = onClick)
-                .padding(vertical = Dimens.Space4),
+        showAmounts = false,
     )
 }
 

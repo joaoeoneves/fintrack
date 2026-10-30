@@ -15,7 +15,6 @@ class BackupCodecMonthSettingsTest {
         val result = BackupCodec.decode("""{$header,"schemaVersion":3,"plannedIncome":[$oldLine]}""").success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(22, result.document.schemaVersion)
         assertTrue(result.document.monthSettings.isEmpty())
         val line = result.document.plannedIncome.single()
         assertEquals("FIXED", line.basis)
@@ -27,7 +26,7 @@ class BackupCodecMonthSettingsTest {
     fun v1AndV2Files_stillDecode() {
         listOf(1, 2).forEach { v ->
             val result = BackupCodec.decode("""{$header,"schemaVersion":$v}""").success()
-            assertEquals(22, result.document.schemaVersion)
+            assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
         }
     }
 
@@ -38,7 +37,7 @@ class BackupCodecMonthSettingsTest {
         val doc =
             backupDoc().copy(
                 plannedIncome = listOf(line, yearly),
-                monthSettings = listOf(LocalMonthSettings("2026-10", 15), LocalMonthSettings("2026-11", 0)),
+                monthSettings = listOf(LocalMonthSettings("2026-10", 15), LocalMonthSettings("2026-11", 2)),
             )
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
@@ -91,25 +90,25 @@ class BackupCodecMonthSettingsTest {
     }
 
     @Test
-    fun v5File_decodesToV14_withDaysOffDefaultedToZero() {
+    fun v5File_withOnlyTheRemovedWorkingDays_decodesWithoutThatRecord_andNothingSkipped() {
         val v5 =
             """{$header,"schemaVersion":5,"monthSettings":[{"month":"2026-10","workingDays":15}]}"""
 
         val result = BackupCodec.decode(v5).success()
 
-        assertEquals(22, result.document.schemaVersion)
-        assertEquals(listOf(LocalMonthSettings("2026-10", 15, 0)), result.document.monthSettings)
+        assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
+        assertTrue(result.document.monthSettings.isEmpty())
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v6RoundTrip_preservesDaysOff_includingDaysOffOnlyRecords() {
+    fun v6RoundTrip_preservesDaysOff() {
         val doc =
             backupDoc().copy(
                 monthSettings =
                     listOf(
-                        LocalMonthSettings("2026-10", 15, 2),
-                        LocalMonthSettings("2026-11", null, 3),
+                        LocalMonthSettings("2026-10", 2),
+                        LocalMonthSettings("2026-11", 3),
                     ),
             )
 
@@ -125,16 +124,16 @@ class BackupCodecMonthSettingsTest {
             backupDoc().copy(
                 monthSettings =
                     listOf(
-                        LocalMonthSettings("2026-10", 15, 2),
-                        LocalMonthSettings("2026-11", null, 24),
-                        LocalMonthSettings("2026-12", 5, -1),
-                        LocalMonthSettings("2027-01", null, 0),
+                        LocalMonthSettings("2026-10", 2),
+                        LocalMonthSettings("2026-11", 24),
+                        LocalMonthSettings("2026-12", -1),
+                        LocalMonthSettings("2027-01", 0),
                     ),
             )
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
 
-        assertEquals(listOf(LocalMonthSettings("2026-10", 15, 2)), result.document.monthSettings)
+        assertEquals(listOf(LocalMonthSettings("2026-10", 2)), result.document.monthSettings)
         assertEquals(3, result.skippedCount)
     }
 }

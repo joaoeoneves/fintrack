@@ -28,7 +28,7 @@ import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Backup, restore, CSV import/export and the wipe in one group. */
+/** Backup, restore, CSV export and the wipe in one group. */
 @Composable
 fun DataSection(
     actions: DataSectionActions,
@@ -38,8 +38,6 @@ fun DataSection(
         SettingsRow(title = stringResource(R.string.settings_export_backup), onClick = actions.onExportBackup)
         Hairline()
         SettingsRow(title = stringResource(R.string.settings_restore_backup), onClick = actions.onRestoreBackup)
-        Hairline()
-        SettingsRow(title = stringResource(R.string.settings_import_csv), onClick = actions.onImportCsv)
         Hairline()
         SettingsRow(title = stringResource(R.string.settings_export_csv), onClick = actions.onExportCsv)
         Hairline()

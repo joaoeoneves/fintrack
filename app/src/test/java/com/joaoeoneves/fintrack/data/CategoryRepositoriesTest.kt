@@ -1,11 +1,11 @@
 package com.joaoeoneves.fintrack.data
 
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.usecase.CategoryUsage
 import com.joaoeoneves.fintrack.domain.usecase.CheckCategoryUsage
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.userCategory
 import kotlinx.coroutines.Dispatchers
@@ -158,38 +158,37 @@ class CategoryRepositoriesTest {
 
     private fun usage(
         expenses: FakeExpenseRepository = FakeExpenseRepository(),
-        budgets: FakeBudgetRepository = FakeBudgetRepository(),
         recurring: FakeRecurringRepository = FakeRecurringRepository(),
-    ) = CheckCategoryUsage(expenses, budgets, recurring)
+    ) = CheckCategoryUsage(expenses, recurring)
 
     @Test
     fun usage_unused() =
         runBlocking {
-            assertEquals(CategoryUsage(false, false), usage()(gymId).getOrThrow())
+            assertEquals(CategoryUsage(hasExpenses = false, hasRecurring = false), usage()(gymId).getOrThrow())
             assertTrue(!usage()(gymId).getOrThrow().inUse)
         }
 
     @Test
-    fun usage_expenseOnly_budgetOnly_both() =
+    fun usage_expenseOnly_recurringOnly_both() =
         runBlocking {
             val expenses = FakeExpenseRepository(listOf(testExpense("e", 1L, date, userCategory("gym"))))
-            val budgets = FakeBudgetRepository(listOf(Budget(gymId, 100L)))
+            val recurring = FakeRecurringRepository(listOf(recurringItem(categoryId = gymId)))
 
             assertEquals(CategoryUsage(true, false), usage(expenses)(gymId).getOrThrow())
-            assertEquals(CategoryUsage(false, true), usage(budgets = budgets)(gymId).getOrThrow())
-            assertEquals(CategoryUsage(true, true), usage(expenses, budgets)(gymId).getOrThrow())
+            assertEquals(CategoryUsage(false, true), usage(recurring = recurring)(gymId).getOrThrow())
+            assertEquals(CategoryUsage(true, true), usage(expenses, recurring)(gymId).getOrThrow())
         }
 
     @Test
     fun usage_eitherFailure_isFailure() =
         runBlocking {
             val expenseError = IllegalStateException("offline")
-            val budgetError = IllegalStateException("budgets down")
+            val recurringError = IllegalStateException("recurring down")
 
             val a = usage(FakeExpenseRepository(nextHasExpenseWithCategoryError = expenseError))(gymId)
-            val b = usage(budgets = FakeBudgetRepository(nextObserveBudgetsError = budgetError))(gymId)
+            val b = usage(recurring = FakeRecurringRepository(nextObserveError = recurringError))(gymId)
 
             assertEquals(expenseError, a.exceptionOrNull())
-            assertEquals(budgetError, b.exceptionOrNull())
+            assertEquals(recurringError, b.exceptionOrNull())
         }
 }

@@ -239,4 +239,73 @@ class FirestoreRecurringMappingTest {
         assertTrue(item != null)
         assertNull(item?.pausedAt)
     }
+
+    @Test
+    fun toFirestoreMap_alwaysWritesTheAdoptionMarker() {
+        assertEquals(true, recurringItem().toFirestoreMap()["autoPost"])
+        assertEquals(true, recurringItem(active = false).toFirestoreMap()["autoPost"])
+    }
+
+    @Test
+    fun isLegacyManual_isTrueForAFalseOrAbsentMarker_falseWhenTrue() {
+        assertTrue(snapshot(fields()).isLegacyManual())
+        assertTrue(snapshot(fields("autoPost" to TestDocumentSnapshots.booleanValue(false))).isLegacyManual())
+        assertTrue(!snapshot(fields("autoPost" to TestDocumentSnapshots.booleanValue(true))).isLegacyManual())
+    }
+
+    @Test
+    fun isLegacyManual_aNonBooleanMarker_countsAsLegacy() {
+        assertTrue(snapshot(fields("autoPost" to str("true"))).isLegacyManual())
+    }
+
+    @Test
+    fun mapper_ignoresTheMarker_bothValuesMapToTheSameItem() {
+        val off = map("autoPost" to TestDocumentSnapshots.booleanValue(false))
+        val on = map("autoPost" to TestDocumentSnapshots.booleanValue(true))
+
+        assertEquals(off, on)
+        assertEquals(map(), on)
+    }
+
+    @Test
+    fun legacyAdoptionUpdate_movesTheCursorToTheLastOccurrenceBeforeToday_andSetsTheMarker() {
+        val item = recurringItem(id = "doc1", handledThrough = day(2026, 1, 15))
+
+        val update = legacyAdoptionUpdate(item, day(2026, 4, 20))
+
+        assertEquals(setOf("handledThrough", "autoPost", "updatedAt"), update.keys)
+        assertEquals("2026-04-15", update["handledThrough"])
+        assertEquals(true, update["autoPost"])
+        assertEquals(FieldValue.serverTimestamp(), update["updatedAt"])
+    }
+
+    @Test
+    fun legacyAdoptionUpdate_todaysOccurrenceStaysPending() {
+        val update = legacyAdoptionUpdate(recurringItem(handledThrough = day(2026, 1, 15)), day(2026, 4, 15))
+
+        assertEquals("2026-03-15", update["handledThrough"])
+    }
+
+    @Test
+    fun legacyAdoptionUpdate_neverMovesTheCursorBackwards() {
+        val update = legacyAdoptionUpdate(recurringItem(handledThrough = day(2026, 6, 15)), day(2026, 4, 20))
+
+        assertEquals("2026-06-15", update["handledThrough"])
+    }
+
+    @Test
+    fun legacyAdoptionUpdate_futureStart_clearsNothingAndKeepsNullCursor() {
+        val update = legacyAdoptionUpdate(recurringItem(startDate = day(2026, 9, 1)), day(2026, 4, 20))
+
+        assertNull(update["handledThrough"])
+        assertEquals(true, update["autoPost"])
+    }
+
+    @Test
+    fun legacyAdoptionUpdate_unmappableItem_onlySetsTheMarker() {
+        val update = legacyAdoptionUpdate(null, day(2026, 4, 20))
+
+        assertEquals(setOf("autoPost", "updatedAt"), update.keys)
+        assertEquals(true, update["autoPost"])
+    }
 }

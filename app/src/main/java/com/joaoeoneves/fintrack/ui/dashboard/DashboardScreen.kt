@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -32,12 +31,8 @@ import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.HeroListSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
-import com.joaoeoneves.fintrack.ui.plan.ChangeSheet
-import com.joaoeoneves.fintrack.ui.plan.LocalReceiveFeedback
-import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringCard
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringModel
-import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringSnackbars
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringUiState
 import com.joaoeoneves.fintrack.ui.recurring.UpcomingRecurringViewModel
 import com.joaoeoneves.fintrack.ui.theme.Dimens
@@ -63,13 +58,10 @@ fun DashboardScreen(
     )
 
     val snackbarHostState = remember { SnackbarHostState() }
-    UpcomingRecurringSnackbars(upcomingViewModel, snackbarHostState)
     StartDismissedSnackbar(startViewModel, snackbarHostState)
-    val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
-    receiveFeedback.ChangeSheet()
     val start = StartChecklistModel(startState, callbacks.onOpenStartStep, startViewModel::onDismiss)
     val blocks = rememberHomeBlocks(start, callbacks, snackbarHostState)
-    val actions = dashboardActions(viewModel, upcomingViewModel, upcomingState, blocks, callbacks)
+    val actions = dashboardActions(viewModel, upcomingState, blocks, callbacks)
 
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
@@ -102,15 +94,13 @@ fun DashboardScreen(
             }
         },
     ) { innerPadding ->
-        CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
-            DashboardBody(
-                uiState = uiState,
-                actions = actions,
-                callbacks = callbacks,
-                scroll = DashboardScroll(pill, listState),
-                contentPadding = innerPadding,
-            )
-        }
+        DashboardBody(
+            uiState = uiState,
+            actions = actions,
+            callbacks = callbacks,
+            scroll = DashboardScroll(pill, listState),
+            contentPadding = innerPadding,
+        )
     }
 }
 
@@ -166,7 +156,6 @@ private data class DashboardScroll(
 
 private fun dashboardActions(
     viewModel: DashboardViewModel,
-    upcomingViewModel: UpcomingRecurringViewModel,
     upcomingState: UpcomingRecurringUiState,
     blocks: HomeBlocks,
     callbacks: DashboardCallbacks,
@@ -181,9 +170,6 @@ private fun dashboardActions(
     upcoming =
         UpcomingRecurringModel(
             state = upcomingState,
-            onConfirm = upcomingViewModel::onConfirm,
-            onSkip = upcomingViewModel::onSkip,
-            onReceiveIncome = upcomingViewModel::onReceiveIncome,
             onManage = callbacks.onOpenRecurring,
         ),
     blocks = blocks,
@@ -229,8 +215,6 @@ private fun DashboardContent(
                 UpcomingRecurringCard(model = actions.upcoming, modifier = Modifier.padding(top = SectionSpacing))
             }
         }
-        recurringSuggestionItems(recurring = actions.blocks.recurring, visible = state.showsCurrentMonthBlocks)
-        activityItems(state = state, callbacks = callbacks)
     }
 }
 
@@ -253,27 +237,9 @@ private fun LazyListScope.summaryItems(
             ScreenItem(Modifier.padding(top = Dimens.Space16)) {
                 InvestedRow(
                     figure = invested,
-                    month = state.budgetMonth,
-                    isCurrentMonth = state.budgetMonthIsCurrent,
                     onClick = { callbacks.onOpenInvestments(state.period) },
                 )
             }
-        }
-    }
-    state.leftover?.let { leftover ->
-        item(key = "leftover") {
-            ScreenItem(Modifier.padding(top = Dimens.Space12)) { LeftoverRow(figure = leftover) }
-        }
-    }
-}
-
-private fun LazyListScope.activityItems(
-    state: DashboardUiState.Content,
-    callbacks: DashboardCallbacks,
-) {
-    item(key = "recent_activity") {
-        ScreenItem(Modifier.padding(top = SectionSpacing)) {
-            RecentActivitySection(items = state.recent, period = state.period, callbacks = callbacks)
         }
     }
 }

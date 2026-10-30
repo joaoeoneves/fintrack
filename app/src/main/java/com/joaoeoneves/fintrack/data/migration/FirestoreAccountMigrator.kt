@@ -23,9 +23,9 @@ private val SERVER_TIMEOUT = 30.seconds
 
 /**
  * Moves guest data into `users/{uid}`: ids are preserved (`document(id)`), batches are committed
- * one at a time and awaited, in the order category groups, categories, budgets, expenses, income, planned income,
+ * one at a time and awaited, in the order category groups, categories, expenses, income, planned income,
  * recurring, month
- * settings, salary profile, goals so the rules' `existsAfter` category lookup finds every custom category a later batch
+ * settings, salary profile so the rules' `existsAfter` category lookup finds every custom category a later batch
  * references. Awaiting is deliberate here (unlike the normal repositories): the caller must know a batch
  * reached the server before the local copy may be removed, so each wait is bounded by a timeout.
  */
@@ -71,12 +71,10 @@ class FirestoreAccountMigrator
             return RemoteAccountSnapshot(
                 expenseIds = ids("expenses"),
                 incomeIds = ids("income"),
-                budgetCategoryIds = ids("budgets"),
                 plannedIncomeIds = ids("plannedIncome"),
                 plannedIncomeLabels = lines.mapNotNullTo(mutableSetOf()) { it.getString("label") },
                 plannedIncomeIdsByLabel = idsByLabel(lines),
                 recurringIds = ids("recurring"),
-                goalIds = ids("goals"),
                 monthSettingsIds = ids("monthSettings"),
                 categories = categories,
                 categoryGroups = groups,

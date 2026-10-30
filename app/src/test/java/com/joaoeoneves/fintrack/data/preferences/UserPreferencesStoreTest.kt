@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.data.preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
 import kotlinx.coroutines.Job
@@ -22,7 +21,7 @@ class UserPreferencesStoreTest : PreferencesStoreTestBase() {
     fun data_onFreshFile_emitsDefaults() =
         runTest {
             assertEquals(
-                UserPreferences(ThemePreference.DARK, CurrencyOption.EUR, AppLanguage.SYSTEM),
+                UserPreferences(ThemePreference.DARK, AppLanguage.SYSTEM),
                 store.data.first(),
             )
         }
@@ -32,10 +31,10 @@ class UserPreferencesStoreTest : PreferencesStoreTestBase() {
         runTest {
             val result =
                 store.update {
-                    it.copy(ThemePreference.LIGHT, CurrencyOption.USD, AppLanguage.ENGLISH)
+                    it.copy(ThemePreference.LIGHT, AppLanguage.ENGLISH)
                 }
 
-            val expected = UserPreferences(ThemePreference.LIGHT, CurrencyOption.USD, AppLanguage.ENGLISH)
+            val expected = UserPreferences(ThemePreference.LIGHT, AppLanguage.ENGLISH)
             assertEquals(expected, result)
             assertEquals(expected, store.data.first())
         }
@@ -43,10 +42,10 @@ class UserPreferencesStoreTest : PreferencesStoreTestBase() {
     @Test
     fun update_singleField_leavesOthersAtCurrentValues() =
         runTest {
-            store.update { it.copy(currency = CurrencyOption.GBP) }
+            store.update { it.copy(language = AppLanguage.ENGLISH) }
 
             assertEquals(
-                UserPreferences(ThemePreference.DARK, CurrencyOption.GBP, AppLanguage.SYSTEM),
+                UserPreferences(ThemePreference.DARK, AppLanguage.ENGLISH),
                 store.data.first(),
             )
         }
@@ -68,13 +67,13 @@ class UserPreferencesStoreTest : PreferencesStoreTestBase() {
     @Test
     fun secondStoreOnSameFile_readsPersistedValues() =
         runTest {
-            store.update { UserPreferences(ThemePreference.LIGHT, CurrencyOption.JPY, AppLanguage.SYSTEM) }
+            store.update { UserPreferences(ThemePreference.LIGHT, AppLanguage.SYSTEM) }
             scope.coroutineContext[Job]!!.cancelAndJoin()
 
             val second = UserPreferencesStore(newDataStore(newScope()))
 
             assertEquals(
-                UserPreferences(ThemePreference.LIGHT, CurrencyOption.JPY, AppLanguage.SYSTEM),
+                UserPreferences(ThemePreference.LIGHT, AppLanguage.SYSTEM),
                 second.data.first(),
             )
         }
@@ -103,10 +102,21 @@ class UserPreferencesStoreTest : PreferencesStoreTestBase() {
             assertEquals(UserPreferences(), store.data.first())
         }
 
+    @Test
+    fun data_removedLegacyKeys_areIgnored() =
+        runTest {
+            dataStore.edit {
+                it[stringPreferencesKey("currency")] = "USD"
+                it[stringPreferencesKey("motion_preference")] = "ON"
+                it[stringPreferencesKey(KEY_THEME)] = "LIGHT"
+            }
+
+            assertEquals(UserPreferences(ThemePreference.LIGHT, AppLanguage.SYSTEM), store.data.first())
+        }
+
     private suspend fun writeRaw(value: String) {
         dataStore.edit {
             it[stringPreferencesKey(KEY_THEME)] = value
-            it[stringPreferencesKey(KEY_CURRENCY)] = value
             it[stringPreferencesKey(KEY_LANGUAGE)] = value
         }
     }

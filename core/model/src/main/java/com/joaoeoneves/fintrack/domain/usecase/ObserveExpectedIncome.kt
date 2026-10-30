@@ -68,7 +68,7 @@ class ObserveExpectedIncome
                             .filter { today >= it.payDate.minusDays(PAYDAY_LEAD_DAYS) }
                     }
                 val current = monthSettings.firstOrNull { it.month == month }
-                val workingDays = effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
+                val workingDays = effectiveWorkingDays(month, current?.daysOff ?: 0)
                 ExpectedIncome(
                     month = month,
                     workingDays = workingDays,

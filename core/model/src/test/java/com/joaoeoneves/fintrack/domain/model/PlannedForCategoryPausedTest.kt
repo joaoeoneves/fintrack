@@ -14,7 +14,7 @@ class PlannedForCategoryPausedTest {
     private fun planned(
         month: YearMonth,
         vararg items: RecurringItem,
-    ) = plannedForCategory(month, null, items.toList())
+    ) = plannedForCategory(month, items.toList())
 
     @Test
     fun skippedOccurrence_isExcluded_otherMonthsStillCount() {

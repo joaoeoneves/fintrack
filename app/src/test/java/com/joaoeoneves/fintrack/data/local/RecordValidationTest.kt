@@ -81,14 +81,6 @@ class RecordValidationTest {
         validateIncome(LocalIncome("i", "s".repeat(200), 1, date, "n".repeat(2000)))
     }
 
-    @Test
-    fun budget_rules() {
-        validateBudget("FOOD", 1, known)
-        validateBudget("FOOD", 0, known)
-        invalid { validateBudget("FOOD", -1, known) }
-        invalid { validateBudget("NOPE", 1, known) }
-    }
-
     private fun cat(
         id: String = "c1",
         name: String? = "Gym",

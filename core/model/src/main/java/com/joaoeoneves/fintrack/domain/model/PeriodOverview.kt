@@ -4,11 +4,11 @@ import java.time.YearMonth
 
 /**
  * Everything the dashboard shows for a selected [Period]: its [transactions] and their [summary],
- * the [budgets] progress and monthly [plan] for [budgetMonth] (the anchor month for month periods, otherwise the
- * current month), the [envelopes] of [budgetMonth] (spend per group), the [recurring]
+ * the [budgets] progress (per-category planned vs spent) and monthly [plan] for [budgetMonth] (the anchor month for
+ * month periods, otherwise the current month), the [envelopes] of [budgetMonth] (spend per group), the [recurring]
  * items they were planned from, the [recent] activity preview and the [periodEnvelopes]: spent per envelope over the
  * whole
- * period (not just [budgetMonth]; amounts and funding are not meaningful there).
+ * period (not just [budgetMonth]; planned amounts are not meaningful there).
  */
 data class PeriodOverview(
     val budgetMonth: YearMonth,

@@ -25,24 +25,6 @@ data class ActivityFilters(
     val incomeSource: String? = null,
 )
 
-/**
- * The money in and out of the visible list: [inCents] is income, [outCents] net expenses (refunds netted, savings
- * included) of which [spendingCents] is spending and [savedCents] is put into savings.
- */
-data class ActivityTotals(
-    val inCents: Long,
-    val outCents: Long,
-    val spendingCents: Long = outCents,
-    val savedCents: Long = 0L,
-)
-
-/** The summary line: [spentCents] spending (investments are [savedCents], shown apart) and [receivedCents] in. */
-data class ActivitySummary(
-    val spentCents: Long,
-    val savedCents: Long,
-    val receivedCents: Long,
-)
-
 sealed interface ActivityUiState {
     data object Loading : ActivityUiState
 
@@ -56,12 +38,10 @@ sealed interface ActivityUiState {
         val canGoToNextMonth: Boolean,
         val items: List<Transaction>,
         val days: List<DaySection<Transaction>>,
-        val totals: ActivityTotals,
         val filters: ActivityFilters,
         val analytics: ActivityAnalytics,
         val categoryScope: Set<CategoryId>? = null,
         val incomeSources: List<IncomeSourceChip> = emptyList(),
-        val summary: ActivitySummary = ActivitySummary(0L, 0L, 0L),
     ) : ActivityUiState
 
     data class Error(

@@ -1,6 +1,5 @@
 package com.joaoeoneves.fintrack.data.backup
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
@@ -65,7 +64,6 @@ internal fun backupCategory(
 internal fun backupDoc(
     expenses: List<LocalExpense> = emptyList(),
     income: List<LocalIncome> = emptyList(),
-    budgets: List<LocalBudget> = emptyList(),
     categories: List<LocalCategory> = emptyList(),
     preferences: BackupPreferences? = null,
 ) = BackupDocument(
@@ -73,7 +71,6 @@ internal fun backupDoc(
     preferences = preferences,
     expenses = expenses,
     income = income,
-    budgets = budgets,
     categories = categories,
 )
 

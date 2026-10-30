@@ -2,14 +2,10 @@
 
 package com.joaoeoneves.fintrack.ui.activity
 
-import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.Transaction
-import com.joaoeoneves.fintrack.domain.model.netCents
-import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.ui.activity.analytics.NO_ENVELOPE
 import com.joaoeoneves.fintrack.ui.common.amountMatchesQuery
 import com.joaoeoneves.fintrack.ui.common.containsIgnoreCase
@@ -119,23 +115,3 @@ private fun Transaction.sortAmountCents(): Long =
         is Expense -> signedAmountCents
         is Income -> amountCents
     }
-
-/**
- * The totals of exactly the [items] the list shows: income received, and the net outflow of the expenses
- * ([ActivityTotals.outCents], refunds netted, savings included) split into what is spending and what was saved by
- * the [categories] catalog. Filters and the type tab therefore always move the totals with the list.
- */
-fun activityTotalsOf(
-    items: List<Transaction>,
-    categories: List<Category>,
-): ActivityTotals {
-    val expenses = items.filterIsInstance<Expense>()
-    val saved = expenses.filter { categories.resolve(it.category.id).kind == CategoryKind.SAVING }.netCents()
-    val out = expenses.netCents()
-    return ActivityTotals(
-        inCents = items.filterIsInstance<Income>().sumOf { it.amountCents },
-        outCents = out,
-        spendingCents = out - saved,
-        savedCents = saved,
-    )
-}

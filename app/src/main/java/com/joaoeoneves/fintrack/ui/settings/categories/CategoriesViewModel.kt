@@ -285,7 +285,7 @@ class CategoriesViewModel(
         moveDialog.value = MoveDialogState.Checking(dialog.source)
         viewModelScope.launch {
             moveCategoryItems
-                .preview(dialog.source.id, target.id)
+                .preview(dialog.source.id)
                 .onSuccess { moveDialog.value = MoveDialogState.Confirm(dialog.source, target, it) }
                 .onFailure { moveDialog.value = MoveDialogState.CannotVerify(dialog.source) }
         }

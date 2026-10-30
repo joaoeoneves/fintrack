@@ -1,12 +1,10 @@
 package com.joaoeoneves.fintrack.data.local
 
 import android.app.Application
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,7 +17,6 @@ import org.robolectric.annotation.Config
 class LocalCategoryMoveTest : LocalStoreTestBase() {
     private val store by lazy { newStore() }
     private val expenses by lazy { LocalExpenseRepository(store, SequenceIds("e")) }
-    private val budgets by lazy { LocalBudgetRepository(store) }
     private val recurring by lazy { LocalRecurringRepository(store, SequenceIds("r")) }
     private val food = CategoryId("FOOD")
     private val shopping = CategoryId("SHOPPING")
@@ -120,57 +117,5 @@ class LocalCategoryMoveTest : LocalStoreTestBase() {
             assertEquals(before, revision())
             assertTrue(recurring.moveRecurringCategory(shopping, ghost).isFailure)
             assertEquals(before, revision())
-        }
-
-    // ---- budgets ----
-
-    @Test
-    fun moveBudget_noTargetBudget_movesLimit_returnsTrue_singleBump() =
-        runStoreTest {
-            budgets.setBudget(food, 5_000)
-            budgets.setBudget(CategoryId("TRANSFER"), 1_000)
-            val before = revision()
-
-            assertTrue(budgets.moveBudget(food, shopping).getOrThrow())
-
-            assertEquals(before + 1, revision())
-            val result =
-                budgets
-                    .observeBudgets()
-                    .first()
-                    .untimed()
-                    .toSet()
-            assertEquals(setOf(Budget(shopping, 5_000), Budget(CategoryId("TRANSFER"), 1_000)), result)
-        }
-
-    @Test
-    fun moveBudget_targetHasBudget_targetWins_sourceDropped() =
-        runStoreTest {
-            budgets.setBudget(food, 5_000)
-            budgets.setBudget(shopping, 800)
-
-            assertTrue(budgets.moveBudget(food, shopping).getOrThrow())
-
-            assertEquals(listOf(Budget(shopping, 800)), budgets.observeBudgets().first().untimed())
-        }
-
-    @Test
-    fun moveBudget_sourceWithoutBudget_returnsFalse_writesNothing() =
-        runStoreTest {
-            budgets.setBudget(shopping, 800)
-            val before = revision()
-
-            assertFalse(budgets.moveBudget(food, shopping).getOrThrow())
-            assertEquals(before, revision())
-            assertEquals(listOf(Budget(shopping, 800)), budgets.observeBudgets().first().untimed())
-        }
-
-    @Test
-    fun moveBudget_unknownTarget_fails_keepsSourceBudget() =
-        runStoreTest {
-            budgets.setBudget(food, 5_000)
-
-            assertTrue(budgets.moveBudget(food, ghost).isFailure)
-            assertEquals(listOf(Budget(food, 5_000)), budgets.observeBudgets().first().untimed())
         }
 }

@@ -4,7 +4,6 @@ import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Leftover
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.SpendingComparison
-import com.joaoeoneves.fintrack.domain.model.YearToDate
 import com.joaoeoneves.fintrack.domain.model.spendingComparisonOf
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
 import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
@@ -95,14 +94,11 @@ fun ActivityHistory.evolutionOf(valuesCents: List<Long>): Evolution? {
 data class HistoryFigures(
     val comparison: SpendingComparison? = null,
     val monthlyAverageCents: Long? = null,
-    val yearToDate: YearToDate? = null,
     val leftover: Leftover? = null,
     val evolution: Evolution? = null,
 ) {
-    val hasDetails: Boolean get() = yearToDate != null || evolution != null
+    val hasDetails: Boolean get() = evolution != null
 }
-
-internal fun YearToDate.orNull(): YearToDate? = takeIf { spentCents != 0L || incomeCents != 0L || savedCents != 0L }
 
 /** The Expenses/All header's figures; the Evolution chart follows the active [category] or envelope [scope]. */
 fun ActivityHistory.spendingFigures(
@@ -112,7 +108,6 @@ fun ActivityHistory.spendingFigures(
     HistoryFigures(
         comparison = comparison()?.takeIf { it.previousCents != null || it.averageCents != null },
         monthlyAverageCents = monthlyAverageSpendingCents(),
-        yearToDate = monthly.yearToDate.orNull(),
         leftover = monthly.leftover.takeIf { it.months > 0 },
         evolution = evolutionOf(spendingSeries(category, scope)),
     )

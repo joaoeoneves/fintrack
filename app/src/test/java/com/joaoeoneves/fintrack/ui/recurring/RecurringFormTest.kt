@@ -205,21 +205,6 @@ class RecurringFormTest {
     }
 
     @Test
-    fun autoPost_defaultsOnForNewItems_andToItemCarriesIt() {
-        val form = newRecurringForm(start, BuiltInCategories.FOOD).copy(name = "Rent", amountCents = 500L)
-
-        assertTrue(form.autoPost)
-        assertTrue(form.toItem(null).autoPost)
-        assertEquals(false, form.copy(autoPost = false).toItem(null).autoPost)
-    }
-
-    @Test
-    fun toForm_keepsStoredAutoPost_includingOff() {
-        assertEquals(false, recurringItem(autoPost = false).toForm(null).autoPost)
-        assertEquals(true, recurringItem(autoPost = true).toForm(null).autoPost)
-    }
-
-    @Test
     fun toItem_pausedSwitchOnAnActiveItem_pausesToday() {
         val existing = recurringItem(id = "r9", handledThrough = day(2026, 2, 15))
 

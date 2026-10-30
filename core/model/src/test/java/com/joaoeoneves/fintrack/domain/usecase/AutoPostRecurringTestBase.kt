@@ -21,7 +21,7 @@ abstract class AutoPostRecurringTestBase {
         id: String = "r1",
         handled: LocalDate? = day(2026, 1, 15),
         skipped: Set<LocalDate> = emptySet(),
-    ) = recurringItem(id = id, handledThrough = handled, autoPost = true, skipped = skipped)
+    ) = recurringItem(id = id, handledThrough = handled, skipped = skipped)
 
     /** The expense an auto-post pass would have created for [date] of item [itemId]. */
     protected fun rentExpense(

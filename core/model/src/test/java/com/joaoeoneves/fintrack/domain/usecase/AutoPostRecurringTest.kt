@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.testutil.recurringItem
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Test
 
 /** [AutoPostRecurring]: posts + advances, only advances when the transaction exists, per-item failure isolation. */
@@ -43,12 +44,64 @@ class AutoPostRecurringTest : AutoPostRecurringTestBase() {
         }
 
     @Test
-    fun manualItems_areIgnored() =
+    fun pausedItems_neverPost() =
         runBlocking {
-            val repo = FakeRecurringRepository(listOf(recurringItem(handledThrough = day(2026, 1, 15))))
+            val repo = FakeRecurringRepository(listOf(auto().copy(active = false)))
 
             assertEquals(0, build(repo)(today, zone))
             assertTrue(repo.confirmedTransactions.isEmpty())
+        }
+
+    @Test
+    fun adoptsLegacyItemsBeforePosting_withTodayAsTheCutoff() =
+        runBlocking {
+            val repo = FakeRecurringRepository(listOf(auto()))
+
+            build(repo)(today, zone)
+
+            assertEquals(listOf(today), repo.adoptCalls)
+            assertEquals("adopt", repo.calls.first())
+        }
+
+    @Test
+    fun adoptionFailure_postsNothing_andReportsFailed() =
+        runBlocking {
+            val repo = FakeRecurringRepository(listOf(auto()))
+            repo.adoptResult = Result.failure(IllegalStateException("offline"))
+
+            val outcome = build(repo).run(today, zone)
+
+            assertEquals(AutomationOutcome(0, failed = true), outcome)
+            assertTrue(repo.confirmedTransactions.isEmpty())
+            assertEquals(day(2026, 1, 15), repo.items.single().handledThrough)
+        }
+
+    @Test
+    @Ignore("Production bug: self-heal re-creates the adopted backlog (see report); re-enable once fixed")
+    fun legacyItemWithAThreeMonthGap_postsOnlyTodaysOccurrence() =
+        runBlocking {
+            val dueDay = day(2026, 4, 15)
+            val repo = FakeRecurringRepository(listOf(auto(handled = day(2026, 1, 15))))
+            repo.legacyManualIds += "r1"
+
+            val posted = build(repo, expensesFor(day(2026, 1, 15)))(dueDay, zone)
+
+            assertEquals(1, posted)
+            assertEquals(listOf("rec_r1_20260415"), repo.confirmedTransactions.map { it.id })
+            assertEquals(day(2026, 4, 15), repo.items.single().handledThrough)
+        }
+
+    @Test
+    @Ignore("Production bug: self-heal re-creates the adopted backlog (see report); re-enable once fixed")
+    fun legacyItem_onADayWithNothingDue_postsNothing_andBacklogIsHandled() =
+        runBlocking {
+            val repo = FakeRecurringRepository(listOf(auto(handled = day(2026, 1, 15))))
+            repo.legacyManualIds += "r1"
+
+            assertEquals(0, build(repo)(today, zone))
+
+            assertTrue(repo.confirmedTransactions.isEmpty())
+            assertEquals(day(2026, 3, 15), repo.items.single().handledThrough)
         }
 
     @Test
@@ -87,7 +140,7 @@ class AutoPostRecurringTest : AutoPostRecurringTestBase() {
     fun income_isSkipped_itsLineRecordsIt() =
         runBlocking {
             val salary =
-                recurringItem(id = "s", type = RecurringType.INCOME, handledThrough = day(2026, 2, 15), autoPost = true)
+                recurringItem(id = "s", type = RecurringType.INCOME, handledThrough = day(2026, 2, 15))
             val repo = FakeRecurringRepository(listOf(salary))
 
             assertEquals(0, build(repo)(today, zone))

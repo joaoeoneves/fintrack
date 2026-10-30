@@ -106,17 +106,6 @@ class DocumentMappingWrongTypeTest {
     }
 
     @Test
-    fun budget_stringLimitCents_isDropped_andValidDocStillMaps() {
-        val bad = doc("budgets", mapOf("limitCents" to str("100")))
-
-        assertNull(callTop("FirestoreBudgetRepositoryKt", "toBudgetOrNull", bad))
-        assertDroppedAndLogged()
-        assertNotNull(
-            callTop("FirestoreBudgetRepositoryKt", "toBudgetOrNull", doc("budgets", mapOf("limitCents" to lng(100L)))),
-        )
-    }
-
-    @Test
     fun plannedIncome_numericLabel_isDropped_andLogged() {
         val bad = mapOf("label" to lng(1L), "amountCents" to lng(100L), "order" to lng(1L))
 

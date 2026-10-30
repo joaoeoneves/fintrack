@@ -35,7 +35,6 @@ data class RecurringForm(
     val dayText: String = "",
     val monthOfYear: Int? = null,
     val endDate: LocalDate? = null,
-    val autoPost: Boolean = true,
     /** Paused: no occurrences are offered or posted until resumed (editing an existing item only). */
     val paused: Boolean = false,
 )
@@ -103,7 +102,7 @@ private val monthRange = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
 /**
  * The item this (already validated) form describes: text trimmed, the category dropped for income,
  * the month dropped for monthly items. Keeps [existing]'s id, handled-through cursor, skipped occurrences,
- * pause day and active flag when editing; a new item is active with a blank id. [autoPost] starts on for a new item.
+ * pause day and active flag when editing; a new item is active with a blank id.
  */
 fun RecurringForm.toItem(
     existing: RecurringItem?,
@@ -132,7 +131,6 @@ private fun RecurringForm.toBaseItem(existing: RecurringItem?): RecurringItem =
         endDate = endDate,
         handledThrough = existing?.handledThrough,
         active = existing?.active ?: true,
-        autoPost = autoPost,
         skipped = existing?.skipped.orEmpty(),
         pausedAt = existing?.pausedAt,
     )
@@ -150,7 +148,6 @@ fun RecurringItem.toForm(category: Category?): RecurringForm =
         dayText = dayOfMonth.toString(),
         monthOfYear = monthOfYear,
         endDate = endDate,
-        autoPost = autoPost,
         paused = !active,
     )
 

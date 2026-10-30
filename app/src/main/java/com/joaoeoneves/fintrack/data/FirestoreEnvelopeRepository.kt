@@ -8,9 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.Envelope
-import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeEdit
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -25,7 +23,7 @@ private const val TAG = "FirestoreEnvelopeRepo"
 /**
  * Envelopes stored under `users/{uid}/categoryGroups` (the collection keeps its pre-envelope name). Writes are not
  * awaited (they land in the local cache immediately and sync when online). An envelope is saved with its
- * categories' `groupId` and budgets in the same batch.
+ * categories' `groupId` in the same batch.
  */
 class FirestoreEnvelopeRepository
     @Inject
@@ -33,7 +31,6 @@ class FirestoreEnvelopeRepository
         private val firestore: FirebaseFirestore,
         private val firebaseAuth: FirebaseAuth,
         private val categoryRepository: FirestoreCategoryRepository,
-        private val budgetRepository: FirestoreBudgetRepository,
     ) : EnvelopeRepository {
         private fun userDoc(uid: String) = firestore.collection("users").document(uid)
 
@@ -64,31 +61,17 @@ class FirestoreEnvelopeRepository
                 val order =
                     envelopes.find { it.id == docRef.id }?.order ?: ((envelopes.maxOfOrNull { it.order } ?: -1) + 1)
                 val batch = firestore.batch()
-                val template = Envelope(docRef.id, edit.name, order, edit.amountCents, edit.fundedByLineId)
-                val existing = envelopes.find { it.id == docRef.id }
-                val saved = existing.savedAs(template, edit.amountCents, edit.effectiveFrom)
+                // The pre-5.5 fixed amount, funding line and amount history are removed from the document.
                 batch.set(
                     docRef,
                     mapOf(
                         "name" to edit.name,
                         "order" to order,
-                        "amountCents" to (saved.amountCents ?: FieldValue.delete()),
-                        "fundedBy" to (edit.fundedByLineId ?: FieldValue.delete()),
                         "updatedAt" to FieldValue.serverTimestamp(),
-                    ) + planTimingFields(saved.startMonth, saved.versions),
+                    ) + LEGACY_ENVELOPE_FIELDS.associateWith { FieldValue.delete() },
                     SetOptions.merge(),
                 )
-                edit.fundedByLineId?.takeIf { it != existing?.fundedByLineId }?.let { line ->
-                    envelopes.filter { it.id != docRef.id && it.fundedByLineId == line }.forEach {
-                        batch.set(
-                            collection(uid).document(it.id),
-                            mapOf("fundedBy" to FieldValue.delete(), "updatedAt" to FieldValue.serverTimestamp()),
-                            SetOptions.merge(),
-                        )
-                    }
-                }
                 fileCategories(batch, uid, docRef.id, edit)
-                writeLimits(batch, uid, edit, budgetRepository.observeBudgets().first())
                 batch.commit().addOnFailureListener(onFail(TAG, "Save envelope ${docRef.id} write failed"))
                 docRef.id
             }
@@ -112,35 +95,6 @@ class FirestoreEnvelopeRepository
                         )
                     }
                 }
-        }
-
-        // The limits to set or clear; none are touched when the edit lists none.
-        private fun writeLimits(
-            batch: WriteBatch,
-            uid: String,
-            edit: EnvelopeEdit,
-            existing: List<Budget>,
-        ) {
-            val budgets = userDoc(uid).collection("budgets")
-            edit.limits.forEach { (categoryId, budget) ->
-                if (budget == null) {
-                    batch.delete(budgets.document(categoryId.value))
-                } else {
-                    val saved =
-                        existing
-                            .find { it.categoryId == categoryId }
-                            .savedAs(categoryId, budget.limitCents, budget.skipMonths, edit.effectiveFrom)
-                    batch.set(
-                        budgets.document(categoryId.value),
-                        mapOf(
-                            "limitCents" to saved.limitCents,
-                            "skipMonths" to budget.skipMonths.sorted(),
-                            "updatedAt" to FieldValue.serverTimestamp(),
-                        ) + planTimingFields(saved.startMonth, saved.versions),
-                        SetOptions.merge(),
-                    )
-                }
-            }
         }
 
         override suspend fun reorderEnvelopes(orderedIds: List<String>): Result<Unit> =
@@ -182,21 +136,17 @@ class FirestoreEnvelopeRepository
         }
     }
 
-/** Written whole (no merge); the id is the document id, an absent amount or funding is omitted. */
+/** Envelope fields written before 5.5: tolerated by the rules, ignored on read, deleted on save. */
+private val LEGACY_ENVELOPE_FIELDS = listOf("amountCents", "fundedBy", "startMonth", "versions")
+
+/** Written whole (no merge); the id is the document id. */
 internal fun Envelope.toFirestoreMap(): Map<String, Any?> =
-    buildMap {
-        put("name", name)
-        put("order", order)
-        amountCents?.let { put("amountCents", it) }
-        fundedByLineId?.let { put("fundedBy", it) }
-        putAll(planTimingFields(startMonth, versions))
-        put("updatedAt", FieldValue.serverTimestamp())
-    }
+    mapOf("name" to name, "order" to order, "updatedAt" to FieldValue.serverTimestamp())
 
 internal fun QuerySnapshot.toEnvelopeList(): List<Envelope> =
     documents.mapNotNull { it.toEnvelopeOrNull() }.sortedWith(compareBy({ it.order }, { it.id }))
 
-/** Lenient: an amount outside 1..[MAX_AMOUNT_CENTS] and a blank funding line count as absent. */
+/** Lenient: the legacy amount, funding and timing fields are ignored. */
 internal fun DocumentSnapshot.toEnvelopeOrNull(): Envelope? =
     mapOrNull("envelope") {
         val name = getString("name")?.takeIf { it.isNotBlank() }
@@ -206,14 +156,6 @@ internal fun DocumentSnapshot.toEnvelopeOrNull(): Envelope? =
             null
         } else {
             val clamped = order.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
-            Envelope(
-                id = id,
-                name = name,
-                order = clamped,
-                amountCents = getLong("amountCents")?.takeIf { it in 1..MAX_AMOUNT_CENTS },
-                fundedByLineId = getString("fundedBy")?.takeIf { it.isNotBlank() },
-                startMonth = startMonthOrNull(),
-                versions = versionsOrEmpty(),
-            )
+            Envelope(id = id, name = name, order = clamped)
         }
     }

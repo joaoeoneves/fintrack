@@ -22,7 +22,6 @@ class PendingWriteSalaryProfileTest {
         emptyList(),
         emptyList(),
         emptyList(),
-        emptyList(),
         plannedIncome,
         emptyList(),
         0,

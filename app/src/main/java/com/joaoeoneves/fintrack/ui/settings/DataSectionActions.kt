@@ -4,7 +4,6 @@ package com.joaoeoneves.fintrack.ui.settings
 data class DataSectionActions(
     val onExportBackup: () -> Unit,
     val onRestoreBackup: () -> Unit,
-    val onImportCsv: () -> Unit,
     val onExportCsv: () -> Unit,
     val onDeleteAll: () -> Unit,
 )

@@ -4,10 +4,8 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import com.joaoeoneves.fintrack.domain.model.MAX_AMOUNT_CENTS
 import com.joaoeoneves.fintrack.domain.model.MAX_CATEGORY_NAME_LENGTH
-import com.joaoeoneves.fintrack.domain.model.MAX_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.MAX_NAME_LENGTH
 import com.joaoeoneves.fintrack.domain.model.MAX_NOTE_LENGTH
-import com.joaoeoneves.fintrack.domain.model.MIN_MONTH_OF_YEAR
 import com.joaoeoneves.fintrack.domain.model.codePointLength
 import java.time.DateTimeException
 import java.time.Instant
@@ -42,20 +40,6 @@ internal fun validateIncome(income: LocalIncome) {
     require(income.amountCents in 1..MAX_AMOUNT_CENTS) { "Income amount must be 1..$MAX_AMOUNT_CENTS cents" }
     requireValidDate(income.date)
     requireValidNote(income.note)
-}
-
-internal fun validateBudget(
-    categoryId: String,
-    limitCents: Long,
-    knownCategoryIds: Set<String>,
-    skipMonths: Collection<Int> = emptyList(),
-) {
-    requireKnownCategory(categoryId, knownCategoryIds)
-    require(limitCents in 0..MAX_AMOUNT_CENTS) { "Budget limit must be 0..$MAX_AMOUNT_CENTS cents" }
-    val months = MIN_MONTH_OF_YEAR..MAX_MONTH_OF_YEAR
-    require(skipMonths.size <= MAX_MONTH_OF_YEAR && skipMonths.all { it in months }) {
-        "Skipped months must be at most 12 values of 1..12"
-    }
 }
 
 /** A category is written whole; a built-in's override may leave the name null, a user one may not. */

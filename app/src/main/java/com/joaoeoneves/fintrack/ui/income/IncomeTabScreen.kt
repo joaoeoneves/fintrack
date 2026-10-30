@@ -51,6 +51,7 @@ import com.joaoeoneves.fintrack.ui.plan.WorkingDaysDialog
 import com.joaoeoneves.fintrack.ui.plan.WorkingDaysState
 import com.joaoeoneves.fintrack.ui.plan.rememberReceiveFeedback
 import com.joaoeoneves.fintrack.ui.theme.Dimens
+import java.time.YearMonth
 
 // How many months past the current one the tab can show (kept in step with the ViewModel's limit).
 private const val INCOME_MONTHS_AHEAD = 120
@@ -144,10 +145,13 @@ private fun IncomeContent(
             MonthCard(state, month, viewModel, onOpenSalaryProfile) { editingWorkingDays = true }
         }
         state.mealCard?.let { MealCardRow(it) }
-        state.outlook?.let { YearOutlook(it) }
+        state.outlook?.let { YearTotal(it) }
         IncomeHistory(
             history = state.history,
             onSourceClick = { onOpenSource(it, state.period) },
+            yearScale = state.period is Period.Year,
+            expectedByMonth = state.outlook?.expectedByMonth().orEmpty(),
+            onMonthClick = viewModel::onMonthSelected,
         )
         if (month != null) {
             IncomeSetupGroup(
@@ -164,7 +168,7 @@ private fun IncomeContent(
     if (editingWorkingDays && workingDaysMonth != null) {
         WorkingDaysDialog(
             state = workingDaysMonth,
-            onSave = viewModel::onSetWorkingDays,
+            onSave = viewModel::onSetDaysOff,
             onDismiss = { editingWorkingDays = false },
         )
     }
@@ -228,43 +232,28 @@ private fun MonthCard(
     )
 }
 
-/** A current or future year: each month's income, received or expected, and the year's total. */
+/** A current or future year: what was received, what is still expected and the year's total. */
 @Composable
-private fun YearOutlook(outlook: YearIncomeOutlook) {
-    val locale = currentLocale()
-    SettingsGroup(
-        label = stringResource(R.string.income_outlook),
+private fun YearTotal(outlook: YearIncomeOutlook) {
+    SettingsRow(
+        title = stringResource(R.string.income_outlook_total),
+        supportingText =
+            stringResource(
+                R.string.income_outlook_total_detail,
+                formatAmountCents(outlook.receivedCents),
+                formatAmountCents(outlook.expectedCents),
+            ),
+        value = formatAmountCents(outlook.totalCents),
         modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(top = Dimens.Space16),
-    ) {
-        outlook.months.forEach { entry ->
-            SettingsRow(
-                title = formatShortMonthName(entry.month, locale),
-                supportingText = stringResource(outlookLabel(entry.received, entry.partial)),
-                value = formatAmountCents(entry.cents),
-            )
-            Hairline()
-        }
-        SettingsRow(
-            title = stringResource(R.string.income_outlook_total),
-            supportingText =
-                stringResource(
-                    R.string.income_outlook_total_detail,
-                    formatAmountCents(outlook.receivedCents),
-                    formatAmountCents(outlook.expectedCents),
-                ),
-            value = formatAmountCents(outlook.totalCents),
-        )
-    }
+    )
 }
 
-private fun outlookLabel(
-    done: Boolean,
-    partial: Boolean,
-) = when {
-    partial -> R.string.income_outlook_partial
-    done -> R.string.income_outlook_received
-    else -> R.string.income_outlook_expected
-}
+/** The months of a current-or-future year that still expect income, with what they expect. */
+private fun YearIncomeOutlook.expectedByMonth(): Map<YearMonth, Long> =
+    months
+        .filter { !it.received }
+        .associate { it.month to it.cents - it.receivedPartCents }
+        .filterValues { it > 0L }
 
 /** The meal card: its plafond, what was paid with it and what is left (may be negative). */
 @Composable

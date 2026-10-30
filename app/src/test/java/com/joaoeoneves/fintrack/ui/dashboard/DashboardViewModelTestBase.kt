@@ -2,14 +2,12 @@ package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Income
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import kotlinx.coroutines.Dispatchers
@@ -64,11 +62,10 @@ open class DashboardViewModelTestBase {
 
     protected fun viewModel(
         expenseRepository: ExpenseRepository = FakeExpenseRepository(),
-        budgetRepository: BudgetRepository = FakeBudgetRepository(),
         incomeRepository: IncomeRepository = FakeIncomeRepository(),
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         clock: Clock = this.clock,
-    ) = dashboardViewModel(expenseRepository, budgetRepository, incomeRepository, savedStateHandle, clock)
+    ) = dashboardViewModel(expenseRepository, incomeRepository, savedStateHandle, clock)
 
     /** Starts collecting [viewModel]'s uiState in the background and runs it to idle. */
     protected fun TestScope.collect(viewModel: DashboardViewModel) {

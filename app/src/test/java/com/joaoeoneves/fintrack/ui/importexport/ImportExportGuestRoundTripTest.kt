@@ -7,10 +7,13 @@ import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.data.FirestoreCategoryRepository
 import com.joaoeoneves.fintrack.data.FirestoreExpenseRepository
 import com.joaoeoneves.fintrack.data.local.LocalCategoryRepository
+import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.local.LocalExpenseRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.session.SessionCategoryRepository
 import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
+import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
+import com.joaoeoneves.fintrack.domain.model.Expense
 import com.joaoeoneves.fintrack.domain.model.Session
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
@@ -28,8 +31,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import java.time.Instant
 
-/** CSV import then export as a guest, through the full guest repository stack (local file store). */
+/** CSV export as a guest, through the full guest repository stack (local file store). */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
@@ -44,10 +48,11 @@ class ImportExportGuestRoundTripTest : LocalStoreTestBase() {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(): ImportExportViewModel {
+    private fun viewModel(
+        store: LocalDataStore,
+        ids: SequenceIds,
+    ): ImportExportViewModel {
         val sessions = FakeSessionRepository(initialSession = Session.Guest)
-        val store = newStore()
-        val ids = SequenceIds("x")
         val categories =
             SessionCategoryRepository(
                 sessions,
@@ -63,35 +68,42 @@ class ImportExportGuestRoundTripTest : LocalStoreTestBase() {
             )
         return ImportExportViewModel(
             CategoryResolvingExpenseRepository(raw, categories),
-            categories,
             RuntimeEnvironment.getApplication(),
         )
     }
 
     @Test
-    fun importThenExport_roundTripsThroughLocalStore() =
+    fun export_writesTheGuestStoreExpenses() =
         runStoreTest {
-            val csv =
-                """
-                name,amountCents,category,date,note
-                Coffee,500,Shopping,2024-01-15T00:00:00Z,with milk
-                Rent,150000,Recurring,2024-02-01T00:00:00Z,
-                """.trimIndent()
-            val input = tmp.newFile("in.csv").apply { writeText(csv) }
+            val store = newStore()
+            val ids = SequenceIds("x")
+            val local = LocalExpenseRepository(store, ids)
+            local.addExpense(
+                Expense(
+                    id = "",
+                    name = "Coffee",
+                    amountCents = 500L,
+                    category = BuiltInCategories.SHOPPING,
+                    date = Instant.parse("2024-01-15T00:00:00Z"),
+                    note = "with milk",
+                ),
+            )
+            local.addExpense(
+                Expense(
+                    id = "",
+                    name = "Rent",
+                    amountCents = 150_000L,
+                    category = BuiltInCategories.RECURRING,
+                    date = Instant.parse("2024-02-01T00:00:00Z"),
+                    note = null,
+                ),
+            )
             val output = tmp.newFile("out.csv")
-            val vm = viewModel()
-
-            vm.onImportFileSelected(Uri.fromFile(input))
-            advanceUntilIdle()
-            assertTrue(vm.importState.value is ImportUiState.Preview)
-            vm.onConfirmImport()
-            advanceUntilIdle()
-            assertTrue(vm.importState.value.toString(), vm.importState.value is ImportUiState.Done)
-
-            assertEquals(2, diskDoc().expenses.size)
+            val vm = viewModel(store, ids)
 
             vm.onExportTargetSelected(Uri.fromFile(output))
             advanceUntilIdle()
+
             assertEquals(ExportUiState.Done(2), vm.exportState.value)
             val exported = output.readText()
             assertTrue(exported, exported.contains("Coffee") && exported.contains("with milk"))

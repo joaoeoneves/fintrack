@@ -4,6 +4,7 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
 import com.joaoeoneves.fintrack.domain.model.toInstantRange
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import kotlinx.coroutines.test.runTest
@@ -18,19 +19,18 @@ import java.time.YearMonth
  */
 class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
     @Test
-    fun currentMonth_opensOneListener_andOneBudgetListener() =
+    fun currentMonth_opensOneListener() =
         runTest {
             val result = overview(Period.CurrentMonth)
 
             val expected = listOf(october.toInstantRange(zone))
             assertEquals(expected, expenses.listeners.observedRanges)
             assertEquals(expected.map(::incomeWindow), income.listeners.observedRanges)
-            assertEquals(1, budgets.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
 
     @Test
-    fun pastMonth_opensOnlyThatMonth_andBudgetsIt() =
+    fun pastMonth_opensOnlyThatMonth() =
         runTest {
             val result = overview(Period.Month(september))
 
@@ -48,7 +48,6 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
             val expected = listOf(rolling, october.toInstantRange(zone))
             assertEquals(expected, expenses.listeners.observedRanges)
             assertEquals(expected.map(::incomeWindow), income.listeners.observedRanges)
-            assertEquals(1, budgets.listeners.observedRanges.size)
             assertEquals(october, result.budgetMonth)
         }
 
@@ -86,14 +85,14 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         runTest {
             expenses.delegate.addExpense(testExpense("sep", 7_000L, noonOn(september, 20), BuiltInCategories.FOOD))
             expenses.delegate.addExpense(testExpense("oct", 2_000L, noonOn(october, 5), BuiltInCategories.FOOD))
-            budgets.delegate.setBudget(BuiltInCategories.FOOD.id, 5_000L)
+            recurring.saveRecurring(recurringItem("r1", amountCents = 5_000L, categoryId = BuiltInCategories.FOOD.id))
 
             val result = overview(Period.Custom(LocalDate.of(2026, 9, 15), LocalDate.of(2026, 10, 31)))
 
             assertEquals(1, expenses.listeners.observedRanges.size)
             val food = result.budgets.single { it.category == BuiltInCategories.FOOD }
             assertEquals(2_000L, food.spentCents)
-            assertEquals(5_000L, food.limitCents)
+            assertEquals(5_000L, food.planned)
             assertEquals(9_000L, result.summary.spendingCents)
         }
 
@@ -123,14 +122,14 @@ class ObservePeriodOverviewTest : ObservePeriodOverviewTestBase() {
         }
 
     @Test
-    fun budgetsListBudgetRepositoryLimits() =
+    fun budgetsListEveryCategory_withPlannedFromRecurringOnly() =
         runTest {
-            budgets.delegate.setBudget(BuiltInCategories.RECURRING.id, 1_000L)
+            recurring.saveRecurring(recurringItem("r1", amountCents = 1_000L, categoryId = BuiltInCategories.FOOD.id))
 
             val result = overview(Period.Month(september))
 
-            assertEquals(BuiltInCategories.all.toList(), result.budgets.map { it.category })
-            assertEquals(1_000L, result.budgets.single { it.category == BuiltInCategories.RECURRING }.limitCents)
+            assertEquals(BuiltInCategories.all.filterNot { it.archived }, result.budgets.map { it.category })
+            assertEquals(1_000L, result.budgets.single { it.category == BuiltInCategories.FOOD }.planned)
             assertEquals(september.toInstantRange(zone), result.transactions.range)
         }
 }

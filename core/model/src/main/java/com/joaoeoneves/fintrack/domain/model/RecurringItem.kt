@@ -25,8 +25,8 @@ const val MAX_SKIPPED_OCCURRENCES = 600
  * months) and, for [RecurringFrequency.YEARLY], [monthOfYear]. [startDate] only says "counts from":
  * the first occurrence is the first scheduled date on or after it. Confirmed occurrences become
  * ordinary transactions; [handledThrough] is the latest occurrence confirmed or skipped. A blank
- * [id] means "not saved yet". With [autoPost] on, due occurrences are confirmed by the app itself (see
- * [autoPostDueOccurrences]) instead of waiting in the upcoming list.
+ * [id] means "not saved yet". Every active expense item is confirmed by the app itself when due (see
+ * [autoPostDueOccurrences]); the posted expense waits in the review inbox.
  *
  * [skipped] is the set of occurrences the user ignored or deleted: they are never pending and never
  * re-created. [pausedAt] is the day the item was paused (`null` when active or paused before it was
@@ -49,7 +49,6 @@ data class RecurringItem(
     val endDate: LocalDate?,
     val handledThrough: LocalDate?,
     val active: Boolean,
-    val autoPost: Boolean = false,
     val skipped: Set<LocalDate> = emptySet(),
     val pausedAt: LocalDate? = null,
 ) {

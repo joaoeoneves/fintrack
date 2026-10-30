@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.activity.analytics
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,12 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.SpendingComparison
-import com.joaoeoneves.fintrack.domain.model.YearToDate
 import com.joaoeoneves.fintrack.domain.model.percentChange
 import com.joaoeoneves.fintrack.ui.common.currentLocale
 import com.joaoeoneves.fintrack.ui.common.formatAmountCents
@@ -103,45 +102,26 @@ fun MonthlyAverageLine(
     )
 }
 
-/** Which year-to-date figure a tab shows: each tab only its own. */
-enum class YearToDateFigure { SPENT, RECEIVED }
+/**
+ * How a Year chart words its bars' captions: [labelRes] is the caption of a bar ("Spent %1$s"); with [expectedByMonth]
+ * a month that still expects income reads "Received X · Expected Y" ([receivedLabelRes] / [receivedExpectedLabelRes]).
+ */
+data class EvolutionCaptions(
+    @param:StringRes val labelRes: Int,
+    @param:StringRes val expectedLabelRes: Int? = null,
+    val expectedByMonth: Map<YearMonth, Long> = emptyMap(),
+)
 
-/** "Since January": the tab's own year-to-date figure, up to the period's last month. */
-@Composable
-fun YearToDateRow(
-    yearToDate: YearToDate,
-    figure: YearToDateFigure,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        SectionTitle(title = stringResource(R.string.activity_since_january))
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.Space8)) {
-            when (figure) {
-                YearToDateFigure.SPENT -> YearCell(stringResource(R.string.activity_ytd_spent), yearToDate.spentCents)
-                YearToDateFigure.RECEIVED ->
-                    YearCell(stringResource(R.string.activity_ytd_received), yearToDate.incomeCents)
-            }
-        }
-    }
-}
-
-@Composable
-private fun YearCell(
-    label: String,
-    cents: Long,
-    color: Color = MaterialTheme.colorScheme.onSurface,
-) {
-    Column {
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = FinTrackTheme.colors.textSecondary)
-        Text(text = formatAmountCents(cents), style = MaterialTheme.typography.titleMedium, color = color, maxLines = 1)
-    }
-}
-
-/** The Evolution bars; the period's months are highlighted and a tap only shows a bar's value (never filters). */
+/**
+ * The Evolution bars; the period's months are highlighted and a tap shows a bar's caption (never filters). With
+ * [onMonthClick] a tap also opens that bar's month.
+ */
 @Composable
 fun EvolutionSection(
     evolution: Evolution,
     modifier: Modifier = Modifier,
+    captions: EvolutionCaptions? = null,
+    onMonthClick: ((YearMonth) -> Unit)? = null,
 ) {
     val locale = currentLocale()
     val long = remember(locale) { DateTimeFormatter.ofPattern("LLLL yyyy", locale) }
@@ -156,11 +136,33 @@ fun EvolutionSection(
                 label = formatShortMonthName(month, locale),
                 valueCents = value,
                 accessibilityText = spoken(month.format(long), formatAmountCents(value, false)),
+                caption = captions?.let { captionOf(resources, it, month, value) },
             )
         }
     Column(modifier = modifier.fillMaxWidth()) {
         SectionTitle(title = stringResource(R.string.activity_evolution))
-        MonthlyBars(bars = bars, highlighted = evolution.highlighted, modifier = Modifier.padding(top = Dimens.Space8))
+        MonthlyBars(
+            bars = bars,
+            highlighted = evolution.highlighted,
+            modifier = Modifier.padding(top = Dimens.Space8),
+            onBarClick = onMonthClick?.let { open -> { index -> evolution.months.getOrNull(index)?.let(open) } },
+        )
+    }
+}
+
+@Composable
+private fun captionOf(
+    resources: android.content.res.Resources,
+    captions: EvolutionCaptions,
+    month: YearMonth,
+    valueCents: Long,
+): String {
+    val value = formatAmountCents(valueCents)
+    val expected = captions.expectedByMonth[month]?.takeIf { it > 0L }
+    return if (expected != null && captions.expectedLabelRes != null) {
+        resources.getString(captions.expectedLabelRes, value, formatAmountCents(expected))
+    } else {
+        resources.getString(captions.labelRes, value)
     }
 }
 

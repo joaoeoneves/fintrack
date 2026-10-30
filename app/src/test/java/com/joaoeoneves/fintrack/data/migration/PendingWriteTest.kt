@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.data.migration
 
 import android.app.Application
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalExpense
 import com.joaoeoneves.fintrack.data.local.LocalIncome
@@ -21,12 +20,11 @@ class PendingWriteTest {
     @Suppress("LongParameterList") // Test fixture: each test overrides only what it cares about.
     private fun plan(
         categories: List<LocalCategory> = emptyList(),
-        budgets: List<LocalBudget> = emptyList(),
         expenses: List<LocalExpense> = emptyList(),
         income: List<LocalIncome> = emptyList(),
         plannedIncome: List<LocalPlannedIncome> = emptyList(),
         recurring: List<LocalRecurringItem> = emptyList(),
-    ) = MigrationPlan(categories, budgets, expenses, income, plannedIncome, recurring, 0)
+    ) = MigrationPlan(categories, expenses, income, plannedIncome, recurring, 0)
 
     private fun List<List<PendingWrite>>.distinctCustomPerBatch() =
         map { batch ->
@@ -43,16 +41,15 @@ class PendingWriteTest {
     }
 
     @Test
-    fun batchesAreOrdered_categoriesBudgetsExpensesIncome() {
+    fun batchesAreOrdered_categoriesExpensesIncome() {
         val batches =
             plan(
                 categories = listOf(localCategory("c1")),
-                budgets = listOf(LocalBudget("FOOD", 100)),
                 expenses = listOf(localExpense("e1")),
                 income = listOf(localIncome("i1")),
             ).toBatches()
 
-        assertEquals(listOf("categories", "budgets", "expenses", "income"), batches.map { it.single().collection })
+        assertEquals(listOf("categories", "expenses", "income"), batches.map { it.single().collection })
     }
 
     @Test
@@ -82,15 +79,6 @@ class PendingWriteTest {
     }
 
     @Test
-    fun budgetBatches_capDistinctCustomCategories() {
-        val budgets = (0 until 16).map { LocalBudget("c$it", 100) } + LocalBudget("FOOD", 1)
-
-        val batches = plan(budgets = budgets).toBatches()
-
-        assertEquals(listOf(15, 2), batches.map { it.size })
-    }
-
-    @Test
     fun categoryWrite_hasCategoryKeysPlusCreatedAt() {
         val write = plan(categories = listOf(localCategory("c1", "Gym", order = 7))).toBatches().single().single()
 
@@ -116,15 +104,6 @@ class PendingWriteTest {
         assertEquals(7, write.data["order"])
         assertEquals(false, write.data["builtIn"])
         assertEquals("SPENDING", write.data["kind"])
-    }
-
-    @Test
-    fun budgetWrite_isLimitAndUpdatedAtKeyedByCategory() {
-        val write = plan(budgets = listOf(LocalBudget("FOOD", 1234))).toBatches().single().single()
-
-        assertEquals("FOOD", write.id)
-        assertEquals(setOf("limitCents", "skipMonths", "updatedAt"), write.data.keys)
-        assertEquals(1234L, write.data["limitCents"])
     }
 
     @Test

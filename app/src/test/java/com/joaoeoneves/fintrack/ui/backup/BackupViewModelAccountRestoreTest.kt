@@ -176,7 +176,7 @@ class BackupViewModelAccountRestoreTest : BackupViewModelTestBase() {
 
             assertEquals(
                 BackupImportState.Confirm(
-                    BackupCounts(1, 0, 0, 0, 0, 0),
+                    BackupCounts(1, 0, 0, 0, 0),
                     skippedCount = 0,
                     localHasData = true,
                     account = true,
@@ -214,7 +214,7 @@ class BackupViewModelAccountRestoreTest : BackupViewModelTestBase() {
 
             assertTrue(BackupImportState.Restoring() in states)
             assertTrue(BackupImportState.Restoring(4, 4) in states)
-            assertEquals(BackupImportState.Done(BackupCounts(1, 0, 0, 0, 0, 0)), vm.importState.value)
+            assertEquals(BackupImportState.Done(BackupCounts(1, 0, 0, 0, 0)), vm.importState.value)
             assertEquals(listOf(doc), account.calls)
             vm.onConfirmImport()
             vm.onRetryRestore()
@@ -265,7 +265,7 @@ class BackupViewModelAccountRestoreTest : BackupViewModelTestBase() {
             vm.onRetryRestore()
             settle()
 
-            assertEquals(BackupImportState.Done(BackupCounts(1, 0, 0, 0, 0, 0)), vm.importState.value)
+            assertEquals(BackupImportState.Done(BackupCounts(1, 0, 0, 0, 0)), vm.importState.value)
             assertEquals(listOf(doc, doc), account.calls)
         }
 

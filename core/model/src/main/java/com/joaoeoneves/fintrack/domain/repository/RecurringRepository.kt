@@ -55,6 +55,14 @@ interface RecurringRepository {
         }
 
     /**
+     * One-time adoption of items created before 5.5, which waited for manual confirmation: every item whose
+     * stored `autoPost` marker is not true gets its backlog marked handled (see `withoutBacklog`) and the marker
+     * set, in one write. Returns how many items were adopted; a no-op for the local (guest) data, which upgrades
+     * on load.
+     */
+    suspend fun adoptLegacyManualItems(today: LocalDate): Result<Int>
+
+    /**
      * Points every recurring item of [source] at [target]; returns how many were changed. Awaited when
      * signed in.
      */

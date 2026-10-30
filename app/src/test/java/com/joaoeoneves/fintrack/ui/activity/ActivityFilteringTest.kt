@@ -189,18 +189,4 @@ class ActivityFilteringTest {
         assertEquals(listOf(lunch), filter(ActivityType.EXPENSE, query = "lunch", envelope = "env-food"))
         assertTrue(filter(ActivityType.EXPENSE, query = "coffee", envelope = "env-food").isEmpty())
     }
-
-    @Test
-    fun totals_followTheVisibleItems() {
-        val categories = listOf(BuiltInCategories.SHOPPING, BuiltInCategories.FOOD, BuiltInCategories.INVESTMENTS)
-        val invest = coffee.copy(id = "i", amountCents = 1_000L, category = BuiltInCategories.INVESTMENTS)
-
-        assertEquals(
-            ActivityTotals(inCents = 255_050L, outCents = 1_900L, spendingCents = 900L, savedCents = 1_000L),
-            activityTotalsOf(all + invest, categories),
-        )
-        val expensesOnly = filter(type = ActivityType.EXPENSE, list = all + invest)
-        assertEquals(ActivityTotals(0L, 1_900L, 900L, 1_000L), activityTotalsOf(expensesOnly, categories))
-        assertEquals(ActivityTotals(0L, 0L, 0L, 0L), activityTotalsOf(emptyList(), categories))
-    }
 }

@@ -1,14 +1,11 @@
 package com.joaoeoneves.fintrack.data.backup
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.validOrNull
-import com.joaoeoneves.fintrack.data.local.validateBudget
 import com.joaoeoneves.fintrack.data.local.validateCategory
 import com.joaoeoneves.fintrack.data.local.validateCategoryGroup
 import com.joaoeoneves.fintrack.data.local.validateExpense
-import com.joaoeoneves.fintrack.data.local.validateGoal
 import com.joaoeoneves.fintrack.data.local.validateIncome
 import com.joaoeoneves.fintrack.data.local.validateMonthSettings
 import com.joaoeoneves.fintrack.data.local.validatePlannedIncome
@@ -24,6 +21,7 @@ internal const val RESTORE_BATCH_SIZE = 450
 /** Collections pruned by a restore, in the order they are pruned (the reverse of the upsert order). */
 internal val RESTORE_PRUNE_ORDER =
     listOf(
+        // Legacy collections: written by nothing since 5.5 but pruned so a restore leaves none behind.
         "goals",
         "monthSettings",
         "recurring",
@@ -89,7 +87,7 @@ private inline fun isValid(check: () -> Unit): Boolean = runCatching(check).isSu
  * against an empty snapshot it merges categories and envelopes of the same name and renumbers their order, which is
  * right for merging guest data but wrong for a replace. Here every id and order is kept; records that cannot be
  * written (invalid, or pointing at a category the backup lacks) are dropped and counted in `skipped`, and dangling
- * links (envelope of a category, funding line, goal category, automation cursor) are cleared instead of
+ * links (envelope of a category, automation cursor) are cleared instead of
  * dropping the record.
  */
 internal fun restoreMigrationPlanOf(
@@ -101,16 +99,10 @@ internal fun restoreMigrationPlanOf(
     val categories = restored.categories
     val known = BuiltInCategories.all.mapTo(mutableSetOf()) { it.id.value } + categories.map { it.id }
 
-    val budgets = local.budgets.filter { it.isValid(known) }.distinctBy { it.categoryId }
     val expenses = local.expenses.filter { isValid { validateExpense(it, known) } }.distinctBy { it.id }
     val income = local.income.filter { isValid { validateIncome(it) } }.distinctBy { it.id }
     val recurring = local.recurring.filter { isValid { validateRecurring(it, known) } }.distinctBy { it.id }
     val monthSettings = local.monthSettings.filter { isValid { validateMonthSettings(it) } }.distinctBy { it.month }
-    val goals =
-        local.goals
-            .map { goal -> goal.copy(linkedCategoryId = goal.linkedCategoryId?.takeIf { it in known }) }
-            .filter { isValid { validateGoal(it) } }
-            .distinctBy { it.id }
     val profile = local.salaryProfile?.takeIf { isValid { validateSalaryProfile(it) } }
     val lines =
         local.plannedIncome
@@ -123,20 +115,17 @@ internal fun restoreMigrationPlanOf(
         local.categoryGroups
             .filter { it.id in groupIds }
             .distinctBy { it.id }
-            .map { it.copy(fundedByLineId = it.fundedByLineId?.takeIf { id -> id in lineIds }) }
     val automation =
         local.automation?.validOrNull()?.let { settings ->
             settings.copy(lineThrough = settings.lineThrough.filterKeys { id -> id in lineIds })
         }
     val skipped =
-        (restored.candidateCount - categories.size) + (local.budgets.size - budgets.size) +
-            (local.expenses.size - expenses.size) + (local.income.size - income.size) +
-            (local.recurring.size - recurring.size) + (local.monthSettings.size - monthSettings.size) +
-            (local.goals.size - goals.size) + (local.plannedIncome.size - lines.size) +
+        (restored.candidateCount - categories.size) + (local.expenses.size - expenses.size) +
+            (local.income.size - income.size) + (local.recurring.size - recurring.size) +
+            (local.monthSettings.size - monthSettings.size) + (local.plannedIncome.size - lines.size) +
             (local.categoryGroups.size - groups.size)
     return MigrationPlan(
         categories = categories,
-        budgets = budgets,
         expenses = expenses,
         income = income,
         plannedIncome = lines,
@@ -145,7 +134,6 @@ internal fun restoreMigrationPlanOf(
         monthSettings = monthSettings,
         categoryGroups = groups,
         salaryProfile = profile,
-        goals = goals,
         automation = automation,
         dismissedRecurring = local.dismissedRecurringSuggestions.dismissalsKept(),
     )
@@ -165,7 +153,7 @@ private fun restoredCategories(
 ): RestoredCategories {
     val maxOrder = local.categories.maxOfOrNull { it.order } ?: -1
     val allCategories =
-        withPlaceholderCategories(local.categories, local.expenses, local.budgets, maxOrder, local.recurring)
+        withPlaceholderCategories(local.categories, local.expenses, maxOrder, local.recurring)
             .namingPlaceholders(local.categories.size, placeholderName)
     val categories =
         allCategories
@@ -173,9 +161,4 @@ private fun restoredCategories(
             .filter { isValid { validateCategory(it) } }
             .distinctBy { it.id }
     return RestoredCategories(categories, allCategories.size)
-}
-
-private fun LocalBudget.isValid(known: Set<String>): Boolean {
-    val budget = this
-    return isValid { validateBudget(budget, known) }
 }

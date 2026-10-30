@@ -16,7 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.ZoneId
 
-/** [HandleRecurringOccurrence]: confirm creates + advances, skip only advances, re-reads, no-ops, refusals. */
+/** [HandleRecurringOccurrence]: confirm creates + advances, re-reads, no-ops, refusals. */
 class HandleRecurringOccurrenceTest {
     private val zone = ZoneId.of("UTC")
     private val today = day(2026, 3, 20)
@@ -114,62 +114,9 @@ class HandleRecurringOccurrenceTest {
         }
 
     @Test
-    fun confirm_andSkip_missingItem_failWithNoSuchElement() =
+    fun confirm_missingItem_failsWithNoSuchElement() =
         runBlocking {
             assertTrue(useCase.confirm("nope", march15, today, zone).exceptionOrNull() is NoSuchElementException)
-            assertTrue(useCase.skip("nope", march15).exceptionOrNull() is NoSuchElementException)
-        }
-
-    @Test
-    fun skip_recordsTheOccurrence_andAdvancesTheCursor() =
-        runBlocking {
-            assertTrue(useCase.skip("r1", march15).isSuccess)
-
-            assertEquals(march15, cursor())
-            assertEquals(setOf(march15), repo.items.single().skipped)
-            assertTrue(repo.confirmedTransactions.isEmpty())
-        }
-
-    @Test
-    fun skip_alreadySkipped_isNoOp() =
-        runBlocking {
-            repo.setItems(listOf(item.copy(skipped = setOf(march15))))
-
-            assertTrue(useCase.skip("r1", march15).isSuccess)
-
-            assertEquals(day(2026, 2, 15), cursor())
-            assertTrue(repo.calls.isEmpty())
-        }
-
-    @Test
-    fun skip_failure_changesNothing() =
-        runBlocking {
-            repo.nextSkipError = IllegalStateException("offline")
-
-            assertTrue(useCase.skip("r1", march15).isFailure)
-
-            assertTrue(
-                repo.items
-                    .single()
-                    .skipped
-                    .isEmpty(),
-            )
-            assertEquals(day(2026, 2, 15), cursor())
-        }
-
-    @Test
-    fun skip_alreadyHandled_isNoOp() =
-        runBlocking {
-            assertTrue(useCase.skip("r1", day(2026, 2, 15)).isSuccess)
-            assertTrue(useCase.skip("r1", day(2026, 1, 15)).isSuccess)
-
-            assertEquals(day(2026, 2, 15), cursor())
-            assertTrue(
-                repo.items
-                    .single()
-                    .skipped
-                    .isEmpty(),
-            )
         }
 
     @Test
@@ -180,8 +127,10 @@ class HandleRecurringOccurrenceTest {
             assertSame(boom, useCase.confirm("r1", march15, today, zone).exceptionOrNull())
             assertEquals(day(2026, 2, 15), cursor())
 
-            repo.nextSkipError = CancellationException("cancelled")
-            assertThrows(CancellationException::class.java) { runBlocking { useCase.skip("r1", march15) } }
+            repo.nextConfirmError = CancellationException("cancelled")
+            assertThrows(CancellationException::class.java) {
+                runBlocking { useCase.confirm("r1", march15, today, zone) }
+            }
             Unit
         }
 }

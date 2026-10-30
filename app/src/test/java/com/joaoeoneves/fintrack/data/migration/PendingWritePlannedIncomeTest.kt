@@ -15,7 +15,7 @@ class PendingWritePlannedIncomeTest {
         plannedIncome: List<com.joaoeoneves.fintrack.data.local.LocalPlannedIncome>,
         expenses: List<com.joaoeoneves.fintrack.data.local.LocalExpense> = emptyList(),
         income: List<com.joaoeoneves.fintrack.data.local.LocalIncome> = emptyList(),
-    ) = MigrationPlan(emptyList(), emptyList(), expenses, income, plannedIncome, emptyList(), 0)
+    ) = MigrationPlan(emptyList(), expenses, income, plannedIncome, emptyList(), 0)
 
     @Test
     fun plannedIncome_isBatchedLast() {

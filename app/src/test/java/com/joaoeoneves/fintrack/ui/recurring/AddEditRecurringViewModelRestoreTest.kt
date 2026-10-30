@@ -23,7 +23,6 @@ class AddEditRecurringViewModelRestoreTest : AddEditRecurringViewModelTestBase()
             dayText = "10",
             monthOfYear = null,
             endDate = "2026-12-31",
-            autoPost = true,
             paused = false,
         )
 
@@ -49,7 +48,6 @@ class AddEditRecurringViewModelRestoreTest : AddEditRecurringViewModelTestBase()
         assertEquals(3_500L, form.amountCents)
         assertEquals("2026-02-10", form.startDate.toString())
         assertEquals("2026-12-31", form.endDate.toString())
-        assertEquals(true, form.autoPost)
         assertEquals("10", form.dayText)
     }
 

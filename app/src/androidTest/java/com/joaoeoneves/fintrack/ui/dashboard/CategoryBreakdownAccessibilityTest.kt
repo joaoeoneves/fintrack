@@ -8,8 +8,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.ui.common.LocalCurrency
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
 import org.junit.Rule
 import org.junit.Test
@@ -26,11 +24,11 @@ import java.util.Locale
  * exact expected content *and* that the bare child text nodes (category names, amounts) are not
  * independently reachable, so TalkBack does not double-announce.
  *
- * Uses [CurrencyOption.USD] with the en-US locale pinned through [LocalConfiguration], same
+ * Uses EUR with the en-US locale pinned through [LocalConfiguration], same
  * pattern as [com.joaoeoneves.fintrack.ui.common.CurrencyFormatTest].
  *
  * The bar splits the total by category kind: SHOPPING + RECURRING + TRANSFER are spending
- * ($90.00), INVESTMENTS is saved/invested ($10.00).
+ * (€90.00), INVESTMENTS is saved/invested (€10.00).
  */
 @RunWith(AndroidJUnit4::class)
 class CategoryBreakdownAccessibilityTest {
@@ -50,7 +48,6 @@ class CategoryBreakdownAccessibilityTest {
             val configuration = Configuration(LocalConfiguration.current).apply { setLocale(Locale.US) }
             CompositionLocalProvider(
                 LocalConfiguration provides configuration,
-                LocalCurrency provides CurrencyOption.USD,
             ) {
                 FinTrackTheme { CategoryBreakdown(slices = slices) }
             }
@@ -63,7 +60,7 @@ class CategoryBreakdownAccessibilityTest {
 
         composeTestRule
             .onNodeWithContentDescription(
-                "Outflow breakdown. Total outflow: $100.00 (spending $90.00, saved or invested $10.00).",
+                "Outflow breakdown. Total outflow: €100.00 (spending €90.00, saved or invested €10.00).",
             ).assertExists()
     }
 
@@ -71,10 +68,10 @@ class CategoryBreakdownAccessibilityTest {
     fun breakdownRows_areReachable_asSingleMergedNodesWithRoundedPercentageAndAmount() {
         setBreakdownContent(slices)
 
-        composeTestRule.onNodeWithContentDescription("Shopping, 45 percent, $45.00").assertExists()
-        composeTestRule.onNodeWithContentDescription("Recurring, 30 percent, $30.00").assertExists()
-        composeTestRule.onNodeWithContentDescription("Transfer, 15 percent, $15.00").assertExists()
-        composeTestRule.onNodeWithContentDescription("Investments, 10 percent, $10.00").assertExists()
+        composeTestRule.onNodeWithContentDescription("Shopping, 45 percent, €45.00").assertExists()
+        composeTestRule.onNodeWithContentDescription("Recurring, 30 percent, €30.00").assertExists()
+        composeTestRule.onNodeWithContentDescription("Transfer, 15 percent, €15.00").assertExists()
+        composeTestRule.onNodeWithContentDescription("Investments, 10 percent, €10.00").assertExists()
     }
 
     @Test
@@ -88,19 +85,19 @@ class CategoryBreakdownAccessibilityTest {
         composeTestRule.onNodeWithText("Recurring").assertDoesNotExist()
         composeTestRule.onNodeWithText("Transfer").assertDoesNotExist()
         composeTestRule.onNodeWithText("Investments").assertDoesNotExist()
-        composeTestRule.onNodeWithText("$45.00").assertDoesNotExist()
+        composeTestRule.onNodeWithText("€45.00").assertDoesNotExist()
     }
 
     @Test
     fun emptySlices_doesNotCrash_andBarStillHasSummaryDescription() {
         setBreakdownContent(emptyList())
 
-        // Total is 0 for no slices -> "$0.00" everywhere, and no per-category clause is appended
+        // Total is 0 for no slices -> "€0.00" everywhere, and no per-category clause is appended
         // so the description is exactly the total
         // sentence with no trailing ". <category>, ..." fragment.
         composeTestRule
             .onNodeWithContentDescription(
-                "Outflow breakdown. Total outflow: $0.00 (spending $0.00, saved or invested $0.00).",
+                "Outflow breakdown. Total outflow: €0.00 (spending €0.00, saved or invested €0.00).",
             ).assertExists()
     }
 }

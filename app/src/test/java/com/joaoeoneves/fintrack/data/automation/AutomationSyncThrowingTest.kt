@@ -44,7 +44,7 @@ class AutomationSyncThrowingTest {
     private val income = FakeIncomeRepository()
     private val plan = FakePlannedIncomeRepository()
     private val automation = FakeAutomationSettingsRepository(incomeRepo = income)
-    private val due = recurringItem(id = "r1", handledThrough = day(2026, 2, 15), autoPost = true)
+    private val due = recurringItem(id = "r1", handledThrough = day(2026, 2, 15))
 
     private fun TestScope.sync(repo: RecurringRepository) =
         AutomationSync(

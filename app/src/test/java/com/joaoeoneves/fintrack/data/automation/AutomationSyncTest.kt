@@ -46,7 +46,7 @@ import java.time.ZoneId
 class AutomationSyncTest {
     private val clock = Clock.fixed(Instant.parse("2026-03-20T10:00:00Z"), ZoneId.of("UTC"))
 
-    private fun due() = recurringItem(id = "r1", handledThrough = day(2026, 2, 15), autoPost = true)
+    private fun due() = recurringItem(id = "r1", handledThrough = day(2026, 2, 15))
 
     private val income = FakeIncomeRepository()
     private val plan = FakePlannedIncomeRepository(listOf(PlannedIncome("p1", "Salary", 100_000L, 0)))
@@ -281,7 +281,7 @@ class AutomationSyncTest {
             assertTrue(repo.confirmedTransactions.isEmpty())
 
             // The restore swaps in another due item; the pass looks at it only after the gate opens.
-            repo.setItems(listOf(recurringItem(id = "r9", handledThrough = day(2026, 2, 15), autoPost = true)))
+            repo.setItems(listOf(recurringItem(id = "r9", handledThrough = day(2026, 2, 15))))
             advanceUntilIdle()
             assertTrue(repo.confirmedTransactions.isEmpty())
 

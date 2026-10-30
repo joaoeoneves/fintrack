@@ -1,13 +1,9 @@
 package com.joaoeoneves.fintrack.data.preferences
 
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
-import com.joaoeoneves.fintrack.domain.model.MotionPreference
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.model.UserPreferences
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
-import com.joaoeoneves.fintrack.domain.repository.MotionRepository
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,10 +12,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * DataStore-backed implementation of the theme, currency and language repositories. Each setter
+ * DataStore-backed implementation of the theme and language repositories. Each setter
  * writes locally first, then pushes the change to Firestore via [PreferencesSync].
  */
-@Suppress("TooManyFunctions") // One observe/set pair per preference.
 @Singleton
 class UserPreferencesRepository
     @Inject
@@ -27,9 +22,7 @@ class UserPreferencesRepository
         private val store: UserPreferencesStore,
         private val sync: PreferencesSync,
     ) : ThemeRepository,
-        CurrencyRepository,
-        LanguageRepository,
-        MotionRepository {
+        LanguageRepository {
         override fun observeThemePreference(): Flow<ThemePreference> = pick { it.theme }
 
         override suspend fun setThemePreference(preference: ThemePreference) {
@@ -37,25 +30,11 @@ class UserPreferencesRepository
             sync.push(PreferenceField.THEME, preference.name)
         }
 
-        override fun observeCurrency(): Flow<CurrencyOption> = pick { it.currency }
-
-        override suspend fun setCurrency(currency: CurrencyOption) {
-            store.update { it.copy(currency = currency) }
-            sync.push(PreferenceField.CURRENCY, currency.name)
-        }
-
         override fun observeLanguage(): Flow<AppLanguage> = pick { it.language }
 
         override suspend fun setLanguage(language: AppLanguage) {
             store.update { it.copy(language = language) }
             sync.push(PreferenceField.LANGUAGE, language.name)
-        }
-
-        override fun observeMotionPreference(): Flow<MotionPreference> = pick { it.reducedMotion }
-
-        // Device-local: not synced to Firestore.
-        override suspend fun setMotionPreference(preference: MotionPreference) {
-            store.update { it.copy(reducedMotion = preference) }
         }
 
         private fun <T> pick(f: (UserPreferences) -> T): Flow<T> = store.data.map(f).distinctUntilChanged()

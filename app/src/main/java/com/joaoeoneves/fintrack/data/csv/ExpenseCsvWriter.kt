@@ -5,8 +5,7 @@ import com.joaoeoneves.fintrack.domain.model.Expense
 private const val HEADER = "name,amountCents,category,date,note"
 
 /**
- * Writes [Expense] lists to CSV text in the format documented by the `seed-data` skill. The output
- * of [write] is guaranteed to be read back with zero failures by [ExpenseCsvParser.parse]. Refunds
+ * Writes [Expense] lists to CSV text in the format documented by the `seed-data` skill. Refunds
  * are written with a negative `amountCents` ([Expense.signedAmountCents]).
  */
 object ExpenseCsvWriter {

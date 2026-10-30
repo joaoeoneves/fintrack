@@ -31,7 +31,7 @@ class LocalDataStoreRecoveryTest : LocalStoreTestBase() {
         assertEquals(content, aside[0].readText())
         assertFalse(dataFile.exists())
         // Next write succeeds and persists.
-        assertTrue(store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }.isSuccess)
+        assertTrue(store.update { it.copy(monthSettings = listOf(LocalMonthSettings("2026-10", 1))) to Unit }.isSuccess)
         assertEquals(1L, newStore().data.first().revision)
     }
 

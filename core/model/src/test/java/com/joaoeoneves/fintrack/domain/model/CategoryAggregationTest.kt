@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.domain.model
 
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import com.joaoeoneves.fintrack.testutil.userCategory
@@ -84,35 +85,38 @@ class CategoryAggregationTest {
     // ---- budgetProgressOf ----
 
     @Test
-    fun budgetProgress_archivedWithBudget_isShown_soItCanBeCleared() {
-        val progress = budgetProgressOf(emptyList(), listOf(Budget(oldArchived.id, 5_000L)), catalog)
+    fun budgetProgress_archivedWithPlannedRecurring_isShown() {
+        val item = recurringItem(amountCents = 5_000L, categoryId = oldArchived.id)
 
-        assertEquals(5_000L, progress.single { it.category.id == oldArchived.id }.limitCents)
+        val progress = budgetProgressOf(emptyList(), catalog, listOf(item), YearMonth.of(2026, 10))
+
+        assertEquals(5_000L, progress.single { it.category.id == oldArchived.id }.planned)
     }
 
     @Test
-    fun budgetProgress_archivedWithoutBudgetOrSpend_isHidden() {
-        val progress = budgetProgressOf(emptyList(), emptyList(), catalog)
+    fun budgetProgress_archivedWithoutPlanOrSpend_isHidden() {
+        val progress = budgetProgressOf(emptyList(), catalog)
 
         assertTrue(progress.none { it.category.id == oldArchived.id })
         assertEquals(catalog.active(), progress.map { it.category })
     }
 
     @Test
-    fun budgetProgress_unknownWithSpend_isLast_andUnknownWithBudgetIsKept() {
+    fun budgetProgress_unknownWithSpend_isLast_andUnknownWithPlanIsKept() {
         val ghost = Category.unknown(CategoryId("ghost"))
         val ghost2 = CategoryId("ghost2")
 
         val progress =
             budgetProgressOf(
                 listOf(testExpense("e", 300L, date, ghost)),
-                listOf(Budget(ghost2, 1_000L)),
                 catalog,
+                listOf(recurringItem(amountCents = 1_000L, categoryId = ghost2)),
+                YearMonth.of(2026, 10),
             )
 
         assertEquals(listOf("ghost", "ghost2"), progress.takeLast(2).map { it.category.id.value })
         assertEquals(300L, progress.single { it.category.id == ghost.id }.spentCents)
-        assertEquals(1_000L, progress.single { it.category.id == ghost2 }.limitCents)
+        assertEquals(1_000L, progress.single { it.category.id == ghost2 }.planned)
         assertTrue(progress.last().category.isUnknown)
     }
 
@@ -120,7 +124,7 @@ class CategoryAggregationTest {
     fun budgetProgress_followsCatalogOrder() {
         val first = userCategory("first", order = -1)
 
-        val progress = budgetProgressOf(emptyList(), emptyList(), mergeCategories(listOf(first)))
+        val progress = budgetProgressOf(emptyList(), mergeCategories(listOf(first)))
 
         assertEquals(
             "first",

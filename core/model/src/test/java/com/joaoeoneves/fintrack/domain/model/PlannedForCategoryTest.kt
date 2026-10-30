@@ -6,53 +6,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.YearMonth
 
-/** [plannedForCategory]: budget precedence, skipped months and which recurring items count. */
+/** [plannedForCategory]: recurring-only planning and which recurring items count. */
 class PlannedForCategoryTest {
     private val october = YearMonth.of(2026, 10)
-    private val food = BuiltInCategories.FOOD.id
-    private val budget = Budget(food, 16_000L)
 
     private fun planned(
         month: YearMonth = october,
-        budget: Budget? = null,
         vararg items: RecurringItem,
-    ) = plannedForCategory(month, budget, items.toList())
+    ) = plannedForCategory(month, items.toList())
 
     @Test
     fun nothing_isNone() {
         assertEquals(PlannedAmount(null, PlannedSource.NONE), planned())
-    }
-
-    @Test
-    fun budget_beatsRecurring() {
-        val result = planned(budget = budget, items = arrayOf(recurringItem(amountCents = 999L)))
-
-        assertEquals(PlannedAmount(16_000L, PlannedSource.BUDGET), result)
-    }
-
-    @Test
-    fun skippedMonth_fallsBackToRecurring() {
-        val skipping = budget.copy(skipMonths = setOf(8))
-
-        val result = planned(YearMonth.of(2026, 8), skipping, recurringItem(amountCents = 1_500L))
-
-        assertEquals(PlannedAmount(1_500L, PlannedSource.RECURRING), result)
-    }
-
-    @Test
-    fun skippedMonth_withoutRecurring_isNone() {
-        val result = planned(YearMonth.of(2026, 8), budget.copy(skipMonths = setOf(8)))
-
-        assertEquals(PlannedAmount(null, PlannedSource.NONE), result)
-    }
-
-    @Test
-    fun skipMonths_onlyAffectTheListedMonth() {
-        val skipping = budget.copy(skipMonths = setOf(8))
-
-        assertEquals(PlannedSource.BUDGET, planned(YearMonth.of(2026, 7), skipping).source)
-        assertEquals(PlannedSource.BUDGET, planned(YearMonth.of(2027, 9), skipping).source)
-        assertEquals(PlannedSource.NONE, planned(YearMonth.of(2027, 8), skipping).source)
     }
 
     @Test
@@ -116,10 +81,5 @@ class PlannedForCategoryTest {
         val salary = recurringItem(type = RecurringType.INCOME, amountCents = 200_000L)
 
         assertEquals(PlannedSource.NONE, planned(items = arrayOf(salary)).source)
-    }
-
-    @Test
-    fun budgetWithEmptySkipSet_alwaysApplies() {
-        (1..12).forEach { m -> assertEquals(PlannedSource.BUDGET, planned(YearMonth.of(2026, m), budget).source) }
     }
 }

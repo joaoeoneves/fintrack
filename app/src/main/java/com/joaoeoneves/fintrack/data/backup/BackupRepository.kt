@@ -43,12 +43,10 @@ class BackupRepository
                 val expenses = server?.expenses ?: expenseRepository.getAllExpenses().getOrThrow()
                 val income = server?.income ?: incomeRepository.getAllIncome().getOrThrow()
                 val plan = server?.let(::planFrom) ?: planBackupSource.read()
-                val budgets = plan.budgets
                 val categories = server?.categories ?: categoryRepository.observeCategories().first()
                 val prefs = preferencesStore.data.first()
                 val stored = categories.filter { it.needsStoring() }.map { it.toLocal() }
                 val localExpenses = expenses.map { it.toLocal() }
-                val localBudgets = budgets.map { it.toLocal() }
                 val localRecurring = plan.recurring.map { it.toLocal() }
                 val dismissed = suggestionRepository.observeDismissedRecurring().first().sorted()
                 val maxOrder = categories.map { it.order }.filter { it != Int.MAX_VALUE }.maxOrNull() ?: 0
@@ -58,25 +56,21 @@ class BackupRepository
                     preferences =
                         BackupPreferences(
                             theme = prefs.theme.name,
-                            currency = prefs.currency.name,
                             language = prefs.language.name,
                         ),
                     expenses = localExpenses,
                     income = income.map { it.toLocal() },
-                    budgets = localBudgets,
                     plannedIncome = plan.plannedIncome.map { it.toLocal() },
                     recurring = localRecurring,
                     monthSettings = plan.monthSettings.filterNot { it.isBlank }.map { it.toLocal() },
                     categoryGroups = plan.categoryGroups.map { it.toLocal() },
                     salaryProfile = plan.salaryProfile?.toLocal(),
-                    goals = plan.goals.map { it.toLocal() },
                     automation = plan.automation.takeIf { it != AutomationSettings() }?.toLocal(),
                     dismissedRecurringSuggestions = dismissed,
                     categories =
                         withPlaceholderCategories(
                             categories = stored,
                             expenses = localExpenses,
-                            budgets = localBudgets,
                             recurring = localRecurring,
                             maxOrder = maxOrder,
                         ).namingPlaceholders(stored.size, plan.deletedCategoryName),
@@ -85,13 +79,11 @@ class BackupRepository
 
         private fun planFrom(server: ServerData) =
             PlanBackupData(
-                budgets = server.budgets,
                 plannedIncome = server.plannedIncome,
                 recurring = server.recurring,
                 monthSettings = server.monthSettings,
                 categoryGroups = server.categoryGroups,
                 salaryProfile = server.salaryProfile,
-                goals = server.goals,
                 automation = server.automation,
                 deletedCategoryName = planBackupSource.deletedCategoryName(),
             )

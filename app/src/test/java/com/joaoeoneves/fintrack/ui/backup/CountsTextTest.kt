@@ -25,33 +25,31 @@ class CountsTextTest {
     }
 
     @Test
-    fun countsEveryKind_includingGoalsAndEnvelopes() {
+    fun countsEveryKind_includingEnvelopes() {
         val text =
             render(
                 BackupCounts(
                     expenses = 1,
                     income = 2,
-                    budgets = 99,
                     categories = 4,
                     plannedIncome = 5,
                     recurring = 6,
                     categoryGroups = 3,
-                    goals = 7,
                     salaryProfile = 1,
                 ),
             )
 
         assertEquals(
             "Expenses: 1\nIncome: 2\nGroups: 3\nCategories: 4\nExpected income: 5\nRecurring: 6\n" +
-                "Goals: 7\nSalary profile: Yes",
+                "Salary profile: Yes",
             text,
         )
     }
 
     @Test
     fun withoutSalaryProfile_saysNo_andZeroCountsAreShown() {
-        val text = render(BackupCounts(0, 0, 0, 0, 0, 0))
+        val text = render(BackupCounts(0, 0, 0, 0, 0))
 
-        assertEquals(true, text.endsWith("Goals: 0\nSalary profile: No"))
+        assertEquals(true, text.endsWith("Recurring: 0\nSalary profile: No"))
     }
 }

@@ -10,7 +10,7 @@ class MonthlyPlanRecurringTest : MonthlyPlanTestBase() {
         category: Category,
         planned: Long,
         spent: Long = 0L,
-    ) = CategoryBudget(category, null, spent, planned, PlannedSource.RECURRING)
+    ) = CategoryBudget(category, spent, planned, PlannedSource.RECURRING)
 
     @Test
     fun recurringOnlyBucket_countsAsPlannedSpending() {
@@ -30,7 +30,7 @@ class MonthlyPlanRecurringTest : MonthlyPlanTestBase() {
     }
 
     @Test
-    fun budgetAndRecurringBuckets_addUp() {
+    fun multipleBuckets_addUp() {
         val summary =
             plan(
                 listOf(
@@ -45,8 +45,8 @@ class MonthlyPlanRecurringTest : MonthlyPlanTestBase() {
     }
 
     @Test
-    fun bucketWithoutLimitOrPlanned_isNotPlanned() {
-        val summary = plan(listOf(CategoryBudget(BuiltInCategories.FOOD, null, 500L)))
+    fun bucketWithoutPlanned_isNotPlanned() {
+        val summary = plan(listOf(CategoryBudget(BuiltInCategories.FOOD, 500L)))
 
         assertEquals(0L, summary.plannedSpendingCents)
         assertEquals(500L, summary.committedCents)
@@ -57,7 +57,7 @@ class MonthlyPlanRecurringTest : MonthlyPlanTestBase() {
         val slices =
             listOf(
                 recurringBucket(BuiltInCategories.SHOPPING, 700L),
-                CategoryBudget(BuiltInCategories.FOOD, null, 0L),
+                CategoryBudget(BuiltInCategories.FOOD, 0L),
                 recurringBucket(BuiltInCategories.TRANSFER, 0L),
                 bucket(BuiltInCategories.INVESTMENTS, 900L),
             ).plannedSlices()
@@ -67,10 +67,9 @@ class MonthlyPlanRecurringTest : MonthlyPlanTestBase() {
     }
 
     @Test
-    fun isOverBudget_usesPlannedNotLimit() {
+    fun isOverBudget_usesPlanned() {
         assertTrue(recurringBucket(BuiltInCategories.FOOD, 100L, spent = 101L).isOverBudget)
         assertEquals(false, recurringBucket(BuiltInCategories.FOOD, 100L, spent = 100L).isOverBudget)
-        // A skipped-month budget carries a limit but no planned amount, so nothing to exceed.
-        assertEquals(false, CategoryBudget(BuiltInCategories.FOOD, 100L, 500L, null, PlannedSource.NONE).isOverBudget)
+        assertEquals(false, CategoryBudget(BuiltInCategories.FOOD, 500L).isOverBudget)
     }
 }

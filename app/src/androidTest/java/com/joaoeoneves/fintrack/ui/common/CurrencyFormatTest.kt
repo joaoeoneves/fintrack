@@ -13,7 +13,6 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -23,8 +22,8 @@ import java.util.Locale
 
 /**
  * Instrumented Compose UI tests for [formatAmountCents]. This function is `@Composable` (it reads
- * [LocalCurrency] and the configuration's locale via [currentLocale]), so it's exercised through a
- * Compose test rule with both provided explicitly.
+ * the configuration's locale via [currentLocale]), so it's exercised through a
+ * Compose test rule with the locale provided explicitly.
  *
  * Money formatting now follows the *app locale* through [java.text.NumberFormat] rather than a
  * per-currency rule: en-US renders "$1,330.40" / "−€1,330.40" (prefixed symbol, period decimal,
@@ -41,43 +40,29 @@ class CurrencyFormatTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun formatAmountCents_enUs_usd_positiveAmount_rendersPrefixedSymbolWithGrouping() {
-        setContent(EN_US, CurrencyOption.USD, amountCents = 133_040)
-
-        composeTestRule.onNodeWithTag(TEST_TAG).assertTextEquals("$1,330.40")
-    }
-
-    @Test
     fun formatAmountCents_enUs_eur_negativeAmount_signPrecedesPrefixedSymbol() {
-        setContent(EN_US, CurrencyOption.EUR, amountCents = -133_040)
+        setContent(EN_US, amountCents = -133_040)
 
         composeTestRule.onNodeWithTag(TEST_TAG).assertTextEquals("−€1,330.40")
     }
 
     @Test
     fun formatAmountCents_enUs_eur_zeroAmount_rendersZero() {
-        setContent(EN_US, CurrencyOption.EUR, amountCents = 0)
+        setContent(EN_US, amountCents = 0)
 
         composeTestRule.onNodeWithTag(TEST_TAG).assertTextEquals("€0.00")
     }
 
     @Test
-    fun formatAmountCents_enUs_gbp_positiveAmount_rendersPoundPrefixed() {
-        setContent(EN_US, CurrencyOption.GBP, amountCents = 133_040)
-
-        composeTestRule.onNodeWithTag(TEST_TAG).assertTextEquals("£1,330.40")
-    }
-
-    @Test
     fun formatAmountCents_ptPt_eur_negativeAmount_rendersCommaDecimalWithSuffixedSymbol() {
-        setContent(PT_PT, CurrencyOption.EUR, amountCents = -1_234)
+        setContent(PT_PT, amountCents = -1_234)
 
         assertEquals("-12,34 €", normalizedText())
     }
 
     @Test
     fun formatAmountCents_ptPt_eur_positiveAmount_rendersCommaDecimalWithSuffixedSymbol() {
-        setContent(PT_PT, CurrencyOption.EUR, amountCents = 1_234)
+        setContent(PT_PT, amountCents = 1_234)
 
         assertEquals("12,34 €", normalizedText())
     }
@@ -86,7 +71,7 @@ class CurrencyFormatTest {
     fun formatAmountCents_ptPt_eur_usesNonBreakingSpaceBeforeSymbol() {
         // The separator before "€" must be a non-breaking space so the amount never wraps away
         // from its symbol (and so Maestro regexes need "." rather than "\s" to match it).
-        setContent(PT_PT, CurrencyOption.EUR, amountCents = 1_234)
+        setContent(PT_PT, amountCents = 1_234)
 
         val separator = rawText().substringAfter("12,34").first()
         assertTrue(
@@ -108,14 +93,12 @@ class CurrencyFormatTest {
 
     private fun setContent(
         locale: Locale,
-        currency: CurrencyOption,
         amountCents: Long,
     ) {
         composeTestRule.setContent {
             val configuration = Configuration(LocalConfiguration.current).apply { setLocale(locale) }
             CompositionLocalProvider(
                 LocalConfiguration provides configuration,
-                LocalCurrency provides currency,
             ) {
                 Column {
                     Text(

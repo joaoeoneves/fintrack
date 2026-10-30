@@ -6,11 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.csv.CsvImportOutcome
-import com.joaoeoneves.fintrack.data.csv.ExpenseCsvParser
 import com.joaoeoneves.fintrack.data.csv.ExpenseCsvWriter
-import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
-import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,8 +15,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,69 +25,10 @@ class ImportExportViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
-        private val categoryRepository: CategoryRepository,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
-        private val _importState = MutableStateFlow<ImportUiState>(ImportUiState.Idle)
-        val importState: StateFlow<ImportUiState> = _importState.asStateFlow()
-
         private val _exportState = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
         val exportState: StateFlow<ExportUiState> = _exportState.asStateFlow()
-
-        fun onImportFileSelected(uri: Uri) {
-            viewModelScope.launch {
-                _importState.value = ImportUiState.Loading
-                val text =
-                    try {
-                        context.contentResolver
-                            .openInputStream(uri)
-                            ?.bufferedReader()
-                            ?.use { it.readText() }
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        // Broad catch: content-provider I/O can throw undocumented exception
-                        // types depending on the provider implementation; log and fall back to
-                        // a generic read-failure message for the user.
-                        Log.w(TAG, "Failed to read import file", e)
-                        null
-                    }
-                if (text == null) {
-                    _importState.value = ImportUiState.Error(UiText.StringResource(R.string.error_import_read_file))
-                    return@launch
-                }
-                val categories = categoryRepository.observeCategories().catch { emit(BuiltInCategories.all) }.first()
-                _importState.value =
-                    when (val outcome = ExpenseCsvParser.parse(text, categories = categories)) {
-                        is CsvImportOutcome.Parsed ->
-                            ImportUiState.Preview(outcome.result.validExpenses, outcome.result.failures)
-                        is CsvImportOutcome.Error -> ImportUiState.Error(outcome.error.toUiText())
-                    }
-            }
-        }
-
-        fun onConfirmImport() {
-            val preview = _importState.value as? ImportUiState.Preview ?: return
-            viewModelScope.launch {
-                _importState.value = ImportUiState.Importing
-                val result = expenseRepository.addExpenses(preview.validExpenses)
-                result.failure?.let { Log.w(TAG, "Import failed after ${result.succeededCount} rows", it) }
-                _importState.value =
-                    when {
-                        result.isCompleteSuccess -> ImportUiState.Done(result.succeededCount)
-                        result.succeededCount > 0 ->
-                            ImportUiState.PartialFailure(
-                                result.succeededCount,
-                                UiText.StringResource(R.string.error_import_failed),
-                            )
-                        else -> ImportUiState.Error(UiText.StringResource(R.string.error_import_failed))
-                    }
-            }
-        }
-
-        fun onDismissImport() {
-            _importState.value = ImportUiState.Idle
-        }
 
         fun onExportTargetSelected(uri: Uri) {
             viewModelScope.launch {
@@ -110,7 +45,7 @@ class ImportExportViewModel
                             } catch (e: CancellationException) {
                                 throw e
                             } catch (e: Exception) {
-                                // Broad catch: see onImportFileSelected above.
+                                // Broad catch: content-provider I/O can throw undocumented exception types.
                                 Log.w(TAG, "Failed to write export file", e)
                                 false
                             }

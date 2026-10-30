@@ -85,7 +85,7 @@ class AutomationSync
         ) {
             fun recurringKey() =
                 recurring.map {
-                    listOf(it.id, it.handledThrough, it.active, it.autoPost, it.endDate, it.skipped, it.pausedAt)
+                    listOf(it.id, it.handledThrough, it.active, it.endDate, it.skipped, it.pausedAt)
                 }
 
             fun paydayKey() =

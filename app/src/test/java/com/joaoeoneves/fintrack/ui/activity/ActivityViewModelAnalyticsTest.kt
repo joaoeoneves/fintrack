@@ -57,9 +57,8 @@ class ActivityViewModelAnalyticsTest : ActivityViewModelTestBase() {
 
             assertEquals(700L, analytics.spentCents)
             assertEquals(analytics.split.spendingCents, analytics.spentCents)
-            // Savings are reported in the list totals, not in the header's spending split.
+            // Savings are not part of the header's spending split.
             assertEquals(0L, analytics.split.savingCents)
-            assertEquals(5_000L, content(fixture.vm).totals.savedCents)
         }
 
     @Test

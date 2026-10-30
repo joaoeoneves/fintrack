@@ -14,7 +14,6 @@ class LocalCategoryRepositoryMutationTest : LocalStoreTestBase() {
     private val store by lazy { newStore() }
     private val repo by lazy { LocalCategoryRepository(store, SequenceIds("c")) }
     private val expenses by lazy { LocalExpenseRepository(store, SequenceIds("e")) }
-    private val budgets by lazy { LocalBudgetRepository(store) }
 
     private suspend fun catalog() = repo.observeCategories().first()
 
@@ -98,14 +97,12 @@ class LocalCategoryRepositoryMutationTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun delete_doesNotTouchReferencingExpensesOrBudgets() =
+    fun delete_doesNotTouchReferencingExpenses() =
         runStoreTest {
             add()
             expenses.addExpense(expense("e1", categoryId = "c1"))
-            budgets.setBudget(CategoryId("c1"), 500)
             repo.deleteCategory(CategoryId("c1"))
             assertEquals(Category.unknown(CategoryId("c1")), expenses.getExpense("e1").getOrThrow()?.category)
-            assertEquals(1, budgets.observeBudgets().first().size)
             assertTrue(expenses.hasExpenseWithCategory(CategoryId("c1")).getOrThrow())
         }
 }

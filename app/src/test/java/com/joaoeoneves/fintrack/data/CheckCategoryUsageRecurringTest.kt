@@ -18,7 +18,6 @@ class CheckCategoryUsageRecurringTest {
     private fun usage(recurring: FakeRecurringRepository) =
         CheckCategoryUsage(
             expenseRepository = FakeExpenseRepository(),
-            budgetRepository = FakeBudgetRepository(),
             recurringRepository = recurring,
         )
 
@@ -27,7 +26,7 @@ class CheckCategoryUsageRecurringTest {
         runBlocking {
             val result = usage(FakeRecurringRepository(listOf(recurringItem(categoryId = gym))))(gym).getOrThrow()
 
-            assertEquals(CategoryUsage(hasExpenses = false, hasBudget = false, hasRecurring = true), result)
+            assertEquals(CategoryUsage(hasExpenses = false, hasRecurring = true), result)
             assertTrue(result.inUse)
         }
 
@@ -44,8 +43,8 @@ class CheckCategoryUsageRecurringTest {
 
     @Test
     fun hasRecurringDefaultsToFalse() {
-        assertFalse(CategoryUsage(hasExpenses = false, hasBudget = false).inUse)
-        assertTrue(CategoryUsage(hasExpenses = false, hasBudget = false, hasRecurring = true).inUse)
+        assertFalse(CategoryUsage(hasExpenses = false).inUse)
+        assertTrue(CategoryUsage(hasExpenses = false, hasRecurring = true).inUse)
     }
 
     @Test

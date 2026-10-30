@@ -133,8 +133,6 @@ private fun ActivityViewModel.activityActions(
         onDelete = ::onDelete,
         onAddExpense = { callbacks.onAddExpense(period) },
         onAddIncome = { callbacks.onAddIncome(period) },
-        onOpenSpending = { callbacks.onOpenSpending(period) },
-        onOpenIncomeTab = { callbacks.onOpenIncomeTab(period) },
     )
 
 @Composable

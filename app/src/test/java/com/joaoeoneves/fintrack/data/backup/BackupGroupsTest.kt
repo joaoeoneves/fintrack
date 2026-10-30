@@ -1,8 +1,6 @@
 package com.joaoeoneves.fintrack.data.backup
 
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Envelope
 import com.joaoeoneves.fintrack.testutil.userCategory
@@ -12,13 +10,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 
-/** Backup schema v5: category groups, category group ids and budget skipped months. */
+/** Backup schema v5: category groups, category group ids. */
 class BackupGroupsTest : BackupRepositoryTestBase() {
     private val header = """"format":"fintrack-backup","exportedAt":"$EXPORTED_AT""""
     private val food = LocalCategoryGroup("g-food", "Food", 0)
 
     @Test
-    fun v4File_decodesToV5_withNoGroupsAndNoSkipMonths() {
+    fun v4File_decodesToCurrent_withNoGroups_andLegacyBudgetsDropped() {
         val v4 =
             """{$header,"schemaVersion":4,
             "categories":[{"id":"gym","name":"Gym","iconKey":"home","colorKey":"teal","kind":"SPENDING","order":10}],
@@ -27,7 +25,6 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
         val result = BackupCodec.decode(v4).success()
 
         assertEquals(BACKUP_SCHEMA_VERSION, result.document.schemaVersion)
-        assertEquals(22, result.document.schemaVersion)
         assertTrue(result.document.categoryGroups.isEmpty())
         assertEquals(
             null,
@@ -35,28 +32,21 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
                 .single()
                 .groupId,
         )
-        assertEquals(
-            emptyList<Int>(),
-            result.document.budgets
-                .single()
-                .skipMonths,
-        )
         assertEquals(0, result.skippedCount)
     }
 
     @Test
-    fun v23File_isUnsupported() {
+    fun nextVersion_isUnsupported() {
         assertEquals(
-            BackupDecodeResult.UnsupportedVersion(23),
-            BackupCodec.decode("""{$header,"schemaVersion":23}"""),
+            BackupDecodeResult.UnsupportedVersion(BACKUP_SCHEMA_VERSION + 1),
+            BackupCodec.decode("""{$header,"schemaVersion":${BACKUP_SCHEMA_VERSION + 1}}"""),
         )
     }
 
     @Test
-    fun v5RoundTrip_keepsGroupsGroupIdsAndSkipMonths() {
+    fun v5RoundTrip_keepsGroupsAndGroupIds() {
         val doc =
             backupDoc(
-                budgets = listOf(LocalBudget("FOOD", 16_000, listOf(8))),
                 categories = listOf(backupCategory("gym").copy(groupId = "g-food")),
             ).copy(categoryGroups = listOf(food))
 
@@ -68,9 +58,9 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
     }
 
     @Test
-    fun invalidGroupsAndSkipMonths_areSkippedAndCounted() {
+    fun invalidGroups_areSkippedAndCounted() {
         val doc =
-            backupDoc(budgets = listOf(LocalBudget("FOOD", 100, listOf(13)), LocalBudget("SHOPPING", 100, listOf(1))))
+            backupDoc()
                 .copy(
                     categoryGroups =
                         listOf(food, LocalCategoryGroup("bad id!", "X", 1), LocalCategoryGroup("g2", "", 2)),
@@ -79,8 +69,7 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success()
 
         assertEquals(listOf(food), result.document.categoryGroups)
-        assertEquals(listOf("SHOPPING"), result.document.budgets.map { it.categoryId })
-        assertEquals(3, result.skippedCount)
+        assertEquals(2, result.skippedCount)
     }
 
     @Test
@@ -89,11 +78,10 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
     }
 
     @Test
-    fun export_includesGroupsGroupIdsAndSkipMonths() =
+    fun export_includesGroupsAndGroupIds() =
         runStoreTest {
             val repo =
                 repository(
-                    budgets = listOf(Budget(BuiltInCategories.FOOD.id, 16_000, setOf(8, 2))),
                     categoryDocs = listOf(userCategory("gym", "Gym").copy(groupId = "g-food")),
                     groups = listOf(Envelope("g2", "Fun", 1), Envelope("g-food", "Food", 0)),
                 )
@@ -102,7 +90,6 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
 
             assertEquals(listOf(food, LocalCategoryGroup("g2", "Fun", 1)), doc.categoryGroups)
             assertEquals("g-food", doc.categories.single { it.id == "gym" }.groupId)
-            assertEquals(listOf(2, 8), doc.budgets.single().skipMonths)
         }
 
     @Test
@@ -120,7 +107,6 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
         runStoreTest {
             val doc =
                 backupDoc(
-                    budgets = listOf(LocalBudget("FOOD", 100, listOf(8))),
                     categories = listOf(backupCategory("gym").copy(groupId = "g-food")),
                 ).copy(categoryGroups = listOf(food))
 
@@ -129,7 +115,6 @@ class BackupGroupsTest : BackupRepositoryTestBase() {
             val stored = localStore.data.first()
             assertEquals(listOf(food), stored.categoryGroups)
             assertEquals("g-food", stored.categories.single().groupId)
-            assertEquals(listOf(8), stored.budgets.single().skipMonths)
         }
 
     @Test

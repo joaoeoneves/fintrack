@@ -43,21 +43,7 @@ class EnvelopesTest : MonthlyPlanTestBase() {
     ) = envelopesOf(buckets, categories, envelopes, PlanMonth(oct, days))
 
     @Test
-    fun singleAmount_isTheMonthAmount_andIgnoresRowsPlanned() {
-        val progress =
-            envelopes(
-                listOf(bucket(dinners, 10_000, spent = 3_000), bucket(snacks, 8_000)),
-                envelopes = listOf(foodEnv.copy(amountCents = 50_000)),
-            ).envelopes.single()
-
-        assertEquals(50_000L, progress.amountCents)
-        assertEquals(3_000L, progress.spentCents)
-        assertEquals(50_000L, progress.committedCents)
-        assertFalse(progress.isOver)
-    }
-
-    @Test
-    fun noAmount_isTheSumOfItsCategoriesLimits() {
+    fun amount_isTheSumOfItsRowsPlanned() {
         val progress = envelopes(listOf(bucket(dinners, 10_000), bucket(snacks, 8_000))).envelopes.first()
 
         assertEquals(18_000L, progress.amountCents)
@@ -65,16 +51,8 @@ class EnvelopesTest : MonthlyPlanTestBase() {
     }
 
     @Test
-    fun skipMonth_fallsBackToRecurringPlanned() {
-        val recurringRow =
-            CategoryBudget(
-                dinners,
-                limitCents = 10_000,
-                spentCents = 0,
-                planned = 3_000,
-                plannedSource = PlannedSource.RECURRING,
-                skipMonths = setOf(10),
-            )
+    fun recurringRows_makeUpTheAmount_andFlagRecurringPlanned() {
+        val recurringRow = CategoryBudget(dinners, 0, planned = 3_000, plannedSource = PlannedSource.RECURRING)
 
         val progress = envelopes(listOf(recurringRow)).envelopes.first()
 

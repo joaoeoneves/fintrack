@@ -1,10 +1,9 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import android.app.Application
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
+import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.TimeRange
-import com.joaoeoneves.fintrack.testutil.CountingBudgetRepository
 import com.joaoeoneves.fintrack.testutil.CountingExpenseRepository
 import com.joaoeoneves.fintrack.testutil.CountingIncomeRepository
 import com.joaoeoneves.fintrack.testutil.genericErrorText
@@ -18,9 +17,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Listener lifecycle and budget-error tests for [DashboardViewModel]: switching periods must tear
+ * Listener lifecycle and error tests for [DashboardViewModel]: switching periods must tear
  * down the previous period's listeners, and month periods share a single expense listener between
- * the summary and the budgets. See [DashboardViewModelTestBase] for shared fixtures/setup.
+ * the summary and the history. See [DashboardViewModelTestBase] for shared fixtures/setup.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -28,24 +27,21 @@ import org.robolectric.annotation.Config
 class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
     private val expenses = CountingExpenseRepository()
     private val income = CountingIncomeRepository()
-    private val budgets = CountingBudgetRepository()
 
     private fun assertActive(
         expenseListeners: Int,
         incomeListeners: Int = expenseListeners, // the month's income shares the expense listener layout
-        budgetListeners: Int = 1,
     ) {
         assertEquals("active expense listeners", expenseListeners, expenses.listeners.active)
         assertEquals("active income listeners", incomeListeners, income.listeners.active)
-        assertEquals("active budget listeners", budgetListeners, budgets.listeners.active)
     }
 
     private fun countingViewModel(): DashboardViewModel {
-        val vm = viewModel(expenseRepository = expenses, budgetRepository = budgets, incomeRepository = income)
+        val vm = viewModel(expenseRepository = expenses, incomeRepository = income)
         return vm
     }
 
-    private fun failingBudgets(error: Throwable) = FakeBudgetRepository(nextObserveBudgetsError = error)
+    private fun failingExpenses(error: Throwable) = FakeExpenseRepository(nextObserveExpensesError = error)
 
     @Test
     fun currentMonth_usesTheMonthAndMonthBeforeListenersPerRepository() =
@@ -83,11 +79,11 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun observeBudgetsError_surfacesErrorState() =
+    fun observeExpensesError_surfacesErrorState() =
         runTest(testDispatcher) {
             val viewModel =
                 viewModel(
-                    budgetRepository = failingBudgets(IllegalStateException("budgets down")),
+                    expenseRepository = failingExpenses(IllegalStateException("expenses down")),
                 )
             collect(viewModel)
 
@@ -95,9 +91,9 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun observeBudgetsError_withoutMessage_usesGenericFallback() =
+    fun observeExpensesError_withoutMessage_usesGenericFallback() =
         runTest(testDispatcher) {
-            val viewModel = viewModel(budgetRepository = failingBudgets(RuntimeException()))
+            val viewModel = viewModel(expenseRepository = failingExpenses(RuntimeException()))
             collect(viewModel)
 
             assertEquals(
@@ -107,11 +103,11 @@ class DashboardViewModelListenerTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun observeBudgetsError_onRollingPeriod_surfacesErrorState() =
+    fun observeExpensesError_onRollingPeriod_surfacesErrorState() =
         runTest(testDispatcher) {
             val viewModel =
                 viewModel(
-                    budgetRepository = failingBudgets(IllegalStateException("budgets down")),
+                    expenseRepository = failingExpenses(IllegalStateException("expenses down")),
                 )
             viewModel.onPeriodSelected(Period.Rolling(TimeRange.THREE_MONTHS))
             collect(viewModel)

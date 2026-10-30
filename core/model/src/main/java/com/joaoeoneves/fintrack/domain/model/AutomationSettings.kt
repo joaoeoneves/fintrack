@@ -8,6 +8,4 @@ import java.time.YearMonth
  */
 data class AutomationSettings(
     val lineRecordedThrough: Map<String, YearMonth> = emptyMap(),
-    /** Whether the salary pays the next month's plan; `null` until chosen (then follows the salary profile). */
-    val salaryPaysNextMonth: Boolean? = null,
 )

@@ -4,10 +4,8 @@ import android.app.Application
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeSessionRepository
 import com.joaoeoneves.fintrack.domain.model.AuthUser
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
-import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -68,8 +66,7 @@ class SettingsViewModelSignOutTest {
                     initialUser = user,
                     nextSignOutResult = Result.failure(IllegalStateException("network unavailable")),
                 )
-            val currencyRepo = FakeCurrencyRepository(CurrencyOption.USD)
-            val viewModel = SettingsViewModel(StaticThemeRepository(), currencyRepo, authRepo)
+            val viewModel = SettingsViewModel(StaticThemeRepository(), authRepo)
             backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
 

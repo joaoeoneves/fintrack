@@ -22,7 +22,6 @@ data class RecurringFormSnapshot(
     val dayText: String,
     val monthOfYear: Int?,
     val endDate: String?,
-    val autoPost: Boolean,
     val paused: Boolean,
 )
 
@@ -39,7 +38,6 @@ internal fun RecurringForm.toSnapshot(recurringId: String?) =
         dayText = dayText,
         monthOfYear = monthOfYear,
         endDate = endDate?.toString(),
-        autoPost = autoPost,
         paused = paused,
     )
 
@@ -63,7 +61,6 @@ internal fun RecurringFormSnapshot.toForm(
                 dayText = dayText,
                 monthOfYear = monthOfYear,
                 endDate = endDate?.let(LocalDate::parse),
-                autoPost = autoPost,
                 paused = paused,
             )
         }.getOrNull()

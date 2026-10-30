@@ -33,8 +33,6 @@ class SessionDataResetRepository
         private suspend fun resetPreferences() {
             val defaults = UserPreferences()
             preferences.setThemePreference(defaults.theme)
-            preferences.setCurrency(defaults.currency)
             preferences.setLanguage(defaults.language)
-            preferences.setMotionPreference(defaults.reducedMotion)
         }
     }

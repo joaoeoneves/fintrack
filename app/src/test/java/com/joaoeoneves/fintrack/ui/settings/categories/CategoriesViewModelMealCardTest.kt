@@ -27,9 +27,9 @@ class CategoriesViewModelMealCardTest : CategoriesViewModelTestBase() {
         val viewModel =
             CategoriesViewModel(
                 repo,
-                CheckCategoryUsage(expenses, budgets, recurring),
+                CheckCategoryUsage(expenses, recurring),
                 FakeBuiltInCategoryNames(),
-                MoveCategoryItems(expenses, budgets, recurring, testDispatcher),
+                MoveCategoryItems(expenses, recurring, testDispatcher),
                 SavedStateHandle(),
                 flowOf(available),
             )

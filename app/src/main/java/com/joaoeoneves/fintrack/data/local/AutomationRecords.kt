@@ -10,13 +10,11 @@ internal fun LocalAutomation.toDomain(): AutomationSettings =
     AutomationSettings(
         lineRecordedThrough =
             lineThrough.mapNotNull { (id, raw) -> parseYearMonthOrNull(raw)?.let { id to it } }.toMap(),
-        salaryPaysNextMonth = salaryPaysNextMonth,
     )
 
 internal fun AutomationSettings.toLocal(): LocalAutomation =
     LocalAutomation(
         lineThrough = lineRecordedThrough.mapValues { it.value.toString() },
-        salaryPaysNextMonth = salaryPaysNextMonth,
     )
 
 /** This record when valid, else `null`. */

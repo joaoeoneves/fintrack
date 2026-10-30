@@ -15,9 +15,7 @@ import com.joaoeoneves.fintrack.data.migration.toBatches
 import com.joaoeoneves.fintrack.data.runCatchingCancellable
 import com.joaoeoneves.fintrack.data.salaryProfileDoc
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
-import com.joaoeoneves.fintrack.domain.repository.CurrencyRepository
 import com.joaoeoneves.fintrack.domain.repository.LanguageRepository
 import com.joaoeoneves.fintrack.domain.repository.PlaceholderNamesProvider
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
@@ -56,8 +54,8 @@ private class ServerState(
 /**
  * Replaces the signed-in account's data with a backup. Order, for safety:
  * 1. a pre-flight read (from the server, with a timeout) of every collection id; if it fails nothing is written;
- * 2. every record of the backup is upserted under its own id, in dependency order (envelopes, categories, budgets,
- *    expenses, income, planned income, recurring, month settings, salary profile, automation, goals), one awaited
+ * 2. every record of the backup is upserted under its own id, in dependency order (envelopes, categories,
+ *    expenses, income, planned income, recurring, month settings, salary profile, automation), one awaited
  *    batch of at most 450 operations at a time;
  * 3. only then the account documents that are not in the backup are deleted (reverse order), then the preferences
  *    are applied.
@@ -71,7 +69,6 @@ class AccountBackupRestorer
         private val firebaseAuth: FirebaseAuth,
         private val placeholderNames: PlaceholderNamesProvider,
         private val themes: ThemeRepository,
-        private val currencies: CurrencyRepository,
         private val languages: LanguageRepository,
     ) : AccountRestore {
         override suspend fun restore(
@@ -131,7 +128,6 @@ class AccountBackupRestorer
             backup ?: return
             runCatchingCancellable {
                 ThemePreference.entries.find { it.name == backup.theme }?.let { themes.setThemePreference(it) }
-                CurrencyOption.entries.find { it.name == backup.currency }?.let { currencies.setCurrency(it) }
                 AppLanguage.entries.find { it.name == backup.language }?.let { languages.setLanguage(it) }
             }
         }

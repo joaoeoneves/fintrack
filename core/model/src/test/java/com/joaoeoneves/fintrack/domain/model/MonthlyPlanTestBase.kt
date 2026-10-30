@@ -10,9 +10,9 @@ abstract class MonthlyPlanTestBase {
 
     protected fun bucket(
         category: Category,
-        limit: Long?,
+        planned: Long?,
         spent: Long = 0L,
-    ) = CategoryBudget(category, limit, spent)
+    ) = CategoryBudget(category, spent, planned)
 
     protected fun line(
         amount: Long,

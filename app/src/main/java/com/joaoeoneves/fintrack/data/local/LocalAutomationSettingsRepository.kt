@@ -29,11 +29,6 @@ class LocalAutomationSettingsRepository
                 doc.copy(automation = current.copy(lineThrough = cursors)) to Unit
             }
 
-        override suspend fun setSalaryPaysNextMonth(enabled: Boolean): Result<Unit> =
-            store.update { doc ->
-                doc.copy(automation = (doc.automation ?: LocalAutomation()).copy(salaryPaysNextMonth = enabled)) to Unit
-            }
-
         override suspend fun recordPayday(
             incomes: List<Income>,
             cursors: Map<String, YearMonth>,

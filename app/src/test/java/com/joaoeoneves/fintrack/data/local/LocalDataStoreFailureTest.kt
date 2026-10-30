@@ -14,7 +14,7 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
     fun update_validationFailure_isFailureAndLeavesDataUntouched() =
         runStoreTest {
             val store = newStore()
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }
+            store.update { it.copy(dismissedRecurringSuggestions = listOf("d1")) to Unit }
             val result =
                 store.update<Unit> {
                     require(false) { "nope" }
@@ -30,22 +30,21 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
         runStoreTest {
             val dir = File(tmp.root, "sub").apply { mkdirs() }
             val store = newStore(File(dir, "guest-data.json"))
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }
+            store.update { it.copy(dismissedRecurringSuggestions = listOf("d1")) to Unit }
             dir.setWritable(false)
             try {
                 assumeFalse(
                     "directory permissions are not enforced",
                     runCatching { File(dir, "probe").createNewFile() }.getOrDefault(false),
                 )
-                val result = store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 2))) to Unit }
+                val result = store.update { it.copy(dismissedRecurringSuggestions = listOf("d2")) to Unit }
                 assertTrue(result.isFailure)
                 assertEquals(1L, store.data.first().revision)
                 assertEquals(
-                    1L,
+                    "d1",
                     store.data
                         .first()
-                        .budgets[0]
-                        .limitCents,
+                        .dismissedRecurringSuggestions[0],
                 )
             } finally {
                 dir.setWritable(true)
@@ -59,7 +58,7 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
             File(target, "x").writeText("x")
             val store = newStore(target)
             // Loading a directory fails to read as a file (IOException), so first load fails.
-            val result = store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }
+            val result = store.update { it.copy(dismissedRecurringSuggestions = listOf("d1")) to Unit }
             assertTrue(result.isFailure)
             assertFalse(File(tmp.root, "guest-data.json.tmp").exists())
         }
@@ -68,7 +67,7 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
     fun clearWithBackup_copiesFileThenWritesEmptyWithNextRevision() =
         runStoreTest {
             val store = newStore()
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }
+            store.update { it.copy(dismissedRecurringSuggestions = listOf("d1")) to Unit }
             val original = dataFile.readText()
             assertTrue(store.clearWithBackup().isSuccess)
             assertEquals(original, File(tmp.root, "guest-data.migrated.json").readText())
@@ -81,12 +80,12 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
     fun clearWithBackup_overwritesSingleBackupSlot() =
         runStoreTest {
             val store = newStore()
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }
+            store.update { it.copy(dismissedRecurringSuggestions = listOf("d1")) to Unit }
             store.clearWithBackup()
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 9))) to Unit }
+            store.update { it.copy(dismissedRecurringSuggestions = listOf("d9")) to Unit }
             store.clearWithBackup()
             val backup = decode(File(tmp.root, "guest-data.migrated.json").readText())
-            assertEquals(9L, backup.budgets[0].limitCents)
+            assertEquals("d9", backup.dismissedRecurringSuggestions[0])
             assertEquals(listOf("guest-data.json", "guest-data.migrated.json"), filesInDir())
         }
 
@@ -103,7 +102,7 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
     fun clearWithBackup_emptyDocument_keepsEarlierBackup_andStillBumpsRevision() =
         runStoreTest {
             val store = newStore()
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 7))) to Unit }
+            store.update { it.copy(dismissedRecurringSuggestions = listOf("d7")) to Unit }
             store.clearWithBackup()
             val backup = File(tmp.root, "guest-data.migrated.json").readText()
 
@@ -119,9 +118,9 @@ class LocalDataStoreFailureTest : LocalStoreTestBase() {
     fun clearWithBackup_existingEmptyFile_noBackupCreated() =
         runStoreTest {
             val store = newStore()
-            store.update { it.copy(budgets = listOf(LocalBudget("FOOD", 1))) to Unit }
+            store.update { it.copy(dismissedRecurringSuggestions = listOf("d1")) to Unit }
             store.replaceAll(LocalDataDocument())
-            assertTrue(diskDoc().budgets.isEmpty())
+            assertTrue(diskDoc().dismissedRecurringSuggestions.isEmpty())
 
             assertTrue(store.clearWithBackup().isSuccess)
 

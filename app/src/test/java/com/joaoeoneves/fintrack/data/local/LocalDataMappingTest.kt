@@ -7,7 +7,6 @@ import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.CategoryKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -76,12 +75,6 @@ class LocalDataMappingTest {
     @Test
     fun documentIsEmpty() {
         assertTrue(LocalDataDocument().isEmpty)
-        assertFalse(LocalDataDocument(budgets = listOf(LocalBudget("FOOD", 1))).isEmpty)
-        assertNotNull(LocalBudget("FOOD", 1).toDomain())
-    }
-
-    @Test
-    fun budget_roundTrips() {
-        assertEquals(LocalBudget("FOOD", 9), LocalBudget("FOOD", 9).toDomain().toLocal())
+        assertFalse(LocalDataDocument(monthSettings = listOf(LocalMonthSettings("2026-10", 1))).isEmpty)
     }
 }

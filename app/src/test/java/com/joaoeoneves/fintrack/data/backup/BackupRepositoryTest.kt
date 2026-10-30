@@ -2,25 +2,21 @@ package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.BuildConfig
 import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
-import com.joaoeoneves.fintrack.data.FakeGoalRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlaceholderNames
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
 import com.joaoeoneves.fintrack.data.FakeSalaryProfileRepository
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.domain.model.AppLanguage
-import com.joaoeoneves.fintrack.domain.model.Budget
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
-import com.joaoeoneves.fintrack.domain.model.CurrencyOption
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
+import com.joaoeoneves.fintrack.testutil.recurringItem
 import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import com.joaoeoneves.fintrack.testutil.userCategory
@@ -44,7 +40,6 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
                 repository(
                     expenses = listOf(testExpense("e1", 500, march, category = gym)),
                     income = listOf(testIncome("i1", 9000, march)),
-                    budgets = listOf(Budget(CategoryId("gym"), 2000)),
                     categoryDocs = listOf(gym),
                 )
 
@@ -57,7 +52,6 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
             assertEquals(listOf("e1"), doc.expenses.map { it.id })
             assertEquals("2026-03-10T12:30:45.123456789Z", doc.expenses.single().date)
             assertEquals(listOf("i1"), doc.income.map { it.id })
-            assertEquals(listOf(LocalBudget("gym", 2000)), doc.budgets)
             assertEquals(listOf("gym"), doc.categories.map { it.id })
             assertEquals(0, BackupCodec.decode(BackupCodec.encode(doc)).success().skippedCount)
         }
@@ -82,11 +76,11 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
     @Test
     fun export_includesCurrentPreferences() =
         runStoreTest {
-            prefsStore.update { it.copy(theme = ThemePreference.LIGHT, currency = CurrencyOption.GBP) }
+            prefsStore.update { it.copy(theme = ThemePreference.LIGHT) }
 
             val prefs = repository().build().preferences
 
-            assertEquals(BackupPreferences("LIGHT", "GBP", AppLanguage.SYSTEM.name), prefs)
+            assertEquals(BackupPreferences("LIGHT", AppLanguage.SYSTEM.name), prefs)
         }
 
     @Test
@@ -143,14 +137,14 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
         }
 
     @Test
-    fun export_orphanExpenseAndBudget_getArchivedPlaceholders() =
+    fun export_orphanExpenseAndRecurring_getArchivedPlaceholders() =
         runStoreTest {
             val gym = userCategory("gym", order = 7)
             val ghost = Category.unknown(CategoryId("ghost"))
             val repo =
                 repository(
                     expenses = listOf(testExpense("e1", 100, march, category = ghost)),
-                    budgets = listOf(Budget(CategoryId("ghost2"), 100)),
+                    recurring = listOf(recurringItem(categoryId = CategoryId("ghost2"))),
                     categoryDocs = listOf(gym),
                 )
 
@@ -163,7 +157,7 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
             val decoded = BackupCodec.decode(BackupCodec.encode(doc)).success()
             assertEquals(0, decoded.skippedCount)
             assertEquals(1, decoded.document.expenses.size)
-            assertEquals(1, decoded.document.budgets.size)
+            assertEquals(1, decoded.document.recurring.size)
         }
 
     @Test
@@ -183,14 +177,12 @@ class BackupRepositoryTest : BackupRepositoryTestBase() {
                     FakeExpenseRepository(),
                     FakeIncomeRepository(),
                     PlanBackupSource(
-                        FakeBudgetRepository(nextObserveBudgetsError = IllegalStateException("boom")),
-                        FakePlannedIncomeRepository(),
+                        FakePlannedIncomeRepository(nextObserveError = IllegalStateException("boom")),
                         FakeRecurringRepository(),
                         FakeMonthSettingsRepository(),
                         FakeEnvelopeRepository(),
                         PlanSingletonSources(
                             FakeSalaryProfileRepository(),
-                            FakeGoalRepository(),
                             FakeAutomationSettingsRepository(),
                             FakePlaceholderNames(),
                         ),

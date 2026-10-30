@@ -13,7 +13,7 @@ import org.robolectric.annotation.Config
 @Config(application = Application::class)
 class MigrationPlannerMonthSettingsTest {
     private val oct = LocalMonthSettings("2026-10", 15)
-    private val nov = LocalMonthSettings("2026-11", 0)
+    private val nov = LocalMonthSettings("2026-11", 2)
 
     private fun local(vararg settings: LocalMonthSettings) = localDoc().copy(monthSettings = settings.toList())
 
@@ -62,7 +62,7 @@ class MigrationPlannerMonthSettingsTest {
     }
 
     @Test
-    fun pendingWrites_useMonthAsIdAndWorkingDaysField_andComeLast() {
+    fun pendingWrites_useMonthAsIdAndDaysOffField_andComeLast() {
         val plan = planMigration(local(oct).copy(income = listOf(localIncome("i1"))), remoteSnapshot())
 
         val batches = plan.toBatches()
@@ -70,40 +70,13 @@ class MigrationPlannerMonthSettingsTest {
         assertEquals(listOf("income", "monthSettings"), batches.map { it.single().collection })
         val write = batches.last().single()
         assertEquals("2026-10", write.id)
-        assertEquals(setOf("workingDays", "updatedAt"), write.data.keys)
-        assertEquals(15, write.data["workingDays"])
-    }
-
-    @Test
-    fun daysOffAndDaysOffOnlyRecords_areCarriedUnchanged() {
-        val both = LocalMonthSettings("2026-10", 15, 2)
-        val daysOffOnly = LocalMonthSettings("2026-11", null, 3)
-
-        val plan = planMigration(local(both, daysOffOnly), remoteSnapshot())
-
-        assertEquals(listOf(both, daysOffOnly), plan.monthSettings)
-        assertEquals(0, plan.skipped)
-    }
-
-    @Test
-    fun pendingWrites_includeDaysOff_andOmitAbsentWorkingDays() {
-        val plan =
-            planMigration(
-                local(LocalMonthSettings("2026-10", 15, 2), LocalMonthSettings("2026-11", null, 3)),
-                remoteSnapshot(),
-            )
-
-        val writes = plan.toBatches().flatten()
-
-        assertEquals(setOf("workingDays", "daysOff", "updatedAt"), writes[0].data.keys)
-        assertEquals(2, writes[0].data["daysOff"])
-        assertEquals(setOf("daysOff", "updatedAt"), writes[1].data.keys)
-        assertEquals(3, writes[1].data["daysOff"])
+        assertEquals(setOf("daysOff", "updatedAt"), write.data.keys)
+        assertEquals(15, write.data["daysOff"])
     }
 
     @Test
     fun invalidDaysOff_andEmptyRecords_areSkipped() {
-        val bad = listOf(LocalMonthSettings("2026-12", null, 24), LocalMonthSettings("2027-01", null, 0))
+        val bad = listOf(LocalMonthSettings("2026-12", 24), LocalMonthSettings("2027-01", 0))
 
         val plan = planMigration(local(oct, *bad.toTypedArray()), remoteSnapshot())
 

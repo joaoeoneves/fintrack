@@ -18,8 +18,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="200" alt="Home: income and spending cards, invested, left over, upcoming bills and recent activity">
-  <img src="docs/screenshots/activity.png" width="200" alt="Activity: spending summary and the list of expenses and income">
+  <img src="docs/screenshots/home.png" width="200" alt="Home: to review, income and spending cards, invested with the investment rate, quick add and upcoming">
+  <img src="docs/screenshots/activity.png" width="200" alt="Activity: the list of expenses and income with search and filters">
   <img src="docs/screenshots/income.png" width="200" alt="Income: received versus expected, income lines and history">
   <img src="docs/screenshots/spending.png" width="200" alt="Spending: spent, fixed versus variable, evolution and categories">
   <img src="docs/screenshots/investments.png" width="200" alt="Investments per month, per year and per instrument">
@@ -39,17 +39,19 @@ mode).
 **Tabs**
 - Home, Activity, Income and Spending, plus an avatar with your initial that opens Account & settings.
   Every tab has the same Month | Year switch (calendar year).
-- **Home**: an income card (received of expected), a spending card, an *Invested* row that opens the
-  investments page (per month, per year, all time and per instrument), *Left over* (an average over
-  closed months), upcoming recurring bills and recent activity. A **Get started** checklist walks through
-  the set-up and hides when done.
-- **Activity**: one list of expenses and income with search, sorting and period filters, delete by
-  swiping or from the edit screen (with undo), and a summary header with the total spent, fixed versus
-  variable and a breakdown by category.
-- **Income**: received versus expected with the difference, income lines, working days and days off,
-  and history. Income counts by the date it was received.
+- **Home**: a **Get started** checklist (hidden when done), a **To review** card (records posted
+  automatically and "Make it recurring?" suggestions), an income card (received of expected), a spending
+  card, an *Invested* row with the share of what you received ("you invested 12% of what you received")
+  that opens the investments page, quick add and an informative list of what is coming up.
+- **Activity**: the list of expenses and income, with search, type, category, group and income source
+  filters, sorting, and delete by swiping or from the edit screen (with undo). Totals and breakdowns live
+  in Spending and Income.
+- **Income**: received versus expected with the difference, income lines, days off (the working-day
+  count follows from the calendar, holidays and days off), and history. Income counts by the date it was
+  received.
 - **Spending**: spent, fixed versus variable, evolution, spending by category and groups (a name plus
   its categories). Recurring bills and investments are managed here.
+- Tapping a bar in a year chart shows that month's figures and opens the month.
 - Detail pages per category and per income source. For the net salary source it shows what was received
   at the end of a month against what was spent in the next one.
 
@@ -59,9 +61,9 @@ mode).
   is suggested.
 - Categories: built-ins plus your own (name, icon, colour, spending or saving), with rename, reorder,
   archive and delete.
-- Amounts that change over time (income lines, groups, limits) keep their history: a new amount applies
+- Income lines that change over time keep their history: a new amount applies
   from the month you choose (*Valid from*) and earlier months keep the old one.
-- CSV import/export for expenses.
+- CSV export for expenses.
 
 **Income lines**
 - The salary profile (optional) and your own lines, one row per component. Salary set-up is three steps
@@ -74,9 +76,9 @@ mode).
 **Bills and investments**
 - Monthly or yearly recurring expenses (rent, subscriptions) and recurring investments, with start and
   end dates and pause/resume.
-- An Upcoming card lists what is due. Confirm records the expense and Skip moves on. Confirming twice
-  (a double tap, or a second device) never creates a duplicate. An item can also be posted
-  automatically on its due date.
+- Every recurring item is recorded automatically on its due date and shows up in *To review*, where you
+  can check or change it. Recording twice (for example from a second device) never creates a duplicate.
+  The upcoming list on Home is informative.
 
 **Guest mode and backup**
 - "Continue as guest" uses the whole app with data kept in a single JSON file on the device; no Firebase
@@ -88,10 +90,9 @@ mode).
 
 **Localization and appearance**
 - English and Portuguese (pt-PT), switchable in-app; follows the system language by default.
-- System, light or dark theme, and a Reduce animations option. Motion includes smooth transitions,
-  predictive back, counting amounts, skeleton loading and haptics.
-- Display currency (USD, EUR, GBP, JPY, CAD, AUD) is cosmetic, with no
-  exchange-rate conversion.
+- System, light or dark theme. Motion (smooth transitions, predictive back, counting amounts, skeleton
+  loading and haptics) follows the system's animation setting.
+- Amounts are in euros.
 
 **Privacy-relevant bits**
 - Sign-in is Google via Credential Manager; data is stored under your own user id and Firestore security
@@ -198,7 +199,6 @@ scripts/gate.sh        shared quality gate
 
 ## Roadmap
 
-- Income CSV import/export (expenses are supported today).
 - Further polish of the income and spending screens based on day-to-day use.
 - Broader instrumented-test coverage.
 

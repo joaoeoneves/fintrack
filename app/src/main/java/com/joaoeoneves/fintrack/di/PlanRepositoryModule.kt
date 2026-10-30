@@ -2,7 +2,6 @@ package com.joaoeoneves.fintrack.di
 
 import com.joaoeoneves.fintrack.data.session.SessionAutomationSettingsRepository
 import com.joaoeoneves.fintrack.data.session.SessionEnvelopeRepository
-import com.joaoeoneves.fintrack.data.session.SessionGoalRepository
 import com.joaoeoneves.fintrack.data.session.SessionMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.session.SessionPlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.session.SessionRecurringRepository
@@ -10,7 +9,6 @@ import com.joaoeoneves.fintrack.data.session.SessionSalaryProfileRepository
 import com.joaoeoneves.fintrack.data.session.SessionSuggestionRepository
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.EnvelopeRepository
-import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import com.joaoeoneves.fintrack.domain.repository.RecurringRepository
@@ -22,7 +20,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
 /**
- * Bindings for the planning data: income lines, month settings, groups, the salary profile, savings goals,
+ * Bindings for the planning data: income lines, month settings, groups, the salary profile,
  * recurring items and the automation settings.
  */
 @Module
@@ -42,9 +40,6 @@ interface PlanRepositoryModule {
 
     @Binds
     fun bindSalaryProfileRepository(impl: SessionSalaryProfileRepository): SalaryProfileRepository
-
-    @Binds
-    fun bindGoalRepository(impl: SessionGoalRepository): GoalRepository
 
     @Binds
     fun bindAutomationSettingsRepository(impl: SessionAutomationSettingsRepository): AutomationSettingsRepository

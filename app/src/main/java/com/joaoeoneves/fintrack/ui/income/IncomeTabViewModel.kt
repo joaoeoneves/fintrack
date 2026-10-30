@@ -224,6 +224,11 @@ class IncomeTabViewModel(
             onSelectScale = selection::selectScale,
         )
 
+    /** Opens [month] (a tap on a Year chart bar): the current month resolves to "this month". */
+    fun onMonthSelected(month: YearMonth) {
+        selection.select(Period.ofMonth(month, clock.instant(), clock.zone))
+    }
+
     private fun monthInputs(
         period: Period,
         now: Instant,
@@ -460,18 +465,13 @@ class IncomeTabViewModel(
         viewModelScope.launch { repositories.plannedIncome.savePlannedIncome(line).onFailure { reportFailure(it) } }
     }
 
-    /**
-     * Overrides [month]'s working days with [days], or restores the calendar count when `null`; [daysOff],
-     * when given, also sets the days off taken that month.
-     */
-    fun onSetWorkingDays(
+    /** Sets the days off taken in [month]. */
+    fun onSetDaysOff(
         month: YearMonth,
-        days: Int?,
-        daysOff: Int? = null,
+        daysOff: Int,
     ) {
         viewModelScope.launch {
-            repositories.monthSettings.setWorkingDaysOverride(month, days).onFailure { reportFailure(it) }
-            daysOff?.let { repositories.monthSettings.setDaysOff(month, it).onFailure { e -> reportFailure(e) } }
+            repositories.monthSettings.setDaysOff(month, daysOff).onFailure { reportFailure(it) }
         }
     }
 
@@ -595,15 +595,13 @@ private fun workingDaysOf(
     settings: List<MonthSettings>,
 ): WorkingDaysState {
     val monthSettings = settings.firstOrNull { it.month == month }
-    val override = monthSettings?.workingDaysOverride
     val daysOff = monthSettings?.daysOff ?: 0
     val calendar = workingDaysIn(month)
     return WorkingDaysState(
         month = month,
-        days = effectiveWorkingDays(month, override, daysOff),
+        days = effectiveWorkingDays(month, daysOff),
         daysOff = daysOff,
         calendarDays = calendar,
         holidays = holidayWeekdaysIn(month),
-        overridden = override != null,
     )
 }

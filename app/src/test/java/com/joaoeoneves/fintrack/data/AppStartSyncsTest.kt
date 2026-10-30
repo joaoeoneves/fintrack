@@ -44,7 +44,7 @@ class AppStartSyncsTest {
         FakePlannedIncomeRepository(
             listOf(own) + salaryProfileLines(profile, listOf(own)).filter { it.id != MANAGED_DUODECIMOS },
         )
-    private val due = recurringItem("r1", handledThrough = day(2026, 2, 15), autoPost = true)
+    private val due = recurringItem("r1", handledThrough = day(2026, 2, 15))
     private val recurring = FakeRecurringRepository(listOf(due))
     private val expenses = FakeExpenseRepository()
     private val startedPreferences = mutableListOf<String>()

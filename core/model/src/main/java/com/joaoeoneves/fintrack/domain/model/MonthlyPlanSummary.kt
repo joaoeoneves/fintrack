@@ -10,7 +10,7 @@ import java.time.YearMonth
  * @property extrasExpectedCents sum of the yearly and one-off lines landing in the month; kept out of
  * [incomeBasisCents] and so out of safe-to-spend.
  * @property actualIncomeCents sum of the income dated in the month.
- * @property plannedSpendingCents sum of the planned amounts (budget limits, else recurring) of spending buckets.
+ * @property plannedSpendingCents sum of the planned (recurring) amounts of spending buckets.
  * @property plannedSavingCents sum of the planned amounts of saving buckets.
  * @property committedCents over all buckets, the larger of the limit (or 0) and the spend.
  * @property remainingInBucketsCents over spending buckets with a limit, what is left of each limit.
@@ -37,8 +37,7 @@ data class MonthlyPlanSummary(
 /**
  * Evaluates the plan for [month]: [buckets] are the month's budget rows, [monthIncome] only that month's
  * income and [workingDays] the working days of the month (per-working-day lines multiply by it). With
- * [envelopes] the buckets filed under one commit pooled (the larger of its amount and its spend); an
- * envelope with a fixed amount counts as spending.
+ * [envelopes] the buckets filed under one commit pooled (the larger of its amount and its spend).
  */
 @Suppress("LongParameterList") // The plan's inputs, one per source.
 fun monthlyPlanOf(
@@ -52,24 +51,21 @@ fun monthlyPlanOf(
     val income = IncomeMonth.forMonth(month, workingDays)
     val activeIncome = plannedIncome.asOf(month)
     val (extras, regular) = activeIncome.partition { it.isExtra }
-    val split = splitBuckets(buckets, envelopes.asOf(month))
-    val fixed = split.byEnvelope.filter { it.first.amountCents != null }
-    val perCategory = split.byEnvelope.filter { it.first.amountCents == null }.flatMap { it.second } + split.loose
+    val split = splitBuckets(buckets, envelopes)
+    val perCategory = split.byEnvelope.flatMap { it.second } + split.loose
     val limited = perCategory.filter { it.planned != null }
     val spendingLimited = limited.filter { it.category.kind == CategoryKind.SPENDING }
     val pooledCommitted =
-        split.byEnvelope.sumOf { (envelope, rows) ->
-            maxOf(monthAmountOf(envelope, rows) ?: 0L, rows.sumOf { it.spentCents })
-        }
+        split.byEnvelope.sumOf { (_, rows) -> maxOf(monthAmountOf(rows) ?: 0L, rows.sumOf { it.spentCents }) }
     val pooledRemaining =
-        split.byEnvelope.sumOf { (envelope, rows) ->
-            monthAmountOf(envelope, rows)?.let { maxOf(it - rows.sumOf { row -> row.spentCents }, 0L) } ?: 0L
+        split.byEnvelope.sumOf { (_, rows) ->
+            monthAmountOf(rows)?.let { maxOf(it - rows.sumOf { row -> row.spentCents }, 0L) } ?: 0L
         }
     return MonthlyPlanSummary(
         expectedIncomeCents = regular.sumOf { income.amountIn(it, month) },
         extrasExpectedCents = extras.sumOf { income.amountIn(it, month) },
         actualIncomeCents = monthIncome.sumOf { it.amountCents },
-        plannedSpendingCents = spendingLimited.sumOf { it.planned ?: 0L } + fixed.sumOf { it.first.amountCents ?: 0L },
+        plannedSpendingCents = spendingLimited.sumOf { it.planned ?: 0L },
         plannedSavingCents = limited.filter { it.category.kind == CategoryKind.SAVING }.sumOf { it.planned ?: 0L },
         committedCents = pooledCommitted + split.loose.sumOf { maxOf(it.planned ?: 0L, it.spentCents) },
         remainingInBucketsCents =

@@ -1,11 +1,9 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.LocalAutomation
-import com.joaoeoneves.fintrack.data.local.LocalBudget
 import com.joaoeoneves.fintrack.data.local.LocalCategoryGroup
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
-import com.joaoeoneves.fintrack.data.local.LocalSavingsGoal
 import com.joaoeoneves.fintrack.domain.model.MANAGED_NET_SALARY
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -17,13 +15,7 @@ class RestoreMigrationPlanTest {
     private fun group(
         id: String,
         order: Int = 0,
-        fundedBy: String? = null,
-    ) = LocalCategoryGroup(id, id.uppercase(), order, fundedByLineId = fundedBy)
-
-    private fun goal(
-        id: String = "g1",
-        linkedCategoryId: String? = null,
-    ) = LocalSavingsGoal(id, "Trip", 100_000, startDate = "2026-01-01", linkedCategoryId = linkedCategoryId)
+    ) = LocalCategoryGroup(id, id.uppercase(), order)
 
     @Test
     fun sameNameCategories_areNotMerged_andIdsAndOrderKept() {
@@ -101,42 +93,12 @@ class RestoreMigrationPlanTest {
     }
 
     @Test
-    fun groupFundedByAMissingLine_isClearedNotDropped() {
-        val local =
-            LocalDataDocument(
-                plannedIncome = listOf(backupPlanned("p1")),
-                categoryGroups = listOf(group("g1", fundedBy = "ghost"), group("g2", fundedBy = "p1")),
-            )
-
-        val plan = restoreMigrationPlanOf(local)
-
-        assertNull(plan.categoryGroups.first { it.id == "g1" }.fundedByLineId)
-        assertEquals("p1", plan.categoryGroups.first { it.id == "g2" }.fundedByLineId)
-        assertEquals(0, plan.skipped)
-    }
-
-    @Test
     fun orphanPlaceholder_isNamedWithTheGivenDeletedCategoryName() {
-        val local = LocalDataDocument(budgets = listOf(LocalBudget("ghost", 100)))
+        val local = LocalDataDocument(expenses = listOf(backupExpense("e1", categoryId = "ghost")))
 
         val plan = restoreMigrationPlanOf(local, "Categoria apagada")
 
         assertEquals("Categoria apagada", plan.categories.single().name)
-    }
-
-    @Test
-    fun goalLinkedToAMissingCategory_isClearedNotDropped() {
-        val local =
-            LocalDataDocument(
-                goals = listOf(goal("g1", "ghost"), goal("g2", "gym"), goal("g3", "FOOD")),
-                categories = listOf(backupCategory("gym")),
-            )
-
-        val goals = restoreMigrationPlanOf(local).goals.associateBy { it.id }
-
-        assertNull(goals.getValue("g1").linkedCategoryId)
-        assertEquals("gym", goals.getValue("g2").linkedCategoryId)
-        assertEquals("FOOD", goals.getValue("g3").linkedCategoryId)
     }
 
     @Test
@@ -189,15 +151,13 @@ class RestoreMigrationPlanTest {
             LocalDataDocument(
                 expenses = listOf(backupExpense("ok"), backupExpense("zero", amountCents = 0)),
                 income = listOf(backupIncome("i-ok"), backupIncome("i-bad", amountCents = -5)),
-                budgets = listOf(LocalBudget("FOOD", 100), LocalBudget("FOOD", 200), LocalBudget("FOOD", -1)),
             )
 
         val plan = restoreMigrationPlanOf(local)
 
         assertEquals(listOf("ok"), plan.expenses.map { it.id })
         assertEquals(listOf("i-ok"), plan.income.map { it.id })
-        assertEquals(listOf(100L), plan.budgets.map { it.limitCents })
-        assertEquals(4, plan.skipped)
+        assertEquals(2, plan.skipped)
     }
 
     @Test

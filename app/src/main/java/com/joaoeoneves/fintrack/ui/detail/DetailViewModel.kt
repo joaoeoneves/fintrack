@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.domain.model.Category
-import com.joaoeoneves.fintrack.domain.model.CategoryBudget
 import com.joaoeoneves.fintrack.domain.model.CategoryId
 import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.domain.model.IncomeSourceKey
@@ -215,16 +214,12 @@ class DetailViewModel
             return if (category.isUnknown && values.all { it == 0L } && movements.isEmpty()) {
                 DetailUiState.NotFound
             } else {
-                val rows = overview.envelopes.envelopes.flatMap { it.rows } + overview.envelopes.unenveloped
                 val envelope = overview.envelopes.envelopes.firstOrNull { it.envelope.id == category.groupId }
-                val isMonth = sources.period !is Period.Year
                 DetailUiState.Content(
                     subject =
                         DetailSubject.OfCategory(
                             category = category,
                             envelopeName = envelope?.envelope?.name,
-                            // The limit is a monthly figure: not shown on the year scale.
-                            limitCents = rows.firstOrNull { it.category.id == id }?.limitOf()?.takeIf { isMonth },
                         ),
                     period = sources.period,
                     canGoToNextMonth = sources.canGoNext,
@@ -240,8 +235,6 @@ class DetailViewModel
                 )
             }
         }
-
-        private fun CategoryBudget.limitOf(): Long? = limitCents?.takeIf { it > 0L }
 
         private fun sourceContent(
             sources: DetailSources,

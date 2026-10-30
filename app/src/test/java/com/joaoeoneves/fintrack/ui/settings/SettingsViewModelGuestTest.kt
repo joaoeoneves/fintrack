@@ -9,7 +9,6 @@ import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.SignInCancelledException
 import com.joaoeoneves.fintrack.domain.model.ThemePreference
 import com.joaoeoneves.fintrack.domain.repository.ThemeRepository
-import com.joaoeoneves.fintrack.testutil.FakeCurrencyRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -62,7 +61,7 @@ class SettingsViewModelGuestTest {
     }
 
     private fun TestScope.viewModel(sessions: FakeSessionRepository): SettingsViewModel {
-        val vm = SettingsViewModel(StaticThemeRepository(), FakeCurrencyRepository(), sessions)
+        val vm = SettingsViewModel(StaticThemeRepository(), sessions)
         backgroundScope.launch { vm.uiState.collect {} }
         advanceUntilIdle()
         return vm

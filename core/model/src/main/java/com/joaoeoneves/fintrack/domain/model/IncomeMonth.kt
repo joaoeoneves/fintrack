@@ -39,7 +39,7 @@ class IncomeMonth(
         fun of(settings: List<MonthSettings>): IncomeMonth =
             IncomeMonth { month ->
                 val current = settings.firstOrNull { it.month == month }
-                effectiveWorkingDays(month, current?.workingDaysOverride, current?.daysOff ?: 0)
+                effectiveWorkingDays(month, current?.daysOff ?: 0)
             }
     }
 }

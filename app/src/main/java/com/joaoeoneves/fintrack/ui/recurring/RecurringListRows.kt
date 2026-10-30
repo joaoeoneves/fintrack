@@ -60,7 +60,6 @@ internal fun RecurringRowItem(
         listOfNotNull(
             stringResource(frequencyRes),
             row.category?.displayName,
-            stringResource(R.string.recurring_automatic).takeIf { item.autoPost },
             statusText(row).takeIf { it.isNotEmpty() },
         ).joinToString(" · ")
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

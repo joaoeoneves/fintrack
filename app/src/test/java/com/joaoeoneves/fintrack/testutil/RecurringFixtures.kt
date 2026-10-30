@@ -23,7 +23,6 @@ fun recurringItem(
     endDate: LocalDate? = null,
     handledThrough: LocalDate? = null,
     active: Boolean = true,
-    autoPost: Boolean = false,
     skipped: Set<LocalDate> = emptySet(),
     pausedAt: LocalDate? = null,
 ) = RecurringItem(
@@ -40,7 +39,6 @@ fun recurringItem(
     endDate = endDate,
     handledThrough = handledThrough,
     active = active,
-    autoPost = autoPost,
     skipped = skipped,
     pausedAt = pausedAt,
 )

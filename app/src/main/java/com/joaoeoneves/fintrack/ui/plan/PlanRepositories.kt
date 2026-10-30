@@ -1,9 +1,7 @@
 package com.joaoeoneves.fintrack.ui.plan
 
 import com.joaoeoneves.fintrack.domain.repository.AutomationSettingsRepository
-import com.joaoeoneves.fintrack.domain.repository.BudgetRepository
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
-import com.joaoeoneves.fintrack.domain.repository.GoalRepository
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
 import com.joaoeoneves.fintrack.domain.repository.PlannedIncomeRepository
 import javax.inject.Inject
@@ -13,9 +11,7 @@ class PlanRepositories
     @Inject
     constructor(
         val plannedIncome: PlannedIncomeRepository,
-        val budgets: BudgetRepository,
         val categories: CategoryRepository,
         val monthSettings: MonthSettingsRepository,
-        val goals: GoalRepository,
         val automation: AutomationSettingsRepository,
     )
