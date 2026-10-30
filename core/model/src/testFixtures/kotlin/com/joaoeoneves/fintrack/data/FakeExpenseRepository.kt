@@ -51,6 +51,28 @@ class FakeExpenseRepository(
 
     override fun observeNeedingReview(): Flow<List<Expense>> = expensesFlow.map { all -> all.filter { it.needsReview } }
 
+    override fun observeAwaitingRefund(): Flow<List<Expense>> =
+        expensesFlow.map { all -> all.filter { it.awaitingRefund } }
+
+    override suspend fun getSplit(splitId: String): Result<List<Expense>> =
+        Result.success(expensesFlow.value.filter { it.splitId == splitId })
+
+    /** All or nothing: fails without changing anything when an [update] part or a [deleteIds] id is missing. */
+    override suspend fun replaceSplit(
+        update: List<Expense>,
+        add: List<Expense>,
+        deleteIds: Collection<String>,
+    ): Result<Unit> {
+        val current = expensesFlow.value
+        val missing = update.firstOrNull { e -> current.none { it.id == e.id } }
+        if (missing != null) return Result.failure(NoSuchElementException("Expense with id ${missing.id} not found"))
+        val byId = update.associateBy { it.id }
+        val added = add.map { it.copy(id = it.id.ifBlank { UUID.randomUUID().toString() }) }
+        expensesFlow.value =
+            current.filterNot { it.id in deleteIds }.map { byId[it.id] ?: it } + added
+        return Result.success(Unit)
+    }
+
     override suspend fun markReviewed(ids: Collection<String>): Result<Unit> {
         expensesFlow.value = expensesFlow.value.map { if (it.id in ids) it.copy(needsReview = false) else it }
         return Result.success(Unit)
