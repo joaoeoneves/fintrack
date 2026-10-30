@@ -695,4 +695,5 @@
     <string name="error_split_sum">Parts must add up to the total</string>
     <string name="error_split_category">Pick a category for each part</string>
     <string name="expense_split_part_caption">Part of a split expense</string>
+    <string name="action_duplicate">Duplicate</string>
 </resources>

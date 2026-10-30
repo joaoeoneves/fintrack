@@ -706,4 +706,5 @@
     <string name="error_split_sum">As partes têm de somar o total</string>
     <string name="error_split_category">Escolhe a categoria de cada parte</string>
     <string name="expense_split_part_caption">Parte de uma despesa dividida</string>
+    <string name="action_duplicate">Duplicar</string>
 </resources>

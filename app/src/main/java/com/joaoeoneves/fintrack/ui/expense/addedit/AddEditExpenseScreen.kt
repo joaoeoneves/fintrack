@@ -40,6 +40,7 @@ import com.joaoeoneves.fintrack.ui.common.asString
 import com.joaoeoneves.fintrack.ui.common.rememberCurrencyAffix
 import com.joaoeoneves.fintrack.ui.designsystem.BorderlessAmountField
 import com.joaoeoneves.fintrack.ui.designsystem.CategoryChip
+import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.MinimalTextField
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.designsystem.rememberIsDirty
@@ -55,6 +56,7 @@ fun AddEditExpenseScreen(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
     onRecordRefund: (String) -> Unit = {},
+    onDuplicate: (String) -> Unit = {},
     viewModel: AddEditExpenseViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -83,7 +85,7 @@ fun AddEditExpenseScreen(
                     form = state.form,
                     categoryOptions = categoryOptions.optionsIncluding(state.form.category),
                     isEditMode = viewModel.isEditRoute,
-                    actions = viewModel.formActions(onRecordRefund),
+                    actions = viewModel.formActions(onRecordRefund, onDuplicate),
                     modifier =
                         Modifier
                             .fillMaxSize()
@@ -126,11 +128,15 @@ internal data class ExpenseFormActions(
     val onRefundOfSelected: (Expense?) -> Unit,
     val split: SplitActions,
     val onRecordRefund: (String) -> Unit,
+    val onDuplicate: (String) -> Unit,
     val onMealCardChanged: (Boolean) -> Unit,
     val onDelete: () -> Unit,
 )
 
-private fun AddEditExpenseViewModel.formActions(onRecordRefund: (String) -> Unit): ExpenseFormActions =
+private fun AddEditExpenseViewModel.formActions(
+    onRecordRefund: (String) -> Unit,
+    onDuplicate: (String) -> Unit,
+): ExpenseFormActions =
     ExpenseFormActions(
         onNameChanged = ::onNameChanged,
         onNameSuggestionPicked = ::onNameSuggestionPicked,
@@ -149,6 +155,7 @@ private fun AddEditExpenseViewModel.formActions(onRecordRefund: (String) -> Unit
                 onRemoved = ::onSplitPartRemoved,
             ),
         onRecordRefund = onRecordRefund,
+        onDuplicate = onDuplicate,
         onMealCardChanged = ::onMealCardChanged,
         onDelete = ::onDelete,
     )
@@ -207,7 +214,15 @@ private fun ExpenseForm(
         MoreOptions(form = form, actions = actions)
 
         form.saveError?.let { FormSaveError(it.asString()) }
-        if (form.canDelete) FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
+        if (form.canDelete) {
+            GhostButton(
+                text = stringResource(R.string.action_duplicate),
+                onClick = { form.expenseId?.let(actions.onDuplicate) },
+                enabled = !form.isBusy,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            FormDeleteButton(onClick = actions.onDelete, enabled = !form.isBusy)
+        }
     }
 }
 
