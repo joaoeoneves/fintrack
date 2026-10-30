@@ -176,6 +176,72 @@ class FirestoreExpenseRepository
             }
         }
 
+        override suspend fun addExpensesKeepingIds(expenses: List<Expense>): Result<List<String>> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val collection = expensesCollection(uid)
+                val withIds = expenses.map { if (it.id.isBlank()) it.copy(id = collection.document().id) else it }
+                for (chunk in withIds.importChunks()) {
+                    val batch = firestore.batch()
+                    chunk.forEach { batch.set(collection.document(it.id), it.toFirestoreMap(includeCreatedAt = true)) }
+                    // Not awaited: lands in the local cache at once and syncs later (see addExpense).
+                    batch.commit().addOnFailureListener(onFail(TAG, "Bulk add expenses failed"))
+                }
+                withIds.map { it.id }
+            }
+        }
+
+        override suspend fun updateExpenses(expenses: List<Expense>): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                for (chunk in expenses.importChunks()) {
+                    val batch = firestore.batch()
+                    chunk.forEach { expense ->
+                        val ref = expensesCollection(uid).document(expense.id)
+                        batch.update(ref, expense.toFirestoreMap(includeCreatedAt = false))
+                    }
+                    // Not awaited: see addExpensesKeepingIds.
+                    batch.commit().addOnFailureListener(onFail(TAG, "Bulk update expenses failed"))
+                }
+            }
+        }
+
+        override suspend fun deleteExpenses(ids: Collection<String>): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                for (chunk in ids.distinct().chunked(REVIEW_BATCH_SIZE)) {
+                    val batch = firestore.batch()
+                    chunk.forEach { batch.delete(expensesCollection(uid).document(it)) }
+                    // Not awaited: see addExpensesKeepingIds.
+                    batch.commit().addOnFailureListener(onFail(TAG, "Bulk delete expenses failed"))
+                }
+            }
+        }
+
+        override fun observeLinkedRefunds(): Flow<List<Expense>> {
+            val uid = firebaseAuth.currentUser?.uid ?: return flowOf(emptyList())
+            val query = expensesCollection(uid).whereGreaterThan("refundOf", "")
+            return callbackFlow {
+                val registration =
+                    query.addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            trySend(snapshot.toExpenses())
+                        }
+                    }
+                awaitClose { registration.remove() }
+            }
+        }
+
         override suspend fun getExpense(id: String): Result<Expense?> {
             val uid =
                 firebaseAuth.currentUser?.uid

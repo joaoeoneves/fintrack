@@ -128,8 +128,8 @@ object BackupCodec {
                     } else {
                         document
                     }
-                val daysOff =
-                    if (document.schemaVersion < DAYS_OFF_BY_TYPE_SCHEMA_VERSION) simplified.upgradedTo24() else simplified
+                val old = document.schemaVersion < DAYS_OFF_BY_TYPE_SCHEMA_VERSION
+                val daysOff = if (old) simplified.upgradedTo24() else simplified
                 // 24 -> 25 expense refundOf/splitId (absent = none): no transform, only the version stamp.
                 sanitize(daysOff.copy(schemaVersion = EXPENSE_LINKS_SCHEMA_VERSION))
             }

@@ -37,6 +37,12 @@ class CategoryResolvingExpenseRepository
                 categoryRepository.observeCategories(),
             ) { expenses, categories -> expenses.resolvedWith(categories) }
 
+        override fun observeLinkedRefunds(): Flow<List<Expense>> =
+            combine(
+                delegate.observeLinkedRefunds(),
+                categoryRepository.observeCategories(),
+            ) { expenses, categories -> expenses.resolvedWith(categories) }
+
         override suspend fun getExpense(id: String): Result<Expense?> =
             delegate.getExpense(id).map { expense -> expense?.let { resolve(listOf(it)).single() } }
 
