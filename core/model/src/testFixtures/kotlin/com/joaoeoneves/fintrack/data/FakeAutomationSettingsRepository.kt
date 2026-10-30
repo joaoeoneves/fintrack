@@ -66,11 +66,5 @@ class FakeAutomationSettingsRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun setSalaryPaysNextMonth(enabled: Boolean): Result<Unit> {
-        failIfRequested()?.let { return Result.failure(it) }
-        settingsFlow.value = settingsFlow.value.copy(salaryPaysNextMonth = enabled)
-        return Result.success(Unit)
-    }
-
     private fun failIfRequested(): Throwable? = nextWriteError.also { nextWriteError = null }
 }
