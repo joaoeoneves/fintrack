@@ -347,8 +347,9 @@ service cloud.firestore {
         && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
-    // Each user can only read/write their own recurring templates (rent, subscriptions, salary).
-    // Confirming an occurrence writes the expense/income and bumps handledThrough in one batch.
+    // Each user can only read/write their own recurring templates (rent, subscriptions;
+    // expenses only, recurring income lives in the planned income lines).
+    // Confirming an occurrence writes the expense and bumps handledThrough in one batch.
     match /users/{userId}/recurring/{itemId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidRecurring(userId, request.resource.data);
