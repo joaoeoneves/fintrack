@@ -231,7 +231,7 @@ class RecordPaydayRunDueTest : RecordPaydayTestBase() {
     fun perWorkingDayLine_usesCalendarDaysMinusDaysOff() =
         runTest {
             plan.savePlannedIncome(line("p1", 1_000).copy(basis = IncomeBasis.PER_WORKING_DAY))
-            monthSettings.setDaysOff(listOf(oct), 3, 0, 0)
+            monthSettings.setDaysOff(listOf(oct), 3, 0)
             cursors("p1" to sep)
 
             useCase.runDue(payday, utc)

@@ -66,6 +66,8 @@ class ReviewInboxViewModel
             combine(
                 expenseRepository.observeNeedingReview(),
                 incomeRepository.observeNeedingReview(),
+                expenseRepository.observeAwaitingRefund(),
+                expenseRepository.observeLinkedRefunds(),
                 ::reviewInbox,
             ).catch { e ->
                 Log.w(TAG, "Review inbox flow failed", e)
@@ -89,7 +91,7 @@ class ReviewInboxViewModel
             val all = inbox.value
             if (all.isEmpty()) return
             viewModelScope.launch {
-                val expenses = all.filterIsInstance<Expense>().map { it.id }
+                val expenses = all.filterIsInstance<Expense>().filter { it.needsReview }.map { it.id }
                 val incomes = all.filterIsInstance<Income>().map { it.id }
                 val results =
                     listOf(
@@ -98,7 +100,7 @@ class ReviewInboxViewModel
                     )
                 val failure = results.firstOrNull { it.isFailure }
                 failure?.let { Log.w(TAG, "Failed to confirm records", it.exceptionOrNull()) }
-                if (results.all { it.isSuccess }) events.send(ReviewInboxEvent.Confirmed(all.size))
+                if (results.all { it.isSuccess }) events.send(ReviewInboxEvent.Confirmed(expenses.size + incomes.size))
             }
         }
 

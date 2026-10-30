@@ -6,8 +6,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.csv.ExpenseCsvWriter
+import com.joaoeoneves.fintrack.data.csv.TransactionCsvWriter
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.IncomeRepository
 import com.joaoeoneves.fintrack.ui.common.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +26,7 @@ class ImportExportViewModel
     @Inject
     constructor(
         private val expenseRepository: ExpenseRepository,
+        private val incomeRepository: IncomeRepository,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val _exportState = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
@@ -35,8 +37,9 @@ class ImportExportViewModel
                 _exportState.value = ExportUiState.Exporting
                 expenseRepository
                     .getAllExpenses()
-                    .onSuccess { expenses ->
-                        val csv = ExpenseCsvWriter.write(expenses)
+                    .mapCatching { expenses -> expenses to incomeRepository.getAllIncome().getOrThrow() }
+                    .onSuccess { (expenses, incomes) ->
+                        val csv = TransactionCsvWriter.write(expenses, incomes)
                         val wrote =
                             try {
                                 val stream = context.contentResolver.openOutputStream(uri)
@@ -51,7 +54,7 @@ class ImportExportViewModel
                             }
                         _exportState.value =
                             if (wrote) {
-                                ExportUiState.Done(expenses.size)
+                                ExportUiState.Done(expenses.size + incomes.size)
                             } else {
                                 ExportUiState.Error(UiText.StringResource(R.string.error_export_write_file))
                             }

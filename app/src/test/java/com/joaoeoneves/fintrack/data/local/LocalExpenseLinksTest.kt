@@ -221,7 +221,7 @@ class LocalExpenseLinksTest : LocalStoreTestBase() {
 
             val doc = newStore().data.first()
 
-            assertEquals(25, doc.schemaVersion)
+            assertEquals(26, doc.schemaVersion)
             assertEquals(3L, doc.revision)
             assertEquals(listOf(local()), doc.expenses)
             assertTrue(filesInDir().none { it.contains("corrupt") })
@@ -236,7 +236,7 @@ class LocalExpenseLinksTest : LocalStoreTestBase() {
 
             assertTrue(repo.addExpensesKeepingIds(listOf(expense("o"), refund("r", of = "o"))).isSuccess)
 
-            assertEquals(25, diskDoc().schemaVersion)
+            assertEquals(26, diskDoc().schemaVersion)
             val reloaded =
                 newStore()
                     .data

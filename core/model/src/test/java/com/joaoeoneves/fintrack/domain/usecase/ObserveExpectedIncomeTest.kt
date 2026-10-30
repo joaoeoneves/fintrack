@@ -141,7 +141,7 @@ class ObserveExpectedIncomeTest {
         runTest {
             val meal = line("meal", 1_000).copy(basis = IncomeBasis.PER_WORKING_DAY, managedKey = MANAGED_MEAL)
             plan.savePlannedIncome(meal)
-            monthSettings.setDaysOff(listOf(oct), 3, 0, 0)
+            monthSettings.setDaysOff(listOf(oct), 3, 0)
 
             val result = expected(LocalDate.of(2026, 10, 28))
 

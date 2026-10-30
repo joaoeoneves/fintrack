@@ -127,4 +127,22 @@ class FirestoreReviewFlagTest {
         assertFalse(parseIncome().needsReview)
         assertFalse(parseIncome("needsReview" to TestDocumentSnapshots.stringValue("true")).needsReview)
     }
+
+    @Test
+    fun expense_awaitingRefund_writtenOnlyWhenTrue_andDeletedOnUpdateWhenFalse() {
+        val on = expense(false).copy(awaitingRefund = true)
+        val off = expense(false)
+        assertEquals(true, on.toFirestoreMap(includeCreatedAt = true)["awaitingRefund"])
+        assertEquals(true, on.toFirestoreMap(includeCreatedAt = false)["awaitingRefund"])
+        assertFalse(off.toFirestoreMap(includeCreatedAt = true).containsKey("awaitingRefund"))
+        assertTrue(isDelete(off.toFirestoreMap(includeCreatedAt = false)["awaitingRefund"]))
+    }
+
+    @Test
+    fun expense_read_awaitingRefund_trueFalseAbsentAndNonBoolean() {
+        assertTrue(parseExpense("awaitingRefund" to TestDocumentSnapshots.booleanValue(true)).awaitingRefund)
+        assertFalse(parseExpense("awaitingRefund" to TestDocumentSnapshots.booleanValue(false)).awaitingRefund)
+        assertFalse(parseExpense().awaitingRefund)
+        assertFalse(parseExpense("awaitingRefund" to TestDocumentSnapshots.stringValue("true")).awaitingRefund)
+    }
 }

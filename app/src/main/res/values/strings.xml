@@ -102,6 +102,8 @@
 
     <string name="expense_field_refund">Refund</string>
     <string name="expense_field_refund_hint">Money returned to you; reduces this category\'s spending</string>
+    <string name="expense_field_awaiting_refund">Will be refunded</string>
+    <string name="expense_field_awaiting_refund_hint">Stays in To review until you record the refund.</string>
     <string name="expense_refund_badge">Refund</string>
     <string name="filter_all">All</string>
     <string name="field_length_counter">%1$d/%2$d</string>
@@ -147,7 +149,7 @@
     <string name="settings_section_data">Data</string>
     <string name="settings_section_account">Account</string>
     <string name="settings_section_about">About</string>
-    <string name="settings_export_csv">Export expenses (CSV)</string>
+    <string name="settings_export_csv">Export transactions (CSV)</string>
     <string name="settings_signed_in_fallback">Signed in</string>
     <string name="label_sign_out_failed">Couldn\'t sign out</string>
     <string name="settings_guest_account">Guest — data is stored only on this device</string>
@@ -173,8 +175,8 @@
     <string name="language_portuguese">Português</string>
 
     <plurals name="export_complete_message">
-        <item quantity="one">Exported %d expense.</item>
-        <item quantity="other">Exported %d expenses.</item>
+        <item quantity="one">Exported %d transaction.</item>
+        <item quantity="other">Exported %d transactions.</item>
     </plurals>
 
     <string name="categories_title">Categories</string>
@@ -385,7 +387,6 @@
         <item quantity="other">%1$d days off</item>
     </plurals>
     <string name="plan_days_off_vacation">Vacation</string>
-    <string name="plan_days_off_sick">Sick leave</string>
     <string name="plan_days_off_other">Other</string>
     <string name="plan_days_off_until">Until</string>
     <plurals name="plan_days_off_range_hint">
@@ -394,12 +395,8 @@
     </plurals>
     <string name="cd_fewer_vacation_days">Fewer vacation days</string>
     <string name="cd_more_vacation_days">More vacation days</string>
-    <string name="cd_fewer_sick_days">Fewer sick days</string>
-    <string name="cd_more_sick_days">More sick days</string>
     <string name="cd_fewer_other_days">Fewer other days off</string>
     <string name="cd_more_other_days">More other days off</string>
-    <string name="plan_days_off_carnival">Carnival Tuesday (day %d)</string>
-    <string name="plan_days_off_carnival_hint">Optional holiday: counts as one day off when ticked.</string>
 
     <string name="plan_group_other">No group</string>
     <string name="error_group_save_failed">Couldn\'t save the group</string>
@@ -666,6 +663,7 @@
     <string name="error_write_rejected">Couldn\'t save a change to the server.</string>
     <string name="error_write_permission">The server did not accept a change. Check that you are signed in with the right account.</string>
     <string name="home_review_subtitle">Recorded automatically</string>
+    <string name="home_review_awaiting_refund">Awaiting refund</string>
     <string name="home_review_confirm_all">Confirm all</string>
     <string name="home_review_more">and %d more</string>
     <plurals name="home_review_confirmed">
@@ -692,7 +690,6 @@
     <string name="expense_refund_of">Refund of</string>
     <string name="expense_refund_of_none">None</string>
     <string name="expense_refund_status">Refunded %1$d%% · real spend %2$s</string>
-    <string name="expense_record_refund">Record refund</string>
     <string name="expense_refunded_badge">Refunded %d%%</string>
     <!-- Split (5.7) -->
     <string name="expense_more_options">More options</string>
@@ -726,4 +723,13 @@
         <item quantity="one">%d expense deleted</item>
         <item quantity="other">%d expenses deleted</item>
     </plurals>
+    <string name="how_it_works_title">How it works</string>
+    <string name="how_it_works_categories_title">Categories</string>
+    <string name="how_it_works_categories_body">Every expense belongs to one category, such as Groceries or Transport. You can rename, archive and add categories in Settings. Categories drive the totals and the limits you set for each month.</string>
+    <string name="how_it_works_groups_title">Groups</string>
+    <string name="how_it_works_groups_body">A group is a name plus the categories that belong to it, for example Home or Leisure. Groups do not change your expenses. They are used in Spending, where you can switch between Category and Group to see the same month either way.</string>
+    <string name="how_it_works_recurring_title">Recurring</string>
+    <string name="how_it_works_recurring_body">A recurring item is an expense or income that repeats, such as rent or a subscription. On its day each month the app records it for you, so you do not have to type it. Every record made this way lands in To review.</string>
+    <string name="how_it_works_review_title">To review</string>
+    <string name="how_it_works_review_body">To review lists what the app recorded on its own and what you marked as Will be refunded. Tap a record to check or edit it, or use Confirm all. An expense marked as Will be refunded stays there until you record a refund linked to it.</string>
 </resources>

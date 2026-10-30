@@ -163,7 +163,7 @@ class SalaryProfileViewModelEffectiveFromTest {
             profiles.saveSalaryProfile(SalaryProfile(baseGrossCents = 100_000, vacationDaysPerYear = 25))
             val settings =
                 listOf(
-                    MonthSettings(YearMonth.of(2026, 3), vacationDays = 5, sickDays = 2),
+                    MonthSettings(YearMonth.of(2026, 3), vacationDays = 5, otherDays = 2),
                     MonthSettings(YearMonth.of(2026, 8), vacationDays = 3, otherDays = 1),
                     MonthSettings(YearMonth.of(2025, 12), vacationDays = 9),
                 )

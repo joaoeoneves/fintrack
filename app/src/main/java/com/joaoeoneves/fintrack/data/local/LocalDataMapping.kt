@@ -46,6 +46,7 @@ internal fun LocalExpense.toDomainOrNull(): Expense? =
             needsReview = needsReview,
             refundOf = refundOf,
             splitId = splitId,
+            awaitingRefund = awaitingRefund,
         )
     }
 
@@ -62,6 +63,7 @@ internal fun Expense.toLocal(): LocalExpense =
         needsReview = needsReview,
         refundOf = refundOf,
         splitId = splitId,
+        awaitingRefund = awaitingRefund,
     )
 
 internal fun LocalIncome.toDomainOrNull(): Income? =

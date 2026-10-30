@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.YearMonth
 
-/** The pure logic behind the days-off dialog: month range, per-type stepper limits, Carnival shortcut. */
+/** The pure logic behind the days-off dialog: month range, per-type stepper limits. */
 class DaysOffSectionsTest {
     private val oct = YearMonth.of(2026, 10)
 
@@ -37,13 +37,12 @@ class DaysOffSectionsTest {
     }
 
     @Test
-    fun counts_eachMaxIsWhatTheOtherTwoLeave() {
-        val counts = DaysOffCounts(vacation = 10, sick = 5, other = 3)
+    fun counts_eachMaxIsWhatTheOtherLeaves() {
+        val counts = DaysOffCounts(vacation = 10, other = 3)
 
-        assertEquals(18, counts.total)
-        assertEquals(MAX_DAYS_OFF - 8, counts.maxVacation)
-        assertEquals(MAX_DAYS_OFF - 13, counts.maxSick)
-        assertEquals(MAX_DAYS_OFF - 15, counts.maxOther)
+        assertEquals(13, counts.total)
+        assertEquals(MAX_DAYS_OFF - 3, counts.maxVacation)
+        assertEquals(MAX_DAYS_OFF - 10, counts.maxOther)
     }
 
     @Test
@@ -51,20 +50,6 @@ class DaysOffSectionsTest {
         val counts = DaysOffCounts()
 
         assertEquals(MAX_DAYS_OFF, counts.maxVacation)
-        assertEquals(MAX_DAYS_OFF, counts.maxSick)
         assertEquals(MAX_DAYS_OFF, counts.maxOther)
-    }
-
-    @Test
-    fun withCarnival_onAddsOne_offTakesOne() {
-        assertEquals(3, withCarnival(2, on = true, max = 10))
-        assertEquals(1, withCarnival(2, on = false, max = 10))
-    }
-
-    @Test
-    fun withCarnival_staysWithinZeroAndMax() {
-        assertEquals(0, withCarnival(0, on = false, max = 10))
-        assertEquals(5, withCarnival(5, on = true, max = 5))
-        assertEquals(0, withCarnival(0, on = true, max = -2))
     }
 }

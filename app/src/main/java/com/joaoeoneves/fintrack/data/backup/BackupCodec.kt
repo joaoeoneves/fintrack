@@ -1,13 +1,14 @@
 package com.joaoeoneves.fintrack.data.backup
 
 import com.joaoeoneves.fintrack.data.local.DAYS_OFF_BY_TYPE_SCHEMA_VERSION
-import com.joaoeoneves.fintrack.data.local.EXPENSE_LINKS_SCHEMA_VERSION
+import com.joaoeoneves.fintrack.data.local.DAYS_OFF_TWO_TYPES_SCHEMA_VERSION
 import com.joaoeoneves.fintrack.data.local.LocalCategory
 import com.joaoeoneves.fintrack.data.local.LocalDataDocument
 import com.joaoeoneves.fintrack.data.local.LocalSalaryProfile
 import com.joaoeoneves.fintrack.data.local.SIMPLIFIED_SCHEMA_VERSION
 import com.joaoeoneves.fintrack.data.local.upgradedTo23
 import com.joaoeoneves.fintrack.data.local.upgradedTo24
+import com.joaoeoneves.fintrack.data.local.upgradedTo26
 import com.joaoeoneves.fintrack.data.local.upgradedToStartMonths
 import com.joaoeoneves.fintrack.data.local.validateAutomation
 import com.joaoeoneves.fintrack.data.local.validateCategory
@@ -118,6 +119,7 @@ object BackupCodec {
         // 23 -> 24 split the monthSettings daysOff total into vacationDays/sickDays/otherDays (the total becomes
         // vacation, see upgradedTo24).
         // 24 -> 25 expense refundOf/splitId (absent = none).
+        // 25 -> 26 sickDays folded into otherDays; expense awaitingRefund (absent = false).
         return when (document.schemaVersion) {
             in 1 until BACKUP_SCHEMA_VERSION -> {
                 val simplified =
@@ -131,7 +133,9 @@ object BackupCodec {
                 val old = document.schemaVersion < DAYS_OFF_BY_TYPE_SCHEMA_VERSION
                 val daysOff = if (old) simplified.upgradedTo24() else simplified
                 // 24 -> 25 expense refundOf/splitId (absent = none): no transform, only the version stamp.
-                sanitize(daysOff.copy(schemaVersion = EXPENSE_LINKS_SCHEMA_VERSION))
+                val twoTypes = document.schemaVersion >= DAYS_OFF_TWO_TYPES_SCHEMA_VERSION
+                val folded = if (twoTypes) daysOff else daysOff.upgradedTo26()
+                sanitize(folded.copy(schemaVersion = DAYS_OFF_TWO_TYPES_SCHEMA_VERSION))
             }
             BACKUP_SCHEMA_VERSION -> sanitize(document)
             else -> BackupDecodeResult.UnsupportedVersion(document.schemaVersion)
@@ -221,6 +225,10 @@ internal fun BackupDocument.upgradedToStartMonths(
         ).upgradedToStartMonths(now, zone)
     return copy(plannedIncome = upgraded.plannedIncome)
 }
+
+/** The 25 -> 26 upgrade of a backup: the same rule as the guest file (see `upgradedTo26`). */
+internal fun BackupDocument.upgradedTo26(): BackupDocument =
+    copy(schemaVersion = DAYS_OFF_TWO_TYPES_SCHEMA_VERSION, monthSettings = monthSettings.upgradedTo26())
 
 /** The 23 -> 24 upgrade of a backup: the same rule as the guest file (see `upgradedTo24`). */
 internal fun BackupDocument.upgradedTo24(): BackupDocument =

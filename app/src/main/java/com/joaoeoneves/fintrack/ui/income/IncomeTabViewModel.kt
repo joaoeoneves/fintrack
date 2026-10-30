@@ -469,11 +469,10 @@ class IncomeTabViewModel(
     fun onSetDaysOff(
         months: List<YearMonth>,
         vacation: Int,
-        sick: Int,
         other: Int,
     ) {
         viewModelScope.launch {
-            repositories.monthSettings.setDaysOff(months, vacation, sick, other).onFailure { reportFailure(it) }
+            repositories.monthSettings.setDaysOff(months, vacation, other).onFailure { reportFailure(it) }
         }
     }
 
@@ -603,7 +602,6 @@ private fun workingDaysOf(
         month = month,
         days = effectiveWorkingDays(month, daysOff),
         vacationDays = monthSettings?.vacationDays ?: 0,
-        sickDays = monthSettings?.sickDays ?: 0,
         otherDays = monthSettings?.otherDays ?: 0,
         calendarDays = calendar,
         holidays = holidayWeekdaysIn(month),

@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
+import com.joaoeoneves.fintrack.domain.model.MAX_DAYS_OFF
 import com.joaoeoneves.fintrack.domain.model.MonthSettings
 import com.joaoeoneves.fintrack.domain.model.requireValidDaysOff
 import com.joaoeoneves.fintrack.domain.repository.MonthSettingsRepository
@@ -54,23 +55,23 @@ class FirestoreMonthSettingsRepository
         override suspend fun setDaysOff(
             months: Collection<YearMonth>,
             vacation: Int,
-            sick: Int,
             other: Int,
         ): Result<Unit> {
-            requireValidDaysOff(months, vacation, sick, other)
+            requireValidDaysOff(months, vacation, other)
             val uid = firebaseAuth.currentUser?.uid ?: return Result.failure(IllegalStateException("Not signed in"))
             return runCatchingCancellable {
                 val batch = firestore.batch()
                 months.distinct().forEach { month ->
                     val docRef = collection(uid).document(month.toString())
-                    if (vacation + sick + other == 0) {
+                    if (vacation + other == 0) {
                         batch.delete(docRef)
                     } else {
                         // `workingDays` (pre-5.5) and `daysOff` (pre-5.6 total) are dropped on the next save.
                         val data =
                             buildMap<String, Any> {
                                 put(FIELD_VACATION_DAYS, vacation.orDelete())
-                                put(FIELD_SICK_DAYS, sick.orDelete())
+                                // `sickDays` (5.6-5.8) was folded into `otherDays` in 5.9.
+                                put(FIELD_SICK_DAYS, FieldValue.delete())
                                 put(FIELD_OTHER_DAYS, other.orDelete())
                                 put(FIELD_DAYS_OFF, FieldValue.delete())
                                 put(FIELD_WORKING_DAYS, FieldValue.delete())
@@ -93,7 +94,6 @@ private fun Int.orDelete(): Any = if (this > 0) this else FieldValue.delete()
 internal fun MonthSettings.toFirestoreMap(): Map<String, Any?> =
     buildMap {
         if (vacationDays > 0) put(FIELD_VACATION_DAYS, vacationDays)
-        if (sickDays > 0) put(FIELD_SICK_DAYS, sickDays)
         if (otherDays > 0) put(FIELD_OTHER_DAYS, otherDays)
         put("updatedAt", FieldValue.serverTimestamp())
     }
@@ -118,7 +118,9 @@ private fun DocumentSnapshot.toMonthSettingsOrNull(): MonthSettings? =
         // A pre-5.6 document only has the total, which counts as vacation; once a typed field exists it is ignored.
         val legacy = vacation == null && sick == null && other == null
         val vacationDays = if (legacy) getLong(FIELD_DAYS_OFF)?.toInt() ?: 0 else vacation ?: 0
+        // 5.9 folded sick days into other days: read both, capped so the total stays within the 23-day limit.
+        val otherDays = ((other ?: 0) + (sick ?: 0)).coerceIn(0, (MAX_DAYS_OFF - vacationDays).coerceAtLeast(0))
         // A leftover document with nothing set (only the legacy working-days override, or fields cleared
         // offline) carries no information.
-        MonthSettings(month, vacationDays, sick ?: 0, other ?: 0).takeUnless { it.isBlank }
+        MonthSettings(month, vacationDays, otherDays).takeUnless { it.isBlank }
     }

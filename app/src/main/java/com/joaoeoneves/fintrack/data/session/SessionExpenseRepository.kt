@@ -36,6 +36,18 @@ class SessionExpenseRepository
 
         override fun observeNeedingReview(): Flow<List<Expense>> = needingReview
 
+        private val awaitingRefund: Flow<List<Expense>> = switch.flow(emptyList()) { it.observeAwaitingRefund() }
+
+        override fun observeAwaitingRefund(): Flow<List<Expense>> = awaitingRefund
+
+        override suspend fun getSplit(splitId: String): Result<List<Expense>> = switch.call { it.getSplit(splitId) }
+
+        override suspend fun replaceSplit(
+            update: List<Expense>,
+            add: List<Expense>,
+            deleteIds: Collection<String>,
+        ): Result<Unit> = switch.call { it.replaceSplit(update, add, deleteIds) }
+
         override suspend fun markReviewed(ids: Collection<String>): Result<Unit> = switch.call { it.markReviewed(ids) }
 
         override suspend fun addExpense(expense: Expense): Result<String> = switch.call { it.addExpense(expense) }

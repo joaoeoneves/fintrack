@@ -11,6 +11,8 @@ import com.joaoeoneves.fintrack.testutil.testExpense
 import com.joaoeoneves.fintrack.testutil.testIncome
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -130,5 +132,70 @@ class ReviewInboxViewModelTest {
             model.onRemove(item)
             advanceUntilIdle()
             assertTrue(incomes.getAllIncome().getOrThrow().isEmpty())
+        }
+
+    /** A fake whose awaiting-refund and linked-refund streams are driven by the test. */
+    private class AwaitingRepo(
+        private val base: FakeExpenseRepository,
+    ) : ExpenseRepository by base {
+        val awaiting = MutableStateFlow<List<Expense>>(emptyList())
+        val linked = MutableStateFlow<List<Expense>>(emptyList())
+        val reviewed = mutableListOf<Collection<String>>()
+
+        override fun observeAwaitingRefund(): Flow<List<Expense>> = awaiting
+
+        override fun observeLinkedRefunds(): Flow<List<Expense>> = linked
+
+        override suspend fun markReviewed(ids: Collection<String>): Result<Unit> {
+            reviewed += ids
+            return base.markReviewed(ids)
+        }
+    }
+
+    private fun awaitingExpense(id: String) = testExpense(id, 5_000, day).copy(awaitingRefund = true)
+
+    private fun refundOf(id: String) = testExpense("r-$id", 2_000, day).copy(isRefund = true, refundOf = id)
+
+    @Test
+    fun `an awaiting-refund expense shows until a refund links to it and returns when that refund goes`() =
+        runTest(dispatcher) {
+            val repo = AwaitingRepo(FakeExpenseRepository())
+            repo.awaiting.value = listOf(awaitingExpense("a1"))
+            val model = vm(repo)
+            assertEquals(1, (model.uiState.value as ReviewInboxUiState.Visible).total)
+
+            repo.linked.value = listOf(refundOf("a1"))
+            runCurrent()
+            assertEquals(ReviewInboxUiState.Hidden, model.uiState.value)
+
+            repo.linked.value = emptyList()
+            runCurrent()
+            assertEquals(listOf("a1"), (model.uiState.value as ReviewInboxUiState.Visible).items.map { it.id })
+        }
+
+    @Test
+    fun `confirm all clears only needsReview and its count excludes awaiting rows`() =
+        runTest(dispatcher) {
+            val repo = AwaitingRepo(FakeExpenseRepository(listOf(flagged("e1"))))
+            repo.awaiting.value = listOf(awaitingExpense("a1"), awaitingExpense("a2"))
+            val model = vm(repo)
+            assertEquals(3, (model.uiState.value as ReviewInboxUiState.Visible).total)
+
+            model.onConfirmAll()
+            advanceUntilIdle()
+
+            assertEquals(listOf<Collection<String>>(listOf("e1")), repo.reviewed)
+            assertEquals(ReviewInboxEvent.Confirmed(1), model.eventFlow.first())
+            assertEquals(listOf("a1", "a2"), (model.uiState.value as ReviewInboxUiState.Visible).items.map { it.id })
+        }
+
+    @Test
+    fun `an expense both flagged and awaiting is listed once`() =
+        runTest(dispatcher) {
+            val both = flagged("b1").copy(awaitingRefund = true)
+            val repo = AwaitingRepo(FakeExpenseRepository(listOf(both)))
+            repo.awaiting.value = listOf(both)
+
+            assertEquals(1, (vm(repo).uiState.value as ReviewInboxUiState.Visible).total)
         }
 }

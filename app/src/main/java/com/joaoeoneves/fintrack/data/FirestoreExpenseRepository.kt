@@ -101,6 +101,56 @@ class FirestoreExpenseRepository
             }
         }
 
+        override fun observeAwaitingRefund(): Flow<List<Expense>> {
+            val uid = firebaseAuth.currentUser?.uid ?: return flowOf(emptyList())
+            val query = expensesCollection(uid).whereEqualTo("awaitingRefund", true)
+            return callbackFlow {
+                val registration =
+                    query.addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            trySend(snapshot.toExpenses())
+                        }
+                    }
+                awaitClose { registration.remove() }
+            }
+        }
+
+        override suspend fun getSplit(splitId: String): Result<List<Expense>> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val query = expensesCollection(uid).whereEqualTo("splitId", splitId)
+                query.get().await().toExpenses()
+            }
+        }
+
+        override suspend fun replaceSplit(
+            update: List<Expense>,
+            add: List<Expense>,
+            deleteIds: Collection<String>,
+        ): Result<Unit> {
+            val uid =
+                firebaseAuth.currentUser?.uid
+                    ?: return Result.failure(IllegalStateException("Not signed in"))
+            return runCatchingCancellable {
+                val collection = expensesCollection(uid)
+                val batch = firestore.batch()
+                update.forEach { batch.update(collection.document(it.id), it.toFirestoreMap(includeCreatedAt = false)) }
+                add.forEach {
+                    val ref = if (it.id.isBlank()) collection.document() else collection.document(it.id)
+                    batch.set(ref, it.toFirestoreMap(includeCreatedAt = true))
+                }
+                deleteIds.distinct().forEach { batch.delete(collection.document(it)) }
+                // Not awaited: lands in the local cache at once and syncs later (see addExpense).
+                batch.commit().addOnFailureListener(onFail(TAG, "Replace split failed"))
+            }
+        }
+
         override suspend fun markReviewed(ids: Collection<String>): Result<Unit> {
             val uid =
                 firebaseAuth.currentUser?.uid
@@ -415,6 +465,11 @@ internal fun Expense.toFirestoreMap(includeCreatedAt: Boolean): Map<String, Any?
     } else if (!includeCreatedAt) {
         map["needsReview"] = FieldValue.delete()
     }
+    if (awaitingRefund) {
+        map["awaitingRefund"] = true
+    } else if (!includeCreatedAt) {
+        map["awaitingRefund"] = FieldValue.delete()
+    }
     putOptional(map, "refundOf", refundOf, includeCreatedAt)
     putOptional(map, "splitId", splitId, includeCreatedAt)
     return map
@@ -452,6 +507,7 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
     val isRefund = get("isRefund") as? Boolean ?: false
     val paidWithMealCard = get("paidWithMealCard") as? Boolean ?: false
     val needsReview = get("needsReview") as? Boolean ?: false
+    val awaitingRefund = get("awaitingRefund") as? Boolean ?: false
     val refundOf = (get("refundOf") as? String)?.takeIf { it.isNotBlank() }
     val splitId = (get("splitId") as? String)?.takeIf { it.isNotBlank() }
 
@@ -485,6 +541,7 @@ private fun DocumentSnapshot.parseExpense(): Expense? {
                 needsReview = needsReview,
                 refundOf = refundOf,
                 splitId = splitId,
+                awaitingRefund = awaitingRefund,
             )
     }
 }

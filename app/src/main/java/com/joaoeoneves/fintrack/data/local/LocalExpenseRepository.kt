@@ -50,6 +50,49 @@ class LocalExpenseRepository
                     .sortedBy { it.date }
             }
 
+        override fun observeAwaitingRefund(): Flow<List<Expense>> =
+            store.data.map { doc ->
+                doc.expenses
+                    .filter { it.awaitingRefund }
+                    .mapNotNull { it.toDomainOrNull() }
+                    .sortedBy { it.date }
+            }
+
+        override suspend fun getSplit(splitId: String): Result<List<Expense>> =
+            runCatchingCancellable {
+                store.data
+                    .first()
+                    .expenses
+                    .filter { it.splitId == splitId }
+                    .mapNotNull { it.toDomainOrNull() }
+            }
+
+        override suspend fun replaceSplit(
+            update: List<Expense>,
+            add: List<Expense>,
+            deleteIds: Collection<String>,
+        ): Result<Unit> =
+            store.update { doc ->
+                val known = knownCategoryIds(doc)
+                val updated = update.map { it.toLocal() }
+                val existing = doc.expenses.mapTo(mutableSetOf()) { it.id }
+                updated.forEach { record ->
+                    require(record.id in existing) { "Expense ${record.id} does not exist" }
+                    validateExpense(record, known)
+                }
+                val added =
+                    add.map { expense ->
+                        expense.toLocal().let { it.copy(id = it.id.ifBlank { idGenerator.newId() }) }.also {
+                            validateExpense(it, known)
+                        }
+                    }
+                val byId = updated.associateBy { it.id }
+                val gone = deleteIds.toSet()
+                val kept = doc.expenses.filterNot { it.id in gone }.map { byId[it.id] ?: it }
+                val addedIds = added.map { it.id }.toSet()
+                doc.copy(expenses = kept.filterNot { it.id in addedIds } + added) to Unit
+            }
+
         override suspend fun markReviewed(ids: Collection<String>): Result<Unit> =
             store.update { doc ->
                 val wanted = ids.toSet()

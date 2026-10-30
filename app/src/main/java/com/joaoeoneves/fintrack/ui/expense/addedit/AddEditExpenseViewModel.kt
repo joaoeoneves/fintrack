@@ -147,6 +147,9 @@ class AddEditExpenseViewModel(
     // Every refund linked to some original; the edited expense's own refund status derives from it.
     private var linkedRefunds: List<Expense> = emptyList()
 
+    // The stored parts of the split being edited (empty for any other expense).
+    private var siblings: List<Expense> = emptyList()
+
     init {
         loadExpense()
         if (route.expenseId != null) {
@@ -191,12 +194,12 @@ class AddEditExpenseViewModel(
                     .getExpense(expenseId)
                     .onSuccess { existing ->
                         loaded = existing
+                        siblings = existing?.let { loadSiblings(it) }.orEmpty()
                         _uiState.value =
                             if (existing != null) {
                                 readyWithSaved(
-                                    ExpenseFormState(
+                                    existing.toEditForm(mealAvailable, siblings.sortedBy { it.id }).copy(
                                         name = existing.name,
-                                        amountCents = existing.amountCents,
                                         category = existing.category,
                                         date = existing.date,
                                         note = existing.note ?: "",
@@ -206,7 +209,9 @@ class AddEditExpenseViewModel(
                                         isEditMode = true,
                                         expenseId = existing.id,
                                         refundOf = existing.refundOf,
-                                        splitId = existing.splitId,
+                                        // A lone leftover part is a plain expense: saving it clears the id.
+                                        splitId = existing.splitId.takeIf { siblings.isNotEmpty() },
+                                        awaitingRefund = existing.awaitingRefund,
                                         refundOfLabel = existing.refundOf?.let { originalName(it) },
                                     ),
                                     BuiltInCategories.all,
@@ -227,6 +232,13 @@ class AddEditExpenseViewModel(
                 loadNewForm()
             }
         }
+    }
+
+    /** The parts of the split [existing] belongs to (itself included), or empty when it is no split of 2+ parts. */
+    private suspend fun loadSiblings(existing: Expense): List<Expense> {
+        val splitId = existing.splitId ?: return emptyList()
+        val parts = expenseRepository.getSplit(splitId).getOrNull().orEmpty()
+        return if (parts.size >= MIN_SPLIT_PARTS && parts.any { it.id == existing.id }) parts else emptyList()
     }
 
     /** A new form: today's date, the default category and the route's prefill (a saved snapshot wins over it). */
@@ -254,38 +266,21 @@ class AddEditExpenseViewModel(
         }
     }
 
-    /**
-     * The new [form] seeded from the route: a duplicate copies the other expense, "record refund" starts a refund
-     * linked to its original (amount left empty); a missing source expense leaves the form as it was.
-     */
+    /** The new [form] seeded from the route: a duplicate copies the other expense; a missing source leaves it as is. */
     private suspend fun seededFromRoute(form: ExpenseFormState): ExpenseFormState {
-        val duplicateOf = route.duplicateOf
-        val refundOf = route.refundOf
-        val source =
-            (duplicateOf ?: refundOf)?.let { id -> expenseRepository.getExpense(id).getOrNull() } ?: return form
-        return if (duplicateOf != null) {
-            val copy = source.duplicated(clock.instant())
-            form.copy(
-                name = copy.name,
-                amountCents = copy.amountCents,
-                category = copy.category,
-                date = copy.date,
-                note = copy.note.orEmpty(),
-                isRefund = copy.isRefund,
-                paidWithMealCard = copy.paidWithMealCard,
-                categoryTouched = true,
-                mealCardTouched = true,
-            )
-        } else {
-            form.copy(
-                name = source.name,
-                category = source.category,
-                isRefund = true,
-                refundOf = source.id,
-                refundOfLabel = source.name,
-                categoryTouched = true,
-            )
-        }
+        val source = route.duplicateOf?.let { id -> expenseRepository.getExpense(id).getOrNull() } ?: return form
+        val copy = source.duplicated(clock.instant())
+        return form.copy(
+            name = copy.name,
+            amountCents = copy.amountCents,
+            category = copy.category,
+            date = copy.date,
+            note = copy.note.orEmpty(),
+            isRefund = copy.isRefund,
+            paidWithMealCard = copy.paidWithMealCard,
+            categoryTouched = true,
+            mealCardTouched = true,
+        )
     }
 
     /** The name of the original expense [id], or `null` when it no longer exists. */
@@ -365,7 +360,7 @@ class AddEditExpenseViewModel(
     fun onRefundChanged(isRefund: Boolean) {
         updateForm {
             val base = it.copy(isRefund = isRefund, saveError = null)
-            val updated = if (isRefund) base.withoutSplit() else base
+            val updated = if (isRefund) base.withoutSplitKeepingOpened().copy(awaitingRefund = false) else base
             // A link only means something on a refund.
             (if (isRefund) updated else updated.copy(refundOf = null, refundOfLabel = null)).withMealCardPrefill()
         }
@@ -375,6 +370,9 @@ class AddEditExpenseViewModel(
     fun onRefundOfSelected(original: Expense?) {
         updateForm { it.copy(refundOf = original?.id, refundOfLabel = original?.name, saveError = null) }
     }
+
+    /** The "Will be refunded" switch. */
+    fun onAwaitingRefundChanged(awaiting: Boolean) = updateForm { it.copy(awaitingRefund = awaiting) }
 
     /** The "Paid with meal card" switch; once the user sets it, the category no longer decides. */
     fun onMealCardChanged(paid: Boolean) = updateForm { it.copy(paidWithMealCard = paid, mealCardTouched = true) }
@@ -393,6 +391,7 @@ class AddEditExpenseViewModel(
             val expense = form.toExpense()
             val result =
                 when {
+                    form.isEditMode && form.splitId != null && siblings.isNotEmpty() -> saveSplitEdit(expense, form)
                     form.isEditMode -> expenseRepository.updateExpense(expense)
                     form.isSplitting -> saveSplit(expense, form)
                     else -> expenseRepository.addExpense(expense)
@@ -422,16 +421,47 @@ class AddEditExpenseViewModel(
             .mapCatching { expenseRepository.addExpensesKeepingIds(it).getOrThrow() }
     }
 
+    /**
+     * Saves the edit of a stored split as one atomic replace: the kept parts are updated, parts added in the form are
+     * created and the parts removed from it are deleted. With the split switched off (or the expense made a refund)
+     * the opened part stays as a plain expense and every other part is deleted. Shared fields (name, date, note, meal
+     * card, awaiting refund) are written to all the parts.
+     */
+    private suspend fun saveSplitEdit(
+        opened: Expense,
+        form: ExpenseFormState,
+    ): Result<Unit> {
+        val byId = siblings.associateBy { it.id }
+        if (!form.isSplitting) {
+            val others = siblings.map { it.id }.filter { it != opened.id }
+            return expenseRepository.replaceSplit(listOf(opened.copy(splitId = null)), emptyList(), others)
+        }
+        val shared = opened.copy(id = "", splitId = form.splitId)
+        val kept = form.splitParts.mapNotNull { it.expenseId }.toSet()
+        val update = mutableListOf<Expense>()
+        val add = mutableListOf<Expense>()
+        form.splitParts.forEach { part ->
+            val category = checkNotNull(part.category)
+            val stored = part.expenseId?.let(byId::get)
+            if (stored != null) {
+                update += shared.copy(id = stored.id, category = category, amountCents = part.amountCents)
+            } else {
+                add += shared.copy(category = category, amountCents = part.amountCents)
+            }
+        }
+        return expenseRepository.replaceSplit(update, add, byId.keys - kept)
+    }
+
     fun onSplitEnabledChanged(enabled: Boolean) =
         updateForm {
             if (!enabled) {
-                it.withoutSplit()
+                it.withoutSplitKeepingOpened()
             } else {
                 it.copy(
                     splitEnabled = true,
                     splitParts =
                         listOf(
-                            SplitPartForm(it.category.takeUnless { c -> c.isUnknown }, it.amountCents),
+                            SplitPartForm(it.category.takeUnless { c -> c.isUnknown }, it.amountCents, it.expenseId),
                             SplitPartForm(null, 0L),
                         ),
                     splitError = null,
@@ -548,6 +578,20 @@ private fun ExpenseFormState.withValidationErrors(): ExpenseFormState? {
     }
 }
 
+/**
+ * Drops the split; when a stored part is open, the form keeps that part's own amount and category (J11) instead of
+ * the total of all parts.
+ */
+private fun ExpenseFormState.withoutSplitKeepingOpened(): ExpenseFormState {
+    val opened = splitParts.firstOrNull { part -> expenseId != null && part.expenseId == expenseId }
+    val plain = withoutSplit()
+    return if (opened == null) {
+        plain
+    } else {
+        plain.copy(amountCents = opened.amountCents, category = opened.category ?: plain.category)
+    }
+}
+
 private fun ExpenseFormState.toExpense(): Expense =
     Expense(
         id = expenseId.orEmpty(),
@@ -560,6 +604,31 @@ private fun ExpenseFormState.toExpense(): Expense =
         paidWithMealCard = paidWithMealCard,
         refundOf = refundOf.takeIf { isRefund },
         splitId = splitId,
+        awaitingRefund = awaitingRefund && !isRefund,
         // Saving counts as looking at it: an edited automatic record leaves the review inbox.
         needsReview = false,
     )
+
+/** The edit form of [existing]; part of a split of [parts] (2+) it opens the split editor with every part. */
+private fun Expense.toEditForm(
+    mealAvailable: Boolean,
+    parts: List<Expense>,
+): ExpenseFormState {
+    val base =
+        ExpenseFormState(
+            amountCents = amountCents,
+            category = category,
+            mealCardAvailable = mealAvailable,
+            isEditMode = true,
+            expenseId = id,
+        )
+    return if (parts.isEmpty()) {
+        base
+    } else {
+        base.copy(
+            amountCents = parts.sumOf { it.amountCents },
+            splitEnabled = true,
+            splitParts = parts.map { SplitPartForm(it.category, it.amountCents, it.id) },
+        )
+    }
+}

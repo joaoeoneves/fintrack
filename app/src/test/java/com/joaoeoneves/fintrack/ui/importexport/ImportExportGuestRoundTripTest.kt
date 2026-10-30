@@ -9,6 +9,7 @@ import com.joaoeoneves.fintrack.data.FirestoreExpenseRepository
 import com.joaoeoneves.fintrack.data.local.LocalCategoryRepository
 import com.joaoeoneves.fintrack.data.local.LocalDataStore
 import com.joaoeoneves.fintrack.data.local.LocalExpenseRepository
+import com.joaoeoneves.fintrack.data.local.LocalIncomeRepository
 import com.joaoeoneves.fintrack.data.local.LocalStoreTestBase
 import com.joaoeoneves.fintrack.data.session.SessionCategoryRepository
 import com.joaoeoneves.fintrack.data.session.SessionExpenseRepository
@@ -68,6 +69,7 @@ class ImportExportGuestRoundTripTest : LocalStoreTestBase() {
             )
         return ImportExportViewModel(
             CategoryResolvingExpenseRepository(raw, categories),
+            LocalIncomeRepository(store, ids),
             RuntimeEnvironment.getApplication(),
         )
     }

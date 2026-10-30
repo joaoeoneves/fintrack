@@ -128,6 +128,6 @@ class BackupCodecV23Test {
 
         val doc = BackupCodec.decode(v24).success().document
 
-        assertEquals(listOf(LocalMonthSettings("2026-10", 2, 3, 1)), doc.monthSettings)
+        assertEquals(listOf(LocalMonthSettings("2026-10", 2, 4)), doc.monthSettings)
     }
 }

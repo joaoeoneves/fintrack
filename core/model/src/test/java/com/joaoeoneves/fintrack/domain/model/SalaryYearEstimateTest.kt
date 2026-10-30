@@ -45,8 +45,8 @@ class SalaryYearEstimateTest {
     }
 
     @Test
-    fun spread_ignoresSickAndOtherDays_soAMonthWithOnlyThoseStillGetsAssumedVacation() {
-        val settings = listOf(MonthSettings(ym(1), sickDays = 5, otherDays = 2))
+    fun spread_ignoresOtherDays_soAMonthWithOnlyThoseStillGetsAssumedVacation() {
+        val settings = listOf(MonthSettings(ym(1), otherDays = 7))
         val spread = assumedVacationByMonth(year, settings, 22)
         // 22 days over all 12 free months (January included), not 11.
         assertEquals(22, spread.values.sum())

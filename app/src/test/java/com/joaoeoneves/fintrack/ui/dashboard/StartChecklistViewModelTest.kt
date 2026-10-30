@@ -14,9 +14,11 @@ import com.joaoeoneves.fintrack.domain.model.PlannedIncome
 import com.joaoeoneves.fintrack.domain.model.SalaryProfile
 import com.joaoeoneves.fintrack.domain.model.Session
 import com.joaoeoneves.fintrack.domain.model.StartStep
+import com.joaoeoneves.fintrack.domain.repository.ServerSettled
 import com.joaoeoneves.fintrack.domain.usecase.ObserveStartChecklist
 import com.joaoeoneves.fintrack.testutil.InMemoryPreferencesDataStore
 import com.joaoeoneves.fintrack.testutil.recurringItem
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -52,6 +54,25 @@ class StartChecklistViewModelTest {
     private val plan = FakePlannedIncomeRepository()
     private val recurring = FakeRecurringRepository()
     private val expenses = FakeExpenseRepository()
+    private val settled = GateSettled()
+
+    /** A [ServerSettled] whose waits suspend until [open] is called, like an offline write queue. */
+    private class GateSettled : ServerSettled {
+        private var gate: CompletableDeferred<Unit>? = null
+
+        fun close() {
+            gate = CompletableDeferred()
+        }
+
+        fun open() {
+            gate?.complete(Unit)
+            gate = null
+        }
+
+        override suspend fun awaitPendingWrites() {
+            gate?.await()
+        }
+    }
 
     @Before
     fun setUp() = Dispatchers.setMain(dispatcher)
@@ -64,6 +85,7 @@ class StartChecklistViewModelTest {
             store,
             ObserveStartChecklist(profiles, plan, recurring, expenses),
             session,
+            settled,
             settleMillis,
         )
 
@@ -323,5 +345,57 @@ class StartChecklistViewModelTest {
             runCurrent()
 
             assertEquals(StartChecklistState.DISMISSED, store.state.first())
+        }
+
+    @Test
+    fun gateClosed_noStateEmitted_untilItOpens() =
+        runTest(dispatcher) {
+            store.set(StartChecklistState.ACTIVE)
+            setUpSteps(2)
+            settled.close()
+            val vm = started(viewModel())
+
+            advanceTimeBy(10 * settleMillis)
+            assertEquals(StartChecklistUiState.Hidden, vm.uiState.value)
+
+            settled.open()
+            runCurrent()
+            advanceUntilIdle()
+            assertEquals(2, vm.visible().doneCount)
+        }
+
+    @Test
+    fun gateClosedAfterAChange_keepsTheLastConfirmedProgress() =
+        runTest(dispatcher) {
+            store.set(StartChecklistState.ACTIVE)
+            setUpSteps(1)
+            val vm = started(viewModel())
+            advanceUntilIdle()
+            assertEquals(1, vm.visible().doneCount)
+
+            settled.close()
+            profiles.saveSalaryProfile(SalaryProfile(baseGrossCents = 100_000L))
+            recurring.saveRecurring(recurringItem(id = ""))
+            advanceUntilIdle()
+            assertEquals(1, vm.visible().doneCount)
+
+            settled.open()
+            advanceUntilIdle()
+            assertEquals(2, vm.visible().doneCount)
+        }
+
+    @Test
+    fun decide_waitsForTheServer_beforeSettingTheState() =
+        runTest(dispatcher) {
+            setUpSteps(3)
+            settled.close()
+            started(viewModel())
+
+            advanceTimeBy(10 * settleMillis)
+            assertNull(store.state.first())
+
+            settled.open()
+            advanceUntilIdle()
+            assertEquals(StartChecklistState.RETIRED, store.state.first())
         }
 }

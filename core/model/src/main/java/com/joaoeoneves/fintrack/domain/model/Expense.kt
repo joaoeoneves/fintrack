@@ -25,6 +25,11 @@ data class Expense(
     val refundOf: String? = null,
     /** Shared by the sibling expenses created by splitting one purchase across categories. */
     val splitId: String? = null,
+    /**
+     * The user expects this expense to be refunded (e.g. paid for someone else); it stays in the "to review" inbox
+     * until a refund is linked to it. Only meaningful on a non-refund expense.
+     */
+    val awaitingRefund: Boolean = false,
 ) : Transaction {
     /** [amountCents] with its sign applied: negative for refunds, positive otherwise. */
     val signedAmountCents: Long get() = if (isRefund) -amountCents else amountCents

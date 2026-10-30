@@ -50,7 +50,10 @@ fun DataSection(
 }
 
 @Composable
-fun AboutSection(modifier: Modifier = Modifier) {
+fun AboutSection(
+    modifier: Modifier = Modifier,
+    onOpenHowItWorks: () -> Unit = {},
+) {
     val context = LocalContext.current
     val unknownVersion = stringResource(R.string.about_version_unknown)
     val versionName =
@@ -68,6 +71,12 @@ fun AboutSection(modifier: Modifier = Modifier) {
         SettingsRow(
             title = stringResource(R.string.app_name),
             value = stringResource(R.string.about_version, versionName),
+        )
+        Hairline()
+        SettingsRow(
+            title = stringResource(R.string.how_it_works_title),
+            onClick = onOpenHowItWorks,
+            showChevron = true,
         )
         Hairline()
         SettingsRow(

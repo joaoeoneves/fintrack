@@ -22,18 +22,17 @@ class LocalMonthSettingsRepository
         override suspend fun setDaysOff(
             months: Collection<YearMonth>,
             vacation: Int,
-            sick: Int,
             other: Int,
         ): Result<Unit> {
-            requireValidDaysOff(months, vacation, sick, other)
+            requireValidDaysOff(months, vacation, other)
             val keys = months.map { it.toString() }.toSet()
             return store.update { doc ->
                 val kept = doc.monthSettings.filterNot { it.month in keys }
                 val set =
-                    if (vacation + sick + other == 0) {
+                    if (vacation + other == 0) {
                         emptyList()
                     } else {
-                        keys.map { LocalMonthSettings(it, vacation, sick, other) }.onEach { validateMonthSettings(it) }
+                        keys.map { LocalMonthSettings(it, vacation, other) }.onEach { validateMonthSettings(it) }
                     }
                 doc.copy(monthSettings = kept + set) to Unit
             }

@@ -120,8 +120,8 @@ data class SalaryProfile(
 }
 
 /**
- * The default "valid from" month of a new salary: with [raiseInFebruary] the next February that is not already
- * past (January gives this year's coming February, February to December this year's February), otherwise [now].
+ * The default "valid from" month of a new salary: with [raiseInFebruary] February of [now]'s year (in January
+ * that is the coming month; from February on the raise is backdated to this year's February), otherwise [now].
  */
 fun defaultEffectiveFrom(
     now: YearMonth,

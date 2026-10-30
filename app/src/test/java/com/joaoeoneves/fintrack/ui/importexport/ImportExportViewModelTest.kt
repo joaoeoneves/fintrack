@@ -4,9 +4,11 @@ import android.app.Application
 import android.net.Uri
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
+import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.domain.model.BuiltInCategories
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.Expense
+import com.joaoeoneves.fintrack.domain.model.Income
 import com.joaoeoneves.fintrack.testutil.CancellingContentProvider
 import com.joaoeoneves.fintrack.testutil.GenericFailureContentProvider
 import com.joaoeoneves.fintrack.ui.common.UiText
@@ -86,7 +88,7 @@ class ImportExportViewModelTest {
                         ),
                     ),
                 )
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeIncomeRepository(), context())
             val target = File(tempFolder.root, "export.csv")
 
             viewModel.onExportTargetSelected(Uri.fromFile(target))
@@ -103,7 +105,7 @@ class ImportExportViewModelTest {
     fun onExportTargetSelected_emptyRepository_writesHeaderOnly_countZero() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeIncomeRepository(), context())
             val target = File(tempFolder.root, "export.csv")
 
             viewModel.onExportTargetSelected(Uri.fromFile(target))
@@ -111,14 +113,34 @@ class ImportExportViewModelTest {
 
             val state = viewModel.exportState.value as ExportUiState.Done
             assertEquals(0, state.exportedCount)
-            assertEquals("name,amountCents,category,date,note", target.readText())
+            assertEquals("name,amountCents,category,date,note,type", target.readText())
+        }
+
+    @Test
+    fun onExportTargetSelected_includesIncome_asTypedRows_andCountsBoth() =
+        runTest(testDispatcher) {
+            val repo = FakeExpenseRepository(listOf(expense(id = "e1", name = "Coffee")))
+            val income =
+                FakeIncomeRepository(
+                    listOf(Income("i1", "Salary", 200_000L, Instant.parse("2024-01-25T00:00:00Z"), "Jan")),
+                )
+            val viewModel = ImportExportViewModel(repo, income, context())
+            val target = File(tempFolder.root, "export.csv")
+
+            viewModel.onExportTargetSelected(Uri.fromFile(target))
+            advanceUntilIdle()
+
+            assertEquals(2, (viewModel.exportState.value as ExportUiState.Done).exportedCount)
+            val lines = target.readText().lines()
+            assertTrue(lines[1], lines[1].startsWith("Coffee,500,") && lines[1].endsWith(",expense"))
+            assertEquals("Salary,200000,,2024-01-25T00:00:00Z,Jan,income", lines[2])
         }
 
     @Test
     fun onDismissExport_resetsStateToIdle() =
         runTest(testDispatcher) {
             val repo = FakeExpenseRepository()
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeIncomeRepository(), context())
             val target = File(tempFolder.root, "export.csv")
             viewModel.onExportTargetSelected(Uri.fromFile(target))
             advanceUntilIdle()
@@ -143,7 +165,7 @@ class ImportExportViewModelTest {
         runTest(testDispatcher) {
             Robolectric.setupContentProvider(CancellingContentProvider::class.java, CancellingContentProvider.AUTHORITY)
             val repo = FakeExpenseRepository(listOf(expense(id = "e1", name = "Coffee")))
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeIncomeRepository(), context())
 
             viewModel.onExportTargetSelected(Uri.parse("content://${CancellingContentProvider.AUTHORITY}/export.csv"))
             advanceUntilIdle()
@@ -162,7 +184,7 @@ class ImportExportViewModelTest {
                 GenericFailureContentProvider.AUTHORITY,
             )
             val repo = FakeExpenseRepository(listOf(expense(id = "e1", name = "Coffee")))
-            val viewModel = ImportExportViewModel(repo, context())
+            val viewModel = ImportExportViewModel(repo, FakeIncomeRepository(), context())
 
             val uri = Uri.parse("content://${GenericFailureContentProvider.AUTHORITY}/export.csv")
             viewModel.onExportTargetSelected(uri)

@@ -57,8 +57,6 @@ data class AddEditExpense(
     val prefillName: String? = null,
     val prefillAmountCents: Long? = null,
     val prefillCategoryId: String? = null,
-    /** A new refund pre-linked to this original expense ("Record refund" on the original's form). */
-    val refundOf: String? = null,
     /** A new expense pre-filled from this existing one ("Duplicate"). */
     val duplicateOf: String? = null,
 )
@@ -72,6 +70,10 @@ data class AddEditIncome(
 
 @Serializable
 object Settings
+
+/** The static "How it works" page opened from Settings. */
+@Serializable
+object HowItWorks
 
 /** The categories list; a non-null [editId] opens that category's editor once, on arrival. */
 @Serializable
