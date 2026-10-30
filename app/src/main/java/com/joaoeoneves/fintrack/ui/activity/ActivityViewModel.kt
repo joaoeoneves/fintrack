@@ -22,8 +22,13 @@ import com.joaoeoneves.fintrack.domain.model.netCents
 import com.joaoeoneves.fintrack.domain.model.refundIndexOf
 import com.joaoeoneves.fintrack.domain.model.resolve
 import com.joaoeoneves.fintrack.domain.model.spendingSplitOf
+import com.joaoeoneves.fintrack.domain.model.usesMealCard
 import com.joaoeoneves.fintrack.domain.repository.CategoryRepository
 import com.joaoeoneves.fintrack.domain.repository.ExpenseRepository
+import com.joaoeoneves.fintrack.domain.repository.SalaryProfileRepository
+import com.joaoeoneves.fintrack.domain.usecase.BulkEditExpenses
+import com.joaoeoneves.fintrack.domain.usecase.BulkKind
+import com.joaoeoneves.fintrack.domain.usecase.BulkUndo
 import com.joaoeoneves.fintrack.domain.usecase.DeleteTransaction
 import com.joaoeoneves.fintrack.domain.usecase.DeletedTransaction
 import com.joaoeoneves.fintrack.domain.usecase.ObservePeriodOverview
@@ -88,6 +93,7 @@ private sealed interface PeriodItems {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("TooManyFunctions", "LongParameterList") // One handler per user action; injected collaborators.
 @HiltViewModel
 class ActivityViewModel
     @Inject
@@ -96,6 +102,8 @@ class ActivityViewModel
         categoryRepository: CategoryRepository,
         private val deleteTransaction: DeleteTransaction,
         expenseRepository: ExpenseRepository,
+        private val bulkEditExpenses: BulkEditExpenses,
+        salaryProfiles: SalaryProfileRepository,
         private val savedStateHandle: SavedStateHandle,
         private val clock: Clock,
     ) : ViewModel() {
@@ -216,11 +224,30 @@ class ActivityViewModel
         /** Period navigation for the selector; any period kind (month, rolling, custom) is allowed. */
         val periodActions =
             PeriodActions(
-                onPrevious = selection::previous,
-                onNext = selection::next,
-                onSelect = selection::select,
-                onSelectScale = selection::selectScale,
+                onPrevious = { onClearSelection().also { selection.previous() } },
+                onNext = { onClearSelection().also { selection.next() } },
+                onSelect = { onClearSelection().also { _ -> selection.select(it) } },
+                onSelectScale = { onClearSelection().also { _ -> selection.selectScale(it) } },
             )
+
+        // The ids of the multi-selected expenses (a plain list in the SavedStateHandle so it survives the process).
+        val selectedIds: StateFlow<Set<String>> =
+            savedStateHandle
+                .getStateFlow(KEY_SELECTED_IDS, emptyList<String>())
+                .map { it.toSet() }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+        private val mealCardAvailable: StateFlow<Boolean> =
+            salaryProfiles
+                .observeSalaryProfile()
+                .map { it.usesMealCard() }
+                .catch { emit(false) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), false)
+
+        private val bulkEvents = Channel<BulkEvent>(Channel.BUFFERED)
+
+        /** One per finished bulk action, so the screen can show its snackbar with an undo. */
+        val bulkUndoEvent: Flow<BulkEvent> = bulkEvents.receiveAsFlow()
 
         // Refunded cents per original expense id; a failing listener just shows no badges.
         private val refundIndex: Flow<Map<String, Long>> =
@@ -250,8 +277,67 @@ class ActivityViewModel
                 initialValue = ActivityUiState.Loading,
             )
 
+        /** The multi-selection as the bar shows it; `null` while nothing (still visible) is selected. */
+        val selectionState: StateFlow<SelectionState?> =
+            combine(selectedIds, uiState, mealCardAvailable) { ids, state, mealAvailable ->
+                val chosen = (state as? ActivityUiState.Content)?.selectedExpenses(ids).orEmpty()
+                chosen.takeIf { it.isNotEmpty() }?.let {
+                    SelectionState(
+                        count = it.size,
+                        showMealCard = mealAvailable || it.any { e -> e.paidWithMealCard },
+                        allOnMealCard = it.all { e -> e.paidWithMealCard },
+                    )
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
+
         fun onTypeSelected(type: ActivityType) {
+            if (type != selectedType.value) onClearSelection()
             savedStateHandle[KEY_SELECTED_TYPE] = type
+        }
+
+        /** Starts a multi-selection with the expense [id] (incomes cannot be selected). */
+        fun onLongPress(id: String) {
+            if (selectedIds.value.isEmpty() && currentExpenses().any { it.id == id }) {
+                savedStateHandle[KEY_SELECTED_IDS] = listOf(id)
+            }
+        }
+
+        fun onToggleSelected(id: String) {
+            val current = selectedIds.value
+            if (current.isEmpty() || currentExpenses().none { it.id == id }) return
+            savedStateHandle[KEY_SELECTED_IDS] = (if (id in current) current - id else current + id).toList()
+        }
+
+        fun onClearSelection() {
+            if (savedStateHandle.get<List<String>>(KEY_SELECTED_IDS).orEmpty().isNotEmpty()) {
+                savedStateHandle[KEY_SELECTED_IDS] = emptyList<String>()
+            }
+        }
+
+        fun onBulkCategory(category: Category) = bulk { bulkEditExpenses.changeCategory(it, category) }
+
+        /** Turns the meal card on for the selection, or off when every selected expense already has it. */
+        fun onBulkMealCard() = bulk { bulkEditExpenses.setMealCard(it, enabled = !it.all { e -> e.paidWithMealCard }) }
+
+        fun onBulkDelete() = bulk { bulkEditExpenses.delete(it) }
+
+        fun onBulkUndo(undo: BulkUndo) {
+            viewModelScope.launch { bulkEditExpenses.undo(undo) }
+        }
+
+        private fun currentExpenses(): List<Expense> =
+            (uiState.value as? ActivityUiState.Content)?.items?.filterIsInstance<Expense>().orEmpty()
+
+        private fun bulk(action: suspend (List<Expense>) -> Result<BulkUndo>) {
+            val chosen = (uiState.value as? ActivityUiState.Content)?.selectedExpenses(selectedIds.value).orEmpty()
+            if (chosen.isEmpty()) return
+            viewModelScope.launch {
+                action(chosen)
+                    .onSuccess {
+                        onClearSelection()
+                        bulkEvents.send(BulkEvent(it.kind, chosen.size, it))
+                    }.onFailure { Log.w(TAG, "Bulk edit failed", it) }
+            }
         }
 
         fun onQueryChanged(newQuery: String) {
@@ -316,6 +402,7 @@ class ActivityViewModel
             private const val KEY_SELECTED_PERIOD = "selectedPeriod"
             private const val KEY_SELECTED_ENVELOPE = "selectedEnvelope"
             private const val KEY_SELECTED_INCOME_SOURCE = "selectedIncomeSource"
+            private const val KEY_SELECTED_IDS = "selectedIds"
         }
     }
 
@@ -424,3 +511,20 @@ private fun refundedPercentOf(
         }.toMap()
 
 private const val PERCENT = 100
+
+/** What the selection bar shows: how many expenses, and whether/how the meal-card action applies. */
+data class SelectionState(
+    val count: Int,
+    val showMealCard: Boolean,
+    val allOnMealCard: Boolean,
+)
+
+/** A finished bulk action: what it did, to how many expenses, and the [undo] that reverts it. */
+data class BulkEvent(
+    val kind: BulkKind,
+    val count: Int,
+    val undo: BulkUndo,
+)
+
+private fun ActivityUiState.Content.selectedExpenses(ids: Set<String>): List<Expense> =
+    items.filterIsInstance<Expense>().filter { it.id in ids }

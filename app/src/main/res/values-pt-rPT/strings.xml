@@ -708,4 +708,29 @@
     <string name="expense_split_part_caption">Parte de uma despesa dividida</string>
     <string name="action_duplicate">Duplicar</string>
     <string name="breakdown_above_average">acima da média</string>
+    <!-- Seleção múltipla (5.7) -->
+    <plurals name="selection_count">
+        <item quantity="one">%d selecionada</item>
+        <item quantity="many">%d selecionadas</item>
+        <item quantity="other">%d selecionadas</item>
+    </plurals>
+    <string name="selection_cancel">Cancelar seleção</string>
+    <string name="selection_category">Categoria</string>
+    <string name="selection_meal_card">Cartão refeição</string>
+    <string name="selection_delete">Apagar</string>
+    <plurals name="bulk_category_changed">
+        <item quantity="one">Categoria alterada em %d despesa</item>
+        <item quantity="many">Categoria alterada em %d de despesas</item>
+        <item quantity="other">Categoria alterada em %d despesas</item>
+    </plurals>
+    <plurals name="bulk_meal_card_updated">
+        <item quantity="one">Cartão refeição atualizado em %d despesa</item>
+        <item quantity="many">Cartão refeição atualizado em %d de despesas</item>
+        <item quantity="other">Cartão refeição atualizado em %d despesas</item>
+    </plurals>
+    <plurals name="bulk_deleted">
+        <item quantity="one">%d despesa apagada</item>
+        <item quantity="many">%d de despesas apagadas</item>
+        <item quantity="other">%d despesas apagadas</item>
+    </plurals>
 </resources>

@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.ui.activity
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -129,6 +130,7 @@ private fun LazyListScope.activityChipItems(
 fun LazyListScope.activityRowItems(
     state: ActivityUiState.Content,
     actions: ActivityActions,
+    selectedIds: Set<String> = emptySet(),
 ) {
     if (state.items.isEmpty()) {
         item(key = "empty") {
@@ -138,7 +140,7 @@ fun LazyListScope.activityRowItems(
     }
     if (state.days.isEmpty()) {
         items(state.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = true, actions = actions, refundedPercent = state.refundedPercent)
+            ActivityRow(transaction, true, actions, RowState(state.refundedPercent, selectedIds))
         }
         return
     }
@@ -151,7 +153,7 @@ fun LazyListScope.activityRowItems(
             )
         }
         items(section.items, key = { it.rowKey() }) { transaction ->
-            ActivityRow(transaction, showDate = false, actions = actions, refundedPercent = state.refundedPercent)
+            ActivityRow(transaction, false, actions, RowState(state.refundedPercent, selectedIds))
         }
     }
 }
@@ -173,36 +175,54 @@ private fun EnvelopeChipsRow(
     )
 }
 
+/** What a row shows besides its transaction: the refunded shares and the multi-selected expense ids. */
+private data class RowState(
+    val refundedPercent: Map<String, Int>,
+    val selectedIds: Set<String>,
+)
+
 @Composable
 private fun LazyItemScope.ActivityRow(
     transaction: Transaction,
     showDate: Boolean,
     actions: ActivityActions,
-    refundedPercent: Map<String, Int>,
+    rowState: RowState,
 ) {
-    SwipeToDeleteRow(
-        onDelete = { actions.onDelete(transaction.id) },
-        deleteLabel = stringResource(R.string.cd_delete),
-        modifier = motionAnimateItem(),
-    ) {
+    val selecting = rowState.selectedIds.isNotEmpty()
+    val content: @Composable RowScope.() -> Unit = {
         val rowModifier = Modifier.weight(1f).padding(horizontal = Dimens.ScreenPadding)
         when (transaction) {
             is Expense ->
                 ExpenseRow(
                     expense = transaction,
                     showDate = showDate,
-                    onClick = { actions.onOpen(transaction) },
+                    onClick = {
+                        if (selecting) actions.onToggleSelected(transaction.id) else actions.onOpen(transaction)
+                    },
+                    onLongClick = { actions.onLongPress(transaction.id) },
+                    selected = transaction.id in rowState.selectedIds,
                     modifier = rowModifier,
-                    refundedPercent = refundedPercent[transaction.id],
+                    refundedPercent = rowState.refundedPercent[transaction.id],
                 )
             is Income ->
                 IncomeRow(
                     income = transaction,
                     showDate = showDate,
-                    onClick = { actions.onOpen(transaction) },
+                    // Incomes are not selectable: while selecting, tapping one does nothing.
+                    onClick = if (selecting) null else ({ actions.onOpen(transaction) }),
                     modifier = rowModifier,
                 )
         }
+    }
+    if (selecting) {
+        Row(modifier = motionAnimateItem(), content = content)
+    } else {
+        SwipeToDeleteRow(
+            onDelete = { actions.onDelete(transaction.id) },
+            deleteLabel = stringResource(R.string.cd_delete),
+            modifier = motionAnimateItem(),
+            content = content,
+        )
     }
 }
 

@@ -19,6 +19,7 @@ import java.time.ZoneId
  * A single expense row (name, category, amount, optionally date) shared between the dashboard's
  * recent-expense list and the full expense list. Set [showDate] to false under a day header.
  */
+@Suppress("LongParameterList") // Independent row options: click, long press, selection and refunded badge.
 @Composable
 fun ExpenseRow(
     expense: Expense,
@@ -27,6 +28,8 @@ fun ExpenseRow(
     showDate: Boolean = true,
     /** How much of this expense was refunded (1..100, from linked refunds); `null` or 0 shows nothing. */
     refundedPercent: Int? = null,
+    onLongClick: (() -> Unit)? = null,
+    selected: Boolean = false,
 ) {
     val dateFormatter = rememberLocaleAwareDateFormatter()
     val subtitle =
@@ -54,6 +57,8 @@ fun ExpenseRow(
         amountColor = amountColor,
         onClick = onClick,
         modifier = modifier,
+        onLongClick = onLongClick,
+        selected = selected,
         badge =
             when {
                 expense.isRefund -> ({ RefundBadge(stringResource(R.string.expense_refund_badge)) })
