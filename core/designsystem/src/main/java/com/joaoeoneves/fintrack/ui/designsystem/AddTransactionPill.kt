@@ -9,13 +9,13 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -90,16 +90,16 @@ class PillVisibility {
 }
 
 /**
- * Wires [this] to [listState]: the pill never hides while the list cannot scroll further, and comes
+ * Wires [this] to [scrollState]: the pill never hides while the scrollable cannot scroll further, and comes
  * back if a late scroll delta hides it again at the end.
  */
 @Composable
-fun PillVisibility.BindTo(listState: LazyListState) {
+fun PillVisibility.BindTo(scrollState: ScrollableState) {
     val pill = this
-    LaunchedEffect(listState, pill) {
-        pill.canScrollForward = { listState.canScrollForward }
+    LaunchedEffect(scrollState, pill) {
+        pill.canScrollForward = { scrollState.canScrollForward }
         // Keyed on "at end while hidden" so it re-fires if a late scroll delta hides the pill again.
-        snapshotFlow { !listState.canScrollForward && !pill.visible }.collect { stuck -> if (stuck) pill.show() }
+        snapshotFlow { !scrollState.canScrollForward && !pill.visible }.collect { stuck -> if (stuck) pill.show() }
     }
 }
 

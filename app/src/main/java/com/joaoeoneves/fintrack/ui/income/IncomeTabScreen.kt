@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.income
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,11 +11,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,10 +34,12 @@ import com.joaoeoneves.fintrack.ui.common.history.IncomeHistory
 import com.joaoeoneves.fintrack.ui.common.period.PeriodSelector
 import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.AddTransactionPill
+import com.joaoeoneves.fintrack.ui.designsystem.BindTo
 import com.joaoeoneves.fintrack.ui.designsystem.CardsSkeleton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackSnackbarHost
 import com.joaoeoneves.fintrack.ui.designsystem.GhostButton
 import com.joaoeoneves.fintrack.ui.designsystem.Hairline
+import com.joaoeoneves.fintrack.ui.designsystem.PillVisibility
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsGroup
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
 import com.joaoeoneves.fintrack.ui.designsystem.StateCrossfade
@@ -77,6 +82,11 @@ fun IncomeTabScreen(
     val receiveFeedback = rememberReceiveFeedback(snackbarHostState)
     receiveFeedback.ChangeSheet()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pill = remember { PillVisibility() }
+    val scrollState = rememberScrollState()
+    pill.BindTo(scrollState)
+    val period = (state as? IncomeTabUiState.Content)?.period
+    LaunchedEffect(period) { pill.show() }
 
     CompositionLocalProvider(LocalReceiveFeedback provides receiveFeedback) {
         TabScaffold(
@@ -87,7 +97,7 @@ fun IncomeTabScreen(
             floatingActionButton = {
                 (state as? IncomeTabUiState.Content)?.let { content ->
                     AddTransactionPill(
-                        visible = true,
+                        visible = pill.visible,
                         onAddExpense = { onAddExpense(content.period) },
                         onAddIncome = { onAddIncome(content.period) },
                     )
@@ -107,26 +117,42 @@ fun IncomeTabScreen(
                         )
 
                     is IncomeTabUiState.Content ->
-                        IncomeContent(current, viewModel, onOpenSalaryProfile, onOpenSource, contentModifier)
+                        IncomeContent(
+                            state = current,
+                            viewModel = viewModel,
+                            onOpenSalaryProfile = onOpenSalaryProfile,
+                            onOpenSource = onOpenSource,
+                            scroll = IncomeScroll(pill, scrollState),
+                            modifier = contentModifier,
+                        )
                 }
             }
         }
     }
 }
 
+/** The tab's scroll state plus the add-pill visibility driven by it. */
+private data class IncomeScroll(
+    val pill: PillVisibility,
+    val state: ScrollState,
+)
+
+@Suppress("LongParameterList") // state, view model, two navigation callbacks and the scroll holder
 @Composable
 private fun IncomeContent(
     state: IncomeTabUiState.Content,
     viewModel: IncomeTabViewModel,
     onOpenSalaryProfile: (hasProfile: Boolean) -> Unit,
     onOpenSource: (String, Period) -> Unit,
+    scroll: IncomeScroll,
     modifier: Modifier = Modifier,
 ) {
     var editingWorkingDays by remember { mutableStateOf(false) }
     Column(
         modifier =
             modifier
-                .verticalScroll(rememberScrollState())
+                .nestedScroll(scroll.pill.connection)
+                .verticalScroll(scroll.state)
                 .navigationBarsPadding()
                 .padding(bottom = Dimens.AddPillClearance),
     ) {

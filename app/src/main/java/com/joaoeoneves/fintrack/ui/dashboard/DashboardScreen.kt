@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -66,6 +67,7 @@ fun DashboardScreen(
     val pill = remember { PillVisibility() }
     val listState = rememberLazyListState()
     val content = uiState as? DashboardUiState.Content
+    LaunchedEffect(content?.period) { pill.show() }
 
     TabScaffold(
         title = stringResource(R.string.nav_home),
