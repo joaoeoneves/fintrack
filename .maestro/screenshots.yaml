@@ -290,9 +290,9 @@ appId: com.joaoeoneves.fintrack
     timeout: 10000
 # Investments page right after switching tabs (Spending -> Home): back must land on Home.
 - scrollUntilVisible:
-    element: "Invested.*"
+    element: "You invested.*"
     centerElement: true
-- tapOn: "Invested.*"
+- tapOn: "You invested.*"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/investments
 # Back from the page returns to Home (5.0 regression check: it used to exit the app after tab switches).
