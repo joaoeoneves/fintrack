@@ -26,7 +26,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.MAX_DAYS_OFF
-import com.joaoeoneves.fintrack.domain.model.carnivalWeekdayIn
 import com.joaoeoneves.fintrack.ui.common.LabeledIconButton
 import com.joaoeoneves.fintrack.ui.common.TestTags
 import com.joaoeoneves.fintrack.ui.common.currentLocale
@@ -36,7 +35,6 @@ import com.joaoeoneves.fintrack.ui.common.period.formatShortMonthName
 import com.joaoeoneves.fintrack.ui.designsystem.DialogTextButton
 import com.joaoeoneves.fintrack.ui.designsystem.FinTrackAlertDialog
 import com.joaoeoneves.fintrack.ui.designsystem.SettingsRow
-import com.joaoeoneves.fintrack.ui.designsystem.SettingsSwitchRow
 import com.joaoeoneves.fintrack.ui.theme.Amount
 import com.joaoeoneves.fintrack.ui.theme.Dimens
 import com.joaoeoneves.fintrack.ui.theme.FinTrackTheme
@@ -76,14 +74,12 @@ internal fun monthName(state: WorkingDaysState): String = formatShortMonthName(s
 /** The days off by type; each type's stepper may use what the other two leave of [MAX_DAYS_OFF]. */
 internal data class DaysOffCounts(
     val vacation: Int = 0,
-    val sick: Int = 0,
     val other: Int = 0,
 ) {
-    val total: Int get() = vacation + sick + other
+    val total: Int get() = vacation + other
 
-    val maxVacation: Int get() = MAX_DAYS_OFF - sick - other
-    val maxSick: Int get() = MAX_DAYS_OFF - vacation - other
-    val maxOther: Int get() = MAX_DAYS_OFF - vacation - sick
+    val maxVacation: Int get() = MAX_DAYS_OFF - other
+    val maxOther: Int get() = MAX_DAYS_OFF - vacation
 }
 
 /** How many months a range of days off may reach beyond the opened month. */
@@ -102,10 +98,10 @@ internal fun monthsBetween(
 @Composable
 fun WorkingDaysDialog(
     state: WorkingDaysState,
-    onSave: (months: List<YearMonth>, vacation: Int, sick: Int, other: Int) -> Unit,
+    onSave: (months: List<YearMonth>, vacation: Int, other: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var counts by remember { mutableStateOf(DaysOffCounts(state.vacationDays, state.sickDays, state.otherDays)) }
+    var counts by remember { mutableStateOf(DaysOffCounts(state.vacationDays, state.otherDays)) }
     var until by remember { mutableStateOf(state.month) }
     val months = monthsBetween(state.month, until)
     FinTrackAlertDialog(
@@ -117,7 +113,6 @@ fun WorkingDaysDialog(
                 verticalArrangement = Arrangement.spacedBy(Dimens.Space12),
             ) {
                 DaysOffFields(counts = counts, onChange = { counts = it })
-                CarnivalShortcut(state.month, counts.other, counts.maxOther) { counts = counts.copy(other = it) }
                 DaysOffUntil(state.month, until, months.size) { until = it }
                 Text(
                     text =
@@ -134,7 +129,7 @@ fun WorkingDaysDialog(
             DialogTextButton(
                 text = stringResource(R.string.action_save),
                 onClick = {
-                    onSave(months, counts.vacation, counts.sick, counts.other)
+                    onSave(months, counts.vacation, counts.other)
                     onDismiss()
                 },
                 modifier = Modifier.testTag(TestTags.DAYS_OFF_SAVE),
@@ -180,7 +175,7 @@ private fun DaysOffUntil(
     }
 }
 
-/** The three "days off" steppers: vacation, sick leave and other. */
+/** The two "days off" steppers: vacation and other. */
 @Composable
 internal fun DaysOffFields(
     counts: DaysOffCounts,
@@ -192,13 +187,6 @@ internal fun DaysOffFields(
         max = counts.maxVacation,
         labels = StepperLabels(R.string.cd_fewer_vacation_days, R.string.cd_more_vacation_days),
         onChange = { onChange(counts.copy(vacation = it)) },
-    )
-    DaysOffStepper(
-        title = R.string.plan_days_off_sick,
-        value = counts.sick,
-        max = counts.maxSick,
-        labels = StepperLabels(R.string.cd_fewer_sick_days, R.string.cd_more_sick_days),
-        onChange = { onChange(counts.copy(sick = it)) },
     )
     DaysOffStepper(
         title = R.string.plan_days_off_other,
@@ -224,37 +212,6 @@ private fun DaysOffStepper(
     )
     Stepper(value = value, onChange = onChange, max = max, labels = labels)
 }
-
-/**
- * The Carnival Tuesday as an optional day off: a switch (shown only in a month it falls on a weekday) that adds it
- * to, or takes it from, the "other" days ([other], at most [max]).
- */
-@Composable
-internal fun CarnivalShortcut(
-    month: YearMonth,
-    other: Int,
-    max: Int,
-    onChange: (Int) -> Unit,
-) {
-    val day = remember(month) { carnivalWeekdayIn(month) } ?: return
-    var counted by remember { mutableStateOf(false) }
-    SettingsSwitchRow(
-        title = stringResource(R.string.plan_days_off_carnival, day.dayOfMonth),
-        supportingText = stringResource(R.string.plan_days_off_carnival_hint),
-        checked = counted,
-        onCheckedChange = {
-            counted = it
-            onChange(withCarnival(other, it, max))
-        },
-    )
-}
-
-/** The "other" days after the Carnival shortcut is switched [on] (one more) or off (one fewer), within 0..[max]. */
-internal fun withCarnival(
-    other: Int,
-    on: Boolean,
-    max: Int = MAX_DAYS_OFF,
-): Int = (if (on) other + 1 else other - 1).coerceIn(0, max.coerceAtLeast(0))
 
 /** Content descriptions of a [Stepper]'s two buttons. */
 internal data class StepperLabels(
