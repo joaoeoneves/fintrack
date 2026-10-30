@@ -17,7 +17,8 @@ class MigrationPlannerEnvelopesTest {
         assertEquals(listOf("g1"), plan.categoryGroups.map { it.id })
         assertEquals("Food", plan.categoryGroups.single().name)
         val write = plan.toBatches().flatten().single { it.collection == "categoryGroups" }
-        assertFalse(write.data.keys.any { it in setOf("amountCents", "fundedBy", "fundedByLineId", "startMonth", "versions") })
+        val legacy = setOf("amountCents", "fundedBy", "fundedByLineId", "startMonth", "versions")
+        assertFalse(write.data.keys.any { it in legacy })
     }
 
     @Test

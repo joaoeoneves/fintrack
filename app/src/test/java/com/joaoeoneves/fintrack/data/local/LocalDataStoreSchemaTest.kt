@@ -43,7 +43,8 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
             """"goals":[{"id":"g","name":"Trip","targetCents":100,"startDate":"2026-01-01"}],""" +
             """"categoryGroups":[{"id":"e1","name":"Food","order":0,"amountCents":900,"fundedByLineId":"meal"}],""" +
             """"automation":{"lineThrough":{"p1":"2026-09"},"salaryPaysNextMonth":true},""" +
-            """"monthSettings":[{"month":"2026-09","workingDays":15},{"month":"2026-10","workingDays":15,"daysOff":2}],""" +
+            """"monthSettings":[{"month":"2026-09","workingDays":15},""" +
+            """{"month":"2026-10","workingDays":15,"daysOff":2}],""" +
             """"recurring":[${recurringJson("manual", ",\"autoPost\":false")},""" +
             """${recurringJson("legacy", "")},${recurringJson("auto", ",\"autoPost\":true")}]}"""
 

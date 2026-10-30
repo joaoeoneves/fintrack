@@ -18,7 +18,8 @@ class BackupCodecV23Test {
         autoPost: String,
         handledThrough: String? = "2026-01-15",
     ) = """{"id":"$id","type":"EXPENSE","name":"Rent","amountCents":5000,"categoryId":"FOOD","frequency":"MONTHLY",""" +
-        """"dayOfMonth":15,"startDate":"2026-01-01"${handledThrough?.let { ""","handledThrough":"$it"""" } ?: ""}$autoPost}"""
+        """"dayOfMonth":15,"startDate":"2026-01-01"""" +
+        (handledThrough?.let { ""","handledThrough":"$it"""" } ?: "") + "$autoPost}"
 
     private val v22 =
         """{$header,"schemaVersion":22,"preferences":{"theme":"DARK","currency":"USD","language":"ENGLISH"},""" +
@@ -27,7 +28,8 @@ class BackupCodecV23Test {
             """"categoryGroups":[{"id":"e1","name":"Food","order":0,"amountCents":900,"fundedByLineId":"meal",""" +
             """"startMonth":"2026-03","versions":[{"from":"2026-03","amountCents":900}]}],""" +
             """"automation":{"lineThrough":{"p1":"2026-09"},"salaryPaysNextMonth":true},""" +
-            """"monthSettings":[{"month":"2026-09","workingDays":15},{"month":"2026-10","workingDays":15,"daysOff":2}],""" +
+            """"monthSettings":[{"month":"2026-09","workingDays":15},""" +
+            """{"month":"2026-10","workingDays":15,"daysOff":2}],""" +
             """"recurring":[${recurring("manual", ""","autoPost":false""")},""" +
             """${recurring("absent", "")},${recurring("auto", ""","autoPost":true""")}]}"""
 

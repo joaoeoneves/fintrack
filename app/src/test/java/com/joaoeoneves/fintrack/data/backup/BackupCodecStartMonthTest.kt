@@ -28,7 +28,9 @@ class BackupCodecStartMonthTest {
     fun v20Backup_keepsItsIncomeLineStartMonthsAndVersions() {
         val versions = listOf(LocalAmountVersion("2026-03", 400), LocalAmountVersion("2026-07", 500))
         val line = backupPlanned("p1").copy(startMonth = "2026-03", versions = versions)
-        val doc = backupDoc(expenses = listOf(backupExpense(date = "2025-01-10T12:00:00Z"))).copy(plannedIncome = listOf(line))
+        val doc =
+            backupDoc(expenses = listOf(backupExpense(date = "2025-01-10T12:00:00Z")))
+                .copy(plannedIncome = listOf(line))
 
         val result = BackupCodec.decode(BackupCodec.encode(doc)).success().document
 

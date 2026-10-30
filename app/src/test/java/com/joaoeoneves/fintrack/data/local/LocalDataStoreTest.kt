@@ -112,7 +112,8 @@ class LocalDataStoreTest : LocalStoreTestBase() {
         runStoreTest {
             dataFile.writeText(
                 """{"schemaVersion":1,"revision":4,"future":{"a":1},""" +
-                    """"dismissedRecurringSuggestions":["a"],"budgets":[{"categoryId":"FOOD","limitCents":5,"x":true}]}""",
+                    """"dismissedRecurringSuggestions":["a"],""" +
+                    """"budgets":[{"categoryId":"FOOD","limitCents":5,"x":true}]}""",
             )
             val doc = newStore().data.first()
             assertEquals(4L, doc.revision)
