@@ -29,11 +29,10 @@ class FakeMonthSettingsRepository(
     override suspend fun setDaysOff(
         months: Collection<YearMonth>,
         vacation: Int,
-        sick: Int,
         other: Int,
     ): Result<Unit> {
-        requireValidDaysOff(months, vacation, sick, other)
-        return change(months.toSet()) { MonthSettings(it, vacation, sick, other) }
+        requireValidDaysOff(months, vacation, other)
+        return change(months.toSet()) { MonthSettings(it, vacation, other) }
     }
 
     private fun change(

@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.data.local
 
+import com.joaoeoneves.fintrack.domain.model.MAX_DAYS_OFF
 import com.joaoeoneves.fintrack.domain.model.withoutBacklog
 import java.time.LocalDate
 
@@ -51,6 +52,28 @@ internal fun List<LocalMonthSettings>.upgradedTo24(): List<LocalMonthSettings> =
 
 /** Schema version (guest file and backup) that added the optional expense `refundOf`/`splitId` links. */
 internal const val EXPENSE_LINKS_SCHEMA_VERSION = 25
+
+/** Schema version (guest file and backup) that folded sick days into other days and added expense `awaitingRefund`. */
+internal const val DAYS_OFF_TWO_TYPES_SCHEMA_VERSION = 26
+
+/**
+ * The pre-26 `sickDays` count is added to the other days, trimming them so the month's total stays within
+ * [MAX_DAYS_OFF]; the marker is dropped and months left with nothing are removed. Idempotent.
+ */
+internal fun List<LocalMonthSettings>.upgradedTo26(): List<LocalMonthSettings> =
+    map { record ->
+        val sick = record.legacySickDays
+        if (sick == null) {
+            record
+        } else {
+            val room = (MAX_DAYS_OFF - record.vacationDays).coerceAtLeast(0)
+            record.copy(otherDays = (record.otherDays + sick).coerceIn(0, room), legacySickDays = null)
+        }
+    }.filter { it.totalDays > 0 }
+
+/** The 25 -> 26 upgrade of the guest file: see the month-settings upgrade above. */
+internal fun LocalDataDocument.upgradedTo26(): LocalDataDocument =
+    copy(schemaVersion = DAYS_OFF_TWO_TYPES_SCHEMA_VERSION, monthSettings = monthSettings.upgradedTo26())
 
 /** The 23 -> 24 upgrade of the guest file: see the month-settings upgrade above. */
 internal fun LocalDataDocument.upgradedTo24(): LocalDataDocument =
