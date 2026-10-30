@@ -354,6 +354,8 @@
     <string name="insights_split_variable">Variable</string>
     <string name="insights_by_category">By category</string>
     <string name="insights_by_group">By group</string>
+    <string name="breakdown_mode_category">Category</string>
+    <string name="breakdown_mode_group">Group</string>
     <string name="cd_insights_split">Spending split: %1$s fixed, %2$s variable</string>
     <string name="plan_basis_fixed">Fixed</string>
     <string name="plan_basis_per_day">Per working day</string>

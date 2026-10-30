@@ -361,6 +361,8 @@
     <string name="insights_split_variable">Variável</string>
     <string name="insights_by_category">Por categoria</string>
     <string name="insights_by_group">Por grupo</string>
+    <string name="breakdown_mode_category">Categoria</string>
+    <string name="breakdown_mode_group">Grupo</string>
     <string name="cd_insights_split">Divisão da despesa: %1$s fixo, %2$s variável</string>
     <string name="plan_basis_fixed">Fixo</string>
     <string name="plan_basis_per_day">Por dia útil</string>
