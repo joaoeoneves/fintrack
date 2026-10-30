@@ -1,7 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
 import androidx.lifecycle.SavedStateHandle
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
@@ -16,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -25,7 +25,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.YearMonth
 
-/** The Home cards of [DashboardViewModel]: income (+ expected), spending, invested, leftover, and the Year scale. */
+/** The Home cards of [DashboardViewModel]: income (+ expected), spending, invested, and the Year scale. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class DashboardViewModelCardsTest : DashboardViewModelTestBase() {
@@ -44,7 +44,6 @@ class DashboardViewModelCardsTest : DashboardViewModelTestBase() {
         val repos =
             DashboardRepositories(
                 FakeExpenseRepository(expenses),
-                FakeBudgetRepository(),
                 FakeIncomeRepository(incomes),
                 FakeCategoryRepository(listOf(etf)),
                 planned,
@@ -95,23 +94,53 @@ class DashboardViewModelCardsTest : DashboardViewModelTestBase() {
         }
 
     @Test
-    fun leftover_isHiddenWithNoClosedMonths_andAveragesTheClosedOnesOtherwise() =
+    fun content_hasNoRecentOrLeftoverFigures() =
         runTest(testDispatcher) {
-            val january = Clock.fixed(Instant.parse("2026-01-20T12:00:00Z"), zone)
-            val jan = income("i", amountCents = 9_000L, date = noonOn(YearMonth.of(2026, 1), 2))
-            val inJanuary = build(incomes = listOf(jan), at = january)
-            collect(inJanuary)
-            assertNull(inJanuary.content().leftover)
+            val vm = build(listOf(expense("e", 1_000L, date = noonOn(previousMonth, 3))))
+            collect(vm)
 
-            val inOctober =
+            val names = DashboardUiState.Content::class.java.declaredFields.map { it.name }
+            assertFalse(names.any { it.contains("recent", ignoreCase = true) || it.contains("leftover", ignoreCase = true) })
+        }
+
+    @Test
+    fun monthRate_isTheMonthsInvestedOverTheMonthsReceived() =
+        runTest(testDispatcher) {
+            val vm =
                 build(
-                    listOf(expense("e", 1_000L, date = noonOn(previousMonth, 3))),
-                    listOf(income("i", amountCents = 4_000L, date = noonOn(previousMonth, 2))),
+                    expenses = listOf(expense("etf", 5_000L, etf, noonOn(currentMonth, 4))),
+                    incomes = listOf(income("i", amountCents = 40_000L, date = noonOn(currentMonth, 2))),
                 )
-            collect(inOctober)
-            // Counting starts at the first month with a record (September).
-            assertEquals(3_000L, inOctober.content().leftover?.averageCents)
-            assertEquals(previousMonth, inOctober.content().leftover?.upTo)
+            collect(vm)
+
+            // 5_000 of 40_000 is 12.5%: rounds half up to 13.
+            assertEquals(13, vm.content().invested?.ratePercent)
+            assertEquals(5_000L, vm.content().invested?.shownCents)
+        }
+
+    @Test
+    fun monthRate_isNullWhenNothingWasReceivedThatMonth() =
+        runTest(testDispatcher) {
+            val vm = build(listOf(expense("etf", 5_000L, etf, noonOn(currentMonth, 4))))
+            collect(vm)
+
+            assertEquals(5_000L, vm.content().invested?.shownCents)
+            assertNull(vm.content().invested?.ratePercent)
+        }
+
+    @Test
+    fun yearRate_isTheYearsInvestedOverTheYearsReceived() =
+        runTest(testDispatcher) {
+            val vm =
+                build(
+                    expenses = listOf(expense("etf", 5_000L, etf, noonOn(previousMonth, 4))),
+                    incomes = listOf(income("i", amountCents = 20_000L, date = noonOn(YearMonth.of(2026, 5), 2))),
+                    handle = SavedStateHandle(mapOf("period" to "year:2026")),
+                )
+            collect(vm)
+
+            assertEquals(25, vm.content().invested?.ratePercent)
+            assertEquals(5_000L, vm.content().invested?.shownCents)
         }
 
     @Test

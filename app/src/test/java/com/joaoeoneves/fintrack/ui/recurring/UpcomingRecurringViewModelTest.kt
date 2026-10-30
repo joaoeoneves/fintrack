@@ -1,31 +1,21 @@
 package com.joaoeoneves.fintrack.ui.recurring
 
 import android.app.Application
-import com.joaoeoneves.fintrack.R
-import com.joaoeoneves.fintrack.data.FakeAutomationSettingsRepository
-import com.joaoeoneves.fintrack.data.FakeCategoryRepository
-import com.joaoeoneves.fintrack.data.FakeExpenseRepository
 import com.joaoeoneves.fintrack.data.FakeIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
 import com.joaoeoneves.fintrack.data.FakePlannedIncomeRepository
 import com.joaoeoneves.fintrack.data.FakeRecurringRepository
-import com.joaoeoneves.fintrack.data.FakeSalaryLineLabelsProvider
 import com.joaoeoneves.fintrack.domain.model.RecurringType
-import com.joaoeoneves.fintrack.domain.usecase.HandleRecurringOccurrence
 import com.joaoeoneves.fintrack.domain.usecase.ObserveExpectedIncome
 import com.joaoeoneves.fintrack.domain.usecase.ObserveUpcomingRecurring
-import com.joaoeoneves.fintrack.domain.usecase.RecordPayday
-import com.joaoeoneves.fintrack.domain.usecase.UndoRecurringOccurrence
 import com.joaoeoneves.fintrack.testutil.MutableClock
 import com.joaoeoneves.fintrack.testutil.day
 import com.joaoeoneves.fintrack.testutil.recurringItem
-import com.joaoeoneves.fintrack.ui.common.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -61,15 +51,6 @@ class UpcomingRecurringViewModelTest {
         UpcomingRecurringViewModel(
             ObserveUpcomingRecurring(repo),
             ObserveExpectedIncome(FakePlannedIncomeRepository(), FakeMonthSettingsRepository(), FakeIncomeRepository()),
-            HandleRecurringOccurrence(repo, FakeCategoryRepository()),
-            RecordPayday(
-                FakePlannedIncomeRepository(),
-                FakeMonthSettingsRepository(),
-                FakeIncomeRepository(),
-                FakeAutomationSettingsRepository(),
-                FakeSalaryLineLabelsProvider(),
-            ),
-            UndoRecurringOccurrence(repo, FakeExpenseRepository()),
             clock,
         )
 
@@ -111,69 +92,19 @@ class UpcomingRecurringViewModelTest {
         }
 
     @Test
-    fun confirm_storesTransaction_movesCursor_andEmitsName() =
+    fun observing_isReadOnly_noPostingNoCursorMove() =
         runTest(testDispatcher) {
             val repo = FakeRecurringRepository(listOf(rent))
             val vm = viewModel(repo)
-            val messages = mutableListOf<RecurringUndo>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                vm.undoEvent.collect { messages += it }
-            }
+
             val row = content(started(vm)).overview.upcoming.single()
 
-            vm.onConfirm(row)
-            advanceUntilIdle()
-
-            assertEquals(1, repo.confirmedTransactions.size)
-            assertEquals(1_000L, repo.confirmedTransactions.single().amountCents)
-            assertEquals(day(2026, 3, 15), repo.items.single().handledThrough)
-            assertEquals(listOf("Rent"), messages.map { it.itemName })
-            assertEquals(RecurringUndo.Kind.CONFIRMED, messages.single().kind)
-        }
-
-    @Test
-    fun confirmFailure_emitsError_andNoMessage() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(rent))
-            val vm = viewModel(repo)
-            val errors = mutableListOf<UiText>()
-            val messages = mutableListOf<RecurringUndo>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                vm.undoEvent.collect { messages += it }
-            }
-            val row = content(started(vm)).overview.upcoming.single()
-            repo.nextConfirmError = IllegalStateException("boom")
-
-            vm.onConfirm(row)
-            advanceUntilIdle()
-
-            assertEquals(listOf<UiText>(UiText.StringResource(R.string.error_recurring_save_failed)), errors)
-            assertTrue(messages.isEmpty())
+            assertTrue(row.isDue)
             assertTrue(repo.confirmedTransactions.isEmpty())
-        }
-
-    @Test
-    fun skip_movesCursorWithoutTransaction_andFailureEmitsError() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(rent))
-            val vm = viewModel(repo)
-            val errors = mutableListOf<UiText>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
-            val row = content(started(vm)).overview.upcoming.single()
-
-            repo.nextSkipError = IllegalStateException("boom")
-            vm.onSkip(row)
-            advanceUntilIdle()
-            assertEquals(1, errors.size)
             assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
-
-            vm.onSkip(row)
-            advanceUntilIdle()
-            assertEquals(day(2026, 3, 15), repo.items.single().handledThrough)
-            assertEquals(setOf(day(2026, 3, 15)), repo.items.single().skipped)
-            assertTrue(repo.confirmedTransactions.isEmpty())
-            assertEquals(1, errors.size)
+            assertTrue(repo.items.single().skipped.isEmpty())
+            val actions = vm.javaClass.declaredMethods.map { it.name }
+            assertTrue(actions.none { it.startsWith("onConfirm") || it.startsWith("onSkip") || it.startsWith("onUndo") })
         }
 
     @Test
@@ -193,75 +124,3 @@ class UpcomingRecurringViewModelTest {
             assertEquals(1, state.overview.upcoming.size)
         }
 
-    @Test
-    fun confirmWithAmount_postsTheOverride() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(rent))
-            val vm = viewModel(repo)
-            val row = content(started(vm)).overview.upcoming.single()
-
-            vm.onConfirm(row, 2_345L)
-            advanceUntilIdle()
-
-            assertEquals(2_345L, repo.confirmedTransactions.single().amountCents)
-        }
-
-    @Test
-    fun undoOfConfirm_rewindsTheCursor() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(rent))
-            val vm = viewModel(repo)
-            val undos = mutableListOf<RecurringUndo>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.undoEvent.collect { undos += it } }
-            val row = content(started(vm)).overview.upcoming.single()
-            vm.onConfirm(row)
-            advanceUntilIdle()
-
-            vm.onUndo(undos.single())
-            advanceUntilIdle()
-
-            assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
-            assertEquals(1, content(vm.uiState.value).overview.upcoming.size)
-        }
-
-    @Test
-    fun skipEmitsASkippedUndo_andUndoUnskips() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(rent))
-            val vm = viewModel(repo)
-            val undos = mutableListOf<RecurringUndo>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.undoEvent.collect { undos += it } }
-            val row = content(started(vm)).overview.upcoming.single()
-            vm.onSkip(row)
-            advanceUntilIdle()
-
-            assertEquals(RecurringUndo.Kind.SKIPPED, undos.single().kind)
-            assertEquals(day(2026, 2, 15), undos.single().previousHandledThrough)
-
-            vm.onUndo(undos.single())
-            advanceUntilIdle()
-
-            assertTrue(
-                repo.items
-                    .single()
-                    .skipped
-                    .isEmpty(),
-            )
-            assertEquals(day(2026, 2, 15), repo.items.single().handledThrough)
-        }
-
-    @Test
-    fun undoFailure_emitsError() =
-        runTest(testDispatcher) {
-            val repo = FakeRecurringRepository(listOf(rent))
-            val vm = viewModel(repo)
-            val errors = mutableListOf<UiText>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.errorEvent.collect { errors += it } }
-            started(vm)
-
-            vm.onUndo(RecurringUndo(RecurringUndo.Kind.SKIPPED, "missing", "X", day(2026, 3, 15), null))
-            advanceUntilIdle()
-
-            assertEquals(1, errors.size)
-        }
-}

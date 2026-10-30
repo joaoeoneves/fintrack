@@ -3,7 +3,6 @@ package com.joaoeoneves.fintrack.ui.spending
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import com.joaoeoneves.fintrack.data.CombinedTransactionRepository
-import com.joaoeoneves.fintrack.data.FakeBudgetRepository
 import com.joaoeoneves.fintrack.data.FakeCategoryRepository
 import com.joaoeoneves.fintrack.data.FakeEnvelopeRepository
 import com.joaoeoneves.fintrack.data.FakeMonthSettingsRepository
@@ -75,7 +74,6 @@ class SpendingTabViewModelTest {
         val transactions = CombinedTransactionRepository(expenseRepo ?: counting, CountingIncomeRepository(emptyList()))
         val sources =
             PlanDataSources(
-                budgets = FakeBudgetRepository(),
                 plannedIncome = FakePlannedIncomeRepository(),
                 monthSettings = FakeMonthSettingsRepository(),
                 categories = FakeCategoryRepository(),
