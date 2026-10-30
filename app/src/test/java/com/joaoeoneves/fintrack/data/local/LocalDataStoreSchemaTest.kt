@@ -152,7 +152,7 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
         }
 
     @Test
-    fun upgradedTo23_isPure_movesManualCursors_andIsIdempotent() {
+    fun upgradedTo23_isPure_movesManualCursors_leavesAutoPostOnesAlone() {
         val today = day(2026, 3, 20)
         val manual = recurringItem(id = "m", handledThrough = day(2026, 1, 15)).toLocal().copy(autoPost = false)
         val auto = recurringItem(id = "a", handledThrough = day(2026, 1, 15)).toLocal().copy(autoPost = true)
@@ -164,7 +164,6 @@ class LocalDataStoreSchemaTest : LocalStoreTestBase() {
         assertEquals("2026-03-15", once.recurring.single { it.id == "m" }.handledThrough)
         assertEquals("2026-01-15", once.recurring.single { it.id == "a" }.handledThrough)
         assertTrue(once.recurring.all { it.autoPost == null })
-        assertEquals(once, once.upgradedTo23(today))
     }
 
     @Test

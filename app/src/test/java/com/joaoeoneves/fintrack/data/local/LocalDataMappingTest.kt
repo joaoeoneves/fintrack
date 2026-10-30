@@ -76,6 +76,6 @@ class LocalDataMappingTest {
     @Test
     fun documentIsEmpty() {
         assertTrue(LocalDataDocument().isEmpty)
-        assertFalse(LocalDataDocument(dismissedRecurringSuggestions = listOf("x")).isEmpty)
+        assertFalse(LocalDataDocument(monthSettings = listOf(LocalMonthSettings("2026-10", 1))).isEmpty)
     }
 }

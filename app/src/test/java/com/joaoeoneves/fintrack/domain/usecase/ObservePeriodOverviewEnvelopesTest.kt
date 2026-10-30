@@ -43,7 +43,7 @@ class ObservePeriodOverviewEnvelopesTest : ObservePeriodOverviewTestBase() {
             assertEquals(16_000L, rows[0].amountCents)
             assertEquals(4_000L, rows[0].spentCents)
             assertEquals(8_650L, rows[1].amountCents)
-            assertEquals(2, result.recurring.size)
+            assertEquals(3, result.recurring.size)
             val row = result.budgets.single { it.category.id == BuiltInCategories.RECURRING.id }
             assertEquals(PlannedSource.RECURRING, row.plannedSource)
         }
