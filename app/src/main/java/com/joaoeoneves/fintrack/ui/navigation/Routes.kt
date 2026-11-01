@@ -59,6 +59,8 @@ data class AddEditExpense(
     val prefillCategoryId: String? = null,
     /** A new expense pre-filled from this existing one ("Duplicate"). */
     val duplicateOf: String? = null,
+    /** A new refund of this expense ("Record refund"), prefilled through the prefill fields above. */
+    val refundOf: String? = null,
 )
 
 /** The income form; [period] is the encoded past month it was opened from (a new income then defaults to it). */

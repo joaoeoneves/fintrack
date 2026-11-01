@@ -210,6 +210,7 @@ private fun DashboardContent(
     ) {
         startItems(start = actions.blocks.start)
         reviewItems(review = actions.blocks.review, visible = state.showsCurrentMonthBlocks)
+        awaitingRefundItems(awaiting = actions.blocks.awaitingRefund)
         summaryItems(state = state, callbacks = callbacks)
         quickAddItems(blocks = actions.blocks, visible = state.showsCurrentMonthBlocks, callbacks = callbacks)
         item(key = "upcoming") {

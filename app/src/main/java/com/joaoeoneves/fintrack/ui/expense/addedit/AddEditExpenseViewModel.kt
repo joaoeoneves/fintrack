@@ -253,7 +253,7 @@ class AddEditExpenseViewModel(
             )
         val prefilled =
             base.withPrefill(route.prefillName, route.prefillAmountCents, route.prefillCategoryId, catalog)
-        val seeded = seededFromRoute(prefilled)
+        val seeded = seededFromRoute(prefilled).withRefundOfFromRoute()
         _uiState.value = readyWithSaved(seeded.withMealCardPrefill(), categoryOptions.value)
         history = loadHistory(expenseRepository, clock)
         publishRefundCandidates(history)
@@ -282,6 +282,10 @@ class AddEditExpenseViewModel(
             mealCardTouched = true,
         )
     }
+
+    /** A "Record refund" form: a refund of the route's expense, named like it; nothing is saved until confirmed. */
+    private fun ExpenseFormState.withRefundOfFromRoute(): ExpenseFormState =
+        route.refundOf?.let { copy(isRefund = true, refundOf = it, refundOfLabel = route.prefillName) } ?: this
 
     /** The name of the original expense [id], or `null` when it no longer exists. */
     private suspend fun originalName(id: String): String? = expenseRepository.getExpense(id).getOrNull()?.name

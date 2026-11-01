@@ -66,8 +66,6 @@ class ReviewInboxViewModel
             combine(
                 expenseRepository.observeNeedingReview(),
                 incomeRepository.observeNeedingReview(),
-                expenseRepository.observeAwaitingRefund(),
-                expenseRepository.observeLinkedRefunds(),
                 ::reviewInbox,
             ).catch { e ->
                 Log.w(TAG, "Review inbox flow failed", e)

@@ -5,6 +5,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [5.11] - 2026-11-01
+
+### Added
+- **Awaiting refund** card on Home: the expenses marked *Will be refunded* that are still owed, the total owed
+  and what is left of each one. *Record refund* on a row opens a new refund prefilled with the remaining
+  amount, today's date and the link to that expense.
+
+### Changed
+- A partly refunded expense stays owed until it is fully refunded. Its form shows "Refunded X% · Y left".
+- To review lists only records posted automatically again.
+
+## [5.10] - 2026-10-30
+
+### Changed
+- The Income tab's Expected covers the whole period (January to December in the Year view), and
+  "Still to receive" replaces "Difference". A source is marked short only for months that have passed.
+
 ## [5.9] - 2026-10-30
 
 "One place per thing."

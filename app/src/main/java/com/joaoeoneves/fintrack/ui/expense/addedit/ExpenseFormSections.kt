@@ -115,10 +115,11 @@ private fun RefundOfSheet(
 internal fun RefundStatusLine(form: ExpenseFormState) {
     if (!form.isEditMode || form.isRefund) return
     form.refundStatus?.let { status ->
+        val owed = form.awaitingRefund && status.netCents > 0L
         Text(
             text =
                 stringResource(
-                    R.string.expense_refund_status,
+                    if (owed) R.string.expense_refund_status_owed else R.string.expense_refund_status,
                     status.percent,
                     formatAmountCents(status.netCents),
                 ),

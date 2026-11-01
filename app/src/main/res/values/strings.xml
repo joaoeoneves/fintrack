@@ -103,7 +103,7 @@
     <string name="expense_field_refund">Refund</string>
     <string name="expense_field_refund_hint">Money returned to you; reduces this category\'s spending</string>
     <string name="expense_field_awaiting_refund">Will be refunded</string>
-    <string name="expense_field_awaiting_refund_hint">Stays in To review until you record the refund.</string>
+    <string name="expense_field_awaiting_refund_hint">Shows in Awaiting refund on Home until it is fully refunded.</string>
     <string name="expense_refund_badge">Refund</string>
     <string name="filter_all">All</string>
     <string name="field_length_counter">%1$d/%2$d</string>
@@ -664,9 +664,13 @@
     <string name="error_write_rejected">Couldn\'t save a change to the server.</string>
     <string name="error_write_permission">The server did not accept a change. Check that you are signed in with the right account.</string>
     <string name="home_review_subtitle">Recorded automatically</string>
-    <string name="home_review_awaiting_refund">Awaiting refund</string>
     <string name="home_review_confirm_all">Confirm all</string>
     <string name="home_review_more">and %d more</string>
+    <string name="home_awaiting_refund_title">Awaiting refund</string>
+    <string name="home_awaiting_refund_total">%s still owed</string>
+    <string name="home_awaiting_refund_remaining">%s left</string>
+    <string name="home_awaiting_refund_record">Record refund</string>
+    <string name="expense_refund_status_owed">Refunded %1$d%% · %2$s left</string>
     <plurals name="home_review_confirmed">
         <item quantity="one">%d entry confirmed</item>
         <item quantity="other">%d entries confirmed</item>
@@ -732,5 +736,5 @@
     <string name="how_it_works_recurring_title">Recurring</string>
     <string name="how_it_works_recurring_body">A recurring item is an expense or income that repeats, such as rent or a subscription. On its day each month the app records it for you, so you do not have to type it. Every record made this way lands in To review.</string>
     <string name="how_it_works_review_title">To review</string>
-    <string name="how_it_works_review_body">To review lists what the app recorded on its own and what you marked as Will be refunded. Tap a record to check or edit it, or use Confirm all. An expense marked as Will be refunded stays there until you record a refund linked to it.</string>
+    <string name="how_it_works_review_body">To review lists what the app recorded on its own. Tap a record to check or edit it, or use Confirm all. Awaiting refund lists the expenses you marked as Will be refunded, with what is still owed in total and per expense; use Record refund on a row to open a refund prefilled with the amount left, or open the expense to see how much came back.</string>
 </resources>

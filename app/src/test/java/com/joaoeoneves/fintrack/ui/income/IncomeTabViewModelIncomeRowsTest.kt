@@ -27,7 +27,7 @@ import java.time.YearMonth
 @Config(application = Application::class)
 class IncomeTabViewModelIncomeRowsTest : IncomeTabViewModelTestBase() {
     private val profile = SalaryProfile(baseGrossCents = 100_000, irsBasePpm = 100_000, mealRatePerDayCents = 900)
-    private val managed = salaryProfileLines(profile, emptyList())
+    private val managed = salaryProfileLines(profile, emptyList(), effectiveFrom = YearMonth.of(2026, 1))
 
     @Test
     fun incomeRows_areOnePerComponent_thenManualLines() =

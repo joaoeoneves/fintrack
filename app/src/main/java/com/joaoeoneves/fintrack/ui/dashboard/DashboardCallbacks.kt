@@ -1,5 +1,6 @@
 package com.joaoeoneves.fintrack.ui.dashboard
 
+import com.joaoeoneves.fintrack.domain.model.OwedRefund
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.QuickAddSuggestion
 import com.joaoeoneves.fintrack.domain.model.RecurringCandidate
@@ -31,6 +32,8 @@ data class DashboardCallbacks(
     val onOpenInvestments: (Period) -> Unit = {},
     /** Opens the new-expense form prefilled from a quick-add chip; never saves directly. */
     val onQuickAdd: (QuickAddSuggestion) -> Unit = {},
+    /** Opens the refund form prefilled for an owed expense ("Record refund"); never saves directly. */
+    val onRecordRefund: (OwedRefund) -> Unit = {},
     /** Opens the recurring editor prefilled from a "make it recurring?" suggestion. */
     val onCreateRecurring: (RecurringCandidate) -> Unit = {},
 )

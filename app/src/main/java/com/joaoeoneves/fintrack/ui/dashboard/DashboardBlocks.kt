@@ -13,6 +13,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joaoeoneves.fintrack.domain.model.Period
 import com.joaoeoneves.fintrack.domain.model.QuickAddSuggestion
 import com.joaoeoneves.fintrack.domain.model.StartStep
+import com.joaoeoneves.fintrack.ui.dashboard.awaiting.AwaitingRefundCard
+import com.joaoeoneves.fintrack.ui.dashboard.awaiting.AwaitingRefundModel
+import com.joaoeoneves.fintrack.ui.dashboard.awaiting.AwaitingRefundViewModel
+import com.joaoeoneves.fintrack.ui.dashboard.awaiting.hasContent
 import com.joaoeoneves.fintrack.ui.dashboard.quickadd.QuickAddRow
 import com.joaoeoneves.fintrack.ui.dashboard.quickadd.QuickAddViewModel
 import com.joaoeoneves.fintrack.ui.dashboard.recurring.RecurringSuggestionModel
@@ -37,6 +41,7 @@ data class StartChecklistModel(
 data class HomeBlocks(
     val start: StartChecklistModel,
     val review: ReviewInboxModel,
+    val awaitingRefund: AwaitingRefundModel = AwaitingRefundModel(),
     val quickAdd: List<QuickAddSuggestion>,
 )
 
@@ -48,10 +53,12 @@ fun rememberHomeBlocks(
     callbacks: DashboardCallbacks,
     snackbarHostState: SnackbarHostState,
     reviewViewModel: ReviewInboxViewModel = hiltViewModel(),
+    awaitingViewModel: AwaitingRefundViewModel = hiltViewModel(),
     quickAddViewModel: QuickAddViewModel = hiltViewModel(),
     recurringViewModel: RecurringSuggestionViewModel = hiltViewModel(),
 ): HomeBlocks {
     val reviewState by reviewViewModel.uiState.collectAsStateWithLifecycle()
+    val awaitingState by awaitingViewModel.uiState.collectAsStateWithLifecycle()
     val quickAdd by quickAddViewModel.suggestions.collectAsStateWithLifecycle()
     val recurringState by recurringViewModel.uiState.collectAsStateWithLifecycle()
     ReviewInboxSnackbars(reviewViewModel, snackbarHostState)
@@ -59,6 +66,12 @@ fun rememberHomeBlocks(
     return HomeBlocks(
         start = start,
         quickAdd = quickAdd,
+        awaitingRefund =
+            AwaitingRefundModel(
+                state = awaitingState,
+                onOpenExpense = callbacks.onOpenExpense,
+                onRecordRefund = callbacks.onRecordRefund,
+            ),
         review =
             ReviewInboxModel(
                 state = reviewState,
@@ -106,6 +119,14 @@ internal fun LazyListScope.reviewItems(
     if (visible && review.hasContent) {
         item(key = "review_inbox") {
             ScreenItem(Modifier.padding(top = SectionSpacing)) { ReviewInboxCard(model = review) }
+        }
+    }
+}
+
+internal fun LazyListScope.awaitingRefundItems(awaiting: AwaitingRefundModel) {
+    if (awaiting.hasContent) {
+        item(key = "awaiting_refund") {
+            ScreenItem(Modifier.padding(top = SectionSpacing)) { AwaitingRefundCard(model = awaiting) }
         }
     }
 }

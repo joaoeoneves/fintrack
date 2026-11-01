@@ -40,10 +40,12 @@ mode).
 - Home, Activity, Income and Spending, plus an avatar with your initial that opens Account & settings.
   Every tab has the same Month | Year switch (calendar year).
 - **Home**: a **Get started** checklist (hidden when done), a **To review** card (records posted
-  automatically, expenses marked *Will be refunded* until the refund is linked, and "Make it
+  automatically and "Make it
   recurring?" suggestions; the checklist ticks a step once the server has confirmed it), an income card (received of expected), a spending
   card, an *Invested* row with the share of what you received ("you invested 12% of what you received")
   that opens the investments page, quick add and an informative list of what is coming up.
+  An **Awaiting refund** card lists the expenses marked *Will be refunded* that are still owed, with the
+  total owed, how much of each is left and a *Record refund* action that opens a prefilled refund.
 - **Activity**: the list of expenses and income, with search, type, category, group and income source
   filters (search also matches the note and the amount, e.g. "12,50 €"), sorting, delete by swiping or
   from the edit screen, and multi-select by long press to change the category, toggle the meal card or

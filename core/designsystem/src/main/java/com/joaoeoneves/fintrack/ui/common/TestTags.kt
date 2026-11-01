@@ -27,6 +27,7 @@ object TestTags {
     const val RECURRING_ADD = "recurring_add"
     const val START_CHECKLIST = "start_checklist"
     const val REVIEW_INBOX = "review_inbox"
+    const val AWAITING_REFUND = "awaiting_refund"
     const val QUICK_ADD = "quick_add"
     const val RECURRING_SUGGESTION = "recurring_suggestion"
     const val SKELETON = "skeleton"

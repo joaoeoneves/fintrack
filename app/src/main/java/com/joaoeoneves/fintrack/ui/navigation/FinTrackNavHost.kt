@@ -97,6 +97,16 @@ private fun NavGraphBuilder.homeRoutes(navController: NavHostController) {
                                 ),
                             )
                         },
+                        onRecordRefund = { owed ->
+                            navController.navigate(
+                                AddEditExpense(
+                                    prefillName = owed.expense.name,
+                                    prefillAmountCents = owed.remainingCents,
+                                    prefillCategoryId = owed.expense.category.id.value,
+                                    refundOf = owed.expense.id,
+                                ),
+                            )
+                        },
                         onQuickAdd = { chip ->
                             navController.navigate(
                                 AddEditExpense(

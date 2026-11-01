@@ -103,7 +103,7 @@
     <string name="expense_field_refund">Reembolso</string>
     <string name="expense_field_refund_hint">Dinheiro devolvido; reduz os gastos desta categoria</string>
     <string name="expense_field_awaiting_refund">Vai ser reembolsada</string>
-    <string name="expense_field_awaiting_refund_hint">Fica em Por rever até registares o reembolso.</string>
+    <string name="expense_field_awaiting_refund_hint">Aparece em Por reembolsar na Home até estar totalmente reembolsada.</string>
     <string name="expense_refund_badge">Reembolso</string>
     <string name="filter_all">Todas</string>
     <string name="field_length_counter">%1$d/%2$d</string>
@@ -675,9 +675,13 @@
     <string name="error_write_rejected">Não foi possível guardar uma alteração no servidor.</string>
     <string name="error_write_permission">O servidor não aceitou uma alteração. Confirma que entraste com a conta certa.</string>
     <string name="home_review_subtitle">Registados automaticamente</string>
-    <string name="home_review_awaiting_refund">Por reembolsar</string>
     <string name="home_review_confirm_all">Confirmar todos</string>
     <string name="home_review_more">e mais %d</string>
+    <string name="home_awaiting_refund_title">Por reembolsar</string>
+    <string name="home_awaiting_refund_total">Falta %s</string>
+    <string name="home_awaiting_refund_remaining">Falta %s</string>
+    <string name="home_awaiting_refund_record">Registar reembolso</string>
+    <string name="expense_refund_status_owed">Reembolsado %1$d%% · falta %2$s</string>
     <plurals name="home_review_confirmed">
         <item quantity="one">%d movimento confirmado</item>
         <item quantity="other">%d movimentos confirmados</item>
@@ -747,5 +751,5 @@
     <string name="how_it_works_recurring_title">Recorrentes</string>
     <string name="how_it_works_recurring_body">Um item recorrente é uma despesa ou um rendimento que se repete, como a renda ou uma subscrição. No dia certo de cada mês a app regista-o por ti, sem teres de o escrever. Cada registo feito assim aparece em Por rever.</string>
     <string name="how_it_works_review_title">Por rever</string>
-    <string name="how_it_works_review_body">Por rever mostra o que a app registou sozinha e o que marcaste como Vai ser reembolsada. Toca num registo para o confirmar ou editar, ou usa Confirmar todos. Uma despesa marcada como Vai ser reembolsada fica aqui até registares um reembolso ligado a ela.</string>
+    <string name="how_it_works_review_body">Por rever mostra o que a app registou sozinha. Toca num registo para o confirmar ou editar, ou usa Confirmar todos. Por reembolsar mostra as despesas que marcaste como Vai ser reembolsada, com o que falta receber no total e em cada uma; usa Registar reembolso numa linha para abrir um reembolso já preenchido com o valor em falta, ou abre a despesa para ver quanto já voltou.</string>
 </resources>
