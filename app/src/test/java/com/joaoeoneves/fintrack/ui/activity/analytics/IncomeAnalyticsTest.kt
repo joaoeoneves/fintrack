@@ -8,8 +8,10 @@ import com.joaoeoneves.fintrack.domain.model.SourceMonth
 import com.joaoeoneves.fintrack.domain.model.YearToDate
 import com.joaoeoneves.fintrack.domain.usecase.MonthlyHistory
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.YearMonth
 
@@ -200,6 +202,46 @@ class IncomeAnalyticsTest {
                 .sources
                 .single()
                 .pastShortCents,
+        )
+    }
+
+    @Test
+    fun isShort_aFewCentsOffThePlan_isNotShort() {
+        // A payslip a few euros below the plan (5,97 € of 13 103,45 €) is not worth a red label.
+        val h =
+            history(
+                listOf(source(salary, 1_309_748L to 1_310_345L, 0L to 132_660L)),
+                income = listOf(1_309_748L, 0L),
+                today = oct,
+            )
+        val row = h.incomeAnalytics().sources.single()
+
+        assertEquals(597L, row.pastShortCents)
+        assertEquals(1_310_345L, row.pastExpectedCents)
+        assertFalse(row.isShort)
+    }
+
+    @Test
+    fun isShort_moreThanOnePercentShort_isShort() {
+        val h = history(listOf(source(salary, 98L to 100L, 0L to 100L)), income = listOf(98L, 0L), today = oct)
+        assertTrue(
+            h
+                .incomeAnalytics()
+                .sources
+                .single()
+                .isShort,
+        )
+    }
+
+    @Test
+    fun isShort_exactlyOnePercentShort_isNotShort() {
+        val h = history(listOf(source(salary, 99L to 100L, 0L to 100L)), income = listOf(99L, 0L), today = oct)
+        assertFalse(
+            h
+                .incomeAnalytics()
+                .sources
+                .single()
+                .isShort,
         )
     }
 

@@ -670,8 +670,7 @@
     <string name="income_meal_card_plafond">Plafond</string>
     <string name="income_meal_card_plafond_from">Plafond (subsídio de %1$s)</string>
     <string name="income_meal_card_spent">Gasto</string>
-    <string name="income_outlook_total">Total do ano</string>
-    <string name="income_outlook_total_detail">Recebido %1$s · previsto %2$s</string>
+    <string name="income_outlook_headline">Falta receber %1$s · Total do ano %2$s</string>
     <string name="error_write_rejected">Não foi possível guardar uma alteração no servidor.</string>
     <string name="error_write_permission">O servidor não aceitou uma alteração. Confirma que entraste com a conta certa.</string>
     <string name="home_review_subtitle">Registados automaticamente</string>

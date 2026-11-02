@@ -165,13 +165,12 @@ private fun IncomeContent(
             showScaleSwitch = true,
             modifier = Modifier.padding(horizontal = Dimens.Space8),
         )
-        IncomeHeadline(history = state.history)
+        IncomeHeadline(history = state.history, outlook = state.outlook)
         val month = state.month
         if (month != null) {
             MonthCard(state, month, viewModel, onOpenSalaryProfile) { editingWorkingDays = true }
         }
         state.mealCard?.let { MealCardRow(it) }
-        state.outlook?.let { YearTotal(it) }
         IncomeHistory(
             history = state.history,
             onSourceClick = { onOpenSource(it, state.period) },
@@ -255,22 +254,6 @@ private fun MonthCard(
             ),
         actions = incomeActions(state, viewModel, onOpenSalaryProfile, onEditWorkingDays),
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding),
-    )
-}
-
-/** A current or future year: what was received, what is still expected and the year's total. */
-@Composable
-private fun YearTotal(outlook: YearIncomeOutlook) {
-    SettingsRow(
-        title = stringResource(R.string.income_outlook_total),
-        supportingText =
-            stringResource(
-                R.string.income_outlook_total_detail,
-                formatAmountCents(outlook.receivedCents),
-                formatAmountCents(outlook.expectedCents),
-            ),
-        value = formatAmountCents(outlook.totalCents),
-        modifier = Modifier.padding(horizontal = Dimens.ScreenPadding).padding(top = Dimens.Space16),
     )
 }
 

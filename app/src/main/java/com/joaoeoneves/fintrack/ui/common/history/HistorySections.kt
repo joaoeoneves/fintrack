@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.joaoeoneves.fintrack.R
 import com.joaoeoneves.fintrack.domain.model.Category
 import com.joaoeoneves.fintrack.domain.model.CategoryId
+import com.joaoeoneves.fintrack.domain.model.YearIncomeOutlook
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityAnalytics
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityBreakdown
 import com.joaoeoneves.fintrack.ui.activity.analytics.ActivityHistory
@@ -132,22 +133,25 @@ private fun SpendingBreakdown(
     }
 }
 
-/** The Income tab's headline: Received with "of X expected", or nothing when nothing was received. */
+/**
+ * The Income tab's headline: Received with "of X expected", or nothing when nothing was received. A current or
+ * future year ([outlook]) reads Received, then what the plan still expects and the year's total instead.
+ */
 @Composable
 fun IncomeHeadline(
     history: ActivityHistory?,
     modifier: Modifier = Modifier,
+    outlook: YearIncomeOutlook? = null,
 ) {
+    if (outlook != null) {
+        YearHeadline(outlook, modifier)
+        return
+    }
     val analytics = remember(history) { history?.incomeAnalytics() }
     if (analytics != null && analytics.receivedCents != 0L) {
         Column(modifier = modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(horizontal = Dimens.ScreenPadding)) {
-                Text(
-                    text = stringResource(R.string.activity_received_total),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = FinTrackTheme.colors.textSecondary,
-                )
-                Text(text = formatAmountCents(analytics.receivedCents), style = AmountLarge, maxLines = 1)
+                ReceivedTotal(analytics.receivedCents)
                 if (analytics.expectedCents != null) {
                     val expected = formatAmountCents(analytics.expectedCents)
                     Text(
@@ -168,6 +172,39 @@ fun IncomeHeadline(
             }
         }
     }
+}
+
+// One figure for what is still coming (the plan for the rest of the year), so Received + it = the year's total.
+@Composable
+private fun YearHeadline(
+    outlook: YearIncomeOutlook,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding)) {
+        ReceivedTotal(outlook.receivedCents)
+        if (outlook.expectedCents > 0L) {
+            Text(
+                text =
+                    stringResource(
+                        R.string.income_outlook_headline,
+                        formatAmountCents(outlook.expectedCents),
+                        formatAmountCents(outlook.totalCents),
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = FinTrackTheme.colors.textSecondary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReceivedTotal(cents: Long) {
+    Text(
+        text = stringResource(R.string.activity_received_total),
+        style = MaterialTheme.typography.labelMedium,
+        color = FinTrackTheme.colors.textSecondary,
+    )
+    Text(text = formatAmountCents(cents), style = AmountLarge, maxLines = 1)
 }
 
 /**
@@ -242,7 +279,7 @@ private fun SourceRow(
             row.expectedCents?.let { expected ->
                 val color =
                     when {
-                        row.pastShortCents > 0L -> colors.negative
+                        row.isShort -> colors.negative
                         row.receivedCents > expected -> colors.positive
                         else -> colors.textSecondary
                     }

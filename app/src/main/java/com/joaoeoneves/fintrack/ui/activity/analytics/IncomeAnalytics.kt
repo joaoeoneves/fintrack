@@ -28,7 +28,16 @@ data class IncomeSourceRow(
     val receivedCents: Long,
     val expectedCents: Long?,
     val pastShortCents: Long = 0L,
-)
+    /** What the months counted in [pastShortCents] expected. */
+    val pastExpectedCents: Long = 0L,
+) {
+    /** Short by more than [SHORT_TOLERANCE_PERCENT] of what the past months expected (a payslip's cents never are). */
+    val isShort: Boolean
+        get() = pastShortCents > 0L && pastShortCents * PERCENT > pastExpectedCents * SHORT_TOLERANCE_PERCENT
+}
+
+private const val SHORT_TOLERANCE_PERCENT = 1L
+private const val PERCENT = 100L
 
 /** The income header's figures for the period: what was [receivedCents], what was [expectedCents] and the sources. */
 data class IncomeAnalytics(
@@ -49,11 +58,10 @@ fun ActivityHistory.incomeAnalytics(): IncomeAnalytics {
             val mine = source.months.filter { it.month in periodMonths }
             val expected = mine.mapNotNull { it.expectedCents }.takeIf { it.isNotEmpty() }?.sum()
             val received = mine.sumOf { it.receivedCents }
-            val pastShort =
-                mine
-                    .filter { today == null || it.month < today }
-                    .sumOf { (it.expectedCents ?: 0L) - it.receivedCents }
-            IncomeSourceRow(source.key.encode(), source.label, received, expected, maxOf(0L, pastShort))
+            val past = mine.filter { today == null || it.month < today }
+            val pastExpected = past.sumOf { it.expectedCents ?: 0L }
+            val pastShort = pastExpected - past.sumOf { it.receivedCents }
+            IncomeSourceRow(source.key.encode(), source.label, received, expected, maxOf(0L, pastShort), pastExpected)
                 .takeIf { received != 0L || (expected ?: 0L) != 0L }
         }
     val receivedCents = monthly.months.filter { it.month in periodMonths }.sumOf { it.incomeCents }
