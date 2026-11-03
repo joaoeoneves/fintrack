@@ -1,312 +1,69 @@
 appId: com.joaoeoneves.fintrack
 ---
-# README screenshots flow (updated for 5.5; guest mode, English, EUR, dark, demo data only). NOT a regression gate.
-# Four tabs: Home, Activity, Income, Spending. Groups/Recurring live in the Spending tab, the salary
-# profile in the Income tab, the investments page behind Home's "Invested" row.
-# Run locally on a 1080x2400 / 420 dpi emulator (adb shell wm size 1080x2400; adb shell wm density 420;
-# reset with wm size reset / wm density reset) with SystemUI demo mode on (clock 12:00, full battery, wifi,
-# no notifications) and resize the PNGs in maestro-out/screens/ to 540 px wide:
-#   maestro test .maestro/screenshots.yaml
-# Captures: home, activity (period selector + chips, unscrolled), income, spending, investments, add-expense.
-# Money inputs are cash-register style: digits only ("6420" = 64.20); no `back` is pressed after typing (the CI emulator has no IME);
-# Save is tapped directly.
+# README screenshots, part 2 (run by scripts/screenshots.sh after .maestro/screenshots-setup.yaml and the demo
+# data): opens the app on the demo year and captures the screens the README shows. NOT a regression gate.
+# Each tab keeps its own period: Month views step back to the previous, complete month.
 
-- runFlow: _guest-start.yaml
-
-# --- Pin English + Dark (EUR is fixed) ---
-- tapOn:
-    id: "account_avatar"
-- tapOn: "Language|Idioma"
-# Index -1 = the open menu's option (the row's own value can also read "English").
-- tapOn:
-    text: "English"
-    index: -1
-- extendedWaitUntil:
-    visible: "Preferences"
-    timeout: 10000
-- tapOn: "Theme"
-- tapOn:
-    text: "Dark"
-    index: -1
-- back
+- launchApp
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
-    timeout: 10000
-
-# --- Income tab: the salary wizard (5 steps: sector, salary, subsidies, meal allowance, summary) ---
-# Private sector, 1500 gross, 15% IRS, 50% subsidies, meal allowance on a card with vacation days.
-# No `back` after typing: the CI emulator has no IME, so Next is scrolled into view instead.
-- tapOn:
-    id: "nav_income"
-- extendedWaitUntil:
-    visible: "Salary profile"
-    timeout: 10000
-- tapOn: "Salary profile"
-- tapOn: "Private sector"
-- tapOn: "Gross base salary \\(monthly\\)"
-- inputText: "150000"
-- tapOn: "IRS withholding rate \\(%\\)"
-- inputText: "15"
-- scrollUntilVisible:
-    element: "Next"
-    centerElement: true
-- tapOn: "Next"
-- tapOn: "50%"
-- tapOn: "Next"
-- tapOn: "Yes, on a card"
-- tapOn: "Meal allowance per working day"
-- inputText: "763"
-- tapOn: "Vacation days per year"
-- inputText: "22"
-- tapOn: "Next"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible: "Expected income"
-    timeout: 10000
-
-# --- Spending tab > New group: Food, Shopping, Rent (name + categories) ---
-- tapOn:
-    id: "nav_spending"
-- scrollUntilVisible:
-    element: "New group"
-- tapOn: "New group"
-- tapOn: "Name"
-- inputText: "Food"
-- tapOn: "Add category"
-- tapOn:
-    text: "Food"
-    index: -1
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible: "Group"
-    timeout: 10000
-- scrollUntilVisible:
-    element: "New group"
-- tapOn: "New group"
-- tapOn: "Name"
-- inputText: "Shopping"
-- tapOn: "Add category"
-- tapOn:
-    text: "Shopping"
-    index: -1
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible: "Group"
-    timeout: 10000
-
-# --- Spending tab > Recurring: Rent and Internet ---
-- scrollUntilVisible:
-    element: "Recurring"
-- tapOn: "Recurring"
-- tapOn: "Add recurring"
-- inputText: "75000"
-- tapOn: "Name"
-- inputText: "Rent"
-- tapOn: "Transfer"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible: "Add recurring"
-    timeout: 10000
-- tapOn: "Add recurring"
-- inputText: "3999"
-- tapOn: "Name"
-- inputText: "Internet"
-- tapOn: "Shopping"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible: "Internet"
-    timeout: 10000
-- back
-
-# Rent is already booked by the Bills entry above, so it is not added again as an expense.
-# --- Income + expenses, spread over different earlier days of the month (the date picker in the form)
-# so the Home balance chart has a real shape. Today is never used; days 1..25 exist in any month.
-- tapOn:
-    id: "nav_home"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn: "Add income"
-- inputText: "140000"
-- tapOn: "Name"
-- inputText: "Freelance"
-- scrollUntilVisible:
-    element: "Date"
-- tapOn: "Date"
-- tapOn:
-    text: ".*\\w+ 1, 20\\d\\d"
-- tapOn: "OK"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn: "Add expense"
-- inputText: "6420"
-- tapOn: "Name"
-- inputText: "Groceries"
-- tapOn: "Food"
-- scrollUntilVisible:
-    element: "Date"
-- tapOn: "Date"
-- tapOn:
-    text: ".*\\w+ 5, 20\\d\\d"
-- tapOn: "OK"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn: "Add expense"
-- inputText: "1850"
-- tapOn: "Name"
-- inputText: "Cinema"
-- tapOn: "Shopping"
-- scrollUntilVisible:
-    element: "Date"
-- tapOn: "Date"
-- tapOn:
-    text: ".*\\w+ 8, 20\\d\\d"
-- tapOn: "OK"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn: "Add expense"
-- inputText: "5130"
-- tapOn: "Name"
-- inputText: "Groceries"
-- tapOn: "Food"
-- scrollUntilVisible:
-    element: "Date"
-- tapOn: "Date"
-- tapOn:
-    text: ".*\\w+ 12, 20\\d\\d"
-- tapOn: "OK"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn: "Add expense"
-- inputText: "1280"
-- tapOn: "Name"
-- inputText: "Lunch"
-- tapOn: "Food"
-- scrollUntilVisible:
-    element: "Date"
-- tapOn: "Date"
-- tapOn:
-    text: ".*\\w+ 19, 20\\d\\d"
-- tapOn: "OK"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-- tapOn: "Add expense"
-- inputText: "3600"
-- tapOn: "Name"
-- inputText: "Dinner out"
-- tapOn: "Food"
-- scrollUntilVisible:
-    element: "Date"
-- tapOn: "Date"
-- tapOn:
-    text: ".*\\w+ 24, 20\\d\\d"
-- tapOn: "OK"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-
-# One investment (day 2) so Home shows the "Invested" row that opens the investments page.
-- tapOn: "Add expense"
-- inputText: "10000"
-- tapOn: "Name"
-- inputText: "ETF"
-- tapOn: "Investments"
-- scrollUntilVisible:
-    element: "Date"
-- tapOn: "Date"
-- tapOn:
-    text: ".*\\w+ 2, 20\\d\\d"
-- tapOn: "OK"
-- tapOn: "Save"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
-
-# --- Screenshots ---
+    timeout: 15000
+# The Get started card is done apart from the payday step; hide it and let its snackbar go.
 - tapOn:
     text: "Dismiss"
     optional: true
-# Back to the very top of Home (the list keeps its scroll position).
-- repeat:
-    times: 8
-    commands:
-      - swipe:
-          start: 50%,25%
-          end: 50%,85%
-          duration: 250
+- extendedWaitUntil:
+    notVisible: ".*hidden"
+    timeout: 10000
+- tapOn: "Previous month"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/home
+
 - tapOn:
     id: "nav_activity"
 - extendedWaitUntil:
     visible:
       id: "activity_list"
     timeout: 10000
-# Unscrolled: the period selector, the source chips; the add pill only overlaps
-# the category chip row, never a transaction row.
+- tapOn: "Previous month"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/activity
+
 - tapOn:
     id: "nav_income"
+- tapOn: "Previous month"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/income
 - tapOn: "Year"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/income-year
 - tapOn: "Month"
+
 - tapOn:
     id: "nav_spending"
+- tapOn: "Previous month"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/spending
 - tapOn: "Year"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/spending-year
 - tapOn: "Month"
+
 - tapOn:
     id: "nav_home"
 - extendedWaitUntil:
     visible:
       id: "dashboard_list"
     timeout: 10000
-# Investments page right after switching tabs (Spending -> Home): back must land on Home.
-- scrollUntilVisible:
-    element: "You invested.*"
-    centerElement: true
-- tapOn: "You invested.*"
-- waitForAnimationToEnd
-- takeScreenshot: maestro-out/screens/investments
-# Back from the page returns to Home (5.0 regression check: it used to exit the app after tab switches).
-- back
-- assertVisible:
-    id: "dashboard_list"
-- extendedWaitUntil:
-    visible:
-      id: "dashboard_list"
-    timeout: 10000
 - tapOn: "Add expense"
 - waitForAnimationToEnd
-- inputText: "4200"
+- inputText: "1840"
 - tapOn: "Name"
-- inputText: "Dinner"
+- inputText: "Lunch"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Paid with meal card"
+- tapOn: "Paid with meal card"
 - waitForAnimationToEnd
 - takeScreenshot: maestro-out/screens/add-expense

@@ -1,144 +1,142 @@
 <p align="center">
-  <img src="docs/icon-512.png" width="96" alt="FinTrack app icon">
+  <img src="docs/icon-512.png" width="88" alt="FinTrack app icon">
 </p>
 
 <h1 align="center">FinTrack</h1>
 
 <p align="center">
-  A monthly money-tracking app for Android: track what you earn and spend, month by month, and keep
-  recurring bills and investments under control.
+  <b>A monthly money tracker for people paid in euros.</b><br>
+  What came in against what was expected, what went out, what was invested: month by month,<br>
+  with no envelopes, no bank login and no account needed.
 </p>
 
 <p align="center">
-  <a href="https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml"><img src="https://github.com/joaoeoneves/fintrack/actions/workflows/ci.yml/badge.svg?event=pull_request" alt="CI"></a>
-  <a href="https://github.com/joaoeoneves/fintrack/releases/latest"><img src="https://img.shields.io/github/v/release/joaoeoneves/fintrack" alt="Latest release"></a>
+  <a href="https://github.com/joaoeoneves/fintrack/releases/latest"><img src="https://img.shields.io/github/v/release/joaoeoneves/fintrack?label=release&color=FFB020" alt="Latest release"></a>
+  <a href="https://github.com/joaoeoneves/fintrack/actions/workflows/release.yml"><img src="https://github.com/joaoeoneves/fintrack/actions/workflows/release.yml/badge.svg" alt="Release build"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/min%20SDK-26-3DDC84?logo=android&logoColor=white" alt="Min SDK 26">
-  <img src="https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin 2.4">
+  <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white" alt="Android 8.0+">
+  <img src="https://img.shields.io/badge/Kotlin-Compose-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin and Jetpack Compose">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="200" alt="Home: to review, income and spending cards, invested with the investment rate, quick add and upcoming">
-  <img src="docs/screenshots/activity.png" width="200" alt="Activity: the list of expenses and income with search and filters">
-  <img src="docs/screenshots/income.png" width="200" alt="Income: received versus expected, income lines and history">
-  <img src="docs/screenshots/spending.png" width="200" alt="Spending: spent, fixed versus variable, evolution and categories">
-  <img src="docs/screenshots/investments.png" width="200" alt="Investments per month, per year and per instrument">
-  <img src="docs/screenshots/add-expense.png" width="200" alt="Add expense form">
+  <a href="https://github.com/joaoeoneves/fintrack/releases/latest"><b>Download the APK</b></a> ·
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/joaoeoneves/fintrack"><b>Add to Obtainium</b></a> ·
+  <a href="docs/FEATURES.md">All features</a>
 </p>
 
-## Why
+<p align="center">
+  <img src="docs/hero.png" width="860" alt="FinTrack on Home, Income (year) and Spending (year), dark theme with demo data">
+</p>
 
-FinTrack started as a personal replacement for a monthly budgeting spreadsheet. The app keeps its
-focus on real numbers: what came in, what went out, what was invested, and how each month compares.
-Income and spending are tracked separately and each month stands on its own: there is no rollover and
-no "available to spend". It works offline-first, and it can be used without an account at all (guest
-mode).
+## Why another money app?
 
-## Features
+Most budgeting apps want you to plan every euro in advance, or to hand them your bank login. FinTrack started as
+the replacement for a personal monthly spreadsheet and keeps that spreadsheet's honesty: real numbers, each month
+on its own.
 
-**Tabs**
-- Home, Activity, Income and Spending, plus an avatar with your initial that opens Account & settings.
-  Every tab has the same Month | Year switch (calendar year).
-- **Home**: a **Get started** checklist (hidden when done), a **To review** card (records posted
-  automatically and "Make it
-  recurring?" suggestions; the checklist ticks a step once the server has confirmed it), an income card (received of expected), a spending
-  card, an *Invested* row with the share of what you received ("you invested 12% of what you received")
-  that opens the investments page, quick add and an informative list of what is coming up.
-  An **Awaiting refund** card lists the expenses marked *Will be refunded* that are still owed, with the
-  total owed, how much of each is left and a *Record refund* action that opens a prefilled refund.
-- **Activity**: the list of expenses and income, with search, type, category, group and income source
-  filters (search also matches the note and the amount, e.g. "12,50 €"), sorting, delete by swiping or
-  from the edit screen, and multi-select by long press to change the category, toggle the meal card or
-  delete several expenses at once (all with undo). Totals and breakdowns live
-  in Spending and Income.
-- **Income**: received versus expected (the whole period, January to December in the Year view) with what is still to receive, income lines, days off by type
-  (vacation and other; one month or several at once; the working-day count follows from the
-  calendar, holidays and days off), and history. Income counts by the date it was
-  received.
-- **Spending**: spent, fixed versus variable, evolution, and spending by category or by group (a name
-  plus its categories) with a Category | Group switch; a category spending more than its recent average is marked *above
-  average*. Recurring bills and investments are managed here,
-  with their yearly cost (monthly and yearly items apart) and the month each one ends.
-- Tapping a bar in a year chart shows that month's figures and opens the month.
-- Detail pages per category and per income source. For the net salary source it shows what was received
-  at the end of a month against what was spent in the next one.
+- **It knows how you're paid.** Set your salary once, gross or net: Social Security and IRS withholding (including
+  IRS Jovem), holiday and Christmas subsidies in twelfths or in full, meal allowance on a card, working days with
+  Portuguese holidays, vacation days. FinTrack then knows what *should* come in each month, and shows what is
+  still to receive.
+- **Real numbers, each month on its own.** No envelopes, no rollover, no "safe to spend". What came in, what went
+  out, what you invested and how this month compares with the last ones.
+- **Recurring things record themselves.** Rent, subscriptions and investments are recorded on their date and
+  wait in *To review* until you confirm them. They never duplicate, even from a second phone.
+- **Refunds that actually net out.** Shared dinners, insurance, family paying you back: link the refund to the
+  expense and the category shows what you really spent. Anything still owed stays on Home until it's paid.
+- **Yours, with no strings attached.** Use it without an account (everything in one file on your phone), or sign
+  in with Google to sync. No bank access, no ads, no analytics, no crash reporting. JSON backups you can read,
+  CSV export, MIT licence.
 
-**Tracking**
-- Expenses (name, amount, category, date, note) and income (source, amount, date, note). Refunds
-  subtract from their category and can be linked to the original expense, which then shows the refunded
-  share and the real spend. An expense can be duplicated, and a new one can be split across categories
-  (*More options*); opening any part of a split edits all its parts together. When you add an expense, the category you used last time for that name
-  is suggested.
-- Categories: built-ins plus your own (new users also start with Home, Transport, Health and Leisure) (name, icon, colour, spending or saving), with rename, reorder,
-  archive and delete. *How it works* in Settings explains categories, groups, recurring items and To review.
-- Income lines that change over time keep their history: a new amount applies
-  from the month you choose (*Valid from*) and earlier months keep the old one.
-- CSV export of expenses and income (one file with a type column).
+## How it compares
 
-**Income lines**
-- The salary profile (optional) and your own lines, one row per component. Salary set-up is three steps
-  (gross or net, subsidies, meal allowance); the full form under Advanced covers youth IRS, deductions
-  and extras (a fixed amount, a multiple of the base or a share of the annual gross, paid in the months
-  you choose).
-- Any line can be recorded automatically on its pay day (last working day, with Portuguese holidays, or
-  a fixed day). Income can be per working day, with days off.
-- The salary profile shows the vacation days left this year, and an optional annual raise in February
-  makes a new salary apply from February (January keeps the previous one).
+|                                              | Envelope budgeting apps | Bank-sync aggregators | Simple expense loggers | A spreadsheet    | **FinTrack**       |
+|----------------------------------------------|:-----------------------:|:---------------------:|:----------------------:|:----------------:|:------------------:|
+| Understands a Portuguese payslip             | —                       | —                     | —                      | if you build it  | **yes**            |
+| Expected vs received income, per month       | partly                  | partly                | —                      | if you build it  | **yes**            |
+| Recurring bills recorded on their date       | yes                     | from the bank         | sometimes              | by hand          | **yes, reviewed**  |
+| Refunds netted against the original expense  | sometimes               | sometimes             | —                      | by hand          | **yes**            |
+| Imports transactions from your bank          | some                    | **yes**               | —                      | —                | no, by design      |
+| Works without an account                     | rarely                  | —                     | often                  | yes              | **yes**            |
+| Needs access to your bank                    | some                    | yes                   | no                     | no               | **no**             |
+| Ads or tracking                              | varies                  | varies                | often                  | no               | **none**           |
+| Open source                                  | rarely                  | rarely                | sometimes              | —                | **MIT**            |
 
-**Bills and investments**
-- Monthly or yearly recurring expenses (rent, subscriptions) and recurring investments, with start and
-  end dates and pause/resume.
-- Every recurring item is recorded automatically on its due date and shows up in *To review*, where you
-  can check or change it. Recording twice (for example from a second device) never creates a duplicate.
-  The upcoming list on Home is informative.
+If you want every transaction imported automatically, or to budget every euro before the month starts, an
+aggregator or an envelope app will suit you better. FinTrack is for writing things down yourself, in a few
+seconds, and seeing clearly where the month went.
 
-**Guest mode and backup**
-- "Continue as guest" uses the whole app with data kept in a single JSON file on the device; no Firebase
-  is involved.
-- Signing in later offers to copy guest data into the account, then to remove it from the device.
-- Versioned JSON backup and restore (for example to move to another phone), for guests and signed-in
-  accounts. Restoring into an account offers to export a backup first. A "delete all data" action is
-  also available.
+**Is it for you?** Yes if you're paid in euros (best of all in Portugal, where the salary model applies) and
+want a clear monthly picture without connecting your bank. Not yet if you need several currencies, iOS, or a
+budget shared by a household.
 
-**Localization and appearance**
-- English and Portuguese (pt-PT), switchable in-app; follows the system language by default.
-- Dark (default), light or system theme. The *Add* button hides while you scroll down and comes back
-  when you scroll up. Motion (smooth transitions, predictive back, counting amounts, skeleton
-  loading and haptics) follows the system's animation setting.
-- Amounts are in euros.
+## A look around
 
-**Privacy-relevant bits**
-- Optional app lock (fingerprint, face or screen lock) when the app opens and after 1 minute away; while
-  it is on, the app preview in recent apps is hidden.
-- Sign-in is Google via Credential Manager; data is stored under your own user id and Firestore security
-  rules restrict every document to its owner (see [SECURITY.md](SECURITY.md)).
-- Guest data never leaves the device unless you export a backup.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/home.png" alt="Home: awaiting refund, received of expected, spent, invested share"></td>
+    <td width="50%">
+      <h3>Home</h3>
+      The month at a glance: what came in against what was expected, what was spent against your recent average,
+      the share of your income you invested, what is still owed to you, and what's coming up.
+      Automatic records wait in <i>To review</i>.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>Income</h3>
+      Every expected line (salary, subsidies, meal allowance, your own lines), ticked as it arrives.
+      The Year view adds up what has come in and what is still to receive until December, plus the meal card
+      balance.
+    </td>
+    <td width="50%"><img src="docs/screenshots/income.png" alt="Income: salary, meal allowance and subsidies received on the 30th"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/spending-year.png" alt="Spending, year view: total, fixed versus variable, monthly evolution, by category"></td>
+    <td width="50%">
+      <h3>Spending</h3>
+      Fixed against variable, month-by-month evolution, and spending by category or by group. Categories above
+      their recent average are flagged. Recurring bills and investments are managed here, with what each one
+      costs per year.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>Adding an expense</h3>
+      Amount first, then a name: the category you used last time for that name is picked for you. Split an
+      expense across categories, mark it as paid with the meal card, or flag it as <i>Will be refunded</i>.
+    </td>
+    <td width="50%"><img src="docs/screenshots/add-expense.png" alt="Add expense: amount, name, category chips, refund and meal card options"></td>
+  </tr>
+</table>
 
-## Download and install
+Activity (search and filters) and the Year views are in [docs/screenshots](docs/screenshots). The full list of
+what the app does is in [docs/FEATURES.md](docs/FEATURES.md).
 
-Signed APKs are attached to each [GitHub release](https://github.com/joaoeoneves/fintrack/releases/latest)
-(Android 8.0+). To get updates automatically, add `https://github.com/joaoeoneves/fintrack` as a source in
-[Obtainium](https://obtainium.imranr.dev/).
+## Privacy
 
-v1.0 was signed with a debug key, so moving to the signed builds requires uninstalling the app once. This
-clears local (guest) data; Firestore data is unaffected.
+|                     | Guest mode                              | Signed in (Google)                                                       |
+|---------------------|-----------------------------------------|--------------------------------------------------------------------------|
+| Where your data is  | One JSON file in the app's storage      | Firestore, under your own user id, plus an offline cache on the phone     |
+| Who can read it     | Only you, on that phone                 | Only your account: security rules restrict every document to its owner   |
+| Leaves the phone    | Only if you export a backup             | Synced to Firestore                                                      |
 
-## Tech stack
+In both modes: no bank credentials, no ads, no analytics or crash reporting, an optional app lock (fingerprint,
+face or screen lock), and backups in a readable JSON format you can take anywhere. Signing in later offers to
+move your guest data into the account. See [SECURITY.md](SECURITY.md) for how to report a problem.
 
-| Area | Choice |
-|---|---|
-| Language | Kotlin 2.4.10 |
-| UI | Jetpack Compose (BOM 2026.06.01) with Material 3 and a small in-house design system (`ui/designsystem`), Inter typeface |
-| Architecture | MVVM, `StateFlow` UI state, type-safe Compose Navigation 2.9 |
-| Async | Coroutines 1.11 and `Flow` |
-| DI | Hilt 2.60 with KSP |
-| Backend | Firebase Auth (Google Sign-In through `androidx.credentials`) and Firestore (BoM 34.16) with its offline cache |
-| Local storage | JSON file via kotlinx.serialization 1.11 (guest mode), Preferences DataStore 1.3 (settings, session) |
-| Performance | R8 minification, Baseline Profiles (`:baselineprofile` module), splash screen API |
-| Quality | ktlint, detekt, Android lint, JUnit 4, Robolectric, Maestro |
-| Build | AGP 9.3, Gradle version catalog, GitHub Actions, Dependabot |
+## Install
 
-## Architecture
+Signed APKs for Android 8.0 and later are attached to every [release](https://github.com/joaoeoneves/fintrack/releases/latest).
+To get updates automatically, add `https://github.com/joaoeoneves/fintrack` as an app in
+[Obtainium](https://obtainium.imranr.dev/). The app is in English and Portuguese (pt-PT), with dark, light and
+system themes.
+
+## Built with
+
+Kotlin 2.4 and Jetpack Compose (Material 3 with a small in-house design system and the Inter typeface), MVVM with
+`StateFlow`, type-safe Compose Navigation, coroutines and `Flow`, Hilt, Firebase Auth and Firestore, a
+kotlinx.serialization JSON store for guest mode, DataStore, R8 and Baseline Profiles.
 
 ```mermaid
 flowchart LR
@@ -149,81 +147,50 @@ flowchart LR
     SR -->|guest| JS[(Local JSON store)]
 ```
 
-ViewModels depend only on repository interfaces from `domain/`. Hilt binds each interface to a
-`Session*Repository` that routes every call to the Firestore or the local JSON implementation for the
-current session, so UI code does not know which one is in use and a guest never creates Firestore.
-Details, the data model and the rules approach are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md);
-the reasoning behind the main choices is in [docs/DECISIONS.md](docs/DECISIONS.md).
+ViewModels only see repository interfaces from the pure-Kotlin domain module. Each one is bound to a repository
+that routes every call to Firestore or to the local JSON store for the current session, so no screen knows which
+one is in use and a guest never touches Firebase. The details and the data model are in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); the reasoning behind the main choices is in
+[docs/DECISIONS.md](docs/DECISIONS.md).
 
-## Quality
+**Quality.** 3,600+ JVM tests, most against in-memory fake repositories, with Robolectric + Compose screen tests
+for the main flows; Maestro end-to-end flows in [`.maestro/`](.maestro); ktlint, detekt and Android lint; every
+release is built by CI from this repository, minified with R8, signed and its signature verified before it is
+published.
 
-- **2,700+ unit tests** (JVM, run against in-memory fake repositories; Robolectric where an Android
-  class is unavoidable).
-- **JVM screen tests** (Robolectric + Compose) drive the main flows on every PR, with no emulator.
-- **Maestro E2E flows** (`.maestro/`, guest mode) can be run on demand from the E2E workflow or by hand.
-- **CI** once per pull request, as two parallel jobs: ktlint, detekt and Android lint; unit tests, the debug
-  build and compilation of the baseline-profile generator. Nothing runs twice: main doesn't re-run CI.
-- **Baseline profile** generated on a CI emulator and committed.
-- **Signed releases**: the Release workflow (run it with a version, or push a tag `vX.Y`) checks that
-  CI passed on the merged pull request, builds (R8) and signs the APK, verifies the signature, and
-  publishes a GitHub release with the APK and the R8 mapping file.
-
-Run the same checks locally with the shared gate script:
-
-```bash
-scripts/gate.sh fast                 # ktlint + detekt + unit tests
-scripts/gate.sh fast 'com.joaoeoneves.fintrack.ui.recurring.*'   # filtered unit tests
-scripts/gate.sh full                 # everything CI checks, plus androidTest compilation
-```
-
-## Getting started
+## Build it yourself
 
 Requires JDK 21 and an Android SDK (`ANDROID_HOME`).
 
 1. Clone the repository.
-2. Create a Firebase project, register an Android app with package `com.joaoeoneves.fintrack`, enable
-   Google Sign-In, create a Firestore database and deploy [`firestore.rules`](firestore.rules).
-3. Put your own `google-services.json` in `app/` (it is gitignored) and add your debug certificate's
-   SHA-1 to the Firebase app (`./gradlew signingReport` prints it).
-4. Build and run:
+2. Create a Firebase project, register an Android app with package `com.joaoeoneves.fintrack`, enable Google
+   Sign-In, create a Firestore database and deploy [`firestore.rules`](firestore.rules).
+3. Put your own `google-services.json` in `app/` (it is gitignored) and add your debug certificate's SHA-1 to the
+   Firebase app (`./gradlew signingReport` prints it).
+4. `./gradlew installDebug`
 
-   ```bash
-   ./gradlew installDebug
-   ```
-
-Guest mode works without any Firebase sign-in, but the build still needs a `google-services.json`
-(CI uses a placeholder one).
-
-## Project structure
+Guest mode works without signing in, but the build still needs a `google-services.json` (CI writes a placeholder).
+Run the same checks as CI with `scripts/gate.sh fast` (ktlint, detekt, unit tests) or `scripts/gate.sh full`
+(also lint, the R8 build and androidTest compilation).
 
 ```
 app/src/main/java/com/joaoeoneves/fintrack/
-├── ui/        Compose screens by feature (dashboard, activity, income, spending, detail, expense,
-│              recurring, settings, ...), designsystem/, theme/, navigation/
-├── data/      Firestore repositories, local/ (guest JSON store), session/ (switching), backup/,
-│              migration/, preferences/, csv/, automation/ and salary/ (app-start syncs)
-└── di/        Hilt modules
-core/model/            pure-Kotlin module: domain models, repository interfaces, use cases
-app/src/test/          JVM unit tests and shared fakes
-app/src/androidTest/   instrumented tests
-baselineprofile/       baseline profile generator module
-.maestro/              Maestro E2E flows
-firestore.rules        Firestore security rules
-scripts/gate.sh        shared quality gate
+├── ui/      Compose screens by feature, navigation, theme
+├── data/    Firestore repositories, local/ (guest JSON store), session/, backup/, migration/, csv/, automation/
+└── di/      Hilt modules
+core/model/            pure-Kotlin domain: models, repository interfaces, use cases
+core/designsystem/     theme and shared Compose components
+baselineprofile/       baseline profile generator
+.maestro/              end-to-end and screenshot flows
 ```
-
-## Roadmap
-
-- Further polish of the income and spending screens based on day-to-day use.
-- Broader instrumented-test coverage.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+Issues are welcome. This repository receives one commit per released version, so pull requests are applied by
+hand in the next release; [CONTRIBUTING.md](CONTRIBUTING.md) explains how. Changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-[MIT](LICENSE) © 2026 João Neves.
-
-The bundled typeface is [Inter](https://github.com/rsms/inter) by Rasmus Andersson, licensed under the
-SIL Open Font License 1.1 (see [`third_party/inter/OFL.txt`](third_party/inter/OFL.txt)).
+[MIT](LICENSE) © 2026 João Neves. The bundled typeface is [Inter](https://github.com/rsms/inter) by Rasmus
+Andersson, under the SIL Open Font License 1.1 ([`third_party/inter/OFL.txt`](third_party/inter/OFL.txt)).

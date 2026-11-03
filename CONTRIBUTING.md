@@ -16,7 +16,7 @@ Day-to-day development happens elsewhere, so `main` only moves when a version is
 ## Building it
 
 1. Install JDK 21 and an Android SDK (`ANDROID_HOME`).
-2. Follow "Getting started" in the [README](README.md): you need your own Firebase project and a
+2. Follow "Build it yourself" in the [README](README.md): you need your own Firebase project and a
    `google-services.json` in `app/` (gitignored, never commit it).
 3. `./gradlew installDebug` to run on a device or emulator. Guest mode needs no sign-in.
 

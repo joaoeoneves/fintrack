@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [5.13] - 2026-11-03
+
+No changes inside the app.
+
+### Changed
+- New README: what FinTrack is for, how it compares with other kinds of money apps, a tour of the main screens
+  and a privacy summary. The full feature list moved to `docs/FEATURES.md`.
+- New screenshots taken on a year of demo data, plus a framed overview image.
+- Each release is now built, signed and published by this repository's Release workflow, and arrives as one
+  commit per version.
+
+## [5.12] - 2026-11-02
+
+### Changed
+- The Income tab's Year header shows one still-to-receive figure: Received, then Still to receive (the plan for
+  the rest of the year) and Year total. The separate row with a second figure is gone.
+- A source is marked short only when past months are short by more than 1% of what was expected, not for a
+  payslip a few euros off.
+
 ## [5.11] - 2026-11-01
 
 ### Added

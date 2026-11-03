@@ -14,8 +14,8 @@ local.properties
 # possibly-public remote; each dev/CI pulls it from the Firebase console instead.
 google-services.json
 
-TODO.md
 .kotlin/
 
 # Local-only parity fixtures with real personal figures (never commit)
 app/src/test/resources/private/
+__pycache__/
