@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [5.14] - 2026-11-10
+
+No changes inside the app.
+
+### Changed
+- Build tools updated (Android Gradle Plugin 9.5.1, KSP 2.3.13).
+- Code scanning analyses the Kotlin code from a real build.
+- The CI's placeholder Firebase config comes from one shared script.
+
 ## [5.13] - 2026-11-03
 
 No changes inside the app.

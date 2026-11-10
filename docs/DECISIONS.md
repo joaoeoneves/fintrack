@@ -59,20 +59,21 @@ Short records of the main architectural choices: context, decision, consequences
 ## 7. Tag-driven signed releases and Obtainium instead of Google Play
 
 - **Context:** This is a personal, open-source project; a store listing adds fees and review overhead.
-- **Decision:** The release workflow (run from Actions with a version, or by pushing a `vX.Y` tag) runs: tests, lint, a signed R8 build, signature
-  verification, then a GitHub release with the APK and mapping file. Users update through Obtainium.
+- **Decision:** Each version is published by the Release workflow: CI (ktlint, detekt, lint, unit tests), a
+  signed R8 build, signature verification, then a GitHub release with the APK and mapping file, tagged
+  `vX.Y`. Users update through Obtainium. Since 5.13 the workflow runs on the public repository (see 16).
 - **Consequences:** Releases are reproducible from CI and need no manual steps. There is no store
   distribution or staged rollout, and the signing key is held in repository secrets.
 
-## 8. Fast JVM screen tests on every PR; emulator E2E on demand
+## 8. Fast JVM screen tests; emulator E2E on demand
 
 - **Context:** Emulator runs on CI were slow and flaky, and on a private repository's small runners they
   cost metered minutes and frequently failed to boot. Google sign-in cannot be scripted anyway.
-- **Decision:** The main flows run as Robolectric + Compose screen tests on the JVM in every PR. The
-  Maestro flows (guest mode) stay in `.maestro/` and run only from the manual E2E workflow or by hand,
-  for example as a final smoke test before a major release.
-- **Consequences:** PRs get UI coverage in minutes with no emulator. Device-only behaviour (real
-  rendering, system dialogs) is checked only when the E2E workflow is run.
+- **Decision:** The main flows run as Robolectric + Compose screen tests on the JVM, in the local gate
+  (`scripts/gate.sh`) and in every release's CI. The Maestro flows (guest mode) stay in `.maestro/` and run
+  by hand, for example as a final smoke test before a major release.
+- **Consequences:** UI coverage in minutes with no emulator. Device-only behaviour (real rendering, system
+  dialogs) is checked only when the Maestro flows are run.
 
 ## 9. Automation runs on app start, not in the background
 
@@ -156,3 +157,17 @@ Short records of the main architectural choices: context, decision, consequences
   it; nothing is written when the refund arrives, so deleting that refund brings the reminder back. The
   checklist only shows a new state after `waitForPendingWrites()` (guests: immediately).
 - **Consequences:** No extra state to keep in sync. Offline, checklist ticks wait for the connection.
+
+## 16. Public repository with one commit per version (5.13)
+
+- **Context:** The public repository showed every intermediate commit, fix-up and CI retry. Moving
+  development to a private repository on GitHub's free plan leaves 2,000 Actions minutes a month there, less
+  than the project's CI used, while Actions on public repositories cost nothing.
+- **Decision:** Development happens in a private repository with Actions off; `scripts/gate.sh` is the
+  per-change check. `scripts/mirror.sh` turns each version into one commit (`FinTrack vX.Y`, the CHANGELOG
+  entry as its message) on top of the public repository's `main`, pushed to an `rc/vX.Y` branch. There the
+  Release workflow runs CI and, when it passes, moves `main`, tags it and publishes the signed APK. The
+  first public history was rebuilt from the existing tags.
+- **Consequences:** The public history reads as a list of versions, and a failed release publishes
+  nothing. CI runs once per version instead of once per change, so the local gate matters more. Outside
+  pull requests are applied by hand in the next version, with the contributor credited.

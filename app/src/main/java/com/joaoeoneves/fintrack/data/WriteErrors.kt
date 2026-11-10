@@ -2,6 +2,7 @@ package com.joaoeoneves.fintrack.data
 
 import android.os.SystemClock
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.channels.BufferOverflow
@@ -45,6 +46,10 @@ object WriteErrors {
             }
         if (fresh) mutableEvents.tryEmit(code)
     }
+
+    /** Forgets when each code was last emitted, so tests sharing this object don't depend on their order. */
+    @VisibleForTesting
+    internal fun resetForTests() = synchronized(lastEmitted) { lastEmitted.clear() }
 }
 
 private const val EVENT_BUFFER = 8

@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -20,6 +21,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class WriteErrorsTest {
+    @Before
+    fun resetDedupe() = WriteErrors.resetForTests()
+
     private fun events(block: () -> Unit): List<WriteErrorCode> {
         val seen = mutableListOf<WriteErrorCode>()
         runTest(UnconfinedTestDispatcher()) {

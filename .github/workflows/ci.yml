@@ -32,50 +32,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # The google-services Gradle plugin fails the build if app/google-services.json is missing. The real file is
-      # never committed; CI only compiles and runs JVM unit tests against fake repositories, so a placeholder with
-      # the right shape and package name is enough.
+      # The google-services Gradle plugin needs app/google-services.json; CI builds with a placeholder.
       - &google-services
         name: Write placeholder google-services.json
-        run: |
-          # Split so the repository never holds a string shaped like a real API key.
-          placeholder_key="AIza""PlaceholderPlaceholderPlaceholderPlace"
-          cat > app/google-services.json <<JSON
-          {
-            "project_info": {
-              "project_number": "000000000000",
-              "project_id": "fintrack-ci-placeholder",
-              "storage_bucket": "fintrack-ci-placeholder.appspot.com"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
-                  "android_client_info": {
-                    "package_name": "com.joaoeoneves.fintrack"
-                  }
-                },
-                "oauth_client": [
-                  {
-                    "client_id": "000000000000-placeholderplaceholderplacehold.apps.googleusercontent.com",
-                    "client_type": 3
-                  }
-                ],
-                "api_key": [
-                  {
-                    "current_key": "${placeholder_key}"
-                  }
-                ],
-                "services": {
-                  "appinvite_service": {
-                    "other_platform_oauth_client": []
-                  }
-                }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          JSON
+        run: scripts/ci/placeholder-google-services.sh
 
       - name: ktlint
         run: ./gradlew ktlintCheck

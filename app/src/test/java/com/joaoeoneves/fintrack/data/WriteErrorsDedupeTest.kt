@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -22,8 +23,11 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class WriteErrorsDedupeTest {
-    // Far above any real elapsedRealtime so state left by other tests (a global object) never interferes.
+    // A fixed clock far from the real elapsedRealtime; the shared state is reset before each test.
     private val base = 1_000_000_000_000L
+
+    @Before
+    fun resetDedupe() = WriteErrors.resetForTests()
 
     private fun events(block: () -> Unit): List<WriteErrorCode> {
         val seen = mutableListOf<WriteErrorCode>()
