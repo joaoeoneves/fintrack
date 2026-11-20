@@ -152,7 +152,7 @@
     <string name="settings_export_csv">Exportar movimentos (CSV)</string>
     <string name="settings_signed_in_fallback">Sessão iniciada</string>
     <string name="label_sign_out_failed">Não foi possível terminar sessão</string>
-    <string name="settings_guest_account">Convidado — os dados ficam guardados apenas neste dispositivo</string>
+    <string name="settings_guest_account">Convidado: os dados ficam guardados apenas neste dispositivo</string>
     <string name="action_sign_in_to_sync">Iniciar sessão para sincronizar</string>
     <string name="action_leave_guest_mode">Sair do modo convidado</string>
     <string name="leave_guest_confirm_title">Sair do modo convidado?</string>
@@ -518,8 +518,8 @@
     <string name="delete_all_data_error_title">Falha ao apagar</string>
     <string name="delete_all_data_error">Não foi possível apagar todos os teus dados. Alguns podem já ter sido apagados. Verifica a ligação e tenta novamente.</string>
     <string name="plan_other_income">Outro rendimento</string>
-    <string name="salary_duplicates_message">Tens outros rendimentos mensais. O perfil salarial já inclui o salário — removê-los para não contar a dobrar?</string>
-    <string name="salary_duplicates_message_meal">Tens outros rendimentos mensais. O perfil salarial já inclui o salário e o subsídio de refeição — removê-los para não contar a dobrar?</string>
+    <string name="salary_duplicates_message">Tens outros rendimentos mensais. O perfil salarial já inclui o salário. Removê-los para não contar a dobrar?</string>
+    <string name="salary_duplicates_message_meal">Tens outros rendimentos mensais. O perfil salarial já inclui o salário e o subsídio de refeição. Removê-los para não contar a dobrar?</string>
     <string name="salary_duplicates_remove">Remover selecionadas</string>
     <string name="salary_duplicates_keep">Manter</string>
     <string name="plan_income_salary">Salário</string>
@@ -586,7 +586,7 @@
     <string name="backup_restoring_preparing">A restaurar…</string>
     <string name="backup_restoring_progress">A restaurar… %1$d de %2$d</string>
     <string name="backup_restore_partial_title">Restauro incompleto</string>
-    <string name="backup_restore_partial_message">Alguns dados já foram substituídos. Tenta novamente para terminar — repetir não duplica nada.</string>
+    <string name="backup_restore_partial_message">Alguns dados já foram substituídos. Tenta novamente para terminar. Repetir não duplica nada.</string>
     <string name="backup_error_restore_offline">Sem ligação. Nada foi alterado.</string>
     <string name="pending_more_options">Mais opções</string>
     <string name="pending_change_amount">Alterar valor</string>
@@ -750,5 +750,5 @@
     <string name="how_it_works_recurring_title">Recorrentes</string>
     <string name="how_it_works_recurring_body">Um item recorrente é uma despesa ou um rendimento que se repete, como a renda ou uma subscrição. No dia certo de cada mês a app regista-o por ti, sem teres de o escrever. Cada registo feito assim aparece em Por rever.</string>
     <string name="how_it_works_review_title">Por rever</string>
-    <string name="how_it_works_review_body">Por rever mostra o que a app registou sozinha. Toca num registo para o confirmar ou editar, ou usa Confirmar todos. Por reembolsar mostra as despesas que marcaste como Vai ser reembolsada, com o que falta receber no total e em cada uma; usa Registar reembolso numa linha para abrir um reembolso já preenchido com o valor em falta, ou abre a despesa para ver quanto já voltou.</string>
+    <string name="how_it_works_review_body">Por rever mostra o que a app registou sozinha. Toca num registo para o confirmar ou editar, ou usa Confirmar todos. Por reembolsar mostra as despesas que marcaste como Vai ser reembolsada. Indica o que falta receber, no total e em cada uma. Registar reembolso numa linha abre um reembolso já preenchido com o valor em falta. Abre a despesa para ver quanto já voltou.</string>
 </resources>

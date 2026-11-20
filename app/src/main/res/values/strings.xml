@@ -152,7 +152,7 @@
     <string name="settings_export_csv">Export transactions (CSV)</string>
     <string name="settings_signed_in_fallback">Signed in</string>
     <string name="label_sign_out_failed">Couldn\'t sign out</string>
-    <string name="settings_guest_account">Guest — data is stored only on this device</string>
+    <string name="settings_guest_account">Guest: data is stored only on this device</string>
     <string name="action_sign_in_to_sync">Sign in to sync</string>
     <string name="action_leave_guest_mode">Leave guest mode</string>
     <string name="leave_guest_confirm_title">Leave guest mode?</string>
@@ -507,8 +507,8 @@
     <string name="delete_all_data_error_title">Delete failed</string>
     <string name="delete_all_data_error">Couldn\'t delete all your data. Some of it may already be gone. Check your connection and try again.</string>
     <string name="plan_other_income">Other income</string>
-    <string name="salary_duplicates_message">You have other monthly income. The salary profile already covers your salary — remove these to avoid counting them twice?</string>
-    <string name="salary_duplicates_message_meal">You have other monthly income. The salary profile already covers salary and meal allowance — remove these to avoid counting them twice?</string>
+    <string name="salary_duplicates_message">You have other monthly income. The salary profile already covers your salary. Remove these to avoid counting them twice?</string>
+    <string name="salary_duplicates_message_meal">You have other monthly income. The salary profile already covers salary and meal allowance. Remove these to avoid counting them twice?</string>
     <string name="salary_duplicates_remove">Remove selected</string>
     <string name="salary_duplicates_keep">Keep</string>
     <string name="plan_income_salary">Salary</string>
@@ -575,7 +575,7 @@
     <string name="backup_restoring_preparing">Restoring…</string>
     <string name="backup_restoring_progress">Restoring… %1$d of %2$d</string>
     <string name="backup_restore_partial_title">Restore incomplete</string>
-    <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish — retrying doesn\'t duplicate anything.</string>
+    <string name="backup_restore_partial_message">Some data was already replaced. Try again to finish. Retrying doesn\'t duplicate anything.</string>
     <string name="backup_error_restore_offline">No connection. Nothing was changed.</string>
     <string name="pending_more_options">More options</string>
     <string name="pending_change_amount">Change amount</string>
@@ -735,5 +735,5 @@
     <string name="how_it_works_recurring_title">Recurring</string>
     <string name="how_it_works_recurring_body">A recurring item is an expense or income that repeats, such as rent or a subscription. On its day each month the app records it for you, so you do not have to type it. Every record made this way lands in To review.</string>
     <string name="how_it_works_review_title">To review</string>
-    <string name="how_it_works_review_body">To review lists what the app recorded on its own. Tap a record to check or edit it, or use Confirm all. Awaiting refund lists the expenses you marked as Will be refunded, with what is still owed in total and per expense; use Record refund on a row to open a refund prefilled with the amount left, or open the expense to see how much came back.</string>
+    <string name="how_it_works_review_body">To review lists what the app recorded on its own. Tap a record to check or edit it, or use Confirm all. Awaiting refund lists the expenses you marked as Will be refunded. It shows what is still owed, in total and per expense. Record refund on a row opens a refund prefilled with the amount left. Open the expense to see how much came back.</string>
 </resources>

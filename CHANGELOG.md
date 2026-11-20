@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [5.15] - 2026-11-20
+
+### Changed
+- Clearer wording in a few places: no more dashes in the guest account row, the salary duplicates prompt and the
+  incomplete restore message, and the refund part of How it works is split into short sentences.
+
 ## [5.14] - 2026-11-10
 
 No changes inside the app.
